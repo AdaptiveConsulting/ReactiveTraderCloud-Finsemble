@@ -1,1 +1,14 @@
-{}
+{
+    "blotter": {
+        "output": "components/blotter/blotter",
+        "entry": "./src\\components\\blotter\\blotter.js"
+    },
+    "analytics": {
+        "output": "components/analytics/analytics",
+        "entry": "./src\\components\\analytics\\analytics.js"
+    },
+    "EURUSD": {
+        "output": "components/EURUSD/EURUSD",
+        "entry": "./src\\components\\EURUSD\\EURUSD.js"
+    }
+}
