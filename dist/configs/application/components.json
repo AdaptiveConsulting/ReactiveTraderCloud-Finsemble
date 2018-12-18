@@ -1,0 +1,368 @@
+{
+    "comment": "Reactive Trader Components",
+    "components": {
+        "Blotter": {
+            "window": {
+                "url": "http://192.168.1.83:3000/blotter",
+                "frame": false,
+                "resizable": true,
+                "autoShow": true,
+                "top": "center",
+                "left": "center",
+                "width": 1000,
+                "height": 1000
+            },
+            "component": {
+                "inject": [
+                    "http://192.168.1.83:3000/blotter"
+                ]
+            },
+            "foreign": {
+                "services": {
+                    "dockingService": {
+                        "canGroup": true,
+                        "isArrangable": true
+                    }
+                },
+                "components": {
+                    "App Launcher": {
+                        "launchableByUser": true
+                    },
+                    "Window Manager": {
+                        "title": "Blotter",
+                        "FSBLHeader": true,
+                        "persistWindowState": false
+                    },
+                    "Toolbar": {
+                        "iconClass": "blotter"
+                    }
+                }
+            }
+        },
+        "Analytics": {
+            "window": {
+                "url": "http://192.168.1.83:3000/analytics",
+                "frame": true,
+                "resizable": true,
+                "autoShow": true,
+                "top": "center",
+                "left": "center",
+                "width": 500,
+                "height": 1000
+            },
+            "component": {
+                "inject": ["http://192.168.1.83:3000/analytics"]
+            },
+            "foreign": {
+                "services": {
+                    "dockingService": {
+                        "canGroup": true,
+                        "isArrangable": true
+                    }
+                },
+                "components": {
+					"App Launcher": {
+						"launchableByUser": true
+					},
+					"Window Manager": {
+						"showLinker": true,
+						"FSBLHeader": true,
+						"persistWindowState": false,
+						"title": "Analytics"
+					},
+					"Toolbar": {
+						"iconClass": "ff-component"
+					}
+				}
+            }
+        },
+        "EURUSD": {
+            "window": {
+                "url": "http://192.168.1.83:3000/spot/EURUSD",
+                "frame": true,
+                "resizable": true,
+                "autoShow": true,
+                "top": "center",
+                "left": "center",
+                "width": 500,
+                "height": 200
+            },
+            "component": {
+                "inject": ["http://192.168.1.83:3000/spot/EURUSD"]
+            },
+            "foreign": {
+                "services": {
+                    "dockingService": {
+                        "canGroup": true,
+                        "isArrangable": true
+                    }
+                },
+                "components": {
+                    "App Launcher": {
+                        "launchableByUser": true
+                    },
+                    "Window Manager": {
+                        "title": "EURUSD",
+                        "FSBLHeader": true,
+                        "persistWindowState": false
+                    },
+                    "Toolbar": {
+                        "iconClass": "EURUSD"
+                    }
+                }
+            }
+		},
+		"GBPUSD": {
+            "window": {
+                "url": "http://192.168.1.83:3000/spot/GBPUSD",
+                "frame": false,
+                "resizable": true,
+                "autoShow": true,
+                "top": "center",
+                "left": "center",
+                "width": 500,
+                "height": 200
+            },
+            "component": {
+                "inject": ["http://192.168.1.83:3000/spot/GBPUSD"]
+            },
+            "foreign": {
+                "services": {
+                    "dockingService": {
+                        "canGroup": true,
+                        "isArrangable": true
+                    }
+                },
+                "components": {
+                    "App Launcher": {
+                        "launchableByUser": true
+                    },
+                    "Window Manager": {
+                        "title": "GBPUSD",
+                        "FSBLHeader": true,
+                        "persistWindowState": false
+                    },
+                    "Toolbar": {
+                        "iconClass": "GBPUSD"
+                    }
+                }
+            }
+		},
+		"EURJPY": {
+            "window": {
+                "url": "http://192.168.1.83:3000/spot/EURJPY",
+                "frame": false,
+                "resizable": true,
+                "autoShow": true,
+                "top": "center",
+                "left": "center",
+                "width": 500,
+                "height": 200
+            },
+            "component": {
+                "inject": ["http://192.168.1.83:3000/spot/EURJPY"]
+            },
+            "foreign": {
+                "services": {
+                    "dockingService": {
+                        "canGroup": true,
+                        "isArrangable": true
+                    }
+                },
+                "components": {
+                    "App Launcher": {
+                        "launchableByUser": true
+                    },
+                    "Window Manager": {
+                        "title": "EURJPY",
+                        "FSBLHeader": true,
+                        "persistWindowState": false
+                    },
+                    "Toolbar": {
+                        "iconClass": "EURJPY"
+                    }
+                }
+            }
+		},
+		"NZDUSD": {
+            "window": {
+                "url": "http://192.168.1.83:3000/spot/NZDUSD",
+                "frame": false,
+                "resizable": true,
+                "autoShow": true,
+                "top": "center",
+                "left": "center",
+                "width": 500,
+                "height": 200
+            },
+            "component": {
+                "inject": ["http://192.168.1.83:3000/spot/NZDUSD"]
+            },
+            "foreign": {
+                "services": {
+                    "dockingService": {
+                        "canGroup": true,
+                        "isArrangable": true
+                    }
+                },
+                "components": {
+                    "App Launcher": {
+                        "launchableByUser": true
+                    },
+                    "Window Manager": {
+                        "title": "NZDUSD",
+                        "FSBLHeader": true,
+                        "persistWindowState": false
+                    },
+                    "Toolbar": {
+                        "iconClass": "NZDUSD"
+                    }
+                }
+            }
+		},
+		"EURCAD": {
+            "window": {
+                "url": "http://192.168.1.83:3000/spot/EURCAD",
+                "frame": false,
+                "resizable": true,
+                "autoShow": true,
+                "top": "center",
+                "left": "center",
+                "width": 500,
+                "height": 200
+            },
+            "component": {
+                "inject": ["http://192.168.1.83:3000/spot/EURCAD"]
+            },
+            "foreign": {
+                "services": {
+                    "dockingService": {
+                        "canGroup": true,
+                        "isArrangable": true
+                    }
+                },
+                "components": {
+                    "App Launcher": {
+                        "launchableByUser": true
+                    },
+                    "Window Manager": {
+                        "title": "EURCAD",
+                        "FSBLHeader": true,
+                        "persistWindowState": false
+                    },
+                    "Toolbar": {
+                        "iconClass": "EURCAD"
+                    }
+                }
+            }
+		},
+		"GBPJPY": {
+            "window": {
+                "url": "http://192.168.1.83:3000/spot/GBPJPY",
+                "frame": false,
+                "resizable": true,
+                "autoShow": true,
+                "top": "center",
+                "left": "center",
+                "width": 500,
+                "height": 200
+            },
+            "component": {
+                "inject": ["http://192.168.1.83:3000/spot/GBPJPY"]
+            },
+            "foreign": {
+                "services": {
+                    "dockingService": {
+                        "canGroup": true,
+                        "isArrangable": true
+                    }
+                },
+                "components": {
+                    "App Launcher": {
+                        "launchableByUser": true
+                    },
+                    "Window Manager": {
+                        "title": "GBPJPY",
+                        "FSBLHeader": true,
+                        "persistWindowState": false
+                    },
+                    "Toolbar": {
+                        "iconClass": "GBPJPY"
+                    }
+                }
+            }
+		},
+		"AUDUSD": {
+            "window": {
+                "url": "http://192.168.1.83:3000/spot/AUDUSD",
+                "frame": false,
+                "resizable": true,
+                "autoShow": true,
+                "top": "center",
+                "left": "center",
+                "width": 500,
+                "height": 200
+            },
+            "component": {
+                "inject": ["http://192.168.1.83:3000/spot/AUDUSD"]
+            },
+            "foreign": {
+                "services": {
+                    "dockingService": {
+                        "canGroup": true,
+                        "isArrangable": true
+                    }
+                },
+                "components": {
+                    "App Launcher": {
+                        "launchableByUser": true
+                    },
+                    "Window Manager": {
+                        "title": "AUDUSD",
+                        "FSBLHeader": true,
+                        "persistWindowState": false
+                    },
+                    "Toolbar": {
+                        "iconClass": "AUDUSD"
+                    }
+				}
+			}
+		},
+		"USDJPY": {
+			"window": {
+				"url": "http://192.168.1.83:3000/spot/USDJPY",
+				"frame": false,
+				"resizable": true,
+				"autoShow": true,
+				"top": "center",
+				"left": "center",
+				"width": 500,
+				"height": 300
+			},
+			"component": {
+				"inject": ["http://192.168.1.83:3000/spot/USDJPY"]
+			},
+			"foreign": {
+				"services": {
+					"dockingService": {
+						"canGroup": true,
+						"isArrangable": true
+					}
+				},
+				"components": {
+					"App Launcher": {
+						"launchableByUser": true
+					},
+					"Window Manager": {
+						"title": "USDJPY",
+						"FSBLHeader": true,
+						"persistWindowState": false
+					},
+					"Toolbar": {
+						"iconClass": "USDJPY"
+					}
+				}
+			}
+		}
+    }
+}
