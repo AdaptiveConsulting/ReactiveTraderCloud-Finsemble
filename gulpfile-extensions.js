@@ -33,25 +33,6 @@ module.exports = taskMethods => {
 
 	taskMethods.post = (done) => {
 
-		// Example, add a new gulp task that first calls the built in "build" task and then does something of your choosing
-		/*
-		gulp.task("myTask", gulp.series("build"), function (done) {
-			// do something
-			done();
-		});
-		*/
-
-		// Example of how to redefine the built in build task. Note that all of the built in npm run commands use "build"
-		/*
-		 gulp.task("build", gulp.series(
-				"clean",
-				taskMethods.copyStaticFiles,
-				taskMethods.buildWebpack,
-				taskMethods.buildSass
-			)
-		);
-		*/
-
 		gulp.task("deploy", function() {
 			return gulp.src("./dist/**/*").pipe(deploy())
 		})

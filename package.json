@@ -15,6 +15,7 @@
         "prod": "gulp prod --gulpfile=./gulpfile.js",
         "prod:nolaunch": "gulp prod:nolaunch --gulpfile=./gulpfile.js",
         "server": "gulp server --gulpfile=./gulpfile.js",
+        "deploy": "gulp deploy --gulpfile=./gulpfile.js",
         "server:prod": "gulp server:prod --gulpfile=./gulpfile.js",
         "clean": "gulp clean --gulpfile=./gulpfile.js",
         "update-finsemble": "npm update @chartiq/finsemble && npm update -g @chartiq/finsemble-cli",

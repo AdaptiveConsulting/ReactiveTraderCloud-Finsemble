@@ -20,7 +20,7 @@
         },
         "alwaysOnTop": false
     },
-    "splashScreenImage": "http://localhost:3375/assets/img/FinsembleSplash.png",
+    "splashScreenImage": "http://localhost:3375/assets/img/splash-screen.jpg",
     "runtime": {
         "arguments": "--noerrdialogs  --v=4 --no-sandbox  --enable-crash-reporting --framestrategy=frames --winhttp-proxy-resolver",
         "version": "9.61.36.36",
@@ -70,6 +70,7 @@
         "moduleRoot": "http://localhost:3375/finsemble",
         "servicesRoot": "http://localhost:3375/finsemble/services",
         "notificationURL": "http://localhost:3375/components/notification/notification.html",
+        "devServer": "http://127.0.0.1:3000",
         "importConfig": [
             "$applicationRoot/configs/application/config.json"
         ],

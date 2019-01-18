@@ -87,7 +87,8 @@
 					"dialogModal",
 					"UserPreferences",
 					"App Catalog",
-					"searchMenu"
+					"searchMenu",
+					"windowTitleBar"
 				]
 			},
 			{
@@ -105,6 +106,31 @@
 				"services": [
 					"dockingService"
 				]
+			},
+			{
+				"agentLabel": "coreComponents",
+				"services": [
+					"Blotter", 
+					"Analytics"
+				]
+			},
+			{
+				"agentLabel": "spotTilesGroup1",
+				"services": [
+					"EURUSD", 
+					"GBPUSD",
+					"EURJPY",
+					"NZDUSD"
+				]
+			},
+			{
+				"agentLabel": "spotTilesGroup2",
+				"services": [
+					"EURCAD",
+					"GBPJPY",
+					"AUDUSD",
+					"USDJPY"
+				]
 			}
 		]
 	},
@@ -115,6 +141,7 @@
 		"$applicationRoot/configs/application/components.json",
 		"$applicationRoot/configs/application/workspaces.json",
 		"$applicationRoot/configs/application/workspaceTemplates.json",
+		"$applicationRoot/configs/application/testConfigOne.json",
 		"$applicationRoot/configs/application/services.json"
 	]
 }

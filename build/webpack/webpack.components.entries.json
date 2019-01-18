@@ -7,8 +7,8 @@
         "output": "components/analytics/analytics",
         "entry": "./src\\components\\analytics\\analytics.js"
     },
-    "EURUSD": {
-        "output": "components/EURUSD/EURUSD",
-        "entry": "./src\\components\\EURUSD\\EURUSD.js"
+    "header": {
+        "output": "components/header/header",
+        "entry": "./src\\components\\header\\header.js"
     }
 }
