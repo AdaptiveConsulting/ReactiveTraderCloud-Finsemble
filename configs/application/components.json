@@ -3,14 +3,14 @@
     "components": {
         "Blotter": {
             "window": {
-                "url": "$devServer/blotter",
+                "url": "$componentRoot/blotter",
                 "frame": false,
                 "resizable": true,
                 "autoShow": true,
                 "top": "center",
                 "left": "center",
-                "width": 1000,
-                "height": 1000
+                "width": 850,
+                "height": 475
             },
             "foreign": {
                 "services": {
@@ -36,14 +36,14 @@
         },
         "Analytics": {
             "window": {
-                "url": "$devServer/analytics",
+                "url": "$componentRoot/analytics",
                 "frame": true,
                 "resizable": true,
                 "autoShow": true,
                 "top": "center",
                 "left": "center",
-                "width": 500,
-                "height": 1000
+                "width": 330,
+                "height": 870
             },
             "foreign": {
                 "services": {
@@ -69,17 +69,14 @@
         },
         "EURUSD": {
             "window": {
-                "url": "$devServer/spot/EURUSD",
+                "url": "$componentRoot/spot/EURUSD",
                 "frame": true,
                 "resizable": true,
                 "autoShow": true,
                 "top": "center",
                 "left": "center",
-                "width": 500,
-                "height": 200
-            },
-            "component": {
-                "inject": "./components/header/header.js"
+                "width": 370,
+                "height": 184
             },
             "foreign": {
                 "services": {
@@ -93,7 +90,7 @@
                         "launchableByUser": false
                     },
                     "Window Manager": {
-                        "FSBLHeader": false,
+                        "FSBLHeader": true,
                         "title": "EURUSD",
                         "persistWindowState": false
                     },
@@ -105,14 +102,14 @@
         },
         "GBPUSD": {
             "window": {
-                "url": "$devServer/spot/GBPUSD",
+                "url": "$componentRoot/spot/GBPUSD",
                 "frame": false,
                 "resizable": true,
                 "autoShow": true,
                 "top": "center",
                 "left": "center",
-                "width": 500,
-                "height": 200
+                "width": 370,
+                "height": 184
             },
             "foreign": {
                 "services": {
@@ -138,14 +135,14 @@
         },
         "EURJPY": {
             "window": {
-                "url": "$devServer/spot/EURJPY",
+                "url": "$componentRoot/spot/EURJPY",
                 "frame": false,
                 "resizable": true,
                 "autoShow": true,
                 "top": "center",
                 "left": "center",
-                "width": 500,
-                "height": 200
+                "width": 370,
+                "height": 184
             },
             "foreign": {
                 "services": {
@@ -171,14 +168,14 @@
         },
         "NZDUSD": {
             "window": {
-                "url": "$devServer/spot/NZDUSD",
+                "url": "$componentRoot/spot/NZDUSD",
                 "frame": false,
                 "resizable": true,
                 "autoShow": true,
                 "top": "center",
                 "left": "center",
-                "width": 500,
-                "height": 200
+                "width": 370,
+                "height": 184
             },
             "foreign": {
                 "services": {
@@ -204,14 +201,14 @@
         },
         "EURCAD": {
             "window": {
-                "url": "$devServer/spot/EURCAD",
+                "url": "$componentRoot/spot/EURCAD",
                 "frame": false,
                 "resizable": true,
                 "autoShow": true,
                 "top": "center",
                 "left": "center",
-                "width": 500,
-                "height": 200
+                "width": 370,
+                "height": 184
             },
             "foreign": {
                 "services": {
@@ -237,14 +234,14 @@
         },
         "GBPJPY": {
             "window": {
-                "url": "$devServer/spot/GBPJPY",
+                "url": "$componentRoot/spot/GBPJPY",
                 "frame": false,
                 "resizable": true,
                 "autoShow": true,
                 "top": "center",
                 "left": "center",
-                "width": 500,
-                "height": 200
+                "width": 370,
+                "height": 184
             },
             "foreign": {
                 "services": {
@@ -270,14 +267,14 @@
         },
         "AUDUSD": {
             "window": {
-                "url": "$devServer/spot/AUDUSD",
+                "url": "$componentRoot/spot/AUDUSD",
                 "frame": false,
                 "resizable": true,
                 "autoShow": true,
                 "top": "center",
                 "left": "center",
-                "width": 500,
-                "height": 200
+                "width": 370,
+                "height": 184
             },
             "foreign": {
                 "services": {
@@ -303,14 +300,14 @@
         },
         "USDJPY": {
             "window": {
-                "url": "$devServer/spot/USDJPY",
+                "url": "$componentRoot/spot/USDJPY",
                 "frame": false,
                 "resizable": true,
                 "autoShow": true,
                 "top": "center",
                 "left": "center",
-                "width": 500,
-                "height": 300
+                "width": 370,
+                "height": 184
             },
             "foreign": {
                 "services": {

@@ -2,9 +2,9 @@
     "devtools_port": 9090,
     "startup_app": {
         "name": "ChartIQ Local",
-        "url": "http://localhost:3375/finsemble/components/system/serviceManager/serviceManager.html",
+        "url": "https://adaptiveconsulting.github.io/rtc-finsemble/finsemble/components/system/serviceManager/serviceManager.html",
         "uuid": "Finsemble",
-        "applicationIcon": "http://localhost:3375/assets/img/Finsemble_Taskbar_Icon.png",
+        "applicationIcon": "https://adaptiveconsulting.github.io/rtc-finsemble/assets/img/Finsemble_Taskbar_Icon.png",
         "defaultTop": 0,
         "defaultLeft": 0,
         "showTaskbarIcon": true,
@@ -20,7 +20,7 @@
         },
         "alwaysOnTop": false
     },
-    "splashScreenImage": "http://localhost:3375/assets/img/splash-screen.jpg",
+    "splashScreenImage": "https://adaptiveconsulting.github.io/rtc-finsemble/assets/img/splash-screen.jpg",
     "runtime": {
         "arguments": "--noerrdialogs  --v=4 --no-sandbox  --enable-crash-reporting --framestrategy=frames --winhttp-proxy-resolver",
         "version": "9.61.36.36",
@@ -34,7 +34,7 @@
     "shortcut": {
         "company": "ChartIQ",
         "description": "ChartIQ Local",
-        "icon": "http://localhost:3375/assets/img/Finsemble_Taskbar_Icon.ico",
+        "icon": "https://adaptiveconsulting.github.io/rtc-finsemble/assets/img/Finsemble_Taskbar_Icon.ico",
         "name": "ChartIQ - LOCAL",
         "target": [
             "desktop",
@@ -44,7 +44,7 @@
         "startMenuRootFolder": "ChartIQ Local"
     },
     "dialogSettings": {
-        "logo": "http://localhost:3375/assets/img/ciq-banner-100x25.png",
+        "logo": "https://adaptiveconsulting.github.io/rtc-finsemble/assets/img/ciq-banner-100x25.png",
         "bgColor": 4280109424,
         "textColor": 4293521652,
         "progressBarBgColor": 4294967295,
@@ -66,11 +66,11 @@
         }
     ],
     "finsemble": {
-        "applicationRoot": "http://localhost:3375",
-        "moduleRoot": "http://localhost:3375/finsemble",
-        "servicesRoot": "http://localhost:3375/finsemble/services",
-        "componentRoot": "http://127.0.0.1:3000",
-        "notificationURL": "http://localhost:3375/components/notification/notification.html",
+        "applicationRoot": "https://adaptiveconsulting.github.io/rtc-finsemble",
+        "moduleRoot": "https://adaptiveconsulting.github.io/rtc-finsemble/finsemble",
+        "servicesRoot": "https://adaptiveconsulting.github.io/rtc-finsemble/finsemble/services",
+        "notificationURL": "https://adaptiveconsulting.github.io/rtc-finsemble/components/notification/notification.html",
+        "componentRoot": "https://web-dev.adaptivecluster.com",
         "devServer": "http://127.0.0.1:3000",
         "importConfig": [
             "$applicationRoot/configs/application/config.json"
@@ -80,4 +80,3 @@
         }
     }
 }
- 

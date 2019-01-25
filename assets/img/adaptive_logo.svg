@@ -4,7 +4,7 @@
     height="16"
     viewBox="0 0 15 17"
 >
-    <g fill="#FFF" fill-rule="evenodd">
+    <g fill="#FFF" fillRule="evenodd">
         <path d="M.047 3.029h3.146v12.88H.047zM3.812 4.065h3.145v12.879H3.812zM7.474 2.432h3.145v12.879H7.474zM11.136.153h3.146v12.879h-3.146z" />
     </g>
 </svg>
