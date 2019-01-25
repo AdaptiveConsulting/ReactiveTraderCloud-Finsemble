@@ -1,7 +1,7 @@
 # rtc-finsemble
 
 
-##Instructions:
+## Instructions
 There are two ways of running this project:  
  - locally with the component URLs directed at your own RT @ localhost:3000
  - or in through an OpenFin launcher (download link below) 
