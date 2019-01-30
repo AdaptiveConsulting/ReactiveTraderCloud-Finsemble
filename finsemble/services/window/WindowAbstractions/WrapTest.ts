@@ -1,9 +1,9 @@
-import * as RouterClient from "../../../clients/routerClientInstance";
+import RouterClient from "../../../clients/routerClientInstance";
 
-const BaseWindow = require("./BaseWindow");
-const OpenfinWindow = require("./openfinWindowWrapper");
+import { BaseWindow } from "./BaseWindow";
+import OpenfinWindow  from "./openfinWindowWrapper";
 
-function testWraps() {
+export function testWraps() {
   let myWrap = BaseWindow.getInstance({ windowName: "wrap1" });
   myWrap.onReady(() => {
     console.log("Wrap is ready.");
@@ -12,5 +12,3 @@ function testWraps() {
   });
   RouterClient.publish("Finsemble.Component.State.wrap1", { state: "ready" });
 }
-
-export = testWraps;

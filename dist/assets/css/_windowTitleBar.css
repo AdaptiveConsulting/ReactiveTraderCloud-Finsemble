@@ -316,6 +316,7 @@ html.desktop-active .fsbl-linker[hover=true] {
     display: none;
 }
 .fsbl-tab-title {
+    font-size: 12px;
     text-align: left;
     min-width: 0;
     overflow: hidden;

@@ -50,7 +50,9 @@
 }
 
 .finsemble-toolbar-button {
-    padding: 5px 6px;
+    margin-right: 5px;
+    margin-left: 5px; 
+    padding: 5px 6px; 
     border: 1px solid var(--toolbar-background-color);
     display: inline-flex;
 }
@@ -201,8 +203,8 @@ img.pinned-icon {
 .finsemble-toolbar-brand-logo {
     width: var(--toolbar-brand-logo-width);
     height: var(--toolbar-brand-logo-height);
-    margin: 2px 2px;
-    padding: 2px 0px 0px 0px;
+    margin: 1px 5px 0px 5px;
+    padding: 0px 5px 0px 5px;
 }
 
 /* Special tweaks for pinned icons */
@@ -228,8 +230,9 @@ img.pinned-icon {
 
 
 .finsemble-toolbar-drag-handle {
-    padding-left:5px;
-    padding-right:5px;
-    padding-top: 6px;
+    padding-left:7px;
+    padding-right:8px;
+    padding-top: 8px;
     -webkit-app-region: drag;
+    background-color: black;
 }

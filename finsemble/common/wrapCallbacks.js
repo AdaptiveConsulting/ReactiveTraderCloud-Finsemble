@@ -1,6 +1,6 @@
 "use strict";
 
-var Logger = require("../clients/logger");
+import Logger from "../clients/logger";
 
 const ADD_STACKTRACE = false; // if true add stacktrace data to errors (this is expensive so only enable when needed)
 
@@ -194,4 +194,4 @@ function wrapCallbacks(parentObject, params) { // variable number of parameters
 	}
 }
 
-module.exports = wrapCallbacks;
+export default wrapCallbacks;

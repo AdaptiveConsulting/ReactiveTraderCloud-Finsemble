@@ -1,8 +1,8 @@
-import * as RouterClient from "../../clients/routerClientInstance";
-import * as Logger from "../../clients/logger";
+import RouterClient from "../../clients/routerClientInstance";
+import Logger from "../../clients/logger";
 import { EventEmitter } from "events";
-import * as UntypedDistributedStoreClient from "../../clients/distributedStoreClient";
-import * as UntypedStorageClient from "../../clients/storageClient";
+import DistributedStoreClient from "../../clients/distributedStoreClient";
+import StorageClient from "../../clients/storageClient";
 import * as util from "../util";
 import { isEqual as deepEqual } from "lodash";
 import * as merge from "deepmerge";
@@ -10,8 +10,9 @@ import { WindowEventManager } from "./WindowEventManager";
 import * as constants from "../constants"
 import { FinsembleEvent } from "./FinsembleEvent";
 
-const System = require("../../common/system");
-var clone = require('lodash.cloneDeep');
+import { System } from "../../common/system";
+/** This import syntax helps the compiler infer the types. */
+import clone = require('lodash.cloneDeep');
 
 declare global {
 	interface Window {
@@ -19,10 +20,6 @@ declare global {
 	}
 }
 
-//This is bad. I don't like it. But without this, the typescript compiler complains. Our clients are just functions that 'inherit' via BaseClient.call. Typescript isn't smart enough to infer the BaseClient's methods, so if you call StorageClient.initialize, it complains.
-//This will go away as we move those things into proper classes.
-let DistributedStoreClient = UntypedDistributedStoreClient as any;
-let StorageClient = UntypedStorageClient as any;
 DistributedStoreClient.initialize();
 StorageClient.initialize();
 const BOUNDS_SET = "bounds-set";
@@ -36,7 +33,7 @@ if (!window._FSBLCache) window._FSBLCache = {
 	gettingWindow: [],
 	windowAttempts: {}
 };
-class FinsembleWindow {
+export class FinsembleWindow {
 	addListener: Function;
 	Group: any;
 	componentState: any;
@@ -124,8 +121,8 @@ class FinsembleWindow {
 		let guid = Date.now() + "_" + Math.random();
 		this.queryWindowService("addEventListener", { eventName: eventName, guid: guid });
 		this.eventManager.listenForRemoteEvent(eventName, handler);
-		let delayable = constants.INTERUPTABBLE_EVENTS.includes(eventName);
-		let cancelable = constants.INTERUPTABBLE_EVENTS.includes(eventName);
+		let delayable = constants.INTERRUPTIBLE_EVENTS.includes(eventName);
+		let cancelable = constants.INTERRUPTIBLE_EVENTS.includes(eventName);
 
 		let interceptor = new FinsembleEvent({
 			source: this,
@@ -403,6 +400,10 @@ class FinsembleWindow {
 
 				params.retrievedIdentifier = identifier;
 				let { wrap } = await FinsembleWindow._createWrap(params);
+
+				if (response.data.descriptor) {
+					wrap.descriptor = response.data.descriptor;
+				}
 
 				//@exit
 				resolve({ wrap });
@@ -789,7 +790,7 @@ class FinsembleWindow {
 			case "InsideWindow":
 				if (stopTabTileResults.tileGroupId) { // if dropped in an existing tile group (which might be the same it was dragging from)
 					self.Group.addWindow(this.identifier, stopTabTileResults.tileGroupId, stopTabTileResults.dropCoordinates);
-				} else { // if dropped in a seperate window outside a tile group
+				} else { // if dropped in a separate window outside a tile group
 					self.Group.createGroup(function (newGroupId) {
 						// add dragging window to new tile group, but specify the dropped on window as the starting window in the tile group
 						self.Group.addWindow(this.identifier, newGroupId, stopTabTileResults.dropCoordinates, { startingWindowIdentifier: stopTabTileResults.droppedOnWindowIdentifier });
@@ -1153,4 +1154,3 @@ class FinsembleWindow {
 		return new Promise(promiseResolver);
 	}
 }
-export = FinsembleWindow;

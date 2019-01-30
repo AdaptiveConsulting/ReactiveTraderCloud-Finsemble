@@ -45,4 +45,4 @@ var SystemSettings = function () {
 	};
 };
 
-module.exports = new SystemSettings();
+export default new SystemSettings();

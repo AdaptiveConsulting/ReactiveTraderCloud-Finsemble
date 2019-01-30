@@ -7,16 +7,15 @@ import {
 	Interface_Window,
 } from "./Interface_Window";
 
-import * as RouterClient from "../../../clients/routerClientInstance";
-import * as Logger from "../../../clients/logger";
-import * as FinsembleWindowInternal from "../WindowAbstractions/FinsembleWindowInternal";
+import RouterClient from "../../../clients/routerClientInstance";
+import Logger from "../../../clients/logger";
+import { FinsembleWindowInternal } from "../WindowAbstractions/FinsembleWindowInternal";
 import * as Constants from "../../../common/constants";
 import { MockDockableWindow } from "../Common/MockDockableWindow";
+import { WindowPoolSingleton } from "../Common/Pools/PoolSingletons";
 
-const { WindowPoolSingleton } = require("../Common/Pools/PoolSingletons");
 
-
-class WindowPrimitives {
+export class WindowPrimitives {
 	dockingMain: any;
 	eventInterruptors: any;
 
@@ -48,10 +47,12 @@ class WindowPrimitives {
 
 
 	definePubicInterface_Window() {
+		Logger.system.debug("definePubicInterface_Window");
+
 		// entry points for public window functions
 		RouterClient.addResponder(this.windowServiceChannelName("addEventListener"), this.addEventListenerHandler);
 		RouterClient.addResponder(this.windowServiceChannelName("removeEventListener"), this.removeEventListenerHandler);
-		RouterClient.addResponder(this.windowServiceChannelName("registerInterruptableEvent"), this.registerInterruptableEventHandler);
+		RouterClient.addResponder(this.windowServiceChannelName("registerInterruptibleEvent"), this.registerInterruptibleEventHandler);
 		RouterClient.addResponder(this.windowServiceChannelName("minimize"), this.minimizeHandler);
 		RouterClient.addResponder(this.windowServiceChannelName("maximize"), this.maximizeHandler);
 		RouterClient.addResponder(this.windowServiceChannelName("restore"), this.restoreHandler);
@@ -102,8 +103,8 @@ class WindowPrimitives {
 		return ({ okay, windowIdentifier, eventName, guid });
 	}
 
-	async registerInterruptableEventHandler(queryError, queryMessage) {
-		let { windowIdentifier, eventName, guid } = this.publicWindowHandlerPreface("registerInterruptableEventHandler", queryError, queryMessage);
+	async registerInterruptibleEventHandler(queryError, queryMessage) {
+		let { windowIdentifier, eventName, guid } = this.publicWindowHandlerPreface("registerInterruptibleEventHandler", queryError, queryMessage);
 		let callback = queryMessage.sendQueryResponse;
 
 		let wrap = WindowPoolSingleton.get(windowIdentifier.name);
@@ -112,7 +113,7 @@ class WindowPrimitives {
 			if (wrap.wrapState === "closing" || wrap.wrapState === "closed") {
 				return callback("Window is being shut down. Failed to add listener.");
 			}
-			if (Constants.INTERUPTABBLE_EVENTS.includes(eventName)) {
+			if (Constants.INTERRUPTIBLE_EVENTS.includes(eventName)) {
 				// keep track of all listeners
 				if (!this.eventInterruptors[windowIdentifier.name]) {
 					this.eventInterruptors[windowIdentifier.name] = {};
@@ -142,7 +143,7 @@ class WindowPrimitives {
 
 		let callback = queryMessage.sendQueryResponse;
 
-		if (Constants.INTERUPTABBLE_EVENTS.includes(eventName)) {
+		if (Constants.INTERRUPTIBLE_EVENTS.includes(eventName)) {
 			// keep track of all listeners
 			if (!this.eventInterruptors[windowIdentifier.name]) {
 				this.eventInterruptors[windowIdentifier.name] = {};
@@ -179,7 +180,7 @@ class WindowPrimitives {
 				return callback("Window is being shut down. Failed to add listener.");
 			}
 
-			if (Constants.INTERUPTABBLE_EVENTS.includes(eventName)) {
+			if (Constants.INTERRUPTIBLE_EVENTS.includes(eventName)) {
 				// keep track of all listeners
 				if (!this.eventInterruptors[windowIdentifier.name]) {
 					this.eventInterruptors[windowIdentifier.name] = {};
@@ -690,5 +691,3 @@ class WindowPrimitives {
 		}
 	}
 }
-
-module.exports = WindowPrimitives;

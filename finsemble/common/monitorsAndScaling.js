@@ -1,8 +1,22 @@
-var EventEmitter = require("events").EventEmitter;
-const System = require("../common/system");
+import { EventEmitter } from "events";
+/** Singleton of the System class shared among all instances of Monitors
+ * @TODO Refactor to instance member of class.
+ */
+let System;
 class Monitors extends EventEmitter {
-	constructor(readyCB, changeCB) {
+	/**
+	 *
+	 * @param {function} readyCB Function to be invoked when monitors are retrieved from the system for the first time.
+	 * @param {function} changeCB Function to be invoked when monitor information changes
+	 * @param {Object} dependencies Dependency object that provides a system object capable of retrieving monitors.
+	 */
+	constructor(readyCB, changeCB, dependencies) {
 		super();
+		if (dependencies && dependencies.System) {
+			System = dependencies.System;
+		} else {
+			throw new Error("Monitors class requires dependency injection. Ensure that System is being passed in.");
+		}
 		this.bindAllFunctions();
 		this.refreshMonitors(readyCB);
 
@@ -12,7 +26,7 @@ class Monitors extends EventEmitter {
 
 		//This is to handle 'wake events'. This is technically only going to handle unlock events (user locks screen or logs out then logs back in)
 		//Technically, if the user has disabled 'lock on sleep', then this will not fire, but openfin does not have an event for waking/sleeping
-		fin.desktop.System.addEventListener("session-changed", (params) => {
+		System.addEventListener("session-changed", (params) => {
 			if (params.reason === "unlock") {
 				this.refreshMonitors(changeCB);
 			}
@@ -301,4 +315,4 @@ class Monitors extends EventEmitter {
 		}, cb);
 	}
 }
-module.exports = Monitors;
+export default Monitors;

@@ -21,7 +21,7 @@
     --secondary-negative-color: var(--red1);
     --tertiary-negative-color: var(--red7);
 
-    --primary-background-color: var(--slate7);
+    --primary-background-color: #2D313C;
     --secondary-background-color: var(--slate6);
     --tertiary-background-color: var(--slate5);
 
@@ -30,7 +30,7 @@
     /* Component Variables:  Use these variables to make small changes to colors and general appearance. */
 
     /** Toolbar */
-    --toolbar-font-size: 15px;
+    --toolbar-font-size: 12px;
     --toolbar-font-color: var(--primary-font-color);
     --toolbar-line-height: 1em;
     --toolbar-font-weight: var(--primary-font-weight);
@@ -40,7 +40,7 @@
     --toolbar-brand-logo-height: 20px;
     --toolbar-background-color: var(--primary-background-color);
     --toolbar-button-hover-color: var(--secondary-accent-color);
-    --toolbar-resize-area-color: var(--slate5);
+    --toolbar-resize-area-color: black;
 
     --toolbar-icon-workspace-color: var(--yellow);
     --toolbar-icon-app-color: var(--tertiary-accent-color);

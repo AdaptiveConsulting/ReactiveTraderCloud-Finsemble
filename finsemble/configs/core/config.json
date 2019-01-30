@@ -1,8 +1,8 @@
 {
 	"comment": "Top-level core configuration -- the `hidden` config file that is always automatically loaded. A reference for the configuration tree can be found at https://documentation.chartiq.com/finsemble/tutorial-ConfigReference.html",
 	"system": {
-		"FSBLVersion": "3.3.0",
-		"gitHash": "2b8e0895136f6c5c53cc89d71a582bf4eb74a799",
+		"FSBLVersion": "3.6.1",
+		"gitHash": "f76bca4af0a34d2fd97b83fe1fa55f30e84bb8e3",
 		"finsembleLibraryPath": "$moduleRoot/FSBL.js",
 		"premiumRoot": "$moduleRoot",
 		"systemTrayIcon": "$moduleRoot/assets/img/Finsemble_Taskbar_Icon.png",

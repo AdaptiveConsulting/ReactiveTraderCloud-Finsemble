@@ -1,13 +1,13 @@
 {
 	"comment": "Core services loaded into the finsemble module",
 	"services": {
-		"launcherService": {
+		"startupLauncherService": {
 			"visible": false,
 			"showDevConsoleOnVisible": true,
 			"active": true,
-			"name": "launcherService",
-			"html": "$servicesRoot/launcher/launcher.html",
-			"file": "$servicesRoot/launcher/launcherService.js",
+			"name": "startupLauncherService",
+			"html": "$servicesRoot/startupLauncher/startupLauncher.html",
+			"file": "$servicesRoot/startupLauncher/startupLauncherService.js",
 			"category": "system"
 		},
 		"workspaceService": {
@@ -139,16 +139,6 @@
 				"focusDelay": 30,
 				"eventIgnore": 50
 			}
-		},
-		"finsembleNativeService": {
-			"useWindow": true,
-			"showDevConsoleOnVisible": true,
-			"name": "finsembleNativeService",
-			"visible": false,
-			"active": true,
-			"html": "$servicesRoot/finsembleNative/finsembleNative.html",
-			"file": "$servicesRoot/finsembleNative/finsembleNativeService.js",
-			"category": "system"
 		},
 		"RPCService": {
 			"useWindow": true,

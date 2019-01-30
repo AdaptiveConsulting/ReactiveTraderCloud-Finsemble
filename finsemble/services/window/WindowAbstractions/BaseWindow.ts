@@ -5,18 +5,17 @@
 //	TODO: LauncherService should not be looking at workspace service bounds to determine monitor to use (need an architecture solution here)
 // 	TODO: discuss BaseWindow.bindFunctions(this) (sidenote: I removed the extra bindings from the wrap)
 
-import * as RouterClient from "../../../clients/routerClientInstance";
-import * as Logger from "../../../clients/logger";
+import RouterClient from "../../../clients/routerClientInstance";
+import Logger from "../../../clients/logger";
 import { EventEmitter } from "events";
-import * as UntypedDistributedStoreClient from "../../../clients/distributedStoreClient";
-import * as UntypedStorageClient from "../../../clients/storageClient";
 import * as util from "../../../common/util";
 import { isEqual as deepEqual } from "lodash";
 import * as merge from "deepmerge";
 import { WindowEventManager } from "../../../common/window/WindowEventManager";
 import * as constants from "../../../common/constants"
 import { FinsembleEvent } from "../../../common/window/FinsembleEvent";
-const System = require("../../../common/system");
+import { System } from "../../../common/system";
+
 declare global {
 	interface Window {
 		_FSBLCache: any;
@@ -25,8 +24,8 @@ declare global {
 
 //This is bad. I don't like it. But without this, the typescript compiler complains. Our clients are just functions that 'inherit' via BaseClient.call. Typescript isn't smart enough to infer the BaseClient's methods, so if you call StorageClient.initialize, it complains.
 //This will go away as we move those things into proper classes.
-let DistributedStoreClient = UntypedDistributedStoreClient as any;
-let StorageClient = UntypedStorageClient as any;
+import DistributedStoreClient from "../../../clients/distributedStoreClient";
+import StorageClient from "../../../clients/storageClient";
 DistributedStoreClient.initialize();
 StorageClient.initialize();
 const BOUNDS_SET = "bounds-set";
@@ -40,7 +39,7 @@ if (!window._FSBLCache) window._FSBLCache = {
 	gettingWindow: [],
 	windowAttempts: {}
 };
-class BaseWindow extends EventEmitter {
+export class BaseWindow extends EventEmitter {
 	Group: any;
 	componentState: any;
 	wrapState: WrapState;
@@ -224,6 +223,7 @@ class BaseWindow extends EventEmitter {
 	static wrap = BaseWindow.getInstance;
 	static getInstance(params, cb = Function.prototype) { // new async wrap
 		let myName = System.Window.getCurrent().name;
+
 		if (params && params.windowName) {
 			params.name = params.windowName;
 		}
@@ -235,7 +235,6 @@ class BaseWindow extends EventEmitter {
 		params.windowName = params.name;
 
 		async function promiseResolver(resolve, reject) {
-
 			if (params.waitForReady !== false) {
 				Logger.system.debug("WRAP LIFECYCLE:WAIT FOR READY", params.name);
 				await BaseWindow._windowReady(params.windowName); // wait to insure the window is fully ready in the window service
@@ -414,9 +413,9 @@ class BaseWindow extends EventEmitter {
 
 	onReady(callback) {
 		if (this.wrapState === "ready") {
-			callback();
+			return callback();
 		}
-		this.on("ready", callback);
+		this.eventManager.on("ready", callback);
 	}
 
 	handleBoundsSet(err, response) {
@@ -545,11 +544,12 @@ class BaseWindow extends EventEmitter {
 	addEventListener(eventName, handler) {
 		// We send this guid so that Window service can keep track of individual listeners for event interruption.
 		let guid = Date.now() + "_" + Math.random();
-		// if (constants.INTERUPTABBLE_EVENTS.includes(eventName)) {
-		// 	this.queryWindowService("registerInterruptableEvent", { eventName: eventName, guid: guid });
-		// }
-		let delayable = constants.INTERUPTABBLE_EVENTS.includes(eventName);
-		let cancelable = constants.INTERUPTABBLE_EVENTS.includes(eventName);
+		// Please do not comment this code out: This is how we create Interruptible events in the private wrappers.
+		if (constants.INTERRUPTIBLE_EVENTS.includes(eventName)) {
+			this.queryWindowService("registerInterruptibleEvent", { eventName: eventName, guid: guid });
+		}
+		let delayable = constants.INTERRUPTIBLE_EVENTS.includes(eventName);
+		let cancelable = constants.INTERRUPTIBLE_EVENTS.includes(eventName);
 		let interceptor = new FinsembleEvent({
 			source: this,
 			event: eventName,
@@ -862,6 +862,13 @@ class BaseWindow extends EventEmitter {
 
 	// Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
 	// If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
+	//@todo fully document this function
+	/**
+	 * Close
+	 * @param params
+	 * @param params.fromSystem Bool. If true, event bubbled up because of an alt+f4, task manager, etc. Something closed the window that wasn't Finsemble.
+	 * @param cb
+	 */
 	_close(params, cb = Function.prototype) {
 		Logger.system.debug("WRAP CLOSE. BaseWindow._close", this.name, params);
 		params = params || {};
@@ -873,6 +880,9 @@ class BaseWindow extends EventEmitter {
 				Logger.system.debug("BaseWindow._close parent", result);
 				cb(err, { shouldContinue: true });
 			});
+		} else if (params.fromSystem) {
+			//if it's a system-close, we don't want to call finWindow.close. finWindow doesn't exist in that case. So we pass shouldContinue: false
+			cb(null, { shouldContinue: false });
 		} else {
 			cb(null, { shouldContinue: true });
 		}
@@ -1004,7 +1014,7 @@ class BaseWindow extends EventEmitter {
 			case "InsideWindow":
 				if (stopTabTileResults.tileGroupId) { // if dropped in an existing tile group (which might be the same it was dragging from)
 					self.Group.addWindow(this.identifier, stopTabTileResults.tileGroupId, stopTabTileResults.dropCoordinates);
-				} else { // if dropped in a seperate window outside a tile group
+				} else { // if dropped in a separate window outside a tile group
 					self.Group.createGroup(function (newGroupId) {
 						// add dragging window to new tile group, but specify the dropped on window as the starting window in the tile group
 						self.Group.addWindow(this.identifier, newGroupId, stopTabTileResults.dropCoordinates, { startingWindowIdentifier: stopTabTileResults.droppedOnWindowIdentifier });
@@ -1167,7 +1177,7 @@ class BaseWindow extends EventEmitter {
 		let cleanValue = JSON.parse(JSON.stringify(newState));
 		if (!deepEqual(oldState, cleanValue)) {
 			Logger.system.debug("APPLICATION LIFECYCLE:  Setting Active Workspace Dirty: Saved state does not match current component state");
-			RouterClient.transmit("WorkspaceService.setActiveWorkspaceDirty", { windowName: this.windowName });
+			RouterClient.transmit(constants.WORKSPACE.API_CHANNELS.SET_ACTIVEWORKSPACE_DIRTY, { windowName: this.windowName });
 		}
 	}
 
@@ -1361,4 +1371,3 @@ class BaseWindow extends EventEmitter {
 		cb("Method not implemented for window", { shouldContinue: true });
 	}
 }
-export = BaseWindow;

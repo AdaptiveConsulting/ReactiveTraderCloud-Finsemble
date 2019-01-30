@@ -1,4 +1,4 @@
-import * as RouterClient from "../../clients/routerClientInstance";
+import RouterClient from "../../clients/routerClientInstance";
 import { EventEmitter } from "events";
 
 /**

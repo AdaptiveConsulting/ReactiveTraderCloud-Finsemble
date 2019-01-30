@@ -2,7 +2,7 @@
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
-var SystemSettings = require("./systemSettings");
+import SystemSettings from "./systemSettings";
 
 /**
  * @introduction
@@ -62,7 +62,7 @@ var Validate = function () {
 	 *
 	 * validate.args(subscribeIDStruct, "object", subscribeIDStruct.subscribeID, "string"); // only check second parm if first validated successful
 	 *
-	 * validate.args(topic, "any", initialState, "object=", params, "object="); // depending on logic, can break into seperate validations
+	 * validate.args(topic, "any", initialState, "object=", params, "object="); // depending on logic, can break into separate validations
 	 * params = params || {};
 	 * validate.args(params.subscribeCallback, "function=", params.publishCallback, "function=", params.unsubscribeCallback, "function=");
 	 */
@@ -154,4 +154,4 @@ var Validate = function () {
 	};
 };
 
-module.exports = new Validate();
+export default new Validate();

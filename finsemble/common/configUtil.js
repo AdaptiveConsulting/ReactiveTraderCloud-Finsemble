@@ -3,9 +3,10 @@
 * All rights reserved.
 */
 
-var FSBLUtils = require("./util");
-var Logger = require("../clients/logger");
-const System = require("./system");
+import FSBLUtils from "./util";
+
+import Logger from "../clients/logger";
+import { System } from "./system";
 /**
  *
  *
@@ -100,7 +101,7 @@ var ConfigUtil = function () {
 	};
 
 	// This does mimimal processing of the manifest, just enough to support getting the router up, which is only expanding variables (e.g. moduleRoot) in the raw manifest
-	this.getExpandedRawManifest = function (callback) {
+	this.getExpandedRawManifest = function (callback, errorCB) {
 		Logger.system.debug("ConfigUtil.getExpandedRawManifest starting");
 
 		function getRawManifest(callback, application, level) {
@@ -114,6 +115,7 @@ var ConfigUtil = function () {
 			}, function (err) {
 				if (err) {
 					Logger.system.error("ConfigUtil.getExpandedRawManifest:application.getManifest:err", err);
+					if (errorCb) errorCB();
 				}
 				// no manifest so try parent
 				application.getParentUuid(function (parentUuid) {
@@ -420,4 +422,4 @@ var ConfigUtil = function () {
 
 };
 
-module.exports = new ConfigUtil();
+export const ConfigUtilInstance = new ConfigUtil();

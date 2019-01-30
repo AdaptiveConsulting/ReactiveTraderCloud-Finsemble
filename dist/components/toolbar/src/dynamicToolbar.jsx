@@ -34,6 +34,8 @@ import "../toolbar.css";
 import "../../../../assets/css/font-finance.css";
 import "../../../../assets/css/finsemble.css";
 
+import DragIcon from "../components/assets/drag-icon"
+
 var pinnableItems = {
 	"componentLauncher": FinsembleButton,
 	"workspaceSwitcher": WorkspaceLauncherButton
@@ -173,7 +175,7 @@ export default class Toolbar extends React.Component {
 		//console.log("Toolbar Render ");
 		if (!this.state.sections) return;
 		return (<FinsembleToolbar onDragStart={this.moveToolbar} onDragEnd={this.onPinDrag}>
-			<DragHandle />
+			<DragIcon/>
 			{this.getSections()}
 			<div className='resize-area' />
 		</FinsembleToolbar>);

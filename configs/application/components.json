@@ -78,6 +78,9 @@
                 "width": 370,
                 "height": 184
             },
+            "component": {
+                "spawnOnStartup": true
+            },
             "foreign": {
                 "services": {
                     "dockingService": {
@@ -90,7 +93,16 @@
                         "launchableByUser": false
                     },
                     "Window Manager": {
-                        "FSBLHeader": true,
+                        "FSBLHeader": {
+                            "component": "windowTitleBar",
+                            "bumpElements": {
+                                "fixed": "all",
+                                "absolute": "all",
+                                "bumpBy": "auto"
+                            },
+                            "bodyMarginTop": "auto",
+                            "forceHeaderHeight": false
+                        },
                         "title": "EURUSD",
                         "persistWindowState": false
                     },
@@ -363,6 +375,42 @@
                     },
                     "Toolbar": {
                         "iconClass": "header"
+                    }
+                }
+            }
+        },
+        "toolbar": {
+            "window": {
+                "url": "$applicationRoot/components/toolbar/toolbar.html",
+                "frame": false,
+                "resizable": true,
+                "autoShow": true,
+                "top": "center",
+                "left": "center",
+                "width": 800,
+                "height": 600
+            },
+            "component": {
+                "inject": false
+            },
+            "foreign": {
+                "services": {
+                    "dockingService": {
+                        "canGroup": true,
+                        "isArrangable": true
+                    }
+                },
+                "components": {
+                    "App Launcher": {
+                        "launchableByUser": true
+                    },
+                    "Window Manager": {
+                        "title": "toolbar",
+                        "FSBLHeader": true,
+                        "persistWindowState": true
+                    },
+                    "Toolbar": {
+                        "iconClass": "toolbar"
                     }
                 }
             }

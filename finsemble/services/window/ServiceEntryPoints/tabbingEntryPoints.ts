@@ -3,12 +3,12 @@
 * All rights reserved.
 */
 // This file contains the service to manage all stacked windows.
-// The common/window/stackedWindow wrapper contains the primary interface. Also, common/Tabbing contains interface to createStackedWindow used by Launcher.
+// The common/window/stackedWindow wrapper contains the primary interface. Also, common/TabbingEntry contains interface to createStackedWindow used by Launcher.
 
-var RouterClient = require("../../../clients/routerClientInstance");
-var Logger = require("../../../clients/logger");
+import RouterClient from "../../../clients/routerClientInstance";
+import Logger from "../../../clients/logger";
 
-class Tabbing {
+export class TabbingEntry {
 	stackedWindowManager: any;
 
 	constructor(stackedWindowManager) {
@@ -17,13 +17,14 @@ class Tabbing {
 	}
 
 	async initialize(done) {
-		Logger.system.debug("Tabbing.initialize");
-		console.debug("Tabbing.initialize");
+		Logger.system.debug("TabbingEntry.initialize");
+		console.debug("TabbingEntry.initialize");
 		this.setupStackedWindowManagerListeners();
 		done();
 	}
 
-	shutdown() {
+	shutdown(done) {
+		done();
 	}
 
 	bindAllFunctions() {
@@ -31,7 +32,7 @@ class Tabbing {
 		for (let name of Object.getOwnPropertyNames(Object.getPrototypeOf(self))) {
 			let method = self[name];
 			// skip constructor
-			if (!(method instanceof Function) || method === Tabbing) continue;
+			if (!(method instanceof Function) || method === TabbingEntry) continue;
 			self[name] = self[name].bind(self);
 		}
 	}
@@ -41,7 +42,7 @@ class Tabbing {
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	setupInterfaceListener(methodName, methodFunction) {
-		Logger.system.debug(`Tabbing.setupInterfaceListener for ${methodName}`);
+		Logger.system.debug(`TabbingEntry.setupInterfaceListener for ${methodName}`);
 		RouterClient.addResponder(`StackedWindow.${methodName}`, function (err, queryMessage) {
 			if (err) {
 				Logger.system.error(`StackedWindow.${methodName} addResponder failed: ${err}`);
@@ -71,5 +72,3 @@ class Tabbing {
 	}
 
 }
-
-module.exports = Tabbing;

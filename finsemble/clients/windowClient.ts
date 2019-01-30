@@ -2,20 +2,22 @@
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
+import StorageClient from "./storageClient";
+import WorkspaceClient from "./workspaceClient";
+import HotkeyClient from "./hotkeysClient";
+import * as util from "../common/util";
+import { System } from "../common/system";
+import { _BaseClient as BaseClient } from "./baseClient";
+import Logger from "./logger";
+import Validate from "../common/validate"; // Finsemble args validator
+import { FinsembleWindow } from "../common/window/FinsembleWindow";
+import { ConfigUtilInstance as configUtil } from "../common/configUtil";
+import deepEqual = require("lodash.isequal");
+import { parallel as asyncParallel } from "async";
+import { debug } from "util";
 
-var StorageClient = require("./storageClient");
-var WorkspaceClient = require("./workspaceClient");
-const HotkeyClient = require("./hotkeysClient.js");
-var util = require("../common/util");
-const System = require("../common/system");
-var BaseClient = require("./baseClient");
-import * as Logger from "./logger";
-var Validate = require("../common/validate"); // Finsemble args validator
-var FinsembleWindow = require("../common/window/FinsembleWindow");
-var configUtil = require("../common/configUtil");
-var deepEqual = require("lodash.isequal");
-const async = require("async");
 const WORKSPACE_CACHE_TOPIC = "finsemble.workspace.cache"; // window data stored in this topic for access by workspace service
+import { WORKSPACE } from "../common/constants";
 
 var finsembleWindow;
 /**
@@ -82,11 +84,27 @@ function removeClass(el, className) {
  * @returns {WindowClient}
  */
 class WindowClient extends BaseClient {
+	options: { customData?: any; defaultTop?: any; defaultLeft?: any; width?: any; };
+	windowHash: string;
+	title: any;
+	toolbarBottom: number;
+	containers: any[];
+	componentState: { [x: string]: any; };
+	windowState: string;
+	hasHeader: boolean;
+	minimizeWithDockedWindows: (cb: any) => void;
+	isInAService: boolean;
+	startedRegistrationWithDocking: boolean;
+	deregisterPlease: boolean;
+	commandChannel: (arg0: any, arg1: any) => void;
+
+
+	
 	constructor(params) {
 		/** @alias WindowClient# */
 		super(params);
 
-		Validate.args(params, "object=") && params && Validate.args2("params.onReady", params.onReady, "function=");
+		Validate.args(params, "object=") && params && (Validate as any).args2("params.onReady", params.onReady, "function=");
 
 		//We store the options that the window is created with in this property.
 		/**
@@ -229,7 +247,7 @@ class WindowClient extends BaseClient {
 	 */
 	listenForHashChanges() {
 		//get url on page load.
-		finsembleWindow.updateOptions({ url: window.top.location.toString() }, () => {
+		finsembleWindow.updateOptions({ url: window.top.location.href }, () => {
 			//StorageClient.save({ topic: WORKSPACE_CACHE_TOPIC, key: this.windowHash, value: finsembleWindow.windowOptions });
 		});
 
@@ -242,9 +260,10 @@ class WindowClient extends BaseClient {
 				if (typeof history.onpushstate === "function") {
 					history.onpushstate({ state: state });
 				}
-				finsembleWindow.updateOptions({ url: window.top.location.toString() }, () => {
+				pushState.apply(history, arguments);
+				finsembleWindow.updateOptions({ url: window.top.location.href }, () => {
 					//StorageClient.save({ topic: WORKSPACE_CACHE_TOPIC, key: self.windowHash, value: finsembleWindow.windowOptions });
-					pushState.apply(history, arguments);
+
 				});
 				return;
 			};
@@ -319,7 +338,7 @@ class WindowClient extends BaseClient {
 	 */
 	setinitialWindowBounds(callback) {
 		Logger.system.warn("`FSBL.Clients.WindowClient.setInitialWindowBounds is deprecated and will be removed in a future version of finsemble. Use 'getInitialOptions' and 'cacheInitialBounds' instead.");
-		async.parallel([
+		asyncParallel([
 			this.getInitialOptions,
 			this.cacheInitialBounds
 		], callback);
@@ -343,7 +362,7 @@ class WindowClient extends BaseClient {
 	 *
 	 * Saves the window's state. Rarely called manually, as it's called every time your window moves.
 	 * @param {Object} bounds optional param.
-	 * @example <caption>The code below is the bulk of our listener for the <code>bounds-changed</code> event from the openFin window. Every time the <code>bounds-changed</code> event is fired (when the window is resized or moved), we save the window's state. The first few lines just prevent the window from being dropped behind the toolbar.</caption>
+	 * @example <caption>The code below is the bulk of our listener for the <code>bounds-changed</code> event from the window. Every time the <code>bounds-changed</code> event is fired (when the window is resized or moved), we save the window's state. The first few lines just prevent the window from being dropped behind the toolbar.</caption>
 	 *finWindow.addEventListener('disabled-frame-bounds-changed', function (bounds) {
 	 * 	if (bounds.top < 45) {
 	 *		finWindow.moveTo(bounds.left, 45);
@@ -357,7 +376,7 @@ class WindowClient extends BaseClient {
 		if (typeof setActiveWorkspaceDirty === "undefined") {
 			setActiveWorkspaceDirty = false;
 		}
-		Validate.args(bounds, "object") && Validate.args2("bounds.top", bounds.top, "number");
+		Validate.args(bounds, "object") && (Validate as any).args2("bounds.top", bounds.top, "number");
 		if (!bounds) {
 			return;
 		}
@@ -507,6 +526,13 @@ class WindowClient extends BaseClient {
 		//for the aesthetics.
 
 		if (document.getElementById("FSBLHeader")) { return; }
+		// On slow loading components, the end user might have the opportunity to scroll the page before the window title bar is injected.
+		// This triggers a chromium bug related to elements with position:fixed. Chromium loses track of where that element actually is on
+		// the browser page. Chromium *thinks* the title bar is lower than it actually is, by the amount of pixels scrolled by the user.
+		// The fix is to force the scroll position back to zero before we inject this fixed element.
+		window.scrollTo(0, 0);
+
+		// Now inject the window title bar
 		var template = document.createElement("div");
 		template.innerHTML = "<div id=\"FSBLHeader\"" + (headerHeight ? " style=height:" + headerHeight : "") + "></div>";
 		document.body.insertBefore(template.firstChild, document.body.firstChild);
@@ -663,7 +689,7 @@ class WindowClient extends BaseClient {
 	 * FSBL.Clients.WindowClient.setComponentState({ fields: [{field:'myChartLayout', value: s }, {field:'chartType', value: 'mountain'}]);
 	 **/
 	setComponentState(params, cb = Function.prototype) {
-		Validate.args(params, "object", cb, "function=") && Validate.args2("params.field", params.field, "string");
+		Validate.args(params, "object", cb, "function=") && (Validate as any).args2("params.field", params.field, "string");
 		if (finsembleWindow) {
 			return finsembleWindow.setComponentState(params, cb);
 		}
@@ -723,7 +749,7 @@ class WindowClient extends BaseClient {
 	 */
 	dirtyTheWorkspace(windowName = finsembleWindow ? finsembleWindow.name: window.name) {
 		if (WorkspaceClient && !WorkspaceClient.activeWorkspace.isDirty) {
-			this.routerClient.transmit("WorkspaceService.setActiveWorkspaceDirty", { windowName }, null);
+			this.routerClient.transmit(WORKSPACE.API_CHANNELS.SET_ACTIVEWORKSPACE_DIRTY, { windowName }, null);
 		}
 	}
 
@@ -904,6 +930,11 @@ class WindowClient extends BaseClient {
 	 * @param {string} [params.forceHeaderHeight] Sets a height to the main FSBLHeader div.
 	 */
 	injectHeader(params, cb = Function.prototype) {
+		//FIXME(Terry) windowService should inject directly from a config:
+		// components."*".component.inject|preload="windowTitleBar.js" <-- set the windowTitleBar
+		// components."welcome".component.inject|preload="windowTitleBar.js" <-- override the windowTitleBar
+		// Everything from here down then goes into windowTitleBar.jsx inside FSBLREady()
+
 		let self = this;
 		if (this.hasHeader) return;
 		this.hasHeader = true;
@@ -923,6 +954,7 @@ class WindowClient extends BaseClient {
 		} else {
 			params = Object.assign(defaultParams, params);
 		}
+
 
 		this.injectDOM(params.forceHeaderHeight);
 		if (params.bumpElements && params.bumpElements.bumpBy !== "auto") {
@@ -1512,6 +1544,8 @@ class WindowClient extends BaseClient {
 		this.componentState = {};
 		let getFinsembleWindow = (done) => {
 			FinsembleWindow.getInstance({ name: this.finWindow.name, uuid: this.finWindow.uuid }, (err, response) => {
+				Logger.system.debug(`FinsembleWindow.getInstance ${this.finWindow.name}`);
+
 				if (err == "Cannot Wrap Service Manager or Services") {
 					this.isInAService = true;
 					this.windowHash = util.camelCase("activeWorkspace", window.name);
@@ -1554,7 +1588,7 @@ class WindowClient extends BaseClient {
 				}
 
 				let self = this;
-				async.parallel([
+				asyncParallel([
 					function addWorkspaceAndBoundsListeners(done) {
 						if (!isCompoundWindow) {
 							self.addWorkspaceListeners();
@@ -1590,8 +1624,13 @@ class WindowClient extends BaseClient {
 							//Determines whether a component should be capable of tabbing/tiling
 							customData.window.ignoreTilingAndTabbingRequests = configUtil.getDefault(customData, "customData.foreign.services.dockingService.ignoreTilingAndTabbingRequests", false);
 
-							//Determines wether a dockable component should be able to snap to other windows
-							customData.window.ignoreSnappingRequests = configUtil.getDefault(customData, "customData.foreign.services.dockingService.ignoreSnappingRequests", false);
+							/* Determines wether a dockable component should be able to snap to other windows
+
+								 For purposes of snapping, 'ephemeral' and 'ignoreSnappingRequests' are aliases for each other.
+							*/
+							const ignoreSnappingRequests = configUtil.getDefault(customData, "customData.foreign.services.dockingService.ignoreSnappingRequests", false);
+							const ephemeral = configUtil.getDefault(customData, "customData.window.ephemeral", false);
+							customData.window.ignoreSnappingRequests = ignoreSnappingRequests || ephemeral;
 
 							self.registerWithDockingManager(customData.window, () => {
 								self.cacheInitialBounds(done);
@@ -1600,7 +1639,7 @@ class WindowClient extends BaseClient {
 							return done();
 						}
 					}
-				], callback);
+				], (err, results) => callback(err, results));
 			});
 		});
 	};
@@ -1616,6 +1655,4 @@ var windowClient = new WindowClient({
 	name: "windowClient"
 });
 
-//windowClient.initialize();
-
-module.exports = windowClient;
+export default  windowClient;

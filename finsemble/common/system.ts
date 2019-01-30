@@ -1,7 +1,21 @@
 // passthrough to openfin. In the future we can make this the passthrough to any container.
+declare var fin;
+declare var chrome;
+
+import { IGlobals } from "../common/Globals";
+/** The global `window` object. We cast it to a specific interface here to be
+ * explicit about what Finsemble-related properties it may have.*/
+const Globals =
+	/** In our testing environments (i.e, mocha running in node.js),
+	 * `window` is not defined. Therefore, we have to check that `window`
+	 * exists; otherwise, in node, `process` is the global context.
+	 */
+	typeof window !== "undefined" ?
+	window as IGlobals
+	: process as IGlobals;
 
 class SystemWindow {
-	constructor(params, cb) {
+	constructor(params, cb, errCb?) {
 		return new fin.desktop.Window(params, cb);
 	}
 
@@ -12,11 +26,10 @@ class SystemWindow {
 	static get wrap() {
 		return fin.desktop.Window.wrap;
 	}
-
 }
 
 class Application {
-	constructor(params, cb) {
+	constructor(params, cb, errCb?) {
 		return new fin.desktop.Application(params, cb);
 	}
 
@@ -35,7 +48,7 @@ class SystemNotification {
 	}
 }
 
-class System {
+export class System {
 	static get Application() {
 		return Application;
 	}
@@ -115,8 +128,8 @@ class System {
 	}
 
 	static FinsembleReady(cb) {
-		if (FSBL && FSBL.addEventListener) {
-			return FSBL.addEventListener("onready", cb);
+		if (Globals.FSBL && Globals.FSBL.addEventListener) {
+			return Globals.FSBL.addEventListener("onready", cb);
 		}
 		return window.addEventListener("FSBLready", cb);
 	}
@@ -158,6 +171,3 @@ class System {
 	}
 
 }
-
-
-module.exports = System;

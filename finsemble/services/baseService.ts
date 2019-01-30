@@ -2,16 +2,20 @@
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
-const FSBLDependencyManager = require("../common/dependencyManager");
-import * as RouterClient from "../clients/routerClientInstance";
-const Logger = require("../clients/logger");
-const asyncSeries = require("async/series");
-const asyncTimeout = require("async/timeout");
-const asyncAsyncify = require("async/asyncify");
-const asyncEach = require("async/each");
-const System = require("../common/system");
+import { FSBLDependencyManagerSingleton as FSBLDependencyManager } from "../common/dependencyManager";
+import RouterClient from "../clients/routerClientInstance";
+import Logger from "../clients/logger";
 
-import { SERVICE_INITIALIZING_CHANNEL, SERVICE_READY_CHANNEL, SERVICE_CLOSING_CHANNEL, SERVICE_CLOSED_CHANNEL, SERVICE_STOP_CHANNEL } from "../common/constants";
+import {
+	series as asyncSeries,
+	asyncify as asyncAsyncify,
+	each as asyncEach,
+	timeout as asyncTimeout
+} from "async";
+import { System } from "../common/system";
+import * as Constants from "../common/constants";
+import { IRouterClient } from "../clients/IRouterClient";
+const { SERVICE_INITIALIZING_CHANNEL, SERVICE_READY_CHANNEL, SERVICE_CLOSING_CHANNEL, SERVICE_CLOSED_CHANNEL, SERVICE_STOP_CHANNEL } = Constants;
 const defaultBaseServiceParams: ServiceConstructorParams = {
 	startupDependencies: {
 		services: [],
@@ -32,7 +36,7 @@ const defaultBaseServiceParams: ServiceConstructorParams = {
  * Service intialization is completly asynchronous, which allows all services to load at the same time, as long as their dependencies have been met.
  * @constructor
 */
-class BaseService {
+export class BaseService {
 	customData: any;
 	initialize: Function;
 	listeners: {
@@ -42,7 +46,7 @@ class BaseService {
 	onBaseServiceReadyCB: null | Function;
 	name: string;
 	parentUuid: string;
-	RouterClient: any;
+	RouterClient: IRouterClient;
 	setOnConnectionCompleteCB: null | Function;
 	shutdownDependencies: FinsembleDependencyObject;
 	start: Function;
@@ -101,7 +105,7 @@ class BaseService {
 		}
 
 		function onRouterReady(done) {
-			RouterClient.ready(function () {
+			RouterClient.onReady(function () {
 				RouterClient.transmit(SERVICE_INITIALIZING_CHANNEL, { name: service.name });
 				window.addEventListener("beforeunload", service.RouterClient.disconnectAll);
 				Logger.system.debug("APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start.onRouterReady");
@@ -172,7 +176,7 @@ class BaseService {
 	onDependenciesReady() {
 		Logger.system.debug("APPLICATION LIFECYCLE:STARTUP:BaseService onDependenciesReady", this.name);
 		this.status = "initializing"; // must change from offline here; otherwise race condition waiting to call this.setOnline
-		RouterClient.ready(() => {
+		RouterClient.onReady(() => {
 			//These first two blocks are for backward compatibility. The 3rd (initialize) is how it should be done.
 			if (this.onBaseServiceReadyCB) {
 				// if inheriting service provided a "connection complete" callback, then invoke before sending online
@@ -233,7 +237,7 @@ class BaseService {
 			cleanup = asyncTimeout(cleanup, 10000); // services may need some time to cleanup (depends on service)
 			cleanup(null, done);
 		}
-		function shutdownComplete(err, data) {
+		function shutdownComplete(err?, data?) {
 			if (err) {
 				Logger.system.error(err);
 			}
@@ -302,5 +306,3 @@ function fixParams(params) {
 		params.shutdownDependencies = defaultBaseServiceParams.shutdownDependencies;
 	}
 }
-
-module.exports = BaseService;

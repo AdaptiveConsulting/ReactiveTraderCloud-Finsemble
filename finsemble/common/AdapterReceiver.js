@@ -1,4 +1,4 @@
-var Utils = require("./util");
+import * as Utils from "./util";
 
 /**
  * Simple object to handle the loading and registration of storage adapters.

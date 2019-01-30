@@ -10,10 +10,10 @@
 
 "use strict";
 
-var ConfigUtils = require("./configUtil");
-var Logger = require("../clients/logger");
-var WebSocketClient = require("socket.io-client");
-const System = require("../common/system");
+import { ConfigUtilInstance as ConfigUtils } from "./configUtil";
+import Logger from "../clients/logger";
+import WebSocketClient from "socket.io-client";
+import { System } from "../common/system";
 
 /**
  * @introduction
@@ -97,6 +97,9 @@ var RouterTransport = {
 
 		// if OpenFin IAB available, then add IAB to active list
 		if (fin && fin.desktop && fin.desktop.InterApplicationBus) addToActive("OpenFinBus");
+
+		// If electron, always have FinsembleTransport active
+		if (fin && fin.container === "Electron") addToActive("FinsembleTransport");
 
 		// if shared worker available, then add shared-worker transport to active list
 		if (SharedWorker) addToActive("SharedWorker");
@@ -345,7 +348,10 @@ RouterTransportImplementation.OpenFinTransport = function (params, parentMessage
  * @param {any} destination either the client name or "RouterService" (unused in FinsembleTransport)
  */
 RouterTransportImplementation.FinsembleTransport = function (params, parentMessageHandler, source, destination, callback) {
-	var serverAddress = ConfigUtils.getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress", "wss://localhost.chartiq.com:3376");
+	/** @TODO - split into two separate vars for clarity. */
+	var serverAddress = ConfigUtils.getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress",
+		ConfigUtils.getDefault(params, "params.IAC.serverAddress","wss://localhost.chartiq.com:3376")
+	);
 	const SOCKET_SERVER_ADDRESS = serverAddress + "/router"; // "router" is the socket namespace used on server
 
 	var self = this;
@@ -536,4 +542,4 @@ RouterTransport.addTransport("SharedWorker", RouterTransportImplementation.Share
 RouterTransport.addTransport("OpenFinBus", RouterTransportImplementation.OpenFinTransport);
 RouterTransport.addTransport("FinsembleTransport", RouterTransportImplementation.FinsembleTransport);
 
-module.exports = RouterTransport;
+export default RouterTransport;

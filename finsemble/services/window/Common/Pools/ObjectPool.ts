@@ -1,9 +1,16 @@
-import * as Logger from "../../../../clients/logger";
-
+/** Singleton of the Logger class shared among all instances of ObjectPool
+ * @TODO Refactor to instance member of class.
+ */
+let Logger;
 export class ObjectPool {
 	objects: any;
 	poolName: string;
-	constructor(name) {
+	constructor(name: string, dependencies: { Logger: any }) {
+		if (dependencies) {
+			Logger = dependencies.Logger;
+		} else {
+			throw new Error("ObjectPool class requires dependency injection. Ensure that dependencies are being passed in as the 2nd parameter.");
+		}
 		this.objects = {};
 		this.poolName = name;
 	}

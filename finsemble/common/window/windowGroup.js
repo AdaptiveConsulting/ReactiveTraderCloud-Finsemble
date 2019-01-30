@@ -1,15 +1,26 @@
-const Logger = require("../../clients/logger");
-const asyncEach = require("async/each");
-var BaseWindow = require("../../services/window/WindowAbstractions/BaseWindow");
+import { each as asyncEach, forEach as asyncForEach } from "async";
+import * as CONSTANTS from "../constants";
+/** Singleton of the Logger class shared among all instances of ObjectPool
+ * @TODO Refactor to instance member of class.
+ */
+let Logger;
 const groupStates = {
 	NORMAL: 0,
 	MINIMIZING: 1,
 	MINIMIZED: 2,
 	RESTORING: 3
 };
-const async = require("async");
-class WindowGroup {
-	constructor(params) {
+export class WindowGroup {
+	/**
+	 *
+	 * @param {object} params Params
+	 * @param {string} params.name name of the group
+	 * @param {object} params.windows array of windows in the group
+	 * @param {object} dependencies Depdenency object that provides a Logger.
+	 * @param {Logger} dependencies.Logger
+	 */
+	constructor(params, dependencies) {
+		Logger = dependencies.Logger;
 		this.name = params.name;
 		this.groupState = groupStates.NORMAL;
 		this.GROUPSTATES = groupStates;
@@ -122,7 +133,7 @@ class WindowGroup {
 		this.groupState = groupStates.MINIMIZING;
 		for (let windowName in this.windows) {
 			let win = this.windows[windowName];
-			if (win.windowState != BaseWindow.WINDOWSTATE.MINIMIZED) win.minimize();
+			if (win.windowState != CONSTANTS.WINDOWSTATE.MINIMIZED) win.minimize();
 		}
 		this.groupState = groupStates.MINIMIZED;
 		this.interruptRestore = false;
@@ -140,7 +151,7 @@ class WindowGroup {
 			} else {
 				win = this.getWindow(w);
 			}
-			if (win && win.windowState != BaseWindow.WINDOWSTATE.MINIMIZED) {
+			if (win && win.windowState != CONSTANTS.WINDOWSTATE.MINIMIZED) {
 				win.minimize();
 			}
 		}
@@ -154,14 +165,14 @@ class WindowGroup {
 			if (self.interruptRestore) return done("restore interrupted");
 			let win = self.windows[windowName];
 			if (win.restore) {
-				if (win.windowState != BaseWindow.WINDOWSTATE.NORMAL) self.windows[windowName].restore({}, done);
+				if (win.windowState != CONSTANTS.WINDOWSTATE.NORMAL) self.windows[windowName].restore({}, done);
 				else done();
 			} else {
 				Logger.system.error(windowName + " does not implment restore");
 				done();
 			}
 		}
-		async.forEach(Object.keys(this.windows), restoreWindow, function (err, data) {
+		asyncForEach(Object.keys(this.windows), restoreWindow, function (err, data) {
 			self.interruptRestore = false;
 			if (!err) {
 				self.groupState = groupStates.NORMAL;
@@ -182,7 +193,7 @@ class WindowGroup {
 				done();
 			}
 		}
-		async.forEach(windowList, restoreWindow, cb);
+		asyncForEach(windowList, restoreWindow, cb);
 	}
 
 	// Bring all windoes to top. Also sets the state of the group to always on top and new windows added to the group inherit the state of thw window
@@ -269,7 +280,7 @@ class WindowGroup {
 				} else {
 					callback();
 				}
-			}, () => { debugger; cb(); });
+			}, () => { cb(); });
 		}
 
 		if (params.restoreWindows) {
@@ -308,7 +319,8 @@ class WindowGroup {
 	findAllByComponentType(componentType) {
 		var windowList = [];
 		for (let windowName in this.windows) {
-			var descriptor = this.windows[windowName].windowDescriptor;
+			let theWindow = this.windows[windowName];
+			let descriptor = theWindow.windowDescriptor;
 			if (componentType === (descriptor.component ? descriptor.component.type : descriptor.customData.component.type)) { //TODO - figure out why this is different in some cases
 				windowList.push(this.windows[windowName]);
 			}
@@ -318,5 +330,3 @@ class WindowGroup {
 
 
 }
-
-module.exports = WindowGroup;

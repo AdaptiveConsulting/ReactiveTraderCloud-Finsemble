@@ -1,8 +1,8 @@
-const EventEmitter = require("events").EventEmitter;
-const RouterClient = require("../clients/routerClientInstance");
+import { EventEmitter } from "events";
+import RouterClient from "../clients/routerClientInstance";
 const STARTUP_TIMEOUT_DURATION = 10000;
-import * as applicationConstants from "./constants";
-const { APPLICATION_STATE_CHANNEL, SERVICES_STATE_CHANNEL, SERVICE_CLOSED_CHANNEL } = applicationConstants;
+import { APPLICATION_STATE_CHANNEL, SERVICES_STATE_CHANNEL, SERVICE_CLOSED_CHANNEL } from "./constants";
+
 type StartupDependencyParams = {
 	callback: Function;
 	dependencies: string[];
@@ -14,6 +14,8 @@ type StartupDependencyParams = {
  */
 class StartupDependency extends EventEmitter {
 	startupTimer: number | null;
+	callback: Function;
+	dependencies: string[];
 	constructor(params: StartupDependencyParams) {
 		super();
 		this.callback = params.callback;
@@ -394,6 +396,9 @@ class FSBLDependencyManager extends EventEmitter {
 	 */
 	startup: StartupManager;
 	shutdown: ShutdownManager;
+	AuthorizationCompleted;
+	RouterClient;
+	name;
 	constructor() {
 		super();
 		this.startup = new StartupManager();
@@ -490,5 +495,5 @@ class FSBLDependencyManager extends EventEmitter {
  * @private
  * @class FSBLDependencyManager
  */
-let FSBLDependencyManagerSingleton: FSBLDependencyManager = new FSBLDependencyManager();
-export = FSBLDependencyManagerSingleton;
+export let FSBLDependencyManagerSingleton: FSBLDependencyManager = new FSBLDependencyManager();
+export default FSBLDependencyManagerSingleton;

@@ -4,7 +4,7 @@
  *
  */
 // Get a value from an object using a string. {abc:{123:"value"}} you would do byString(object,"abc.123")
-function byString(o, s) {//Object,String
+export function byString(o, s) {//Object,String
 	s = s.replace(/\[(\w+)\]/g, ".$1"); // convert indexes to properties
 	s = s.replace(/^\./, "");           // strip a leading dot
 	var a = s.split(".");
@@ -22,12 +22,12 @@ function byString(o, s) {//Object,String
 	return o;
 }
 //can add values to an object from a string. Must be in `.` form abc.123
-const setPath = (object, path, value) => path
+export const setPath = (object, path, value) => path
 	.split(".")
 	.reduce((o, p) => o[p] = path.split(".").pop() === p ? value : o[p] || {}, object);
 
 // This handles the intial mapping for us. It will crawl through all child objects and map those too. Parent is the current location within the object(`parent.child`). Null is top level. The mapping is all flattened
-function initObject(object, parent, mapping) {
+export function initObject(object, parent, mapping) {
 	var mapLocation;
 
 	if (!parent) { parent = null; }
@@ -38,7 +38,7 @@ function initObject(object, parent, mapping) {
 		return;
 	}
 
-	for (n in object) {
+	for (let n in object) {
 		if (typeof object[n] === "object" && object[n] !== "undefined") {
 			mapLocation = parent ? parent + "." + n : n;
 			mapping[mapLocation] = parent;
@@ -50,7 +50,7 @@ function initObject(object, parent, mapping) {
 	}
 }
 // Will map out a field in an object. So we don't have to loop through the whole thing everytime we have a change.
-function mapField(object, s, mapping) {
+export function mapField(object, s, mapping) {
 	if (mapping[s]) { return; }// If we're already mapped move on.
 	s = s.replace(/\[(\w+)\]/g, ".$1"); // convert indexes to properties
 	s = s.replace(/^\./, "");           // strip a leading dot
@@ -76,7 +76,7 @@ function mapField(object, s, mapping) {
 	}	
 }
 // To see if we're replacing an existing field/object with an object/field that would make some of the mapping obsolete.
-function checkForObjectChange(object, field, mapping) {
+export function checkForObjectChange(object, field, mapping) {
 	var objectReplacing = byString(object, field);
 	if (objectReplacing === null) { return false; }
 	if (typeof objectReplacing === "object") {
@@ -102,11 +102,3 @@ function removeChildMapping(mapping, field) {
 	}
 	return removals;
 }
-
-module.exports = {
-	setPath: setPath,
-	byString: byString,
-	initObject: initObject,
-	mapField: mapField,
-	checkForObjectChange: checkForObjectChange
-};

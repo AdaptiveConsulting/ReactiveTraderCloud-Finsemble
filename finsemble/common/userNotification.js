@@ -3,9 +3,10 @@
 * All rights reserved.
 */
 
-var Logger = require("../clients/logger");
-var ConfigUtil = require("./configUtil");
-const System = require("../common/system");
+import Logger from "../clients/logger";
+
+import { ConfigUtilInstance as ConfigUtil } from "./configUtil";
+import { System } from "../common/system";
 var ConfigClient = null;
 
 "use strict";
@@ -30,7 +31,7 @@ var UserNotification = function () {
 			}, 0);
 		} else {
 			// Require configClient here instead of at top of page to avoid a dependency error (Router uses UserNotification before config service is ready).
-			if (!ConfigClient) ConfigClient = require("../clients/configClient");
+			if (!ConfigClient) ConfigClient = require("../clients/configClient").default;
 			ConfigClient.get({ field: "finsemble" }, function (err, finConfig) {
 				defaultTemplateURL = ConfigUtil.getDefault(finConfig, "finsemble.notificationURL", finConfig.moduleRoot + "/components/system/notification/notification.html");
 				cb(defaultTemplateURL);
@@ -49,7 +50,7 @@ var UserNotification = function () {
 	 * @param {object=} params
 	 * @param {number} params.maxCount specifies the max number of notifications to display for specified identifier when frequency="MAX-COUNT" (default is 1)
 	 * @param {number} params.duration time in milliseconds before auto-dismissing the notification (defaults to 24 hours)
-	 * @param {number} params.url url for notification HTML. If not provided then the system default will be used. This url should be coded as required for OpenFin notifications (see OpenFin Documentation). Defaults to Finsemble's built-in version at "/finsemble/components/system/notification/notification.html".
+	 * @param {number} params.url the URL for for notification HTML. If not provided then the system default will be used. Defaults to Finsemble's built-in version at "/finsemble/components/system/notification/notification.html".
 	 *
 	 * @example
 	 *		FSBL.UserNotification.alert("system", "ONCE-SINCE-STARTUP", "MANIFEST-Error", message);
@@ -115,4 +116,4 @@ var UserNotification = function () {
 	};
 };
 
-module.exports = new UserNotification();
+export default new UserNotification();

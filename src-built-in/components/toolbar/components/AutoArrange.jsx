@@ -3,6 +3,8 @@ import { FinsembleButton } from "@chartiq/finsemble-react-controls";
 
 // Store
 import ToolbarStore from "../stores/toolbarStore";
+import AutoArrangeIcon from "./assets/auto-arrange-icon"
+
 
 export default class AutoArrange extends React.Component {
 	constructor(props) {
@@ -45,7 +47,7 @@ export default class AutoArrange extends React.Component {
 		}
 		let buttonClass = "finsemble-toolbar-button-icon ff-grid";
 		return (<FinsembleButton className={wrapperClasses} buttonType={["Toolbar"]} title={tooltip} onClick={this.autoArrange}>
-			<i className={buttonClass}></i>
+			<AutoArrangeIcon/>
 		</FinsembleButton>);
 	}
 }

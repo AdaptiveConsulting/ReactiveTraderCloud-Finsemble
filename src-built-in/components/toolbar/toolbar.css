@@ -7,7 +7,7 @@
 @import  url('../../../assets/css/_toolbar.css');
 
 body, html {
-    height: 100%;
+    height:  100%;
     margin: 0px;
     font-family: var(--font-family);
     font-weight: var(--toolbar-font-weight);
@@ -17,6 +17,8 @@ body, html {
     vertical-align: middle;
     -webkit-user-select: none;
     overflow: hidden;
+    border-radius: 5px;
+    border: 2px solid black;
 }
 
 .fsbl-share-scrim {

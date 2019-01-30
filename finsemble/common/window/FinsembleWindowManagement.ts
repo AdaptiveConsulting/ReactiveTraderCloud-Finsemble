@@ -1,5 +1,5 @@
-import * as RouterClient from "../../clients/routerClientInstance";
-import * as Logger from "../../clients/logger";
+import RouterClient from "../../clients/routerClientInstance";
+import Logger from "../../clients/logger";
 import * as constants from "../constants"
 
 declare global {
@@ -49,4 +49,4 @@ class FinsembleWindowManagement {
 	}
 }
 
-export = new FinsembleWindowManagement();
+export default new FinsembleWindowManagement();

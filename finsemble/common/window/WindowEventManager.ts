@@ -1,5 +1,5 @@
-import * as RouterClient from "../../clients/routerClientInstance";
-import * as Logger from "../../clients/logger";
+import RouterClient from "../../clients/routerClientInstance";
+import Logger from "../../clients/logger";
 import { EventEmitter } from "events";
 
 /**
@@ -19,7 +19,7 @@ import { EventEmitter } from "events";
  * @extends {EventEmitter}
  */
 
-declare interface WindowEventManager extends EventEmitter {
+export declare interface WindowEventManager extends EventEmitter {
 	//event list for the event emitter.
 	listeningFor: any[];
 	/**
@@ -106,7 +106,7 @@ declare type EventManagerConstructorParams = {
 	name: string;
 }
 
-class WindowEventManager extends EventEmitter implements WindowEventManager {
+export class WindowEventManager extends EventEmitter implements WindowEventManager {
 	/**
 	* Array of events that we're subscribed to remotely. When receiving a remote event, the event manager will emit a local event.
 	* @type {WindowEventName[]}
@@ -138,7 +138,7 @@ class WindowEventManager extends EventEmitter implements WindowEventManager {
 		Logger.system.info("WRAP CLOSE. WindowEventManager.cleanup. Removing router subscriptions", this.windowName, eventSubscriptions);
 
 		eventSubscriptions.forEach(channelName => {
-			let handlers: Array<Function> = this.remoteEventSubscriptions[channelName];
+			let handlers: Array<StandardCallBack> = this.remoteEventSubscriptions[channelName];
 			handlers.forEach(handler => {
 				RouterClient.removeListener(channelName, handler);
 			});
@@ -281,5 +281,3 @@ class WindowEventManager extends EventEmitter implements WindowEventManager {
 	};
 
 }
-
-export { WindowEventManager }
