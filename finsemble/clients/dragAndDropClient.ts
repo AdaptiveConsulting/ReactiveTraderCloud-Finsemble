@@ -10,6 +10,7 @@ import launcherClient from "./launcherClient";
 import windowClient from "./windowClient";
 import distributedStoreClient from "./distributedStoreClient";
 import { FinsembleWindow } from "../common/window/FinsembleWindow";
+import { openSharedData } from "../common/util";
 import { each as asyncEach, parallel as asyncParallel} from "async";
 
 const DRAG_START_CHANNEL = "DragAndDropClient.dragStart";
@@ -521,7 +522,7 @@ class DragAndDropClient extends BaseClient {
 	 *
 	 */
 	openSharedData(params, cb) {
-		FSBL.Utils.openSharedData(params, cb);
+		openSharedData(params, cb);
 	}
 
 	/**

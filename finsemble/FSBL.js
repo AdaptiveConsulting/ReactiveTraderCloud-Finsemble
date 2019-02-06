@@ -747,7 +747,7 @@ exports.LoggerConstructor = function (dependencies) {
         var self = this;
         if (!self.RouterClient) {
             console.log("No instance of the RouterClient found for this instance of the Logger. Dynamically requireing it.");
-            self.RouterClient = __webpack_require__(8).default;
+            self.RouterClient = __webpack_require__(6).default;
         }
         let onlineSubscription, allActiveSubscription;
         //Wait for the service before coming online. can't use the dependency manager, because it uses the router, which uses the logger.
@@ -833,7 +833,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
-const routerClientInstance_1 = __webpack_require__(8);
+const routerClientInstance_1 = __webpack_require__(6);
 const validate_1 = __webpack_require__(4); // Finsemble args validator
 const logger_1 = __webpack_require__(0);
 const system_1 = __webpack_require__(3);
@@ -1421,190 +1421,6 @@ var Validate = function () {
 
 /***/ }),
 /* 5 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(process) {
-/**
- * This is the web browser implementation of `debug()`.
- *
- * Expose `debug()` as the module.
- */
-
-exports = module.exports = __webpack_require__(68);
-exports.log = log;
-exports.formatArgs = formatArgs;
-exports.save = save;
-exports.load = load;
-exports.useColors = useColors;
-exports.storage = 'undefined' != typeof chrome
-               && 'undefined' != typeof chrome.storage
-                  ? chrome.storage.local
-                  : localstorage();
-
-/**
- * Colors.
- */
-
-exports.colors = [
-  'lightseagreen',
-  'forestgreen',
-  'goldenrod',
-  'dodgerblue',
-  'darkorchid',
-  'crimson'
-];
-
-/**
- * Currently only WebKit-based Web Inspectors, Firefox >= v31,
- * and the Firebug extension (any Firefox version) are known
- * to support "%c" CSS customizations.
- *
- * TODO: add a `localStorage` variable to explicitly enable/disable colors
- */
-
-function useColors() {
-  // is webkit? http://stackoverflow.com/a/16459606/376773
-  // document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
-  return (typeof document !== 'undefined' && 'WebkitAppearance' in document.documentElement.style) ||
-    // is firebug? http://stackoverflow.com/a/398120/376773
-    (window.console && (console.firebug || (console.exception && console.table))) ||
-    // is firefox >= v31?
-    // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
-    (navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31);
-}
-
-/**
- * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
- */
-
-exports.formatters.j = function(v) {
-  try {
-    return JSON.stringify(v);
-  } catch (err) {
-    return '[UnexpectedJSONParseError]: ' + err.message;
-  }
-};
-
-
-/**
- * Colorize log arguments if enabled.
- *
- * @api public
- */
-
-function formatArgs() {
-  var args = arguments;
-  var useColors = this.useColors;
-
-  args[0] = (useColors ? '%c' : '')
-    + this.namespace
-    + (useColors ? ' %c' : ' ')
-    + args[0]
-    + (useColors ? '%c ' : ' ')
-    + '+' + exports.humanize(this.diff);
-
-  if (!useColors) return args;
-
-  var c = 'color: ' + this.color;
-  args = [args[0], c, 'color: inherit'].concat(Array.prototype.slice.call(args, 1));
-
-  // the final "%c" is somewhat tricky, because there could be other
-  // arguments passed either before or after the %c, so we need to
-  // figure out the correct index to insert the CSS into
-  var index = 0;
-  var lastC = 0;
-  args[0].replace(/%[a-z%]/g, function(match) {
-    if ('%%' === match) return;
-    index++;
-    if ('%c' === match) {
-      // we only are interested in the *last* %c
-      // (the user may have provided their own)
-      lastC = index;
-    }
-  });
-
-  args.splice(lastC, 0, c);
-  return args;
-}
-
-/**
- * Invokes `console.log()` when available.
- * No-op when `console.log` is not a "function".
- *
- * @api public
- */
-
-function log() {
-  // this hackery is required for IE8/9, where
-  // the `console.log` function doesn't have 'apply'
-  return 'object' === typeof console
-    && console.log
-    && Function.prototype.apply.call(console.log, console, arguments);
-}
-
-/**
- * Save `namespaces`.
- *
- * @param {String} namespaces
- * @api private
- */
-
-function save(namespaces) {
-  try {
-    if (null == namespaces) {
-      exports.storage.removeItem('debug');
-    } else {
-      exports.storage.debug = namespaces;
-    }
-  } catch(e) {}
-}
-
-/**
- * Load `namespaces`.
- *
- * @return {String} returns the previously persisted debug modes
- * @api private
- */
-
-function load() {
-  var r;
-  try {
-    return exports.storage.debug;
-  } catch(e) {}
-
-  // If debug isn't set in LS, and we're in Electron, try to load $DEBUG
-  if (typeof process !== 'undefined' && 'env' in process) {
-    return process.env.DEBUG;
-  }
-}
-
-/**
- * Enable namespaces listed in `localStorage.debug` initially.
- */
-
-exports.enable(load());
-
-/**
- * Localstorage attempts to return the localstorage.
- *
- * This is necessary because safari throws
- * when a user disables cookies/localstorage
- * and you attempt to access it.
- *
- * @return {LocalStorage}
- * @api private
- */
-
-function localstorage(){
-  try {
-    return true;
-  } catch (e) {}
-}
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(20)))
-
-/***/ }),
-/* 6 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2140,8 +1956,13 @@ function injectJS(path, cb) { //Inject a script tag with the path given. Once th
 	head.insertBefore(script, firstScript);
 };
 
+/** Daniel H. 1/14/2019
+ * @TODO - This method is only used in the DragAndDrop client, and it introduces a sneaky circular dependency between
+ * this module and the launcherClient. It should be refactored out of this module. This can't be done until v4.0.0, as
+ * it would be a breaking change to our API.
+ */
 /**
- * This will either open a component with the shared data or publish the shared data using the linker client if the window is linked
+ * This will either open a component with the shared data or publish the shared data using the linker client if the window is linked.
  * @experimental
  *
  * @param {object} params
@@ -2241,7 +2062,233 @@ function openSharedData(params, cb) {
 
 
 /***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * @introduction
+ * <h2>Router Client Instance</h2>
+ * Exports a single shared instance of the router client.  See {@link RouterClientConstructor} for the complete API definition with examples.
+ *
+ * Example:
+ *
+ *	// get a shared instance of RouterClient (shared within the containing component or service)
+ *	var RouterClient = require('./routerClientInstance').default;
+ *
+ * @namespace routerClientInstance
+ * @shouldBePublished false
+ */
+const routerClientConstructor_1 = __webpack_require__(51);
+const logger_1 = __webpack_require__(0);
+let RCConstructor = routerClientConstructor_1.RouterClientConstructor;
+/** The logger needs a router client, and the router client needs a logger.
+ * To get around this fundamental circular dependency, we pass a reference
+ * of the RouterClient to the Logger. Only after this is called will the
+ * RouterClient and Logger be ready. If RouterClient is NOT required before
+ * the Logger, then this file will be dynamically required at Logger.start().
+ */
+/** An instance of the IRouterClient interface, (that is, the Router Client).
+ * All other clients are built on top of the RouterClient; its API is the
+ * primary form of communication between the various components of Finsemble.
+ */
+let RouterClientInstance = new RCConstructor({ clientName: "RouterClient" });
+logger_1.Logger.setRouterClient(RouterClientInstance);
+exports.default = RouterClientInstance;
+
+
+/***/ }),
 /* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(process) {
+/**
+ * This is the web browser implementation of `debug()`.
+ *
+ * Expose `debug()` as the module.
+ */
+
+exports = module.exports = __webpack_require__(68);
+exports.log = log;
+exports.formatArgs = formatArgs;
+exports.save = save;
+exports.load = load;
+exports.useColors = useColors;
+exports.storage = 'undefined' != typeof chrome
+               && 'undefined' != typeof chrome.storage
+                  ? chrome.storage.local
+                  : localstorage();
+
+/**
+ * Colors.
+ */
+
+exports.colors = [
+  'lightseagreen',
+  'forestgreen',
+  'goldenrod',
+  'dodgerblue',
+  'darkorchid',
+  'crimson'
+];
+
+/**
+ * Currently only WebKit-based Web Inspectors, Firefox >= v31,
+ * and the Firebug extension (any Firefox version) are known
+ * to support "%c" CSS customizations.
+ *
+ * TODO: add a `localStorage` variable to explicitly enable/disable colors
+ */
+
+function useColors() {
+  // is webkit? http://stackoverflow.com/a/16459606/376773
+  // document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
+  return (typeof document !== 'undefined' && 'WebkitAppearance' in document.documentElement.style) ||
+    // is firebug? http://stackoverflow.com/a/398120/376773
+    (window.console && (console.firebug || (console.exception && console.table))) ||
+    // is firefox >= v31?
+    // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
+    (navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31);
+}
+
+/**
+ * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
+ */
+
+exports.formatters.j = function(v) {
+  try {
+    return JSON.stringify(v);
+  } catch (err) {
+    return '[UnexpectedJSONParseError]: ' + err.message;
+  }
+};
+
+
+/**
+ * Colorize log arguments if enabled.
+ *
+ * @api public
+ */
+
+function formatArgs() {
+  var args = arguments;
+  var useColors = this.useColors;
+
+  args[0] = (useColors ? '%c' : '')
+    + this.namespace
+    + (useColors ? ' %c' : ' ')
+    + args[0]
+    + (useColors ? '%c ' : ' ')
+    + '+' + exports.humanize(this.diff);
+
+  if (!useColors) return args;
+
+  var c = 'color: ' + this.color;
+  args = [args[0], c, 'color: inherit'].concat(Array.prototype.slice.call(args, 1));
+
+  // the final "%c" is somewhat tricky, because there could be other
+  // arguments passed either before or after the %c, so we need to
+  // figure out the correct index to insert the CSS into
+  var index = 0;
+  var lastC = 0;
+  args[0].replace(/%[a-z%]/g, function(match) {
+    if ('%%' === match) return;
+    index++;
+    if ('%c' === match) {
+      // we only are interested in the *last* %c
+      // (the user may have provided their own)
+      lastC = index;
+    }
+  });
+
+  args.splice(lastC, 0, c);
+  return args;
+}
+
+/**
+ * Invokes `console.log()` when available.
+ * No-op when `console.log` is not a "function".
+ *
+ * @api public
+ */
+
+function log() {
+  // this hackery is required for IE8/9, where
+  // the `console.log` function doesn't have 'apply'
+  return 'object' === typeof console
+    && console.log
+    && Function.prototype.apply.call(console.log, console, arguments);
+}
+
+/**
+ * Save `namespaces`.
+ *
+ * @param {String} namespaces
+ * @api private
+ */
+
+function save(namespaces) {
+  try {
+    if (null == namespaces) {
+      exports.storage.removeItem('debug');
+    } else {
+      exports.storage.debug = namespaces;
+    }
+  } catch(e) {}
+}
+
+/**
+ * Load `namespaces`.
+ *
+ * @return {String} returns the previously persisted debug modes
+ * @api private
+ */
+
+function load() {
+  var r;
+  try {
+    return exports.storage.debug;
+  } catch(e) {}
+
+  // If debug isn't set in LS, and we're in Electron, try to load $DEBUG
+  if (typeof process !== 'undefined' && 'env' in process) {
+    return process.env.DEBUG;
+  }
+}
+
+/**
+ * Enable namespaces listed in `localStorage.debug` initially.
+ */
+
+exports.enable(load());
+
+/**
+ * Localstorage attempts to return the localstorage.
+ *
+ * This is necessary because safari throws
+ * when a user disables cookies/localstorage
+ * and you attempt to access it.
+ *
+ * @return {LocalStorage}
+ * @api private
+ */
+
+function localstorage(){
+  try {
+    return true;
+  } catch (e) {}
+}
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(20)))
+
+/***/ }),
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(setImmediate, process, global, module) {(function (global, factory) {
@@ -7857,59 +7904,17 @@ Object.defineProperty(exports, '__esModule', { value: true });
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(83).setImmediate, __webpack_require__(20), __webpack_require__(1), __webpack_require__(16)(module)))
 
 /***/ }),
-/* 8 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-Object.defineProperty(exports, "__esModule", { value: true });
-/**
- * @introduction
- * <h2>Router Client Instance</h2>
- * Exports a single shared instance of the router client.  See {@link RouterClientConstructor} for the complete API definition with examples.
- *
- * Example:
- *
- *	// get a shared instance of RouterClient (shared within the containing component or service)
- *	var RouterClient = require('./routerClientInstance').default;
- *
- * @namespace routerClientInstance
- * @shouldBePublished false
- */
-const routerClientConstructor_1 = __webpack_require__(51);
-const logger_1 = __webpack_require__(0);
-let RCConstructor = routerClientConstructor_1.RouterClientConstructor;
-/** The logger needs a router client, and the router client needs a logger.
- * To get around this fundamental circular dependency, we pass a reference
- * of the RouterClient to the Logger. Only after this is called will the
- * RouterClient and Logger be ready. If RouterClient is NOT required before
- * the Logger, then this file will be dynamically required at Logger.start().
- */
-/** An instance of the IRouterClient interface, (that is, the Router Client).
- * All other clients are built on top of the RouterClient; its API is the
- * primary form of communication between the various components of Finsemble.
- */
-let RouterClientInstance = new RCConstructor({ clientName: "RouterClient" });
-logger_1.Logger.setRouterClient(RouterClientInstance);
-exports.default = RouterClientInstance;
-
-
-/***/ }),
 /* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const routerClientInstance_1 = __webpack_require__(8);
+const routerClientInstance_1 = __webpack_require__(6);
 const logger_1 = __webpack_require__(0);
 const distributedStoreClient_1 = __webpack_require__(11);
 const storageClient_1 = __webpack_require__(21);
-const util = __webpack_require__(6);
+const util = __webpack_require__(5);
 const WindowEventManager_1 = __webpack_require__(54);
 const constants = __webpack_require__(13);
 const FinsembleEvent_1 = __webpack_require__(53);
@@ -9694,7 +9699,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const storageClient_1 = __webpack_require__(21);
 const workspaceClient_1 = __webpack_require__(30);
 const hotkeysClient_1 = __webpack_require__(27);
-const util = __webpack_require__(6);
+const util = __webpack_require__(5);
 const system_1 = __webpack_require__(3);
 const baseClient_1 = __webpack_require__(2);
 const logger_1 = __webpack_require__(0);
@@ -9702,7 +9707,8 @@ const validate_1 = __webpack_require__(4); // Finsemble args validator
 const FinsembleWindow_1 = __webpack_require__(9);
 const configUtil_1 = __webpack_require__(17);
 const deepEqual = __webpack_require__(35);
-const async_1 = __webpack_require__(7);
+const async_1 = __webpack_require__(8);
+const routerClientInstance_1 = __webpack_require__(6);
 const WORKSPACE_CACHE_TOPIC = "finsemble.workspace.cache"; // window data stored in this topic for access by workspace service
 const constants_1 = __webpack_require__(13);
 var finsembleWindow;
@@ -10810,9 +10816,9 @@ class WindowClient extends baseClient_1._BaseClient {
      */
     ejectFromGroup() {
         let windowName = this.getWindowNameForDocking();
-        FSBL.Clients.RouterClient.query("DockingService.leaveGroup", {
+        routerClientInstance_1.default.query("DockingService.leaveGroup", {
             name: windowName
-        });
+        }, () => { });
         this.dirtyTheWorkspace(windowName);
     }
     /**
@@ -10950,7 +10956,7 @@ class WindowClient extends baseClient_1._BaseClient {
      * @param {*} cb
      */
     startTilingOrTabbing(params, cb = Function.prototype) {
-        FSBL.Clients.RouterClient.transmit("DockingService.startTilingOrTabbing", params);
+        routerClientInstance_1.default.transmit("DockingService.startTilingOrTabbing", params);
         cb();
     }
     ;
@@ -10961,7 +10967,7 @@ class WindowClient extends baseClient_1._BaseClient {
      */
     cancelTilingOrTabbing(params, cb = Function.prototype) {
         console.debug("CancelTilingOrTabbing");
-        FSBL.Clients.RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
+        routerClientInstance_1.default.transmit("DockingService.cancelTilingOrTabbing", params);
         cb();
     }
     ;
@@ -10971,7 +10977,7 @@ class WindowClient extends baseClient_1._BaseClient {
      * @param {*} cb
      */
     sendIdentifierForTilingOrTabbing(params, cb = Function.prototype) {
-        FSBL.Clients.RouterClient.transmit("DockingService.identifierForTilingOrTabbing", params);
+        routerClientInstance_1.default.transmit("DockingService.identifierForTilingOrTabbing", params);
         cb();
     }
     ;
@@ -10990,10 +10996,10 @@ class WindowClient extends baseClient_1._BaseClient {
             bottom: finsembleWindow.windowOptions.bottom,
         };
         let transmitAndQueryStop = () => {
-            FSBL.Clients.RouterClient.query("DockingService.stopTilingOrTabbing", params, () => {
+            routerClientInstance_1.default.query("DockingService.stopTilingOrTabbing", params, () => {
                 cb();
             });
-            FSBL.Clients.RouterClient.transmit("DockingService.stopTilingOrTabbing", params);
+            routerClientInstance_1.default.transmit("DockingService.stopTilingOrTabbing", params);
         };
         if (!params.mousePosition) {
             return system_1.System.getMousePosition((err, position) => {
@@ -11001,7 +11007,7 @@ class WindowClient extends baseClient_1._BaseClient {
                 let pointIsInBox = this.isPointInBox(position, windowPosition);
                 if (!params.allowDropOnSelf && pointIsInBox) {
                     logger_1.default.system.debug("StopTilingOrTabbing windowClient cancel 1:", params, windowPosition, err);
-                    FSBL.Clients.RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
+                    routerClientInstance_1.default.transmit("DockingService.cancelTilingOrTabbing", params);
                     return cb();
                 }
                 logger_1.default.system.debug("StopTilingOrTabbing windowClient stop 1:", err, params, windowPosition, err);
@@ -11011,7 +11017,7 @@ class WindowClient extends baseClient_1._BaseClient {
         let pointIsInBox = this.isPointInBox(params.mousePosition, windowPosition);
         if (!params.allowDropOnSelf && pointIsInBox) {
             logger_1.default.system.debug("StopTilingOrTabbing windowClient cancel 2:", params, windowPosition);
-            FSBL.Clients.RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
+            routerClientInstance_1.default.transmit("DockingService.cancelTilingOrTabbing", params);
             return cb();
         }
         logger_1.default.system.debug("StopTilingOrTabbing windowClient stop 2:", params, windowPosition);
@@ -11837,7 +11843,7 @@ module.exports = function(module) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__util__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__util__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__system__ = __webpack_require__(3);
@@ -11851,19 +11857,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-/**
- *
- *
-/**
- *
- *
-/**
- *
- *
-/**
- *
- *
- */
+
 var ConfigUtil = function () {
 
 	var self = this;
@@ -12284,7 +12278,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 */
 const baseClient_1 = __webpack_require__(2);
 const windowClient_1 = __webpack_require__(12);
-const util = __webpack_require__(6);
+const util = __webpack_require__(5);
 const validate_1 = __webpack_require__(4); // Finsemble args validator
 const system_1 = __webpack_require__(3);
 const logger_1 = __webpack_require__(0);
@@ -14328,7 +14322,7 @@ function error(data){
 Object.defineProperty(exports, "__esModule", { value: true });
 const validate_1 = __webpack_require__(4); // Finsemble args validator
 const baseClient_1 = __webpack_require__(2);
-const async_1 = __webpack_require__(7);
+const async_1 = __webpack_require__(8);
 const logger_1 = __webpack_require__(0);
 /**
  * @introduction
@@ -14910,7 +14904,7 @@ Overview of how this works:
 
 */
 const baseClient_1 = __webpack_require__(2);
-const routerClientInstance_1 = __webpack_require__(8);
+const routerClientInstance_1 = __webpack_require__(6);
 const logger_1 = __webpack_require__(0);
 const keyMap = __webpack_require__(90).dictionary;
 /** The global `window` object. We cast it to a specific interface here to be
@@ -15241,7 +15235,7 @@ const logger_1 = __webpack_require__(0);
 logger_1.default.system.debug("Starting LinkerClient");
 var sysinfo = logger_1.default.system.info;
 var sysdebug = logger_1.default.system.debug;
-const async_1 = __webpack_require__(7);
+const async_1 = __webpack_require__(8);
 const deepEqual = __webpack_require__(35);
 /**
  *
@@ -16069,7 +16063,7 @@ exports.LocalLogger = LocalLogger;
 */
 Object.defineProperty(exports, "__esModule", { value: true });
 const baseClient_1 = __webpack_require__(2);
-const Util = __webpack_require__(6);
+const Util = __webpack_require__(5);
 const validate_1 = __webpack_require__(4);
 const logger_1 = __webpack_require__(0);
 const constants_1 = __webpack_require__(13);
@@ -16881,7 +16875,7 @@ exports.default = workspaceClient;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const events_1 = __webpack_require__(15);
-const routerClientInstance_1 = __webpack_require__(8);
+const routerClientInstance_1 = __webpack_require__(6);
 const STARTUP_TIMEOUT_DURATION = 10000;
 const constants_1 = __webpack_require__(13);
 /**
@@ -19349,7 +19343,7 @@ var Emitter = __webpack_require__(14);
 var parser = __webpack_require__(25);
 var on = __webpack_require__(38);
 var bind = __webpack_require__(32);
-var debug = __webpack_require__(5)('socket.io-client:manager');
+var debug = __webpack_require__(7)('socket.io-client:manager');
 var indexOf = __webpack_require__(34);
 var Backoff = __webpack_require__(55);
 
@@ -19944,7 +19938,7 @@ var Emitter = __webpack_require__(14);
 var toArray = __webpack_require__(84);
 var on = __webpack_require__(38);
 var bind = __webpack_require__(32);
-var debug = __webpack_require__(5)('socket.io-client:socket');
+var debug = __webpack_require__(7)('socket.io-client:socket');
 var hasBin = __webpack_require__(33);
 
 /**
@@ -20428,7 +20422,7 @@ var parseqs = __webpack_require__(22);
 var parser = __webpack_require__(10);
 var inherit = __webpack_require__(19);
 var yeast = __webpack_require__(43);
-var debug = __webpack_require__(5)('engine.io-client:polling');
+var debug = __webpack_require__(7)('engine.io-client:polling');
 
 /**
  * Module exports.
@@ -20909,7 +20903,10 @@ const FinsembleWindow_1 = __webpack_require__(9);
 const userNotification_1 = __webpack_require__(44);
 const applicationConstants = __webpack_require__(13);
 const { APPLICATION_STATE_CHANNEL } = applicationConstants;
-const async_1 = __webpack_require__(7);
+const async_1 = __webpack_require__(8);
+const wrapCallbacks_1 = __webpack_require__(95);
+const configUtil_1 = __webpack_require__(17);
+const Utils = __webpack_require__(5);
 const validate_1 = __webpack_require__(4);
 /** The global `window` object. We cast it to a specific interface here to be
  * explicit about what Finsemble-related properties it may have. */
@@ -20930,9 +20927,6 @@ if (Globals.FSBLAlreadyPreloaded) {
 }
 if ((fin.container === "browser" || window.top === window) && !Globals.FSBLAlreadyPreloaded) { // @todo - remove when OpenFin Fixes preload
     Globals.FSBLAlreadyPreloaded = true;
-    var Utils = __webpack_require__(6).default;
-    var ConfigUtils = __webpack_require__(17).ConfigUtilInstance;
-    var wrapCallbacks = __webpack_require__(95).default;
     // FSBL.initialize() or System.ready() may start first. It's unpredictable. initialize() depends on main()
     // so we use variables to defer running that function if main() hasn't yet run.
     var deferredCallback = Function.prototype;
@@ -20954,13 +20948,13 @@ if ((fin.container === "browser" || window.top === window) && !Globals.FSBLAlrea
             windowName = name;
         };
         this.Utils = Utils;
-        this.ConfigUtils = ConfigUtils;
+        this.ConfigUtils = configUtil_1.ConfigUtilInstance;
         this.Validate = validate_1.default;
         this.UserNotification = userNotification_1.default;
         //This order is _roughly_ as follows: Get everything up that is a dependency of something else, then get those up. The linker and DnD depend on the Store. Workspace depends on Storage and so on. It's not exact, but this was the combination that yielded the best results for me.
         /** @namespace Clients  */
         this.Clients = {
-            RouterClient: __webpack_require__(8).default,
+            RouterClient: __webpack_require__(6).default,
             AuthenticationClient: __webpack_require__(48).default,
             WindowClient: __webpack_require__(12).default,
             DistributedStoreClient: __webpack_require__(11).default,
@@ -21086,8 +21080,8 @@ if ((fin.container === "browser" || window.top === window) && !Globals.FSBLAlrea
                     // Wrap OF functions that have callbacks to insure all callbacks invoked;
                     // since class/constructor, must wrap at prototype level (otherwise prototypes won't be picked up)
                     FSBL.Clients.Logger.debug(`WINDOW LIFECYCLE:STARTUP: Wrapping OF Calls in ${finsembleWindow.name}`);
-                    wrapCallbacks(system_1.System.Application);
-                    wrapCallbacks(system_1.System); // not a class so done pass in prototype
+                    wrapCallbacks_1.default(system_1.System.Application);
+                    wrapCallbacks_1.default(system_1.System); // not a class so done pass in prototype
                 }
             });
             this.Clients.RouterClient.publish("Finsemble." + windowName + ".componentReady", {
@@ -21314,7 +21308,7 @@ function noop() {}
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const async_1 = __webpack_require__(7);
+const async_1 = __webpack_require__(8);
 const storeUtils = __webpack_require__(93);
 const logger_1 = __webpack_require__(0);
 /** The global `window` object. We cast it to a specific interface here to be
@@ -22062,11 +22056,11 @@ exports.default = authenticationClient;
 */
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const async_1 = __webpack_require__(7);
+const async_1 = __webpack_require__(8);
 const launcherClient_1 = __webpack_require__(18);
 const windowClient_1 = __webpack_require__(12);
 const distributedStoreClient_1 = __webpack_require__(11);
-const Utils = __webpack_require__(6);
+const Utils = __webpack_require__(5);
 const validate_1 = __webpack_require__(4);
 const baseClient_1 = __webpack_require__(2);
 const FinsembleWindow_1 = __webpack_require__(9);
@@ -22499,7 +22493,8 @@ const launcherClient_1 = __webpack_require__(18);
 const windowClient_1 = __webpack_require__(12);
 const distributedStoreClient_1 = __webpack_require__(11);
 const FinsembleWindow_1 = __webpack_require__(9);
-const async_1 = __webpack_require__(7);
+const util_1 = __webpack_require__(5);
+const async_1 = __webpack_require__(8);
 const DRAG_START_CHANNEL = "DragAndDropClient.dragStart";
 const DRAG_END_CHANNEL = "DragAndDropClient.dragEnd";
 const SHARE_HIGHLIGHT_OPACITY = 1;
@@ -22989,7 +22984,7 @@ class DragAndDropClient extends baseClient_1._BaseClient {
      *
      */
     openSharedData(params, cb) {
-        FSBL.Utils.openSharedData(params, cb);
+        util_1.openSharedData(params, cb);
     }
     /**
      * @private
@@ -23146,7 +23141,7 @@ exports.default = dragAndDropClient;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const routerTransport_1 = __webpack_require__(92);
-const Utils = __webpack_require__(6);
+const Utils = __webpack_require__(5);
 const configUtil_1 = __webpack_require__(17);
 const validate_1 = __webpack_require__(4); // Finsemble args validator
 const userNotification_1 = __webpack_require__(44);
@@ -24669,7 +24664,7 @@ exports.FinsembleEvent = FinsembleEvent;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const routerClientInstance_1 = __webpack_require__(8);
+const routerClientInstance_1 = __webpack_require__(6);
 const logger_1 = __webpack_require__(0);
 const events_1 = __webpack_require__(15);
 class WindowEventManager extends events_1.EventEmitter {
@@ -28487,7 +28482,7 @@ module.exports = function parsejson(data) {
 var url = __webpack_require__(66);
 var parser = __webpack_require__(25);
 var Manager = __webpack_require__(37);
-var debug = __webpack_require__(5)('socket.io-client');
+var debug = __webpack_require__(7)('socket.io-client');
 
 /**
  * Module exports.
@@ -28600,7 +28595,7 @@ exports.Socket = __webpack_require__(39);
  */
 
 var parseuri = __webpack_require__(36);
-var debug = __webpack_require__(5)('socket.io-client:url');
+var debug = __webpack_require__(7)('socket.io-client:url');
 
 /**
  * Module exports.
@@ -28947,7 +28942,7 @@ module.exports.parser = __webpack_require__(10);
 
 var transports = __webpack_require__(40);
 var Emitter = __webpack_require__(14);
-var debug = __webpack_require__(5)('engine.io-client:socket');
+var debug = __webpack_require__(7)('engine.io-client:socket');
 var index = __webpack_require__(34);
 var parser = __webpack_require__(10);
 var parseuri = __webpack_require__(36);
@@ -29932,7 +29927,7 @@ var XMLHttpRequest = __webpack_require__(24);
 var Polling = __webpack_require__(41);
 var Emitter = __webpack_require__(14);
 var inherit = __webpack_require__(19);
-var debug = __webpack_require__(5)('engine.io-client:polling-xhr');
+var debug = __webpack_require__(7)('engine.io-client:polling-xhr');
 
 /**
  * Module exports.
@@ -30364,7 +30359,7 @@ var parser = __webpack_require__(10);
 var parseqs = __webpack_require__(22);
 var inherit = __webpack_require__(19);
 var yeast = __webpack_require__(43);
-var debug = __webpack_require__(5)('engine.io-client:websocket');
+var debug = __webpack_require__(7)('engine.io-client:websocket');
 var BrowserWebSocket = global.WebSocket || global.MozWebSocket;
 var NodeWebSocket;
 if (typeof window === 'undefined') {
@@ -31763,14 +31758,15 @@ for (var i = 0; i < 256; ++i) {
 function bytesToUuid(buf, offset) {
   var i = offset || 0;
   var bth = byteToHex;
-  return bth[buf[i++]] + bth[buf[i++]] +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] +
-          bth[buf[i++]] + bth[buf[i++]] +
-          bth[buf[i++]] + bth[buf[i++]];
+  // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
+  return ([bth[buf[i++]], bth[buf[i++]], 
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]],
+	bth[buf[i++]], bth[buf[i++]],
+	bth[buf[i++]], bth[buf[i++]]]).join('');
 }
 
 module.exports = bytesToUuid;
@@ -31785,9 +31781,11 @@ module.exports = bytesToUuid;
 // and inconsistent support for the `crypto` API.  We do the best we can via
 // feature-detection
 
-// getRandomValues needs to be invoked in a context where "this" is a Crypto implementation.
-var getRandomValues = (typeof(crypto) != 'undefined' && crypto.getRandomValues.bind(crypto)) ||
-                      (typeof(msCrypto) != 'undefined' && msCrypto.getRandomValues.bind(msCrypto));
+// getRandomValues needs to be invoked in a context where "this" is a Crypto
+// implementation. Also, find the complete implementation of crypto on IE11.
+var getRandomValues = (typeof(crypto) != 'undefined' && crypto.getRandomValues && crypto.getRandomValues.bind(crypto)) ||
+                      (typeof(msCrypto) != 'undefined' && typeof window.msCrypto.getRandomValues == 'function' && msCrypto.getRandomValues.bind(msCrypto));
+
 if (getRandomValues) {
   // WHATWG crypto RNG - http://wiki.whatwg.org/wiki/Crypto
   var rnds8 = new Uint8Array(16); // eslint-disable-line no-undef

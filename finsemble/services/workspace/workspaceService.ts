@@ -254,7 +254,7 @@ class WorkspaceService extends BaseService {
 		const getEssentialConfigPromiseResolver = async (resolve, reject) => {
 			Logger.system.debug("APPLICATION LIFECYCLE:WorkspaceService:initialize sequence: getEssentialConfig");
 			try {
-				let finsemble = await ConfigClient.getValue({ field: "finsemble" });
+				let { data: finsemble } = await ConfigClient.getValue({ field: "finsemble" });
 
 				// If we have workspaces in our config they must be the defaults. Store them to this object
 				if (finsemble && finsemble.workspaces && (finsemble.workspaces instanceof Array) && finsemble.workspaces.length > 0) {

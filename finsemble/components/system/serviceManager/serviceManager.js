@@ -286,8 +286,7 @@ module.exports = g;
 
 /***/ }),
 /* 3 */,
-/* 4 */,
-/* 5 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -957,7 +956,7 @@ exports.LoggerConstructor = function (dependencies) {
         var self = this;
         if (!self.RouterClient) {
             console.log("No instance of the RouterClient found for this instance of the Logger. Dynamically requireing it.");
-            self.RouterClient = __webpack_require__(19).default;
+            self.RouterClient = __webpack_require__(14).default;
         }
         let onlineSubscription, allActiveSubscription;
         //Wait for the service before coming online. can't use the dependency manager, because it uses the router, which uses the logger.
@@ -1006,6 +1005,7 @@ exports.default = exports.Logger;
 
 
 /***/ }),
+/* 5 */,
 /* 6 */,
 /* 7 */,
 /* 8 */
@@ -1168,6 +1168,48 @@ exports.System = System;
 /* 12 */,
 /* 13 */,
 /* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * @introduction
+ * <h2>Router Client Instance</h2>
+ * Exports a single shared instance of the router client.  See {@link RouterClientConstructor} for the complete API definition with examples.
+ *
+ * Example:
+ *
+ *	// get a shared instance of RouterClient (shared within the containing component or service)
+ *	var RouterClient = require('./routerClientInstance').default;
+ *
+ * @namespace routerClientInstance
+ * @shouldBePublished false
+ */
+const routerClientConstructor_1 = __webpack_require__(95);
+const logger_1 = __webpack_require__(4);
+let RCConstructor = routerClientConstructor_1.RouterClientConstructor;
+/** The logger needs a router client, and the router client needs a logger.
+ * To get around this fundamental circular dependency, we pass a reference
+ * of the RouterClient to the Logger. Only after this is called will the
+ * RouterClient and Logger be ready. If RouterClient is NOT required before
+ * the Logger, then this file will be dynamically required at Logger.start().
+ */
+/** An instance of the IRouterClient interface, (that is, the Router Client).
+ * All other clients are built on top of the RouterClient; its API is the
+ * primary form of communication between the various components of Finsemble.
+ */
+let RouterClientInstance = new RCConstructor({ clientName: "RouterClient" });
+logger_1.Logger.setRouterClient(RouterClientInstance);
+exports.default = RouterClientInstance;
+
+
+/***/ }),
+/* 15 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1197,7 +1239,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__system__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__ = __webpack_require__(120);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_logger__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1__ = __webpack_require__(198);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_uuid_v1__);
@@ -1738,8 +1780,13 @@ function injectJS(path, cb) {
 	head.insertBefore(script, firstScript);
 };
 
+/** Daniel H. 1/14/2019
+ * @TODO - This method is only used in the DragAndDrop client, and it introduces a sneaky circular dependency between
+ * this module and the launcherClient. It should be refactored out of this module. This can't be done until v4.0.0, as
+ * it would be a breaking change to our API.
+ */
 /**
- * This will either open a component with the shared data or publish the shared data using the linker client if the window is linked
+ * This will either open a component with the shared data or publish the shared data using the linker client if the window is linked.
  * @experimental
  *
  * @param {object} params
@@ -1840,9 +1887,9 @@ function openSharedData(params, cb) {
 };
 
 /***/ }),
-/* 15 */,
 /* 16 */,
-/* 17 */
+/* 17 */,
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(process) {
@@ -2026,7 +2073,7 @@ function localstorage(){
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2036,9 +2083,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
-const routerClientInstance_1 = __webpack_require__(19);
+const routerClientInstance_1 = __webpack_require__(14);
 const validate_1 = __webpack_require__(20); // Finsemble args validator
-const logger_1 = __webpack_require__(5);
+const logger_1 = __webpack_require__(4);
 const system_1 = __webpack_require__(8);
 const dependencyManager_1 = __webpack_require__(58);
 /**
@@ -2301,48 +2348,6 @@ var BaseClient = function (params) {
     this.onClose = function () { };
 };
 exports.default = BaseClient;
-
-
-/***/ }),
-/* 19 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-Object.defineProperty(exports, "__esModule", { value: true });
-/**
- * @introduction
- * <h2>Router Client Instance</h2>
- * Exports a single shared instance of the router client.  See {@link RouterClientConstructor} for the complete API definition with examples.
- *
- * Example:
- *
- *	// get a shared instance of RouterClient (shared within the containing component or service)
- *	var RouterClient = require('./routerClientInstance').default;
- *
- * @namespace routerClientInstance
- * @shouldBePublished false
- */
-const routerClientConstructor_1 = __webpack_require__(95);
-const logger_1 = __webpack_require__(5);
-let RCConstructor = routerClientConstructor_1.RouterClientConstructor;
-/** The logger needs a router client, and the router client needs a logger.
- * To get around this fundamental circular dependency, we pass a reference
- * of the RouterClient to the Logger. Only after this is called will the
- * RouterClient and Logger be ready. If RouterClient is NOT required before
- * the Logger, then this file will be dynamically required at Logger.start().
- */
-/** An instance of the IRouterClient interface, (that is, the Router Client).
- * All other clients are built on top of the RouterClient; its API is the
- * primary form of communication between the various components of Finsemble.
- */
-let RouterClientInstance = new RCConstructor({ clientName: "RouterClient" });
-logger_1.Logger.setRouterClient(RouterClientInstance);
-exports.default = RouterClientInstance;
 
 
 /***/ }),
@@ -3456,8 +3461,7 @@ exports.decodePayloadAsBinary = function (data, binaryType, callback) {
 
 /***/ }),
 /* 29 */,
-/* 30 */,
-/* 31 */
+/* 30 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -3485,8 +3489,8 @@ module.exports = function(module) {
 
 
 /***/ }),
-/* 32 */,
-/* 33 */
+/* 31 */,
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -3655,7 +3659,7 @@ Emitter.prototype.hasListeners = function(event){
 
 
 /***/ }),
-/* 34 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(setImmediate, process, global, module) {(function (global, factory) {
@@ -9268,10 +9272,10 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(194).setImmediate, __webpack_require__(0), __webpack_require__(2), __webpack_require__(31)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(194).setImmediate, __webpack_require__(0), __webpack_require__(2), __webpack_require__(30)(module)))
 
 /***/ }),
-/* 35 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9334,13 +9338,13 @@ exports.APPLICATION_LIFECYCLE = {};
 
 
 /***/ }),
-/* 36 */
+/* 35 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__util__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__util__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__system__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__system__);
@@ -9353,19 +9357,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-/**
- *
- *
-/**
- *
- *
-/**
- *
- *
-/**
- *
- *
- */
+
 var ConfigUtil = function () {
 
 	var self = this;
@@ -9788,6 +9780,7 @@ const ConfigUtilInstance = new ConfigUtil();
 
 
 /***/ }),
+/* 36 */,
 /* 37 */,
 /* 38 */,
 /* 39 */
@@ -9818,9 +9811,9 @@ module.exports = function(a, b){
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const validate_1 = __webpack_require__(20); // Finsemble args validator
-const baseClient_1 = __webpack_require__(18);
-const async_1 = __webpack_require__(34);
-const logger_1 = __webpack_require__(5);
+const baseClient_1 = __webpack_require__(19);
+const async_1 = __webpack_require__(33);
+const logger_1 = __webpack_require__(4);
 /**
  * @introduction
  * <h2>Config Client</h2>
@@ -10385,13 +10378,13 @@ exports.default = configClient;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const routerClientInstance_1 = __webpack_require__(19);
-const logger_1 = __webpack_require__(5);
+const routerClientInstance_1 = __webpack_require__(14);
+const logger_1 = __webpack_require__(4);
 const distributedStoreClient_1 = __webpack_require__(93);
 const storageClient_1 = __webpack_require__(70);
-const util = __webpack_require__(14);
+const util = __webpack_require__(15);
 const WindowEventManager_1 = __webpack_require__(119);
-const constants = __webpack_require__(35);
+const constants = __webpack_require__(34);
 const FinsembleEvent_1 = __webpack_require__(118);
 const system_1 = __webpack_require__(8);
 /** This import syntax helps the compiler infer the types. */
@@ -11462,7 +11455,7 @@ exports.decode = function(qs){
  */
 
 var parser = __webpack_require__(28);
-var Emitter = __webpack_require__(33);
+var Emitter = __webpack_require__(32);
 
 /**
  * Module exports.
@@ -12078,9 +12071,9 @@ function error(data){
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const events_1 = __webpack_require__(25);
-const routerClientInstance_1 = __webpack_require__(19);
+const routerClientInstance_1 = __webpack_require__(14);
 const STARTUP_TIMEOUT_DURATION = 10000;
-const constants_1 = __webpack_require__(35);
+const constants_1 = __webpack_require__(34);
 /**
  * Small class to hold on to dependencies and callbacks. Also emits a timeout event that the startupManager is listening for. When it times out, the startupManager catches the event and generates a message that includes all of the offline clients and services. It then causes this class to emit an  err event that the baseService is listening for. This arrangement is set up for a couple of reasons.
  * 1. I can't use the logger in here because the logger uses the startupManager, and there'd be a circular dependency.
@@ -12625,8 +12618,8 @@ exports.LocalLogger = LocalLogger;
 */
 Object.defineProperty(exports, "__esModule", { value: true });
 const validate_1 = __webpack_require__(20);
-const logger_1 = __webpack_require__(5);
-const baseClient_1 = __webpack_require__(18);
+const logger_1 = __webpack_require__(4);
+const baseClient_1 = __webpack_require__(19);
 /**
  *
  * @introduction
@@ -13029,11 +13022,11 @@ module.exports = function parseuri(str) {
 
 var eio = __webpack_require__(180);
 var Socket = __webpack_require__(86);
-var Emitter = __webpack_require__(33);
+var Emitter = __webpack_require__(32);
 var parser = __webpack_require__(57);
 var on = __webpack_require__(85);
 var bind = __webpack_require__(71);
-var debug = __webpack_require__(17)('socket.io-client:manager');
+var debug = __webpack_require__(18)('socket.io-client:manager');
 var indexOf = __webpack_require__(75);
 var Backoff = __webpack_require__(128);
 
@@ -13624,11 +13617,11 @@ function on (obj, ev, fn) {
  */
 
 var parser = __webpack_require__(57);
-var Emitter = __webpack_require__(33);
+var Emitter = __webpack_require__(32);
 var toArray = __webpack_require__(195);
 var on = __webpack_require__(85);
 var bind = __webpack_require__(71);
-var debug = __webpack_require__(17)('socket.io-client:socket');
+var debug = __webpack_require__(18)('socket.io-client:socket');
 var hasBin = __webpack_require__(74);
 
 /**
@@ -14112,7 +14105,7 @@ var parseqs = __webpack_require__(52);
 var parser = __webpack_require__(28);
 var inherit = __webpack_require__(39);
 var yeast = __webpack_require__(90);
-var debug = __webpack_require__(17)('engine.io-client:polling');
+var debug = __webpack_require__(18)('engine.io-client:polling');
 
 /**
  * Module exports.
@@ -14451,9 +14444,9 @@ module.exports = yeast;
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__configUtil__ = __webpack_require__(36);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__configUtil__ = __webpack_require__(35);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__common_system__);
 /*!
@@ -14586,7 +14579,7 @@ var UserNotification = function () {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const baseClient_1 = __webpack_require__(18);
+const baseClient_1 = __webpack_require__(19);
 const StoreModel_1 = __webpack_require__(115);
 /** I'm not sure why we previously deferred requiring StoreModel, but we did.
   * I've tried to stay as true to the original implementation as possible. -- Daniel 12/19/18 */
@@ -14742,9 +14735,9 @@ Overview of how this works:
 -Removing a hotkey clears the corresponding event emitter, and also sends a router message to the service to remove its windowid from the array of windows registered for the hotkey combination - if the window is registered with that hotkey combination multiple times, it will only remove one, allowing other hotkeys on the same window with the same key combination to still be registered.
 
 */
-const baseClient_1 = __webpack_require__(18);
-const routerClientInstance_1 = __webpack_require__(19);
-const logger_1 = __webpack_require__(5);
+const baseClient_1 = __webpack_require__(19);
+const routerClientInstance_1 = __webpack_require__(14);
+const logger_1 = __webpack_require__(4);
 const keyMap = __webpack_require__(201).dictionary;
 /** The global `window` object. We cast it to a specific interface here to be
  * explicit about what Finsemble-related properties it may have. */
@@ -15066,12 +15059,12 @@ exports.default = hotkeyClient;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const routerTransport_1 = __webpack_require__(121);
-const Utils = __webpack_require__(14);
-const configUtil_1 = __webpack_require__(36);
+const Utils = __webpack_require__(15);
+const configUtil_1 = __webpack_require__(35);
 const validate_1 = __webpack_require__(20); // Finsemble args validator
 const userNotification_1 = __webpack_require__(91);
 const system_1 = __webpack_require__(8);
-const logger_1 = __webpack_require__(5);
+const logger_1 = __webpack_require__(4);
 var queue = []; // should never be used, but message sent before router ready will be queue
 const Globals = window;
 const localLogger_1 = __webpack_require__(69);
@@ -16326,17 +16319,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const storageClient_1 = __webpack_require__(70);
 const workspaceClient_1 = __webpack_require__(117);
 const hotkeysClient_1 = __webpack_require__(94);
-const util = __webpack_require__(14);
+const util = __webpack_require__(15);
 const system_1 = __webpack_require__(8);
-const baseClient_1 = __webpack_require__(18);
-const logger_1 = __webpack_require__(5);
+const baseClient_1 = __webpack_require__(19);
+const logger_1 = __webpack_require__(4);
 const validate_1 = __webpack_require__(20); // Finsemble args validator
 const FinsembleWindow_1 = __webpack_require__(46);
-const configUtil_1 = __webpack_require__(36);
+const configUtil_1 = __webpack_require__(35);
 const deepEqual = __webpack_require__(153);
-const async_1 = __webpack_require__(34);
+const async_1 = __webpack_require__(33);
+const routerClientInstance_1 = __webpack_require__(14);
 const WORKSPACE_CACHE_TOPIC = "finsemble.workspace.cache"; // window data stored in this topic for access by workspace service
-const constants_1 = __webpack_require__(35);
+const constants_1 = __webpack_require__(34);
 var finsembleWindow;
 /**
  *
@@ -17442,9 +17436,9 @@ class WindowClient extends baseClient_1._BaseClient {
      */
     ejectFromGroup() {
         let windowName = this.getWindowNameForDocking();
-        FSBL.Clients.RouterClient.query("DockingService.leaveGroup", {
+        routerClientInstance_1.default.query("DockingService.leaveGroup", {
             name: windowName
-        });
+        }, () => { });
         this.dirtyTheWorkspace(windowName);
     }
     /**
@@ -17582,7 +17576,7 @@ class WindowClient extends baseClient_1._BaseClient {
      * @param {*} cb
      */
     startTilingOrTabbing(params, cb = Function.prototype) {
-        FSBL.Clients.RouterClient.transmit("DockingService.startTilingOrTabbing", params);
+        routerClientInstance_1.default.transmit("DockingService.startTilingOrTabbing", params);
         cb();
     }
     ;
@@ -17593,7 +17587,7 @@ class WindowClient extends baseClient_1._BaseClient {
      */
     cancelTilingOrTabbing(params, cb = Function.prototype) {
         console.debug("CancelTilingOrTabbing");
-        FSBL.Clients.RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
+        routerClientInstance_1.default.transmit("DockingService.cancelTilingOrTabbing", params);
         cb();
     }
     ;
@@ -17603,7 +17597,7 @@ class WindowClient extends baseClient_1._BaseClient {
      * @param {*} cb
      */
     sendIdentifierForTilingOrTabbing(params, cb = Function.prototype) {
-        FSBL.Clients.RouterClient.transmit("DockingService.identifierForTilingOrTabbing", params);
+        routerClientInstance_1.default.transmit("DockingService.identifierForTilingOrTabbing", params);
         cb();
     }
     ;
@@ -17622,10 +17616,10 @@ class WindowClient extends baseClient_1._BaseClient {
             bottom: finsembleWindow.windowOptions.bottom,
         };
         let transmitAndQueryStop = () => {
-            FSBL.Clients.RouterClient.query("DockingService.stopTilingOrTabbing", params, () => {
+            routerClientInstance_1.default.query("DockingService.stopTilingOrTabbing", params, () => {
                 cb();
             });
-            FSBL.Clients.RouterClient.transmit("DockingService.stopTilingOrTabbing", params);
+            routerClientInstance_1.default.transmit("DockingService.stopTilingOrTabbing", params);
         };
         if (!params.mousePosition) {
             return system_1.System.getMousePosition((err, position) => {
@@ -17633,7 +17627,7 @@ class WindowClient extends baseClient_1._BaseClient {
                 let pointIsInBox = this.isPointInBox(position, windowPosition);
                 if (!params.allowDropOnSelf && pointIsInBox) {
                     logger_1.default.system.debug("StopTilingOrTabbing windowClient cancel 1:", params, windowPosition, err);
-                    FSBL.Clients.RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
+                    routerClientInstance_1.default.transmit("DockingService.cancelTilingOrTabbing", params);
                     return cb();
                 }
                 logger_1.default.system.debug("StopTilingOrTabbing windowClient stop 1:", err, params, windowPosition, err);
@@ -17643,7 +17637,7 @@ class WindowClient extends baseClient_1._BaseClient {
         let pointIsInBox = this.isPointInBox(params.mousePosition, windowPosition);
         if (!params.allowDropOnSelf && pointIsInBox) {
             logger_1.default.system.debug("StopTilingOrTabbing windowClient cancel 2:", params, windowPosition);
-            FSBL.Clients.RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
+            routerClientInstance_1.default.transmit("DockingService.cancelTilingOrTabbing", params);
             return cb();
         }
         logger_1.default.system.debug("StopTilingOrTabbing windowClient stop 2:", params, windowPosition);
@@ -18398,9 +18392,9 @@ function noop() {}
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const async_1 = __webpack_require__(34);
+const async_1 = __webpack_require__(33);
 const storeUtils = __webpack_require__(122);
-const logger_1 = __webpack_require__(5);
+const logger_1 = __webpack_require__(4);
 /** The global `window` object. We cast it to a specific interface here to be
  * explicit about what Finsemble-related properties it may have. */
 const Globals = window;
@@ -18925,12 +18919,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
-const baseClient_1 = __webpack_require__(18);
+const baseClient_1 = __webpack_require__(19);
 const windowClient_1 = __webpack_require__(96);
-const util = __webpack_require__(14);
+const util = __webpack_require__(15);
 const validate_1 = __webpack_require__(20); // Finsemble args validator
 const system_1 = __webpack_require__(8);
-const logger_1 = __webpack_require__(5);
+const logger_1 = __webpack_require__(4);
 const FinsembleWindow_1 = __webpack_require__(46);
 /** The global `window` object. We cast it to a specific interface here to be
  * explicit about what Finsemble-related properties it may have. */
@@ -19866,11 +19860,11 @@ exports.default = launcherClient;
 * All rights reserved.
 */
 Object.defineProperty(exports, "__esModule", { value: true });
-const baseClient_1 = __webpack_require__(18);
-const Util = __webpack_require__(14);
+const baseClient_1 = __webpack_require__(19);
+const Util = __webpack_require__(15);
 const validate_1 = __webpack_require__(20);
-const logger_1 = __webpack_require__(5);
-const constants_1 = __webpack_require__(35);
+const logger_1 = __webpack_require__(4);
+const constants_1 = __webpack_require__(34);
 function escapeRegExp(str) {
     return str.replace(/[-[\]/{}()*+?.\\^$|]/g, "\\$&");
 }
@@ -20751,8 +20745,8 @@ exports.FinsembleEvent = FinsembleEvent;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const routerClientInstance_1 = __webpack_require__(19);
-const logger_1 = __webpack_require__(5);
+const routerClientInstance_1 = __webpack_require__(14);
+const logger_1 = __webpack_require__(4);
 const events_1 = __webpack_require__(25);
 class WindowEventManager extends events_1.EventEmitter {
     /**
@@ -21252,8 +21246,8 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__configUtil__ = __webpack_require__(36);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__configUtil__ = __webpack_require__(35);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_socket_io_client__ = __webpack_require__(176);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_socket_io_client___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_socket_io_client__);
@@ -23213,7 +23207,7 @@ try {
   }
 }).call(this);
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(31)(module), __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(30)(module), __webpack_require__(2)))
 
 /***/ }),
 /* 151 */
@@ -24968,7 +24962,7 @@ function stubFalse() {
 
 module.exports = cloneDeep;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(31)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(30)(module)))
 
 /***/ }),
 /* 152 */,
@@ -26824,7 +26818,7 @@ function stubFalse() {
 
 module.exports = isEqual;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(31)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(30)(module)))
 
 /***/ }),
 /* 154 */
@@ -27089,7 +27083,7 @@ module.exports = function parsejson(data) {
 var url = __webpack_require__(177);
 var parser = __webpack_require__(57);
 var Manager = __webpack_require__(84);
-var debug = __webpack_require__(17)('socket.io-client');
+var debug = __webpack_require__(18)('socket.io-client');
 
 /**
  * Module exports.
@@ -27202,7 +27196,7 @@ exports.Socket = __webpack_require__(86);
  */
 
 var parseuri = __webpack_require__(76);
-var debug = __webpack_require__(17)('socket.io-client:url');
+var debug = __webpack_require__(18)('socket.io-client:url');
 
 /**
  * Module exports.
@@ -27548,8 +27542,8 @@ module.exports.parser = __webpack_require__(28);
  */
 
 var transports = __webpack_require__(87);
-var Emitter = __webpack_require__(33);
-var debug = __webpack_require__(17)('engine.io-client:socket');
+var Emitter = __webpack_require__(32);
+var debug = __webpack_require__(18)('engine.io-client:socket');
 var index = __webpack_require__(75);
 var parser = __webpack_require__(28);
 var parseuri = __webpack_require__(76);
@@ -28532,9 +28526,9 @@ JSONPPolling.prototype.doWrite = function (data, fn) {
 
 var XMLHttpRequest = __webpack_require__(56);
 var Polling = __webpack_require__(88);
-var Emitter = __webpack_require__(33);
+var Emitter = __webpack_require__(32);
 var inherit = __webpack_require__(39);
-var debug = __webpack_require__(17)('engine.io-client:polling-xhr');
+var debug = __webpack_require__(18)('engine.io-client:polling-xhr');
 
 /**
  * Module exports.
@@ -28966,7 +28960,7 @@ var parser = __webpack_require__(28);
 var parseqs = __webpack_require__(52);
 var inherit = __webpack_require__(39);
 var yeast = __webpack_require__(90);
-var debug = __webpack_require__(17)('engine.io-client:websocket');
+var debug = __webpack_require__(18)('engine.io-client:websocket');
 var BrowserWebSocket = global.WebSocket || global.MozWebSocket;
 var NodeWebSocket;
 if (typeof window === 'undefined') {
@@ -30365,14 +30359,15 @@ for (var i = 0; i < 256; ++i) {
 function bytesToUuid(buf, offset) {
   var i = offset || 0;
   var bth = byteToHex;
-  return bth[buf[i++]] + bth[buf[i++]] +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] +
-          bth[buf[i++]] + bth[buf[i++]] +
-          bth[buf[i++]] + bth[buf[i++]];
+  // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
+  return ([bth[buf[i++]], bth[buf[i++]], 
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]],
+	bth[buf[i++]], bth[buf[i++]],
+	bth[buf[i++]], bth[buf[i++]]]).join('');
 }
 
 module.exports = bytesToUuid;
@@ -30387,9 +30382,11 @@ module.exports = bytesToUuid;
 // and inconsistent support for the `crypto` API.  We do the best we can via
 // feature-detection
 
-// getRandomValues needs to be invoked in a context where "this" is a Crypto implementation.
-var getRandomValues = (typeof(crypto) != 'undefined' && crypto.getRandomValues.bind(crypto)) ||
-                      (typeof(msCrypto) != 'undefined' && msCrypto.getRandomValues.bind(msCrypto));
+// getRandomValues needs to be invoked in a context where "this" is a Crypto
+// implementation. Also, find the complete implementation of crypto on IE11.
+var getRandomValues = (typeof(crypto) != 'undefined' && crypto.getRandomValues && crypto.getRandomValues.bind(crypto)) ||
+                      (typeof(msCrypto) != 'undefined' && typeof window.msCrypto.getRandomValues == 'function' && msCrypto.getRandomValues.bind(msCrypto));
+
 if (getRandomValues) {
   // WHATWG crypto RNG - http://wiki.whatwg.org/wiki/Crypto
   var rnds8 = new Uint8Array(16); // eslint-disable-line no-undef
@@ -30778,7 +30775,7 @@ module.exports = __webpack_amd_options__;
 
 }(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(31)(module), __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(30)(module), __webpack_require__(2)))
 
 /***/ }),
 /* 201 */
@@ -30886,7 +30883,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * @shouldBePublished false
  */
 const routerClientConstructor_1 = __webpack_require__(95);
-const logger_1 = __webpack_require__(5);
+const logger_1 = __webpack_require__(4);
 let RCConstructor = routerClientConstructor_1.RouterClientConstructor;
 /** The logger needs a router client, and the router client needs a logger.
  * To get around this fundamental circular dependency, we pass a reference
@@ -30914,15 +30911,15 @@ exports.default = RouterClientInstance;
 */
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const async_1 = __webpack_require__(34);
+const async_1 = __webpack_require__(33);
 const launcherClient_1 = __webpack_require__(116);
 const windowClient_1 = __webpack_require__(96);
 const distributedStoreClient_1 = __webpack_require__(93);
-const Utils = __webpack_require__(14);
+const Utils = __webpack_require__(15);
 const validate_1 = __webpack_require__(20);
-const baseClient_1 = __webpack_require__(18);
+const baseClient_1 = __webpack_require__(19);
 const FinsembleWindow_1 = __webpack_require__(46);
-const logger_1 = __webpack_require__(5);
+const logger_1 = __webpack_require__(4);
 const system_1 = __webpack_require__(8);
 windowClient_1.default.initialize();
 launcherClient_1.default.initialize();
@@ -31342,15 +31339,15 @@ exports.default = dialogManagerClient;
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events__ = __webpack_require__(25);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_events__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_logger__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__SplinterAgent__ = __webpack_require__(315);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__common_util__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__common_util__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_lodash_clone__ = __webpack_require__(386);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_lodash_clone___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_lodash_clone__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_async__ = __webpack_require__(34);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_async__ = __webpack_require__(33);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_async___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_async__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_system__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7__common_system__);
@@ -31547,8 +31544,8 @@ class SplinterAgentPool extends __WEBPACK_IMPORTED_MODULE_0_events___default.a.E
 		};
 
 		//Spawn new application; when it comes online, it'll send off an 'onSpawned' message. At that point we add the agent to our pool and flush the queue.
-		let finApp = new __WEBPACK_IMPORTED_MODULE_7__common_system__["System"].Application(agentDescriptor, function () {
-			__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.addListener(agentDescriptor.name + ".onSpawned", function () {
+		let finApp = new __WEBPACK_IMPORTED_MODULE_7__common_system__["System"].Application(agentDescriptor, () => {
+			__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.addListener(agentDescriptor.name + ".onSpawned", () => {
 				__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.debug("Agent spawned and connected to the pool.", agentDescriptor.name);
 				agentConfig.app = finApp;
 				let agent = new __WEBPACK_IMPORTED_MODULE_3__SplinterAgent__["a" /* default */](agentConfig);
@@ -31560,7 +31557,7 @@ class SplinterAgentPool extends __WEBPACK_IMPORTED_MODULE_0_events___default.a.E
 				}
 			});
 			finApp.run();
-		}, function (err) {
+		}, err => {
 			__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.error("Failed to create Agent", err);
 		});
 	}
@@ -31781,7 +31778,7 @@ module.exports = deepmerge_1;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var FSBLDependencyManager;
-const Constants = __webpack_require__(35);
+const Constants = __webpack_require__(34);
 const system_1 = __webpack_require__(8);
 var FSBLUtils;
 var UserNotification;
@@ -31791,7 +31788,7 @@ var RouterClient;
 var ConfigClient;
 var SplinterAgentPool;
 var Logger;
-const async_1 = __webpack_require__(34);
+const async_1 = __webpack_require__(33);
 /** This syntax allows TS to keep track of where the import comes from. */
 const merge = __webpack_require__(277);
 let SCHEDULED_RESTART_TIMEOUT = 60000;
@@ -31833,13 +31830,13 @@ class _ServiceManager {
         window["FSBLDependencyManager"] = FSBLDependencyManager;
         RouterClient = __webpack_require__(272).default;
         /** This exports each of its functions, so no default needed. */
-        FSBLUtils = __webpack_require__(14);
+        FSBLUtils = __webpack_require__(15);
         UserNotification = __webpack_require__(91).default;
-        ConfigUtil = __webpack_require__(36).ConfigUtilInstance;
+        ConfigUtil = __webpack_require__(35).ConfigUtilInstance;
         DialogManager = __webpack_require__(273).default;
         ConfigClient = __webpack_require__(45).default;
         SplinterAgentPool = __webpack_require__(276).default;
-        Logger = __webpack_require__(5).default;
+        Logger = __webpack_require__(4).default;
         FinsembleUUID = FSBLUtils.guuid();
     }
     static getOpenfinManifest() {
@@ -32524,9 +32521,9 @@ system_1.System.ready(async function () {
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events__ = __webpack_require__(25);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_events__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_system__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__common_system__);
@@ -34606,7 +34603,7 @@ function stubFalse() {
 
 module.exports = clone;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(31)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(30)(module)))
 
 /***/ })
 /******/ ]);

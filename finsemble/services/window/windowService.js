@@ -2376,7 +2376,7 @@ var Validate = function () {
 
 /* harmony default export */ __webpack_exports__["default"] = (new Validate());
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\common\\validate.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\common\\validate.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\common\\validate.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\common\\validate.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -2951,8 +2951,13 @@ function injectJS(path, cb) {
 	head.insertBefore(script, firstScript);
 };
 
+/** Daniel H. 1/14/2019
+ * @TODO - This method is only used in the DragAndDrop client, and it introduces a sneaky circular dependency between
+ * this module and the launcherClient. It should be refactored out of this module. This can't be done until v4.0.0, as
+ * it would be a breaking change to our API.
+ */
 /**
- * This will either open a component with the shared data or publish the shared data using the linker client if the window is linked
+ * This will either open a component with the shared data or publish the shared data using the linker client if the window is linked.
  * @experimental
  *
  * @param {object} params
@@ -3052,7 +3057,7 @@ function openSharedData(params, cb) {
 	});
 };
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\common\\util.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\common\\util.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\common\\util.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\common\\util.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -8981,19 +8986,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-/**
- *
- *
-/**
- *
- *
-/**
- *
- *
-/**
- *
- *
- */
+
 var ConfigUtil = function () {
 
 	var self = this;
@@ -9415,7 +9408,7 @@ const ConfigUtilInstance = new ConfigUtil();
 /* harmony export (immutable) */ __webpack_exports__["ConfigUtilInstance"] = ConfigUtilInstance;
 
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\common\\configUtil.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\common\\configUtil.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\common\\configUtil.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\common\\configUtil.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -13297,7 +13290,7 @@ var UserNotification = function () {
 
 /* harmony default export */ __webpack_exports__["default"] = (new UserNotification());
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\common\\userNotification.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\common\\userNotification.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\common\\userNotification.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\common\\userNotification.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -13316,14 +13309,15 @@ for (var i = 0; i < 256; ++i) {
 function bytesToUuid(buf, offset) {
   var i = offset || 0;
   var bth = byteToHex;
-  return bth[buf[i++]] + bth[buf[i++]] +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] +
-          bth[buf[i++]] + bth[buf[i++]] +
-          bth[buf[i++]] + bth[buf[i++]];
+  // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
+  return ([bth[buf[i++]], bth[buf[i++]], 
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]],
+	bth[buf[i++]], bth[buf[i++]],
+	bth[buf[i++]], bth[buf[i++]]]).join('');
 }
 
 module.exports = bytesToUuid;
@@ -13338,9 +13332,11 @@ module.exports = bytesToUuid;
 // and inconsistent support for the `crypto` API.  We do the best we can via
 // feature-detection
 
-// getRandomValues needs to be invoked in a context where "this" is a Crypto implementation.
-var getRandomValues = (typeof(crypto) != 'undefined' && crypto.getRandomValues.bind(crypto)) ||
-                      (typeof(msCrypto) != 'undefined' && msCrypto.getRandomValues.bind(msCrypto));
+// getRandomValues needs to be invoked in a context where "this" is a Crypto
+// implementation. Also, find the complete implementation of crypto on IE11.
+var getRandomValues = (typeof(crypto) != 'undefined' && crypto.getRandomValues && crypto.getRandomValues.bind(crypto)) ||
+                      (typeof(msCrypto) != 'undefined' && typeof window.msCrypto.getRandomValues == 'function' && msCrypto.getRandomValues.bind(msCrypto));
+
 if (getRandomValues) {
   // WHATWG crypto RNG - http://wiki.whatwg.org/wiki/Crypto
   var rnds8 = new Uint8Array(16); // eslint-disable-line no-undef
@@ -14258,7 +14254,7 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 }
 /* harmony default export */ __webpack_exports__["a"] = (Monitors);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\common\\monitorsAndScaling.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\common\\monitorsAndScaling.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\common\\monitorsAndScaling.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\common\\monitorsAndScaling.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -14820,7 +14816,7 @@ RouterTransport.addTransport("FinsembleTransport", RouterTransportImplementation
 
 /* harmony default export */ __webpack_exports__["default"] = (RouterTransport);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\common\\routerTransport.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\common\\routerTransport.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\common\\routerTransport.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\common\\routerTransport.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -17486,7 +17482,7 @@ var SystemSettings = function () {
 
 /* harmony default export */ __webpack_exports__["a"] = (new SystemSettings());
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\common\\systemSettings.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\common\\systemSettings.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\common\\systemSettings.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\common\\systemSettings.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -23898,7 +23894,7 @@ function removeChildMapping(mapping, field) {
 	return removals;
 }
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\common\\storeUtils.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\common\\storeUtils.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\common\\storeUtils.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\common\\storeUtils.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -24447,6 +24443,7 @@ const FinsembleWindow_1 = __webpack_require__(80);
 const configUtil_1 = __webpack_require__(14);
 const deepEqual = __webpack_require__(91);
 const async_1 = __webpack_require__(11);
+const routerClientInstance_1 = __webpack_require__(6);
 const WORKSPACE_CACHE_TOPIC = "finsemble.workspace.cache"; // window data stored in this topic for access by workspace service
 const constants_1 = __webpack_require__(16);
 var finsembleWindow;
@@ -25554,9 +25551,9 @@ class WindowClient extends baseClient_1._BaseClient {
      */
     ejectFromGroup() {
         let windowName = this.getWindowNameForDocking();
-        FSBL.Clients.RouterClient.query("DockingService.leaveGroup", {
+        routerClientInstance_1.default.query("DockingService.leaveGroup", {
             name: windowName
-        });
+        }, () => { });
         this.dirtyTheWorkspace(windowName);
     }
     /**
@@ -25694,7 +25691,7 @@ class WindowClient extends baseClient_1._BaseClient {
      * @param {*} cb
      */
     startTilingOrTabbing(params, cb = Function.prototype) {
-        FSBL.Clients.RouterClient.transmit("DockingService.startTilingOrTabbing", params);
+        routerClientInstance_1.default.transmit("DockingService.startTilingOrTabbing", params);
         cb();
     }
     ;
@@ -25705,7 +25702,7 @@ class WindowClient extends baseClient_1._BaseClient {
      */
     cancelTilingOrTabbing(params, cb = Function.prototype) {
         console.debug("CancelTilingOrTabbing");
-        FSBL.Clients.RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
+        routerClientInstance_1.default.transmit("DockingService.cancelTilingOrTabbing", params);
         cb();
     }
     ;
@@ -25715,7 +25712,7 @@ class WindowClient extends baseClient_1._BaseClient {
      * @param {*} cb
      */
     sendIdentifierForTilingOrTabbing(params, cb = Function.prototype) {
-        FSBL.Clients.RouterClient.transmit("DockingService.identifierForTilingOrTabbing", params);
+        routerClientInstance_1.default.transmit("DockingService.identifierForTilingOrTabbing", params);
         cb();
     }
     ;
@@ -25734,10 +25731,10 @@ class WindowClient extends baseClient_1._BaseClient {
             bottom: finsembleWindow.windowOptions.bottom,
         };
         let transmitAndQueryStop = () => {
-            FSBL.Clients.RouterClient.query("DockingService.stopTilingOrTabbing", params, () => {
+            routerClientInstance_1.default.query("DockingService.stopTilingOrTabbing", params, () => {
                 cb();
             });
-            FSBL.Clients.RouterClient.transmit("DockingService.stopTilingOrTabbing", params);
+            routerClientInstance_1.default.transmit("DockingService.stopTilingOrTabbing", params);
         };
         if (!params.mousePosition) {
             return system_1.System.getMousePosition((err, position) => {
@@ -25745,7 +25742,7 @@ class WindowClient extends baseClient_1._BaseClient {
                 let pointIsInBox = this.isPointInBox(position, windowPosition);
                 if (!params.allowDropOnSelf && pointIsInBox) {
                     logger_1.default.system.debug("StopTilingOrTabbing windowClient cancel 1:", params, windowPosition, err);
-                    FSBL.Clients.RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
+                    routerClientInstance_1.default.transmit("DockingService.cancelTilingOrTabbing", params);
                     return cb();
                 }
                 logger_1.default.system.debug("StopTilingOrTabbing windowClient stop 1:", err, params, windowPosition, err);
@@ -25755,7 +25752,7 @@ class WindowClient extends baseClient_1._BaseClient {
         let pointIsInBox = this.isPointInBox(params.mousePosition, windowPosition);
         if (!params.allowDropOnSelf && pointIsInBox) {
             logger_1.default.system.debug("StopTilingOrTabbing windowClient cancel 2:", params, windowPosition);
-            FSBL.Clients.RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
+            routerClientInstance_1.default.transmit("DockingService.cancelTilingOrTabbing", params);
             return cb();
         }
         logger_1.default.system.debug("StopTilingOrTabbing windowClient stop 2:", params, windowPosition);
@@ -31551,7 +31548,7 @@ class BoxMath {
 }
 /* harmony default export */ __webpack_exports__["a"] = (BoxMath);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Docking\\boxMath.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Docking\\boxMath.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\services\\window\\Docking\\boxMath.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\services\\window\\Docking\\boxMath.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -31597,7 +31594,7 @@ module.exports = v4;
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* WEBPACK VAR INJECTION */(function(process, module) {/* harmony export (immutable) */ __webpack_exports__["guuid"] = guuid;
 /* harmony export (immutable) */ __webpack_exports__["clone"] = clone;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_uuid__ = __webpack_require__(101);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_uuid__ = __webpack_require__(102);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_uuid___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_uuid__);
 
 //Class without deep openfin/system dependencies.
@@ -31648,7 +31645,7 @@ const mockLogger = new MockLogger();
 /* harmony export (immutable) */ __webpack_exports__["mockLogger"] = mockLogger;
 
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\common\\disentangledUtils.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\common\\disentangledUtils.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\common\\disentangledUtils.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\common\\disentangledUtils.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -32210,7 +32207,7 @@ class DockableBox {
 }
 /* harmony default export */ __webpack_exports__["a"] = (DockableBox);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Docking\\dockableBox.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Docking\\dockableBox.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\services\\window\\Docking\\dockableBox.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\services\\window\\Docking\\dockableBox.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -32256,7 +32253,7 @@ const logger_1 = __webpack_require__(2);
 const events_1 = __webpack_require__(17);
 const util = __webpack_require__(10);
 const lodash_1 = __webpack_require__(197);
-const merge = __webpack_require__(102);
+const merge = __webpack_require__(103);
 const WindowEventManager_1 = __webpack_require__(89);
 const constants = __webpack_require__(16);
 const FinsembleEvent_1 = __webpack_require__(88);
@@ -33557,7 +33554,7 @@ const SPLIT_HANDLE_MAP = {
 /* harmony export (immutable) */ __webpack_exports__["SPLIT_HANDLE_MAP"] = SPLIT_HANDLE_MAP;
 
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Docking\\constants.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Docking\\constants.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\services\\window\\Docking\\constants.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\services\\window\\Docking\\constants.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -33624,124 +33621,6 @@ exports.ObjectPool = ObjectPool;
 
 /***/ }),
 /* 101 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var v1 = __webpack_require__(40);
-var v4 = __webpack_require__(93);
-
-var uuid = v4;
-uuid.v1 = v1;
-uuid.v4 = v4;
-
-module.exports = uuid;
-
-
-/***/ }),
-/* 102 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var isMergeableObject = function isMergeableObject(value) {
-	return isNonNullObject(value)
-		&& !isSpecial(value)
-};
-
-function isNonNullObject(value) {
-	return !!value && typeof value === 'object'
-}
-
-function isSpecial(value) {
-	var stringValue = Object.prototype.toString.call(value);
-
-	return stringValue === '[object RegExp]'
-		|| stringValue === '[object Date]'
-		|| isReactElement(value)
-}
-
-// see https://github.com/facebook/react/blob/b5ac963fb791d1298e7f396236383bc955f916c1/src/isomorphic/classic/element/ReactElement.js#L21-L25
-var canUseSymbol = typeof Symbol === 'function' && Symbol.for;
-var REACT_ELEMENT_TYPE = canUseSymbol ? Symbol.for('react.element') : 0xeac7;
-
-function isReactElement(value) {
-	return value.$$typeof === REACT_ELEMENT_TYPE
-}
-
-function emptyTarget(val) {
-    return Array.isArray(val) ? [] : {}
-}
-
-function cloneIfNecessary(value, optionsArgument) {
-    var clone = optionsArgument && optionsArgument.clone === true;
-    return (clone && isMergeableObject(value)) ? deepmerge(emptyTarget(value), value, optionsArgument) : value
-}
-
-function defaultArrayMerge(target, source, optionsArgument) {
-    var destination = target.slice();
-    source.forEach(function(e, i) {
-        if (typeof destination[i] === 'undefined') {
-            destination[i] = cloneIfNecessary(e, optionsArgument);
-        } else if (isMergeableObject(e)) {
-            destination[i] = deepmerge(target[i], e, optionsArgument);
-        } else if (target.indexOf(e) === -1) {
-            destination.push(cloneIfNecessary(e, optionsArgument));
-        }
-    });
-    return destination
-}
-
-function mergeObject(target, source, optionsArgument) {
-    var destination = {};
-    if (isMergeableObject(target)) {
-        Object.keys(target).forEach(function(key) {
-            destination[key] = cloneIfNecessary(target[key], optionsArgument);
-        });
-    }
-    Object.keys(source).forEach(function(key) {
-        if (!isMergeableObject(source[key]) || !target[key]) {
-            destination[key] = cloneIfNecessary(source[key], optionsArgument);
-        } else {
-            destination[key] = deepmerge(target[key], source[key], optionsArgument);
-        }
-    });
-    return destination
-}
-
-function deepmerge(target, source, optionsArgument) {
-    var sourceIsArray = Array.isArray(source);
-    var targetIsArray = Array.isArray(target);
-    var options = optionsArgument || { arrayMerge: defaultArrayMerge };
-    var sourceAndTargetTypesMatch = sourceIsArray === targetIsArray;
-
-    if (!sourceAndTargetTypesMatch) {
-        return cloneIfNecessary(source, optionsArgument)
-    } else if (sourceIsArray) {
-        var arrayMerge = options.arrayMerge || defaultArrayMerge;
-        return arrayMerge(target, source, optionsArgument)
-    } else {
-        return mergeObject(target, source, optionsArgument)
-    }
-}
-
-deepmerge.all = function deepmergeAll(array, optionsArgument) {
-    if (!Array.isArray(array) || array.length < 2) {
-        throw new Error('first argument should be an array with at least two elements')
-    }
-
-    // we are sure there are at least 2 values, so it is safe to have no initial value
-    return array.reduce(function(prev, next) {
-        return deepmerge(prev, next, optionsArgument)
-    })
-};
-
-var deepmerge_1 = deepmerge;
-
-module.exports = deepmerge_1;
-
-
-/***/ }),
-/* 103 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -34083,8 +33962,126 @@ class WindowGroup {
 /* harmony export (immutable) */ __webpack_exports__["a"] = WindowGroup;
 
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\common\\window\\windowGroup.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\common\\window\\windowGroup.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\common\\window\\windowGroup.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\common\\window\\windowGroup.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
+
+/***/ }),
+/* 102 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var v1 = __webpack_require__(40);
+var v4 = __webpack_require__(93);
+
+var uuid = v4;
+uuid.v1 = v1;
+uuid.v4 = v4;
+
+module.exports = uuid;
+
+
+/***/ }),
+/* 103 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var isMergeableObject = function isMergeableObject(value) {
+	return isNonNullObject(value)
+		&& !isSpecial(value)
+};
+
+function isNonNullObject(value) {
+	return !!value && typeof value === 'object'
+}
+
+function isSpecial(value) {
+	var stringValue = Object.prototype.toString.call(value);
+
+	return stringValue === '[object RegExp]'
+		|| stringValue === '[object Date]'
+		|| isReactElement(value)
+}
+
+// see https://github.com/facebook/react/blob/b5ac963fb791d1298e7f396236383bc955f916c1/src/isomorphic/classic/element/ReactElement.js#L21-L25
+var canUseSymbol = typeof Symbol === 'function' && Symbol.for;
+var REACT_ELEMENT_TYPE = canUseSymbol ? Symbol.for('react.element') : 0xeac7;
+
+function isReactElement(value) {
+	return value.$$typeof === REACT_ELEMENT_TYPE
+}
+
+function emptyTarget(val) {
+    return Array.isArray(val) ? [] : {}
+}
+
+function cloneIfNecessary(value, optionsArgument) {
+    var clone = optionsArgument && optionsArgument.clone === true;
+    return (clone && isMergeableObject(value)) ? deepmerge(emptyTarget(value), value, optionsArgument) : value
+}
+
+function defaultArrayMerge(target, source, optionsArgument) {
+    var destination = target.slice();
+    source.forEach(function(e, i) {
+        if (typeof destination[i] === 'undefined') {
+            destination[i] = cloneIfNecessary(e, optionsArgument);
+        } else if (isMergeableObject(e)) {
+            destination[i] = deepmerge(target[i], e, optionsArgument);
+        } else if (target.indexOf(e) === -1) {
+            destination.push(cloneIfNecessary(e, optionsArgument));
+        }
+    });
+    return destination
+}
+
+function mergeObject(target, source, optionsArgument) {
+    var destination = {};
+    if (isMergeableObject(target)) {
+        Object.keys(target).forEach(function(key) {
+            destination[key] = cloneIfNecessary(target[key], optionsArgument);
+        });
+    }
+    Object.keys(source).forEach(function(key) {
+        if (!isMergeableObject(source[key]) || !target[key]) {
+            destination[key] = cloneIfNecessary(source[key], optionsArgument);
+        } else {
+            destination[key] = deepmerge(target[key], source[key], optionsArgument);
+        }
+    });
+    return destination
+}
+
+function deepmerge(target, source, optionsArgument) {
+    var sourceIsArray = Array.isArray(source);
+    var targetIsArray = Array.isArray(target);
+    var options = optionsArgument || { arrayMerge: defaultArrayMerge };
+    var sourceAndTargetTypesMatch = sourceIsArray === targetIsArray;
+
+    if (!sourceAndTargetTypesMatch) {
+        return cloneIfNecessary(source, optionsArgument)
+    } else if (sourceIsArray) {
+        var arrayMerge = options.arrayMerge || defaultArrayMerge;
+        return arrayMerge(target, source, optionsArgument)
+    } else {
+        return mergeObject(target, source, optionsArgument)
+    }
+}
+
+deepmerge.all = function deepmergeAll(array, optionsArgument) {
+    if (!Array.isArray(array) || array.length < 2) {
+        throw new Error('first argument should be an array with at least two elements')
+    }
+
+    // we are sure there are at least 2 values, so it is safe to have no initial value
+    return array.reduce(function(prev, next) {
+        return deepmerge(prev, next, optionsArgument)
+    })
+};
+
+var deepmerge_1 = deepmerge;
+
+module.exports = deepmerge_1;
+
 
 /***/ }),
 /* 104 */,
@@ -34111,7 +34108,7 @@ const FinsembleWindowInternal = __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseW
 /* harmony export (immutable) */ __webpack_exports__["FinsembleWindowInternal"] = FinsembleWindowInternal;
 
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\WindowAbstractions\\FinsembleWindowInternal.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\WindowAbstractions\\FinsembleWindowInternal.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\services\\window\\WindowAbstractions\\FinsembleWindowInternal.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\services\\window\\WindowAbstractions\\FinsembleWindowInternal.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -34121,13 +34118,11 @@ const FinsembleWindowInternal = __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseW
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-//tslint:disable
-var thisApp, manifest, finWindow;
+var manifest;
 /**
  * This file receives SpawnRequests from a master `SplinterAgent`.
  */
 const routerClientInstance_1 = __webpack_require__(6);
-routerClientInstance_1.default.onReady(onRouterReady);
 const logger_1 = __webpack_require__(2);
 logger_1.default.start();
 logger_1.default.system.debug("SpltinerAgentSlave loaded.");
@@ -34136,8 +34131,6 @@ function onSetTitle(err, message) {
     document.title = message.data.title;
 }
 function onRouterReady() {
-    thisApp = system_1.System.Application.getCurrent();
-    finWindow = system_1.System.Window.getCurrent();
     //Listen for close, unregister from the logger.
     finWindow.addEventListener("close-requested", () => {
         logger_1.default.unregisterClient({ deleteFromPersistence: true });
@@ -34183,6 +34176,15 @@ function onSpawnRequest(err, message, manifestToUse = manifest) {
     });
 }
 exports.onSpawnRequest = onSpawnRequest;
+const thisApp = system_1.System.Application.getCurrent();
+const finWindow = system_1.System.Window.getCurrent();
+/*
+    This file is imported into windowService createSplinterAndInject. Without this shielding, we get spurious onspawned transmits from onRouterReady.
+    Those cause errors to show up in the Central Logger from the listener in the SplinterAgentPool.
+    We should only transmit anything here in the actual SplinteragentSlave window.
+*/
+if (finWindow.name === thisApp.window.name)
+    routerClientInstance_1.default.onReady(onRouterReady);
 
 
 /***/ }),
@@ -34219,7 +34221,7 @@ exports.WindowPool = WindowPool;
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_window_windowGroup__ = __webpack_require__(103);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_window_windowGroup__ = __webpack_require__(101);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__dockableBox__ = __webpack_require__(95);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__constants__ = __webpack_require__(98);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__boxMath__ = __webpack_require__(92);
@@ -35324,7 +35326,7 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 //DockableGroup.prototype = DockableBox;
 /* harmony default export */ __webpack_exports__["a"] = (DockableGroup);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Docking\\dockableGroup.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Docking\\dockableGroup.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\services\\window\\Docking\\dockableGroup.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\services\\window\\Docking\\dockableGroup.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -35349,8 +35351,8 @@ function DockableMonitor(params) {
 	this.right = bounds.right;
 	this.bottom = bounds.bottom;
 	this.rawMonitor = params.monitor instanceof DockableMonitor ? params.monitor.rawMonitor : params.monitor; //Need this later in order to do docking related tasks
-	this.unclaimedRect = this.rawMonitor.unclaimedRect;
-	this.availableRect = this.rawMonitor.availableRect;
+	this.unclaimedRect = params.monitor.unclaimedRect;
+	this.availableRect = params.monitor.availableRect;
 	this.bufferSize = 15;
 	/**
  * @function {function name}
@@ -35640,7 +35642,7 @@ function DockableMonitor(params) {
 
 /* harmony default export */ __webpack_exports__["a"] = (DockableMonitor);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Docking\\dockableMonitor.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Docking\\dockableMonitor.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\services\\window\\Docking\\dockableMonitor.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\services\\window\\Docking\\dockableMonitor.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -36531,7 +36533,7 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 }
 /* harmony default export */ __webpack_exports__["a"] = (DockableWindow);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Docking\\dockableWindow.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Docking\\dockableWindow.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\services\\window\\Docking\\dockableWindow.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\services\\window\\Docking\\dockableWindow.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -37154,7 +37156,7 @@ class DockingCalculator {
 			let mon = monitors[i];
 			//Only need to move windows if the current monitor is the one we docked too and if the current window is on said monitor
 			if (dockedWin.monitor.name === mon.name && win.monitor.name === mon.name) {
-				let { availableRect, unclaimedRect } = mon.rawMonitor;
+				let { availableRect } = mon.rawMonitor;
 				let newBounds = {
 					left: __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_7__common_disentangledUtils__["clone"])(win.left),
 					right: __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_7__common_disentangledUtils__["clone"])(win.right),
@@ -37171,7 +37173,7 @@ class DockingCalculator {
 				//If we're docking a window to the top of the monitor, and the top another window is in claimed space, resize it so that the window shrinks by the height of the newly docked window. This basically squishes the window out of space it shouldn't be in.
 				if (dockedWin.monitorDockablePositions.TOP === dockedWin.dockedPosition) {
 					if (win.top <= availableRect.top) {
-						newBounds.top = unclaimedRect.top + dockedWin.bottom;
+						newBounds.top = dockedWin.bottom;
 						newBounds.height = newBounds.bottom - newBounds.top;
 						newBounds.hasChanged = true;
 						newBounds.mousePosition = {
@@ -37319,11 +37321,6 @@ class DockingCalculator {
 		//@todo, pick up zones that are off limits from terry's update.
 		monitorUpdate.forEach(monitor => {
 			//Push updated bounds to the pool.
-			if (monitor instanceof __WEBPACK_IMPORTED_MODULE_0__dockableMonitor__["a" /* default */]) {
-				//Monitor needs to be removed and then readded. The old code monitorPool[monitor.name] = monitor will no longer work since there is an inner object in a pool called 'objects'. This needs to be updated by the pools getters and setters.
-				monitorPool.remove(monitor.name);
-				monitorPool.add(monitor.name, monitor);
-			}
 			if (monitor.availableRect.top !== monitor.unclaimedRect.top) {
 				restrictedAreas.push({
 					min: {
@@ -40529,7 +40526,7 @@ class DockingCalculator {
 }
 /* harmony default export */ __webpack_exports__["a"] = (DockingCalculator);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Docking\\dockingCalculator.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Docking\\dockingCalculator.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\services\\window\\Docking\\dockingCalculator.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\services\\window\\Docking\\dockingCalculator.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(0), __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -40610,7 +40607,7 @@ function mousePosToBounds(mousePosition) {
 	return bounds;
 }
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Docking\\maskBoundsCalculator.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Docking\\maskBoundsCalculator.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\services\\window\\Docking\\maskBoundsCalculator.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\services\\window\\Docking\\maskBoundsCalculator.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
@@ -40756,7 +40753,7 @@ serviceInstance.start();
 
 /* harmony default export */ __webpack_exports__["default"] = (serviceInstance);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\windowService.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\windowService.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\services\\window\\windowService.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\services\\window\\windowService.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -41521,10 +41518,11 @@ const createSplinterAndInject_1 = __webpack_require__(165);
 const LauncherDefaults_1 = __webpack_require__(163);
 const async_1 = __webpack_require__(11);
 const lodash_difference_1 = __webpack_require__(175);
-const merge = __webpack_require__(102);
+const merge = __webpack_require__(103);
 // For regression testing
 __webpack_require__(211);
 const clone = __webpack_require__(90);
+;
 var activeWindows = new launcherGroup_1.LauncherGroup({
     name: "LauncherService.allWindows",
 });
@@ -42177,14 +42175,36 @@ class Launcher {
                 return windowDescriptor;
             }
         }
-        let bounds = {
-            left: windowDescriptor.defaultLeft,
-            top: windowDescriptor.defaultTop,
-            height: windowDescriptor.defaultHeight,
-            width: windowDescriptor.defaultWidth,
-            right: null,
-            bottom: null
-        };
+        let bounds;
+        /** Currently our bounds data (top, left, height, width, etc.) is duplicated in up to three places
+         * in the WindowDescriptor object: as top level props (windowDescriptor.left), as top level
+         * props with a "default" prefix (windowDescriptor.defaultLeft), and, in the case of StackedWindows
+         * (and in this case only), within the "bounds" prop (windowDescriptor.bounds.left).
+         *
+         * @TODO Pick a place and stick with it. Refactor all the code touching WindowDescriptors to use
+         * that new place. Either everyone should check "bounds", or no one should.
+         */
+        if (windowDescriptor.componentType === "StackedWindow") {
+            bounds = {
+                left: windowDescriptor.left,
+                top: windowDescriptor.top,
+                height: windowDescriptor.height,
+                width: windowDescriptor.width,
+                right: null,
+                bottom: null
+            };
+        }
+        else {
+            bounds = {
+                left: windowDescriptor.defaultLeft,
+                top: windowDescriptor.defaultTop,
+                height: windowDescriptor.defaultHeight,
+                width: windowDescriptor.defaultWidth,
+                right: null,
+                bottom: null
+            };
+        }
+        ;
         bounds.right = bounds.left + bounds.width;
         bounds.bottom = bounds.top + bounds.height;
         //@note, will be used later.
@@ -42222,6 +42242,21 @@ class Launcher {
             windowDescriptor.width = bounds.width;
             windowDescriptor.right = bounds.left + bounds.width;
             windowDescriptor.bottom = bounds.top + bounds.height;
+            /**
+             * Daniel H. - 1/16/19
+             * Needed in the case that  the windowDescriptor belongs to a StackedWindow.
+             * See coments above.
+             *
+             * @TODO - Refactor this away.
+            */
+            if (windowDescriptor.bounds) {
+                windowDescriptor.bounds.left = bounds.left;
+                windowDescriptor.bounds.top = bounds.top;
+                windowDescriptor.bounds.height = bounds.height;
+                windowDescriptor.bounds.width = bounds.width;
+                windowDescriptor.bounds.right = bounds.left + bounds.width;
+                windowDescriptor.bounds.bottom = bounds.top + bounds.height;
+            }
         }
         return windowDescriptor;
     }
@@ -42324,7 +42359,7 @@ class Launcher {
      * with defaultLeft, defaultTop, defaultWidth, defaultHeight, and claimMonitorSpace set.
      */
     deriveBounds(launcherParams) {
-        var windowDescriptor = {};
+        let windowDescriptor = {};
         // Default to same monitor of the relativeWindow passed in (usually the window that launched us)
         // Get windowDescriptor for the previous window (the caller or relativeWindow)
         function addPreviousWindow(params) {
@@ -42556,7 +42591,7 @@ class Launcher {
                 }
                 var allActiveWindows = activeWindows.getWindows();
                 var activeComponentNames = Object.keys(allActiveWindows).filter(name => {
-                    return allActiveWindows[name].params.component == c;
+                    return allActiveWindows[name].componentType === c;
                 });
                 for (var j of activeComponentNames) {
                     componentsThatCanReceiveDataTypes[commonType].activeComponents.push(j);
@@ -66350,6 +66385,7 @@ module.exports = difference;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_12__clients_logger__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__common_constants__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__common_constants___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_13__common_constants__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__common_window_windowGroup__ = __webpack_require__(101);
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 // replace with import when ready
@@ -66373,6 +66409,7 @@ __WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.start();
 var DockingMain_AUTO_ARRANGE_CHANNEL = "DockingService.AutoarrangeStatus";
 var serviceConfig = {};
 var groupData = {};
+
 
 const APPLICATION_STATE_CHANNEL = __WEBPACK_IMPORTED_MODULE_13__common_constants__["APPLICATION_STATE_CHANNEL"];
 //Paste this into a toolbar's console.
@@ -66432,6 +66469,8 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		//docking options. These defaults are different from launchers defaults for a given window
 		this.defaultHeight = params.defaultHeight;
 		this.defaultWidth = params.defaultWidth;
+
+		__WEBPACK_IMPORTED_MODULE_1__common_util__["Monitors"].on("monitors-changed", this.monitorsChanged.bind(this));
 
 		this.bindAllFunctions();
 		this.activeWorkspace = { name: "" };
@@ -67000,6 +67039,94 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		return dimensions;
 	}
 
+	/**
+  * Called when monitors' state changes. Either a monitor has been added/removed or rearranged.
+  * @param {object} monitors An object containing each monitor with monitor name as keys
+  */
+	monitorsChanged(monitors) {
+
+		let newMonitors = [];
+		//Loop through the new monitors coming in from the system and rebuild them similar to how docking expects monitors (system monitors don't have an unclaimedRect)
+		for (let i = 0; i < monitors.length; i++) {
+			let newMonitor = monitors[i];
+			newMonitor.unclaimedRect = clone(monitors[i].availableRect);
+			newMonitors.push(newMonitor);
+		}
+
+		//After building the current list of monitors, update the monitor status
+		this.updateMonitorInfo(newMonitors);
+		let dockingMonitors = this.getMonitors();
+		//Loop through the windows looking for docked windows. Any docked windows need to be undocked and redocked to claim the proper amount of space with the new monitor dimensions
+		let wins = this.getWindows();
+		let oldHeight, oldWidth, snappedEdge;
+		for (let i = 0; i < Object.keys(wins).length; i++) {
+			let key = Object.keys(wins)[i];
+			let win = wins[key];
+
+			if (win.isDocked) {
+				//save these values for when the toolbar is undocked
+				oldWidth = clone(win.undockedPosition.width);
+				oldHeight = clone(win.undockedPosition.height);
+
+				//Get the window's snapped edge based on its docked position
+				for (let i = 0; i < Object.keys(win.monitorDockablePositions).length; i++) {
+					let key = Object.keys(win.monitorDockablePositions)[i];
+					if (win.monitorDockablePositions[key] === win.dockedPosition) {
+						snappedEdge = key.toLowerCase();
+					}
+				}
+
+				//Using the new monitors from the system, get the monitor that the current docked window is on. This will have the refreshed bounds
+				let mon = win.calculator.getMonitorByMajority(win, monitors);
+
+				//Get a dockable monitor for the monitor the window is currently on
+				let newDockingMon;
+
+				//Update the window's reference to the monitor that it is on. The new reference has updated rects that reflect the change that came from the system.
+				for (let i = 0; i < Object.keys(dockingMonitors).length; i++) {
+					let dockingMon = dockingMonitors[Object.keys(dockingMonitors)[i]];
+					if (dockingMon.rawMonitor.deviceId === mon.deviceId) {
+						newDockingMon = dockingMon;
+					}
+				}
+				win.monitor = newDockingMon;
+
+				//undock the monitor so we can dock it properly later
+				win.monitor.undockWindowFromMonitor(win);
+
+				//Values the window needs to properly update.
+				win.dockedHeight = win.height;
+				win.snappedEdge = snappedEdge;
+
+				let bounds, top, bottom;
+				let unclaimedRect = clone(mon.unclaimedRect);
+
+				//Reset windows bounds to move onto the new monitors bounds
+				if (snappedEdge.toLowerCase() === "top") {
+					top = unclaimedRect.top;
+					bottom = top + win.height;
+				} else if (snappedEdge.toLowerCase() === "bottom") {
+					bottom = unclaimedRect.bottom;
+					top = bottom - win.height;
+				}
+
+				bounds = {
+					left: unclaimedRect.left,
+					right: unclaimedRect.right,
+					bottom: bottom,
+					top: top,
+					width: unclaimedRect.width,
+					height: win.height
+				};
+				//Update the bounds before we dock the window so it will dock to the correct place
+				win.setBounds(bounds, Function.prototype, Function.prototype);
+
+				//Dock the window to it's attached monitor
+				win.monitor.dockWindowToMonitor(win, oldWidth, oldHeight);
+			}
+		}
+	}
+
 	updateMonitorInfo(monitorUpdate) {
 		var self = this;
 		// @todo, handle this properly. When a user removes a monitor, we need to revert everything.
@@ -67022,6 +67149,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 				_monitor: monitor
 			});
 		});
+
 		__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.log("Docking.monitorUpdate", monitorUpdate);
 		super.updateMonitorInfo(monitorUpdate);
 		self.setBufferSize(serviceConfig.BUFFER_SIZE);
@@ -68606,7 +68734,7 @@ function DefaultDockingOptions(configData, MIN_HEIGHT, MIN_WIDTH) {
 
 /* harmony default export */ __webpack_exports__["a"] = (DockingMain);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Docking\\dockingMain.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Docking\\dockingMain.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\services\\window\\Docking\\dockingMain.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\services\\window\\Docking\\dockingMain.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -69251,7 +69379,7 @@ window.Tester = {
 	})()
 };
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Launcher\\_test.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Launcher\\_test.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\services\\window\\Launcher\\_test.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\services\\window\\Launcher\\_test.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -69266,7 +69394,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__services_window_WindowAbstractions_BaseWindow__ = __webpack_require__(97);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__services_window_WindowAbstractions_BaseWindow___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__services_window_WindowAbstractions_BaseWindow__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_window_windowGroup__ = __webpack_require__(103);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_window_windowGroup__ = __webpack_require__(101);
 
 
 
@@ -69506,7 +69634,7 @@ class LauncherGroup extends __WEBPACK_IMPORTED_MODULE_3__common_window_windowGro
 /* harmony export (immutable) */ __webpack_exports__["LauncherGroup"] = LauncherGroup;
 
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Launcher\\launcherGroup.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Launcher\\launcherGroup.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\services\\window\\Launcher\\launcherGroup.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\services\\window\\Launcher\\launcherGroup.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -69856,7 +69984,9 @@ class AutoArrange {
 							triggeredByAutoArrange: true
 						}, () => {
 							bounds.triggeredByAutoArrange = true;
-							group.scale(bounds, "topLeft", self.DockingCalculator, () => {
+							//We scale the group to the entire monitor. The 'anchor' here is basically "from what side did it get resized?".
+							//Imagine the user grabbing the bottom right of the group and stretching it to fill the entire monitor. That's essentially what we're doing here.
+							group.scale(bounds, "bottomRight", self.DockingCalculator, () => {
 								group.stopMove();
 							});
 						});
@@ -69951,7 +70081,7 @@ class AutoArrange {
 
 /* harmony default export */ __webpack_exports__["a"] = (AutoArrange);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\MultiWindowFeatures\\autoArrange.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\MultiWindowFeatures\\autoArrange.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\services\\window\\MultiWindowFeatures\\autoArrange.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\services\\window\\MultiWindowFeatures\\autoArrange.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -70027,7 +70157,7 @@ class ServiceEntryPoints {
 /* harmony export (immutable) */ __webpack_exports__["a"] = ServiceEntryPoints;
 
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\ServiceEntryPoints\\setupAllEntryPoints.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\ServiceEntryPoints\\setupAllEntryPoints.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\services\\window\\ServiceEntryPoints\\setupAllEntryPoints.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\services\\window\\ServiceEntryPoints\\setupAllEntryPoints.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -70288,7 +70418,7 @@ class SplinterAgent extends __WEBPACK_IMPORTED_MODULE_0_events___default.a.Event
 
 /* harmony default export */ __webpack_exports__["a"] = (SplinterAgent);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Splintering\\SplinterAgent.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Splintering\\SplinterAgent.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\services\\window\\Splintering\\SplinterAgent.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\services\\window\\Splintering\\SplinterAgent.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -70504,8 +70634,8 @@ class SplinterAgentPool extends __WEBPACK_IMPORTED_MODULE_0_events___default.a.E
 		};
 
 		//Spawn new application; when it comes online, it'll send off an 'onSpawned' message. At that point we add the agent to our pool and flush the queue.
-		let finApp = new __WEBPACK_IMPORTED_MODULE_7__common_system__["System"].Application(agentDescriptor, function () {
-			__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.addListener(agentDescriptor.name + ".onSpawned", function () {
+		let finApp = new __WEBPACK_IMPORTED_MODULE_7__common_system__["System"].Application(agentDescriptor, () => {
+			__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.addListener(agentDescriptor.name + ".onSpawned", () => {
 				__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.debug("Agent spawned and connected to the pool.", agentDescriptor.name);
 				agentConfig.app = finApp;
 				let agent = new __WEBPACK_IMPORTED_MODULE_3__SplinterAgent__["a" /* default */](agentConfig);
@@ -70517,7 +70647,7 @@ class SplinterAgentPool extends __WEBPACK_IMPORTED_MODULE_0_events___default.a.E
 				}
 			});
 			finApp.run();
-		}, function (err) {
+		}, err => {
 			__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.error("Failed to create Agent", err);
 		});
 	}
@@ -70626,7 +70756,7 @@ class SplinterAgentPool extends __WEBPACK_IMPORTED_MODULE_0_events___default.a.E
 
 /* harmony default export */ __webpack_exports__["default"] = (SplinterAgentPool);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Splintering\\SplinterAgentPool.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\Splintering\\SplinterAgentPool.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\services\\window\\Splintering\\SplinterAgentPool.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\services\\window\\Splintering\\SplinterAgentPool.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -71119,7 +71249,7 @@ class NativeWindow extends __WEBPACK_IMPORTED_MODULE_3__BaseWindow__["BaseWindow
 
 /* harmony default export */ __webpack_exports__["a"] = (NativeWindow);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\WindowAbstractions\\externalWindowWrapper.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\WindowAbstractions\\externalWindowWrapper.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\services\\window\\WindowAbstractions\\externalWindowWrapper.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\services\\window\\WindowAbstractions\\externalWindowWrapper.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -71973,7 +72103,7 @@ class OpenFinWindow extends __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindo
 
 /* harmony default export */ __webpack_exports__["a"] = (OpenFinWindow);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\WindowAbstractions\\openfinWindowWrapper.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\WindowAbstractions\\openfinWindowWrapper.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\services\\window\\WindowAbstractions\\openfinWindowWrapper.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\services\\window\\WindowAbstractions\\openfinWindowWrapper.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),
@@ -72642,7 +72772,7 @@ class StackedWindow extends __WEBPACK_IMPORTED_MODULE_3__BaseWindow__["BaseWindo
 
 /* harmony default export */ __webpack_exports__["a"] = (StackedWindow);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\WindowAbstractions\\stackedWindowWrapper.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\thorsent\\finsemble\\src\\services\\window\\WindowAbstractions\\stackedWindowWrapper.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\services\\window\\WindowAbstractions\\stackedWindowWrapper.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\services\\window\\WindowAbstractions\\stackedWindowWrapper.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
 
 /***/ }),

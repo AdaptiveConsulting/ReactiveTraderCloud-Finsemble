@@ -1,14 +1,6 @@
 {
-    "blotter": {
-        "output": "components/blotter/blotter",
-        "entry": "./src\\components\\blotter\\blotter.js"
-    },
-    "analytics": {
-        "output": "components/analytics/analytics",
-        "entry": "./src\\components\\analytics\\analytics.js"
-    },
-    "header": {
-        "output": "components/header/header",
-        "entry": "./src\\components\\header\\header.js"
+    "ChartIQ": {
+        "output": "components/ChartIQ/ChartIQ",
+        "entry": "./src\\components\\ChartIQ\\ChartIQ.js"
     }
 }

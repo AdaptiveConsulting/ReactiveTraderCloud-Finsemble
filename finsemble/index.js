@@ -1463,190 +1463,6 @@ exports.default = RouterClientInstance;
 
 /***/ }),
 /* 6 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(process) {
-/**
- * This is the web browser implementation of `debug()`.
- *
- * Expose `debug()` as the module.
- */
-
-exports = module.exports = __webpack_require__(69);
-exports.log = log;
-exports.formatArgs = formatArgs;
-exports.save = save;
-exports.load = load;
-exports.useColors = useColors;
-exports.storage = 'undefined' != typeof chrome
-               && 'undefined' != typeof chrome.storage
-                  ? chrome.storage.local
-                  : localstorage();
-
-/**
- * Colors.
- */
-
-exports.colors = [
-  'lightseagreen',
-  'forestgreen',
-  'goldenrod',
-  'dodgerblue',
-  'darkorchid',
-  'crimson'
-];
-
-/**
- * Currently only WebKit-based Web Inspectors, Firefox >= v31,
- * and the Firebug extension (any Firefox version) are known
- * to support "%c" CSS customizations.
- *
- * TODO: add a `localStorage` variable to explicitly enable/disable colors
- */
-
-function useColors() {
-  // is webkit? http://stackoverflow.com/a/16459606/376773
-  // document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
-  return (typeof document !== 'undefined' && 'WebkitAppearance' in document.documentElement.style) ||
-    // is firebug? http://stackoverflow.com/a/398120/376773
-    (window.console && (console.firebug || (console.exception && console.table))) ||
-    // is firefox >= v31?
-    // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
-    (navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31);
-}
-
-/**
- * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
- */
-
-exports.formatters.j = function(v) {
-  try {
-    return JSON.stringify(v);
-  } catch (err) {
-    return '[UnexpectedJSONParseError]: ' + err.message;
-  }
-};
-
-
-/**
- * Colorize log arguments if enabled.
- *
- * @api public
- */
-
-function formatArgs() {
-  var args = arguments;
-  var useColors = this.useColors;
-
-  args[0] = (useColors ? '%c' : '')
-    + this.namespace
-    + (useColors ? ' %c' : ' ')
-    + args[0]
-    + (useColors ? '%c ' : ' ')
-    + '+' + exports.humanize(this.diff);
-
-  if (!useColors) return args;
-
-  var c = 'color: ' + this.color;
-  args = [args[0], c, 'color: inherit'].concat(Array.prototype.slice.call(args, 1));
-
-  // the final "%c" is somewhat tricky, because there could be other
-  // arguments passed either before or after the %c, so we need to
-  // figure out the correct index to insert the CSS into
-  var index = 0;
-  var lastC = 0;
-  args[0].replace(/%[a-z%]/g, function(match) {
-    if ('%%' === match) return;
-    index++;
-    if ('%c' === match) {
-      // we only are interested in the *last* %c
-      // (the user may have provided their own)
-      lastC = index;
-    }
-  });
-
-  args.splice(lastC, 0, c);
-  return args;
-}
-
-/**
- * Invokes `console.log()` when available.
- * No-op when `console.log` is not a "function".
- *
- * @api public
- */
-
-function log() {
-  // this hackery is required for IE8/9, where
-  // the `console.log` function doesn't have 'apply'
-  return 'object' === typeof console
-    && console.log
-    && Function.prototype.apply.call(console.log, console, arguments);
-}
-
-/**
- * Save `namespaces`.
- *
- * @param {String} namespaces
- * @api private
- */
-
-function save(namespaces) {
-  try {
-    if (null == namespaces) {
-      exports.storage.removeItem('debug');
-    } else {
-      exports.storage.debug = namespaces;
-    }
-  } catch(e) {}
-}
-
-/**
- * Load `namespaces`.
- *
- * @return {String} returns the previously persisted debug modes
- * @api private
- */
-
-function load() {
-  var r;
-  try {
-    return exports.storage.debug;
-  } catch(e) {}
-
-  // If debug isn't set in LS, and we're in Electron, try to load $DEBUG
-  if (typeof process !== 'undefined' && 'env' in process) {
-    return process.env.DEBUG;
-  }
-}
-
-/**
- * Enable namespaces listed in `localStorage.debug` initially.
- */
-
-exports.enable(load());
-
-/**
- * Localstorage attempts to return the localstorage.
- *
- * This is necessary because safari throws
- * when a user disables cookies/localstorage
- * and you attempt to access it.
- *
- * @return {LocalStorage}
- * @api private
- */
-
-function localstorage(){
-  try {
-    return window.localStorage;
-  } catch (e) {}
-}
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(19)))
-
-/***/ }),
-/* 7 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2182,8 +1998,13 @@ function injectJS(path, cb) { //Inject a script tag with the path given. Once th
 	head.insertBefore(script, firstScript);
 };
 
+/** Daniel H. 1/14/2019
+ * @TODO - This method is only used in the DragAndDrop client, and it introduces a sneaky circular dependency between
+ * this module and the launcherClient. It should be refactored out of this module. This can't be done until v4.0.0, as
+ * it would be a breaking change to our API.
+ */
 /**
- * This will either open a component with the shared data or publish the shared data using the linker client if the window is linked
+ * This will either open a component with the shared data or publish the shared data using the linker client if the window is linked.
  * @experimental
  *
  * @param {object} params
@@ -2281,6 +2102,190 @@ function openSharedData(params, cb) {
 
 };
 
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(process) {
+/**
+ * This is the web browser implementation of `debug()`.
+ *
+ * Expose `debug()` as the module.
+ */
+
+exports = module.exports = __webpack_require__(69);
+exports.log = log;
+exports.formatArgs = formatArgs;
+exports.save = save;
+exports.load = load;
+exports.useColors = useColors;
+exports.storage = 'undefined' != typeof chrome
+               && 'undefined' != typeof chrome.storage
+                  ? chrome.storage.local
+                  : localstorage();
+
+/**
+ * Colors.
+ */
+
+exports.colors = [
+  'lightseagreen',
+  'forestgreen',
+  'goldenrod',
+  'dodgerblue',
+  'darkorchid',
+  'crimson'
+];
+
+/**
+ * Currently only WebKit-based Web Inspectors, Firefox >= v31,
+ * and the Firebug extension (any Firefox version) are known
+ * to support "%c" CSS customizations.
+ *
+ * TODO: add a `localStorage` variable to explicitly enable/disable colors
+ */
+
+function useColors() {
+  // is webkit? http://stackoverflow.com/a/16459606/376773
+  // document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
+  return (typeof document !== 'undefined' && 'WebkitAppearance' in document.documentElement.style) ||
+    // is firebug? http://stackoverflow.com/a/398120/376773
+    (window.console && (console.firebug || (console.exception && console.table))) ||
+    // is firefox >= v31?
+    // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
+    (navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31);
+}
+
+/**
+ * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
+ */
+
+exports.formatters.j = function(v) {
+  try {
+    return JSON.stringify(v);
+  } catch (err) {
+    return '[UnexpectedJSONParseError]: ' + err.message;
+  }
+};
+
+
+/**
+ * Colorize log arguments if enabled.
+ *
+ * @api public
+ */
+
+function formatArgs() {
+  var args = arguments;
+  var useColors = this.useColors;
+
+  args[0] = (useColors ? '%c' : '')
+    + this.namespace
+    + (useColors ? ' %c' : ' ')
+    + args[0]
+    + (useColors ? '%c ' : ' ')
+    + '+' + exports.humanize(this.diff);
+
+  if (!useColors) return args;
+
+  var c = 'color: ' + this.color;
+  args = [args[0], c, 'color: inherit'].concat(Array.prototype.slice.call(args, 1));
+
+  // the final "%c" is somewhat tricky, because there could be other
+  // arguments passed either before or after the %c, so we need to
+  // figure out the correct index to insert the CSS into
+  var index = 0;
+  var lastC = 0;
+  args[0].replace(/%[a-z%]/g, function(match) {
+    if ('%%' === match) return;
+    index++;
+    if ('%c' === match) {
+      // we only are interested in the *last* %c
+      // (the user may have provided their own)
+      lastC = index;
+    }
+  });
+
+  args.splice(lastC, 0, c);
+  return args;
+}
+
+/**
+ * Invokes `console.log()` when available.
+ * No-op when `console.log` is not a "function".
+ *
+ * @api public
+ */
+
+function log() {
+  // this hackery is required for IE8/9, where
+  // the `console.log` function doesn't have 'apply'
+  return 'object' === typeof console
+    && console.log
+    && Function.prototype.apply.call(console.log, console, arguments);
+}
+
+/**
+ * Save `namespaces`.
+ *
+ * @param {String} namespaces
+ * @api private
+ */
+
+function save(namespaces) {
+  try {
+    if (null == namespaces) {
+      exports.storage.removeItem('debug');
+    } else {
+      exports.storage.debug = namespaces;
+    }
+  } catch(e) {}
+}
+
+/**
+ * Load `namespaces`.
+ *
+ * @return {String} returns the previously persisted debug modes
+ * @api private
+ */
+
+function load() {
+  var r;
+  try {
+    return exports.storage.debug;
+  } catch(e) {}
+
+  // If debug isn't set in LS, and we're in Electron, try to load $DEBUG
+  if (typeof process !== 'undefined' && 'env' in process) {
+    return process.env.DEBUG;
+  }
+}
+
+/**
+ * Enable namespaces listed in `localStorage.debug` initially.
+ */
+
+exports.enable(load());
+
+/**
+ * Localstorage attempts to return the localstorage.
+ *
+ * This is necessary because safari throws
+ * when a user disables cookies/localstorage
+ * and you attempt to access it.
+ *
+ * @return {LocalStorage}
+ * @api private
+ */
+
+function localstorage(){
+  try {
+    return window.localStorage;
+  } catch (e) {}
+}
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(19)))
 
 /***/ }),
 /* 8 */
@@ -8669,7 +8674,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const storageClient_1 = __webpack_require__(21);
 const workspaceClient_1 = __webpack_require__(31);
 const hotkeysClient_1 = __webpack_require__(28);
-const util = __webpack_require__(7);
+const util = __webpack_require__(6);
 const system_1 = __webpack_require__(3);
 const baseClient_1 = __webpack_require__(2);
 const logger_1 = __webpack_require__(0);
@@ -8678,6 +8683,7 @@ const FinsembleWindow_1 = __webpack_require__(13);
 const configUtil_1 = __webpack_require__(20);
 const deepEqual = __webpack_require__(35);
 const async_1 = __webpack_require__(8);
+const routerClientInstance_1 = __webpack_require__(5);
 const WORKSPACE_CACHE_TOPIC = "finsemble.workspace.cache"; // window data stored in this topic for access by workspace service
 const constants_1 = __webpack_require__(12);
 var finsembleWindow;
@@ -9785,9 +9791,9 @@ class WindowClient extends baseClient_1._BaseClient {
      */
     ejectFromGroup() {
         let windowName = this.getWindowNameForDocking();
-        FSBL.Clients.RouterClient.query("DockingService.leaveGroup", {
+        routerClientInstance_1.default.query("DockingService.leaveGroup", {
             name: windowName
-        });
+        }, () => { });
         this.dirtyTheWorkspace(windowName);
     }
     /**
@@ -9925,7 +9931,7 @@ class WindowClient extends baseClient_1._BaseClient {
      * @param {*} cb
      */
     startTilingOrTabbing(params, cb = Function.prototype) {
-        FSBL.Clients.RouterClient.transmit("DockingService.startTilingOrTabbing", params);
+        routerClientInstance_1.default.transmit("DockingService.startTilingOrTabbing", params);
         cb();
     }
     ;
@@ -9936,7 +9942,7 @@ class WindowClient extends baseClient_1._BaseClient {
      */
     cancelTilingOrTabbing(params, cb = Function.prototype) {
         console.debug("CancelTilingOrTabbing");
-        FSBL.Clients.RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
+        routerClientInstance_1.default.transmit("DockingService.cancelTilingOrTabbing", params);
         cb();
     }
     ;
@@ -9946,7 +9952,7 @@ class WindowClient extends baseClient_1._BaseClient {
      * @param {*} cb
      */
     sendIdentifierForTilingOrTabbing(params, cb = Function.prototype) {
-        FSBL.Clients.RouterClient.transmit("DockingService.identifierForTilingOrTabbing", params);
+        routerClientInstance_1.default.transmit("DockingService.identifierForTilingOrTabbing", params);
         cb();
     }
     ;
@@ -9965,10 +9971,10 @@ class WindowClient extends baseClient_1._BaseClient {
             bottom: finsembleWindow.windowOptions.bottom,
         };
         let transmitAndQueryStop = () => {
-            FSBL.Clients.RouterClient.query("DockingService.stopTilingOrTabbing", params, () => {
+            routerClientInstance_1.default.query("DockingService.stopTilingOrTabbing", params, () => {
                 cb();
             });
-            FSBL.Clients.RouterClient.transmit("DockingService.stopTilingOrTabbing", params);
+            routerClientInstance_1.default.transmit("DockingService.stopTilingOrTabbing", params);
         };
         if (!params.mousePosition) {
             return system_1.System.getMousePosition((err, position) => {
@@ -9976,7 +9982,7 @@ class WindowClient extends baseClient_1._BaseClient {
                 let pointIsInBox = this.isPointInBox(position, windowPosition);
                 if (!params.allowDropOnSelf && pointIsInBox) {
                     logger_1.default.system.debug("StopTilingOrTabbing windowClient cancel 1:", params, windowPosition, err);
-                    FSBL.Clients.RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
+                    routerClientInstance_1.default.transmit("DockingService.cancelTilingOrTabbing", params);
                     return cb();
                 }
                 logger_1.default.system.debug("StopTilingOrTabbing windowClient stop 1:", err, params, windowPosition, err);
@@ -9986,7 +9992,7 @@ class WindowClient extends baseClient_1._BaseClient {
         let pointIsInBox = this.isPointInBox(params.mousePosition, windowPosition);
         if (!params.allowDropOnSelf && pointIsInBox) {
             logger_1.default.system.debug("StopTilingOrTabbing windowClient cancel 2:", params, windowPosition);
-            FSBL.Clients.RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
+            routerClientInstance_1.default.transmit("DockingService.cancelTilingOrTabbing", params);
             return cb();
         }
         logger_1.default.system.debug("StopTilingOrTabbing windowClient stop 2:", params, windowPosition);
@@ -10312,7 +10318,7 @@ const routerClientInstance_1 = __webpack_require__(5);
 const logger_1 = __webpack_require__(0);
 const distributedStoreClient_1 = __webpack_require__(10);
 const storageClient_1 = __webpack_require__(21);
-const util = __webpack_require__(7);
+const util = __webpack_require__(6);
 const WindowEventManager_1 = __webpack_require__(54);
 const constants = __webpack_require__(12);
 const FinsembleEvent_1 = __webpack_require__(53);
@@ -11844,7 +11850,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 */
 const baseClient_1 = __webpack_require__(2);
 const windowClient_1 = __webpack_require__(11);
-const util = __webpack_require__(7);
+const util = __webpack_require__(6);
 const validate_1 = __webpack_require__(4); // Finsemble args validator
 const system_1 = __webpack_require__(3);
 const logger_1 = __webpack_require__(0);
@@ -12980,7 +12986,7 @@ process.umask = function() { return 0; };
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__util__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__util__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__system__ = __webpack_require__(3);
@@ -12994,19 +13000,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-/**
- *
- *
-/**
- *
- *
-/**
- *
- *
-/**
- *
- *
- */
+
 var ConfigUtil = function () {
 
 	var self = this;
@@ -16520,7 +16514,7 @@ exports.LocalLogger = LocalLogger;
 */
 Object.defineProperty(exports, "__esModule", { value: true });
 const baseClient_1 = __webpack_require__(2);
-const Util = __webpack_require__(7);
+const Util = __webpack_require__(6);
 const validate_1 = __webpack_require__(4);
 const logger_1 = __webpack_require__(0);
 const constants_1 = __webpack_require__(12);
@@ -19349,7 +19343,7 @@ var Emitter = __webpack_require__(14);
 var parser = __webpack_require__(26);
 var on = __webpack_require__(38);
 var bind = __webpack_require__(32);
-var debug = __webpack_require__(6)('socket.io-client:manager');
+var debug = __webpack_require__(7)('socket.io-client:manager');
 var indexOf = __webpack_require__(34);
 var Backoff = __webpack_require__(56);
 
@@ -19944,7 +19938,7 @@ var Emitter = __webpack_require__(14);
 var toArray = __webpack_require__(85);
 var on = __webpack_require__(38);
 var bind = __webpack_require__(32);
-var debug = __webpack_require__(6)('socket.io-client:socket');
+var debug = __webpack_require__(7)('socket.io-client:socket');
 var hasBin = __webpack_require__(33);
 
 /**
@@ -20428,7 +20422,7 @@ var parseqs = __webpack_require__(23);
 var parser = __webpack_require__(9);
 var inherit = __webpack_require__(18);
 var yeast = __webpack_require__(43);
-var debug = __webpack_require__(6)('engine.io-client:polling');
+var debug = __webpack_require__(7)('engine.io-client:polling');
 
 /**
  * Module exports.
@@ -20916,7 +20910,7 @@ module.exports = {
 		HotkeyClient: __webpack_require__(28).default,
 	},
 	UserNotification: __webpack_require__(44).default,
-	Util: __webpack_require__(7).default,
+	Util: __webpack_require__(6).default,
 	DependencyManager: __webpack_require__(22).default,
 	models: {
 		baseStorage: __webpack_require__(96).default,
@@ -21717,7 +21711,7 @@ const async_1 = __webpack_require__(8);
 const launcherClient_1 = __webpack_require__(17);
 const windowClient_1 = __webpack_require__(11);
 const distributedStoreClient_1 = __webpack_require__(10);
-const Utils = __webpack_require__(7);
+const Utils = __webpack_require__(6);
 const validate_1 = __webpack_require__(4);
 const baseClient_1 = __webpack_require__(2);
 const FinsembleWindow_1 = __webpack_require__(13);
@@ -22150,6 +22144,7 @@ const launcherClient_1 = __webpack_require__(17);
 const windowClient_1 = __webpack_require__(11);
 const distributedStoreClient_1 = __webpack_require__(10);
 const FinsembleWindow_1 = __webpack_require__(13);
+const util_1 = __webpack_require__(6);
 const async_1 = __webpack_require__(8);
 const DRAG_START_CHANNEL = "DragAndDropClient.dragStart";
 const DRAG_END_CHANNEL = "DragAndDropClient.dragEnd";
@@ -22640,7 +22635,7 @@ class DragAndDropClient extends baseClient_1._BaseClient {
      *
      */
     openSharedData(params, cb) {
-        FSBL.Utils.openSharedData(params, cb);
+        util_1.openSharedData(params, cb);
     }
     /**
      * @private
@@ -22797,7 +22792,7 @@ exports.default = dragAndDropClient;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const routerTransport_1 = __webpack_require__(93);
-const Utils = __webpack_require__(7);
+const Utils = __webpack_require__(6);
 const configUtil_1 = __webpack_require__(20);
 const validate_1 = __webpack_require__(4); // Finsemble args validator
 const userNotification_1 = __webpack_require__(44);
@@ -28423,7 +28418,7 @@ module.exports = function parsejson(data) {
 var url = __webpack_require__(67);
 var parser = __webpack_require__(26);
 var Manager = __webpack_require__(37);
-var debug = __webpack_require__(6)('socket.io-client');
+var debug = __webpack_require__(7)('socket.io-client');
 
 /**
  * Module exports.
@@ -28536,7 +28531,7 @@ exports.Socket = __webpack_require__(39);
  */
 
 var parseuri = __webpack_require__(36);
-var debug = __webpack_require__(6)('socket.io-client:url');
+var debug = __webpack_require__(7)('socket.io-client:url');
 
 /**
  * Module exports.
@@ -28883,7 +28878,7 @@ module.exports.parser = __webpack_require__(9);
 
 var transports = __webpack_require__(40);
 var Emitter = __webpack_require__(14);
-var debug = __webpack_require__(6)('engine.io-client:socket');
+var debug = __webpack_require__(7)('engine.io-client:socket');
 var index = __webpack_require__(34);
 var parser = __webpack_require__(9);
 var parseuri = __webpack_require__(36);
@@ -29868,7 +29863,7 @@ var XMLHttpRequest = __webpack_require__(25);
 var Polling = __webpack_require__(41);
 var Emitter = __webpack_require__(14);
 var inherit = __webpack_require__(18);
-var debug = __webpack_require__(6)('engine.io-client:polling-xhr');
+var debug = __webpack_require__(7)('engine.io-client:polling-xhr');
 
 /**
  * Module exports.
@@ -30300,7 +30295,7 @@ var parser = __webpack_require__(9);
 var parseqs = __webpack_require__(23);
 var inherit = __webpack_require__(18);
 var yeast = __webpack_require__(43);
-var debug = __webpack_require__(6)('engine.io-client:websocket');
+var debug = __webpack_require__(7)('engine.io-client:websocket');
 var BrowserWebSocket = global.WebSocket || global.MozWebSocket;
 var NodeWebSocket;
 if (typeof window === 'undefined') {
@@ -31699,14 +31694,15 @@ for (var i = 0; i < 256; ++i) {
 function bytesToUuid(buf, offset) {
   var i = offset || 0;
   var bth = byteToHex;
-  return bth[buf[i++]] + bth[buf[i++]] +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] +
-          bth[buf[i++]] + bth[buf[i++]] +
-          bth[buf[i++]] + bth[buf[i++]];
+  // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
+  return ([bth[buf[i++]], bth[buf[i++]], 
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]],
+	bth[buf[i++]], bth[buf[i++]],
+	bth[buf[i++]], bth[buf[i++]]]).join('');
 }
 
 module.exports = bytesToUuid;
@@ -31721,9 +31717,11 @@ module.exports = bytesToUuid;
 // and inconsistent support for the `crypto` API.  We do the best we can via
 // feature-detection
 
-// getRandomValues needs to be invoked in a context where "this" is a Crypto implementation.
-var getRandomValues = (typeof(crypto) != 'undefined' && crypto.getRandomValues.bind(crypto)) ||
-                      (typeof(msCrypto) != 'undefined' && msCrypto.getRandomValues.bind(msCrypto));
+// getRandomValues needs to be invoked in a context where "this" is a Crypto
+// implementation. Also, find the complete implementation of crypto on IE11.
+var getRandomValues = (typeof(crypto) != 'undefined' && crypto.getRandomValues && crypto.getRandomValues.bind(crypto)) ||
+                      (typeof(msCrypto) != 'undefined' && typeof window.msCrypto.getRandomValues == 'function' && msCrypto.getRandomValues.bind(msCrypto));
+
 if (getRandomValues) {
   // WHATWG crypto RNG - http://wiki.whatwg.org/wiki/Crypto
   var rnds8 = new Uint8Array(16); // eslint-disable-line no-undef

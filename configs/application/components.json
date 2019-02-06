@@ -123,6 +123,10 @@
                 "width": 370,
                 "height": 184
             },
+            "component": {
+                "inject": false,
+                "preload": "$applicationRoot/preloads/nativeOverrides.js"
+            },
             "foreign": {
                 "services": {
                     "dockingService": {
@@ -343,16 +347,16 @@
                 }
             }
         },
-        "header": {
+        "ChartIQ": {
             "window": {
-                "url": "$applicationRoot/components/header/header.html",
-                "frame": false,
+                "frame": true,
+                "url": "http://127.0.0.1:4000/template-advanced.html",
                 "resizable": true,
                 "autoShow": true,
                 "top": "center",
                 "left": "center",
-                "width": 800,
-                "height": 600
+                "width": 1000,
+                "height": 650
             },
             "component": {
                 "inject": false
@@ -369,48 +373,12 @@
                         "launchableByUser": true
                     },
                     "Window Manager": {
-                        "title": "header",
-                        "FSBLHeader": true,
+                        "title": "ChartIQ",
+                        "FSBLHeader": false,
                         "persistWindowState": true
                     },
                     "Toolbar": {
-                        "iconClass": "header"
-                    }
-                }
-            }
-        },
-        "toolbar": {
-            "window": {
-                "url": "$applicationRoot/components/toolbar/toolbar.html",
-                "frame": false,
-                "resizable": true,
-                "autoShow": true,
-                "top": "center",
-                "left": "center",
-                "width": 800,
-                "height": 600
-            },
-            "component": {
-                "inject": false
-            },
-            "foreign": {
-                "services": {
-                    "dockingService": {
-                        "canGroup": true,
-                        "isArrangable": true
-                    }
-                },
-                "components": {
-                    "App Launcher": {
-                        "launchableByUser": true
-                    },
-                    "Window Manager": {
-                        "title": "toolbar",
-                        "FSBLHeader": true,
-                        "persistWindowState": true
-                    },
-                    "Toolbar": {
-                        "iconClass": "toolbar"
+                        "iconClass": "ChartIQ"
                     }
                 }
             }

@@ -358,75 +358,6 @@ module.exports = invariant;
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {/**
- * Copyright (c) 2014-present, Facebook, Inc.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- *
- */
-
-
-
-var emptyFunction = __webpack_require__(29);
-
-/**
- * Similar to invariant but only logs a warning if the condition is not met.
- * This can be used to log issues in development environments in critical
- * paths. Removing the logging code for production environments will keep the
- * same logic and follow the same code paths.
- */
-
-var warning = emptyFunction;
-
-if (process.env.NODE_ENV !== 'production') {
-  var printWarning = function printWarning(format) {
-    for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-      args[_key - 1] = arguments[_key];
-    }
-
-    var argIndex = 0;
-    var message = 'Warning: ' + format.replace(/%s/g, function () {
-      return args[argIndex++];
-    });
-    if (typeof console !== 'undefined') {
-      console.error(message);
-    }
-    try {
-      // --- Welcome to debugging React ---
-      // This error was thrown as a convenience so that you can use this stack
-      // to find the callsite that caused this warning to fire.
-      throw new Error(message);
-    } catch (x) {}
-  };
-
-  warning = function warning(condition, format) {
-    if (format === undefined) {
-      throw new Error('`warning(condition, format, ...args)` requires a warning ' + 'message argument');
-    }
-
-    if (format.indexOf('Failed Composite propType: ') === 0) {
-      return; // Ignore CompositeComponent proptype check.
-    }
-
-    if (!condition) {
-      for (var _len2 = arguments.length, args = Array(_len2 > 2 ? _len2 - 2 : 0), _key2 = 2; _key2 < _len2; _key2++) {
-        args[_key2 - 2] = arguments[_key2];
-      }
-
-      printWarning.apply(undefined, [format].concat(args));
-    }
-  };
-}
-
-module.exports = warning;
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
 
 /*!
 * Copyright 2017 by ChartIQ, Inc.
@@ -1093,7 +1024,7 @@ exports.LoggerConstructor = function (dependencies) {
         var self = this;
         if (!self.RouterClient) {
             console.log("No instance of the RouterClient found for this instance of the Logger. Dynamically requireing it.");
-            self.RouterClient = __webpack_require__(19).default;
+            self.RouterClient = __webpack_require__(14).default;
         }
         let onlineSubscription, allActiveSubscription;
         //Wait for the service before coming online. can't use the dependency manager, because it uses the router, which uses the logger.
@@ -1140,6 +1071,75 @@ exports.Logger = typeof fin !== "undefined" ?
     : new localLogger_1.LocalLogger();
 exports.default = exports.Logger;
 
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process) {/**
+ * Copyright (c) 2014-present, Facebook, Inc.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ *
+ */
+
+
+
+var emptyFunction = __webpack_require__(36);
+
+/**
+ * Similar to invariant but only logs a warning if the condition is not met.
+ * This can be used to log issues in development environments in critical
+ * paths. Removing the logging code for production environments will keep the
+ * same logic and follow the same code paths.
+ */
+
+var warning = emptyFunction;
+
+if (process.env.NODE_ENV !== 'production') {
+  var printWarning = function printWarning(format) {
+    for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      args[_key - 1] = arguments[_key];
+    }
+
+    var argIndex = 0;
+    var message = 'Warning: ' + format.replace(/%s/g, function () {
+      return args[argIndex++];
+    });
+    if (typeof console !== 'undefined') {
+      console.error(message);
+    }
+    try {
+      // --- Welcome to debugging React ---
+      // This error was thrown as a convenience so that you can use this stack
+      // to find the callsite that caused this warning to fire.
+      throw new Error(message);
+    } catch (x) {}
+  };
+
+  warning = function warning(condition, format) {
+    if (format === undefined) {
+      throw new Error('`warning(condition, format, ...args)` requires a warning ' + 'message argument');
+    }
+
+    if (format.indexOf('Failed Composite propType: ') === 0) {
+      return; // Ignore CompositeComponent proptype check.
+    }
+
+    if (!condition) {
+      for (var _len2 = arguments.length, args = Array(_len2 > 2 ? _len2 - 2 : 0), _key2 = 2; _key2 < _len2; _key2++) {
+        args[_key2 - 2] = arguments[_key2];
+      }
+
+      printWarning.apply(undefined, [format].concat(args));
+    }
+  };
+}
+
+module.exports = warning;
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ }),
 /* 6 */
@@ -1234,6 +1234,7 @@ var bpfrpt_proptype_CellRangeRendererParams = process.env.NODE_ENV === 'producti
   deferredMeasurementCache: __WEBPACK_IMPORTED_MODULE_2_prop_types___default.a.object,
   horizontalOffsetAdjustment: __WEBPACK_IMPORTED_MODULE_2_prop_types___default.a.number.isRequired,
   isScrolling: __WEBPACK_IMPORTED_MODULE_2_prop_types___default.a.bool.isRequired,
+  isScrollingOptOut: __WEBPACK_IMPORTED_MODULE_2_prop_types___default.a.bool.isRequired,
   parent: __WEBPACK_IMPORTED_MODULE_2_prop_types___default.a.object.isRequired,
   rowSizeAndPositionManager: function rowSizeAndPositionManager() {
     return (typeof __WEBPACK_IMPORTED_MODULE_1__utils_ScalingCellSizeAndPositionManager__["a" /* default */] === 'function' ? __WEBPACK_IMPORTED_MODULE_2_prop_types___default.a.instanceOf(__WEBPACK_IMPORTED_MODULE_1__utils_ScalingCellSizeAndPositionManager__["a" /* default */]).isRequired : __WEBPACK_IMPORTED_MODULE_2_prop_types___default.a.any.isRequired).apply(this, arguments);
@@ -1871,6 +1872,48 @@ module.exports = ReactDOMComponentTree;
 
 /***/ }),
 /* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * @introduction
+ * <h2>Router Client Instance</h2>
+ * Exports a single shared instance of the router client.  See {@link RouterClientConstructor} for the complete API definition with examples.
+ *
+ * Example:
+ *
+ *	// get a shared instance of RouterClient (shared within the containing component or service)
+ *	var RouterClient = require('./routerClientInstance').default;
+ *
+ * @namespace routerClientInstance
+ * @shouldBePublished false
+ */
+const routerClientConstructor_1 = __webpack_require__(95);
+const logger_1 = __webpack_require__(4);
+let RCConstructor = routerClientConstructor_1.RouterClientConstructor;
+/** The logger needs a router client, and the router client needs a logger.
+ * To get around this fundamental circular dependency, we pass a reference
+ * of the RouterClient to the Logger. Only after this is called will the
+ * RouterClient and Logger be ready. If RouterClient is NOT required before
+ * the Logger, then this file will be dynamically required at Logger.start().
+ */
+/** An instance of the IRouterClient interface, (that is, the Router Client).
+ * All other clients are built on top of the RouterClient; its API is the
+ * primary form of communication between the various components of Finsemble.
+ */
+let RouterClientInstance = new RCConstructor({ clientName: "RouterClient" });
+logger_1.Logger.setRouterClient(RouterClientInstance);
+exports.default = RouterClientInstance;
+
+
+/***/ }),
+/* 15 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1900,7 +1943,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__system__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__ = __webpack_require__(120);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_logger__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1__ = __webpack_require__(198);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_uuid_v1__);
@@ -2441,8 +2484,13 @@ function injectJS(path, cb) {
 	head.insertBefore(script, firstScript);
 };
 
+/** Daniel H. 1/14/2019
+ * @TODO - This method is only used in the DragAndDrop client, and it introduces a sneaky circular dependency between
+ * this module and the launcherClient. It should be refactored out of this module. This can't be done until v4.0.0, as
+ * it would be a breaking change to our API.
+ */
 /**
- * This will either open a component with the shared data or publish the shared data using the linker client if the window is linked
+ * This will either open a component with the shared data or publish the shared data using the linker client if the window is linked.
  * @experimental
  *
  * @param {object} params
@@ -2543,15 +2591,15 @@ function openSharedData(params, cb) {
 };
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_routerClientInstance__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_routerClientInstance__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_routerClientInstance___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__clients_routerClientInstance__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_events__ = __webpack_require__(25);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_events___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_events__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_util__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_util__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_lodash_debounce__ = __webpack_require__(152);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_lodash_debounce___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_lodash_debounce__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_lodash_throttle__ = __webpack_require__(104);
@@ -3416,7 +3464,7 @@ window.TheLoggerStore = loggerStore;
 /* harmony default export */ __webpack_exports__["a"] = (loggerStore);
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3455,7 +3503,7 @@ var ExecutionEnvironment = {
 module.exports = ExecutionEnvironment;
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(process) {
@@ -3639,7 +3687,7 @@ function localstorage(){
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3649,9 +3697,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
-const routerClientInstance_1 = __webpack_require__(19);
+const routerClientInstance_1 = __webpack_require__(14);
 const validate_1 = __webpack_require__(20); // Finsemble args validator
-const logger_1 = __webpack_require__(5);
+const logger_1 = __webpack_require__(4);
 const system_1 = __webpack_require__(8);
 const dependencyManager_1 = __webpack_require__(58);
 /**
@@ -3914,48 +3962,6 @@ var BaseClient = function (params) {
     this.onClose = function () { };
 };
 exports.default = BaseClient;
-
-
-/***/ }),
-/* 19 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-Object.defineProperty(exports, "__esModule", { value: true });
-/**
- * @introduction
- * <h2>Router Client Instance</h2>
- * Exports a single shared instance of the router client.  See {@link RouterClientConstructor} for the complete API definition with examples.
- *
- * Example:
- *
- *	// get a shared instance of RouterClient (shared within the containing component or service)
- *	var RouterClient = require('./routerClientInstance').default;
- *
- * @namespace routerClientInstance
- * @shouldBePublished false
- */
-const routerClientConstructor_1 = __webpack_require__(95);
-const logger_1 = __webpack_require__(5);
-let RCConstructor = routerClientConstructor_1.RouterClientConstructor;
-/** The logger needs a router client, and the router client needs a logger.
- * To get around this fundamental circular dependency, we pass a reference
- * of the RouterClient to the Logger. Only after this is called will the
- * RouterClient and Logger be ready. If RouterClient is NOT required before
- * the Logger, then this file will be dynamically required at Logger.start().
- */
-/** An instance of the IRouterClient interface, (that is, the Router Client).
- * All other clients are built on top of the RouterClient; its API is the
- * primary form of communication between the various components of Finsemble.
- */
-let RouterClientInstance = new RCConstructor({ clientName: "RouterClient" });
-logger_1.Logger.setRouterClient(RouterClientInstance);
-exports.default = RouterClientInstance;
 
 
 /***/ }),
@@ -4590,7 +4596,7 @@ var _prodInvariant = __webpack_require__(68);
 var ReactCurrentOwner = __webpack_require__(38);
 
 var invariant = __webpack_require__(3);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 function isNative(fn) {
   // Based on isNative() from Lodash
@@ -5573,48 +5579,6 @@ exports.decodePayloadAsBinary = function (data, binaryType, callback) {
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-
-
-/**
- * Copyright (c) 2013-present, Facebook, Inc.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- *
- * 
- */
-
-function makeEmptyFunction(arg) {
-  return function () {
-    return arg;
-  };
-}
-
-/**
- * This function accepts and discards inputs; it has no side effects. This is
- * primarily useful idiomatically for overridable function endpoints which
- * always need to be callable, since JS lacks a null-call idiom ala Cocoa.
- */
-var emptyFunction = function emptyFunction() {};
-
-emptyFunction.thatReturns = makeEmptyFunction;
-emptyFunction.thatReturnsFalse = makeEmptyFunction(false);
-emptyFunction.thatReturnsTrue = makeEmptyFunction(true);
-emptyFunction.thatReturnsNull = makeEmptyFunction(null);
-emptyFunction.thatReturnsThis = function () {
-  return this;
-};
-emptyFunction.thatReturnsArgument = function (arg) {
-  return arg;
-};
-
-module.exports = emptyFunction;
-
-/***/ }),
-/* 30 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
 /* WEBPACK VAR INJECTION */(function(process) {/**
  * Copyright (c) 2016-present, Facebook, Inc.
  *
@@ -5639,7 +5603,7 @@ module.exports = { debugTool: debugTool };
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ }),
-/* 31 */
+/* 30 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -5667,7 +5631,7 @@ module.exports = function(module) {
 
 
 /***/ }),
-/* 32 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5696,7 +5660,7 @@ exports.default = _assign2.default || function (target) {
 };
 
 /***/ }),
-/* 33 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -5865,7 +5829,7 @@ Emitter.prototype.hasListeners = function(event){
 
 
 /***/ }),
-/* 34 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(setImmediate, process, global, module) {(function (global, factory) {
@@ -11478,10 +11442,10 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(194).setImmediate, __webpack_require__(0), __webpack_require__(2), __webpack_require__(31)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(194).setImmediate, __webpack_require__(0), __webpack_require__(2), __webpack_require__(30)(module)))
 
 /***/ }),
-/* 35 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11544,13 +11508,13 @@ exports.APPLICATION_LIFECYCLE = {};
 
 
 /***/ }),
-/* 36 */
+/* 35 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__util__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__util__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__system__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__system__);
@@ -11563,19 +11527,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-/**
- *
- *
-/**
- *
- *
-/**
- *
- *
-/**
- *
- *
- */
+
 var ConfigUtil = function () {
 
 	var self = this;
@@ -11998,6 +11950,48 @@ const ConfigUtilInstance = new ConfigUtil();
 
 
 /***/ }),
+/* 36 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * Copyright (c) 2013-present, Facebook, Inc.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ *
+ * 
+ */
+
+function makeEmptyFunction(arg) {
+  return function () {
+    return arg;
+  };
+}
+
+/**
+ * This function accepts and discards inputs; it has no side effects. This is
+ * primarily useful idiomatically for overridable function endpoints which
+ * always need to be callable, since JS lacks a null-call idiom ala Cocoa.
+ */
+var emptyFunction = function emptyFunction() {};
+
+emptyFunction.thatReturns = makeEmptyFunction;
+emptyFunction.thatReturnsFalse = makeEmptyFunction(false);
+emptyFunction.thatReturnsTrue = makeEmptyFunction(true);
+emptyFunction.thatReturnsNull = makeEmptyFunction(null);
+emptyFunction.thatReturnsThis = function () {
+  return this;
+};
+emptyFunction.thatReturnsArgument = function (arg) {
+  return arg;
+};
+
+module.exports = emptyFunction;
+
+/***/ }),
 /* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12332,8 +12326,8 @@ var _assign = __webpack_require__(11);
 
 var PooledClass = __webpack_require__(53);
 
-var emptyFunction = __webpack_require__(29);
-var warning = __webpack_require__(4);
+var emptyFunction = __webpack_require__(36);
+var warning = __webpack_require__(5);
 
 var didWarnForAddedNewProperty = false;
 var isProxySupported = typeof Proxy === 'function';
@@ -12874,9 +12868,9 @@ module.exports = DOMProperty;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const validate_1 = __webpack_require__(20); // Finsemble args validator
-const baseClient_1 = __webpack_require__(18);
-const async_1 = __webpack_require__(34);
-const logger_1 = __webpack_require__(5);
+const baseClient_1 = __webpack_require__(19);
+const async_1 = __webpack_require__(33);
+const logger_1 = __webpack_require__(4);
 /**
  * @introduction
  * <h2>Config Client</h2>
@@ -13441,13 +13435,13 @@ exports.default = configClient;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const routerClientInstance_1 = __webpack_require__(19);
-const logger_1 = __webpack_require__(5);
+const routerClientInstance_1 = __webpack_require__(14);
+const logger_1 = __webpack_require__(4);
 const distributedStoreClient_1 = __webpack_require__(93);
 const storageClient_1 = __webpack_require__(70);
-const util = __webpack_require__(14);
+const util = __webpack_require__(15);
 const WindowEventManager_1 = __webpack_require__(119);
-const constants = __webpack_require__(35);
+const constants = __webpack_require__(34);
 const FinsembleEvent_1 = __webpack_require__(118);
 const system_1 = __webpack_require__(8);
 /** This import syntax helps the compiler infer the types. */
@@ -14759,7 +14753,7 @@ var _assign = __webpack_require__(11);
 
 var ReactCurrentOwner = __webpack_require__(38);
 
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 var canDefineProperty = __webpack_require__(113);
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 
@@ -15094,7 +15088,7 @@ module.exports = ReactElement;
  */
 
 var parser = __webpack_require__(28);
-var Emitter = __webpack_require__(33);
+var Emitter = __webpack_require__(32);
 
 /**
  * Module exports.
@@ -15710,9 +15704,9 @@ function error(data){
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const events_1 = __webpack_require__(25);
-const routerClientInstance_1 = __webpack_require__(19);
+const routerClientInstance_1 = __webpack_require__(14);
 const STARTUP_TIMEOUT_DURATION = 10000;
-const constants_1 = __webpack_require__(35);
+const constants_1 = __webpack_require__(34);
 /**
  * Small class to hold on to dependencies and callbacks. Also emits a timeout event that the startupManager is listening for. When it times out, the startupManager catches the event and generates a message that includes all of the offline clients and services. It then causes this class to emit an  err event that the baseService is listening for. This arrangement is set up for a couple of reasons.
  * 1. I can't use the logger in here because the logger uses the startupManager, and there'd be a circular dependency.
@@ -16158,7 +16152,7 @@ exports.default = exports.FSBLDependencyManagerSingleton;
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
-  Copyright (c) 2016 Jed Watson.
+  Copyright (c) 2017 Jed Watson.
   Licensed under the MIT License (MIT), see
   http://jedwatson.github.io/classnames
 */
@@ -16180,8 +16174,11 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
 
 			if (argType === 'string' || argType === 'number') {
 				classes.push(arg);
-			} else if (Array.isArray(arg)) {
-				classes.push(classNames.apply(null, arg));
+			} else if (Array.isArray(arg) && arg.length) {
+				var inner = classNames.apply(null, arg);
+				if (inner) {
+					classes.push(inner);
+				}
 			} else if (argType === 'object') {
 				for (var key in arg) {
 					if (hasOwn.call(arg, key) && arg[key]) {
@@ -16195,6 +16192,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
 	}
 
 	if (typeof module !== 'undefined' && module.exports) {
+		classNames.default = classNames;
 		module.exports = classNames;
 	} else if (true) {
 		// register as 'classnames', consistent with npm package name
@@ -16392,9 +16390,9 @@ module.exports = DOMLazyTree;
 
 
 var ReactRef = __webpack_require__(431);
-var ReactInstrumentation = __webpack_require__(30);
+var ReactInstrumentation = __webpack_require__(29);
 
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 /**
  * Helper to call ReactRef.attachRefs with this composite component, split out
@@ -16859,8 +16857,8 @@ exports.LocalLogger = LocalLogger;
 */
 Object.defineProperty(exports, "__esModule", { value: true });
 const validate_1 = __webpack_require__(20);
-const logger_1 = __webpack_require__(5);
-const baseClient_1 = __webpack_require__(18);
+const logger_1 = __webpack_require__(4);
+const baseClient_1 = __webpack_require__(19);
 /**
  *
  * @introduction
@@ -17561,7 +17559,7 @@ var EventPluginUtils = __webpack_require__(158);
 
 var accumulateInto = __webpack_require__(238);
 var forEachAccumulated = __webpack_require__(239);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 var getListener = EventPluginHub.getListener;
 
@@ -18101,11 +18099,11 @@ var requestAnimationTimeout = function requestAnimationTimeout(callback, delay) 
 
 var eio = __webpack_require__(180);
 var Socket = __webpack_require__(86);
-var Emitter = __webpack_require__(33);
+var Emitter = __webpack_require__(32);
 var parser = __webpack_require__(57);
 var on = __webpack_require__(85);
 var bind = __webpack_require__(71);
-var debug = __webpack_require__(17)('socket.io-client:manager');
+var debug = __webpack_require__(18)('socket.io-client:manager');
 var indexOf = __webpack_require__(75);
 var Backoff = __webpack_require__(128);
 
@@ -18696,11 +18694,11 @@ function on (obj, ev, fn) {
  */
 
 var parser = __webpack_require__(57);
-var Emitter = __webpack_require__(33);
+var Emitter = __webpack_require__(32);
 var toArray = __webpack_require__(195);
 var on = __webpack_require__(85);
 var bind = __webpack_require__(71);
-var debug = __webpack_require__(17)('socket.io-client:socket');
+var debug = __webpack_require__(18)('socket.io-client:socket');
 var hasBin = __webpack_require__(74);
 
 /**
@@ -19184,7 +19182,7 @@ var parseqs = __webpack_require__(52);
 var parser = __webpack_require__(28);
 var inherit = __webpack_require__(39);
 var yeast = __webpack_require__(90);
-var debug = __webpack_require__(17)('engine.io-client:polling');
+var debug = __webpack_require__(18)('engine.io-client:polling');
 
 /**
  * Module exports.
@@ -19523,9 +19521,9 @@ module.exports = yeast;
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__configUtil__ = __webpack_require__(36);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__configUtil__ = __webpack_require__(35);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__common_system__);
 /*!
@@ -19667,7 +19665,7 @@ module.exports = __webpack_require__(402);
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const baseClient_1 = __webpack_require__(18);
+const baseClient_1 = __webpack_require__(19);
 const StoreModel_1 = __webpack_require__(115);
 /** I'm not sure why we previously deferred requiring StoreModel, but we did.
   * I've tried to stay as true to the original implementation as possible. -- Daniel 12/19/18 */
@@ -19823,9 +19821,9 @@ Overview of how this works:
 -Removing a hotkey clears the corresponding event emitter, and also sends a router message to the service to remove its windowid from the array of windows registered for the hotkey combination - if the window is registered with that hotkey combination multiple times, it will only remove one, allowing other hotkeys on the same window with the same key combination to still be registered.
 
 */
-const baseClient_1 = __webpack_require__(18);
-const routerClientInstance_1 = __webpack_require__(19);
-const logger_1 = __webpack_require__(5);
+const baseClient_1 = __webpack_require__(19);
+const routerClientInstance_1 = __webpack_require__(14);
+const logger_1 = __webpack_require__(4);
 const keyMap = __webpack_require__(201).dictionary;
 /** The global `window` object. We cast it to a specific interface here to be
  * explicit about what Finsemble-related properties it may have. */
@@ -20147,12 +20145,12 @@ exports.default = hotkeyClient;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const routerTransport_1 = __webpack_require__(121);
-const Utils = __webpack_require__(14);
-const configUtil_1 = __webpack_require__(36);
+const Utils = __webpack_require__(15);
+const configUtil_1 = __webpack_require__(35);
 const validate_1 = __webpack_require__(20); // Finsemble args validator
 const userNotification_1 = __webpack_require__(91);
 const system_1 = __webpack_require__(8);
-const logger_1 = __webpack_require__(5);
+const logger_1 = __webpack_require__(4);
 var queue = []; // should never be used, but message sent before router ready will be queue
 const Globals = window;
 const localLogger_1 = __webpack_require__(69);
@@ -21407,17 +21405,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const storageClient_1 = __webpack_require__(70);
 const workspaceClient_1 = __webpack_require__(117);
 const hotkeysClient_1 = __webpack_require__(94);
-const util = __webpack_require__(14);
+const util = __webpack_require__(15);
 const system_1 = __webpack_require__(8);
-const baseClient_1 = __webpack_require__(18);
-const logger_1 = __webpack_require__(5);
+const baseClient_1 = __webpack_require__(19);
+const logger_1 = __webpack_require__(4);
 const validate_1 = __webpack_require__(20); // Finsemble args validator
 const FinsembleWindow_1 = __webpack_require__(46);
-const configUtil_1 = __webpack_require__(36);
+const configUtil_1 = __webpack_require__(35);
 const deepEqual = __webpack_require__(153);
-const async_1 = __webpack_require__(34);
+const async_1 = __webpack_require__(33);
+const routerClientInstance_1 = __webpack_require__(14);
 const WORKSPACE_CACHE_TOPIC = "finsemble.workspace.cache"; // window data stored in this topic for access by workspace service
-const constants_1 = __webpack_require__(35);
+const constants_1 = __webpack_require__(34);
 var finsembleWindow;
 /**
  *
@@ -22523,9 +22522,9 @@ class WindowClient extends baseClient_1._BaseClient {
      */
     ejectFromGroup() {
         let windowName = this.getWindowNameForDocking();
-        FSBL.Clients.RouterClient.query("DockingService.leaveGroup", {
+        routerClientInstance_1.default.query("DockingService.leaveGroup", {
             name: windowName
-        });
+        }, () => { });
         this.dirtyTheWorkspace(windowName);
     }
     /**
@@ -22663,7 +22662,7 @@ class WindowClient extends baseClient_1._BaseClient {
      * @param {*} cb
      */
     startTilingOrTabbing(params, cb = Function.prototype) {
-        FSBL.Clients.RouterClient.transmit("DockingService.startTilingOrTabbing", params);
+        routerClientInstance_1.default.transmit("DockingService.startTilingOrTabbing", params);
         cb();
     }
     ;
@@ -22674,7 +22673,7 @@ class WindowClient extends baseClient_1._BaseClient {
      */
     cancelTilingOrTabbing(params, cb = Function.prototype) {
         console.debug("CancelTilingOrTabbing");
-        FSBL.Clients.RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
+        routerClientInstance_1.default.transmit("DockingService.cancelTilingOrTabbing", params);
         cb();
     }
     ;
@@ -22684,7 +22683,7 @@ class WindowClient extends baseClient_1._BaseClient {
      * @param {*} cb
      */
     sendIdentifierForTilingOrTabbing(params, cb = Function.prototype) {
-        FSBL.Clients.RouterClient.transmit("DockingService.identifierForTilingOrTabbing", params);
+        routerClientInstance_1.default.transmit("DockingService.identifierForTilingOrTabbing", params);
         cb();
     }
     ;
@@ -22703,10 +22702,10 @@ class WindowClient extends baseClient_1._BaseClient {
             bottom: finsembleWindow.windowOptions.bottom,
         };
         let transmitAndQueryStop = () => {
-            FSBL.Clients.RouterClient.query("DockingService.stopTilingOrTabbing", params, () => {
+            routerClientInstance_1.default.query("DockingService.stopTilingOrTabbing", params, () => {
                 cb();
             });
-            FSBL.Clients.RouterClient.transmit("DockingService.stopTilingOrTabbing", params);
+            routerClientInstance_1.default.transmit("DockingService.stopTilingOrTabbing", params);
         };
         if (!params.mousePosition) {
             return system_1.System.getMousePosition((err, position) => {
@@ -22714,7 +22713,7 @@ class WindowClient extends baseClient_1._BaseClient {
                 let pointIsInBox = this.isPointInBox(position, windowPosition);
                 if (!params.allowDropOnSelf && pointIsInBox) {
                     logger_1.default.system.debug("StopTilingOrTabbing windowClient cancel 1:", params, windowPosition, err);
-                    FSBL.Clients.RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
+                    routerClientInstance_1.default.transmit("DockingService.cancelTilingOrTabbing", params);
                     return cb();
                 }
                 logger_1.default.system.debug("StopTilingOrTabbing windowClient stop 1:", err, params, windowPosition, err);
@@ -22724,7 +22723,7 @@ class WindowClient extends baseClient_1._BaseClient {
         let pointIsInBox = this.isPointInBox(params.mousePosition, windowPosition);
         if (!params.allowDropOnSelf && pointIsInBox) {
             logger_1.default.system.debug("StopTilingOrTabbing windowClient cancel 2:", params, windowPosition);
-            FSBL.Clients.RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
+            routerClientInstance_1.default.transmit("DockingService.cancelTilingOrTabbing", params);
             return cb();
         }
         logger_1.default.system.debug("StopTilingOrTabbing windowClient stop 2:", params, windowPosition);
@@ -24756,7 +24755,7 @@ module.exports = escapeTextContentForBrowser;
 
 
 
-var ExecutionEnvironment = __webpack_require__(16);
+var ExecutionEnvironment = __webpack_require__(17);
 var DOMNamespaces = __webpack_require__(157);
 
 var WHITESPACE_TEST = /^[ \r\n\t\f]/;
@@ -24976,9 +24975,9 @@ function noop() {}
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const async_1 = __webpack_require__(34);
+const async_1 = __webpack_require__(33);
 const storeUtils = __webpack_require__(122);
-const logger_1 = __webpack_require__(5);
+const logger_1 = __webpack_require__(4);
 /** The global `window` object. We cast it to a specific interface here to be
  * explicit about what Finsemble-related properties it may have. */
 const Globals = window;
@@ -25503,12 +25502,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
-const baseClient_1 = __webpack_require__(18);
+const baseClient_1 = __webpack_require__(19);
 const windowClient_1 = __webpack_require__(96);
-const util = __webpack_require__(14);
+const util = __webpack_require__(15);
 const validate_1 = __webpack_require__(20); // Finsemble args validator
 const system_1 = __webpack_require__(8);
-const logger_1 = __webpack_require__(5);
+const logger_1 = __webpack_require__(4);
 const FinsembleWindow_1 = __webpack_require__(46);
 /** The global `window` object. We cast it to a specific interface here to be
  * explicit about what Finsemble-related properties it may have. */
@@ -26444,11 +26443,11 @@ exports.default = launcherClient;
 * All rights reserved.
 */
 Object.defineProperty(exports, "__esModule", { value: true });
-const baseClient_1 = __webpack_require__(18);
-const Util = __webpack_require__(14);
+const baseClient_1 = __webpack_require__(19);
+const Util = __webpack_require__(15);
 const validate_1 = __webpack_require__(20);
-const logger_1 = __webpack_require__(5);
-const constants_1 = __webpack_require__(35);
+const logger_1 = __webpack_require__(4);
+const constants_1 = __webpack_require__(34);
 function escapeRegExp(str) {
     return str.replace(/[-[\]/{}()*+?.\\^$|]/g, "\\$&");
 }
@@ -27329,8 +27328,8 @@ exports.FinsembleEvent = FinsembleEvent;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const routerClientInstance_1 = __webpack_require__(19);
-const logger_1 = __webpack_require__(5);
+const routerClientInstance_1 = __webpack_require__(14);
+const logger_1 = __webpack_require__(4);
 const events_1 = __webpack_require__(25);
 class WindowEventManager extends events_1.EventEmitter {
     /**
@@ -27830,8 +27829,8 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__configUtil__ = __webpack_require__(36);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__configUtil__ = __webpack_require__(35);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_socket_io_client__ = __webpack_require__(176);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_socket_io_client___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_socket_io_client__);
@@ -30313,7 +30312,7 @@ try {
   }
 }).call(this);
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(31)(module), __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(30)(module), __webpack_require__(2)))
 
 /***/ }),
 /* 151 */
@@ -32068,7 +32067,7 @@ function stubFalse() {
 
 module.exports = cloneDeep;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(31)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(30)(module)))
 
 /***/ }),
 /* 152 */
@@ -34307,7 +34306,7 @@ function stubFalse() {
 
 module.exports = isEqual;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(31)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(30)(module)))
 
 /***/ }),
 /* 154 */
@@ -34384,7 +34383,7 @@ module.exports = ReactPropTypesSecret;
 var DOMLazyTree = __webpack_require__(64);
 var Danger = __webpack_require__(394);
 var ReactDOMComponentTree = __webpack_require__(13);
-var ReactInstrumentation = __webpack_require__(30);
+var ReactInstrumentation = __webpack_require__(29);
 
 var createMicrosoftUnsafeLocalFunction = __webpack_require__(164);
 var setInnerHTML = __webpack_require__(110);
@@ -34639,7 +34638,7 @@ var _prodInvariant = __webpack_require__(9);
 var ReactErrorUtils = __webpack_require__(162);
 
 var invariant = __webpack_require__(3);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 /**
  * Injected dependencies:
@@ -34935,7 +34934,7 @@ var React = __webpack_require__(67);
 var PropTypes = propTypesFactory(React.isValidElement);
 
 var invariant = __webpack_require__(3);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 var hasReadOnlyValue = {
   button: true,
@@ -35202,11 +35201,11 @@ var _prodInvariant = __webpack_require__(9);
 
 var ReactCurrentOwner = __webpack_require__(38);
 var ReactInstanceMap = __webpack_require__(79);
-var ReactInstrumentation = __webpack_require__(30);
+var ReactInstrumentation = __webpack_require__(29);
 var ReactUpdates = __webpack_require__(37);
 
 var invariant = __webpack_require__(3);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 function enqueueUpdate(internalInstance) {
   ReactUpdates.enqueueUpdate(internalInstance);
@@ -35608,7 +35607,7 @@ module.exports = getEventTarget;
 
 
 
-var ExecutionEnvironment = __webpack_require__(16);
+var ExecutionEnvironment = __webpack_require__(17);
 
 var useHasFeature;
 if (ExecutionEnvironment.canUseDOM) {
@@ -35718,8 +35717,8 @@ module.exports = shouldUpdateReactComponent;
 
 var _assign = __webpack_require__(11);
 
-var emptyFunction = __webpack_require__(29);
-var warning = __webpack_require__(4);
+var emptyFunction = __webpack_require__(36);
+var warning = __webpack_require__(5);
 
 var validateDOMNesting = emptyFunction;
 
@@ -36308,7 +36307,7 @@ var ScalingCellSizeAndPositionManager = function () {
 /* WEBPACK VAR INJECTION */(function(process) {/* unused harmony export DEFAULT_SCROLLING_RESET_TIME_INTERVAL */
 /* unused harmony export bpfrpt_proptype_CellMeasurerCache */
 /* unused harmony export bpfrpt_proptype_Positioner */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(32);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(31);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_defineProperty__ = __webpack_require__(323);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_defineProperty___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_defineProperty__);
@@ -37111,7 +37110,7 @@ module.exports = lowPriorityWarning;
 var url = __webpack_require__(177);
 var parser = __webpack_require__(57);
 var Manager = __webpack_require__(84);
-var debug = __webpack_require__(17)('socket.io-client');
+var debug = __webpack_require__(18)('socket.io-client');
 
 /**
  * Module exports.
@@ -37224,7 +37223,7 @@ exports.Socket = __webpack_require__(86);
  */
 
 var parseuri = __webpack_require__(76);
-var debug = __webpack_require__(17)('socket.io-client:url');
+var debug = __webpack_require__(18)('socket.io-client:url');
 
 /**
  * Module exports.
@@ -37570,8 +37569,8 @@ module.exports.parser = __webpack_require__(28);
  */
 
 var transports = __webpack_require__(87);
-var Emitter = __webpack_require__(33);
-var debug = __webpack_require__(17)('engine.io-client:socket');
+var Emitter = __webpack_require__(32);
+var debug = __webpack_require__(18)('engine.io-client:socket');
 var index = __webpack_require__(75);
 var parser = __webpack_require__(28);
 var parseuri = __webpack_require__(76);
@@ -38554,9 +38553,9 @@ JSONPPolling.prototype.doWrite = function (data, fn) {
 
 var XMLHttpRequest = __webpack_require__(56);
 var Polling = __webpack_require__(88);
-var Emitter = __webpack_require__(33);
+var Emitter = __webpack_require__(32);
 var inherit = __webpack_require__(39);
-var debug = __webpack_require__(17)('engine.io-client:polling-xhr');
+var debug = __webpack_require__(18)('engine.io-client:polling-xhr');
 
 /**
  * Module exports.
@@ -38988,7 +38987,7 @@ var parser = __webpack_require__(28);
 var parseqs = __webpack_require__(52);
 var inherit = __webpack_require__(39);
 var yeast = __webpack_require__(90);
-var debug = __webpack_require__(17)('engine.io-client:websocket');
+var debug = __webpack_require__(18)('engine.io-client:websocket');
 var BrowserWebSocket = global.WebSocket || global.MozWebSocket;
 var NodeWebSocket;
 if (typeof window === 'undefined') {
@@ -40387,14 +40386,15 @@ for (var i = 0; i < 256; ++i) {
 function bytesToUuid(buf, offset) {
   var i = offset || 0;
   var bth = byteToHex;
-  return bth[buf[i++]] + bth[buf[i++]] +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] +
-          bth[buf[i++]] + bth[buf[i++]] +
-          bth[buf[i++]] + bth[buf[i++]];
+  // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
+  return ([bth[buf[i++]], bth[buf[i++]], 
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]],
+	bth[buf[i++]], bth[buf[i++]],
+	bth[buf[i++]], bth[buf[i++]]]).join('');
 }
 
 module.exports = bytesToUuid;
@@ -40409,9 +40409,11 @@ module.exports = bytesToUuid;
 // and inconsistent support for the `crypto` API.  We do the best we can via
 // feature-detection
 
-// getRandomValues needs to be invoked in a context where "this" is a Crypto implementation.
-var getRandomValues = (typeof(crypto) != 'undefined' && crypto.getRandomValues.bind(crypto)) ||
-                      (typeof(msCrypto) != 'undefined' && msCrypto.getRandomValues.bind(msCrypto));
+// getRandomValues needs to be invoked in a context where "this" is a Crypto
+// implementation. Also, find the complete implementation of crypto on IE11.
+var getRandomValues = (typeof(crypto) != 'undefined' && crypto.getRandomValues && crypto.getRandomValues.bind(crypto)) ||
+                      (typeof(msCrypto) != 'undefined' && typeof window.msCrypto.getRandomValues == 'function' && msCrypto.getRandomValues.bind(msCrypto));
+
 if (getRandomValues) {
   // WHATWG crypto RNG - http://wiki.whatwg.org/wiki/Crypto
   var rnds8 = new Uint8Array(16); // eslint-disable-line no-undef
@@ -40800,7 +40802,7 @@ module.exports = __webpack_amd_options__;
 
 }(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(31)(module), __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(30)(module), __webpack_require__(2)))
 
 /***/ }),
 /* 201 */
@@ -41400,7 +41402,7 @@ module.exports = exports['default'];
  * @typechecks
  */
 
-var emptyFunction = __webpack_require__(29);
+var emptyFunction = __webpack_require__(36);
 
 /**
  * Upstream version of event listener. Does not take into account specific
@@ -41577,13 +41579,31 @@ module.exports = function(isValidElement) {
 
 
 
-var emptyFunction = __webpack_require__(29);
-var invariant = __webpack_require__(3);
-var warning = __webpack_require__(4);
 var assign = __webpack_require__(11);
 
 var ReactPropTypesSecret = __webpack_require__(155);
 var checkPropTypes = __webpack_require__(387);
+
+var printWarning = function() {};
+
+if (process.env.NODE_ENV !== 'production') {
+  printWarning = function(text) {
+    var message = 'Warning: ' + text;
+    if (typeof console !== 'undefined') {
+      console.error(message);
+    }
+    try {
+      // --- Welcome to debugging React ---
+      // This error was thrown as a convenience so that you can use this stack
+      // to find the callsite that caused this warning to fire.
+      throw new Error(message);
+    } catch (x) {}
+  };
+}
+
+function emptyFunctionThatReturnsNull() {
+  return null;
+}
 
 module.exports = function(isValidElement, throwOnDirectAccess) {
   /* global Symbol */
@@ -41727,12 +41747,13 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
       if (secret !== ReactPropTypesSecret) {
         if (throwOnDirectAccess) {
           // New behavior only for users of `prop-types` package
-          invariant(
-            false,
+          var err = new Error(
             'Calling PropTypes validators directly is not supported by the `prop-types` package. ' +
             'Use `PropTypes.checkPropTypes()` to call them. ' +
             'Read more at http://fb.me/use-check-prop-types'
           );
+          err.name = 'Invariant Violation';
+          throw err;
         } else if (process.env.NODE_ENV !== 'production' && typeof console !== 'undefined') {
           // Old behavior for people using React.PropTypes
           var cacheKey = componentName + ':' + propName;
@@ -41741,15 +41762,12 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
             // Avoid spamming the console because they are often not actionable except for lib authors
             manualPropTypeWarningCount < 3
           ) {
-            warning(
-              false,
+            printWarning(
               'You are manually calling a React.PropTypes validation ' +
-              'function for the `%s` prop on `%s`. This is deprecated ' +
+              'function for the `' + propFullName + '` prop on `' + componentName  + '`. This is deprecated ' +
               'and will throw in the standalone `prop-types` package. ' +
               'You may be seeing this warning due to a third-party PropTypes ' +
-              'library. See https://fb.me/react-warning-dont-call-proptypes ' + 'for details.',
-              propFullName,
-              componentName
+              'library. See https://fb.me/react-warning-dont-call-proptypes ' + 'for details.'
             );
             manualPropTypeCallCache[cacheKey] = true;
             manualPropTypeWarningCount++;
@@ -41793,7 +41811,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
   }
 
   function createAnyTypeChecker() {
-    return createChainableTypeChecker(emptyFunction.thatReturnsNull);
+    return createChainableTypeChecker(emptyFunctionThatReturnsNull);
   }
 
   function createArrayOfTypeChecker(typeChecker) {
@@ -41843,8 +41861,8 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 
   function createEnumTypeChecker(expectedValues) {
     if (!Array.isArray(expectedValues)) {
-      process.env.NODE_ENV !== 'production' ? warning(false, 'Invalid argument supplied to oneOf, expected an instance of array.') : void 0;
-      return emptyFunction.thatReturnsNull;
+      process.env.NODE_ENV !== 'production' ? printWarning('Invalid argument supplied to oneOf, expected an instance of array.') : void 0;
+      return emptyFunctionThatReturnsNull;
     }
 
     function validate(props, propName, componentName, location, propFullName) {
@@ -41886,21 +41904,18 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 
   function createUnionTypeChecker(arrayOfTypeCheckers) {
     if (!Array.isArray(arrayOfTypeCheckers)) {
-      process.env.NODE_ENV !== 'production' ? warning(false, 'Invalid argument supplied to oneOfType, expected an instance of array.') : void 0;
-      return emptyFunction.thatReturnsNull;
+      process.env.NODE_ENV !== 'production' ? printWarning('Invalid argument supplied to oneOfType, expected an instance of array.') : void 0;
+      return emptyFunctionThatReturnsNull;
     }
 
     for (var i = 0; i < arrayOfTypeCheckers.length; i++) {
       var checker = arrayOfTypeCheckers[i];
       if (typeof checker !== 'function') {
-        warning(
-          false,
+        printWarning(
           'Invalid argument supplied to oneOfType. Expected an array of check functions, but ' +
-          'received %s at index %s.',
-          getPostfixForTypeWarning(checker),
-          i
+          'received ' + getPostfixForTypeWarning(checker) + ' at index ' + i + '.'
         );
-        return emptyFunction.thatReturnsNull;
+        return emptyFunctionThatReturnsNull;
       }
     }
 
@@ -42411,10 +42426,10 @@ module.exports = PooledClass.addPoolingTo(CallbackQueue);
 
 var DOMProperty = __webpack_require__(44);
 var ReactDOMComponentTree = __webpack_require__(13);
-var ReactInstrumentation = __webpack_require__(30);
+var ReactInstrumentation = __webpack_require__(29);
 
 var quoteAttributeValueForBrowser = __webpack_require__(457);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 var VALID_ATTRIBUTE_NAME_REGEX = new RegExp('^[' + DOMProperty.ATTRIBUTE_NAME_START_CHAR + '][' + DOMProperty.ATTRIBUTE_NAME_CHAR + ']*$');
 var illegalAttributeNameCache = {};
@@ -42675,7 +42690,7 @@ var LinkedValueUtils = __webpack_require__(160);
 var ReactDOMComponentTree = __webpack_require__(13);
 var ReactUpdates = __webpack_require__(37);
 
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 var didWarnValueLink = false;
 var didWarnValueDefaultValue = false;
@@ -43141,7 +43156,7 @@ var ReactDOMContainerInfo = __webpack_require__(404);
 var ReactDOMFeatureFlags = __webpack_require__(406);
 var ReactFeatureFlags = __webpack_require__(231);
 var ReactInstanceMap = __webpack_require__(79);
-var ReactInstrumentation = __webpack_require__(30);
+var ReactInstrumentation = __webpack_require__(29);
 var ReactMarkupChecksum = __webpack_require__(426);
 var ReactReconciler = __webpack_require__(65);
 var ReactUpdateQueue = __webpack_require__(163);
@@ -43152,7 +43167,7 @@ var instantiateReactComponent = __webpack_require__(243);
 var invariant = __webpack_require__(3);
 var setInnerHTML = __webpack_require__(110);
 var shouldUpdateReactComponent = __webpack_require__(169);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 var ATTR_NAME = DOMProperty.ID_ATTRIBUTE_NAME;
 var ROOT_ATTR_NAME = DOMProperty.ROOT_ATTRIBUTE_NAME;
@@ -43892,7 +43907,7 @@ module.exports = getHostComponentFromComposite;
 
 
 
-var ExecutionEnvironment = __webpack_require__(16);
+var ExecutionEnvironment = __webpack_require__(17);
 
 var contentKey = null;
 
@@ -44063,7 +44078,7 @@ var ReactHostComponent = __webpack_require__(232);
 
 var getNextDebugID = __webpack_require__(511);
 var invariant = __webpack_require__(3);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 // To avoid a cyclic dependency, we create the final class in this module
 var ReactCompositeComponentWrapper = function (element) {
@@ -44241,7 +44256,7 @@ module.exports = isTextInputElement;
 
 
 
-var ExecutionEnvironment = __webpack_require__(16);
+var ExecutionEnvironment = __webpack_require__(17);
 var escapeTextContentForBrowser = __webpack_require__(109);
 var setInnerHTML = __webpack_require__(110);
 
@@ -44304,7 +44319,7 @@ var REACT_ELEMENT_TYPE = __webpack_require__(420);
 var getIteratorFn = __webpack_require__(454);
 var invariant = __webpack_require__(3);
 var KeyEscapeUtils = __webpack_require__(159);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 var SEPARATOR = '.';
 var SUBSEPARATOR = ':';
@@ -44695,7 +44710,7 @@ var bpfrpt_proptype_ScrollIndices = process.env.NODE_ENV === 'production' ? null
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(32);
+/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(31);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(21);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__);
@@ -44948,7 +44963,7 @@ var bpfrpt_proptype_CellMeasureCache = process.env.NODE_ENV === 'production' ? n
 /* WEBPACK VAR INJECTION */(function(process) {/* unused harmony export DEFAULT_SCROLLING_RESET_TIME_INTERVAL */
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_assign__ = __webpack_require__(204);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_assign___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_assign__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_extends__ = __webpack_require__(32);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_extends__ = __webpack_require__(31);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_extends___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_extends__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(21);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_core_js_object_get_prototype_of___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_babel_runtime_core_js_object_get_prototype_of__);
@@ -45388,35 +45403,35 @@ var Grid = function (_React$PureComponent) {
       // In that event we need to remeasure.
       if (!instanceProps.scrollbarSizeMeasured) {
         this.setState(function (prevState) {
-          prevState.instanceProps.scrollbarSize = getScrollbarSize();
-          prevState.instanceProps.scrollbarSizeMeasured = true;
-          prevState.needToResetStyleCache = false;
-          return prevState;
+          var stateUpdate = __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_extends___default()({}, prevState, { needToResetStyleCache: false });
+          stateUpdate.instanceProps.scrollbarSize = getScrollbarSize();
+          stateUpdate.instanceProps.scrollbarSizeMeasured = true;
+          return stateUpdate;
         });
       }
 
       if (typeof scrollLeft === 'number' && scrollLeft >= 0 || typeof scrollTop === 'number' && scrollTop >= 0) {
-        this.setState(function (prevState) {
-          var stateUpdate = Grid._getScrollToPositionStateUpdate({
-            prevState: prevState,
-            scrollLeft: scrollLeft,
-            scrollTop: scrollTop
-          });
-          if (stateUpdate) {
-            stateUpdate.needToResetStyleCache = false;
-            return stateUpdate;
-          }
-          return null;
+        var stateUpdate = Grid._getScrollToPositionStateUpdate({
+          prevState: this.state,
+          scrollLeft: scrollLeft,
+          scrollTop: scrollTop
         });
+        if (stateUpdate) {
+          stateUpdate.needToResetStyleCache = false;
+          this.setState(stateUpdate);
+        }
       }
 
-      // setting the ref's scrollLeft and scrollTop.
-      // Somehow in MultiGrid the main grid doesn't trigger a update on mount.
-      if (this._scrollingContainer.scrollLeft !== this.state.scrollLeft) {
-        this._scrollingContainer.scrollLeft = this.state.scrollLeft;
-      }
-      if (this._scrollingContainer.scrollTop !== this.state.scrollTop) {
-        this._scrollingContainer.scrollTop = this.state.scrollTop;
+      // refs don't work in `react-test-renderer`
+      if (this._scrollingContainer) {
+        // setting the ref's scrollLeft and scrollTop.
+        // Somehow in MultiGrid the main grid doesn't trigger a update on mount.
+        if (this._scrollingContainer.scrollLeft !== this.state.scrollLeft) {
+          this._scrollingContainer.scrollLeft = this.state.scrollLeft;
+        }
+        if (this._scrollingContainer.scrollTop !== this.state.scrollTop) {
+          this._scrollingContainer.scrollTop = this.state.scrollTop;
+        }
       }
 
       // Don't update scroll offset if the size is 0; we don't render any cells in this case.
@@ -45703,7 +45718,8 @@ var Grid = function (_React$PureComponent) {
           overscanIndicesGetter = props.overscanIndicesGetter,
           overscanRowCount = props.overscanRowCount,
           rowCount = props.rowCount,
-          width = props.width;
+          width = props.width,
+          isScrollingOptOut = props.isScrollingOptOut;
       var scrollDirectionHorizontal = state.scrollDirectionHorizontal,
           scrollDirectionVertical = state.scrollDirectionVertical,
           instanceProps = state.instanceProps;
@@ -45806,6 +45822,7 @@ var Grid = function (_React$PureComponent) {
           deferredMeasurementCache: deferredMeasurementCache,
           horizontalOffsetAdjustment: horizontalOffsetAdjustment,
           isScrolling: isScrolling,
+          isScrollingOptOut: isScrollingOptOut,
           parent: this,
           rowSizeAndPositionManager: instanceProps.rowSizeAndPositionManager,
           rowStartIndex: rowStartIndex,
@@ -45936,19 +45953,16 @@ var Grid = function (_React$PureComponent) {
       var scrollLeft = _ref8.scrollLeft,
           scrollTop = _ref8.scrollTop;
 
-      this.setState(function (prevState) {
-        var stateUpdate = Grid._getScrollToPositionStateUpdate({
-          prevState: prevState,
-          scrollLeft: scrollLeft,
-          scrollTop: scrollTop
-        });
-
-        if (stateUpdate) {
-          stateUpdate.needToResetStyleCache = false;
-          return stateUpdate;
-        }
-        return null;
+      var stateUpdate = Grid._getScrollToPositionStateUpdate({
+        prevState: this.state,
+        scrollLeft: scrollLeft,
+        scrollTop: scrollTop
       });
+
+      if (stateUpdate) {
+        stateUpdate.needToResetStyleCache = false;
+        this.setState(stateUpdate);
+      }
     }
   }, {
     key: '_getCalculatedScrollLeft',
@@ -45967,8 +45981,8 @@ var Grid = function (_React$PureComponent) {
       var stateUpdate = Grid._getScrollLeftForScrollToColumnStateUpdate(props, state);
       if (stateUpdate) {
         stateUpdate.needToResetStyleCache = false;
+        this.setState(stateUpdate);
       }
-      this.setState(stateUpdate);
     }
   }, {
     key: '_getCalculatedScrollTop',
@@ -45982,11 +45996,16 @@ var Grid = function (_React$PureComponent) {
     key: '_resetStyleCache',
     value: function _resetStyleCache() {
       var styleCache = this._styleCache;
+      var cellCache = this._cellCache;
+      var isScrollingOptOut = this.props.isScrollingOptOut;
 
       // Reset cell and style caches once scrolling stops.
       // This makes Grid simpler to use (since cells commonly change).
       // And it keeps the caches from growing too large.
       // Performance is most sensitive when a user is scrolling.
+      // Don't clear visible cells from cellCache if isScrollingOptOut is specified.
+      // This keeps the cellCache to a resonable size.
+
       this._cellCache = {};
       this._styleCache = {};
 
@@ -45995,6 +46014,10 @@ var Grid = function (_React$PureComponent) {
         for (var columnIndex = this._columnStartIndex; columnIndex <= this._columnStopIndex; columnIndex++) {
           var key = rowIndex + '-' + columnIndex;
           this._styleCache[key] = styleCache[key];
+
+          if (isScrollingOptOut) {
+            this._cellCache[key] = cellCache[key];
+          }
         }
       }
     }
@@ -46007,8 +46030,8 @@ var Grid = function (_React$PureComponent) {
       var stateUpdate = Grid._getScrollTopForScrollToRowStateUpdate(props, state);
       if (stateUpdate) {
         stateUpdate.needToResetStyleCache = false;
+        this.setState(stateUpdate);
       }
-      this.setState(stateUpdate);
     }
   }], [{
     key: 'getDerivedStateFromProps',
@@ -46018,23 +46041,15 @@ var Grid = function (_React$PureComponent) {
       if (nextProps.columnCount === 0 && prevState.scrollLeft !== 0 || nextProps.rowCount === 0 && prevState.scrollTop !== 0) {
         newState.scrollLeft = 0;
         newState.scrollTop = 0;
-      } else if (nextProps.scrollLeft !== prevState.scrollLeft || nextProps.scrollTop !== prevState.scrollTop) {
-        // this handles the weird edge case where setting scrollToColumn in
-        // multigrid was causing multiple getDerivedStateFromProps calls. Overriding
-        // the state set in the first time.
-        // We should warn since if scrollTo{column,row} and scroll{left,top} is specified,
-        // scrollTo{column,row} should override.
-        if (nextProps.scrollToColumn > 0 && prevState.scrollLeft && nextProps.scrollLeft === 0) {
-          //NOOP
-        } else if (nextProps.scrollToRow > 0 && prevState.scrollTop && nextProps.scrollTop === 0) {
-          //NOOP
-        } else {
-          __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_assign___default()(newState, Grid._getScrollToPositionStateUpdate({
-            prevState: prevState,
-            scrollLeft: nextProps.scrollLeft,
-            scrollTop: nextProps.scrollTop
-          }));
-        }
+
+        // only use scroll{Left,Top} from props if scrollTo{Column,Row} isn't specified
+        // scrollTo{Column,Row} should override scroll{Left,Top}
+      } else if (nextProps.scrollLeft !== prevState.scrollLeft && nextProps.scrollToColumn < 0 || nextProps.scrollTop !== prevState.scrollTop && nextProps.scrollToRow < 0) {
+        __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_assign___default()(newState, Grid._getScrollToPositionStateUpdate({
+          prevState: prevState,
+          scrollLeft: nextProps.scrollLeft,
+          scrollTop: nextProps.scrollTop
+        }));
       }
 
       var instanceProps = prevState.instanceProps;
@@ -46291,7 +46306,8 @@ Grid.defaultProps = {
   scrollToColumn: -1,
   scrollToRow: -1,
   style: {},
-  tabIndex: 0
+  tabIndex: 0,
+  isScrollingOptOut: false
 };
 Grid.propTypes = process.env.NODE_ENV === 'production' ? null : {
   "aria-label": __WEBPACK_IMPORTED_MODULE_19_prop_types___default.a.string.isRequired,
@@ -46395,6 +46411,13 @@ Grid.propTypes = process.env.NODE_ENV === 'production' ? null : {
    * This property is primarily intended for use with the WindowScroller component.
    */
   isScrolling: __WEBPACK_IMPORTED_MODULE_19_prop_types___default.a.bool,
+
+
+  /**
+   * Opt-out of isScrolling param passed to cellRangeRenderer.
+   * To avoid the extra render when scroll stops.
+   */
+  isScrollingOptOut: __WEBPACK_IMPORTED_MODULE_19_prop_types___default.a.bool.isRequired,
 
 
   /** Optional renderer to be used in place of rows when either :rowCount or :columnCount is 0.  */
@@ -46547,6 +46570,7 @@ function defaultCellRangeRenderer(_ref) {
       deferredMeasurementCache = _ref.deferredMeasurementCache,
       horizontalOffsetAdjustment = _ref.horizontalOffsetAdjustment,
       isScrolling = _ref.isScrolling,
+      isScrollingOptOut = _ref.isScrollingOptOut,
       parent = _ref.parent,
       rowSizeAndPositionManager = _ref.rowSizeAndPositionManager,
       rowStartIndex = _ref.rowStartIndex,
@@ -46625,7 +46649,10 @@ function defaultCellRangeRenderer(_ref) {
       // However if we are scaling scroll positions and sizes, we should also avoid caching.
       // This is because the offset changes slightly as scroll position changes and caching leads to stale values.
       // For more info refer to issue #395
-      if (isScrolling && !horizontalOffsetAdjustment && !verticalOffsetAdjustment) {
+      //
+      // If isScrollingOptOut is specified, we always cache cells.
+      // For more info refer to issue #1028
+      if ((isScrollingOptOut || isScrolling) && !horizontalOffsetAdjustment && !verticalOffsetAdjustment) {
         if (!cellCache[key]) {
           cellCache[key] = cellRenderer(cellRendererParams);
         }
@@ -46725,7 +46752,7 @@ function defaultOverscanIndicesGetter(_ref) {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(32);
+/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(31);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_own_property_descriptor__ = __webpack_require__(319);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_own_property_descriptor___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_own_property_descriptor__);
@@ -47413,7 +47440,7 @@ defaultHeaderRowRenderer.propTypes = process.env.NODE_ENV === 'production' ? nul
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {/* harmony export (immutable) */ __webpack_exports__["a"] = defaultRowRenderer;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(32);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(31);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_react__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_react__);
@@ -47494,7 +47521,7 @@ defaultRowRenderer.propTypes = process.env.NODE_ENV === 'production' ? null : __
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {/* unused harmony export IS_SCROLLING_TIMEOUT */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(32);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(31);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(21);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__);
@@ -48177,7 +48204,7 @@ var checkReactTypeSpec = __webpack_require__(509);
 
 var canDefineProperty = __webpack_require__(113);
 var getIteratorFn = __webpack_require__(269);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 var lowPriorityWarning = __webpack_require__(174);
 
 function getDeclarationErrorAddendum() {
@@ -48421,7 +48448,7 @@ module.exports = ReactElementValidator;
 
 
 
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 function warnNoop(publicInstance, callerName) {
   if (process.env.NODE_ENV !== 'production') {
@@ -48902,7 +48929,7 @@ class LogAdapter {
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__components_TopCollar__ = __webpack_require__(280);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__components_Views_Logs_LogView__ = __webpack_require__(284);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__components_Views_Config_ConfigViewer__ = __webpack_require__(283);
@@ -49113,7 +49140,7 @@ class LogMessage {
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__LoggerButton__ = __webpack_require__(42);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_system__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__common_system__);
@@ -49309,7 +49336,7 @@ class TopCollar extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.PureCompon
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(16);
 /**
  * Bar on the left side of the logger that changes the active view.
  */
@@ -49351,7 +49378,7 @@ class ViewSwitcher extends __WEBPACK_IMPORTED_MODULE_0_react__["Component"] {
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_CtrlFSearch__ = __webpack_require__(126);
 /**
  * This is the box that pops up if you press ctrl+f. It handles searching through the content on the page and scrolling to matches.
@@ -49520,7 +49547,7 @@ class LoggerSearchBox extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Comp
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__ConfigSearchBox__ = __webpack_require__(282);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__highlighter_Highlighter__ = __webpack_require__(97);
 /**
@@ -49642,7 +49669,7 @@ class LogView extends __WEBPACK_IMPORTED_MODULE_0_react__["PureComponent"] {
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_CtrlFSearch__ = __webpack_require__(126);
 /**
  * This is the box that pops up if you press ctrl+f. It handles searching through the content on the page and scrolling to matches.
@@ -49812,7 +49839,7 @@ class LoggerSearchBox extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Comp
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LoggerButton__ = __webpack_require__(42);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(16);
 /**
  * Changes which types of logs are captured for a given client. Can also remove all of the client's logs from the view.
  */
@@ -50022,7 +50049,7 @@ class LoggerClientControl extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LoggerClientControl__ = __webpack_require__(286);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__LoggerButton__ = __webpack_require__(42);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__stores_LoggerStore__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__stores_LoggerStore__ = __webpack_require__(16);
 /**
  * The list of all clients that have registered with the logger, in addition to their current capture state.
  */
@@ -50367,7 +50394,7 @@ class LoggerClientControlList extends __WEBPACK_IMPORTED_MODULE_0_react___defaul
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LoggerButton__ = __webpack_require__(42);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(16);
 /**
  * Toggles for different categories of logs (e.g., system, dev, perf).
  */
@@ -50434,7 +50461,7 @@ class CategoryFilters extends __WEBPACK_IMPORTED_MODULE_0_react__["Component"] {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LoggerButton__ = __webpack_require__(42);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_resize_observer_polyfill__ = __webpack_require__(514);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__CategoryFilters__ = __webpack_require__(288);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_lodash_debounce__ = __webpack_require__(152);
@@ -50707,7 +50734,7 @@ class TabSwitcher extends __WEBPACK_IMPORTED_MODULE_0_react__["Component"] {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LoggerButton__ = __webpack_require__(42);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(16);
 /**
  * Houses quick-views, which are buttons that can change quickly change filters and settings to capture/debug a common problem.
  */
@@ -50763,7 +50790,7 @@ class QuickViews extends __WEBPACK_IMPORTED_MODULE_0_react__["Component"] {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LoggerButton__ = __webpack_require__(42);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(16);
 /**
  * Preferences that can be set by the user.
  */
@@ -50892,7 +50919,7 @@ const theme = {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LoggerButton__ = __webpack_require__(42);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(16);
 /**
  * Knocks out different types of logs from the view (e.g., turn of all errors). Doesn't affect capture state, just log visibility.
  */
@@ -51123,7 +51150,7 @@ class LogLevelFilters extends __WEBPACK_IMPORTED_MODULE_0_react__["Component"] {
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_react_virtualized_dist_commonjs_AutoSizer__ = __webpack_require__(460);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_react_virtualized_dist_commonjs_AutoSizer___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_react_virtualized_dist_commonjs_AutoSizer__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__objectInspector_object_inspector_ObjectInspector__ = __webpack_require__(298);
@@ -51693,7 +51720,7 @@ const IconMap = {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LogLevelFilters__ = __webpack_require__(294);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__LogList__ = __webpack_require__(295);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__LoggerSearchbox__ = __webpack_require__(285);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__stores_LoggerStore__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__stores_LoggerStore__ = __webpack_require__(16);
 /**
  * The harness for the actual console and filters.
  */
@@ -52944,7 +52971,7 @@ const getExpandedPaths = (data, dataIterator, expandPaths, expandLevel, initialS
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_dependencyManager__ = __webpack_require__(58);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_dependencyManager___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__common_dependencyManager__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__LogAdapter__ = __webpack_require__(274);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_react__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_react__);
@@ -53033,7 +53060,7 @@ StartLoggerUI();
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__LoggerStore__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__LoggerStore__ = __webpack_require__(16);
 /**
  * Currently a dumb bridge from the adapter to the logger store. In the future I'd like this to actually work like a proper actions file of a store.
  */
@@ -54617,7 +54644,7 @@ var emptyObject = __webpack_require__(103);
 var _invariant = __webpack_require__(3);
 
 if (process.env.NODE_ENV !== 'production') {
-  var warning = __webpack_require__(4);
+  var warning = __webpack_require__(5);
 }
 
 var MIXINS_KEY = 'mixins';
@@ -55865,7 +55892,7 @@ module.exports = createArrayFromMixed;
 
 /*eslint-disable fb-www/unsafe-html*/
 
-var ExecutionEnvironment = __webpack_require__(16);
+var ExecutionEnvironment = __webpack_require__(17);
 
 var createArrayFromMixed = __webpack_require__(375);
 var getMarkupWrap = __webpack_require__(377);
@@ -55952,7 +55979,7 @@ module.exports = createNodesFromMarkup;
 
 /*eslint-disable fb-www/unsafe-html */
 
-var ExecutionEnvironment = __webpack_require__(16);
+var ExecutionEnvironment = __webpack_require__(17);
 
 var invariant = __webpack_require__(3);
 
@@ -56259,7 +56286,7 @@ module.exports = memoizeStringOnly;
 
 
 
-var ExecutionEnvironment = __webpack_require__(16);
+var ExecutionEnvironment = __webpack_require__(17);
 
 var performance;
 
@@ -56321,11 +56348,24 @@ module.exports = performanceNow;
 
 
 
+var printWarning = function() {};
+
 if (process.env.NODE_ENV !== 'production') {
-  var invariant = __webpack_require__(3);
-  var warning = __webpack_require__(4);
   var ReactPropTypesSecret = __webpack_require__(155);
   var loggedTypeFailures = {};
+
+  printWarning = function(text) {
+    var message = 'Warning: ' + text;
+    if (typeof console !== 'undefined') {
+      console.error(message);
+    }
+    try {
+      // --- Welcome to debugging React ---
+      // This error was thrown as a convenience so that you can use this stack
+      // to find the callsite that caused this warning to fire.
+      throw new Error(message);
+    } catch (x) {}
+  };
 }
 
 /**
@@ -56350,12 +56390,29 @@ function checkPropTypes(typeSpecs, values, location, componentName, getStack) {
         try {
           // This is intentionally an invariant that gets caught. It's the same
           // behavior as without this statement except with a better message.
-          invariant(typeof typeSpecs[typeSpecName] === 'function', '%s: %s type `%s` is invalid; it must be a function, usually from ' + 'the `prop-types` package, but received `%s`.', componentName || 'React class', location, typeSpecName, typeof typeSpecs[typeSpecName]);
+          if (typeof typeSpecs[typeSpecName] !== 'function') {
+            var err = Error(
+              (componentName || 'React class') + ': ' + location + ' type `' + typeSpecName + '` is invalid; ' +
+              'it must be a function, usually from the `prop-types` package, but received `' + typeof typeSpecs[typeSpecName] + '`.'
+            );
+            err.name = 'Invariant Violation';
+            throw err;
+          }
           error = typeSpecs[typeSpecName](values, typeSpecName, componentName, location, null, ReactPropTypesSecret);
         } catch (ex) {
           error = ex;
         }
-        warning(!error || error instanceof Error, '%s: type specification of %s `%s` is invalid; the type checker ' + 'function must return `null` or an `Error` but returned a %s. ' + 'You may have forgotten to pass an argument to the type checker ' + 'creator (arrayOf, instanceOf, objectOf, oneOf, oneOfType, and ' + 'shape all require an argument).', componentName || 'React class', location, typeSpecName, typeof error);
+        if (error && !(error instanceof Error)) {
+          printWarning(
+            (componentName || 'React class') + ': type specification of ' +
+            location + ' `' + typeSpecName + '` is invalid; the type checker ' +
+            'function must return `null` or an `Error` but returned a ' + typeof error + '. ' +
+            'You may have forgotten to pass an argument to the type checker ' +
+            'creator (arrayOf, instanceOf, objectOf, oneOf, oneOfType, and ' +
+            'shape all require an argument).'
+          )
+
+        }
         if (error instanceof Error && !(error.message in loggedTypeFailures)) {
           // Only monitor this failure once because there tends to be a lot of the
           // same error.
@@ -56363,7 +56420,9 @@ function checkPropTypes(typeSpecs, values, location, componentName, getStack) {
 
           var stack = getStack ? getStack() : '';
 
-          warning(false, 'Failed %s type: %s%s', location, error.message, stack != null ? stack : '');
+          printWarning(
+            'Failed ' + location + ' type: ' + error.message + (stack != null ? stack : '')
+          );
         }
       }
     }
@@ -56388,9 +56447,9 @@ module.exports = checkPropTypes;
 
 
 
-var emptyFunction = __webpack_require__(29);
-var invariant = __webpack_require__(3);
 var ReactPropTypesSecret = __webpack_require__(155);
+
+function emptyFunction() {}
 
 module.exports = function() {
   function shim(props, propName, componentName, location, propFullName, secret) {
@@ -56398,12 +56457,13 @@ module.exports = function() {
       // It is still safe when called from React.
       return;
     }
-    invariant(
-      false,
+    var err = new Error(
       'Calling PropTypes validators directly is not supported by the `prop-types` package. ' +
       'Use PropTypes.checkPropTypes() to call them. ' +
       'Read more at http://fb.me/use-check-prop-types'
     );
+    err.name = 'Invariant Violation';
+    throw err;
   };
   shim.isRequired = shim;
   function getShim() {
@@ -56559,7 +56619,7 @@ module.exports = AutoFocusUtils;
 
 
 var EventPropagators = __webpack_require__(78);
-var ExecutionEnvironment = __webpack_require__(16);
+var ExecutionEnvironment = __webpack_require__(17);
 var FallbackCompositionState = __webpack_require__(397);
 var SyntheticCompositionEvent = __webpack_require__(440);
 var SyntheticInputEvent = __webpack_require__(443);
@@ -56946,14 +57006,14 @@ module.exports = BeforeInputEventPlugin;
 
 
 var CSSProperty = __webpack_require__(225);
-var ExecutionEnvironment = __webpack_require__(16);
-var ReactInstrumentation = __webpack_require__(30);
+var ExecutionEnvironment = __webpack_require__(17);
+var ReactInstrumentation = __webpack_require__(29);
 
 var camelizeStyleName = __webpack_require__(373);
 var dangerousStyleValue = __webpack_require__(450);
 var hyphenateStyleName = __webpack_require__(380);
 var memoizeStringOnly = __webpack_require__(383);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 var processStyleName = memoizeStringOnly(function (styleName) {
   return hyphenateStyleName(styleName);
@@ -57166,7 +57226,7 @@ module.exports = CSSPropertyOperations;
 
 var EventPluginHub = __webpack_require__(77);
 var EventPropagators = __webpack_require__(78);
-var ExecutionEnvironment = __webpack_require__(16);
+var ExecutionEnvironment = __webpack_require__(17);
 var ReactDOMComponentTree = __webpack_require__(13);
 var ReactUpdates = __webpack_require__(37);
 var SyntheticEvent = __webpack_require__(41);
@@ -57482,10 +57542,10 @@ module.exports = ChangeEventPlugin;
 var _prodInvariant = __webpack_require__(9);
 
 var DOMLazyTree = __webpack_require__(64);
-var ExecutionEnvironment = __webpack_require__(16);
+var ExecutionEnvironment = __webpack_require__(17);
 
 var createNodesFromMarkup = __webpack_require__(376);
-var emptyFunction = __webpack_require__(29);
+var emptyFunction = __webpack_require__(36);
 var invariant = __webpack_require__(3);
 
 var Danger = {
@@ -58003,7 +58063,7 @@ var instantiateReactComponent = __webpack_require__(243);
 var KeyEscapeUtils = __webpack_require__(159);
 var shouldUpdateReactComponent = __webpack_require__(169);
 var traverseAllChildren = __webpack_require__(246);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 var ReactComponentTreeHook;
 
@@ -58193,7 +58253,7 @@ var ReactComponentEnvironment = __webpack_require__(161);
 var ReactCurrentOwner = __webpack_require__(38);
 var ReactErrorUtils = __webpack_require__(162);
 var ReactInstanceMap = __webpack_require__(79);
-var ReactInstrumentation = __webpack_require__(30);
+var ReactInstrumentation = __webpack_require__(29);
 var ReactNodeTypes = __webpack_require__(235);
 var ReactReconciler = __webpack_require__(65);
 
@@ -58205,7 +58265,7 @@ var emptyObject = __webpack_require__(103);
 var invariant = __webpack_require__(3);
 var shallowEqual = __webpack_require__(147);
 var shouldUpdateReactComponent = __webpack_require__(169);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 var CompositeTypes = {
   ImpureClass: 0,
@@ -59101,7 +59161,7 @@ var ReactVersion = __webpack_require__(434);
 var findDOMNode = __webpack_require__(451);
 var getHostComponentFromComposite = __webpack_require__(240);
 var renderSubtreeIntoContainer = __webpack_require__(458);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 ReactDefaultInjection.inject();
 
@@ -59141,7 +59201,7 @@ if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ !== 'undefined' && typeof __REACT_DEVT
 }
 
 if (process.env.NODE_ENV !== 'production') {
-  var ExecutionEnvironment = __webpack_require__(16);
+  var ExecutionEnvironment = __webpack_require__(17);
   if (ExecutionEnvironment.canUseDOM && window.top === window.self) {
     // First check if devtools is not installed
     if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ === 'undefined') {
@@ -59176,7 +59236,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 if (process.env.NODE_ENV !== 'production') {
-  var ReactInstrumentation = __webpack_require__(30);
+  var ReactInstrumentation = __webpack_require__(29);
   var ReactDOMUnknownPropertyHook = __webpack_require__(416);
   var ReactDOMNullInputValuePropHook = __webpack_require__(410);
   var ReactDOMInvalidARIAHook = __webpack_require__(409);
@@ -59224,18 +59284,18 @@ var ReactDOMInput = __webpack_require__(408);
 var ReactDOMOption = __webpack_require__(411);
 var ReactDOMSelect = __webpack_require__(229);
 var ReactDOMTextarea = __webpack_require__(414);
-var ReactInstrumentation = __webpack_require__(30);
+var ReactInstrumentation = __webpack_require__(29);
 var ReactMultiChild = __webpack_require__(427);
 var ReactServerRenderingTransaction = __webpack_require__(432);
 
-var emptyFunction = __webpack_require__(29);
+var emptyFunction = __webpack_require__(36);
 var escapeTextContentForBrowser = __webpack_require__(109);
 var invariant = __webpack_require__(3);
 var isEventSupported = __webpack_require__(168);
 var shallowEqual = __webpack_require__(147);
 var inputValueTracking = __webpack_require__(242);
 var validateDOMNesting = __webpack_require__(170);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 var Flags = ReactDOMComponentFlags;
 var deleteListener = EventPluginHub.deleteListener;
@@ -60389,7 +60449,7 @@ var ReactDOMComponentTree = __webpack_require__(13);
 var ReactUpdates = __webpack_require__(37);
 
 var invariant = __webpack_require__(3);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 var didWarnValueLink = false;
 var didWarnCheckedLink = false;
@@ -60674,7 +60734,7 @@ module.exports = ReactDOMInput;
 var DOMProperty = __webpack_require__(44);
 var ReactComponentTreeHook = __webpack_require__(27);
 
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 var warnedProperties = {};
 var rARIA = new RegExp('^(aria)-[' + DOMProperty.ATTRIBUTE_NAME_CHAR + ']*$');
@@ -60770,7 +60830,7 @@ module.exports = ReactDOMInvalidARIAHook;
 
 var ReactComponentTreeHook = __webpack_require__(27);
 
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 var didWarnValueNull = false;
 
@@ -60821,7 +60881,7 @@ var React = __webpack_require__(67);
 var ReactDOMComponentTree = __webpack_require__(13);
 var ReactDOMSelect = __webpack_require__(229);
 
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 var didWarnInvalidOptionChildren = false;
 
 function flattenChildren(children) {
@@ -60941,7 +61001,7 @@ module.exports = ReactDOMOption;
 
 
 
-var ExecutionEnvironment = __webpack_require__(16);
+var ExecutionEnvironment = __webpack_require__(17);
 
 var getNodeForCharacterOffset = __webpack_require__(455);
 var getTextContentAccessor = __webpack_require__(241);
@@ -61330,7 +61390,7 @@ var ReactDOMComponentTree = __webpack_require__(13);
 var ReactUpdates = __webpack_require__(37);
 
 var invariant = __webpack_require__(3);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 var didWarnValueLink = false;
 var didWarnValDefaultVal = false;
@@ -61630,7 +61690,7 @@ var DOMProperty = __webpack_require__(44);
 var EventPluginRegistry = __webpack_require__(105);
 var ReactComponentTreeHook = __webpack_require__(27);
 
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 if (process.env.NODE_ENV !== 'production') {
   var reactProps = {
@@ -61746,10 +61806,10 @@ module.exports = ReactDOMUnknownPropertyHook;
 var ReactInvalidSetStateWarningHook = __webpack_require__(425);
 var ReactHostOperationHistoryHook = __webpack_require__(423);
 var ReactComponentTreeHook = __webpack_require__(27);
-var ExecutionEnvironment = __webpack_require__(16);
+var ExecutionEnvironment = __webpack_require__(17);
 
 var performanceNow = __webpack_require__(385);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 var hooks = [];
 var didHookThrowForEvent = {};
@@ -62112,7 +62172,7 @@ var _assign = __webpack_require__(11);
 var ReactUpdates = __webpack_require__(37);
 var Transaction = __webpack_require__(108);
 
-var emptyFunction = __webpack_require__(29);
+var emptyFunction = __webpack_require__(36);
 
 var RESET_BATCHED_UPDATES = {
   initialize: emptyFunction,
@@ -62328,7 +62388,7 @@ module.exports = ReactEventEmitterMixin;
 var _assign = __webpack_require__(11);
 
 var EventListener = __webpack_require__(220);
-var ExecutionEnvironment = __webpack_require__(16);
+var ExecutionEnvironment = __webpack_require__(17);
 var PooledClass = __webpack_require__(53);
 var ReactDOMComponentTree = __webpack_require__(13);
 var ReactUpdates = __webpack_require__(37);
@@ -62558,7 +62618,7 @@ module.exports = ReactInjection;
 
 
 
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 if (process.env.NODE_ENV !== 'production') {
   var processingChildContext = false;
@@ -62655,13 +62715,13 @@ var _prodInvariant = __webpack_require__(9);
 
 var ReactComponentEnvironment = __webpack_require__(161);
 var ReactInstanceMap = __webpack_require__(79);
-var ReactInstrumentation = __webpack_require__(30);
+var ReactInstrumentation = __webpack_require__(29);
 
 var ReactCurrentOwner = __webpack_require__(38);
 var ReactReconciler = __webpack_require__(65);
 var ReactChildReconciler = __webpack_require__(399);
 
-var emptyFunction = __webpack_require__(29);
+var emptyFunction = __webpack_require__(36);
 var flattenChildren = __webpack_require__(452);
 var invariant = __webpack_require__(3);
 
@@ -63233,7 +63293,7 @@ var CallbackQueue = __webpack_require__(226);
 var PooledClass = __webpack_require__(53);
 var ReactBrowserEventEmitter = __webpack_require__(106);
 var ReactInputSelection = __webpack_require__(233);
-var ReactInstrumentation = __webpack_require__(30);
+var ReactInstrumentation = __webpack_require__(29);
 var Transaction = __webpack_require__(108);
 var ReactUpdateQueue = __webpack_require__(163);
 
@@ -63505,7 +63565,7 @@ var _assign = __webpack_require__(11);
 
 var PooledClass = __webpack_require__(53);
 var Transaction = __webpack_require__(108);
-var ReactInstrumentation = __webpack_require__(30);
+var ReactInstrumentation = __webpack_require__(29);
 var ReactServerUpdateQueue = __webpack_require__(433);
 
 /**
@@ -63600,7 +63660,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var ReactUpdateQueue = __webpack_require__(163);
 
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 function warnNoop(publicInstance, callerName) {
   if (process.env.NODE_ENV !== 'production') {
@@ -64061,7 +64121,7 @@ module.exports = SVGDOMPropertyConfig;
 
 
 var EventPropagators = __webpack_require__(78);
-var ExecutionEnvironment = __webpack_require__(16);
+var ExecutionEnvironment = __webpack_require__(17);
 var ReactDOMComponentTree = __webpack_require__(13);
 var ReactInputSelection = __webpack_require__(233);
 var SyntheticEvent = __webpack_require__(41);
@@ -64269,7 +64329,7 @@ var SyntheticTransitionEvent = __webpack_require__(446);
 var SyntheticUIEvent = __webpack_require__(80);
 var SyntheticWheelEvent = __webpack_require__(447);
 
-var emptyFunction = __webpack_require__(29);
+var emptyFunction = __webpack_require__(36);
 var getEventCharCode = __webpack_require__(165);
 var invariant = __webpack_require__(3);
 
@@ -65005,7 +65065,7 @@ var ReactPropTypeLocationNames = __webpack_require__(429);
 var ReactPropTypesSecret = __webpack_require__(236);
 
 var invariant = __webpack_require__(3);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 var ReactComponentTreeHook;
 
@@ -65091,7 +65151,7 @@ module.exports = checkReactTypeSpec;
 
 
 var CSSProperty = __webpack_require__(225);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 var isUnitlessNumber = CSSProperty.isUnitlessNumber;
 var styleWarnings = {};
@@ -65181,7 +65241,7 @@ var ReactInstanceMap = __webpack_require__(79);
 
 var getHostComponentFromComposite = __webpack_require__(240);
 var invariant = __webpack_require__(3);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 /**
  * Returns the DOM node rendered by this element.
@@ -65240,7 +65300,7 @@ module.exports = findDOMNode;
 
 var KeyEscapeUtils = __webpack_require__(159);
 var traverseAllChildren = __webpack_require__(246);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 var ReactComponentTreeHook;
 
@@ -65553,7 +65613,7 @@ module.exports = getNodeForCharacterOffset;
 
 
 
-var ExecutionEnvironment = __webpack_require__(16);
+var ExecutionEnvironment = __webpack_require__(17);
 
 /**
  * Generate a mapping of standard vendor prefixes using the defined style property and event name.
@@ -65701,7 +65761,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _extends2 = __webpack_require__(32);
+var _extends2 = __webpack_require__(31);
 
 var _extends3 = _interopRequireDefault(_extends2);
 
@@ -66612,7 +66672,7 @@ function defaultKeyMapper(rowIndex, columnIndex) {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(32);
+/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(31);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_objectWithoutProperties__ = __webpack_require__(127);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_objectWithoutProperties___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_objectWithoutProperties__);
@@ -66927,7 +66987,7 @@ function defaultCellGroupRenderer(_ref4) {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(32);
+/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(31);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(21);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__);
@@ -69154,7 +69214,7 @@ var CellMeasurerCacheDecorator = function () {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(32);
+/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(31);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_objectWithoutProperties__ = __webpack_require__(127);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_objectWithoutProperties___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_objectWithoutProperties__);
@@ -70169,7 +70229,7 @@ ScrollSync.propTypes = process.env.NODE_ENV !== "production" ? {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(32);
+/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(31);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(21);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__);
@@ -72201,7 +72261,7 @@ module.exports = PooledClass;
 var PooledClass = __webpack_require__(502);
 var ReactElement = __webpack_require__(54);
 
-var emptyFunction = __webpack_require__(29);
+var emptyFunction = __webpack_require__(36);
 var traverseAllChildren = __webpack_require__(513);
 
 var twoArgumentPooler = PooledClass.twoArgumentPooler;
@@ -72659,7 +72719,7 @@ var ReactPropTypeLocationNames = __webpack_require__(505);
 var ReactPropTypesSecret = __webpack_require__(507);
 
 var invariant = __webpack_require__(3);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 var ReactComponentTreeHook;
 
@@ -72844,7 +72904,7 @@ var REACT_ELEMENT_TYPE = __webpack_require__(266);
 var getIteratorFn = __webpack_require__(269);
 var invariant = __webpack_require__(3);
 var KeyEscapeUtils = __webpack_require__(501);
-var warning = __webpack_require__(4);
+var warning = __webpack_require__(5);
 
 var SEPARATOR = '.';
 var SUBSEPARATOR = ':';

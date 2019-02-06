@@ -18,11 +18,11 @@
 			"unknownComponent":"nonConfiguredComponent"
 		},
 		"assimilation": {
-			"useOpenFinSpawn": false,
+			"useOpenFinSpawn": true,
 			"enabled": true,
 			"blacklist": [],
 			"whitelist": [],
-			"onlySpawned": true,
+			"onlySpawned": false,
 			"throttle": 10,
 			"focusDelay": 30,
 			"eventIgnore": 50
@@ -62,7 +62,14 @@
 		"showNativeTabs": true,
 		"floatingTitlebarComponent": "Floating Titlebar"
 	},
-	"betaFeatures": {},
+	"betaFeatures": {
+		"assimilation": {
+			"enabled": true,
+			"blacklist": [],
+			"whitelist": [],
+			"onlySpawned": false
+		}
+	},
 	"splinteringConfig": {
 		"comment": "A SplinterAgent is just an openfin application that is capable of spawning specific components/services. If you try to spawn a component/service that one of these agents does not cover, it will be spawned by the defaultAgent. You can also specify maxWindowsPerAgent if you would like to limit your agents to some ceiling. This is useful when you have a particularly heavy component.",
 		"enabled": true,

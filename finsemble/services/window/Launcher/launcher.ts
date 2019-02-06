@@ -24,6 +24,7 @@ import {
 } from "async";
 import _difference from "lodash.difference";
 import merge = require("deepmerge");
+import { FinsembleWindow } from "../../../common/window/FinsembleWindow";
 
 // For regression testing
 import "./_test";
@@ -32,9 +33,49 @@ import { IRouterClient } from "../../../clients/IRouterClient";
 
 const clone = require("lodash.cloneDeep");
 
-var activeWindows = new LauncherWindowGroup({
+/**
+ * The internal representation of a Finsemble-controlled window.
+ * 
+ * Daniel H. - 1/16/2019
+ * I've done the bare minimum required to provide tight type safety
+ * for this file. We really need to figure out which of these interfaces
+ * is appropriate and pick that one, rather than this disjointed union.
+ * 
+ * @TODO - Lift into seperate interface file and refactor correctly.
+ */
+type FSBLWindow = BaseWindow & FinsembleWindow & {
+	windowDescriptor: WindowDescriptor;
+	/** 
+	 * The name of the component in this window. E.g "Welcome Component", "StackedWindow", etc.
+	 * 
+	 * Daniel H. - 1/16/2019
+	 * This appears to duplicated on the windowDescriptor itself.
+ 	 * @TODO - Pick one and stick with it.
+	*/
+	componentType: string;
+	lastHeartbeat: number;
+	errorSent: boolean;
+	warningSent: boolean;
+	uuid: string;
+};
+
+/** Daniel H. - 1/16/2019
+ * This is a stand-in for the real type.
+ * @TODO - Refactor LauncherGroup to Typescript.
+*/
+interface ILauncherGroup {
+	getWindows(): { [name: string]: FSBLWindow };
+	getWindow(name: string): FSBLWindow;
+	findAllByComponentType(componentType: string): FSBLWindow[];
+	getWindowNames(): string[];
+	addWindow(window: FSBLWindow): void;
+	removeWindows(windowNames: string[], cb: () => void);
+	windows: FSBLWindow[];
+};
+
+var activeWindows: ILauncherGroup = new LauncherWindowGroup({
 	name: "LauncherService.allWindows",
-});
+}) as any;
 
 declare var window: any;
 /**
@@ -55,13 +96,56 @@ const NAME_STORAGE_KEY = "finsemble.NameCountData";
  * is missing from this.
  * @TODO Move to a seperate file and complete. */
 type WindowDescriptor = {
-	name: string,
-	uuid: string,
-	monitorInfo: any,
+	name?: string,
+	uuid?: string,
+	monitorInfo?: any,
 	defaultLeft?: number,
 	defaultTop?: number,
 	defaultWidth?: number,
 	defaultHeight?: number;
+	/** The name of the component in this window. E.g "Welcome Component", "StackedWindow", etc. */
+	componentType?: string;
+	customData?: {
+		monitorDimensions?: {};
+		window?: {
+			allowToSpawnOffScreen: boolean;
+		};
+		// Daniel H. 1/16/19 - This appears to be a duplicate of the top level manifest.
+		// @TODO - Pick one and remove the other.
+		manifest?: {};
+		spawnData?: {};
+		component?: {
+			type: string;
+			spawnOnAllMonitors: boolean;
+		};
+	};
+	claimMonitorSpace?: boolean;
+	url?: string;
+	// Daniel H. 1/16/19 - This appears to be a duplicate of the .customData.manifest.
+	// @TODO - Pick one and remove the other.
+	manifest?: {};
+	resizable?: boolean;
+	/** A unique string that sets a process affinity flag. This allows windows to grouped together under a single process (a.k.a. Application). This flag is only available when running on Electron via e2o. */
+	affinity?: string;
+	alwaysOnTop?: boolean;
+	showTaskbarIcon?: boolean;
+	// Daniel H. - 1/16/19 - This apears to be duplicate data with defaultLeft, etc.
+	// Same story for .bounds.left, etc.
+	// @TODO - Refactor to single source of truth. See other comments from same date in file.
+	left?: number;
+	top?: number;
+	right?: number;
+	bottom?: number;
+	width?: number;
+	height?: number;
+	bounds?: {
+		left: number;
+		top: number;
+		right: number;
+		bottom: number;
+		width: number;
+		height: number;
+	}
 }
 
 /** All the possible window types, including their aliases used in config. */
@@ -100,7 +184,7 @@ export type SpawnParams = {
 	staggerPixels?: number;
 	launchingWindow?: any;
 	options?: {
-	name ?: string;
+		name?: string;
 		url?: string;
 		preloadScripts?: any
 		customData?: {
@@ -429,7 +513,7 @@ export class Launcher {
 		this.executeWindowGroupFunctionByListGroupOrType(response, cb);
 	}
 
-	calculateBounds(foundMonitor, windowDescriptor, launcherParams) {
+	calculateBounds(foundMonitor, windowDescriptor: WindowDescriptor, launcherParams) {
 		var position = launcherParams.position;
 
 		var monitors = launcherParams.monitors;
@@ -789,19 +873,40 @@ export class Launcher {
 	 * @param {*} previousWindowBounds not used, unfortunately
 	 * @returns windowDescriptor updated window descriptor
 	 */
-	adjustBoundsToBeOnMonitor(windowDescriptor) {
+	adjustBoundsToBeOnMonitor(windowDescriptor: WindowDescriptor): WindowDescriptor {
 		if (windowDescriptor && windowDescriptor.customData && windowDescriptor.customData.window) {
 			if (windowDescriptor.customData.window.allowToSpawnOffScreen) {
 				return windowDescriptor;
 			}
 		}
-		let bounds = {
-			left: windowDescriptor.defaultLeft,
-			top: windowDescriptor.defaultTop,
-			height: windowDescriptor.defaultHeight,
-			width: windowDescriptor.defaultWidth,
-			right: null,
-			bottom: null
+
+		let bounds;
+		/** Currently our bounds data (top, left, height, width, etc.) is duplicated in up to three places
+		 * in the WindowDescriptor object: as top level props (windowDescriptor.left), as top level
+		 * props with a "default" prefix (windowDescriptor.defaultLeft), and, in the case of StackedWindows
+		 * (and in this case only), within the "bounds" prop (windowDescriptor.bounds.left).
+		 * 
+		 * @TODO Pick a place and stick with it. Refactor all the code touching WindowDescriptors to use
+		 * that new place. Either everyone should check "bounds", or no one should.
+		 */
+		if (windowDescriptor.componentType === "StackedWindow") {
+			bounds = {
+				left: windowDescriptor.left,
+				top: windowDescriptor.top,
+				height: windowDescriptor.height,
+				width: windowDescriptor.width,
+				right: null,
+				bottom: null
+			}
+		} else {
+			bounds = {
+				left: windowDescriptor.defaultLeft,
+				top: windowDescriptor.defaultTop,
+				height: windowDescriptor.defaultHeight,
+				width: windowDescriptor.defaultWidth,
+				right: null,
+				bottom: null
+			}
 		};
 
 		bounds.right = bounds.left + bounds.width;
@@ -853,6 +958,22 @@ export class Launcher {
 			windowDescriptor.width = bounds.width;
 			windowDescriptor.right = bounds.left + bounds.width;
 			windowDescriptor.bottom = bounds.top + bounds.height;
+
+			/**
+			 * Daniel H. - 1/16/19
+			 * Needed in the case that  the windowDescriptor belongs to a StackedWindow.
+			 * See coments above.
+			 * 
+			 * @TODO - Refactor this away.
+			*/
+			if (windowDescriptor.bounds) {
+				windowDescriptor.bounds.left = bounds.left;
+				windowDescriptor.bounds.top = bounds.top;
+				windowDescriptor.bounds.height = bounds.height;
+				windowDescriptor.bounds.width = bounds.width;
+				windowDescriptor.bounds.right = bounds.left + bounds.width;
+				windowDescriptor.bounds.bottom = bounds.top + bounds.height;
+			}
 		}
 
 		return windowDescriptor;
@@ -867,7 +988,7 @@ export class Launcher {
 	/**
 	 * @private
 	 */
-	compileWindowDescriptor(config, params, baseDescriptor, resultFromDeriveBounds) {
+	compileWindowDescriptor(config, params, baseDescriptor: WindowDescriptor, resultFromDeriveBounds): WindowDescriptor {
 		var windowDescriptor = baseDescriptor;
 		
 		// Pushes affinity option further down callstack for eventual consumption by E2O.
@@ -970,8 +1091,8 @@ export class Launcher {
 	 * @returns {Promise} A promise that resolves to a new windowDescriptor that describes the new window.
 	 * with defaultLeft, defaultTop, defaultWidth, defaultHeight, and claimMonitorSpace set.
 	 */
-	deriveBounds(launcherParams): Promise<WindowDescriptor> {
-		var windowDescriptor = {};
+	deriveBounds(launcherParams: SpawnParams): Promise<WindowDescriptor> {
+		let windowDescriptor: WindowDescriptor = {};
 		// Default to same monitor of the relativeWindow passed in (usually the window that launched us)
 
 		// Get windowDescriptor for the previous window (the caller or relativeWindow)
@@ -1117,8 +1238,8 @@ export class Launcher {
 	/**
 	 * Returns a list of window descriptors that includes each window that the launcher has spawned.
 	 */
-	getActiveDescriptors() {
-		var descriptors = {};
+	getActiveDescriptors()  {
+		var descriptors: {[k: string]: WindowDescriptor} = {};
 		var allActiveWindows = activeWindows.getWindows();
 		for (var name in allActiveWindows) {
 			descriptors[name] = allActiveWindows[name].windowDescriptor;
@@ -1206,7 +1327,7 @@ export class Launcher {
 				}
 				var allActiveWindows = activeWindows.getWindows();
 				var activeComponentNames = Object.keys(allActiveWindows).filter(name => {
-					return allActiveWindows[name].params.component == c;
+					return allActiveWindows[name].componentType === c;
 				});
 				for (var j of activeComponentNames) { componentsThatCanReceiveDataTypes[commonType].activeComponents.push(j); }
 				//componentsThatCanReceiveDataTypes[commonType].activeComponents = [...componentsThatCanReceiveDataTypes[commonType].activeComponents, ...activeComponents];
@@ -2466,7 +2587,7 @@ export class Launcher {
 			};
 			let spawnResult = await self.doSpawn(windowDescriptor);
 			let { err, data: objectReceivedOnSpawn } = spawnResult;
-			Logger.system.info(windowDescriptor.name,"Inside LauncherService.spawn(), before ");
+			Logger.system.info(windowDescriptor.name, "Inside LauncherService.spawn(), before ");
 			if (err) {
 				errorString = err;
 			} else {
@@ -2476,7 +2597,7 @@ export class Launcher {
 				} else {
 					descriptor = data;
 				}
-				Logger.system.info(windowDescriptor.name,"Inside LauncherService.spawn(), after ");
+				Logger.system.info(windowDescriptor.name, "Inside LauncherService.spawn(), after ");
 			}
 		}
 
@@ -2522,7 +2643,7 @@ export class Launcher {
 	* @param {LauncherClient~windowDescriptor} windowDescriptor The descriptor to launch
 	* @param {function} cb Callback
 	*/
-	doSpawn(windowDescriptor, cb = Function.prototype): Promise<{ err: any, data: any }> {
+	doSpawn(windowDescriptor: WindowDescriptor, cb = Function.prototype): Promise<{ err: any, data: any }> {
 		const promiseResolver = (resolve) => {
 			this.createSplinterAndInject.createWindow({ windowDescriptor }, (err, windowIdentifier) => {
 				Logger.system.debug("doSpawn createWindow", err, windowIdentifier, windowDescriptor);

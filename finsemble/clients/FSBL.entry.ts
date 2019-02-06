@@ -10,6 +10,9 @@ import * as applicationConstants from "../common/constants";
 const { APPLICATION_STATE_CHANNEL } = applicationConstants;
 import { each as asyncEach, asyncify, timeout as asyncTimeout } from "async";
 import { IGlobals } from "../common/Globals";
+import wrapCallbacks from "../common/wrapCallbacks";
+import { ConfigUtilInstance as  ConfigUtils } from "../common/configUtil";
+import * as Utils from "../common/util";
 import Validate from "../common/validate";
 /** The global `window` object. We cast it to a specific interface here to be
  * explicit about what Finsemble-related properties it may have. */
@@ -32,10 +35,6 @@ if (Globals.FSBLAlreadyPreloaded) {
 
 if ((fin.container === "browser" || window.top === window) && !Globals.FSBLAlreadyPreloaded) { // @todo - remove when OpenFin Fixes preload
 	Globals.FSBLAlreadyPreloaded = true;
-	var Utils = require("../common/util").default;
-	var ConfigUtils = require("../common/configUtil").ConfigUtilInstance;
-	var wrapCallbacks = require("../common/wrapCallbacks").default;
-
 	// FSBL.initialize() or System.ready() may start first. It's unpredictable. initialize() depends on main()
 	// so we use variables to defer running that function if main() hasn't yet run.
 	var deferredCallback = Function.prototype;

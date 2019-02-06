@@ -620,7 +620,7 @@ export class FinsembleWindow {
 		this.queryWindowService("focus", params, callback);
 	}
 
-	bringToFront(params, callback) {
+	bringToFront(params?, callback?) {
 		this.queryWindowService("bringToFront", params, callback);
 	}
 

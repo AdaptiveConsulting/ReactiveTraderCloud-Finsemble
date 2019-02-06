@@ -14,6 +14,7 @@ import { FinsembleWindow } from "../common/window/FinsembleWindow";
 import { ConfigUtilInstance as configUtil } from "../common/configUtil";
 import deepEqual = require("lodash.isequal");
 import { parallel as asyncParallel } from "async";
+import RouterClient from "./routerClientInstance";
 import { debug } from "util";
 
 const WORKSPACE_CACHE_TOPIC = "finsemble.workspace.cache"; // window data stored in this topic for access by workspace service
@@ -99,7 +100,7 @@ class WindowClient extends BaseClient {
 	commandChannel: (arg0: any, arg1: any) => void;
 
 
-	
+
 	constructor(params) {
 		/** @alias WindowClient# */
 		super(params);
@@ -739,7 +740,7 @@ class WindowClient extends BaseClient {
 	 */
 	formGroup() {
 		let windowName = this.getWindowNameForDocking()
-		this.routerClient.transmit("DockingService.formGroup", {windowName});
+		this.routerClient.transmit("DockingService.formGroup", { windowName });
 		this.dirtyTheWorkspace(windowName);
 	}
 
@@ -747,7 +748,7 @@ class WindowClient extends BaseClient {
 	 * Makes the workspace dirty.
 	 * @private
 	 */
-	dirtyTheWorkspace(windowName = finsembleWindow ? finsembleWindow.name: window.name) {
+	dirtyTheWorkspace(windowName = finsembleWindow ? finsembleWindow.name : window.name) {
 		if (WorkspaceClient && !WorkspaceClient.activeWorkspace.isDirty) {
 			this.routerClient.transmit(WORKSPACE.API_CHANNELS.SET_ACTIVEWORKSPACE_DIRTY, { windowName }, null);
 		}
@@ -1177,9 +1178,9 @@ class WindowClient extends BaseClient {
 	 */
 	ejectFromGroup() {
 		let windowName = this.getWindowNameForDocking();
-		FSBL.Clients.RouterClient.query("DockingService.leaveGroup", {
+		RouterClient.query("DockingService.leaveGroup", {
 			name: windowName
-		});
+		}, () => { });
 		this.dirtyTheWorkspace(windowName);
 	}
 
@@ -1315,7 +1316,7 @@ class WindowClient extends BaseClient {
 	 * @param {*} cb
 	 */
 	startTilingOrTabbing(params, cb = Function.prototype) {
-		FSBL.Clients.RouterClient.transmit("DockingService.startTilingOrTabbing", params);
+		RouterClient.transmit("DockingService.startTilingOrTabbing", params);
 		cb();
 	};
 
@@ -1326,7 +1327,7 @@ class WindowClient extends BaseClient {
 	 */
 	cancelTilingOrTabbing(params, cb = Function.prototype) {
 		console.debug("CancelTilingOrTabbing");
-		FSBL.Clients.RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
+		RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
 		cb();
 	};
 
@@ -1336,7 +1337,7 @@ class WindowClient extends BaseClient {
 	 * @param {*} cb
 	 */
 	sendIdentifierForTilingOrTabbing(params, cb = Function.prototype) {
-		FSBL.Clients.RouterClient.transmit("DockingService.identifierForTilingOrTabbing", params);
+		RouterClient.transmit("DockingService.identifierForTilingOrTabbing", params);
 		cb();
 	};
 
@@ -1356,10 +1357,10 @@ class WindowClient extends BaseClient {
 		};
 
 		let transmitAndQueryStop = () => { // We both transmit and query because no stack operation shound happen until this is done and there are a lot of listeners around. TODO: clean them up and move the transmit to docking.
-			FSBL.Clients.RouterClient.query("DockingService.stopTilingOrTabbing", params, () => {
+			RouterClient.query("DockingService.stopTilingOrTabbing", params, () => {
 				cb();
 			});
-			FSBL.Clients.RouterClient.transmit("DockingService.stopTilingOrTabbing", params);
+			RouterClient.transmit("DockingService.stopTilingOrTabbing", params);
 		};
 
 		if (!params.mousePosition) {
@@ -1368,7 +1369,7 @@ class WindowClient extends BaseClient {
 				let pointIsInBox = this.isPointInBox(position, windowPosition);
 				if (!params.allowDropOnSelf && pointIsInBox) {
 					Logger.system.debug("StopTilingOrTabbing windowClient cancel 1:", params, windowPosition, err);
-					FSBL.Clients.RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
+					RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
 					return cb();
 				}
 				Logger.system.debug("StopTilingOrTabbing windowClient stop 1:", err, params, windowPosition, err);
@@ -1378,7 +1379,7 @@ class WindowClient extends BaseClient {
 		let pointIsInBox = this.isPointInBox(params.mousePosition, windowPosition);
 		if (!params.allowDropOnSelf && pointIsInBox) {
 			Logger.system.debug("StopTilingOrTabbing windowClient cancel 2:", params, windowPosition);
-			FSBL.Clients.RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
+			RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
 			return cb();
 		}
 		Logger.system.debug("StopTilingOrTabbing windowClient stop 2:", params, windowPosition);
@@ -1418,7 +1419,8 @@ class WindowClient extends BaseClient {
 			};
 			finsembleWindow.addListener("parent-set", onParentSet);
 			FSBL.Clients.LauncherClient.spawn("StackedWindow", {
-				windowType: "StackedWindow", data: { windowIdentifiers: params.windowIdentifiers } , options: {newStack: true } }, function (err, windowInfo) {
+				windowType: "StackedWindow", data: { windowIdentifiers: params.windowIdentifiers }, options: { newStack: true }
+			}, function (err, windowInfo) {
 				Logger.system.debug("WindowClient.getStackedWindow-success", err, windowInfo);
 				if (!err) {
 					return;
@@ -1655,4 +1657,4 @@ var windowClient = new WindowClient({
 	name: "windowClient"
 });
 
-export default  windowClient;
+export default windowClient;
