@@ -1,16 +1,25 @@
 .finsemble-toolbar-button {
-    margin-right: 5px;
-    margin-left: 5px;
+    margin-right: 8px;
+    margin-left: 8px;
 }
 
 .finsemble-toolbar-brand-logo {
-    margin: 1px 5px 0px 5px;
-    padding: 0px 5px 0px 5px;
+    margin: 1px 2px 0px 2px;
+    height: 16px;
+    width: 16px;
 }
 
 .finsemble-toolbar-drag-handle {
-    padding-left:7px;
-    padding-right:8px;
-    padding-top: 8px;
+    padding: 10px 5px 0px 4px;
     background-color: black;
 }
+
+
+.divider:before {
+    height: 39px; /* the same height as the toolbar */
+}
+
+.finsemble-toolbar-window-controls {
+    margin-top: 2px;
+}
+

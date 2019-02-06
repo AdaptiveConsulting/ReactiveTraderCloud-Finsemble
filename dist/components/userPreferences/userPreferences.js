@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 180);
+/******/ 	return __webpack_require__(__webpack_require__.s = 167);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -222,7 +222,7 @@ exports = module.exports = __webpack_require__(0)(false);
 
 
 // module
-exports.push([module.i, ":root {\r\n    --primary-background-color: #2D313C;\r\n    --toolbar-font-size: 12px;\r\n    --toolbar-resize-area-color: black;\r\n    --titleBar-font-size: 12px;\r\n}", ""]);
+exports.push([module.i, ":root {\r\n    --primary-background-color: #2D313C;\r\n    --toolbar-font-size: 12px;\r\n    --toolbar-resize-area-color: black;\r\n    --titleBar-font-size: 12px;\r\n    --toolbar-separator: 2px solid #3d4455;\r\n}", ""]);
 
 // exports
 
@@ -1012,7 +1012,7 @@ exports = module.exports = __webpack_require__(0)(false);
 
 
 // module
-exports.push([module.i, ".finsemble-toolbar-button {\r\n    margin-right: 5px;\r\n    margin-left: 5px;\r\n}\r\n\r\n.finsemble-toolbar-brand-logo {\r\n    margin: 1px 5px 0px 5px;\r\n    padding: 0px 5px 0px 5px;\r\n}\r\n\r\n.finsemble-toolbar-drag-handle {\r\n    padding-left:7px;\r\n    padding-right:8px;\r\n    padding-top: 8px;\r\n    background-color: black;\r\n}\r\n", ""]);
+exports.push([module.i, ".finsemble-toolbar-button {\r\n    margin-right: 8px;\r\n    margin-left: 8px;\r\n}\r\n\r\n.finsemble-toolbar-brand-logo {\r\n    margin: 1px 2px 0px 2px;\r\n    height: 16px;\r\n    width: 16px;\r\n}\r\n\r\n.finsemble-toolbar-drag-handle {\r\n    padding: 10px 5px 0px 4px;\r\n    background-color: black;\r\n}\r\n\r\n\r\n.divider:before {\r\n    height: 39px; /* the same height as the toolbar */\r\n}\r\n\r\n.finsemble-toolbar-window-controls {\r\n    margin-top: 2px;\r\n}\r\n\r\n", ""]);
 
 // exports
 
@@ -1997,8 +1997,7 @@ module.exports.Actions = Actions;
 /* 102 */,
 /* 103 */,
 /* 104 */,
-/* 105 */,
-/* 106 */
+/* 105 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2042,6 +2041,7 @@ class Checkbox extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Component {
 
 
 /***/ }),
+/* 106 */,
 /* 107 */,
 /* 108 */,
 /* 109 */,
@@ -2053,16 +2053,15 @@ class Checkbox extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Component {
 /* 115 */,
 /* 116 */,
 /* 117 */,
-/* 118 */,
-/* 119 */
+/* 118 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__content_General__ = __webpack_require__(181);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__content_Toolbar__ = __webpack_require__(182);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__content_Workspaces__ = __webpack_require__(183);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__content_General__ = __webpack_require__(168);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__content_Toolbar__ = __webpack_require__(169);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__content_Workspaces__ = __webpack_require__(170);
 
 
 
@@ -2106,7 +2105,7 @@ class ContentSection extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Compo
 
 
 /***/ }),
-/* 120 */
+/* 119 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2174,6 +2173,7 @@ class LeftNav extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Component {
 
 
 /***/ }),
+/* 120 */,
 /* 121 */,
 /* 122 */,
 /* 123 */,
@@ -2191,7 +2191,7 @@ class LeftNav extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Component {
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(202);
+var content = __webpack_require__(201);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // Prepare cssTransformation
 var transform;
@@ -2255,20 +2255,7 @@ module.exports = {"Entries":[{"name":"general","label":"General"},{"name":"works
 /* 164 */,
 /* 165 */,
 /* 166 */,
-/* 167 */,
-/* 168 */,
-/* 169 */,
-/* 170 */,
-/* 171 */,
-/* 172 */,
-/* 173 */,
-/* 174 */,
-/* 175 */,
-/* 176 */,
-/* 177 */,
-/* 178 */,
-/* 179 */,
-/* 180 */
+/* 167 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2285,8 +2272,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__assets_css_finsemble_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__assets_css_finsemble_css__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_react_dom__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_react_dom___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_react_dom__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__components_LeftNav__ = __webpack_require__(120);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__components_ContentSection__ = __webpack_require__(119);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__components_LeftNav__ = __webpack_require__(119);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__components_ContentSection__ = __webpack_require__(118);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__workspaceManagementMenu_src_stores_workspaceManagementMenuStore__ = __webpack_require__(45);
 /*!
 * Copyright 2017 by ChartIQ, Inc.
@@ -2360,7 +2347,7 @@ function FSBLReady() {
 }
 
 /***/ }),
-/* 181 */
+/* 168 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2368,8 +2355,8 @@ function FSBLReady() {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_UserPreferencesStore__ = __webpack_require__(49);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_UserPreferencesStore___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__stores_UserPreferencesStore__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__general_ScheduledRestart__ = __webpack_require__(184);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__general_Toolbar__ = __webpack_require__(185);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__general_ScheduledRestart__ = __webpack_require__(171);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__general_Toolbar__ = __webpack_require__(172);
 
 
 
@@ -2391,7 +2378,7 @@ class General extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Component {
 
 
 /***/ }),
-/* 182 */
+/* 169 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2418,7 +2405,7 @@ class Toolbar extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Component {
 
 
 /***/ }),
-/* 183 */
+/* 170 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2428,7 +2415,7 @@ class Toolbar extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Component {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_UserPreferencesStore___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__stores_UserPreferencesStore__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__chartiq_finsemble_react_controls__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__chartiq_finsemble_react_controls___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__chartiq_finsemble_react_controls__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__checkbox__ = __webpack_require__(106);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__checkbox__ = __webpack_require__(105);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_async__ = __webpack_require__(42);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_async___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_async__);
 
@@ -3021,7 +3008,7 @@ class Workspaces extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Component
 
 
 /***/ }),
-/* 184 */
+/* 171 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3029,7 +3016,7 @@ class Workspaces extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Component
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_UserPreferencesStore__ = __webpack_require__(49);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_UserPreferencesStore___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__stores_UserPreferencesStore__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__checkbox__ = __webpack_require__(106);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__checkbox__ = __webpack_require__(105);
 
 
 
@@ -3261,7 +3248,7 @@ class ScheduledRestart extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Com
 
 
 /***/ }),
-/* 185 */
+/* 172 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3380,6 +3367,19 @@ class Toolbar extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Component {
 
 
 /***/ }),
+/* 173 */,
+/* 174 */,
+/* 175 */,
+/* 176 */,
+/* 177 */,
+/* 178 */,
+/* 179 */,
+/* 180 */,
+/* 181 */,
+/* 182 */,
+/* 183 */,
+/* 184 */,
+/* 185 */,
 /* 186 */,
 /* 187 */,
 /* 188 */,
@@ -3395,8 +3395,7 @@ class Toolbar extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Component {
 /* 198 */,
 /* 199 */,
 /* 200 */,
-/* 201 */,
-/* 202 */
+/* 201 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(0)(false);

@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 179);
+/******/ 	return __webpack_require__(__webpack_require__.s = 190);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -222,7 +222,7 @@ exports = module.exports = __webpack_require__(0)(false);
 
 
 // module
-exports.push([module.i, ":root {\r\n    --primary-background-color: #2D313C;\r\n    --toolbar-font-size: 12px;\r\n    --toolbar-resize-area-color: black;\r\n    --titleBar-font-size: 12px;\r\n}", ""]);
+exports.push([module.i, ":root {\r\n    --primary-background-color: #2D313C;\r\n    --toolbar-font-size: 12px;\r\n    --toolbar-resize-area-color: black;\r\n    --titleBar-font-size: 12px;\r\n    --toolbar-separator: 2px solid #3d4455;\r\n}", ""]);
 
 // exports
 
@@ -1012,7 +1012,7 @@ exports = module.exports = __webpack_require__(0)(false);
 
 
 // module
-exports.push([module.i, ".finsemble-toolbar-button {\r\n    margin-right: 5px;\r\n    margin-left: 5px;\r\n}\r\n\r\n.finsemble-toolbar-brand-logo {\r\n    margin: 1px 5px 0px 5px;\r\n    padding: 0px 5px 0px 5px;\r\n}\r\n\r\n.finsemble-toolbar-drag-handle {\r\n    padding-left:7px;\r\n    padding-right:8px;\r\n    padding-top: 8px;\r\n    background-color: black;\r\n}\r\n", ""]);
+exports.push([module.i, ".finsemble-toolbar-button {\r\n    margin-right: 8px;\r\n    margin-left: 8px;\r\n}\r\n\r\n.finsemble-toolbar-brand-logo {\r\n    margin: 1px 2px 0px 2px;\r\n    height: 16px;\r\n    width: 16px;\r\n}\r\n\r\n.finsemble-toolbar-drag-handle {\r\n    padding: 10px 5px 0px 4px;\r\n    background-color: black;\r\n}\r\n\r\n\r\n.divider:before {\r\n    height: 39px; /* the same height as the toolbar */\r\n}\r\n\r\n.finsemble-toolbar-window-controls {\r\n    margin-top: 2px;\r\n}\r\n\r\n", ""]);
 
 // exports
 
@@ -1138,7 +1138,7 @@ module.exports = (__webpack_require__(2))(49);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_async___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_async__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__config_json__ = __webpack_require__(211);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__config_json___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__config_json__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__searchStore__ = __webpack_require__(105);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__searchStore__ = __webpack_require__(106);
 /*!
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
@@ -1944,7 +1944,8 @@ module.exports = debounce;
 /* 102 */,
 /* 103 */,
 /* 104 */,
-/* 105 */
+/* 105 */,
+/* 106 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2201,7 +2202,6 @@ let getStore = () => {
 
 
 /***/ }),
-/* 106 */,
 /* 107 */,
 /* 108 */,
 /* 109 */,
@@ -2213,7 +2213,11 @@ let getStore = () => {
 /* 115 */,
 /* 116 */,
 /* 117 */,
-/* 118 */
+/* 118 */,
+/* 119 */,
+/* 120 */,
+/* 121 */,
+/* 122 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2224,21 +2228,21 @@ let getStore = () => {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__chartiq_finsemble_react_controls__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__chartiq_finsemble_react_controls___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__chartiq_finsemble_react_controls__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__stores_toolbarStore__ = __webpack_require__(54);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__components_AutoArrange__ = __webpack_require__(168);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__components_AlwaysOnTop__ = __webpack_require__(167);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__components_BringToFront__ = __webpack_require__(169);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__components_MinimizeAll__ = __webpack_require__(171);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__components_WorkspaceLauncherButton__ = __webpack_require__(173);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__components_WorkspaceMenuOpener__ = __webpack_require__(174);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__components_Search__ = __webpack_require__(172);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__components_DragHandle__ = __webpack_require__(170);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__components_AutoArrange__ = __webpack_require__(179);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__components_AlwaysOnTop__ = __webpack_require__(178);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__components_BringToFront__ = __webpack_require__(180);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__components_MinimizeAll__ = __webpack_require__(182);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__components_WorkspaceLauncherButton__ = __webpack_require__(184);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__components_WorkspaceMenuOpener__ = __webpack_require__(185);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__components_Search__ = __webpack_require__(183);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__components_DragHandle__ = __webpack_require__(181);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__toolbar_css__ = __webpack_require__(208);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__toolbar_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_12__toolbar_css__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__assets_css_font_finance_css__ = __webpack_require__(31);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__assets_css_font_finance_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_13__assets_css_font_finance_css__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__assets_css_finsemble_css__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__assets_css_finsemble_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_14__assets_css_finsemble_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__components_assets_drag_icon__ = __webpack_require__(176);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__components_assets_drag_icon__ = __webpack_require__(187);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 /*!
@@ -2444,10 +2448,6 @@ function FSBLReady() {
 }
 
 /***/ }),
-/* 119 */,
-/* 120 */,
-/* 121 */,
-/* 122 */,
 /* 123 */,
 /* 124 */,
 /* 125 */,
@@ -2492,7 +2492,18 @@ function FSBLReady() {
 /* 164 */,
 /* 165 */,
 /* 166 */,
-/* 167 */
+/* 167 */,
+/* 168 */,
+/* 169 */,
+/* 170 */,
+/* 171 */,
+/* 172 */,
+/* 173 */,
+/* 174 */,
+/* 175 */,
+/* 176 */,
+/* 177 */,
+/* 178 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2544,7 +2555,7 @@ class AlwaysOnTop extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Componen
 
 
 /***/ }),
-/* 168 */
+/* 179 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2553,7 +2564,7 @@ class AlwaysOnTop extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Componen
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__chartiq_finsemble_react_controls__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__chartiq_finsemble_react_controls___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__chartiq_finsemble_react_controls__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_toolbarStore__ = __webpack_require__(54);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__assets_auto_arrange_icon__ = __webpack_require__(175);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__assets_auto_arrange_icon__ = __webpack_require__(186);
 
 
 
@@ -2611,7 +2622,7 @@ class AutoArrange extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Componen
 
 
 /***/ }),
-/* 169 */
+/* 180 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2620,7 +2631,7 @@ class AutoArrange extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Componen
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__chartiq_finsemble_react_controls__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__chartiq_finsemble_react_controls___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__chartiq_finsemble_react_controls__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_toolbarStore__ = __webpack_require__(54);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__assets_to_front_icon__ = __webpack_require__(178);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__assets_to_front_icon__ = __webpack_require__(189);
 
 
 
@@ -2652,7 +2663,7 @@ class BringToFront extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Compone
 
 
 /***/ }),
-/* 170 */
+/* 181 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2686,7 +2697,7 @@ const DragHandle = () => {
 /* unused harmony default export */ var _unused_webpack_default_export = (DragHandle);
 
 /***/ }),
-/* 171 */
+/* 182 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2694,7 +2705,7 @@ const DragHandle = () => {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__chartiq_finsemble_react_controls__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__chartiq_finsemble_react_controls___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__chartiq_finsemble_react_controls__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__assets_minimize_all_icon__ = __webpack_require__(177);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__assets_minimize_all_icon__ = __webpack_require__(188);
 
 
 
@@ -2721,7 +2732,7 @@ class MinimizeAll extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Componen
 
 
 /***/ }),
-/* 172 */
+/* 183 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2729,7 +2740,7 @@ class MinimizeAll extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Componen
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__chartiq_finsemble_react_controls__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__chartiq_finsemble_react_controls___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__chartiq_finsemble_react_controls__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_searchStore__ = __webpack_require__(105);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_searchStore__ = __webpack_require__(106);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_lodash_debounce__ = __webpack_require__(77);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_lodash_debounce___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_lodash_debounce__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__stores_toolbarStore__ = __webpack_require__(54);
@@ -2892,7 +2903,7 @@ class Search extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Component {
 
 
 /***/ }),
-/* 173 */
+/* 184 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2934,7 +2945,7 @@ class WorkspaceLauncherButton extends __WEBPACK_IMPORTED_MODULE_0_react___defaul
 
 
 /***/ }),
-/* 174 */
+/* 185 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2996,7 +3007,7 @@ class WorkspaceMenuOpener extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.
 
 
 /***/ }),
-/* 175 */
+/* 186 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3010,7 +3021,8 @@ class WorkspaceMenuOpener extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.
 		xmlns: "http://www.w3.org/2000/svg",
 		width: "18",
 		height: "18",
-		viewBox: "0 0 22 22"
+		viewBox: "0 0 22 22",
+		className: "finsemble-toolbar-window-controls"
 	},
 	__WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(
 		"g",
@@ -3024,7 +3036,7 @@ class WorkspaceMenuOpener extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.
 ));
 
 /***/ }),
-/* 176 */
+/* 187 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3034,7 +3046,7 @@ class WorkspaceMenuOpener extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.
 
 const DragIcon = () => __WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(
     "svg",
-    { xmlns: "http://www.w3.org/2000/svg", width: "4", height: "18", viewBox: "0 0 4 18" },
+    { xmlns: "http://www.w3.org/2000/svg", width: "3", height: "13", viewBox: "0 0 4 18" },
     __WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(
         "g",
         { fill: "#444C5F", "fill-rule": "evenodd" },
@@ -3051,7 +3063,7 @@ const DragIcon = () => __WEBPACK_IMPORTED_MODULE_0_react___default.a.createEleme
 ));
 
 /***/ }),
-/* 177 */
+/* 188 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3065,7 +3077,8 @@ const DragIcon = () => __WEBPACK_IMPORTED_MODULE_0_react___default.a.createEleme
 		xmlns: "http://www.w3.org/2000/svg",
 		width: "22",
 		height: "18",
-		viewBox: "0 0 26 22"
+		viewBox: "0 0 26 22",
+		className: "finsemble-toolbar-window-controls"
 	},
 	__WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(
 		"g",
@@ -3079,7 +3092,7 @@ const DragIcon = () => __WEBPACK_IMPORTED_MODULE_0_react___default.a.createEleme
 ));
 
 /***/ }),
-/* 178 */
+/* 189 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3089,7 +3102,7 @@ const DragIcon = () => __WEBPACK_IMPORTED_MODULE_0_react___default.a.createEleme
 
 /* harmony default export */ __webpack_exports__["a"] = (() => __WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(
     "svg",
-    { xmlns: "http://www.w3.org/2000/svg", xlink: "http://www.w3.org/1999/xlink", width: "18", height: "18", viewBox: "0 0 22 22" },
+    { className: "finsemble-toolbar-window-controls", xmlns: "http://www.w3.org/2000/svg", xlink: "http://www.w3.org/1999/xlink", width: "18", height: "18", viewBox: "0 0 22 22" },
     __WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(
         "defs",
         null,
@@ -3110,12 +3123,12 @@ const DragIcon = () => __WEBPACK_IMPORTED_MODULE_0_react___default.a.createEleme
 ));
 
 /***/ }),
-/* 179 */
+/* 190 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__dynamicToolbar__ = __webpack_require__(118);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__dynamicToolbar__ = __webpack_require__(122);
 /*!
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
@@ -3137,17 +3150,6 @@ if (!fin.container || fin.container != "electron") {
 }
 
 /***/ }),
-/* 180 */,
-/* 181 */,
-/* 182 */,
-/* 183 */,
-/* 184 */,
-/* 185 */,
-/* 186 */,
-/* 187 */,
-/* 188 */,
-/* 189 */,
-/* 190 */,
 /* 191 */,
 /* 192 */,
 /* 193 */,
@@ -3158,7 +3160,9 @@ if (!fin.container || fin.container != "electron") {
 /* 198 */,
 /* 199 */,
 /* 200 */,
-/* 201 */
+/* 201 */,
+/* 202 */,
+/* 203 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(0)(false);
@@ -3167,14 +3171,12 @@ exports.i(__webpack_require__(3), "");
 exports.i(__webpack_require__(32), "");
 
 // module
-exports.push([module.i, "/*!\r\n  * Copyright 2017 by ChartIQ, Inc.\r\n  * All rights reserved.\r\n  */\r\n\r\nbody, html {\r\n    height:  100%;\r\n    margin: 0px;\r\n    font-family: var(--font-family);\r\n    font-weight: var(--toolbar-font-weight);\r\n    font-size: var(--toolbar-font-size);\r\n    color: var(--toolbar-font-color);\r\n    line-height: var(--toolbar-line-height);\r\n    vertical-align: middle;\r\n    -webkit-user-select: none;\r\n    overflow: hidden;\r\n    border-radius: 5px;\r\n    border: 2px solid black;\r\n}\r\n\r\n.fsbl-share-scrim {\r\n    display: none !important;\r\n}\r\n\r\n.first-pinned-component {\r\n    margin-left: 0px !important;\r\n}\r\n\r\n.icon-only > i {\r\n    height: 22px;\r\n    font-size: var(--toolbar-icon-font-size);\r\n    width: auto;\r\n}\r\n\r\n.searchSection {\r\n    position: relative;\r\n    max-width: 107px;\r\n    overflow: visible;\r\n    max-height: var(--toolbar-height);\r\n    width: 30px;\r\n    padding-top: 0px;\r\n}\r\n\r\n.left.finsemble-toolbar-section {\r\n    overflow: visible;\r\n}\r\n\r\n.searchContainer {\r\n    display: flex;\r\n    margin: 0px 5px;\r\n}\r\n\r\n.searchInput {\r\n    position: absolute;\r\n    display: inline;\r\n    text-indent: 8px;\r\n    width: 107px;\r\n    height: var(--toolbar-height);\r\n    line-height:var(--toolbar-height);\r\n    background-color: transparent;\r\n    border-color: transparent;\r\n    z-index: 2;\r\n    overflow: hidden;\r\n    white-space: nowrap;\r\n    transition-timing-function: ease-in-out -.1;\r\n    transition: width .5s,background-color 0s 0s;\r\n}\r\n\r\n.searchInput.full[contenteditable=true]:empty:before {\r\n    content: attr(placeholder);\r\n}\r\n\r\n.searchInput.compact {\r\n    content: \"\";\r\n    padding-left: 9px;\r\n    width: 23px;\r\n    cursor: pointer;\r\n    color: transparent; /* hide the text when in compact mode */\r\n  /*transition: width .5s,background-color 0s .5s;*/;\r\n}\r\n\r\n.searchInput.compact::before {\r\n    content: \"\";\r\n}\r\n\r\n.searchInput.full {\r\n    content: \"\";\r\n    padding-left: 9px;\r\n    padding-right: 9px;\r\n    width: 23px;\r\n    color: var(--search-input-background-color);\r\n    cursor: pointer;\r\n    transition: width .5s,background-color 0s .5s;\r\n}\r\n\r\n[contenteditable=\"true\"] br {\r\n    display: none;\r\n}\r\n\r\n[contenteditable=\"true\"] div {\r\n    display: none;\r\n}\r\n\r\n.searchInput.active {\r\n    display: inline-block;\r\n    left: 0px;\r\n    width: 349px;\r\n    text-align: left;\r\n    background-color: var(--search-input-background-color);\r\n    color: var(--search-input-font-color);\r\n    cursor: initial;\r\n    z-index: 99;\r\n}\r\n\r\nimg {\r\n    user-drag: none;\r\n    user-select: none;\r\n    -moz-user-select: none;\r\n    -webkit-user-drag: none;\r\n    -webkit-user-select: none;\r\n    -ms-user-select: none;\r\n}\r\n\r\n.searchInput::after {\r\n    position: absolute;\r\n    font-family: font-finance;\r\n    right: 10px;\r\n    content: \",\";\r\n    color: var(--toolbar-font-color); /* make sure magnifying glass is white */\r\n}\r\n\r\ndiv {\r\n    outline-color: transparent;\r\n}\r\n", ""]);
+exports.push([module.i, "/*!\r\n  * Copyright 2017 by ChartIQ, Inc.\r\n  * All rights reserved.\r\n  */\r\n\r\nbody, html {\r\n    height:  100%;\r\n    margin: 0px;\r\n    font-family: var(--font-family);\r\n    font-weight: var(--toolbar-font-weight);\r\n    font-size: var(--toolbar-font-size);\r\n    color: var(--toolbar-font-color);\r\n    line-height: var(--toolbar-line-height);\r\n    vertical-align: middle;\r\n    -webkit-user-select: none;\r\n    overflow: hidden;\r\n    border-radius: 5px;\r\n    border: 2px solid black;\r\n}\r\n\r\n.fsbl-share-scrim {\r\n    display: none !important;\r\n}\r\n\r\n.first-pinned-component {\r\n    margin-left: 0px !important;\r\n}\r\n\r\n.icon-only > i {\r\n    height: 22px;\r\n    font-size: var(--toolbar-icon-font-size);\r\n    width: auto;\r\n}\r\n\r\n\r\n\r\n.searchSection {\r\n    position: relative;\r\n    max-width: 107px;\r\n    overflow: visible;\r\n    max-height: var(--toolbar-height);\r\n    width: 30px;\r\n    padding-top: 0px;\r\n}\r\n\r\n.left.finsemble-toolbar-section {\r\n    overflow: visible;\r\n}\r\n\r\n.searchContainer {\r\n    display: flex;\r\n    margin: -1px 5px;\r\n    padding-bottom: 5px;\r\n}\r\n\r\n.searchInput {\r\n    position: absolute;\r\n    display: inline;\r\n    text-indent: 8px;\r\n    width: 107px;\r\n    height: var(--toolbar-height);\r\n    line-height:var(--toolbar-height);\r\n    background-color: transparent;\r\n    border-color: transparent;\r\n    z-index: 2;\r\n    overflow: hidden;\r\n    white-space: nowrap;\r\n    transition-timing-function: ease-in-out -.1;\r\n    transition: width .5s,background-color 0s 0s;\r\n}\r\n\r\n.searchInput.full[contenteditable=true]:empty:before {\r\n    content: attr(placeholder);\r\n}\r\n\r\n.searchInput.compact {\r\n    content: \"\";\r\n    padding-left: 9px;\r\n    width: 23px;\r\n    cursor: pointer;\r\n    color: transparent; /* hide the text when in compact mode */\r\n  /*transition: width .5s,background-color 0s .5s;*/;\r\n}\r\n\r\n.searchInput.compact::before {\r\n    content: \"\";\r\n}\r\n\r\n.searchInput.full {\r\n    content: \"\";\r\n    padding-left: 9px;\r\n    padding-right: 9px;\r\n    width: 23px;\r\n    color: var(--search-input-background-color);\r\n    cursor: pointer;\r\n    transition: width .5s,background-color 0s .5s;\r\n}\r\n\r\n[contenteditable=\"true\"] br {\r\n    display: none;\r\n}\r\n\r\n[contenteditable=\"true\"] div {\r\n    display: none;\r\n}\r\n\r\n.searchInput.active {\r\n    display: inline-block;\r\n    left: 0px;\r\n    width: 349px;\r\n    text-align: left;\r\n    background-color: var(--search-input-background-color);\r\n    color: var(--search-input-font-color);\r\n    cursor: initial;\r\n    z-index: 99;\r\n}\r\n\r\nimg {\r\n    user-drag: none;\r\n    user-select: none;\r\n    -moz-user-select: none;\r\n    -webkit-user-drag: none;\r\n    -webkit-user-select: none;\r\n    -ms-user-select: none;\r\n}\r\n\r\n.searchInput::after {\r\n    position: absolute;\r\n    font-family: font-finance;\r\n    right: 10px;\r\n    content: \",\";\r\n    color: var(--toolbar-font-color); /* make sure magnifying glass is white */\r\n}\r\n\r\ndiv {\r\n    outline-color: transparent;\r\n}\r\n", ""]);
 
 // exports
 
 
 /***/ }),
-/* 202 */,
-/* 203 */,
 /* 204 */,
 /* 205 */,
 /* 206 */,
@@ -3185,7 +3187,7 @@ exports.push([module.i, "/*!\r\n  * Copyright 2017 by ChartIQ, Inc.\r\n  * All r
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(201);
+var content = __webpack_require__(203);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // Prepare cssTransformation
 var transform;

@@ -70,9 +70,5 @@
 	"throbber": {
 		"output": "components/throbber/throbber",
 		"entry": "./src-built-in/components/throbber/throbber.js"
-	},
-	"toolbar": {
-		"output": "components/toolbar/toolbar",
-		"entry": "./src-built-in/components/toolbar/src/app.jsx"
 	}
 }

@@ -748,7 +748,7 @@ exports = module.exports = __webpack_require__(0)(false);
 
 
 // module
-exports.push([module.i, ".finsemble-toolbar-button {\r\n    margin-right: 5px;\r\n    margin-left: 5px;\r\n}\r\n\r\n.finsemble-toolbar-brand-logo {\r\n    margin: 1px 5px 0px 5px;\r\n    padding: 0px 5px 0px 5px;\r\n}\r\n\r\n.finsemble-toolbar-drag-handle {\r\n    padding-left:7px;\r\n    padding-right:8px;\r\n    padding-top: 8px;\r\n    background-color: black;\r\n}\r\n", ""]);
+exports.push([module.i, ".finsemble-toolbar-button {\r\n    margin-right: 8px;\r\n    margin-left: 8px;\r\n}\r\n\r\n.finsemble-toolbar-brand-logo {\r\n    margin: 1px 2px 0px 2px;\r\n    height: 16px;\r\n    width: 16px;\r\n}\r\n\r\n.finsemble-toolbar-drag-handle {\r\n    padding: 10px 5px 0px 4px;\r\n    background-color: black;\r\n}\r\n\r\n\r\n.divider:before {\r\n    height: 39px; /* the same height as the toolbar */\r\n}\r\n\r\n.finsemble-toolbar-window-controls {\r\n    margin-top: 2px;\r\n}\r\n\r\n", ""]);
 
 // exports
 
@@ -897,7 +897,7 @@ exports = module.exports = __webpack_require__(0)(false);
 
 
 // module
-exports.push([module.i, ":root {\r\n    --primary-background-color: #2D313C;\r\n    --toolbar-font-size: 12px;\r\n    --toolbar-resize-area-color: black;\r\n    --titleBar-font-size: 12px;\r\n}", ""]);
+exports.push([module.i, ":root {\r\n    --primary-background-color: #2D313C;\r\n    --toolbar-font-size: 12px;\r\n    --toolbar-resize-area-color: black;\r\n    --titleBar-font-size: 12px;\r\n    --toolbar-separator: 2px solid #3d4455;\r\n}", ""]);
 
 // exports
 

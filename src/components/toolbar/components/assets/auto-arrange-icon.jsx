@@ -6,6 +6,7 @@ export default () => (
 		width="18"
 		height="18"
 		viewBox="0 0 22 22"
+		className="finsemble-toolbar-window-controls"
 	>
 		<g fill="none" fill-rule="nonzero">
 			<path d="M-5-5h32v32H-5z" />

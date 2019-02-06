@@ -468,62 +468,6 @@
 				}
 			}
 		},
-		"Toolbar": {
-			"window": {
-				"id": "launcher",
-				"url": "$applicationRoot/components/toolbar/toolbar.html",
-				"width": 600,
-				"height": 39,
-				"dockedHeight": 39,
-				"top": 0,
-				"left": 0,
-				"right": 0,
-				"position": "available",
-				"autoShow": true,
-				"dockable": [
-					"top",
-					"bottom"
-				],
-				"maxHeight": 39,
-				"minHeight": 39,
-				"minWidth": 300,
-				"docked": "top",
-				"canGroup": false,
-				"options": {
-					"autoShow": false,
-					"contextMenu": false,
-					"showTaskbarIcon": false,
-					"smallWindow": true
-				}
-			},
-			"component": {
-				"category": "system",
-				"spawnOnStartup": true,
-				"spawnOnAllMonitors": false,
-				"canMinimize": false
-			},
-			"foreign": {
-				"services": {
-					"dockingService": {
-						"isArrangable": false,
-						"ignoreSnappingRequests": true,
-						"ignoreTilingAndTabbingRequests": true
-					},
-					"workspaceService": {
-						"global": true
-					}
-				},
-				"components": {
-					"App Launcher": {
-						"launchableByUser": false
-					},
-					"Window Manager": {
-						"persistWindowState": false,
-						"FSBLHeader": false
-					}
-				}
-			}
-		},
 		"windowTitleBar": {
 			"window": {
 				"url": "$applicationRoot/components/windowTitleBar/windowTitleBar.js",

@@ -35,6 +35,8 @@ body, html {
     width: auto;
 }
 
+
+
 .searchSection {
     position: relative;
     max-width: 107px;
@@ -50,7 +52,8 @@ body, html {
 
 .searchContainer {
     display: flex;
-    margin: 0px 5px;
+    margin: -1px 5px;
+    padding-bottom: 5px;
 }
 
 .searchInput {

@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 189);
+/******/ 	return __webpack_require__(__webpack_require__.s = 176);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -197,7 +197,7 @@ exports.push([module.i, "\r\n", ""]);
 
 /***/ }),
 
-/***/ 122:
+/***/ 121:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -333,23 +333,7 @@ exports.push([module.i, "body.menu {\r\n    margin: 0px;\r\n    font-family: var
 
 /***/ }),
 
-/***/ 18:
-/***/ (function(module, exports, __webpack_require__) {
-
-var escape = __webpack_require__(4);
-exports = module.exports = __webpack_require__(0)(false);
-// imports
-
-
-// module
-exports.push([module.i, "@font-face {\r\n  font-family: 'Roboto';\r\n  font-style: normal;\r\n  font-weight: 300;\r\n  src: url(" + escape(__webpack_require__(23)) + ");\r\n}\r\n\r\n@font-face {\r\n  font-family: 'Roboto';\r\n  font-style: italic;\r\n  font-weight: 300;\r\n  src: url(" + escape(__webpack_require__(24)) + ");\r\n}\r\n\r\n@font-face {\r\n  font-family: 'Roboto';\r\n  font-style: normal;\r\n  font-weight: 500;\r\n  src: url(" + escape(__webpack_require__(25)) + ");\r\n}\r\n\r\n@font-face {\r\n  font-family: 'Roboto';\r\n  font-style: italic;\r\n  font-weight: 500;\r\n  src: url(" + escape(__webpack_require__(26)) + ");\r\n}\r\n\r\n@font-face {\r\n  font-family: 'Roboto';\r\n  font-style: normal;\r\n  font-weight: 700;\r\n  src: url(" + escape(__webpack_require__(27)) + ");\r\n}\r\n\r\n@font-face {\r\n  font-family: 'Roboto';\r\n  font-style: italic;\r\n  font-weight: 700;\r\n  src: url(" + escape(__webpack_require__(28)) + ");\r\n}", ""]);
-
-// exports
-
-
-/***/ }),
-
-/***/ 189:
+/***/ 176:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -362,7 +346,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__assets_css_finsemble_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__assets_css_finsemble_css__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__chartiq_finsemble_react_controls__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__chartiq_finsemble_react_controls___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__chartiq_finsemble_react_controls__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__timer__ = __webpack_require__(122);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__timer__ = __webpack_require__(121);
 /*!
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
@@ -565,6 +549,22 @@ function FSBLReady() {
 		__WEBPACK_IMPORTED_MODULE_1_react_dom___default.a.render(__WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(YesNoDialog, null), document.getElementById("YesNoDialog-component-wrapper"));
 	}
 }
+
+/***/ }),
+
+/***/ 18:
+/***/ (function(module, exports, __webpack_require__) {
+
+var escape = __webpack_require__(4);
+exports = module.exports = __webpack_require__(0)(false);
+// imports
+
+
+// module
+exports.push([module.i, "@font-face {\r\n  font-family: 'Roboto';\r\n  font-style: normal;\r\n  font-weight: 300;\r\n  src: url(" + escape(__webpack_require__(23)) + ");\r\n}\r\n\r\n@font-face {\r\n  font-family: 'Roboto';\r\n  font-style: italic;\r\n  font-weight: 300;\r\n  src: url(" + escape(__webpack_require__(24)) + ");\r\n}\r\n\r\n@font-face {\r\n  font-family: 'Roboto';\r\n  font-style: normal;\r\n  font-weight: 500;\r\n  src: url(" + escape(__webpack_require__(25)) + ");\r\n}\r\n\r\n@font-face {\r\n  font-family: 'Roboto';\r\n  font-style: italic;\r\n  font-weight: 500;\r\n  src: url(" + escape(__webpack_require__(26)) + ");\r\n}\r\n\r\n@font-face {\r\n  font-family: 'Roboto';\r\n  font-style: normal;\r\n  font-weight: 700;\r\n  src: url(" + escape(__webpack_require__(27)) + ");\r\n}\r\n\r\n@font-face {\r\n  font-family: 'Roboto';\r\n  font-style: italic;\r\n  font-weight: 700;\r\n  src: url(" + escape(__webpack_require__(28)) + ");\r\n}", ""]);
+
+// exports
+
 
 /***/ }),
 
@@ -837,7 +837,7 @@ exports = module.exports = __webpack_require__(0)(false);
 
 
 // module
-exports.push([module.i, ".finsemble-toolbar-button {\r\n    margin-right: 5px;\r\n    margin-left: 5px;\r\n}\r\n\r\n.finsemble-toolbar-brand-logo {\r\n    margin: 1px 5px 0px 5px;\r\n    padding: 0px 5px 0px 5px;\r\n}\r\n\r\n.finsemble-toolbar-drag-handle {\r\n    padding-left:7px;\r\n    padding-right:8px;\r\n    padding-top: 8px;\r\n    background-color: black;\r\n}\r\n", ""]);
+exports.push([module.i, ".finsemble-toolbar-button {\r\n    margin-right: 8px;\r\n    margin-left: 8px;\r\n}\r\n\r\n.finsemble-toolbar-brand-logo {\r\n    margin: 1px 2px 0px 2px;\r\n    height: 16px;\r\n    width: 16px;\r\n}\r\n\r\n.finsemble-toolbar-drag-handle {\r\n    padding: 10px 5px 0px 4px;\r\n    background-color: black;\r\n}\r\n\r\n\r\n.divider:before {\r\n    height: 39px; /* the same height as the toolbar */\r\n}\r\n\r\n.finsemble-toolbar-window-controls {\r\n    margin-top: 2px;\r\n}\r\n\r\n", ""]);
 
 // exports
 
@@ -986,7 +986,7 @@ exports = module.exports = __webpack_require__(0)(false);
 
 
 // module
-exports.push([module.i, ":root {\r\n    --primary-background-color: #2D313C;\r\n    --toolbar-font-size: 12px;\r\n    --toolbar-resize-area-color: black;\r\n    --titleBar-font-size: 12px;\r\n}", ""]);
+exports.push([module.i, ":root {\r\n    --primary-background-color: #2D313C;\r\n    --toolbar-font-size: 12px;\r\n    --toolbar-resize-area-color: black;\r\n    --titleBar-font-size: 12px;\r\n    --toolbar-separator: 2px solid #3d4455;\r\n}", ""]);
 
 // exports
 

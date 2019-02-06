@@ -2,7 +2,7 @@ import React from 'react'
 
 export default () => (
   
-<svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="18" height="18" viewBox="0 0 22 22">
+<svg className="finsemble-toolbar-window-controls" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="18" height="18" viewBox="0 0 22 22">
     <defs>
         <path id="a" d="M5.926 12.605h13.71v14.062H5.926z"/>
         <mask id="b" width="13.71" height="14.062" x="0" y="0" fill="#fff">

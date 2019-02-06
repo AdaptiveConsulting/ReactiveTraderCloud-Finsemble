@@ -2,5 +2,9 @@
     "ChartIQ": {
         "output": "components/ChartIQ/ChartIQ",
         "entry": "./src\\components\\ChartIQ\\ChartIQ.js"
-    }
+    },
+    "toolbar": {
+		"output": "components/toolbar/toolbar",
+		"entry": "./src/components/toolbar/src/app.jsx"
+	}
 }
