@@ -8,7 +8,7 @@ export default () => (
 		viewBox="0 0 22 22"
 		className="finsemble-toolbar-window-controls"
 	>
-		<g fill="none" fill-rule="nonzero">
+		<g fill="none" fillRule="nonzero">
 			<path d="M-5-5h32v32H-5z" />
 			<path
 				fill="#FFF"

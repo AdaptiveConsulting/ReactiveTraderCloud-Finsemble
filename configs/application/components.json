@@ -406,20 +406,16 @@
 					}
 				}
 			}
-		},
+        },
         "ChartIQ": {
             "window": {
-                "frame": true,
-                "url": "http://127.0.0.1:4000/template-advanced.html",
+                "frame": false,
                 "resizable": true,
                 "autoShow": true,
                 "top": "center",
                 "left": "center",
                 "width": 1000,
                 "height": 650
-            },
-            "component": {
-                "inject": false
             },
             "foreign": {
                 "services": {
