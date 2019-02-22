@@ -4,7 +4,15 @@
         "entry": "./src\\components\\ChartIQ\\ChartIQ.js"
     },
     "toolbar": {
-		"output": "components/toolbar/toolbar",
-		"entry": "./src/components/toolbar/src/app.jsx"
-	}
+        "output": "components/toolbar/toolbar",
+        "entry": "./src/components/toolbar/src/app.jsx"
+    },
+    "ChartMC": {
+        "output": "components/ChartMC/ChartMC",
+        "entry": "./src\\components\\ChartMC\\ChartMC.js"
+    },
+    "SpotTileD": {
+        "output": "components/SpotTileD/SpotTileD",
+        "entry": "./src\\components\\SpotTileD\\SpotTileD.js"
+    }
 }

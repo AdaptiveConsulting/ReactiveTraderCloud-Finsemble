@@ -38994,12 +38994,6 @@ class WindowTitleBar extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Compo
 		return __WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(
 			"div",
 			{ className: headerClasses },
-			RENDER_LEFT_SECTION && __WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(
-				"div",
-				{ className: "fsbl-header-left" },
-				self.state.showLinkerButton ? __WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(__WEBPACK_IMPORTED_MODULE_4__components_left_LinkerButton__["a" /* default */], null) : null,
-				self.state.showShareButton ? __WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(__WEBPACK_IMPORTED_MODULE_5__components_left_ShareButton_jsx__["a" /* default */], null) : null
-			),
 			__WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(__WEBPACK_IMPORTED_MODULE_8__components_assets_AdaptiveLogo_jsx__["a" /* AdaptiveLogo */], null),
 			__WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(
 				"div",
@@ -39019,6 +39013,12 @@ class WindowTitleBar extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Compo
 					ref: "tabArea",
 					onTitleUpdated: this.resizeDragHandle
 				})
+			),
+			RENDER_LEFT_SECTION && __WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(
+				"div",
+				{ className: "fsbl-header-left" },
+				self.state.showLinkerButton ? __WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(__WEBPACK_IMPORTED_MODULE_4__components_left_LinkerButton__["a" /* default */], null) : null,
+				self.state.showShareButton ? __WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(__WEBPACK_IMPORTED_MODULE_5__components_left_ShareButton_jsx__["a" /* default */], null) : null
 			),
 			__WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(
 				"div",

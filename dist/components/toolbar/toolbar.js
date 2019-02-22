@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 190);
+/******/ 	return __webpack_require__(__webpack_require__.s = 192);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -1136,7 +1136,7 @@ module.exports = (__webpack_require__(2))(49);
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_async__ = __webpack_require__(42);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_async___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_async__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__config_json__ = __webpack_require__(211);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__config_json__ = __webpack_require__(213);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__config_json___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__config_json__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__searchStore__ = __webpack_require__(106);
 /*!
@@ -2228,21 +2228,21 @@ let getStore = () => {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__chartiq_finsemble_react_controls__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__chartiq_finsemble_react_controls___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__chartiq_finsemble_react_controls__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__stores_toolbarStore__ = __webpack_require__(54);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__components_AutoArrange__ = __webpack_require__(179);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__components_AlwaysOnTop__ = __webpack_require__(178);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__components_BringToFront__ = __webpack_require__(180);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__components_MinimizeAll__ = __webpack_require__(182);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__components_WorkspaceLauncherButton__ = __webpack_require__(184);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__components_WorkspaceMenuOpener__ = __webpack_require__(185);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__components_Search__ = __webpack_require__(183);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__components_DragHandle__ = __webpack_require__(181);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__toolbar_css__ = __webpack_require__(208);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__components_AutoArrange__ = __webpack_require__(181);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__components_AlwaysOnTop__ = __webpack_require__(180);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__components_BringToFront__ = __webpack_require__(182);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__components_MinimizeAll__ = __webpack_require__(184);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__components_WorkspaceLauncherButton__ = __webpack_require__(186);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__components_WorkspaceMenuOpener__ = __webpack_require__(187);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__components_Search__ = __webpack_require__(185);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__components_DragHandle__ = __webpack_require__(183);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__toolbar_css__ = __webpack_require__(210);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__toolbar_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_12__toolbar_css__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__assets_css_font_finance_css__ = __webpack_require__(31);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__assets_css_font_finance_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_13__assets_css_font_finance_css__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__assets_css_finsemble_css__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__assets_css_finsemble_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_14__assets_css_finsemble_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__components_assets_drag_icon__ = __webpack_require__(187);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__components_assets_drag_icon__ = __webpack_require__(189);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 /*!
@@ -2503,7 +2503,9 @@ function FSBLReady() {
 /* 175 */,
 /* 176 */,
 /* 177 */,
-/* 178 */
+/* 178 */,
+/* 179 */,
+/* 180 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2555,7 +2557,7 @@ class AlwaysOnTop extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Componen
 
 
 /***/ }),
-/* 179 */
+/* 181 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2564,7 +2566,7 @@ class AlwaysOnTop extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Componen
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__chartiq_finsemble_react_controls__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__chartiq_finsemble_react_controls___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__chartiq_finsemble_react_controls__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_toolbarStore__ = __webpack_require__(54);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__assets_auto_arrange_icon__ = __webpack_require__(186);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__assets_auto_arrange_icon__ = __webpack_require__(188);
 
 
 
@@ -2622,7 +2624,7 @@ class AutoArrange extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Componen
 
 
 /***/ }),
-/* 180 */
+/* 182 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2631,7 +2633,7 @@ class AutoArrange extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Componen
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__chartiq_finsemble_react_controls__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__chartiq_finsemble_react_controls___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__chartiq_finsemble_react_controls__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_toolbarStore__ = __webpack_require__(54);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__assets_to_front_icon__ = __webpack_require__(189);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__assets_to_front_icon__ = __webpack_require__(191);
 
 
 
@@ -2663,7 +2665,7 @@ class BringToFront extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Compone
 
 
 /***/ }),
-/* 181 */
+/* 183 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2697,7 +2699,7 @@ const DragHandle = () => {
 /* unused harmony default export */ var _unused_webpack_default_export = (DragHandle);
 
 /***/ }),
-/* 182 */
+/* 184 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2705,7 +2707,7 @@ const DragHandle = () => {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__chartiq_finsemble_react_controls__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__chartiq_finsemble_react_controls___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__chartiq_finsemble_react_controls__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__assets_minimize_all_icon__ = __webpack_require__(188);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__assets_minimize_all_icon__ = __webpack_require__(190);
 
 
 
@@ -2732,7 +2734,7 @@ class MinimizeAll extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Componen
 
 
 /***/ }),
-/* 183 */
+/* 185 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2903,7 +2905,7 @@ class Search extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Component {
 
 
 /***/ }),
-/* 184 */
+/* 186 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2945,7 +2947,7 @@ class WorkspaceLauncherButton extends __WEBPACK_IMPORTED_MODULE_0_react___defaul
 
 
 /***/ }),
-/* 185 */
+/* 187 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3007,7 +3009,7 @@ class WorkspaceMenuOpener extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.
 
 
 /***/ }),
-/* 186 */
+/* 188 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3036,7 +3038,7 @@ class WorkspaceMenuOpener extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.
 ));
 
 /***/ }),
-/* 187 */
+/* 189 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3063,7 +3065,7 @@ const DragIcon = () => __WEBPACK_IMPORTED_MODULE_0_react___default.a.createEleme
 ));
 
 /***/ }),
-/* 188 */
+/* 190 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3092,7 +3094,7 @@ const DragIcon = () => __WEBPACK_IMPORTED_MODULE_0_react___default.a.createEleme
 ));
 
 /***/ }),
-/* 189 */
+/* 191 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3123,7 +3125,7 @@ const DragIcon = () => __WEBPACK_IMPORTED_MODULE_0_react___default.a.createEleme
 ));
 
 /***/ }),
-/* 190 */
+/* 192 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3150,8 +3152,6 @@ if (!fin.container || fin.container != "electron") {
 }
 
 /***/ }),
-/* 191 */,
-/* 192 */,
 /* 193 */,
 /* 194 */,
 /* 195 */,
@@ -3162,7 +3162,9 @@ if (!fin.container || fin.container != "electron") {
 /* 200 */,
 /* 201 */,
 /* 202 */,
-/* 203 */
+/* 203 */,
+/* 204 */,
+/* 205 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(0)(false);
@@ -3177,17 +3179,17 @@ exports.push([module.i, "/*!\r\n  * Copyright 2017 by ChartIQ, Inc.\r\n  * All r
 
 
 /***/ }),
-/* 204 */,
-/* 205 */,
 /* 206 */,
 /* 207 */,
-/* 208 */
+/* 208 */,
+/* 209 */,
+/* 210 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(203);
+var content = __webpack_require__(205);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // Prepare cssTransformation
 var transform;
@@ -3212,9 +3214,9 @@ if(false) {
 }
 
 /***/ }),
-/* 209 */,
-/* 210 */,
-/* 211 */
+/* 211 */,
+/* 212 */,
+/* 213 */
 /***/ (function(module, exports) {
 
 module.exports = [{"align":"left","iconClasses":"finsemble-toolbar-brand-logo","icon":"../../assets/img/adaptive-logo.png","menuType":"File Menu"},{"align":"left","type":"seperator"},{"align":"left","type":"reactComponent","reactComponent":"Search"},{"align":"left","type":"seperator"},{"align":"left","label":"Workspaces","menuType":"Workspace Management Menu","reactComponent":"WorkspaceMenuOpener","type":"reactComponent"},{"align":"left","type":"seperator"},{"comment":"Change align to add AlwaysOnTop capability","align":"none","type":"reactComponent","reactComponent":"AlwaysOnTop"},{"align":"right","type":"reactComponent","reactComponent":"AutoArrange"},{"align":"right","type":"reactComponent","reactComponent":"MinimizeAll"},{"align":"right","type":"reactComponent","reactComponent":"BringToFront"},{"align":"left","label":"Apps","id":"app-launcher","menuType":"App Launcher"},{"align":"left","type":"seperator"},{"align":"right","type":"seperator"},{"align":"right","iconClasses":"finsemble-toolbar-brand-logo","icon":"../../assets/img/Finsemble_Taskbar_Icon.png","menuType":"File Menu"}]

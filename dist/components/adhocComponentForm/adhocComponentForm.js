@@ -203,7 +203,7 @@ exports.push([module.i, "\r\n", ""]);
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(192);
+var content = __webpack_require__(194);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // Prepare cssTransformation
 var transform;
@@ -530,7 +530,7 @@ exports.push([module.i, ":root {\r\n    --slate1: #7B98B3;\r\n    --slate2: #678
 
 /***/ }),
 
-/***/ 192:
+/***/ 194:
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(0)(false);

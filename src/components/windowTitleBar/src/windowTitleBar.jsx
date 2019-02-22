@@ -420,15 +420,10 @@ class WindowTitleBar extends React.Component {
 		//See this.allowDragOnCenterRegion for more explanation.
 		return (
 			<div className={headerClasses}>
-				{/* Only render the left section if something is inside of it. The left section has a right-border that we don't want showing willy-nilly. */}
-				{RENDER_LEFT_SECTION && (
-					<div className="fsbl-header-left">
-						{self.state.showLinkerButton ? <Linker /> : null}
-						{self.state.showShareButton ? <Sharer /> : null}
-					</div>
-				)}
+
+                <AdaptiveLogo />
+
 			
-				<AdaptiveLogo />
 				
 
 				{/* center section of the titlebar */}
@@ -450,6 +445,13 @@ class WindowTitleBar extends React.Component {
 						/>
 					)}
 				</div>
+				{/* Only render the left section if something is inside of it. The left section has a right-border that we don't want showing willy-nilly. */}
+				{RENDER_LEFT_SECTION && (
+					<div className="fsbl-header-left">
+						{self.state.showLinkerButton ? <Linker /> : null}
+						{self.state.showShareButton ? <Sharer /> : null}
+					</div>
+				)}
 				<div className={rightWrapperClasses} ref={this.setToolbarRight}>
 					{this.state.alwaysOnTopButton && showMinimizeIcon ? (
 						<AlwaysOnTop />

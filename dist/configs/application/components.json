@@ -160,6 +160,9 @@
                 "width": 370,
                 "height": 184
             },
+            "component": {
+                "inject": "$applicationRoot/components/SpotTileD/SpotTileD.js"
+            },
             "foreign": {
                 "services": {
                     "dockingService": {
@@ -192,6 +195,9 @@
                 "left": "center",
                 "width": 370,
                 "height": 184
+            },
+            "component": {
+                "inject": "$applicationRoot/components/SpotTileD/SpotTileD.js"
             },
             "foreign": {
                 "services": {
@@ -348,64 +354,64 @@
             }
         },
         "Toolbar": {
-			"window": {
-				"id": "launcher",
-				"url": "$applicationRoot/components/toolbar/toolbar.html",
-				"width": 600,
-				"height": 39,
-				"dockedHeight": 39,
-				"top": 0,
-				"left": 0,
-				"right": 0,
-				"position": "available",
-				"autoShow": true,
-				"dockable": [
-					"top",
-					"bottom"
-				],
-				"maxHeight": 39,
-				"minHeight": 39,
-				"minWidth": 300,
-				"docked": "top",
-				"canGroup": false,
-				"options": {
-					"autoShow": false,
-					"contextMenu": false,
-					"showTaskbarIcon": false,
+            "window": {
+                "id": "launcher",
+                "url": "$applicationRoot/components/toolbar/toolbar.html",
+                "width": 600,
+                "height": 39,
+                "dockedHeight": 39,
+                "top": 0,
+                "left": 0,
+                "right": 0,
+                "position": "available",
+                "autoShow": true,
+                "dockable": [
+                    "top",
+                    "bottom"
+                ],
+                "maxHeight": 39,
+                "minHeight": 39,
+                "minWidth": 300,
+                "docked": "top",
+                "canGroup": false,
+                "options": {
+                    "autoShow": false,
+                    "contextMenu": false,
+                    "showTaskbarIcon": false,
                     "smallWindow": true,
                     "cornerRounding": {
-                        "height": 7, 
+                        "height": 7,
                         "width": 7
                     }
-				}
-			},
-			"component": {
-				"category": "system",
-				"spawnOnStartup": true,
-				"spawnOnAllMonitors": false,
-				"canMinimize": false
-			},
-			"foreign": {
-				"services": {
-					"dockingService": {
-						"isArrangable": false,
-						"ignoreSnappingRequests": true,
-						"ignoreTilingAndTabbingRequests": true
-					},
-					"workspaceService": {
-						"global": true
-					}
-				},
-				"components": {
-					"App Launcher": {
-						"launchableByUser": false
-					},
-					"Window Manager": {
-						"persistWindowState": false,
-						"FSBLHeader": false
-					}
-				}
-			}
+                }
+            },
+            "component": {
+                "category": "system",
+                "spawnOnStartup": true,
+                "spawnOnAllMonitors": false,
+                "canMinimize": false
+            },
+            "foreign": {
+                "services": {
+                    "dockingService": {
+                        "isArrangable": false,
+                        "ignoreSnappingRequests": true,
+                        "ignoreTilingAndTabbingRequests": true
+                    },
+                    "workspaceService": {
+                        "global": true
+                    }
+                },
+                "components": {
+                    "App Launcher": {
+                        "launchableByUser": false
+                    },
+                    "Window Manager": {
+                        "persistWindowState": false,
+                        "FSBLHeader": false
+                    }
+                }
+            }
         },
         "ChartIQ": {
             "window": {
@@ -435,6 +441,81 @@
                     },
                     "Toolbar": {
                         "iconClass": "ChartIQ"
+                    }
+                }
+            }
+        },
+        "ChartMC": {
+            "window": {
+                "url": "http://adaptiveconsulting.github.io/ReactiveTraderCloud/chartiq/template-advanced.html",
+                "frame": true,
+                "resizable": true,
+                "autoShow": true,
+                "top": "center",
+                "left": "center",
+                "width": 1000,
+                "height": 650,
+                "options": {
+                    "frame": true
+                }
+            },
+            "component": {
+                "inject": "$applicationRoot/components/ChartMC/ChartMC.js"
+            },
+            "foreign": {
+                "services": {
+                    "dockingService": {
+                        "canGroup": true,
+                        "isArrangable": true
+                    }
+                },
+                "components": {
+                    "App Launcher": {
+                        "launchableByUser": true
+                    },
+                    "Window Manager": {
+                        "title": "ChartMC",
+                        "FSBLHeader": false,
+                        "persistWindowState": true
+                    },
+                    "Toolbar": {
+                        "iconClass": "ChartMC"
+                    }
+                }
+            }
+        },
+        "SpotTileD": {
+            "window": {
+                "url": "$applicationRoot/components/SpotTileD/SpotTileD.html",
+                "frame": false,
+                "resizable": true,
+                "autoShow": true,
+                "top": "center",
+                "left": "center",
+                "width": 800,
+                "height": 600
+            },
+            "component": {
+                "inject": false
+            },
+            "foreign": {
+                "services": {
+                    "dockingService": {
+                        "canGroup": true,
+                        "isArrangable": true
+                    }
+                },
+                "components": {
+                    "App Launcher": {
+                        "launchableByUser": true
+                    },
+                    "Window Manager": {
+                        "title": "SpotTileD",
+                        "FSBLHeader": true,
+                        "persistWindowState": true
+                    },
+                    "Toolbar": {
+                        "iconClass": "SpotTileD"
                     }
                 }
             }
