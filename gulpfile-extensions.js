@@ -6,16 +6,22 @@
  * 3) Override or add new gulp tasks (TASKS)
  */
 module.exports = taskMethods => {
-    "use strict";
+	"use strict";
 
-    const gulp = require("gulp");
+	const gulp = require("gulp");
+	const chalk = require("chalk");
+	const fs = require("fs");
+	const path = require("path");
+	const del = require("del");
+	// const shell = require("shelljs");
+
+	const DOCS_OUTPUT = "./docs";
+	const DOCS_SRC = ["./dist/**", "./finsemble", "./public/**"];
 
 	const origBuildWebpack = taskMethods.buildWebpack;
-	taskMethods.buildWebpack = (done) => {
+	taskMethods.buildWebpack = done => {
 		origBuildWebpack(() => {
 			// Mangle FSBL
-			const fs = require("fs");
-			const path = require("path");
 			const fsblJS = path.join(__dirname, "finsemble", "FSBL.js");
 			fs.readFile(fsblJS, "utf8", (err, data) => {
 				if (err) {
@@ -23,20 +29,45 @@ module.exports = taskMethods => {
 				}
 				const result = data.replace(/window.localStorage/g, "true");
 
-				fs.writeFile(fsblJS, result, "utf8", (err) => {
+				fs.writeFile(fsblJS, result, "utf8", err => {
 					if (err) return console.log(err);
 				});
 			});
 			done();
-		})
+		});
+	};
+
+
+	// // Use this to run custom code after every build process
+	// const buildOriginal = taskMethods.build;
+	// taskMethods.build = done => {
+	// 	buildOriginal(() => {
+	//		// Custom stuff here
+	// 		done();
+	// 	});
+	// };
+
+	function deployToDocs() {
+		logToTerminal(`Generating Github Pages output in ${DOCS_OUTPUT}`, "cyan");
+		logToTerminal(`Deleting current ${DOCS_OUTPUT}`);
+		del.sync([`${DOCS_OUTPUT}/**`, `!${DOCS_OUTPUT}`], { force: true });
+		logToTerminal(`Copying ${DOCS_SRC.join(", ")} -> ${DOCS_OUTPUT}`);
+		return gulp.src(DOCS_SRC).pipe(gulp.dest(DOCS_OUTPUT));
 	}
 
-	taskMethods.post = (done) => {
 
-		gulp.task("deploy", function() {
-			return gulp.src("./dist/**/*").pipe(deploy())
-		})
+	taskMethods.post = done => {
+		gulp.task("deploy", deployToDocs);
 
 		done();
-	}
+	};
+
+	// Utilities
+	const logToTerminal = (msg, color = "white", bgcolor = "bgBlack") => {
+		if (!chalk[color]) color = "white";
+		if (!chalk[color][bgcolor]) bgcolor = "bgBlack";
+		console.log(
+			`[${new Date().toLocaleTimeString()}] ${chalk[color][bgcolor](msg)}.`
+		);
+	};
 };
