@@ -15,9 +15,6 @@ module.exports = taskMethods => {
 	const del = require("del");
 	// const shell = require("shelljs");
 
-	const DOCS_OUTPUT = "./docs";
-	const DOCS_SRC = ["./dist/**", "./finsemble", "./public/**"];
-
 	const origBuildWebpack = taskMethods.buildWebpack;
 	taskMethods.buildWebpack = done => {
 		origBuildWebpack(() => {
@@ -47,17 +44,41 @@ module.exports = taskMethods => {
 	// 	});
 	// };
 
-	function deployToDocs() {
-		logToTerminal(`Generating Github Pages output in ${DOCS_OUTPUT}`, "cyan");
-		logToTerminal(`Deleting current ${DOCS_OUTPUT}`);
-		del.sync([`${DOCS_OUTPUT}/**`, `!${DOCS_OUTPUT}`], { force: true });
-		logToTerminal(`Copying ${DOCS_SRC.join(", ")} -> ${DOCS_OUTPUT}`);
-		return gulp.src(DOCS_SRC).pipe(gulp.dest(DOCS_OUTPUT));
+	const DOCS_OUTPUT = "./docs";
+
+	function deploy_cleanDocsFolder() {
+		return del([`${DOCS_OUTPUT}/**`, `!${DOCS_OUTPUT}`], {
+			force: true
+		});
+	}
+	deploy_cleanDocsFolder.displayName = `Delete current ${DOCS_OUTPUT}`
+
+	function deploy_dist() {
+		return gulp.src(`./dist/**`).pipe(gulp.dest(DOCS_OUTPUT));
+	}
+	deploy_dist.displayName = `Copy dist/** -> ${DOCS_OUTPUT}`
+
+	function deploy_finsemble() {
+		return gulp.src(`./finsemble/**`, { base: "." }).pipe(gulp.dest(DOCS_OUTPUT));
+	}
+	deploy_finsemble.displayName = `Copy ./finsemble -> ${DOCS_OUTPUT}`
+
+	function deploy_public() {
+		return gulp.src(`./public/**`).pipe(gulp.dest(DOCS_OUTPUT));
+	}
+	deploy_public.displayName = `Copy public/** -> ${DOCS_OUTPUT}`
+
+	function deployToDocs(deployDone) {
+		return gulp.series(
+			deploy_cleanDocsFolder,
+			deploy_dist,
+			deploy_finsemble,
+			deploy_public
+		);
 	}
 
-
 	taskMethods.post = done => {
-		gulp.task("deploy", deployToDocs);
+		gulp.task("deploy", deployToDocs());
 
 		done();
 	};
@@ -69,5 +90,6 @@ module.exports = taskMethods => {
 		console.log(
 			`[${new Date().toLocaleTimeString()}] ${chalk[color][bgcolor](msg)}.`
 		);
+		return Promise.resolve()
 	};
 };
