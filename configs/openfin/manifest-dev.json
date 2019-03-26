@@ -70,7 +70,7 @@
         "moduleRoot": "https://adaptiveconsulting.github.io/rtc-finsemble/finsemble",
         "servicesRoot": "https://adaptiveconsulting.github.io/rtc-finsemble/finsemble/services",
         "notificationURL": "https://adaptiveconsulting.github.io/rtc-finsemble/components/notification/notification.html",
-        "componentRoot": "https://web-demo.adaptivecluster.com",
+        "componentRoot": "https://web-dev.adaptivecluster.com",
         "devServer": "http://127.0.0.1:3000",
         "importConfig": [
             "$applicationRoot/configs/application/config.json"
