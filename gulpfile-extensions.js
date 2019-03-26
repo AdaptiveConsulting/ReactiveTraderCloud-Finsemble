@@ -15,6 +15,8 @@ module.exports = taskMethods => {
 	const del = require("del");
 	// const shell = require("shelljs");
 
+	const _createInstallers = require("./lib/createInstallers");
+
 	const origBuildWebpack = taskMethods.buildWebpack;
 	taskMethods.buildWebpack = done => {
 		origBuildWebpack(() => {
@@ -34,7 +36,6 @@ module.exports = taskMethods => {
 		});
 	};
 
-
 	// // Use this to run custom code after every build process
 	// const buildOriginal = taskMethods.build;
 	// taskMethods.build = done => {
@@ -51,22 +52,24 @@ module.exports = taskMethods => {
 			force: true
 		});
 	}
-	deploy_cleanDocsFolder.displayName = `Delete current ${DOCS_OUTPUT}`
+	deploy_cleanDocsFolder.displayName = `Delete current ${DOCS_OUTPUT}`;
 
 	function deploy_dist() {
 		return gulp.src(`./dist/**`).pipe(gulp.dest(DOCS_OUTPUT));
 	}
-	deploy_dist.displayName = `Copy dist/** -> ${DOCS_OUTPUT}`
+	deploy_dist.displayName = `Copy dist/** -> ${DOCS_OUTPUT}`;
 
 	function deploy_finsemble() {
-		return gulp.src(`./finsemble/**`, { base: "." }).pipe(gulp.dest(DOCS_OUTPUT));
+		return gulp
+			.src(`./finsemble/**`, { base: "." })
+			.pipe(gulp.dest(DOCS_OUTPUT));
 	}
-	deploy_finsemble.displayName = `Copy ./finsemble -> ${DOCS_OUTPUT}`
+	deploy_finsemble.displayName = `Copy ./finsemble -> ${DOCS_OUTPUT}`;
 
 	function deploy_public() {
 		return gulp.src(`./public/**`).pipe(gulp.dest(DOCS_OUTPUT));
 	}
-	deploy_public.displayName = `Copy public/** -> ${DOCS_OUTPUT}`
+	deploy_public.displayName = `Copy public/** -> ${DOCS_OUTPUT}`;
 
 	function deployToDocs(deployDone) {
 		return gulp.series(
@@ -77,8 +80,17 @@ module.exports = taskMethods => {
 		);
 	}
 
+	function createInstallers() {
+		const INSTALLERS_TO_CREATE = [
+			{ manifestName: "manifest-dev", exeName: "dev" },
+			{ manifestName: "manifest-prod", exeName: "demo" }
+		];
+		return _createInstallers(INSTALLERS_TO_CREATE);
+	}
+
 	taskMethods.post = done => {
 		gulp.task("deploy", deployToDocs());
+		gulp.task("createInstallers", createInstallers);
 
 		done();
 	};
@@ -90,6 +102,6 @@ module.exports = taskMethods => {
 		console.log(
 			`[${new Date().toLocaleTimeString()}] ${chalk[color][bgcolor](msg)}.`
 		);
-		return Promise.resolve()
+		return Promise.resolve();
 	};
 };
