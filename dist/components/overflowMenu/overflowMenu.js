@@ -774,7 +774,7 @@ exports = module.exports = __webpack_require__(0)(false);
 
 
 // module
-exports.push([module.i, ":root {\r\n    --primary-background-color: #2D313C;\r\n    --toolbar-font-size: 12px;\r\n    --toolbar-resize-area-color: black;\r\n    --titleBar-font-size: 12px;\r\n    --toolbar-separator: 2px solid #3d4455;\r\n}", ""]);
+exports.push([module.i, ":root {\r\n    --primary-background-color: #2D313C;\r\n    --toolbar-font-size: 12px;\r\n    --toolbar-resize-area-color: black;\r\n    --titleBar-font-size: 12px;\r\n    --toolbar-separator: 2px solid #3d4455;\r\n    --toolbar-external-background-color: #959eb6;\r\n}", ""]);
 
 // exports
 

@@ -187,7 +187,7 @@ module.exports = "data:application/vnd.ms-fontobject;base64,IEUAAGhEAAABAAIAAAAA
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return LinkerStore; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return Actions; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_flux__ = __webpack_require__(206);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_flux__ = __webpack_require__(203);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_flux___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_flux__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_events__ = __webpack_require__(55);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_events___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_events__);
@@ -319,7 +319,7 @@ exports.push([module.i, "\r\n", ""]);
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(200);
+var content = __webpack_require__(197);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // Prepare cssTransformation
 var transform;
@@ -613,6 +613,21 @@ exports.push([module.i, ":root {\r\n    --slate1: #7B98B3;\r\n    --slate2: #678
 
 /***/ }),
 
+/***/ 197:
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(0)(false);
+// imports
+exports.i(__webpack_require__(3), "");
+
+// module
+exports.push([module.i, "/*!\r\n* Copyright 2017 by ChartIQ, Inc.\r\n* All rights reserved.\r\n*/\r\nbody {\r\n    margin:0;\r\n\tborder:0;\r\n}\r\n\r\n#main {\r\n    padding: 4px 0px;\r\n    background-color: var(--menu-background-color);\r\n}\r\n\r\n.linkerGroup{\r\n    height: 20px;\r\n    margin: 4px 8px;\r\n    cursor: pointer;\r\n    border-radius: 2px;\r\n}\r\n\r\n.linkerContainer{\r\n    width: 100%;\r\n    display: flex;\r\n    flex-direction:column;\r\n}\r\n\r\n.active-linker-group{\r\n    margin-left: auto;\r\n    height: 100%;\r\n    display: flex;\r\n    empty-cells: auto;\r\n    align-content: center;\r\n    justify-content: center;\r\n    align-items: center;\r\n    flex-direction: row;\r\n    color: var(--menu-linker-selected-font-color);\r\n    font-size: var(--menu-linker-selected-font-size);\r\n}", ""]);
+
+// exports
+
+
+/***/ }),
+
 /***/ 2:
 /***/ (function(module, exports) {
 
@@ -635,22 +650,7 @@ exports.push([module.i, "", ""]);
 
 /***/ }),
 
-/***/ 200:
-/***/ (function(module, exports, __webpack_require__) {
-
-exports = module.exports = __webpack_require__(0)(false);
-// imports
-exports.i(__webpack_require__(3), "");
-
-// module
-exports.push([module.i, "/*!\r\n* Copyright 2017 by ChartIQ, Inc.\r\n* All rights reserved.\r\n*/\r\nbody {\r\n    margin:0;\r\n\tborder:0;\r\n}\r\n\r\n#main {\r\n    padding: 4px 0px;\r\n    background-color: var(--menu-background-color);\r\n}\r\n\r\n.linkerGroup{\r\n    height: 20px;\r\n    margin: 4px 8px;\r\n    cursor: pointer;\r\n    border-radius: 2px;\r\n}\r\n\r\n.linkerContainer{\r\n    width: 100%;\r\n    display: flex;\r\n    flex-direction:column;\r\n}\r\n\r\n.active-linker-group{\r\n    margin-left: auto;\r\n    height: 100%;\r\n    display: flex;\r\n    empty-cells: auto;\r\n    align-content: center;\r\n    justify-content: center;\r\n    align-items: center;\r\n    flex-direction: row;\r\n    color: var(--menu-linker-selected-font-color);\r\n    font-size: var(--menu-linker-selected-font-size);\r\n}", ""]);
-
-// exports
-
-
-/***/ }),
-
-/***/ 206:
+/***/ 203:
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -662,12 +662,12 @@ exports.push([module.i, "/*!\r\n* Copyright 2017 by ChartIQ, Inc.\r\n* All right
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-module.exports.Dispatcher = __webpack_require__(207);
+module.exports.Dispatcher = __webpack_require__(204);
 
 
 /***/ }),
 
-/***/ 207:
+/***/ 204:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -690,7 +690,7 @@ exports.__esModule = true;
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-var invariant = __webpack_require__(214);
+var invariant = __webpack_require__(211);
 
 var _prefix = 'ID_';
 
@@ -1001,7 +1001,7 @@ module.exports = function (css) {
 
 /***/ }),
 
-/***/ 214:
+/***/ 211:
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = (__webpack_require__(2))(0);
@@ -1781,7 +1781,7 @@ exports = module.exports = __webpack_require__(0)(false);
 
 
 // module
-exports.push([module.i, ":root {\r\n    --primary-background-color: #2D313C;\r\n    --toolbar-font-size: 12px;\r\n    --toolbar-resize-area-color: black;\r\n    --titleBar-font-size: 12px;\r\n    --toolbar-separator: 2px solid #3d4455;\r\n}", ""]);
+exports.push([module.i, ":root {\r\n    --primary-background-color: #2D313C;\r\n    --toolbar-font-size: 12px;\r\n    --toolbar-resize-area-color: black;\r\n    --titleBar-font-size: 12px;\r\n    --toolbar-separator: 2px solid #3d4455;\r\n    --toolbar-external-background-color: #959eb6;\r\n}", ""]);
 
 // exports
 

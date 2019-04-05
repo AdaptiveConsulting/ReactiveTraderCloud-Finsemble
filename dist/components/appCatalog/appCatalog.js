@@ -222,7 +222,7 @@ exports = module.exports = __webpack_require__(0)(false);
 
 
 // module
-exports.push([module.i, ":root {\r\n    --primary-background-color: #2D313C;\r\n    --toolbar-font-size: 12px;\r\n    --toolbar-resize-area-color: black;\r\n    --titleBar-font-size: 12px;\r\n    --toolbar-separator: 2px solid #3d4455;\r\n}", ""]);
+exports.push([module.i, ":root {\r\n    --primary-background-color: #2D313C;\r\n    --toolbar-font-size: 12px;\r\n    --toolbar-resize-area-color: black;\r\n    --titleBar-font-size: 12px;\r\n    --toolbar-separator: 2px solid #3d4455;\r\n    --toolbar-external-background-color: #959eb6;\r\n}", ""]);
 
 // exports
 
@@ -1759,7 +1759,7 @@ class AppContent extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Component
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__menu_css__ = __webpack_require__(209);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__menu_css__ = __webpack_require__(206);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__menu_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__menu_css__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__assets_css_font_finance_css__ = __webpack_require__(31);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__assets_css_font_finance_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__assets_css_font_finance_css__);
@@ -1890,7 +1890,7 @@ class ComplexMenu extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Componen
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(195);
+var content = __webpack_require__(192);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // Prepare cssTransformation
 var transform;
@@ -2337,10 +2337,7 @@ class AppList extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Component {
 /* 189 */,
 /* 190 */,
 /* 191 */,
-/* 192 */,
-/* 193 */,
-/* 194 */,
-/* 195 */
+/* 192 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(0)(false);
@@ -2355,8 +2352,8 @@ exports.push([module.i, "/*!\r\n* Copyright 2017 by ChartIQ, Inc.\r\n* All right
 
 
 /***/ }),
-/* 196 */,
-/* 197 */
+/* 193 */,
+/* 194 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(0)(false);
@@ -2371,6 +2368,9 @@ exports.push([module.i, "body {\r\n    margin: 0px;\r\n    font-family: var(--fo
 
 
 /***/ }),
+/* 195 */,
+/* 196 */,
+/* 197 */,
 /* 198 */,
 /* 199 */,
 /* 200 */,
@@ -2379,16 +2379,13 @@ exports.push([module.i, "body {\r\n    margin: 0px;\r\n    font-family: var(--fo
 /* 203 */,
 /* 204 */,
 /* 205 */,
-/* 206 */,
-/* 207 */,
-/* 208 */,
-/* 209 */
+/* 206 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(197);
+var content = __webpack_require__(194);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // Prepare cssTransformation
 var transform;

@@ -920,7 +920,7 @@ exports.push([module.i, ".form-group {\r\n    /* display: flex; */\r\n    flex-d
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(202);
+var content = __webpack_require__(199);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // Prepare cssTransformation
 var transform;
@@ -1289,6 +1289,22 @@ exports.push([module.i, ":root {\r\n    --slate1: #7B98B3;\r\n    --slate2: #678
 
 /***/ }),
 
+/***/ 199:
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(0)(false);
+// imports
+exports.i(__webpack_require__(3), "");
+exports.i(__webpack_require__(17), "");
+
+// module
+exports.push([module.i, "\t\t\t\t\t\t/*!\r\n* Copyright 2017 by ChartIQ, Inc.\r\n* All rights reserved.\r\n*/\r\n\r\nhtml {\r\n    height: 100%;\r\n    overflow-x: hidden;\r\n    margin-left: 0px;\r\n}\r\n\r\nbody {\r\n    margin-left: 0px !important;\r\n    margin-right: 0px !important;\r\n    font-size: var(--menu-font-size);\r\n    max-height: 500px;\r\n    font-family: var(--font-family);\r\n    overflow-y: auto !important;\r\n    background-color: var(--menu-background-color);\r\n}\r\n\r\n.provider, .bestMatch {\r\n    padding-top: 8px;\r\n}\r\n\r\n.searchHeader {\r\n    height: 21px;\r\n    display: flex;\r\n    color: var(--search-header-font-color);\r\n    font-weight: var(--search-header-font-weight);\r\n    padding: 6px 0px 0px 14px;\r\n}\r\n\r\n.divider {\r\n    height: 1px;\r\n    border: var(--toolbar-separator);\r\n    margin-bottom: 15px;\r\n}\r\n\r\n.provider {\r\n    display: flex;\r\n    flex-direction: row;\r\n    justify-content: space-between;\r\n    align-content: center;\r\n    align-items: center;\r\n}\r\n\r\n.resultItem {\r\n    color: var(--search-result-font-color);\r\n    font-weight: var(--search-result-font-weight);\r\n    text-align: left;\r\n    padding: 4px 28px 4px 14px;\r\n    display: flex;\r\n    align-items: center;\r\n    justify-content: center;\r\n}\r\n\r\n.resultItem:hover {\r\n    background-color: var(--search-result-highlighter-color)\r\n}\r\n\r\n\r\n.providerContainer:last-child {\r\n    margin-bottom: 0px;\r\n}\r\n\r\n.resultItem.active {\r\n    background-color: var(--search-result-highlighter-color);\r\n}\r\n\r\n.resultItem .resultName {\r\n    flex: 1;\r\n    vertical-align: middle;\r\n}\r\n\r\n.resultItem .actions {\r\n    display: flex;\r\n    margin-top: 8px;\r\n    margin-bottom: 8px;\r\n}\r\n\r\n.resultItem.action {\r\n    cursor: pointer;\r\n}\r\n\r\n.resultItem .actions .action {\r\n    margin-right: 11px;\r\n    cursor: pointer;\r\n}\r\n\r\n.actionButton {\r\n    border: 1px solid var(--button-neutral-border-color);\r\n    padding: 3px;\r\n    display: inline-block;\r\n    text-align: center;\r\n    outline: none;\r\n    text-decoration: none;\r\n}\r\n\r\n.providerAction {\r\n    height: 16px;\r\n    border: solid 1px var(--button-neutral-border-color);\r\n    display: flex;\r\n    justify-content: center;\r\n    text-align: center;\r\n    align-items: center;\r\n    padding-left: 4px;\r\n    padding-right: 4px;\r\n    cursor: pointer;\r\n    margin-right: 8px;\r\n}\r\n\r\n.providerAction:hover {\r\n    border: 1px solid var(--scrollbar-color);\r\n}\r\n\r\n.actionTitle {\r\n    font-size: 11px;\r\n    vertical-align: middle;\r\n    color: var(--menu-font-color);\r\n}\r\n\r\n.arrow_right_grey {\r\n    width: 10px;\r\n    height: 9px;\r\n    object-fit: contain;\r\n    font-size: 11px;\r\n    margin-left: 4px;\r\n}\r\n\r\n.empty-delete {\r\n    width: 1em;\r\n}\r\n\r\n::-webkit-scrollbar-track {\r\n    border-radius: 3px;\r\n    background-color: transparent;\r\n}\r\n\r\n::-webkit-scrollbar {\r\n    width: 9px;\r\n    background-color: transparent;\r\n    border-radius: 3px;\r\n}\r\n\r\n::-webkit-scrollbar-thumb {\r\n    cursor: pointer;\r\n    border-radius: 9px;\r\n    background-color: var(--scrollbar-color);\r\n}\r\n\r\n.no-results {\r\n    padding-left: 14px;\r\n    padding-top: 12px;\r\n}\r\n", ""]);
+
+// exports
+
+
+/***/ }),
+
 /***/ 2:
 /***/ (function(module, exports) {
 
@@ -1305,22 +1321,6 @@ exports = module.exports = __webpack_require__(0)(false);
 
 // module
 exports.push([module.i, "", ""]);
-
-// exports
-
-
-/***/ }),
-
-/***/ 202:
-/***/ (function(module, exports, __webpack_require__) {
-
-exports = module.exports = __webpack_require__(0)(false);
-// imports
-exports.i(__webpack_require__(3), "");
-exports.i(__webpack_require__(17), "");
-
-// module
-exports.push([module.i, "\t\t\t\t\t\t/*!\r\n* Copyright 2017 by ChartIQ, Inc.\r\n* All rights reserved.\r\n*/\r\n\r\nhtml {\r\n    height: 100%;\r\n    overflow-x: hidden;\r\n    margin-left: 0px;\r\n}\r\n\r\nbody {\r\n    margin-left: 0px !important;\r\n    margin-right: 0px !important;\r\n    font-size: var(--menu-font-size);\r\n    max-height: 500px;\r\n    font-family: var(--font-family);\r\n    overflow-y: auto !important;\r\n    background-color: var(--menu-background-color);\r\n}\r\n\r\n.provider, .bestMatch {\r\n    padding-top: 8px;\r\n}\r\n\r\n.searchHeader {\r\n    height: 21px;\r\n    display: flex;\r\n    color: var(--search-header-font-color);\r\n    font-weight: var(--search-header-font-weight);\r\n    padding: 6px 0px 0px 14px;\r\n}\r\n\r\n.divider {\r\n    height: 1px;\r\n    border: var(--toolbar-separator);\r\n    margin-bottom: 15px;\r\n}\r\n\r\n.provider {\r\n    display: flex;\r\n    flex-direction: row;\r\n    justify-content: space-between;\r\n    align-content: center;\r\n    align-items: center;\r\n}\r\n\r\n.resultItem {\r\n    color: var(--search-result-font-color);\r\n    font-weight: var(--search-result-font-weight);\r\n    text-align: left;\r\n    padding: 4px 28px 4px 14px;\r\n    display: flex;\r\n    align-items: center;\r\n    justify-content: center;\r\n}\r\n\r\n.resultItem:hover {\r\n    background-color: var(--search-result-highlighter-color)\r\n}\r\n\r\n\r\n.providerContainer:last-child {\r\n    margin-bottom: 0px;\r\n}\r\n\r\n.resultItem.active {\r\n    background-color: var(--search-result-highlighter-color);\r\n}\r\n\r\n.resultItem .resultName {\r\n    flex: 1;\r\n    vertical-align: middle;\r\n}\r\n\r\n.resultItem .actions {\r\n    display: flex;\r\n    margin-top: 8px;\r\n    margin-bottom: 8px;\r\n}\r\n\r\n.resultItem.action {\r\n    cursor: pointer;\r\n}\r\n\r\n.resultItem .actions .action {\r\n    margin-right: 11px;\r\n    cursor: pointer;\r\n}\r\n\r\n.actionButton {\r\n    border: 1px solid var(--button-neutral-border-color);\r\n    padding: 3px;\r\n    display: inline-block;\r\n    text-align: center;\r\n    outline: none;\r\n    text-decoration: none;\r\n}\r\n\r\n.providerAction {\r\n    height: 16px;\r\n    border: solid 1px var(--button-neutral-border-color);\r\n    display: flex;\r\n    justify-content: center;\r\n    text-align: center;\r\n    align-items: center;\r\n    padding-left: 4px;\r\n    padding-right: 4px;\r\n    cursor: pointer;\r\n    margin-right: 8px;\r\n}\r\n\r\n.providerAction:hover {\r\n    border: 1px solid var(--scrollbar-color);\r\n}\r\n\r\n.actionTitle {\r\n    font-size: 11px;\r\n    vertical-align: middle;\r\n    color: var(--menu-font-color);\r\n}\r\n\r\n.arrow_right_grey {\r\n    width: 10px;\r\n    height: 9px;\r\n    object-fit: contain;\r\n    font-size: 11px;\r\n    margin-left: 4px;\r\n}\r\n\r\n.empty-delete {\r\n    width: 1em;\r\n}\r\n\r\n::-webkit-scrollbar-track {\r\n    border-radius: 3px;\r\n    background-color: transparent;\r\n}\r\n\r\n::-webkit-scrollbar {\r\n    width: 9px;\r\n    background-color: transparent;\r\n    border-radius: 3px;\r\n}\r\n\r\n::-webkit-scrollbar-thumb {\r\n    cursor: pointer;\r\n    border-radius: 9px;\r\n    background-color: var(--scrollbar-color);\r\n}\r\n\r\n.no-results {\r\n    padding-left: 14px;\r\n    padding-top: 12px;\r\n}\r\n", ""]);
 
 // exports
 
@@ -1754,7 +1754,7 @@ exports = module.exports = __webpack_require__(0)(false);
 
 
 // module
-exports.push([module.i, ":root {\r\n    --primary-background-color: #2D313C;\r\n    --toolbar-font-size: 12px;\r\n    --toolbar-resize-area-color: black;\r\n    --titleBar-font-size: 12px;\r\n    --toolbar-separator: 2px solid #3d4455;\r\n}", ""]);
+exports.push([module.i, ":root {\r\n    --primary-background-color: #2D313C;\r\n    --toolbar-font-size: 12px;\r\n    --toolbar-resize-area-color: black;\r\n    --titleBar-font-size: 12px;\r\n    --toolbar-separator: 2px solid #3d4455;\r\n    --toolbar-external-background-color: #959eb6;\r\n}", ""]);
 
 // exports
 
