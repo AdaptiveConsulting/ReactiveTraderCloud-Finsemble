@@ -19,14 +19,14 @@ export type BaseClientParams = {
 	requiredClients?: any[],
 	/** The services that must be online before this client comes online. */
 	requiredServices?: any[],
-	startupDependencies?: { services: string[], clients: string[] }
+	startupDependencies?: { services?: string[], clients?: string[] }
 };
 
 /**
  * @introduction
  * <h2>Base Client</h2>
  * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependecies are met, either client or service, the client's `onReady` method is fired.
- * 
+ *
  * We're currently halfway through migrating our clients from extending a normal function prototype to an ES6 class.
  * "_BaseClient" represents the new class, while "BaseClient" is the original function. When the migration is complete,
  * we will remove the old function and rename "_BaseClient" to "BaseClient".
@@ -63,7 +63,7 @@ export class _BaseClient {
 	private _onReady: any;
 	startupTime = 0;
 	initialized = false;
-	startupDependencies = { services: [], clients: [] };
+	startupDependencies: { services?: any[], clients?: any[] } = { services: [], clients: [] };
 	/** Reference to the RouterClient. */
 	routerClient;
 	/** Gets the current openfin window - stays here for backward compatiblity. */
@@ -94,18 +94,25 @@ export class _BaseClient {
 		};
 		// @TODO - Refactor this to use DI.
 		this.logger = Logger;
-		/** 
-		 * Reference to the RouterClient 
+		/**
+		 * Reference to the RouterClient
 		 */
 		this.routerClient = RouterClient;
 	}
+	/**
+	 * @private
+	 *
+	 */
 	processClientReadyQueue = () => {
 		for (let cb of this.clientReadyQueue) {
 			cb();
 		}
 		this.clientReadyQueue = [];
 	};
-
+	/**
+	 * @private
+	 *
+	 */
 	onReady = (cb) => {
 		this.clientReadyQueue.push(cb);
 		if (this.status === "online") {
@@ -114,6 +121,10 @@ export class _BaseClient {
 	}
 
 	/** Check to see if the client can come online. We check this against the required services and clients */
+	/**
+ * @private
+ *
+ */
 	setClientOnline = () => {
 		this.status = "online";
 		const onReadyMessage = `STARTUP:CLIENT ONLINE:${this.finWindow.name}:${this.name}`;
@@ -129,7 +140,10 @@ export class _BaseClient {
 			readyCB();
 		}
 	}
-
+	/**
+	 * @private
+	 *
+	 */
 	initialize = (cb = Function.prototype) => {
 		if (this.initialized) return;
 
@@ -148,7 +162,10 @@ export class _BaseClient {
 				});
 		});
 	}
-
+	/**
+	 * @private
+	 *
+	 */
 	onClose = (cb?) => {
 		if (cb) cb();
 	};
@@ -268,7 +285,7 @@ var BaseClient = function (params) {
 	this.setClientOnline = function () {
 		var self = this;
 		status = "online";
-		let onReadyMessage = `StARTUP:CLIENT ONLINE:${self.finWindow.name}:${self.name}`;
+		let onReadyMessage = `STARTUP:CLIENT ONLINE:${self.finWindow.name}:${self.name}`;
 		self.startupTime = performance.now() - self.startupTime;
 		if (onReady) {
 			onReady(function () {

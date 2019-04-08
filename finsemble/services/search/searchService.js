@@ -63,228 +63,12 @@
 /******/ 	__webpack_require__.p = "http://localhost:3375/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 235);
+/******/ 	return __webpack_require__(__webpack_require__.s = 188);
 /******/ })
 /************************************************************************/
-/******/ ([
-/* 0 */
-/***/ (function(module, exports) {
+/******/ ({
 
-var g;
-
-// This works in non-strict mode
-g = (function() {
-	return this;
-})();
-
-try {
-	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1,eval)("this");
-} catch(e) {
-	// This works if the window reference is available
-	if(typeof window === "object")
-		g = window;
-}
-
-// g can still be undefined, but nothing to do about it...
-// We return undefined, instead of nothing here, so it's
-// easier to handle this case. if(!global) { ...}
-
-module.exports = g;
-
-
-/***/ }),
-/* 1 */
-/***/ (function(module, exports) {
-
-// shim for using process in browser
-var process = module.exports = {};
-
-// cached from whatever global is present so that test runners that stub it
-// don't break things.  But we need to wrap it in a try catch in case it is
-// wrapped in strict mode code which doesn't define any globals.  It's inside a
-// function because try/catches deoptimize in certain engines.
-
-var cachedSetTimeout;
-var cachedClearTimeout;
-
-function defaultSetTimout() {
-    throw new Error('setTimeout has not been defined');
-}
-function defaultClearTimeout () {
-    throw new Error('clearTimeout has not been defined');
-}
-(function () {
-    try {
-        if (typeof setTimeout === 'function') {
-            cachedSetTimeout = setTimeout;
-        } else {
-            cachedSetTimeout = defaultSetTimout;
-        }
-    } catch (e) {
-        cachedSetTimeout = defaultSetTimout;
-    }
-    try {
-        if (typeof clearTimeout === 'function') {
-            cachedClearTimeout = clearTimeout;
-        } else {
-            cachedClearTimeout = defaultClearTimeout;
-        }
-    } catch (e) {
-        cachedClearTimeout = defaultClearTimeout;
-    }
-} ())
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        //normal enviroments in sane situations
-        return setTimeout(fun, 0);
-    }
-    // if setTimeout wasn't available but was latter defined
-    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-        cachedSetTimeout = setTimeout;
-        return setTimeout(fun, 0);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedSetTimeout(fun, 0);
-    } catch(e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-            return cachedSetTimeout.call(null, fun, 0);
-        } catch(e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-            return cachedSetTimeout.call(this, fun, 0);
-        }
-    }
-
-
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        //normal enviroments in sane situations
-        return clearTimeout(marker);
-    }
-    // if clearTimeout wasn't available but was latter defined
-    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-        cachedClearTimeout = clearTimeout;
-        return clearTimeout(marker);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedClearTimeout(marker);
-    } catch (e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-            return cachedClearTimeout.call(null, marker);
-        } catch (e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-            return cachedClearTimeout.call(this, marker);
-        }
-    }
-
-
-
-}
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    if (!draining || !currentQueue) {
-        return;
-    }
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = runTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    runClearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
-    }
-};
-
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-process.prependListener = noop;
-process.prependOnceListener = noop;
-
-process.listeners = function (name) { return [] }
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
-
-/***/ }),
-/* 2 */
+/***/ 0:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -302,9 +86,9 @@ var CONSOLE_DEFAULT_LOG_SETTING = { Error: true, Warn: true, Info: true, Log: tr
 const MAX_LOG_MESSAGE_SIZE = 50000;
 const OVER_LOG_SIZE_LIMIT_MESSAGE = `Log argument greater than ${MAX_LOG_MESSAGE_SIZE / 1000}KB. Check local Console to see output of the object.`;
 const MAX_QUEUE_SIZE = 5 * 1000; // maximum logger queue size; plenty of space although shouldn't need much since continuely sending to logger if working correctly;
-const throttle = __webpack_require__(39);
-const system_1 = __webpack_require__(4);
-const localLogger_1 = __webpack_require__(23);
+const throttle = __webpack_require__(20);
+const system_1 = __webpack_require__(3);
+const localLogger_1 = __webpack_require__(15);
 /**
  * @introduction
  *
@@ -499,7 +283,7 @@ exports.LoggerConstructor = function (dependencies) {
     }
     // filter out message containing certain substrings;
     function filterMessage(message) {
-        var result = (message.logData.indexOf("heartbeat") !== -1);
+        var result = (message.logData.includes("Finsemble.heartbeat") === true);
         return result;
     }
     function formatAndQueueMessage(category, type, args) {
@@ -954,7 +738,7 @@ exports.LoggerConstructor = function (dependencies) {
         var self = this;
         if (!self.RouterClient) {
             console.log("No instance of the RouterClient found for this instance of the Logger. Dynamically requireing it.");
-            self.RouterClient = __webpack_require__(6).default;
+            self.RouterClient = __webpack_require__(4).default;
         }
         let onlineSubscription, allActiveSubscription;
         //Wait for the service before coming online. can't use the dependency manager, because it uses the router, which uses the logger.
@@ -1003,7 +787,2423 @@ exports.default = exports.Logger;
 
 
 /***/ }),
-/* 3 */
+
+/***/ 1:
+/***/ (function(module, exports) {
+
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+
+/***/ }),
+
+/***/ 10:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__util__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__system__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__system__);
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+
+
+
+
+
+
+var ConfigUtil = function () {
+
+	var self = this;
+
+	/**
+  * @introduction
+  * <h2>Finsemble Configuration Utility Functions</h2>
+  * @private
+  * @class ConfigUtil
+  */
+	// run through the configuration object and resolve any variables definitions (i.e. $applicationRoot)
+	this.resolveConfigVariables = function (finsembleConfig, startingConfigObject) {
+		var pass = 0;
+		var needsAnotherPass = true;
+
+		/**
+   * Called by resolveObject().
+   * This function parses a string to find variables.
+   * It looks up the value of any identified variables, replacing them in the string.
+   * The completed string is then returned.
+   * @TODO convert this function to use an actual tokenizer?
+   **/
+		function resolveString(configString) {
+			var delimiters = /[/\\:?=&\s]/; // delimiters in regex form
+			var tokens = configString.split(delimiters);
+			for (var i = 0; i < tokens.length; i++) {
+				if (tokens[i][0] === "$") {
+					// special variable character $ has to first char in string
+					var variableReference = tokens[i].substring(1); // string off the leading $
+					var variableResolution = finsembleConfig[variableReference]; // the variable value is another config property, which already must be set
+					var newValue = configString.replace(tokens[i], variableResolution); // replace the variable reference with new value
+					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.info("forceObjectsToLogger", "ConfigUtil.resolveConfigVariables:resolveString configString", tokens[i], variableReference, variableResolution, "oldvalue=", configString, "value=", newValue);
+					needsAnotherPass = true; // <<-- here is the only place needsAnotherPass is set, since still resolving variables
+					configString = newValue;
+				}
+			}
+			return configString;
+		}
+
+		// process an array of config items looking for variables to resolve (a recursive routine)
+		function resolveArray(configArray, pass, recursionLevel) {
+			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.info("forceObjectsToLogger", "resolveArray", "pass", pass, "recursionLevel", recursionLevel, "configArray:", configArray);
+			for (var i = 0; i < configArray.length; i++) {
+				var value = configArray[i];
+				if (typeof value === "string" && value.indexOf("$") > -1) {
+					configArray[i] = resolveString(value);
+				} else if (value instanceof Array) {
+					resolveArray(value, pass, recursionLevel + 1); // array reference passed so don't need return value
+				} else if (typeof value === "object") {
+					resolveObject(value, pass, recursionLevel + 1); // object reference passed so don't need return value
+				}
+			}
+		}
+
+		/**
+   * Expand "variables" within a config object. Variables are strings that begin with "$".
+   * For instance, `finsemble.bar:"help", foo:$bar` would be expanded into `finsemble.bar:"help",foo:"help"`
+   * This is a recursive routine
+   */
+		function resolveObject(configObject, pass, recursionLevel) {
+			configObject = configObject || {}; // don't error on bad config
+			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.info("forceObjectsToLogger", "ConfigUtil.resolveConfigVariables:resolveObject", "pass", pass, "recursionLevel", recursionLevel, "configObject:", configObject);
+			Object.keys(configObject).forEach(function (key) {
+				var value = configObject[key];
+				if (typeof value === "string" && value.indexOf("$") > -1) {
+					configObject[key] = resolveString(value);
+				} else if (value instanceof Array) {
+					resolveArray(value, pass, recursionLevel + 1); // array reference passed so don't need return value
+				} else if (typeof value === "object") {
+					resolveObject(value, pass, recursionLevel + 1); // object reference passed so don't need return value
+				}
+			});
+		}
+
+		// since variables may be nested, keep resolving till no more left
+		while (needsAnotherPass) {
+			needsAnotherPass = false; // don't need another pass afterwards unless a variable is resolved somewhere in finsembleConfig
+			resolveObject(startingConfigObject, ++pass, 1);
+		}
+	};
+
+	// This does mimimal processing of the manifest, just enough to support getting the router up, which is only expanding variables (e.g. moduleRoot) in the raw manifest
+	this.getExpandedRawManifest = function (callback, errorCB) {
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("ConfigUtil.getExpandedRawManifest starting");
+
+		function getRawManifest(callback, application, level) {
+			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getRawManifest", application, level);
+
+			application.getManifest(function (manifest) {
+				// get raw openfin manifest
+				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getExpandedRawManifest: manifest retrieved. Pre-variable resolution", manifest);
+				self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables first time so can fild config config location
+				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getExpandedRawManifest:Complete. post-variable resolution", manifest);
+				callback(manifest);
+			}, function (err) {
+				if (err) {
+					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("ConfigUtil.getExpandedRawManifest:application.getManifest:err", err);
+					if (errorCb) errorCB();
+				}
+				// no manifest so try parent
+				application.getParentUuid(function (parentUuid) {
+					var parentApplication = __WEBPACK_IMPORTED_MODULE_2__system__["System"].Application.wrap(parentUuid);
+					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "uuid", parentUuid, "parentApplication", parentApplication);
+					if (level < 10) {
+						getRawManifest(callback, parentApplication, ++level);
+					} else {
+						// still could find so must be a problem (i.e. avoid infinite loop)
+						callback("could not find manifest in parent applications");
+					}
+				});
+			});
+		}
+
+		__WEBPACK_IMPORTED_MODULE_2__system__["System"].ready(function () {
+			// make sure openfin is ready
+			var application = __WEBPACK_IMPORTED_MODULE_2__system__["System"].Application.getCurrent();
+			getRawManifest(callback, application, 1);
+		});
+	};
+
+	// async read of JSON config file
+	this.readConfigFile = function (coreConfigFile, importCallback) {
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("fetching " + coreConfigFile);
+		fetch(coreConfigFile, {
+			credentials: "include"
+		}).then(function (response) {
+			return response.json();
+		}).catch(function (err) {
+			importCallback("failure importing: " + err, null);
+		}).then(function (importObject) {
+			importCallback(null, importObject);
+		});
+	};
+
+	// This does a "first stage" processing of the manifest, providing enought config to start finsemble.
+	// Pull in the initial manifest, which includes gettig the "hiddlen" core config file along with its import definitions, and expand all variables.
+	// However, the full config processing, incluing actually doing the imports, is only done in the Config Service.
+	this.getInitialManifest = function (callback) {
+
+		__WEBPACK_IMPORTED_MODULE_2__system__["System"].ready(function () {
+			// make sure openfin is ready
+			var application = __WEBPACK_IMPORTED_MODULE_2__system__["System"].Application.getCurrent();
+			application.getManifest(function (manifest) {
+				// get raw openfin manifest
+				manifest.finsemble = manifest.finsemble || {}; // don't error on bad config
+				self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables first time so can find config config location
+				let CORE_CONFIG = manifest.finsemble.moduleRoot + "/configs/core/config.json"; // <<<--- here is the "hidden" core config file
+				self.readConfigFile(CORE_CONFIG, function (error, newFinsembleConfigObject) {
+					// fetch the core config file
+					if (!error) {
+						Object.keys(newFinsembleConfigObject).forEach(function (key) {
+							if (key === "importConfig") {
+								// add any importConfig items from the core to the existing importConifg
+								manifest.finsemble.importConfig = manifest.finsemble.importConfig || [];
+								for (let i = 0; i < newFinsembleConfigObject.importConfig.length; i++) {
+									manifest.finsemble.importConfig.unshift(newFinsembleConfigObject.importConfig[i]);
+								}
+							} else if (key === "importThirdPartyConfig") {
+								// add any importThirdPartyConfig items from the core to the existing importConifg
+								manifest.finsemble.importThirdPartyConfig = manifest.finsemble.importThirdPartyConfig || [];
+								for (let i = 0; i < newFinsembleConfigObject.importThirdPartyConfig.length; i++) {
+									manifest.finsemble.importThirdPartyConfig.unshift(newFinsembleConfigObject.importThirdPartyConfig[i]);
+								}
+							} else {
+								manifest.finsemble[key] = newFinsembleConfigObject[key];
+							}
+						});
+						self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables with finsemble config
+						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getInitialManifest:getCoreConfig:Initial Manifest after variables Resolved", manifest);
+					} else {
+						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("ConfigUtil.getInitialManifest:getCoreConfig:failed importing into finsemble config", error);
+					}
+					callback(manifest);
+				});
+			});
+		});
+	};
+
+	// output JSON objecvt to file
+	this.promptAndSaveJSONToLocalFile = function (filename, jsonObject) {
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("saveJSONToLocalFile", filename, jsonObject);
+
+		let dataStr = JSON.stringify(jsonObject, null, "\t");
+		let dataUri = "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+
+		let exportFileDefaultName = filename + ".json";
+
+		let linkElement = document.createElement("a");
+		linkElement.setAttribute("href", dataUri);
+		linkElement.setAttribute("download", exportFileDefaultName);
+		linkElement.click();
+	};
+
+	// utility function for future use
+	this.configFormatForExport = function (typeOfConfig, configObject) {
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("configFormatForExport starting", typeOfConfig, configObject);
+		var exportConfig = __WEBPACK_IMPORTED_MODULE_0__util__["default"].clone(configObject);
+
+		if (typeOfConfig === "raw") {
+			// do nothing since config is ready to export as is
+		} else if (typeOfConfig === "all") {
+			delete exportConfig.importConfig;
+			delete exportConfig.comment;
+		} else if (typeOfConfig === "application") {
+			delete exportConfig.importConfig;
+			delete exportConfig.comment;
+			delete exportConfig.system;
+			delete exportConfig.services;
+		} else if (typeOfConfig === "workspace") {
+			exportConfig = { workspace: exportConfig };
+		} else if (typeOfConfig === "workspaceTemplate") {
+			let workspaceDefinition = {};
+			workspaceDefinition[exportConfig.name] = exportConfig;
+			exportConfig = { workspaceTemplates: workspaceDefinition };
+		} else if (typeOfConfig === "services") {
+			exportConfig = exportConfig.services;
+		} else if (typeOfConfig === "components") {
+			exportConfig = exportConfig.components;
+		}
+
+		return exportConfig;
+	};
+
+	/////////////////////////////////////////////////////////////////////////
+	/////////////// Remaining code is for config verification ///////////////
+	/////////////////////////////////////////////////////////////////////////
+
+	// convenience constructor to return record used in configVerifyObject.
+	this.VerifyConfigRecord = function (propertyType, propertyCondition) {
+		this._verify = {
+			type: propertyType,
+			condition: propertyCondition
+		};
+	};
+
+	// convenience constants for definiting verification object. See example usage in ServiceManager or ConfigService.
+	// Required means startup will break without it, so error.
+	// Optional means startup will not break without it; however, it is documented and expected as part of the config that should always be there.  So warning message only.
+	// Deprecated mean startup will no break but old config format is used and should be updated.
+	this.REQUIRED_STRING = new this.VerifyConfigRecord("string", "required");
+	this.REQUIRED_OBJECT = new this.VerifyConfigRecord("object", "required");
+	this.REQUIRED_BOOLEAN = new this.VerifyConfigRecord("boolean", "required");
+	this.REQUIRED_ARRAY = new this.VerifyConfigRecord("array", "required");
+	this.OPTIONAL_EXPECTED_STRING = new this.VerifyConfigRecord("string", "optional");
+	this.OPTIONAL_EXPECTED_OBJECT = new this.VerifyConfigRecord("object", "optional");
+	this.OPTIONAL_EXPECTED_BOOLEAN = new this.VerifyConfigRecord("boolean", "optional");
+	this.OPTIONAL_EXPECTED_ARRAY = new this.VerifyConfigRecord("array", "optional");
+	this.DEPRECATED_STRING = new this.VerifyConfigRecord("string", "DEPRECATED");
+	this.DEPRECATED_OBJECT = new this.VerifyConfigRecord("object", "DEPRECATED");
+	this.DEPRECATED_BOOLEAN = new this.VerifyConfigRecord("boolean", "DEPRECATED");
+	this.DEPRECATED_ARRAY = new this.VerifyConfigRecord("array", "DEPRECATED");
+
+	// check type of one config property. Return true if ok; otherwise false. Must handle null configProperty (returning false).
+	function checkType(configProperty, type) {
+		var typeOk = true;
+		if (configProperty) {
+			if (type == "array") {
+				if (!Array.isArray(configProperty)) {
+					typeOk = false;
+				}
+			} else {
+				// note "array" type is being distinguished from "object" type, so configProperty type shouldn't be an array
+				if (Array.isArray(configProperty) || typeof configProperty !== type) {
+					typeOk = false;
+				}
+			}
+		} else {
+			typeOk = false;
+		}
+		return typeOk;
+	}
+
+	// Verifies one config property given it's corresponding verifyRecord and returns appropriate result.
+	function verifyConfigProperty(fullPathName, configProperty, verifyRecord) {
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose(`verifyConfigProperty for ${fullPathName}`, configProperty, verifyRecord);
+		var resultOk = true;
+		switch (verifyRecord._verify.condition) {
+			case "required":
+				resultOk = checkType(configProperty, verifyRecord._verify.type);
+				if (!resultOk) {
+					// required must exist and have correct type
+					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`Illegally formatted configuration.  Type of ${fullPathName} is not an expected ${verifyRecord._verify.type}`, configProperty, verifyRecord);
+				}
+				break;
+			case "optional":
+				if (!configProperty) {
+					// missing optional only generates warning
+					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.warn(`CONFIGURATION WARNING: Expected configuration missing for ${fullPathName}.`, configProperty, verifyRecord);
+				} else {
+					resultOk = checkType(configProperty, verifyRecord._verify.type);
+					if (!resultOk) {
+						// optional only errors with wrong type
+						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`Illegally formatted configuration. Type of ${fullPathName} is not an expected ${verifyRecord._verify.type}`, configProperty, verifyRecord);
+					}
+				}
+				break;
+			case "DEPRECATED":
+				if (configProperty) {
+					// DEPRECATED generates warning
+					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.warn(`CONFIGURATION WARNING: DEPRECATED configuration ${fullPathName}.`, configProperty, verifyRecord);
+					resultOk = checkType(configProperty, verifyRecord._verify.type);
+					if (!resultOk) {
+						// DEPRECATED only errors with wrong type
+						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`Config ${fullPathName} is DEPRECATED and illegally formatted.  Expected type is ${verifyRecord._verify.type}.`, configProperty, verifyRecord);
+					}
+				}
+				break;
+			default:
+				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`Illegally formatted config record.  Condition ${verifyRecord._verify.condition} unknown`, configProperty, verifyRecord);
+		}
+		return resultOk;
+	}
+
+	/**
+  * Verifies config is correct and logs messages as needed. Recursively walks configObject and configVerifyObject.
+  *
+  * @param {object} fullPathName path name of config being verfied (e.g. "manifest", "manifest.finsemble"); used for error messages
+  * @param {object} configObject the configuration object to verify (typically the manifest object or manifest.finsemble object)
+  * @param {object} configVerifyObject object to drive the verification; data driven.
+  *
+  * Example configVerifyObject below.
+  * 		Note verification records (e.g. REQUIRED_STRING) only go at the leaf level, but code must handle corresponding undefined config at all levels.
+  *
+  * 		var configVerifyObject = {
+  *		finsemble: {
+  *			applicationRoot: REQUIRED_STRING,
+  *			moduleRoot: REQUIRED_STRING,
+  *			system: {
+  *				FSBLVersion: REQUIRED_STRING,
+  *				requiredServicesConfig: REQUIRED_OBJECT,
+  *			},
+  *			splinteringConfig: {
+  *				splinterAgents: OPTIONAL_EXPECTED_ARRAY
+  *			},
+  *			storage: {
+  *				LocalStorageAdapter: DEPRECATED_STRING
+  *			},
+  *		}
+  *	};
+ 	 *
+  *
+  * @returns If correct, return true (with no log messages generated); return false otherwise. For optional or DEPRECATED generate warning if not defined, but no error unless if wrong type.
+  *
+  * @example See ConfigService for example usuage.
+  *
+  * @private
+  */
+	this.verifyConfigObject = function (fullPathName, configObject, configVerifyObject) {
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose(`verifyConfigObject for ${fullPathName}`, configObject, configVerifyObject);
+		var verifyConfigObjectOk = true;
+
+		if (configVerifyObject._verify) {
+			// currently config records only defined at leaf level (could enhance by allowing at any level)
+			verifyConfigObjectOk = verifyConfigProperty(fullPathName, configObject, configVerifyObject);
+		} else {
+			if (!configVerifyObject) {
+				// shouldn't happen unless by api input
+				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`configUtil.verify: configVerifyObject not defined for ${fullPathName}`, configObject, configVerifyObject);
+			} else {
+				var propertyList = Object.keys(configVerifyObject);
+				if (!propertyList) {
+					// shouldn't happen unless by api input
+					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`configUtil.verify: illegally formatted verification record for ${fullPathName}`, configObject, configVerifyObject);
+				} else {
+					// not at leaf level so recursively iterate though all the properties
+					for (let i = 0; i < propertyList.length; i++) {
+						let property = propertyList[i];
+						let thisPropertyPath = fullPathName + "." + property;
+						let thisConfigProperty = null;
+						if (configObject && property in configObject) {
+							thisConfigProperty = configObject[property];
+						}
+						// the order of the conditional (i.e. "&&") insures verification will continue after error(s)
+						verifyConfigObjectOk = this.verifyConfigObject(thisPropertyPath, thisConfigProperty, configVerifyObject[property]) && verifyConfigObjectOk;
+					}
+				}
+			}
+		}
+		return verifyConfigObjectOk;
+	};
+
+	/**
+  * Convenience function to get a default value from config.
+  *
+  * @param {object} base base path of config object
+  * @param {string} path path string of config property
+  * @param {any} defaultValue if path value not defined or null, then use default value
+  *
+  * @returns {object} return config value or default value
+  *
+  * @example
+  *
+  *		defaultAdaptor = ConfigUtil.getDefault(manifest, "manifest.finsemble.defaultStorage", "LocalStorageAdapter");
+  *		sameDomainTransport = ConfigUtil.getDefault(finConfig, "finConfig.router.sameDomainTransport", "SharedWorker");
+  *		var serverAddress = getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress", "wss://localhost.chartiq.com:3376");
+  *
+  */
+	this.getDefault = function (base, path, defaultValue) {
+		var result = defaultValue;
+		if (base) {
+			try {
+				let properties = path.split(".");
+				let currentValue = base;
+				for (let i = 1; i < properties.length; i++) {
+					currentValue = currentValue[properties[i]];
+				}
+				result = currentValue;
+			} catch (err) {
+				result = defaultValue;
+			}
+
+			if (typeof result === "undefined") result = defaultValue;
+		}
+		return result;
+	};
+};
+
+const ConfigUtilInstance = new ConfigUtil();
+/* harmony export (immutable) */ __webpack_exports__["ConfigUtilInstance"] = ConfigUtilInstance;
+
+
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\configUtil.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\configUtil.js"); } } })();
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
+
+/***/ }),
+
+/***/ 11:
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.WRAPPERS = {
+    /*
+        TODO: For the time being these are just events our windows fire but not OpenFin (this is used in the OF wrapper. Long term we might have to reverse this)
+        TODO: Event naming is inconsistent. Our events should not be camel case to mantain consistency.
+    */
+    EVENTS: ["title-changed", "bringToFront", "setBounds", "alwaysOnTop", "setOpacity"]
+};
+exports.APPLICATION_STATE_CHANNEL = "Finsemble.Application.State";
+//These next four channels are used in service => service manager communication. The SM receives these messages and then pushes out state updates to the rest of the system.
+exports.SERVICE_INITIALIZING_CHANNEL = "Finsemble.ServiceManager.serviceInitializing";
+exports.SERVICE_READY_CHANNEL = "Finsemble.ServiceManager.serviceReady";
+exports.SERVICE_CLOSING_CHANNEL = "Finsemble.ServiceManager.serviceClosing";
+exports.SERVICE_CLOSED_CHANNEL = "Finsemble.ServiceManager.serviceClosed";
+//This channel is where the aggregated state of all services is sent out on.
+exports.SERVICES_STATE_CHANNEL = "Finsemble.State.Services";
+exports.WINDOWSTATE = {
+    NORMAL: 0,
+    MINIMIZED: 1,
+    MAXIMIZED: 2,
+    HIDDEN: 3
+};
+//These channels are to start and stop services dynamically.
+exports.SERVICE_START_CHANNEL = "Finsemble.Service.Start";
+exports.SERVICE_STOP_CHANNEL = "Finsemble.Service.Stop";
+// These channels are for interrupting events
+exports.EVENT_INTERRUPT_CHANNEL = "Finsemble.Event.Interrupt";
+exports.INTERRUPTIBLE_EVENTS = ["close-requested", "closed", "close-complete", "_container-close-handlers"];
+exports.WORKSPACE = {
+    STORAGE_TOPIC: "finsemble.workspace",
+    CACHE_STORAGE_TOPIC: "finsemble.workspace.cache",
+    API_CHANNELS: {
+        SAVE: "Finsemble.Workspace.Save",
+        RENAME: "Finsemble.Workspace.Rename",
+        SAVE_AS: "Finsemble.Workspace.SaveAs",
+        SWITCH_TO: "Finsemble.Workspace.SwitchTo",
+        IMPORT: "Finsemble.Workspace.Import",
+        EXPORT: "Finsemble.Workspace.Export",
+        REMOVE: "Finsemble.Workspace.Remove",
+        SAVE_GLOBAL_DATA: "Finsemble.Workspace.SaveGlobalData",
+        SAVE_VIEW_DATA: "Finsemble.Workspace.SaveViewData",
+        GET_GLOBAL_DATA: "Finsemble.Workspace.GetGlobalData",
+        GET_VIEW_DATA: "Finsemble.Workspace.GetViewData",
+        GET_WORKSPACES: "Finsemble.Workspace.GetWorkspaces",
+        SET_WORKSPACE_ORDER: "Finsemble.Workspace.SetWorkspaceOrder",
+        SET_ACTIVEWORKSPACE_DIRTY: "Finsemble.Workspace.SetActiveWorkspaceDirty",
+        GET_TEMPLATES: "Finsemble.Workspace.GetTemplates",
+        IMPORT_TEMPLATE: "Finsemble.Workspace.ImportTemplate",
+        EXPORT_TEMPLATE: "Finsemble.Workspace.ExportTemplate",
+        REMOVE_TEMPLATE: "Finsemble.Workspace.RemoveTemplate",
+    }
+};
+// These channels are to publish LifeCycle events on.
+// Currently unused but placeholder here for implementation, at least for Workspace.
+exports.APPLICATION_LIFECYCLE = {};
+exports.HEARTBEAT_TIMEOUT_CHANNEL = "Finsemble.WindowService.HeartbeatTimeout";
+exports.DELIVERY_MECHANISM = {
+    PRELOAD: 'preload',
+    INJECTION: 'injection',
+};
+
+
+/***/ }),
+
+/***/ 12:
+/***/ (function(module, exports) {
+
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+function EventEmitter() {
+  this._events = this._events || {};
+  this._maxListeners = this._maxListeners || undefined;
+}
+module.exports = EventEmitter;
+
+// Backwards-compat with node 0.10.x
+EventEmitter.EventEmitter = EventEmitter;
+
+EventEmitter.prototype._events = undefined;
+EventEmitter.prototype._maxListeners = undefined;
+
+// By default EventEmitters will print a warning if more than 10 listeners are
+// added to it. This is a useful default which helps finding memory leaks.
+EventEmitter.defaultMaxListeners = 10;
+
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+EventEmitter.prototype.setMaxListeners = function(n) {
+  if (!isNumber(n) || n < 0 || isNaN(n))
+    throw TypeError('n must be a positive number');
+  this._maxListeners = n;
+  return this;
+};
+
+EventEmitter.prototype.emit = function(type) {
+  var er, handler, len, args, i, listeners;
+
+  if (!this._events)
+    this._events = {};
+
+  // If there is no 'error' event listener then throw.
+  if (type === 'error') {
+    if (!this._events.error ||
+        (isObject(this._events.error) && !this._events.error.length)) {
+      er = arguments[1];
+      if (er instanceof Error) {
+        throw er; // Unhandled 'error' event
+      } else {
+        // At least give some kind of context to the user
+        var err = new Error('Uncaught, unspecified "error" event. (' + er + ')');
+        err.context = er;
+        throw err;
+      }
+    }
+  }
+
+  handler = this._events[type];
+
+  if (isUndefined(handler))
+    return false;
+
+  if (isFunction(handler)) {
+    switch (arguments.length) {
+      // fast cases
+      case 1:
+        handler.call(this);
+        break;
+      case 2:
+        handler.call(this, arguments[1]);
+        break;
+      case 3:
+        handler.call(this, arguments[1], arguments[2]);
+        break;
+      // slower
+      default:
+        args = Array.prototype.slice.call(arguments, 1);
+        handler.apply(this, args);
+    }
+  } else if (isObject(handler)) {
+    args = Array.prototype.slice.call(arguments, 1);
+    listeners = handler.slice();
+    len = listeners.length;
+    for (i = 0; i < len; i++)
+      listeners[i].apply(this, args);
+  }
+
+  return true;
+};
+
+EventEmitter.prototype.addListener = function(type, listener) {
+  var m;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events)
+    this._events = {};
+
+  // To avoid recursion in the case that type === "newListener"! Before
+  // adding it to the listeners, first emit "newListener".
+  if (this._events.newListener)
+    this.emit('newListener', type,
+              isFunction(listener.listener) ?
+              listener.listener : listener);
+
+  if (!this._events[type])
+    // Optimize the case of one listener. Don't need the extra array object.
+    this._events[type] = listener;
+  else if (isObject(this._events[type]))
+    // If we've already got an array, just append.
+    this._events[type].push(listener);
+  else
+    // Adding the second element, need to change to array.
+    this._events[type] = [this._events[type], listener];
+
+  // Check for listener leak
+  if (isObject(this._events[type]) && !this._events[type].warned) {
+    if (!isUndefined(this._maxListeners)) {
+      m = this._maxListeners;
+    } else {
+      m = EventEmitter.defaultMaxListeners;
+    }
+
+    if (m && m > 0 && this._events[type].length > m) {
+      this._events[type].warned = true;
+      console.error('(node) warning: possible EventEmitter memory ' +
+                    'leak detected. %d listeners added. ' +
+                    'Use emitter.setMaxListeners() to increase limit.',
+                    this._events[type].length);
+      if (typeof console.trace === 'function') {
+        // not supported in IE 10
+        console.trace();
+      }
+    }
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+EventEmitter.prototype.once = function(type, listener) {
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  var fired = false;
+
+  function g() {
+    this.removeListener(type, g);
+
+    if (!fired) {
+      fired = true;
+      listener.apply(this, arguments);
+    }
+  }
+
+  g.listener = listener;
+  this.on(type, g);
+
+  return this;
+};
+
+// emits a 'removeListener' event iff the listener was removed
+EventEmitter.prototype.removeListener = function(type, listener) {
+  var list, position, length, i;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events || !this._events[type])
+    return this;
+
+  list = this._events[type];
+  length = list.length;
+  position = -1;
+
+  if (list === listener ||
+      (isFunction(list.listener) && list.listener === listener)) {
+    delete this._events[type];
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+
+  } else if (isObject(list)) {
+    for (i = length; i-- > 0;) {
+      if (list[i] === listener ||
+          (list[i].listener && list[i].listener === listener)) {
+        position = i;
+        break;
+      }
+    }
+
+    if (position < 0)
+      return this;
+
+    if (list.length === 1) {
+      list.length = 0;
+      delete this._events[type];
+    } else {
+      list.splice(position, 1);
+    }
+
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.removeAllListeners = function(type) {
+  var key, listeners;
+
+  if (!this._events)
+    return this;
+
+  // not listening for removeListener, no need to emit
+  if (!this._events.removeListener) {
+    if (arguments.length === 0)
+      this._events = {};
+    else if (this._events[type])
+      delete this._events[type];
+    return this;
+  }
+
+  // emit removeListener for all listeners on all events
+  if (arguments.length === 0) {
+    for (key in this._events) {
+      if (key === 'removeListener') continue;
+      this.removeAllListeners(key);
+    }
+    this.removeAllListeners('removeListener');
+    this._events = {};
+    return this;
+  }
+
+  listeners = this._events[type];
+
+  if (isFunction(listeners)) {
+    this.removeListener(type, listeners);
+  } else if (listeners) {
+    // LIFO order
+    while (listeners.length)
+      this.removeListener(type, listeners[listeners.length - 1]);
+  }
+  delete this._events[type];
+
+  return this;
+};
+
+EventEmitter.prototype.listeners = function(type) {
+  var ret;
+  if (!this._events || !this._events[type])
+    ret = [];
+  else if (isFunction(this._events[type]))
+    ret = [this._events[type]];
+  else
+    ret = this._events[type].slice();
+  return ret;
+};
+
+EventEmitter.prototype.listenerCount = function(type) {
+  if (this._events) {
+    var evlistener = this._events[type];
+
+    if (isFunction(evlistener))
+      return 1;
+    else if (evlistener)
+      return evlistener.length;
+  }
+  return 0;
+};
+
+EventEmitter.listenerCount = function(emitter, type) {
+  return emitter.listenerCount(type);
+};
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+
+
+/***/ }),
+
+/***/ 13:
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const events_1 = __webpack_require__(12);
+const routerClientInstance_1 = __webpack_require__(4);
+const STARTUP_TIMEOUT_DURATION = 10000;
+const constants_1 = __webpack_require__(11);
+/**
+ * Small class to hold on to dependencies and callbacks. Also emits a timeout event that the startupManager is listening for. When it times out, the startupManager catches the event and generates a message that includes all of the offline clients and services. It then causes this class to emit an  err event that the baseService is listening for. This arrangement is set up for a couple of reasons.
+ * 1. I can't use the logger in here because the logger uses the startupManager, and there'd be a circular dependency.
+ * 2. FSBLDependencyManager is a singleton, and there can be multiple services living in a single window. I didn't want them all to log that they were offline if they weren't (e.g., if I'd put the emitter on the StartupManager instead of this class).
+ */
+class StartupDependency extends events_1.EventEmitter {
+    constructor(params) {
+        super();
+        this.callback = params.callback;
+        this.dependencies = params.dependencies;
+        this.startupTimer = null;
+        this.setStartupTimer = this.setStartupTimer.bind(this);
+        this.clearStartupTimer = this.clearStartupTimer.bind(this);
+        this.setStartupTimer();
+    }
+    /**
+     * Removes the startup timer (because the dependency was resolved within the allotted time);
+     */
+    clearStartupTimer() {
+        clearTimeout(this.startupTimer);
+        delete this.startupTimer;
+    }
+    /**
+     * If the dependency hasn't resolved within STARTUP_TIMEOUT_DURATION, emit a timeout event that the StartupManager can catch.
+     */
+    setStartupTimer() {
+        let self = this;
+        //+ coerces the result to a number, making typescript happy.
+        this.startupTimer = +setTimeout(() => {
+            self.emit("timeout");
+        }, STARTUP_TIMEOUT_DURATION);
+    }
+}
+/**
+ * Used to generate a unique ID for the list of dependencies.
+ */
+function uuidv4() {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0, v = c === "x" ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+/**
+ * @private
+ */
+class StartupManager {
+    /**
+     * @private
+     */
+    constructor() {
+        this.servicesAreAllOnline = {};
+        this.clientsAreAllOnline = {};
+        this.onlineClients = [];
+        this.onlineServices = [];
+        this.dependencies = {};
+        this.AuthorizationCompleted = false;
+        this.startupTimers = {};
+        this.startupTimerFired = false;
+        this.bindCorrectContext();
+    }
+    /**
+     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required depenencies are ready.
+     *
+     * @param {FinsembleDependency} dependencies
+     * @param {any} callback
+     * @memberof StartupManager
+     */
+    waitFor(dependencies, callback) {
+        let id = uuidv4();
+        //Set defaults to an empty array if they aren't passed in.
+        if (!dependencies.services)
+            dependencies.services = [];
+        if (!dependencies.clients)
+            dependencies.clients = [];
+        //The dependency manager can pass in a name to the dependency. If it does, we'll use it. If not, we won't.
+        if (dependencies.clients.length) {
+            if (this.AuthorizationCompleted === false && dependencies.clients.includes("authenticationClient")) {
+                dependencies.clients.splice(dependencies.clients.indexOf("authenticationClient"), 1);
+            }
+            //Lowercase the first letter of the client.
+            dependencies.clients = dependencies.clients.map(clientName => {
+                return clientName.charAt(0).toLowerCase() + clientName.slice(1);
+            });
+        }
+        let dependency = new StartupDependency({ dependencies, callback });
+        //If the dependency times out, throw an error that the baseService can catch. It will then log out why it's not online.
+        dependency.on("timeout", () => {
+            this.onDependencyTimeout(dependency);
+        });
+        this.dependencies[id] = dependency;
+        this.checkDependencies();
+        return dependency;
+    }
+    /**
+     * This method generates a helpful error message giving possible reasons for why the service is offline. After the message is generated, it emits an event on the dependency that's passed in as a parameter. The BaseService is listening for this event, and logs the error message to the central logger.
+     * @param {Dependency} dependency
+     */
+    onDependencyTimeout(dependency) {
+        const NEW_LINE = "\n", TAB = "\u0009", BULLET = "\u2022", BULLET_POINT = NEW_LINE + TAB + BULLET, STORAGE_ADAPTER_ERROR = "The default storage adapter failed to fully initialize, or has a syntax error. Ensure that the default storage adapter is up, connected, and sending/receiving data properly.";
+        const HELPFUL_MESSAGES = {
+            preferencesService: [
+                `PreferencesService failed to start.${BULLET_POINT}Typically this is caused by a failure to retrieve data from your default storage adapter. ${STORAGE_ADAPTER_ERROR}`
+            ],
+            storageService: [
+                `StorageService failed to start. Here are some common reasons for failure:${BULLET_POINT}${STORAGE_ADAPTER_ERROR}${BULLET_POINT}The data coming back from your adapter is improperly formatted or otherwise corrupted. Try clearing your storage and restarting. If the problem persists, the issue may not be in your adapter.`
+            ],
+            routerService: [
+                "RouterService failed to start. This is a fatal error. Contact finsemble support."
+            ],
+            workspaceService: [
+                `WorkspaceService failed to start. Here are some common reasons for failure:${BULLET_POINT}${STORAGE_ADAPTER_ERROR}.${BULLET_POINT}Your active workspace is corrupted.`
+            ],
+            assimilationService: [
+                "AssimilationService failed to start. Check to see that the 'FinsembleAssimilation' is active in your taskManager. If it is, please contact finsemble support."
+            ]
+        };
+        let offlineClients = this.getOfflineClients();
+        let offlineServices = this.getOfflineServices();
+        let errorMessage = `APPLICATION LIFECYCLE:STARTUP:Dependency not online after ${STARTUP_TIMEOUT_DURATION / 1000} seconds.`;
+        if (offlineClients.length) {
+            errorMessage += ` Waiting for these clients: ${offlineClients.join(", ")}.`;
+        }
+        if (offlineServices.length) {
+            errorMessage += ` Waiting for these services: ${offlineServices.join(", ")}.`;
+        }
+        //For every service that's offline, check to see if we have any helpful messages for it. If so, iterate through the array and append to the error message.
+        offlineServices.forEach((service) => {
+            if (HELPFUL_MESSAGES[service]) {
+                HELPFUL_MESSAGES[service].forEach((msg) => {
+                    errorMessage += NEW_LINE + NEW_LINE + msg + NEW_LINE;
+                });
+                //puts a line between our helpful messages and the log stack.
+                errorMessage += NEW_LINE;
+            }
+        });
+        //The BaseService is listening for this event, and will log the errorMessage to the central logger.
+        dependency.emit("err", errorMessage);
+    }
+    /**
+     * This function loops through all of the registered dependencies and checks to see if the conditions have been met. If so, it invokes the callback and removes the reference to the dependency.
+     *
+     * @memberof StartupManager
+     */
+    checkDependencies() {
+        for (let id in this.dependencies) {
+            let dependency = this.dependencies[id];
+            let { dependencies, callback } = dependency;
+            if (dependencies.services.length && !this.servicesAreAllOnline[id]) {
+                this.servicesAreAllOnline[id] = this.checkServices(dependencies.services);
+                if (!this.servicesAreAllOnline[id]) {
+                    continue;
+                }
+            }
+            if (dependencies.clients.length && !this.clientsAreAllOnline[id]) {
+                this.clientsAreAllOnline[id] = this.checkClients(dependencies.clients);
+                if (!this.clientsAreAllOnline[id]) {
+                    continue;
+                }
+            }
+            delete this.dependencies[id];
+            dependency.clearStartupTimer();
+            if (callback) {
+                callback();
+            }
+        }
+    }
+    getOfflineClients() {
+        let offlineClients = [];
+        for (let id in this.dependencies) {
+            let { dependencies } = this.dependencies[id];
+            offlineClients = offlineClients.concat(dependencies.clients.filter((dep) => !this.onlineClients.includes(dep)));
+        }
+        //return deduped list.
+        return offlineClients.filter((client, i) => offlineClients.indexOf(client) === i);
+    }
+    getOfflineServices() {
+        let offlineServices = [];
+        for (let id in this.dependencies) {
+            let { dependencies } = this.dependencies[id];
+            offlineServices = offlineServices.concat(dependencies.services.filter((dep) => !this.onlineServices.includes(dep)));
+        }
+        return offlineServices.filter((client, i) => offlineServices.indexOf(client) === i);
+    }
+    /**
+     * Iterates through required service list, returns false if any required service is offline.
+     *
+     * @param {any} serviceList
+     * @memberof StartupManager
+     */
+    checkServices(serviceList) {
+        return serviceList.every(service => this.onlineServices.includes(service));
+    }
+    /**
+     * Iterates through required client list, returns false if any required client is offline.
+     *
+     * @param {any} clientList
+
+     * @memberof StartupManager
+     */
+    checkClients(clientList) {
+        return clientList.every(client => this.onlineClients.includes(client));
+    }
+    /**
+     * When a service comes online, we push it onto our array of online services, and run through all of the registered dependencies.
+     *
+     * @param {any} serviceName
+     * @memberof StartupManager
+     */
+    setServiceOnline(serviceName) {
+        this.onlineServices.push(serviceName);
+        this.checkDependencies();
+    }
+    /**
+     * Sets an array of services online. Only happens once at startup.
+     *
+     * @param {any} serviceList
+     * @memberof StartupManager
+     */
+    setServicesOnline(serviceList) {
+        this.onlineServices = this.onlineServices.concat(serviceList);
+        this.checkDependencies();
+    }
+    /**
+     *
+     *
+     * @param {any} clientName
+
+     * @memberof StartupManager
+     */
+    setClientOnline(clientName) {
+        //This check is done because multiple clients of the same type can be on a page.
+        if (this.onlineClients.includes(clientName)) {
+            return;
+        }
+        this.onlineClients.push(clientName);
+        this.checkDependencies();
+    }
+    /**
+     * Returns the array of online clients.
+     *
+
+     * @memberof StartupManager
+     */
+    getOnlineClients() {
+        return this.onlineClients;
+    }
+    /**
+     * Returns the array of online services.
+     *
+
+     * @memberof StartupManager
+     */
+    getOnlineServices() {
+        return this.onlineServices;
+    }
+    /**
+     * Method to make sure that `this` is correct when the callbacks are invoked.
+     *
+     * @memberof StartupManager
+     */
+    bindCorrectContext() {
+        this.checkDependencies = this.checkDependencies.bind(this);
+        this.checkServices = this.checkServices.bind(this);
+        this.checkClients = this.checkClients.bind(this);
+        this.getOfflineClients = this.getOfflineClients.bind(this);
+        this.getOfflineServices = this.getOfflineServices.bind(this);
+        this.onDependencyTimeout = this.onDependencyTimeout.bind(this);
+        this.waitFor = this.waitFor.bind(this);
+    }
+}
+/**
+ * @private
+ */
+class ShutdownManager {
+    /**
+     * @private
+     */
+    constructor() {
+        this.offlineServices = [];
+        this.dependencies = {};
+        this.checkDependencies = this.checkDependencies.bind(this);
+    }
+    /**
+     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required depenencies are ready.
+     *
+     * @param {FinsembleDependency} dependencies
+     * @param {any} callback
+     * @memberof StartupManager
+     */
+    waitFor(dependencies, callback) {
+        //Set defaults to an empty array if they aren't passed in.
+        if (!dependencies.services) {
+            dependencies.services = [];
+        }
+        let id = uuidv4();
+        this.dependencies[id] = { dependencies, callback };
+    }
+    /**
+     * This function loops through all of the registered dependencies and checks to see if the conditions have been met. If so, it invokes the callback and removes the reference to the dependency.
+     *
+     * @memberof ShutdownDependencies
+     */
+    checkDependencies() {
+        console.debug("checkDependencies", this.dependencies);
+        if (Object.keys(this.dependencies)) {
+            for (let id in this.dependencies) {
+                let { dependencies, callback } = this.dependencies[id];
+                console.debug("checkDependency", dependencies.services, this.offlineServices);
+                if (dependencies.services.length) {
+                    let servicesAreAllOffline = this.checkServices(dependencies.services);
+                    if (!servicesAreAllOffline) {
+                        continue;
+                    }
+                }
+                console.debug("checkDependencies callback");
+                delete this.dependencies[id];
+                if (callback) {
+                    callback();
+                }
+            }
+        }
+    }
+    /**
+     * Iterates through required service list, returns false if any required service is offline.
+     *
+     * @param {any} serviceList
+
+     * @memberof StartupManager
+     */
+    checkServices(serviceList) {
+        return serviceList.every(service => this.offlineServices.includes(service));
+    }
+    setServiceOffline(service) {
+        console.debug("setServiceOffline", service);
+        this.offlineServices.push(service);
+        this.checkDependencies();
+    }
+}
+/**
+ * This is a class that handles FSBL client/service dependnecy management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
+ * @shouldBePublished false
+ * @private
+ * @class FSBLDependencyManager
+ */
+class FSBLDependencyManager extends events_1.EventEmitter {
+    constructor() {
+        super();
+        this.startup = new StartupManager();
+        this.shutdown = new ShutdownManager();
+        this.RouterClient = routerClientInstance_1.default;
+        this.AuthorizationCompleted = false;
+        this.bindCorrectContext();
+        this.onAuthorizationCompleted(this.startup.checkDependencies);
+        routerClientInstance_1.default.onReady(this.listenForServices);
+    }
+    /**
+ * Method to make sure that `this` is correct when the callbacks are invoked.
+ *
+ * @memberof StartupManager
+ */
+    bindCorrectContext() {
+        this.listenForServices = this.listenForServices.bind(this);
+        this.onAuthorizationCompleted = this.onAuthorizationCompleted.bind(this);
+    }
+    setClientOnline(client) {
+        this.startup.setClientOnline(client);
+    }
+    /*
+    * handler for when a service changes its state. If a service comes online or goes offline, dependencies are checked and callbacks invoked.
+    */
+    onServiceStateChange(data) {
+        let ServiceNames = Object.keys(data);
+        //Iterate through all services. If it was online but isn't anymore, set it offline. If it was offline but now is, set it online.
+        ServiceNames.forEach((serviceName) => {
+            let state = data[serviceName].state;
+            let wasOnline = this.startup.onlineServices.includes(serviceName);
+            let isOnline = state === "ready";
+            if (!wasOnline && isOnline) {
+                this.startup.setServiceOnline(serviceName);
+            }
+            if (wasOnline && !isOnline && state === "closed") {
+                this.shutdown.setServiceOffline(serviceName);
+            }
+        });
+    }
+    /**
+     * Listens on the router for services to come online. The first subscriber gets the activeServices as of object instantiation. The 2nd subscriber listens for services to come online after the object is created. We should consider make this all one subscriber, though I see the advantage of having this setup.
+     *
+     */
+    listenForServices() {
+        console.debug("dependency manager: listenForServices in " + this.name);
+        this.RouterClient.subscribe(constants_1.SERVICES_STATE_CHANNEL, (err, event) => {
+            this.onServiceStateChange(event.data);
+        });
+        // TODO: The pubsub responder doesnt seem to work here. IT works for the above when not closing.
+        this.RouterClient.addListener(constants_1.SERVICE_CLOSED_CHANNEL, (err, event) => {
+            let services = {};
+            services[event.data.name] = {
+                state: "closed"
+            };
+            this.onServiceStateChange(services);
+        });
+        this.RouterClient.subscribe(constants_1.APPLICATION_STATE_CHANNEL, (err, response) => {
+            switch (response.data.state) {
+                //authenticated will only be caught by components/services that are up before auth does its thing. Otherwise, a component/service coming up will have the 'ready' application state. In either case, we need to do the things below. But only once.
+                case "authenticated":
+                case "ready":
+                    //No need to send this message out twice.
+                    if (this.AuthorizationCompleted)
+                        break;
+                    console.debug("Authorization Completed");
+                    this.AuthorizationCompleted = true;
+                    this.startup.AuthorizationCompleted = true;
+                    this.emit("AuthorizationCompleted");
+                    break;
+                case "closing":
+                    this.shutdown.checkDependencies();
+                    break;
+            }
+        });
+    }
+    onAuthorizationCompleted(callback) {
+        if (this.AuthorizationCompleted) {
+            callback();
+        }
+        else {
+            this.addListener("AuthorizationCompleted", callback);
+        }
+    }
+}
+/**
+ * This is a class that handles FSBL client/service dependnecy management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
+ * @shouldBePublished false
+ * @private
+ * @class FSBLDependencyManager
+ */
+exports.FSBLDependencyManagerSingleton = new FSBLDependencyManager();
+exports.default = exports.FSBLDependencyManagerSingleton;
+
+
+/***/ }),
+
+/***/ 14:
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const validate_1 = __webpack_require__(6); // Finsemble args validator
+const baseClient_1 = __webpack_require__(7);
+const async_1 = __webpack_require__(9);
+const logger_1 = __webpack_require__(0);
+/**
+ * @introduction
+ * <h2>Config Client</h2>
+ *
+ * This client provides run-time access to Finsemble's configuration. See the [Configuration tutorial](tutorial-Configuration.html) for a configuration overview.
+ * The Config Client functions similar to a global store created with the DistributedStoreClient and offers many of the same methods.
+ * Values modified at runtime are not persisted.
+ *
+ * @hideconstructor
+ * @constructor
+ */
+class ConfigClient extends baseClient_1._BaseClient {
+    constructor(params) {
+        super(params);
+        this.listeners = [];
+        /**
+         * make sure we dont have duplicate router subscribers
+         * @private
+         */
+        this.changeSub = (change) => {
+            if (!this.subs)
+                this.subs = {};
+            if (!this.subs[change]) {
+                this.routerClient.query("configService.addListener", change, (err, queryResponse) => {
+                    this.routerClient.subscribe(change, this.handleChanges);
+                });
+                this.subs[change] = true;
+            }
+        };
+        /**
+         * @private
+         * @memberof ConfigClient
+         */
+        this.handleChanges = (err, response) => {
+            if (err) {
+                logger_1.default.system.error(err);
+            }
+            if (!response.data.field) {
+                response.data.field = null;
+            }
+            //var combined = "configService" + (response.data.field ? "." + response.data.field : "");
+            var val = response.data.storeData ? response.data.storeData : response.data.value;
+            this.triggerListeners(response.data.field ? response.data.field : "configService", val);
+        };
+        // Trigger any function that is listening for changes
+        /**
+         * @private
+         * @memberof ConfigClient
+         */
+        this.triggerListeners = (listenerKey, data) => {
+            if (this.listeners[listenerKey]) {
+                for (var i = 0; i < this.listeners[listenerKey].length; i++) {
+                    if (typeof this.listeners[listenerKey][i] === "function") {
+                        this.listeners[listenerKey][i](null, { field: listenerKey, value: data });
+                    }
+                    else {
+                        logger_1.default.system.warn("ConfigClient:triggerListeners: listener is not a function", listenerKey);
+                    }
+                }
+            }
+        };
+        /**
+         * This is designed to mirror the get. Private because security TBD.
+         * @private
+         *
+         * @param {object} params
+         * @param {function} callback
+         */
+        this.set = (params, callback) => {
+            logger_1.default.system.debug("ConfigClient.Set", params);
+            // if only one argument then assume no filtering parameters -- the complete manifest will be returned
+            if (arguments.length === 1) {
+                callback = params; // since only one arg, it must be the callback
+                validate_1.default.args(callback, "function");
+                params = {};
+            }
+            else {
+                validate_1.default.args(params, "object", callback, "function");
+            }
+            this.routerClient.query("config.set", params, function (queryErr, queryResponse) {
+                callback(queryErr, queryResponse ? queryResponse.data : null);
+            });
+        };
+        //Methods were formally an arrow function. If we want our documentation build to read nested parameters, we need to use this instead of an arrow.
+        this.processAndSet = this.processAndSet.bind(this);
+        this.getValue = this.getValue.bind(this);
+        this.getValues = this.getValues.bind(this);
+        this.setValue = this.setValue.bind(this);
+        this.setValues = this.setValues.bind(this);
+        this.removeValue = this.removeValue.bind(this);
+        this.removeValues = this.removeValues.bind(this);
+        this.addListener = this.addListener.bind(this);
+        this.addListeners = this.addListeners.bind(this);
+        this.removeListener = this.removeListener.bind(this);
+        this.removeListeners = this.removeListeners.bind(this);
+        this.setPreference = this.setPreference.bind(this);
+        this.getPreferences = this.getPreferences.bind(this);
+    }
+    /**
+     * Get a value from the config.
+     * @param {valueParam | String} params - Params object. This can also be a string
+     * @param {String} params.field - The field where the value is stored.
+     * @param {Function} cb -  Will return the value if found.
+     * @returns {any} - The value of the field. If no callback is given and the value is local, this will run synchronous
+     * @example
+     * FSBL.Clients.ConfigClient.getValue({field:'field1'},function(err,value){});
+     * FSBL.Clients.ConfigClient.getValue('field1',function(err,value){});
+     */
+    getValue(params, cb = Function.prototype) {
+        if (typeof params === "string") {
+            params = { field: params };
+        }
+        const promiseResolver = (resolve, reject) => {
+            if (!params.field) {
+                const err = "no field provided";
+                reject(err);
+                return cb(err);
+            }
+            this.routerClient.query("configService.getValue", { field: params.field }, function (err, response) {
+                if (err) {
+                    return cb(err);
+                }
+                resolve({ err, data: response.data });
+                return cb(err, response.data);
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    ;
+    /**
+     * Get multiple values from the config.
+    * @param {Object[] | String[]} fields - An array of field objects. If there are no fields proviced, the complete configuration manifest are returned.
+     * @param {String} fields[].field - The name of the field
+     * @param {Function} [cb] -  Will return the value if found.
+     * @returns {Object} - returns an object of with the fields as keys.If no callback is given and the value is local, this will run synchronous
+     * @example
+     * FSBL.Clients.ConfigClient.getValues([{field:'field1'},{field2:'field2'}],function(err,values){});
+     * FSBL.Clients.ConfigClient.getValues(['field1','field2'],function(err,values){});
+     * FSBL.Clients.ConfigClient.get(null, callback); // returns the complete manifest containing the finsemble property
+    */
+    getValues(fields, cb = Function.prototype) {
+        if (typeof fields === "function") {
+            cb = fields;
+            fields = null;
+        }
+        if (fields && !Array.isArray(fields)) {
+            return this.getValue(fields, cb);
+        }
+        const promiseResolver = (resolve) => {
+            this.routerClient.query("configService.getValues", {
+                fields: fields
+            }, function (err, response) {
+                if (err) {
+                    return cb(err);
+                }
+                resolve({ err, data: response.data });
+                return cb(err, response.data);
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    ;
+    /**
+     * Set a value in the config. Setting a value will trigger events that you can listen to using addListener
+     * @param {Object} params - Params object
+     * @param {String} params.field - The name of the field where data will be stored
+     * @param {any} params.value - Value to be stored
+     * @param {function} [cb] optional callback
+     * @returns {null}
+     *
+     * @example
+     * FSBL.Clients.ConfigClient.setValue({field:'field1',value:"new value"});
+     */
+    setValue(params, cb) {
+        var data = {
+            field: params.field,
+            value: params.value
+        };
+        return this.routerClient.query("configService.setValue", data, function (err) {
+            return cb ? cb(err) : null;
+        });
+    }
+    ;
+    /**
+     * This will set multiple values in the config.
+     * @param {Object} fields - An Array of field objects
+     * @param {String} fields.field - The name of the field
+     * @param {any} fields.value - Field value
+     * @param {function} [cb] optional callback
+     * @returns {null}
+     *
+     * @example
+     * FSBL.Clients.ConfigClient.setValues([{field:'field1',value:"new value"}]);
+     */
+    setValues(fields, cb) {
+        if (!fields) {
+            return logger_1.default.system.error("ConfigClient.SetValues. No params given");
+        }
+        if (!Array.isArray(fields)) {
+            return logger_1.default.system.error("ConfigClient.SetValues. Params must be an array");
+        }
+        return this.routerClient.query("configService.setValues", fields, function (err) {
+            return cb ? cb(err) : null;
+        });
+    }
+    ;
+    /**
+     * Remove a value from the config.
+     * @param {Object | String} params - Either an object or string
+     * @param {String} param.field - The name of the field
+     * @param {Function} [cb] -  returns an error if there is one
+     * @example
+     * FSBL.Clients.ConfigClient.removeValue({field:'field1'},function(err,bool){});
+     */
+    removeValue(params, cb = Function.prototype) {
+        if (params !== undefined) {
+            if (!params.field && typeof params === "string") {
+                params = { field: params };
+            }
+            else {
+                return cb("no field provided");
+            }
+        }
+        params.value = null;
+        return this.setValue(params, cb);
+    }
+    ;
+    /**
+     * Removes multiple values from the config.
+     * @param {Array.<Object>} params - An Array of field objects
+     * @param {Function} [cb] -  returns an error if there is one.
+     * @example
+     * FSBL.Clients.ConfigClient.removeValue({field:'field1'},function(err,bool){});
+     */
+    removeValues(params, cb = Function.prototype) {
+        if (!Array.isArray(params)) {
+            return cb("The passed in parameter needs to be an array");
+        }
+        //casting needed here because params doesn't have an index method?? My guess is that their type defs aren't great.
+        async_1.map(params, this.removeValue, function (err, data) {
+            return cb(err, data);
+        });
+    }
+    ;
+    /**
+    * Add a listener to the config at either the root config level or field level. If no field is given, the root config level is used. You can also listen for changes to config fields any number of levels deep -- finsemble.configitem.deeperconfigitem.evendeeperconfigitem
+    * @param {Object} params - Params object
+    * @param {String} params.field - The data field to listen for. If this is empty it listen to all changes of the store.
+    * @param {Function} fn -  the function to call when a listener is triggered
+    * @param {Function} cb - callback
+    * @example
+    * var myFunction = function(err,data){};
+    * FSBL.Clients.ConfigClient.addListener({field:'field1'},myFunction,cb);
+    */
+    addListener(params, fn, cb) {
+        var field = null;
+        if (typeof params === "function") {
+            fn = params;
+            params = {};
+        }
+        if (params.field) {
+            field = params.field;
+        }
+        var combined = "configService" + (field ? "." + field : "");
+        if (this.listeners[combined]) {
+            this.listeners[combined].push(fn);
+        }
+        else {
+            this.listeners[combined] = [fn];
+        }
+        this.changeSub(combined);
+        return cb ? cb() : null;
+    }
+    ;
+    /**
+     *
+    * Add an array of listeners as objects or strings. If using strings, you must provide a function callback.
+    * @param {Object | Array.<Object>} params - Params object
+    * @param {String} params[].field - The data field to listen for.
+    * @param {String} params[].listener - the function to call when a listener is triggered. If this is empty, fn is used.
+    * @param {function} fn -  the function to call when a listener is triggered
+    * @param {function} [cb]
+    * @todo make the typing proper.
+    * @example
+    * var myFunction = function(err,data){}
+  * FSBL.Clients.ConfigClient.addListeners(
+    * 	[
+    * 		{ field: "field1", listener: myFunction },
+    * 		{ field: "field2", listener: myFunction }
+    * 	],
+    * 	null,
+    * 	cb
+    * );
+    *
+    * FSBL.Clients.ConfigClient.addListeners(
+    * [{ field: "field1" }, { field: "field2", listener: myFunction }],
+    * myFunction,
+    * cb
+    * );
+    *
+    * FSBL.Clients.ConfigClient.addListeners(["field1", "field2"], myFunction, cb);
+    */
+    addListeners(params, fn, cb) {
+        if (!Array.isArray(params)) {
+            return this.addListener(params, fn, cb);
+        }
+        for (var i = 0; i < params.length; i++) {
+            var field = null;
+            var item = params[i];
+            var ls;
+            if (typeof item === "string") {
+                field = item;
+            }
+            else if (item.field) {
+                field = item.field;
+                ls = params[i].listener;
+            }
+            var combined = "configService" + (field ? "." + field : "");
+            if (!ls) {
+                if (fn && typeof fn === "function") {
+                    ls = fn;
+                }
+            }
+            if (this.listeners[combined]) {
+                this.listeners[combined].push(ls);
+            }
+            else {
+                this.listeners[combined] = [ls];
+            }
+            this.changeSub(combined);
+        }
+        return cb ? cb() : null;
+    }
+    ;
+    /**
+     * Remove a listener from config. If no field is given, we look for a config root listener
+     * @param {Object} params - Params object
+     * @param {String} [params.field] - The data field
+     * @param {function} [fn] -  the function to remove from the listeners
+     * @param {function} [cb] -  returns true if it was succesfull in removing the listener.
+     *
+     * @example
+     * var myFunction = function(err,data){}
+     * FSBL.Clients.ConfigClient.removeListener({field:'field1'},MyFunction,function(bool){});
+     * FSBL.Clients.ConfigClient.removeListener(MyFunction,function(bool){});
+     */
+    removeListener(params, fn, cb) {
+        var field = null;
+        if (typeof params === "function") {
+            cb = fn;
+            fn = params;
+            params = {};
+        }
+        if (params.field) {
+            field = params.field;
+        }
+        var combined = this.name + (field ? "." + field : "");
+        if (this.listeners[combined]) {
+            for (var i = 0; i < this.listeners[combined].length; i++) {
+                if (this.listeners[combined][i] === fn) {
+                    this.listeners[combined].pop(i);
+                    return cb ? cb(null, true) : null;
+                }
+            }
+        }
+        return cb ? cb(null, false) : null;
+    }
+    ;
+    /**
+     * Remove an array of listeners from the config
+     * @param {Object | Array.<Object>} params - Params object
+     * @param {String} params.field - The data field to listen for. If this is empty it listen to all changes of the store.
+     * @param {function} params.listener - The listener function
+     * @param {function} [fn] -  the function to remove from the listeners
+     * @param {function} [cb] -  returns true if it was succesfull in removing the listener.
+     *
+     * @example
+     * var myFunction = function(err,data){ }
+     * FSBL.Clients.ConfigClient.removeListeners({field:'field1'},MyFunction,function(bool){});
+     * FSBL.Clients.ConfigClient.removeListeners([{field:'field1',listener:MyFunction}],function(bool){});
+     * FSBL.Clients.ConfigClient.removeListeners(['field1'],MyFunction,function(bool){});
+     */
+    removeListeners(params, fn, cb) {
+        if (!Array.isArray(params)) {
+            if (typeof params === "function") {
+                this.removeListener({}, params, cb);
+            }
+            else if (params.field) {
+                this.removeListener(params, fn, cb);
+            }
+            return cb("missing fields");
+        }
+        var removeCount = 0;
+        for (var i = 0; i < params.length; i++) {
+            var field = null;
+            var item = params[i];
+            var ls;
+            if (typeof item === "string") {
+                field = item;
+            }
+            else if (item.field) {
+                field = item.field;
+                ls = params[i].listener;
+            }
+            var combined = "configService" + (field ? "." + field : "");
+            if (!ls) {
+                if (fn && typeof fn === "function") {
+                    ls = fn;
+                }
+                else {
+                    continue;
+                }
+            }
+            for (var j = 0; j < this.listeners[combined].length; j++) {
+                if (this.listeners[combined][j] === ls) {
+                    this.listeners[combined].pop(i);
+                    removeCount++;
+                }
+            }
+        }
+        if (removeCount < params.length) {
+            return cb("All listeners could not be found", false);
+        }
+        return cb ? cb(null, true) : null;
+    }
+    ;
+    /**
+     * Get all or a portion of the configuration from the Config Service. Typically this function is used to return Finsemble configuration
+     * (e.g. "finesemble.components"); however, if can also return all or part of the manifest which contains the Finsemble config property.
+     * If no configReference parameter is passed in (i.e. only the callback parameter is specified), then the complete manifest object is returned
+     * (including manifest.finsemble).
+     *
+     * @param {object=} params field property indentifies specific config to return
+     * @param {function} callback callback function(error, data) to get the configuration data
+     * @private
+     * @example
+     *
+     * FSBL.Clients.ConfigClient.get({ field: "finsemble" },function(err, finsemble) {
+     *		if (!err) {
+     *			finsembleConfig = finsemble;
+     *		} else {
+     *			console.error("failed to get finsemble configuration");
+     *		}
+     * });
+     *
+     * FSBL.Clients.ConfigClient.get({ field: "finsemble.isAuthEnabled" }, function(err, isAuthEnabled) {
+     *		var authorizationOn = isAuthEnabled;
+     * });
+     *
+     * FSBL.Clients.ConfigClient.get(callback); // returns the complete manifest containing the finsemble property
+     * FSBL.Clients.ConfigClient.get(null, callback); // alternate form; returns the complete manifest containing the finsemble property
+     * FSBL.Clients.ConfigClient.get({}, callback); // alternate form; returns the complete manifest containing the finsemble property
+     * FSBL.Clients.ConfigClient.get({ field: "finsemble.components" }, callback);
+     * FSBL.Clients.ConfigClient.get({ field: "finsemble.services" }, callback);
+     * FSBL.Clients.ConfigClient.get({ field: "finsemble.components" },callback);
+     * FSBL.Clients.ConfigClient.get({ field: "finsemble.assimilation.whitelist" }, callback);
+     * FSBL.Clients.ConfigClient.get({ field: "runtime.version",callback) }; // returns the manifest's runtime.version property
+     */
+    get(params, callback) {
+        logger_1.default.system.debug("ConfigClient.Get", params);
+        logger_1.default.system.warn("This functionality has been deprecated. It will be removed in Finsemble version 3.0. Use getValue instead.", params);
+        // if only one argument then assume no filtering parameters -- the complete manifest will be returned
+        if (arguments.length === 1) {
+            callback = params; // since only one arg, it must be the callback
+            validate_1.default.args(callback, "function");
+            params = {};
+        }
+        else {
+            validate_1.default.args(params, "object", callback, "function");
+        }
+        this.routerClient.query("config.get", params, function (queryErr, queryResponse) {
+            callback(queryErr, queryResponse ? queryResponse.data : null);
+        });
+    }
+    ;
+    /**
+     * Dynamically set config values within the Finsemble configuration.  New config properties may be set or existing ones modified. Note that configuration changes will not necessarily dynamically modify the components or services that use the corresponding configuration -- it depends if the component or service handles the corresponding change notifications (either though PubSub or the Config's DataStore). Also, these changes do not persist in any config files.)
+     *
+     * Special Note: Anytime config is set using this API, the newConfig along with the updated manifest will by published to the PubSub topic "Config.changeNotification".  To get these notifications any component or service can subscribe to the topic. An example is shown below.
+     *
+     * Special Note: Anytime config is set using this API, the dataStore underlying configuration 'Finsemble-Configuration-Store' will also be updated. To get these dataStore events a listener can be set as shown in the example below. However, any config modifications made directly though the DataStore will not result in corresponding PubSub notifications.
+     *
+     * @param {object} params
+     * @param {object} params.newConfig provides the configuration properties to add into the existing configuration under manifest.finsemble. This config must match the Finsembe config requirements as described in [Understanding Finsemble's Configuration]{@tutorial Configuration}. It can include importConfig references to dynamically fetch additional configuration files.
+     * @param {boolean} params.overwrite if true then overwrite any preexisting config with new config (can only set to true when running from same origin, not cross-domain); if false then newConfig must not match properties of existing config, including service and component configuration.
+     * @param {boolean} params.replace true specifies any component or service definitions in the new config will place all existing non-system component and service configuration
+     * @param {function} [cb] callback to be invoked upon task completion.
+     * @example
+     * // Examples using processAndSet()
+     * FSBL.Clients.ConfigClient.processAndSet({ newConfig: { myNewConfigField: 12345 }, overwrite: false});
+     * FSBL.Clients.ConfigClient.processAndSet(
+     * {
+     *	newConfig: {
+     *		"myNewConfigField": 12345,
+     *		"myNewConfigObject": {
+     *			A: "this is a test",
+     *			B: "more test"
+     *		},
+     *		"importConfig": [
+     *			"$applicationRoot/configs/application/test.json",
+     *		]
+     *	},
+     *	overwrite: true,
+     *  replace: false,
+     * },
+     *	function (err, finsemble) {
+     *		if (err) {
+     *			console.error("ConfigClient.set", err);
+     *		} else {
+     *			console.log("new finsemble config", finsemble);
+     *		}
+     *	}
+     * );
+     *
+     *  // example subscribing to PubSub to get notifications of dynamic updates
+     * RouterClient.subscribe("Config.changeNotification", function (err, notify) {
+     *		console.log("set notification", notify.data.newConfig, notify.data.finsemble);
+     *	});
+     *
+     *  // example using DataStore to get notifications of dynamic updates
+     * DistributedStoreClient.getStore({ store: 'Finsemble-Configuration-Store', global: true }, function (err, configStore) {
+     *		configStore.addListener({ field: "finsemble" }, function (err, newFinsembleConfig) {
+     *			console.log("new manifest.finsemble configuration", newFinsembleConfig);
+     *		});
+     * });
+     *
+     */
+    processAndSet(params, callback) {
+        logger_1.default.system.debug("ConfigClient.processAndSet", params);
+        validate_1.default.args(params, "object", callback, "function=") &&
+            validate_1.default.args2("params.newConfig", params.newConfig, "object", "params.overwrite", params.overwrite, "boolean=", "params.replace", params.replace, "boolean=");
+        if (!params.overwrite && params.replace) {
+            var errMsg = "cannot use replace option unless overwrite is also true";
+            logger_1.default.system.warn("ConfigClient.processAndSet:", errMsg);
+            if (callback) {
+                callback(errMsg, null);
+            }
+        }
+        else {
+            this.routerClient.query("config.processAndSet", params, function (queryErr, queryResponse) {
+                if (callback) {
+                    callback(queryErr, queryResponse ? queryResponse.data : null);
+                }
+            });
+        }
+    }
+    ;
+    /**
+     * Sets a value on the configStore and persists that value to storage. On application restart, this value will overwrite any application defaults.
+     * @param {Object} params - Params object
+     * @param {String} params.field - The name of the field where data will be stored
+     * @param {any} params.value - Value to be stored
+     * @param {function} callback - callback to be invoked when preferences have been retrieved from the service.
+     * @example
+     * FSBL.Clients.ConfigClient.setPreference({field: "finsemble.initialWorkspace", value: "Workspace 2" }, (err, response) => {
+     * 		//preference has been set
+     * });
+     */
+    setPreference(params, callback) {
+        this.routerClient.query("PreferencesService.setPreference", params, function (queryErr, queryResponse) {
+            if (callback) {
+                callback(queryErr, queryResponse ? queryResponse.data : null);
+            }
+        });
+    }
+    ;
+    /**
+     * Retrieves all of the preferences set for the application.
+     * @param {Object} params - parameters to pass to getPreferences. Optional. Defaults to null and currently ignored.
+     * @param {function} callback - callback to be invoked when preferences have been retrieved from the service.
+     * @example
+     * FSBL.Clients.ConfigClient.getPreferences((err, preferences)=>{
+     * 		//use preferences.
+     * });
+     */
+    getPreferences(params, callback) {
+        if (typeof params === "function") {
+            callback = params;
+            params = null;
+        }
+        this.routerClient.query("PreferencesService.getPreferences", params, function (queryErr, queryResponse) {
+            if (callback) {
+                callback(queryErr, queryResponse ? queryResponse.data : null);
+            }
+        });
+    }
+    ;
+}
+;
+var configClient = new ConfigClient({
+    startupDependencies: {
+        services: ["configService"]
+    },
+    onReady: function (cb) {
+        if (cb) {
+            cb();
+        }
+    },
+    name: "configClient"
+});
+exports.default = configClient;
+
+
+/***/ }),
+
+/***/ 15:
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+/*!
+* Copyright 2018 by ChartIQ, Inc.
+* All rights reserved.
+*/
+Object.defineProperty(exports, "__esModule", { value: true });
+const { debug, warn, log, /*info,*/ error } = console;
+const info = () => { };
+const verbose = info;
+const logger = {
+    warn, info, log, debug,
+    error, verbose
+};
+// This is all stolen from the logger.
+// @TODO - make consumers agnostic of this stuff and remove from the interface.
+const LOCAL_ONLY_DEFAULT = false;
+var DEFAULT_LOG_SETTING = { Error: true, Warn: true, Info: true, Log: true, Debug: true, Verbose: true, LocalOnly: LOCAL_ONLY_DEFAULT }; // if true captured for logger
+var CONSOLE_DEFAULT_LOG_SETTING = { Error: true, Warn: true, Info: true, Log: true, Debug: true }; // if true then goes to console and captured for logger
+var initialLogState = {
+    console: CONSOLE_DEFAULT_LOG_SETTING,
+    dev: DEFAULT_LOG_SETTING,
+    system: DEFAULT_LOG_SETTING,
+    perf: DEFAULT_LOG_SETTING,
+}; // will be updated on registration with Central Logger, but capture everything until then
+function IsLogMessage(channel) {
+    return (channel === "logger.service.logMessages");
+}
+;
+function traceString() {
+    function getPosition(string, subString, index) {
+        return string.split(subString, index).join(subString).length;
+    }
+    function getErrorObject() {
+        try {
+            throw Error("");
+        }
+        catch (err) {
+            return err;
+        }
+    }
+    var stack = getErrorObject().stack;
+    var position = getPosition(stack, "\n", 4);
+    var tString = stack.substring(position); // strip off irrelevant part of stack
+    var final = "Log Stack: \n" + tString.substr(1); // insert description
+    return final;
+}
+/** An implementation of the ICentralLogger interface that
+ * merely logs straight to the console rather than going over to
+ * Central Logging serice. Used in situations where use of the
+ * Central Logging service is not possible (such as in test
+ * environments, or in the Central Logging service itself).
+ */
+class LocalLogger {
+    constructor() {
+        // Loggery things.
+        // @TODO - Make consumers agnostic of these and remove from interface.
+        this.start = () => { };
+        this.isLogMessage = IsLogMessage;
+        this.setting = () => initialLogState;
+        this.callStack = () => traceString();
+        this.unregisterClient = (_) => { };
+        this.setRouterClient = () => { };
+        // Top level logging methods
+        this.warn = warn;
+        this.info = info;
+        this.log = log;
+        this.debug = debug;
+        this.error = error;
+        this.verbose = verbose;
+        // "Namespaced" methods - they still point to console.
+        this.system = logger;
+        this.perf = logger;
+    }
+}
+exports.LocalLogger = LocalLogger;
+
+
+/***/ }),
+
+/***/ 16:
+/***/ (function(module, exports) {
+
+module.exports = function(module) {
+	if(!module.webpackPolyfill) {
+		module.deprecate = function() {};
+		module.paths = [];
+		// module.parent = undefined by default
+		if(!module.children) module.children = [];
+		Object.defineProperty(module, "loaded", {
+			enumerable: true,
+			get: function() {
+				return module.l;
+			}
+		});
+		Object.defineProperty(module, "id", {
+			enumerable: true,
+			get: function() {
+				return module.i;
+			}
+		});
+		module.webpackPolyfill = 1;
+	}
+	return module;
+};
+
+
+/***/ }),
+
+/***/ 17:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__clients_logger__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__configUtil__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__common_system__);
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+
+
+
+
+
+var ConfigClient = null;
+
+"use strict";
+
+/**
+ * @hideConstructor true
+ * @constructor
+ */
+var UserNotification = function () {
+	var alertOnceSinceStartUp = {};
+	var alertCurrentCount = {};
+	var defaultTemplateURL = null;
+
+	/**
+  * Gets the default template URL from the manifest at finsemble->notificationURL. If that doesn't exist then it falls back to the system template location.
+  * @private
+  */
+	this.getDefaultTemplateURL = function (cb) {
+		if (defaultTemplateURL) {
+			setTimeout(function () {
+				// Ensure async, just like else clause
+				cb(defaultTemplateURL);
+			}, 0);
+		} else {
+			// Require configClient here instead of at top of page to avoid a dependency error (Router uses UserNotification before config service is ready).
+			if (!ConfigClient) ConfigClient = __webpack_require__(14).default;
+			ConfigClient.get({ field: "finsemble" }, function (err, finConfig) {
+				defaultTemplateURL = __WEBPACK_IMPORTED_MODULE_1__configUtil__["ConfigUtilInstance"].getDefault(finConfig, "finsemble.notificationURL", finConfig.moduleRoot + "/components/system/notification/notification.html");
+				cb(defaultTemplateURL);
+			});
+		}
+	};
+
+	/**
+  * Conditionally alerts the end user using a desktop notification.
+  *
+  * @param {string} topic specifies a category for the notification. Topic is currently unused, but in the future it will be used to filter notifications (e.g. applying regEx's defined in config to determine which notifications are displayed). Any topic string can be specified; however "system" is the recommended topic for system notifications applicable both to end uses and to developers. "dev" is the recommended topic for notifications applicable only during development (e.g. a notification that config.json has an illegal value).
+  * @param {string} frequency Either "ALWAYS", "ONCE-SINCE-STARTUP", or "MAX-COUNT" to determine if alert should be displayed. Note, the frequencies are based on the number of notifications emitted from a window (as opposed to system wide.)
+  * @param {string} identifier uniquely identifies this specific notification message. Used when "frequency" is set to "ONCE-SINCE-STARTUP" or "MAX-COUNT"
+  * @param {any} message message to display in the notification. Typically a string. Finsemble's built in templating accepts and object. See src-built-in/components/notification/notification.html.
+  * @param {object=} params
+  * @param {number} params.maxCount specifies the max number of notifications to display for specified identifier when frequency="MAX-COUNT" (default is 1)
+  * @param {number} params.duration time in milliseconds before auto-dismissing the notification (defaults to 24 hours)
+  * @param {number} params.url the URL for for notification HTML. If not provided then the system default will be used. Defaults to Finsemble's built-in version at "/finsemble/components/system/notification/notification.html".
+  *
+  * @example
+  *		FSBL.UserNotification.alert("system", "ONCE-SINCE-STARTUP", "MANIFEST-Error", message);
+ *		FSBL.UserNotification.alert("dev", "ALWAYS", "Config-Error", message, { url: notificationURL, duration: 1000 * 5 });
+ *		FSBL.UserNotification.alert("dev", "MAX-COUNT", "Transport-Failure", message, { url: notificationURL, maxCount: 2 });
+ */
+
+	this.alert = function (topic, frequency, identifier, message, params) {
+		var self = this;
+		// If the url for the template is passed in then don't bother fetching the config
+		if (params && params.url) {
+			this.alertInternal(topic, frequency, identifier, message, params, params.url);
+		} else {
+			// If no url, then we need to get the template from config
+			this.getDefaultTemplateURL(function (url) {
+				self.alertInternal(topic, frequency, identifier, message, params, url);
+			});
+		}
+	};
+
+	/**
+  * @private
+  */
+	this.alertInternal = function (topic, frequency, identifier, message, params, url) {
+		params = params || {};
+		var alertUser = false;
+		var key = "UserNotification.alert." + identifier;
+		var duration = params.duration || 1000 * 60 * 60 * 24;
+
+		switch (frequency) {
+			case "ONCE-SINCE-STARTUP":
+				if (key in alertOnceSinceStartUp) {
+					alertUser = false;
+				} else {
+					// if no key then must be first time
+					alertUser = true;
+					alertOnceSinceStartUp[key] = true;
+				}
+				break;
+			case "MAX-COUNT":
+				let currentCount = 0;
+				let maxCount = params.maxCount || 1;
+				if (key in alertCurrentCount) {
+					currentCount = alertCurrentCount[key];
+				}
+				alertCurrentCount[key] = ++currentCount; // increment and store
+				if (currentCount <= maxCount) {
+					alertUser = true;
+				}
+				break;
+			default:
+				// default to "ALWAYS"
+				alertUser = true;
+		}
+
+		__WEBPACK_IMPORTED_MODULE_0__clients_logger___default.a.log("UserNotification.alert", topic, alertUser, frequency, identifier, message, params);
+		if (alertUser) {
+			var notifyObject = {
+				url: url,
+				message: message,
+				timeout: duration
+			};
+			new __WEBPACK_IMPORTED_MODULE_2__common_system__["System"].Notification(notifyObject);
+		}
+	};
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (new UserNotification());
+
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\userNotification.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\userNotification.js"); } } })();
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
+
+/***/ }),
+
+/***/ 18:
+/***/ (function(module, exports) {
+
+/**
+ * Convert array of 16 byte values to UUID string format of the form:
+ * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+ */
+var byteToHex = [];
+for (var i = 0; i < 256; ++i) {
+  byteToHex[i] = (i + 0x100).toString(16).substr(1);
+}
+
+function bytesToUuid(buf, offset) {
+  var i = offset || 0;
+  var bth = byteToHex;
+  // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
+  return ([bth[buf[i++]], bth[buf[i++]], 
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]],
+	bth[buf[i++]], bth[buf[i++]],
+	bth[buf[i++]], bth[buf[i++]]]).join('');
+}
+
+module.exports = bytesToUuid;
+
+
+/***/ }),
+
+/***/ 188:
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(94);
+
+
+/***/ }),
+
+/***/ 19:
+/***/ (function(module, exports) {
+
+// Unique ID creation requires a high quality random # generator.  In the
+// browser this is a little complicated due to unknown quality of Math.random()
+// and inconsistent support for the `crypto` API.  We do the best we can via
+// feature-detection
+
+// getRandomValues needs to be invoked in a context where "this" is a Crypto
+// implementation. Also, find the complete implementation of crypto on IE11.
+var getRandomValues = (typeof(crypto) != 'undefined' && crypto.getRandomValues && crypto.getRandomValues.bind(crypto)) ||
+                      (typeof(msCrypto) != 'undefined' && typeof window.msCrypto.getRandomValues == 'function' && msCrypto.getRandomValues.bind(msCrypto));
+
+if (getRandomValues) {
+  // WHATWG crypto RNG - http://wiki.whatwg.org/wiki/Crypto
+  var rnds8 = new Uint8Array(16); // eslint-disable-line no-undef
+
+  module.exports = function whatwgRNG() {
+    getRandomValues(rnds8);
+    return rnds8;
+  };
+} else {
+  // Math.random()-based (RNG)
+  //
+  // If all else fails, use Math.random().  It's fast, but is of unspecified
+  // quality.
+  var rnds = new Array(16);
+
+  module.exports = function mathRNG() {
+    for (var i = 0, r; i < 16; i++) {
+      if ((i & 0x03) === 0) r = Math.random() * 0x100000000;
+      rnds[i] = r >>> ((i & 0x03) << 3) & 0xff;
+    }
+
+    return rnds;
+  };
+}
+
+
+/***/ }),
+
+/***/ 2:
 /***/ (function(module, exports) {
 
 module.exports = function(originalModule) {
@@ -1033,7 +3233,3335 @@ module.exports = function(originalModule) {
 
 
 /***/ }),
-/* 4 */
+
+/***/ 20:
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {/**
+ * lodash (Custom Build) <https://lodash.com/>
+ * Build: `lodash modularize exports="npm" -o ./`
+ * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+ * Released under MIT license <https://lodash.com/license>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ */
+
+/** Used as the `TypeError` message for "Functions" methods. */
+var FUNC_ERROR_TEXT = 'Expected a function';
+
+/** Used as references for various `Number` constants. */
+var NAN = 0 / 0;
+
+/** `Object#toString` result references. */
+var symbolTag = '[object Symbol]';
+
+/** Used to match leading and trailing whitespace. */
+var reTrim = /^\s+|\s+$/g;
+
+/** Used to detect bad signed hexadecimal string values. */
+var reIsBadHex = /^[-+]0x[0-9a-f]+$/i;
+
+/** Used to detect binary string values. */
+var reIsBinary = /^0b[01]+$/i;
+
+/** Used to detect octal string values. */
+var reIsOctal = /^0o[0-7]+$/i;
+
+/** Built-in method references without a dependency on `root`. */
+var freeParseInt = parseInt;
+
+/** Detect free variable `global` from Node.js. */
+var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
+
+/** Detect free variable `self`. */
+var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+
+/** Used as a reference to the global object. */
+var root = freeGlobal || freeSelf || Function('return this')();
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/**
+ * Used to resolve the
+ * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var objectToString = objectProto.toString;
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeMax = Math.max,
+    nativeMin = Math.min;
+
+/**
+ * Gets the timestamp of the number of milliseconds that have elapsed since
+ * the Unix epoch (1 January 1970 00:00:00 UTC).
+ *
+ * @static
+ * @memberOf _
+ * @since 2.4.0
+ * @category Date
+ * @returns {number} Returns the timestamp.
+ * @example
+ *
+ * _.defer(function(stamp) {
+ *   console.log(_.now() - stamp);
+ * }, _.now());
+ * // => Logs the number of milliseconds it took for the deferred invocation.
+ */
+var now = function() {
+  return root.Date.now();
+};
+
+/**
+ * Creates a debounced function that delays invoking `func` until after `wait`
+ * milliseconds have elapsed since the last time the debounced function was
+ * invoked. The debounced function comes with a `cancel` method to cancel
+ * delayed `func` invocations and a `flush` method to immediately invoke them.
+ * Provide `options` to indicate whether `func` should be invoked on the
+ * leading and/or trailing edge of the `wait` timeout. The `func` is invoked
+ * with the last arguments provided to the debounced function. Subsequent
+ * calls to the debounced function return the result of the last `func`
+ * invocation.
+ *
+ * **Note:** If `leading` and `trailing` options are `true`, `func` is
+ * invoked on the trailing edge of the timeout only if the debounced function
+ * is invoked more than once during the `wait` timeout.
+ *
+ * If `wait` is `0` and `leading` is `false`, `func` invocation is deferred
+ * until to the next tick, similar to `setTimeout` with a timeout of `0`.
+ *
+ * See [David Corbacho's article](https://css-tricks.com/debouncing-throttling-explained-examples/)
+ * for details over the differences between `_.debounce` and `_.throttle`.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Function
+ * @param {Function} func The function to debounce.
+ * @param {number} [wait=0] The number of milliseconds to delay.
+ * @param {Object} [options={}] The options object.
+ * @param {boolean} [options.leading=false]
+ *  Specify invoking on the leading edge of the timeout.
+ * @param {number} [options.maxWait]
+ *  The maximum time `func` is allowed to be delayed before it's invoked.
+ * @param {boolean} [options.trailing=true]
+ *  Specify invoking on the trailing edge of the timeout.
+ * @returns {Function} Returns the new debounced function.
+ * @example
+ *
+ * // Avoid costly calculations while the window size is in flux.
+ * jQuery(window).on('resize', _.debounce(calculateLayout, 150));
+ *
+ * // Invoke `sendMail` when clicked, debouncing subsequent calls.
+ * jQuery(element).on('click', _.debounce(sendMail, 300, {
+ *   'leading': true,
+ *   'trailing': false
+ * }));
+ *
+ * // Ensure `batchLog` is invoked once after 1 second of debounced calls.
+ * var debounced = _.debounce(batchLog, 250, { 'maxWait': 1000 });
+ * var source = new EventSource('/stream');
+ * jQuery(source).on('message', debounced);
+ *
+ * // Cancel the trailing debounced invocation.
+ * jQuery(window).on('popstate', debounced.cancel);
+ */
+function debounce(func, wait, options) {
+  var lastArgs,
+      lastThis,
+      maxWait,
+      result,
+      timerId,
+      lastCallTime,
+      lastInvokeTime = 0,
+      leading = false,
+      maxing = false,
+      trailing = true;
+
+  if (typeof func != 'function') {
+    throw new TypeError(FUNC_ERROR_TEXT);
+  }
+  wait = toNumber(wait) || 0;
+  if (isObject(options)) {
+    leading = !!options.leading;
+    maxing = 'maxWait' in options;
+    maxWait = maxing ? nativeMax(toNumber(options.maxWait) || 0, wait) : maxWait;
+    trailing = 'trailing' in options ? !!options.trailing : trailing;
+  }
+
+  function invokeFunc(time) {
+    var args = lastArgs,
+        thisArg = lastThis;
+
+    lastArgs = lastThis = undefined;
+    lastInvokeTime = time;
+    result = func.apply(thisArg, args);
+    return result;
+  }
+
+  function leadingEdge(time) {
+    // Reset any `maxWait` timer.
+    lastInvokeTime = time;
+    // Start the timer for the trailing edge.
+    timerId = setTimeout(timerExpired, wait);
+    // Invoke the leading edge.
+    return leading ? invokeFunc(time) : result;
+  }
+
+  function remainingWait(time) {
+    var timeSinceLastCall = time - lastCallTime,
+        timeSinceLastInvoke = time - lastInvokeTime,
+        result = wait - timeSinceLastCall;
+
+    return maxing ? nativeMin(result, maxWait - timeSinceLastInvoke) : result;
+  }
+
+  function shouldInvoke(time) {
+    var timeSinceLastCall = time - lastCallTime,
+        timeSinceLastInvoke = time - lastInvokeTime;
+
+    // Either this is the first call, activity has stopped and we're at the
+    // trailing edge, the system time has gone backwards and we're treating
+    // it as the trailing edge, or we've hit the `maxWait` limit.
+    return (lastCallTime === undefined || (timeSinceLastCall >= wait) ||
+      (timeSinceLastCall < 0) || (maxing && timeSinceLastInvoke >= maxWait));
+  }
+
+  function timerExpired() {
+    var time = now();
+    if (shouldInvoke(time)) {
+      return trailingEdge(time);
+    }
+    // Restart the timer.
+    timerId = setTimeout(timerExpired, remainingWait(time));
+  }
+
+  function trailingEdge(time) {
+    timerId = undefined;
+
+    // Only invoke if we have `lastArgs` which means `func` has been
+    // debounced at least once.
+    if (trailing && lastArgs) {
+      return invokeFunc(time);
+    }
+    lastArgs = lastThis = undefined;
+    return result;
+  }
+
+  function cancel() {
+    if (timerId !== undefined) {
+      clearTimeout(timerId);
+    }
+    lastInvokeTime = 0;
+    lastArgs = lastCallTime = lastThis = timerId = undefined;
+  }
+
+  function flush() {
+    return timerId === undefined ? result : trailingEdge(now());
+  }
+
+  function debounced() {
+    var time = now(),
+        isInvoking = shouldInvoke(time);
+
+    lastArgs = arguments;
+    lastThis = this;
+    lastCallTime = time;
+
+    if (isInvoking) {
+      if (timerId === undefined) {
+        return leadingEdge(lastCallTime);
+      }
+      if (maxing) {
+        // Handle invocations in a tight loop.
+        timerId = setTimeout(timerExpired, wait);
+        return invokeFunc(lastCallTime);
+      }
+    }
+    if (timerId === undefined) {
+      timerId = setTimeout(timerExpired, wait);
+    }
+    return result;
+  }
+  debounced.cancel = cancel;
+  debounced.flush = flush;
+  return debounced;
+}
+
+/**
+ * Creates a throttled function that only invokes `func` at most once per
+ * every `wait` milliseconds. The throttled function comes with a `cancel`
+ * method to cancel delayed `func` invocations and a `flush` method to
+ * immediately invoke them. Provide `options` to indicate whether `func`
+ * should be invoked on the leading and/or trailing edge of the `wait`
+ * timeout. The `func` is invoked with the last arguments provided to the
+ * throttled function. Subsequent calls to the throttled function return the
+ * result of the last `func` invocation.
+ *
+ * **Note:** If `leading` and `trailing` options are `true`, `func` is
+ * invoked on the trailing edge of the timeout only if the throttled function
+ * is invoked more than once during the `wait` timeout.
+ *
+ * If `wait` is `0` and `leading` is `false`, `func` invocation is deferred
+ * until to the next tick, similar to `setTimeout` with a timeout of `0`.
+ *
+ * See [David Corbacho's article](https://css-tricks.com/debouncing-throttling-explained-examples/)
+ * for details over the differences between `_.throttle` and `_.debounce`.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Function
+ * @param {Function} func The function to throttle.
+ * @param {number} [wait=0] The number of milliseconds to throttle invocations to.
+ * @param {Object} [options={}] The options object.
+ * @param {boolean} [options.leading=true]
+ *  Specify invoking on the leading edge of the timeout.
+ * @param {boolean} [options.trailing=true]
+ *  Specify invoking on the trailing edge of the timeout.
+ * @returns {Function} Returns the new throttled function.
+ * @example
+ *
+ * // Avoid excessively updating the position while scrolling.
+ * jQuery(window).on('scroll', _.throttle(updatePosition, 100));
+ *
+ * // Invoke `renewToken` when the click event is fired, but not more than once every 5 minutes.
+ * var throttled = _.throttle(renewToken, 300000, { 'trailing': false });
+ * jQuery(element).on('click', throttled);
+ *
+ * // Cancel the trailing throttled invocation.
+ * jQuery(window).on('popstate', throttled.cancel);
+ */
+function throttle(func, wait, options) {
+  var leading = true,
+      trailing = true;
+
+  if (typeof func != 'function') {
+    throw new TypeError(FUNC_ERROR_TEXT);
+  }
+  if (isObject(options)) {
+    leading = 'leading' in options ? !!options.leading : leading;
+    trailing = 'trailing' in options ? !!options.trailing : trailing;
+  }
+  return debounce(func, wait, {
+    'leading': leading,
+    'maxWait': wait,
+    'trailing': trailing
+  });
+}
+
+/**
+ * Checks if `value` is the
+ * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+ * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+ * @example
+ *
+ * _.isObject({});
+ * // => true
+ *
+ * _.isObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isObject(_.noop);
+ * // => true
+ *
+ * _.isObject(null);
+ * // => false
+ */
+function isObject(value) {
+  var type = typeof value;
+  return !!value && (type == 'object' || type == 'function');
+}
+
+/**
+ * Checks if `value` is object-like. A value is object-like if it's not `null`
+ * and has a `typeof` result of "object".
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+ * @example
+ *
+ * _.isObjectLike({});
+ * // => true
+ *
+ * _.isObjectLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isObjectLike(_.noop);
+ * // => false
+ *
+ * _.isObjectLike(null);
+ * // => false
+ */
+function isObjectLike(value) {
+  return !!value && typeof value == 'object';
+}
+
+/**
+ * Checks if `value` is classified as a `Symbol` primitive or object.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+ * @example
+ *
+ * _.isSymbol(Symbol.iterator);
+ * // => true
+ *
+ * _.isSymbol('abc');
+ * // => false
+ */
+function isSymbol(value) {
+  return typeof value == 'symbol' ||
+    (isObjectLike(value) && objectToString.call(value) == symbolTag);
+}
+
+/**
+ * Converts `value` to a number.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to process.
+ * @returns {number} Returns the number.
+ * @example
+ *
+ * _.toNumber(3.2);
+ * // => 3.2
+ *
+ * _.toNumber(Number.MIN_VALUE);
+ * // => 5e-324
+ *
+ * _.toNumber(Infinity);
+ * // => Infinity
+ *
+ * _.toNumber('3.2');
+ * // => 3.2
+ */
+function toNumber(value) {
+  if (typeof value == 'number') {
+    return value;
+  }
+  if (isSymbol(value)) {
+    return NAN;
+  }
+  if (isObject(value)) {
+    var other = typeof value.valueOf == 'function' ? value.valueOf() : value;
+    value = isObject(other) ? (other + '') : other;
+  }
+  if (typeof value != 'string') {
+    return value === 0 ? value : +value;
+  }
+  value = value.replace(reTrim, '');
+  var isBinary = reIsBinary.test(value);
+  return (isBinary || reIsOctal.test(value))
+    ? freeParseInt(value.slice(2), isBinary ? 2 : 8)
+    : (reIsBadHex.test(value) ? NAN : +value);
+}
+
+module.exports = throttle;
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
+
+/***/ }),
+
+/***/ 21:
+/***/ (function(module, exports, __webpack_require__) {
+
+var rng = __webpack_require__(19);
+var bytesToUuid = __webpack_require__(18);
+
+// **`v1()` - Generate time-based UUID**
+//
+// Inspired by https://github.com/LiosK/UUID.js
+// and http://docs.python.org/library/uuid.html
+
+var _nodeId;
+var _clockseq;
+
+// Previous uuid creation time
+var _lastMSecs = 0;
+var _lastNSecs = 0;
+
+// See https://github.com/broofa/node-uuid for API details
+function v1(options, buf, offset) {
+  var i = buf && offset || 0;
+  var b = buf || [];
+
+  options = options || {};
+  var node = options.node || _nodeId;
+  var clockseq = options.clockseq !== undefined ? options.clockseq : _clockseq;
+
+  // node and clockseq need to be initialized to random values if they're not
+  // specified.  We do this lazily to minimize issues related to insufficient
+  // system entropy.  See #189
+  if (node == null || clockseq == null) {
+    var seedBytes = rng();
+    if (node == null) {
+      // Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
+      node = _nodeId = [
+        seedBytes[0] | 0x01,
+        seedBytes[1], seedBytes[2], seedBytes[3], seedBytes[4], seedBytes[5]
+      ];
+    }
+    if (clockseq == null) {
+      // Per 4.2.2, randomize (14 bit) clockseq
+      clockseq = _clockseq = (seedBytes[6] << 8 | seedBytes[7]) & 0x3fff;
+    }
+  }
+
+  // UUID timestamps are 100 nano-second units since the Gregorian epoch,
+  // (1582-10-15 00:00).  JSNumbers aren't precise enough for this, so
+  // time is handled internally as 'msecs' (integer milliseconds) and 'nsecs'
+  // (100-nanoseconds offset from msecs) since unix epoch, 1970-01-01 00:00.
+  var msecs = options.msecs !== undefined ? options.msecs : new Date().getTime();
+
+  // Per 4.2.1.2, use count of uuid's generated during the current clock
+  // cycle to simulate higher resolution clock
+  var nsecs = options.nsecs !== undefined ? options.nsecs : _lastNSecs + 1;
+
+  // Time since last uuid creation (in msecs)
+  var dt = (msecs - _lastMSecs) + (nsecs - _lastNSecs)/10000;
+
+  // Per 4.2.1.2, Bump clockseq on clock regression
+  if (dt < 0 && options.clockseq === undefined) {
+    clockseq = clockseq + 1 & 0x3fff;
+  }
+
+  // Reset nsecs if clock regresses (new clockseq) or we've moved onto a new
+  // time interval
+  if ((dt < 0 || msecs > _lastMSecs) && options.nsecs === undefined) {
+    nsecs = 0;
+  }
+
+  // Per 4.2.1.2 Throw error if too many uuids are requested
+  if (nsecs >= 10000) {
+    throw new Error('uuid.v1(): Can\'t create more than 10M uuids/sec');
+  }
+
+  _lastMSecs = msecs;
+  _lastNSecs = nsecs;
+  _clockseq = clockseq;
+
+  // Per 4.1.4 - Convert from unix epoch to Gregorian epoch
+  msecs += 12219292800000;
+
+  // `time_low`
+  var tl = ((msecs & 0xfffffff) * 10000 + nsecs) % 0x100000000;
+  b[i++] = tl >>> 24 & 0xff;
+  b[i++] = tl >>> 16 & 0xff;
+  b[i++] = tl >>> 8 & 0xff;
+  b[i++] = tl & 0xff;
+
+  // `time_mid`
+  var tmh = (msecs / 0x100000000 * 10000) & 0xfffffff;
+  b[i++] = tmh >>> 8 & 0xff;
+  b[i++] = tmh & 0xff;
+
+  // `time_high_and_version`
+  b[i++] = tmh >>> 24 & 0xf | 0x10; // include version
+  b[i++] = tmh >>> 16 & 0xff;
+
+  // `clock_seq_hi_and_reserved` (Per 4.2.2 - include variant)
+  b[i++] = clockseq >>> 8 | 0x80;
+
+  // `clock_seq_low`
+  b[i++] = clockseq & 0xff;
+
+  // `node`
+  for (var n = 0; n < 6; ++n) {
+    b[i + n] = node[n];
+  }
+
+  return buf ? buf : bytesToUuid(b);
+}
+
+module.exports = v1;
+
+
+/***/ }),
+
+/***/ 22:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_events__);
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
+
+/** Singleton of the System class shared among all instances of Monitors
+ * @TODO Refactor to instance member of class.
+ */
+let System;
+class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
+	/**
+  *
+  * @param {function} readyCB Function to be invoked when monitors are retrieved from the system for the first time.
+  * @param {function} changeCB Function to be invoked when monitor information changes
+  * @param {Object} dependencies Dependency object that provides a system object capable of retrieving monitors.
+  */
+	constructor(readyCB, changeCB, dependencies) {
+		super();
+		if (dependencies && dependencies.System) {
+			System = dependencies.System;
+		} else {
+			throw new Error("Monitors class requires dependency injection. Ensure that System is being passed in.");
+		}
+		this.bindAllFunctions();
+		this.refreshMonitors(readyCB);
+
+		System.addEventListener("monitor-info-changed", () => {
+			this.refreshMonitors(changeCB);
+		});
+
+		//This is to handle 'wake events'. This is technically only going to handle unlock events (user locks screen or logs out then logs back in)
+		//Technically, if the user has disabled 'lock on sleep', then this will not fire, but openfin does not have an event for waking/sleeping
+		System.addEventListener("session-changed", params => {
+			if (params.reason === "unlock") {
+				this.refreshMonitors(changeCB);
+			}
+		});
+	}
+
+	bindAllFunctions() {
+		let self = this;
+		for (let name of Object.getOwnPropertyNames(Object.getPrototypeOf(self))) {
+			let method = self[name];
+			// skip constructor
+			if (!(method instanceof Function) || method === Monitors) continue;
+			self[name] = self[name].bind(self);
+		}
+	}
+
+	asyncIt(data, cb) {
+		cb(data);
+		return data;
+	}
+
+	rationalizeMonitor(monitor) {
+		monitor.monitorRect.width = monitor.monitorRect.right - monitor.monitorRect.left;
+		monitor.monitorRect.height = monitor.monitorRect.bottom - monitor.monitorRect.top;
+		monitor.availableRect.width = monitor.availableRect.right - monitor.availableRect.left;
+		monitor.availableRect.height = monitor.availableRect.bottom - monitor.availableRect.top;
+	}
+
+	calculateMonitorScale(dipRect, scaledRect) {
+		return (scaledRect.right - scaledRect.left) / (dipRect.right - dipRect.left);
+	}
+
+	refreshMonitors(cb = Function.prototype) {
+		System.getMonitorInfo(monitorInfo => {
+			//console.log("getAllMonitors");
+			this.allMonitors = [];
+			var primaryMonitor = monitorInfo.primaryMonitor;
+			this.primaryMonitor = primaryMonitor;
+			primaryMonitor.whichMonitor = "primary";
+			primaryMonitor.deviceScaleFactor = this.calculateMonitorScale(primaryMonitor.monitor.dipRect, primaryMonitor.monitor.scaledRect);
+
+			primaryMonitor.position = 0;
+			this.allMonitors.push(primaryMonitor);
+			for (let i = 0; i < monitorInfo.nonPrimaryMonitors.length; i++) {
+				let monitor = monitorInfo.nonPrimaryMonitors[i];
+				monitor.deviceScaleFactor = this.calculateMonitorScale(monitor.monitor.dipRect, monitor.monitor.scaledRect);
+				monitor.whichMonitor = i;
+				monitor.position = i + 1;
+				this.allMonitors.push(monitor);
+			}
+			for (let i = 0; i < this.allMonitors.length; i++) {
+				let monitor = this.allMonitors[i];
+				this.rationalizeMonitor(monitor);
+			}
+			cb(this.allMonitors);
+			this.ready = true;
+			this.emit("monitors-changed", this.allMonitors);
+		});
+	}
+
+	/**
+  * Gets All Monitors.
+  * @param {*} cb
+  */
+	getAllMonitors(cb = Function.prototype) {
+		if (!this.ready) {
+			if (cb) this.refreshMonitors(cb);else return "not ready";
+		} else {
+			return this.asyncIt(this.allMonitors, cb);
+		}
+	}
+
+	/**
+  * Gets the monitor on which the point is or null if not on any monitor. This assumes scaled dimensions for the monitor (For example from Openfin or WPF directly).
+  * @param {*} x
+  * @param {*} y
+  * @param {*} cb
+  */
+	getMonitorFromScaledXY(x, y, cb = Function.prototype) {
+		let promiseResolver = resolve => {
+			if (!this.ready) {
+				this.refreshMonitors(() => {
+					this.getMonitorFromScaledXY(x, y, cb);
+				});
+				//This will recursively call until we have monitors.
+				return "not ready";
+			}
+			let theMonitor = null;
+			var monitors = this.allMonitors;
+			for (var i = 0; i < monitors.length; i++) {
+				var monitor = monitors[i];
+				var monitorRect = monitor.monitorRect;
+				// Are our coordinates inside the monitor? Note that
+				// left and top are inclusive. right and bottom are exclusive
+				// In OpenFin, two adjacent monitors will share a right and left pixel value!
+				if (x >= monitorRect.left && x < monitorRect.right && y >= monitorRect.top && y < monitorRect.bottom) {
+					theMonitor = monitor;
+					break;
+				}
+			}
+			resolve(theMonitor);
+			cb(theMonitor);
+		};
+		return new Promise(promiseResolver);
+	}
+
+	/**
+  * Gets the monitor on which the point is or null if not on any monitor. This assumes unscaled positions of x,y (for example from windows API).
+  *
+  * @param {any} x
+  * @param {any} y
+  * @param {any} [cb=function () { }]
+  * @returns monitor if found or null
+  * @memberof Monitors
+  */
+	getMonitorFromUnscaledXY(x, y, cb = Function.prototype) {
+		if (!this.ready) {
+			this.refreshMonitors(() => {
+				this.getMonitorFromUnscaledXY(x, y, cb);
+			});
+			return "not ready";
+		}
+		var monitors = this.allMonitors;
+		for (var i = 0; i < monitors.length; i++) {
+			var monitor = monitors[i];
+			var monitorRect = monitor.monitor.scaledRect;
+			if (x >= monitorRect.left && x < monitorRect.right && y >= monitorRect.top && y < monitorRect.bottom) {
+				return this.asyncIt(monitor, cb);
+			}
+		}
+		return this.asyncIt(null, cb);
+	}
+
+	/**
+  * Converts Point from scaled (e.g. from OpenFin/WPF) to unscaled (e.g. to give Windows API) position
+  *
+  * @param {any} point
+  * @param {any} [cb=function () { }]
+  * @returns monitor if found or null
+  * @memberof Monitors
+  */
+	translatePointFromScaled(params, cb = Function.prototype) {
+		var _this = this;
+
+		return _asyncToGenerator(function* () {
+			if (!_this.ready) {
+				_this.refreshMonitors(function () {
+					_this.translatePointFromScaled(params, cb);
+				});
+				return "not ready";
+			}
+			var point;
+			if (params.point) point = params.point;else point = params;
+			var monitor = params.monitor;
+			if (!monitor) {
+				let result = yield _this.getMonitorFromScaledXY(point.x, point.y);
+				monitor = result.data;
+			}
+
+			let unscaledPoint = null;
+			if (monitor) {
+				var relativeX = point.x - monitor.monitorRect.left;
+				var relativeY = point.y - monitor.monitorRect.top;
+				var unscaledRelativeX = relativeX * monitor.deviceScaleFactor;
+				var unscaledRelativeY = relativeY * monitor.deviceScaleFactor;
+				unscaledPoint = {
+					x: unscaledRelativeX + monitor.monitor.scaledRect.left,
+					y: unscaledRelativeY + monitor.monitor.scaledRect.top
+				};
+			}
+
+			cb(unscaledPoint);
+			return Promise.resolve(unscaledPoint);
+		})();
+	}
+
+	/**
+  * Converts Point to scaled (e.g. from OpenFin/WPF) from unscaled (e.g. to give Windows API) position
+  *
+  * @param {any} point
+  * @param {any} [cb=function () { }]
+  * @returns point if on monitor or null
+  * @memberof Monitors
+  */
+	translatePointToScaled(params, cb = Function.prototype) {
+		if (!this.ready) {
+			this.refreshMonitors(() => {
+				this.translatePointToScaled(params, cb);
+			});
+			return "not ready";
+		}
+		var point;
+		if (params.point) point = params.point;else point = params;
+		var monitor = params.monitor || this.getMonitorFromUnscaledXY(point.x, point.y);
+		if (!monitor) return this.asyncIt(null, cb);
+		var relativeX = point.x - monitor.monitor.scaledRect.left;
+		var relativeY = point.y - monitor.monitor.scaledRect.top;
+		var scaledRelativeX = relativeX / monitor.deviceScaleFactor;
+		var scaledRelativeY = relativeY / monitor.deviceScaleFactor;
+		var scaledPoint = {
+			x: scaledRelativeX + monitor.monitorRect.left,
+			y: scaledRelativeY + monitor.monitorRect.top
+		};
+		return this.asyncIt(scaledPoint, cb);
+	}
+
+	/**
+  * Converts Rectangle (top, left, bottom, right) from unscaled to scaled. Mainly for use to translate window locations to/from Windows API.
+  *
+  * @param {any} rect
+  * @param {any} [cb=function () { }]
+  * @returns rect
+  * @memberof Monitors
+  */
+	translateRectToScaled(rect, cb = Function.prototype) {
+		var _this2 = this;
+
+		return _asyncToGenerator(function* () {
+			if (!_this2.ready) {
+				_this2.refreshMonitors(function () {
+					_this2.translateRectToScaled(rect, cb);
+				});
+				return "not ready";
+			}
+			var topLeft = _this2.translatePointToScaled({ x: rect.left, y: rect.top });
+			var bottomRight = _this2.translatePointToScaled({ x: rect.right, y: rect.bottom });
+			if (!topLeft && bottomRight) {
+				monitor = yield _this2.getMonitorFromScaledXY(bottomRight);
+				topLeft = _this2.translatePointToScaled({
+					monitor,
+					point: { x: rect.left, y: rect.top }
+				});
+			}
+			if (!bottomRight && topLeft) {
+				monitor = yield _this2.getMonitorFromScaledXY(bottomRight);
+				bottomRight = _this2.translatePointToScaled({
+					monitor,
+					point: { x: rect.right, y: rect.bottom }
+				});
+			}
+			return _this2.asyncIt({
+				top: topLeft ? topLeft.y : null,
+				left: topLeft ? topLeft.x : null,
+				bottom: bottomRight ? bottomRight.y : null,
+				right: bottomRight ? bottomRight.x : null,
+				height: topLeft && bottomRight ? bottomRight.y - topLeft.y : null,
+				width: topLeft && bottomRight ? bottomRight.x - topLeft.x : null
+			}, cb);
+		})();
+	}
+
+	/**
+  * Converts Rectangle (top, left, bottom, right) to unscaled from scaled. Mainly for use to translate window locations to/from Windows API.
+  *
+  * @param {any} rect
+  * @param {any} [cb=function () { }]
+  * @returns rect
+  * @memberof Monitors
+  */
+	translateRectFromScaled(rect, cb = Function.prototype) {
+		if (!this.ready) {
+			this.refreshMonitors(() => {
+				this.translateRectFromScaled(rect, cb);
+			});
+			return "not ready";
+		}
+		var topLeft = this.translatePointFromScaled({ x: rect.left, y: rect.top });
+		var bottomRight = this.translatePointFromScaled({ x: rect.right, y: rect.bottom });
+		if (!topLeft && bottomRight) {
+			topLeft = this.translatePointFromScaled({
+				monitor: this.getMonitorFromUnscaledXY(bottomRight),
+				point: { x: rect.left, y: rect.top }
+			});
+		}
+		if (!bottomRight && topLeft) {
+			bottomRight = this.translatePointFromScaled({
+				monitor: this.getMonitorFromUnscaledXY(topLeft),
+				point: { x: rect.right, y: rect.bottom }
+			});
+		}
+		return this.asyncIt({
+			top: topLeft ? topLeft.y : null,
+			left: topLeft ? topLeft.x : null,
+			bottom: bottomRight ? bottomRight.y : null,
+			right: bottomRight ? bottomRight.x : null,
+			height: topLeft && bottomRight ? bottomRight.y - topLeft.y : null,
+			width: topLeft && bottomRight ? bottomRight.x - topLeft.x : null
+		}, cb);
+	}
+}
+/* harmony default export */ __webpack_exports__["a"] = (Monitors);
+
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\monitorsAndScaling.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\monitorsAndScaling.js"); } } })();
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
+
+/***/ }),
+
+/***/ 23:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__configUtil__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__common_system__);
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+
+// This routerTransport module is shared between router clients and the router service.  It supports
+// the addition of new transports without any change to the router code. Each transport is
+// point-to-point between a router client and the router service (i.e. hub and spoke).  Each router
+// client can use a different transport (i.e. the router service connects to them all).
+
+
+
+
+
+
+
+/**
+ * @introduction
+ * <h2>Router Transport</h2>
+ * **Service-Level Module**.  Manages and contains the point-to-point transports (i.e., Layer 2) supported by Finsemble.
+ * Each transport communicates between a Finsemble services or component (i.e. a router client on one end) and the Finsemble router service (another router client on the other end).
+ *
+ * Integration into routerService.js is automatic on startup.
+ *
+ * Developer Notes on Adding New Transport:
+ * 1) Create new transport constructor.
+ * 2) Call RouterTransport.addTransport() to make the transport constructor (see the bottom of this file)
+ *
+ * Each transport constructor must be implemented with the following interface:
+ *
+ *	ExampleTransportConstructor(params, parentMessageHandler, source, destination) where
+ *
+ * 			params is a passed in object including data that may (or may not) be needed for implementing the transport
+ * 					params.FinsembleUUID: globally unique identifier for Finsemble (one per host machine)
+ *					params.applicationRoot:  value of manifest.finsemble.applicationRoot,
+ *					params.routerDomainRoot: value of manifest.finsemble.moduleRoot,
+ *					params.sameDomainTransport: transport to use for same domain clients
+ *					params.crossDomainTransport: transport to use for cross domain clients
+ *					params.transportSettings: transport settings from finsemble.router.transportSettings if defined, otherwise an empty object
+ *
+ * 			parentMessageHandler(incomingTransportInfo, routerMessage) where
+ * 					incomingTransportInfo is a transport-specific object containing essential information to route back to the same client.
+ * 						The same object will be returned on a send() so the transport can use to send the message to that client.
+ * 						It's up to the developer to decide what to put in the incomingTransportInfo object. The RouterService never
+ * 						directly uses the object, except to do a property-based comparison for equality (so equality must be based on the top-level properties within the object.)
+ * 					routerMessage is an object containing a single router message. The transport generally does not need to know the contents --
+ * 						it only sends and receives these messages. However, the router's header (routerMessage.header) is available to the transport if needed.
+ *
+ * 			source is either the source's client name or "RouterService" (when the RouterService is the source)
+ *
+ * 			destination is either the destination's client name or "RouterService" (when the RouterService is the desgination)
+ *
+ * 			callback(this) returns the constructor.  Normally a constructor is not asyncronous, but support in case the constructed transport requires async initialization.
+ *
+ * The transport constructor must implement two functions.
+ * 		1) send(transport, routerMessage) -- transport object contains destination transport info; routerMessage is the message to send
+ * 		2) identifier() -- returns transport's name
+ *
+ * These functions along with the parentMessageHandler callback all that's needed to interface with the higher-level router (either a client or router service):
+ *
+ * The three transports implemented at the bottom of this file can serve as examples.
+ *
+ * @namespace RouterTransport
+ */
+var RouterTransport = {
+
+	activeTransports: {},
+
+	/**
+  * Adds a new type of router transport to pass message between RouterClient and RouterService.
+  *
+  * @param {string} transportName identifies the new transport
+  * @param {object} transportConstructor returns an instance of the new transport
+  */
+	addTransport: function (transportName, transportConstructor) {
+		this.activeTransports[transportName] = transportConstructor;
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log(`RouterTransport ${transportName} added to activeTransports`);
+	},
+
+	/**
+  * Gets array of active transports.  What is active depends both on config and what is supported by the environment. Typically, if OF IAB is defined then the IAB transport is added to active list.  Likewise, if SharedWorker defined, then SharedWork transport added to the active list.  Special transports that don't have backwards compatability (e.g. FinsembleTransport) are only added if specified in the config.
+  *
+  * @param {string} params transport paramters
+  *
+  * @returns array of active transport names
+  */
+	getActiveTransports: function (params) {
+		var transportNames = [];
+
+		// convenience funciton to add transport to active list only if it's not already in the list
+		function addToActive(transportName) {
+			if (transportNames.indexOf(transportName) === -1) {
+				// if not already in the list, then add it
+				transportNames.push(transportName);
+			}
+		}
+
+		// if OpenFin IAB available, then add IAB to active list
+		if (fin && fin.desktop && fin.desktop.InterApplicationBus) addToActive("OpenFinBus");
+
+		// If electron, always have FinsembleTransport active
+		if (fin && fin.container === "Electron") addToActive("FinsembleTransport");
+
+		// if shared worker available, then add shared-worker transport to active list
+		if (SharedWorker) addToActive("SharedWorker");
+
+		// add whatever the sameDomainTrasnport is to the active list
+		addToActive(params.sameDomainTransport);
+
+		// add whatever the crossDomainTrasnport is to the active list
+		addToActive(params.crossDomainTransport);
+
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log("getActiveTransports", transportNames);
+		return transportNames;
+	},
+
+	/**
+  * Get default transport for event router&mdash;this is the most reliable transport across all contexts.
+  *
+ 	 * @param {object} params parameters for transport
+  * @param {any} incomingMessageHandler
+  * @param {any} source
+  * @param {any} destination
+  * @returns the transport object
+  */
+	getDefaultTransport: function (params, incomingMessageHandler, source, destination) {
+		return RouterTransport.getTransport(params, "OpenFinBus", incomingMessageHandler, source, destination);
+	},
+
+	/**
+  * Get best client transport based on the run-time context. Will only return cross-domain transport if current context is inter-domain.
+  *
+ 	 * @param {object} params parameters for transport
+  * @param {any} incomingMessageHandler
+  * @param {any} source
+  * @param {any} destination
+  * @returns the transport object
+  */
+	getRecommendedTransport: function (params, incomingMessageHandler, source, destination) {
+
+		// returns true if this window's location is in another domain
+		function crossDomain() {
+			var parser = document.createElement("a");
+			parser.href = params.routerDomainRoot;
+
+			var isSameHost = window.location.hostname === parser.hostname;
+
+			var isSameProtocol = window.location.protocol === parser.protocol;
+
+			var wport = window.location.port === undefined ? window.location.port : 80;
+			var pport = parser.port === undefined ? parser.port : 80;
+			var isSamePort = wport === pport;
+
+			var isCrossDomain = !(isSameHost && isSamePort && isSameProtocol);
+			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("Transport crossDomain=" + isCrossDomain + " (" + isSameHost + ":" + isSameProtocol + ":" + isSamePort + ")");
+			return isCrossDomain;
+		}
+
+		// returns name of the best transport for communicating with router service
+		function recommendedTransportName() {
+			var sameDomainTransport = params.sameDomainTransport;
+			var crossDomainTransport = params.crossDomainTransport;
+
+			var selectedTransport = sameDomainTransport;
+			if (crossDomain()) {
+				selectedTransport = crossDomainTransport;
+			}
+
+			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log(`Transport Info: Selected=${selectedTransport} SameDomainDefault=${sameDomainTransport} CrossDomainDefault=${crossDomainTransport}`);
+			console.log(`Transport Info: Selected=${selectedTransport} SameDomainDefault=${sameDomainTransport} CrossDomainDefault=${crossDomainTransport}`);
+
+			return selectedTransport;
+		}
+
+		var transportName = recommendedTransportName();
+		return RouterTransport.getTransport(params, transportName, incomingMessageHandler, source, destination);
+	},
+
+	/**
+  * Get a specific transport by name. The transport must be in list of the active transports (i.e. previously added).
+  *
+ 	 * @param {object} params parameters for transport
+  * @param {any} transportName
+  * @param {any} incomingMessageHandler
+  * @param {any} source
+  * @param {any} destination
+  * @returns the transport object
+  */
+	getTransport: function (params, transportName, incomingMessageHandler, source, destination) {
+		var self = this;
+		return new Promise(function (resolve, reject) {
+			var transportConstructor = self.activeTransports[transportName];
+			if (transportConstructor) {
+				new transportConstructor(params, incomingMessageHandler, source, destination, function (newTransport) {
+					resolve(newTransport);
+				});
+			} else {
+				reject("unknown router transport name: " + transportName);
+			}
+		});
+	}
+};
+
+//////////////////////////////////////////////////////////////
+// Below all transports are defined then added to active list
+//////////////////////////////////////////////////////////////
+
+var RouterTransportImplementation = {}; // a convenience namespace for router-transport implementations
+
+/*
+ * Implements the SharedWorker Transport.
+ *
+ * Required Functions (used by transport clients):
+ * 		send(routerMessage) -- transports the event
+ * 		identifier() -- returns transport name/identifier
+ *
+ * @param {object} params various parms to support transports
+ * @param {any} parentMessageHandler callback for incoming event
+ * @param {any} source either the client name or "RouterService"
+ * @param {any} destination either the client name or "RouterService" (unused in SharedWorker)
+ */
+RouterTransportImplementation.SharedWorkerTransport = function (params, parentMessageHandler, source, destination, callback) {
+	var routerThread;
+	var self = this;
+
+	// receives incoming shared-worker messages then passes on to parent with correct "wrapper"
+	function sharedWorkerMessageHandler(swMessage) {
+		var port = swMessage.data[0];
+		var routerMessage = swMessage.data[1];
+		var incomingTransportInfo = { "transportID": self.identifier(), "port": port };
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("SharedWorkerTransport Incoming Transport", incomingTransportInfo, "Message", routerMessage);
+		parentMessageHandler(incomingTransportInfo, routerMessage);
+	}
+
+	//required function for parent (i.e. routeClient or routeService)
+	this.send = function (transport, routerMessage) {
+		// handle optional transport parm
+		if (arguments.length === 1) {
+			// clients use just one parm -- routerMessage
+			routerMessage = arguments[0];
+			transport = null;
+		} else {
+			// router services uses both parameters
+			transport = arguments[0];
+			routerMessage = arguments[1];
+		}
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("SharedWorkerTransport Outgoing Transport", routerMessage);
+
+		try {
+			routerThread.port.postMessage([transport, routerMessage]);
+		} catch (e) {
+			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("SharedWorkerTransport: post message failed: " + JSON.stringify(e), "Probable cause is sending illegal data type (e.g. function).");
+		}
+	};
+
+	//required function for parent (i.e. routeClient or routeService)
+	this.identifier = function () {
+		return "SharedWorker";
+	};
+
+	var workerPath = params.transportSettings.SharedWorker && params.transportSettings.SharedWorker.workerPath ? params.transportSettings.SharedWorker.workerPath : params.routerDomainRoot + "/common/routerSharedWorker.js";
+
+	__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log(`SharedWorker Transport Initializing for ${source} using ${workerPath}`);
+	console.log(`SharedWorker Transport Initializing for ${source} using ${workerPath}`);
+
+	routerThread = new SharedWorker(workerPath, { name: "Finsemble", credentials: "included" });
+	routerThread.port.onmessage = sharedWorkerMessageHandler;
+	routerThread.onerror = function (e) {
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("SharedWorkerTransport Transport Error" + JSON.stringify(e));
+	};
+	routerThread.port.start();
+
+	if (source === "RouterService") {
+		// send first message though shared worker to identify router service
+		routerThread.port.postMessage({ data: "connect", source: "RouterService" });
+	}
+
+	callback(this);
+};
+
+/*
+ * Implements the OpenFin Bus Transport.
+ *
+ * Required Functions (used by transport clients):
+ * 		send(transport, routerMessage) -- transport object contains destination transport info; routerMessage is the message to send
+ * 		identifier() -- returns transport's name
+ *
+ * @param {object} params unused in OpenFin transport
+ * @param {any} parentMessageHandler callback for incoming event
+ * @param {any} source either the client name or "RouterService"
+ * @param {any} destination either the client name or "RouterService"
+ */
+RouterTransportImplementation.OpenFinTransport = function (params, parentMessageHandler, source, destination, callback) {
+	var uuid = __WEBPACK_IMPORTED_MODULE_2__common_system__["System"].Application.getCurrent().uuid;
+	var self = this;
+
+	// receives incoming OpenFin bus messages then passes on to parent with correct "wrapper"
+	function openFinMessageHandler(routerMessage, senderUuid) {
+		var incomingTransportInfo = { "transportID": self.identifier(), "senderUuid": senderUuid, "name": routerMessage.header.origin };
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("OpenFinTransport Incoming Transport", incomingTransportInfo, "Message", routerMessage);
+		parentMessageHandler(incomingTransportInfo, routerMessage);
+	}
+
+	function subscribeFailure(reason) {
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("OpenFinBus Subscribe Failure: " + reason);
+	}
+
+	//required function for the parent (i.e. routeClient or routeService)
+	this.send = function (transport, routerMessage) {
+		var destTopic;
+
+		// handle optional transport parm
+		if (arguments.length === 1) {
+			// client use just one parameter - routerMessage
+			destTopic = destination;
+			routerMessage = arguments[0];
+		} else {
+			// router service uses both parameters
+			destTopic = transport.name;
+			routerMessage = arguments[1];
+		}
+
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("OpenFinTransport Outgoing Transport", uuid, destTopic, "Message", routerMessage);
+		fin.desktop.InterApplicationBus.publish(destTopic, routerMessage, function () {}, function (err) {});
+	};
+
+	//required function for the parent (i.e. routeClient or routeService)
+	this.identifier = function () {
+		return "OpenFinBus";
+	};
+
+	__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log(`OpenFinBus Transport Initializing for ${source}`);
+	console.log(`OpenFinBus Transport Initializing for ${source}`);
+	fin.desktop.InterApplicationBus.subscribe("*", source, openFinMessageHandler, null, subscribeFailure);
+
+	callback(this);
+};
+
+/*
+ * Implements the FinsembleTransport (alternative to IAB without iFrame problems with supporting server commonly running on local server).
+ *
+ * Required Functions (used by transport clients):
+ * 		send(event) -- transports the event
+ * 		identifier() -- returns transport name/identifier
+ *
+ * @param {object} params various parms to support transports
+ * @param {any} parentMessageHandler callback for incoming event
+ * @param {any} source either the client name or "RouterService"
+ * @param {any} destination either the client name or "RouterService" (unused in FinsembleTransport)
+ */
+RouterTransportImplementation.FinsembleTransport = function (params, parentMessageHandler, source, destination, callback) {
+	/** @TODO - split into two separate vars for clarity. */
+	var serverAddress = __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress", __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.IAC.serverAddress", "wss://localhost.chartiq.com:3376"));
+	const SOCKET_SERVER_ADDRESS = serverAddress + "/router"; // "router" is the socket namespace used on server
+
+	var self = this;
+
+	// receives incoming messages then passes on to parent (what's passed to parent should be same routerMessage received in send()
+	function finsembleMessageHandler(routerMessage) {
+		var incomingTransportInfo = { "transportID": self.identifier(), "client": routerMessage.clientMessage.header.origin };
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("FinsembleTransport Incoming Transport", incomingTransportInfo, "Message", routerMessage);
+		parentMessageHandler(incomingTransportInfo, routerMessage.clientMessage);
+	}
+
+	// Both sending and receiving is based on the following routing functionality located in a local node server (the below is a copy of the node server code)
+	// 		// destination is RouterClient (message.client)
+	//  	client.on('ROUTER_CLIENT', function(message) {
+	// 			routerServer.emit(message.client, message);
+	// 		});
+	// 		// destination is RouterService
+	// 		client.on('ROUTER_SERVICE', function(message) {
+	// 			routerServer.emit('ROUTER_SERVICE_IN', message);
+	// 		});
+
+	//required function for the parent (i.e. routeClient or routeService)
+	this.send = function (transport, routerMessage) {
+		let dest;
+		let message;
+
+		// decide how to route the message based on whether client or routerservice is sending
+		if (arguments.length === 1) {
+			// clients use just one parameter, so send client message to RouterService
+			dest = "ROUTER_SERVICE";
+			routerMessage = arguments[0];
+			message = { clientMessage: routerMessage }; // no client property needed to route on server since always going to router service
+		} else {
+			// router service uses both parameters, so send router-service mssage to a client
+			dest = "ROUTER_CLIENT";
+			routerMessage = arguments[1];
+			message = { client: transport.client, clientMessage: routerMessage }; // client property used to router on server
+		}
+
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("FinsembleTransport Outgoing Transport", dest, "NewMessage", message);
+		routerServerSocket.send(JSON.stringify({ dest, message }));
+	};
+
+	//required function for the parent (i.e. routeClient or routeService)
+	this.identifier = function () {
+		return "FinsembleTransport";
+	};
+
+	__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log(`FinsembleTransport Transport Initializing for ${source} using ${SOCKET_SERVER_ADDRESS}`);
+	console.log(`FinsembleTransport Transport Initializing for ${source} using ${SOCKET_SERVER_ADDRESS}`);
+
+	function connectTimeoutHandler() {
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`FinsembleTransport Connection Timeout for ${source}`);
+		callback(self);
+	}
+
+	// set up for receiving incoming messages
+	var routerServerSocket;
+	if (SOCKET_SERVER_ADDRESS.startsWith("ws:") || SOCKET_SERVER_ADDRESS.startsWith("wss:")) {
+		routerServerSocket = new WebSocket(SOCKET_SERVER_ADDRESS);
+	} else {
+		console.error("wss not found as SOCKET_SERVER_ADDRESS.  Use wss!", SOCKET_SERVER_ADDRESS);
+		routerServerSocket = new WebSocket(SOCKET_SERVER_ADDRESS);
+	}
+	var connectTimer = setTimeout(connectTimeoutHandler, 3000); // cleared in setServiceOnline
+
+	routerServerSocket.addEventListener("open", () => {
+		clearTimeout(connectTimer);
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log("FinsembleTransport Connected to Server");
+		console.log("FinsembleTransport Connected to Server");
+		// TODO: Currently all messages are broadcast to everyone and filtering happens here. Need to implement a system similar to socket.io to prevent this or only send messages to proper destinations.
+		routerServerSocket.addEventListener("message", event => {
+			let data = JSON.parse(event.data);
+			if (source === "RouterService" && data.dest == "ROUTER_SERVICE") {
+				finsembleMessageHandler(data.message);
+			} else if (source === data.message.client) {
+				finsembleMessageHandler(data.message);
+			}
+		});
+		callback(self);
+	});
+};
+
+/*
+ * Implements the FinsembleCloudTransport (a version of FinsembleTransport with server commonly running on remote server).
+ *
+ * Required Functions (used by transport clients):
+ * 		send(event) -- transports the event
+ * 		identifier() -- returns transport name/identifier
+ *
+ * @param {object} params various parms to support transports
+ * @param {any} parentMessageHandler callback for incoming event
+ * @param {any} source either the client name or "RouterService"
+ * @param {any} destination either the client name or "RouterService" (unused in FinsembleCloudTransport)
+ */
+RouterTransportImplementation.FinsembleCloudTransport = function (params, parentMessageHandler, source, destination, callback) {
+	var serverAddress;
+	var defaultAddress = __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.transportSettings.FinsembleCloudTransport.serverAddress", params.applicationRoot);
+	var FinsembleUUID = params.FinsembleUUID;
+
+	if (defaultAddress.substr(defaultAddress.length - 1) === "/") {
+		serverAddress = defaultAddress.substring(0, defaultAddress.length - 1); // truncate and trailing slash because it causes problem with socket.io namespace
+	} else {
+		serverAddress = defaultAddress;
+	}
+
+	const SOCKET_SERVER_ADDRESS = serverAddress + "/router"; // "router" is the socket namespace used on server
+
+	var self = this;
+
+	// receives incoming messages then passes on to parent (what's passed to parent should be same routerMessage received in send()
+	function finsembleMessageHandler(routerMessage) {
+		var incomingTransportInfo = { "transportID": self.identifier(), "client": routerMessage.clientMessage.header.origin };
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("FinsembleCloudTransport Incoming Transport", incomingTransportInfo, "Message", routerMessage);
+		parentMessageHandler(incomingTransportInfo, routerMessage.clientMessage);
+	}
+
+	//required function for the parent (i.e. routeClient or routeService)
+	this.send = function (transport, routerMessage) {
+		var dest;
+		var newMessage;
+
+		// decide how to route the message based on whether client or routerservice is sending
+		if (arguments.length === 1) {
+			// clients use just one parameter, so send client message to RouterService
+			dest = "ROUTER_SERVICE";
+			routerMessage = arguments[0];
+			newMessage = { FinsembleUUID, clientMessage: routerMessage }; // no client property needed to route on server since always going to router service
+		} else {
+			// router service uses both parameters, so send router-service mssage to a client
+			dest = "ROUTER_CLIENT";
+			routerMessage = arguments[1];
+			newMessage = { FinsembleUUID, client: transport.client, clientMessage: routerMessage }; // client property used to router on server
+		}
+
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("FinsembleCloudTransport Outgoing Transport", dest, "NewMessage", newMessage);
+		routerServerSocket.emit(dest, newMessage);
+	};
+
+	//required function for the parent (i.e. routeClient or routeService)
+	this.identifier = function () {
+		return "FinsembleCloudTransport";
+	};
+
+	__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log(`FinsembleCloudTransport Transport Initializing for ${source} using ${SOCKET_SERVER_ADDRESS}`);
+	console.log(`FinsembleCloudTransport Transport Initializing for ${source} using ${SOCKET_SERVER_ADDRESS}`);
+
+	function connectTimeoutHandler() {
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`FinsembleCloudTransport Connection Timeout for ${source}`);
+		callback(self);
+	}
+
+	// set up for receiving incoming messages
+	var routerServerSocket;
+	if (SOCKET_SERVER_ADDRESS.indexOf("ws:") !== -1) {
+		routerServerSocket = new ws(SOCKET_SERVER_ADDRESS);
+	} else {
+		console.error("SOCKET_SERVER_ADDRESS not wss!", SOCKET_SERVER_ADDRESS);
+		routerServerSocket = new ws(SOCKET_SERVER_ADDRESS); // if not ws then http
+	}
+	var connectTimer = setTimeout(connectTimeoutHandler, 3000); // cleared in setServiceOnline
+
+	routerServerSocket.on("connect", function () {
+		clearTimeout(connectTimer);
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log("FinsembleCloudTransport Connected to Server", FinsembleUUID);
+		console.log("FinsembleCloudTransport Connected to Server");
+		if (source === "RouterService") {
+			// if this transport is for router service, use hardcoded socket address ("ROUTER_SERVICE_IN") along with FinsembleUUID
+			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("Setting Up Socket Connection", "ROUTER_SERVICE_IN" + FinsembleUUID);
+			console.log("Setting Up Socket Connection", "ROUTER_SERVICE_IN" + FinsembleUUID);
+			routerServerSocket.on("ROUTER_SERVICE_IN" + FinsembleUUID, function (data) {
+				finsembleMessageHandler(data);
+			});
+		} else {
+			// for all other clients, the source == client name, so each socket address is based on client name along with FinsembleUUID
+			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("Setting Up Socket Connection", source + FinsembleUUID);
+			console.log("SETTING UP Socket CONNECTION", source + FinsembleUUID);
+			routerServerSocket.on(source + FinsembleUUID, function (data) {
+				finsembleMessageHandler(data);
+			});
+		}
+		callback(self);
+	});
+};
+
+// add the transports to the available/active list
+RouterTransport.addTransport("SharedWorker", RouterTransportImplementation.SharedWorkerTransport);
+RouterTransport.addTransport("OpenFinBus", RouterTransportImplementation.OpenFinTransport);
+RouterTransport.addTransport("FinsembleTransport", RouterTransportImplementation.FinsembleTransport);
+
+/* harmony default export */ __webpack_exports__["default"] = (RouterTransport);
+
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\routerTransport.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\routerTransport.js"); } } })();
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
+
+/***/ }),
+
+/***/ 24:
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {var scope = (typeof global !== "undefined" && global) ||
+            (typeof self !== "undefined" && self) ||
+            window;
+var apply = Function.prototype.apply;
+
+// DOM APIs, for completeness
+
+exports.setTimeout = function() {
+  return new Timeout(apply.call(setTimeout, scope, arguments), clearTimeout);
+};
+exports.setInterval = function() {
+  return new Timeout(apply.call(setInterval, scope, arguments), clearInterval);
+};
+exports.clearTimeout =
+exports.clearInterval = function(timeout) {
+  if (timeout) {
+    timeout.close();
+  }
+};
+
+function Timeout(id, clearFn) {
+  this._id = id;
+  this._clearFn = clearFn;
+}
+Timeout.prototype.unref = Timeout.prototype.ref = function() {};
+Timeout.prototype.close = function() {
+  this._clearFn.call(scope, this._id);
+};
+
+// Does not start the time, just sets up the members needed.
+exports.enroll = function(item, msecs) {
+  clearTimeout(item._idleTimeoutId);
+  item._idleTimeout = msecs;
+};
+
+exports.unenroll = function(item) {
+  clearTimeout(item._idleTimeoutId);
+  item._idleTimeout = -1;
+};
+
+exports._unrefActive = exports.active = function(item) {
+  clearTimeout(item._idleTimeoutId);
+
+  var msecs = item._idleTimeout;
+  if (msecs >= 0) {
+    item._idleTimeoutId = setTimeout(function onTimeout() {
+      if (item._onTimeout)
+        item._onTimeout();
+    }, msecs);
+  }
+};
+
+// setimmediate attaches itself to the global object
+__webpack_require__(27);
+// On some exotic environments, it's not clear which object `setimmediate` was
+// able to install onto.  Search each possibility in the same order as the
+// `setimmediate` library.
+exports.setImmediate = (typeof self !== "undefined" && self.setImmediate) ||
+                       (typeof global !== "undefined" && global.setImmediate) ||
+                       (this && this.setImmediate);
+exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
+                         (typeof global !== "undefined" && global.clearImmediate) ||
+                         (this && this.clearImmediate);
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
+
+/***/ }),
+
+/***/ 25:
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const routerTransport_1 = __webpack_require__(23);
+const Utils = __webpack_require__(8);
+const configUtil_1 = __webpack_require__(10);
+const validate_1 = __webpack_require__(6); // Finsemble args validator
+const userNotification_1 = __webpack_require__(17);
+const system_1 = __webpack_require__(3);
+const logger_1 = __webpack_require__(0);
+var queue = []; // should never be used, but message sent before router ready will be queue
+const Globals = window;
+const localLogger_1 = __webpack_require__(15);
+let Logger = logger_1.Logger;
+//@todo proper types for router messages would be great.
+// Use global data for these objects in case multiple clients running in same window (a side effect of injection and perhaps other edge conditions).
+Globals.FSBLData = Globals.FSBLData || {};
+Globals.FSBLData.clientIDCounter = Globals.FSBLData.clientIDCounter || 1000;
+Globals.FSBLData.RouterClients = Globals.FSBLData.RouterClients || {};
+/**
+ * @introduction
+ *
+ * <h2>Router Client</h2>
+ *
+ * The Router Client sends and receives event messages between Finsemble components and services. See the <a href=tutorial-TheRouter.html>Router tutorial</a> for an overview of the Router's functionality.
+ *
+ * Router callbacks for incoming messages are **always** in the form `callback(error, event)`. If `error` is null, then the incoming data is always in `event.data`. If `error` is set, it contains a diagnostic object and message. On error, the `event` parameter is not undefined.
+ *
+ *
+ * @constructor
+ * @hideconstructor
+ * @publishedName RouterClient
+ * @param {string} clientName router base client name for human readable messages (window name is concatenated to baseClientName)
+ * @param {string=} transportName router transport name, currently either "SharedWorker" or "OpenFinBus" (usually this is autoconfigured internally but can be selected for testing or special configurations)
+ */
+// uncomment for optimization.
+// console.time("FinMainStartup");
+exports.RouterClientConstructor = function (params) {
+    validate_1.default.args(params, "object") && validate_1.default.args2("params.clientName", params.clientName, "string", "params.transportName", params.transportName, "string=");
+    // console.timeStamp("Router");
+    // console.profile("Router");
+    ///////////////////////////
+    // Private Data
+    ///////////////////////////
+    var baseClientName = params.clientName;
+    var transportName = params.transportName;
+    var handshakeHandler;
+    var timeCalibrationHandler;
+    var mapListeners = {};
+    var mapResponders = {};
+    var mapPubSubResponders = {};
+    var mapPubSubResponderState = {};
+    var mapPubSubResponderRegEx = {};
+    var pubsubListOfSubscribers = {};
+    var mapSubscribersID = {};
+    var mapSubscribersTopic = {};
+    var mapQueryResponses = {};
+    var mapQueryResponseTimeOut = {};
+    var clientName;
+    var transport = null;
+    var isRouterReady = false;
+    var parentReadyCallbackQueue = []; // must be queue because may be multiple waiters
+    var self = this;
+    this.startupTime = 0;
+    /////////////////////////////////////////////////////////////////////
+    // Private Message Contructors for Communicating with RouterService
+    /////////////////////////////////////////////////////////////////////
+    function InitialHandshakeMessage() {
+        this.header = {
+            "origin": clientName,
+            "type": "initialHandshake",
+        };
+    }
+    function TimeCalibrationHandshakeMessage(clientBaseTime, serviceBaseTime) {
+        this.header = {
+            "origin": clientName,
+            "type": "timeCalibration",
+        };
+        this.clientBaseTime = clientBaseTime;
+        this.serviceBaseTime = serviceBaseTime;
+    }
+    function AddListenerMessage(channel) {
+        this.header = {
+            "origin": clientName,
+            "type": "addListener",
+            "channel": channel
+        };
+    }
+    function TransmitMessage(toChannel, data, options) {
+        this.header = {
+            "origin": clientName,
+            "type": "transmit",
+            "channel": toChannel
+        };
+        this.data = data;
+        this.options = options;
+    }
+    function RemoveListenerMessage(channel) {
+        this.header = {
+            "origin": clientName,
+            "type": "removeListener",
+            "channel": channel
+        };
+    }
+    function addResponderMessage(channel) {
+        this.header = {
+            "origin": clientName,
+            "type": "addResponder",
+            "channel": channel
+        };
+    }
+    function QueryMessage(queryID, channel, data) {
+        this.header = {
+            "origin": clientName,
+            "type": "query",
+            "queryID": queryID,
+            "channel": channel
+        };
+        this.data = data;
+    }
+    function QueryResponseMessage(queryID, error, data) {
+        this.header = {
+            "origin": clientName,
+            "type": "queryResponse",
+            "queryID": queryID,
+            "error": error
+        };
+        this.data = data;
+    }
+    function RemoveResponderMessage(channel) {
+        this.header = {
+            "origin": clientName,
+            "type": "removeResponder",
+            "channel": channel
+        };
+    }
+    function SubscribeMessage(subscribeID, topic) {
+        this.header = {
+            "origin": clientName,
+            "type": "subscribe",
+            "subscribeID": subscribeID,
+            "topic": topic
+        };
+    }
+    function UnsubscribeMessage(subscribeID, topic) {
+        this.header = {
+            "origin": clientName,
+            "type": "unsubscribe",
+            "subscribeID": subscribeID,
+            "topic": topic
+        };
+    }
+    function PublishMessage(topic, data) {
+        this.header = {
+            "origin": clientName,
+            "type": "publish",
+            "topic": topic
+        };
+        this.data = data;
+    }
+    function NotifyMessage(subscribeID, topic, error, data) {
+        this.header = {
+            "origin": clientName,
+            "type": "notify",
+            "subscribeID": subscribeID,
+            "topic": topic,
+            "error": error
+        };
+        this.data = data;
+    }
+    function AddPubSubResponderMessage(topic) {
+        this.header = {
+            "origin": clientName,
+            "type": "addPubSubResponder",
+            "topic": topic
+        };
+    }
+    function RemovePubSubResponderMessage(topic) {
+        this.header = {
+            "origin": clientName,
+            "type": "removePubSubResponder",
+            "topic": topic
+        };
+    }
+    function JoinGroupMessage(group) {
+        this.header = {
+            "origin": clientName,
+            "type": "joinGroup",
+            "group": group
+        };
+    }
+    function LeaveGroupMessage(group) {
+        this.header = {
+            "origin": clientName,
+            "type": "leaveGroup",
+            "group": group
+        };
+    }
+    function GroupTransmitMessage(group, toChannel, message, data) {
+        this.header = {
+            "origin": clientName,
+            "type": "groupTransmit",
+            "group": group,
+            "channel": toChannel
+        };
+        this.data = data;
+    }
+    //////////////////////
+    // Private Functions
+    //////////////////////
+    // router client is being terminated so cleanup
+    function destructor(event) {
+        Logger.system.info("WINDOW LIFECYCLE:Shutdown:RouterClient:Shutting down.");
+        self.disconnectAll(); // this will let the router know the client is terminating
+    }
+    // invoked when router init is complete
+    function onReadyCallBack() {
+        self.startupTime = performance.now() - self.startupTime;
+        Logger.system.debug("WINDOW LIFECYCLE:STARTUP:RouterClient Ready");
+        isRouterReady = true;
+        // console.profileEnd("Router");
+        // invoke all the parent callbacks waiting for router to be ready
+        while (parentReadyCallbackQueue.length > 0) {
+            Logger.system.debug("WINDOW LIFECYCLE:STARTUP:RouterClient parentReady invoked");
+            var nextParentCallback = parentReadyCallbackQueue.shift();
+            nextParentCallback();
+        }
+    }
+    // called once on router-client creation
+    function constructor(clientName, transportName) {
+        Logger.system.debug("WINDOW LIFECYCLE:STARTUP:RouterClient Constructor:Name:", clientName);
+        var callbackCounter = 0;
+        function processManifest(manifest) {
+            Logger.system.info("WINDOW LIFECYCLE:STARTUP:RouterClient:processManifest");
+            //If manifest is a string, then there was an error getting the manifest because in a separate application
+            if (!manifest || typeof (manifest) === "string") {
+                Logger.system.error("WINDOW LIFECYCLE:STARTUP:RouterClient:processManifest failed -- fatal error", manifest);
+            }
+            else {
+                asyncConnectToEventRouter(manifest, clientName, transportName, onReadyCallBack); /**** establish connection to router service ****/
+            }
+        }
+        //This is the only place we need to wait for desktop.main
+        system_1.System.ready(function () {
+            var finWindow = system_1.System.Window.getCurrent();
+            Logger.system.debug(`WINDOW LIFECYCLE:STARTUP: fin.main invoked in ${finWindow.name}`);
+            window.console.debug(`WINDOW LIFECYCLE:STARTUP: fin.main invoked in ${finWindow.name}`);
+            self.startupTime = performance.now();
+            // uncomment for optimization.
+            // console.timeEnd("FinMainStartup");
+            if (callbackCounter++ === 0) { // this check should  not be needed; patch for OpenFin bug which invokes callback twice
+                // catch "window closing" event so can cleanup
+                //got rid of onClose destructors because it's handled inside of the baseService and inside of FSBL. if we disconnect all before other close handlers complete, we could end up with a hanging window.
+                finWindow.getOptions((opts) => {
+                    // now the manifest data is available in custom data for all windows except the service manager window (i.e. the first window)
+                    if (opts.customData && opts.customData.manifest) {
+                        Logger.system.debug("Router Init using custom data");
+                        processManifest(opts.customData.manifest);
+                    }
+                    else {
+                        configUtil_1.ConfigUtilInstance.getExpandedRawManifest(function (manifest) {
+                            Logger.system.debug("Router Init using getExpandedRawManifest");
+                            if (Globals.FinsembleUUID) {
+                                manifest.finsemble.FinsembleUUID = Globals.FinsembleUUID; // every window except serviceManager has FinsembleUUID -- this case covers the service manager,
+                            }
+                            processManifest(manifest);
+                        }, function (err) {
+                            Logger.system.error("WINDOW LIFECYCLE:STARTUP:RouterClient:manifest error", err);
+                        });
+                    }
+                }, function (err) {
+                    Logger.system.error("WINDOW LIFECYCLE:STARTUP:finWindow.getOptions error", err);
+                });
+            }
+        });
+    }
+    // connects to event-router service. will retry various ways if needed
+    function asyncConnectToEventRouter(manifest, clientName, transportName, onReadyCallBack) {
+        var transportNotSpecified = (typeof (transportName) === "undefined");
+        var myTimer;
+        var myRetryCounter;
+        var isFinished = false;
+        var handshakeFailedCount = 0;
+        var finConfig = manifest.finsemble;
+        var isElectron = fin && fin.container == "Electron";
+        var routerParams = {
+            FinsembleUUID: finConfig.FinsembleUUID,
+            applicationRoot: finConfig.applicationRoot,
+            routerDomainRoot: finConfig.moduleRoot,
+            forceWindowTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.forceWindowTransport", {}),
+            sameDomainTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.sameDomainTransport", "SharedWorker"),
+            crossDomainTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.crossDomainTransport", isElectron ? "FinsembleTransport" : "OpenFinBus"),
+            transportSettings: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.transportSettings", {}),
+            IAC: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.IAC", {})
+        };
+        function getClientTransport() {
+            Logger.system.debug("WINDOW LIFECYCLE:STARTUP:RouterClient:getClientTransport", "ROUTER PARAMS:", routerParams);
+            if (transportNotSpecified) {
+                transport = routerTransport_1.default.getRecommendedTransport(routerParams, incomingMessageHandler, clientName, "RouterService")
+                    .then(transportReady)
+                    .catch(errHandler);
+            }
+            else { // tranport specified...typically only for regression testing
+                transport = routerTransport_1.default.getTransport(routerParams, transportName, incomingMessageHandler, clientName, "RouterService")
+                    .then(transportReady)
+                    .catch(errHandler);
+            }
+        }
+        function transportReady(transportObj) {
+            myRetryCounter = 0;
+            Logger.system.debug("WINDOW LIFECYCLE:STARTUP:RouterClient:transport ready", "TRANSPORT OBJECT", transportObj);
+            transport = transportObj;
+            handshakeHandler = finished; // set function to receive handshake response
+            sendHandshake();
+            myTimer = setInterval(sendHandshake, 200); // start time to retry if response not recieved back from router service
+        }
+        function handshakeFailedHandler() {
+            clearInterval(myTimer);
+            handshakeFailedCount++;
+            if (handshakeFailedCount <= 3) {
+                Logger.system.error("WINDOW LIFECYCLE:STARTUP:RouterClient: failure to connect to router service. Retrying...", handshakeFailedCount, routerParams);
+                getClientTransport();
+            }
+            else {
+                let failureMessage = `Router ${transport.identifier()} failure for window ${window.name} after multiple retries.`;
+                Logger.system.error(failureMessage, routerParams);
+                let notificationURL = configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.notificationURL", finConfig.moduleRoot + "/components/system/notification/notification.html");
+                userNotification_1.default.alert("dev", "ONCE-SINCE-STARTUP", "FSBL-Internal-Transport-Failure", failureMessage, { url: notificationURL });
+            }
+        }
+        function sendHandshake() {
+            Logger.system.debug("WINDOW LIFECYCLE:STARTUP:RouterClient: sendHandshake", myRetryCounter);
+            sendToRouterService(new InitialHandshakeMessage());
+            if (myRetryCounter++ > 50) {
+                handshakeFailedHandler();
+            }
+        }
+        function finished() {
+            if (!isFinished) { // ensure only invoked once
+                Logger.system.debug("WINDOW LIFECYCLE:STARTUP:RouterClient connected: Starting " + clientName + " with transport " + transport.identifier());
+                isFinished = true;
+                clearInterval(myTimer);
+                if (queue) { // this should not happen with proper startup order, which waits on routerClient to be ready
+                    for (var i = 0; i < queue.length; i++) {
+                        Logger.system.debug("RouterClient: firing queued msg");
+                        var msg = queue[i];
+                        transport.send(msg);
+                    }
+                }
+                // notify initialization is complete
+                if (onReadyCallBack) {
+                    onReadyCallBack();
+                }
+            }
+        }
+        function errHandler(errorMessage) {
+            Logger.system.error("RouterClientError", errorMessage);
+        }
+        // main code for this asyncConnectToEventRouter function -- only executed once
+        getClientTransport();
+    }
+    // provides unique id within one router client for queries
+    function clientID() {
+        return clientName + "." + (++Globals.FSBLData.clientIDCounter);
+    }
+    // returns true if this routerClient originated the message
+    function originatedHere() {
+        return this.header.origin === this.header.lastClient;
+    }
+    // invoke client callbacks in the input array (that are attached to a specific channel and listener type)
+    function invokeListenerCallbacks(map, message) {
+        var originalClientCallbackArray = map[message.header.channel] || {};
+        var clientCallbackArray = [];
+        if (clientCallbackArray === undefined) {
+            Logger.system.warn("RouterClient: no listener for incoming transmit on channel " + message.header.channel + " from " + message.header.origin, message);
+        }
+        else {
+            message.originatedHere = originatedHere; // add local function to test origin
+            //@note, have to operate off of a copy because a callback may call removeListener, which will modify map[message.header.channel].
+            originalClientCallbackArray.forEach(cb => {
+                clientCallbackArray.push(cb);
+            });
+            for (var i = 0; i < clientCallbackArray.length; i++) { // for each callback defined for the channel
+                if (!Logger.isLogMessage(message.header.channel)) { // logger messages
+                    Logger.system.info("RouterClient: incoming transmit", "CHANNEL", message.header.channel, "FROM", message.header.origin, "MESSAGE", message);
+                }
+                clientCallbackArray[i](null, message); // invoke the callback; the error parameter is always null for this case
+            }
+        }
+    }
+    function sendQueryResponse(err, responseData) {
+        //@todo consider removing this log. Why log it? Why not log it _only_ if the dev wants a particular message logged. This can cause problems.
+        Logger.system.info("RouterClient: outgoing query response", "CHANNEL", this.header.channel, "RESPONSE DATA", responseData, "QUERY ID", this.header.queryID);
+        sendToRouterService(new QueryResponseMessage(this.header.queryID, err, responseData));
+    }
+    // invoke responder-listener callback (attached to a specific channel)
+    function invokeResponderCallback(map, queryMessage) {
+        var responderCallback = map[queryMessage.header.channel];
+        if (responderCallback === undefined) {
+            Logger.system.warn("RouterClient: no query responder define on channel " + queryMessage.header.channel + " incoming from " + queryMessage.header.origin, queryMessage);
+            responderCallback(null, queryMessage); // invoke the callback (no error), queryMessage);
+        }
+        else {
+            if (!queryMessage.header.error) {
+                queryMessage.originatedHere = originatedHere; // add local function to test origin
+                queryMessage.sendQueryResponse = sendQueryResponse.bind(queryMessage); // add callback function to message so responder can respond to query
+                Logger.system.info("RouterClient: incoming query", "CHANNEL", queryMessage.header.channel, "FROM", queryMessage.header.origin, "QUERY MESSAGE", queryMessage);
+                responderCallback(null, queryMessage); // invoke the callback (no error)
+            }
+            else { // invoke the callback with error since  flag in message (from router service)
+                Logger.system.warn("RouterClient: queryResponder error", queryMessage);
+                responderCallback(queryMessage.header.error, null);
+                delete map[queryMessage.header.channel]; // this is a bad responder (e.g. duplicate) so remove it
+            }
+        }
+    }
+    // add a callbackHandler into the query-response map for the given queryID
+    function addQueryResponseCallBack(map, queryID, responseCallback) {
+        map[queryID] = responseCallback;
+    }
+    // add timer to wait for query response
+    function addQueryResponseTimeout(mapQueryResponseTimeOut, newQueryID, channel, timeout) {
+        if (timeout > 0) {
+            mapQueryResponseTimeOut[newQueryID] = setTimeout(function () {
+                Logger.system.warn("RouterClient: timeout waiting on query response on channel " + channel + " for queryID " + newQueryID +
+                    " on timer " + mapQueryResponseTimeOut[newQueryID] + " timeout=" + timeout);
+            }, timeout);
+        }
+    }
+    // delete timer waiting on query response (if it exists)
+    function deleteQueryResponseTimeout(mapQueryResponseTimeOut, newQueryID) {
+        var theTimer = mapQueryResponseTimeOut[newQueryID];
+        if (theTimer !== undefined) {
+            clearTimeout(theTimer);
+        }
+    }
+    // invoke query-response callback (that is attached to a specific channel and listener type)
+    function invokeQueryResponseCallback(map, responseMessage) {
+        var clientCallback = map[responseMessage.header.queryID];
+        if (clientCallback === undefined) {
+            Logger.system.warn("RouterClient: no handler for incoming query response", "QUERY ID", responseMessage.header.queryID);
+        }
+        else {
+            // delete any existing timer waiting on the response
+            deleteQueryResponseTimeout(mapQueryResponseTimeOut, responseMessage.header.queryID);
+            if (!responseMessage.header.error) {
+                //@todo consider removing this log. Why log it? Why not log it _only_ if the dev wants a particular message logged. This can cause problems.
+                Logger.system.info("RouterClient: incoming query response", "RESPONSE MESSAGE", responseMessage, "QUERY ID", responseMessage.header.queryID);
+                clientCallback(null, responseMessage); // invoke the callback passing the response message
+            }
+            else {
+                Logger.system.warn("RouterClient: incoming queryResponse error", responseMessage.header, "QUERY ID", responseMessage.header.queryID);
+                clientCallback(responseMessage.header.error, responseMessage); // error from router service so pass it back instead of a message
+            }
+            delete map[responseMessage.header.queryID];
+        }
+    }
+    // add responder callbackHandler for the given channel
+    function addResponderCallBack(map, channel, callback) {
+        var status = false;
+        var clientCallback = map[channel];
+        if (clientCallback === undefined) {
+            map[channel] = callback;
+            status = true;
+        }
+        return status;
+    }
+    // support function for sendNotifyToSubscriber -- maintains local list of subscribers for pubsub responder
+    function addToPubSubListOfSubscribers(pubsubListOfSubscribers, topic, subscribeID) {
+        if (!(topic in pubsubListOfSubscribers)) {
+            pubsubListOfSubscribers[topic] = [subscribeID];
+        }
+        else {
+            pubsubListOfSubscribers[topic].push(subscribeID);
+        }
+    }
+    // support function for addPubSubResponder -- add pubsub responder callbackHandler for the given channel
+    function addPubSubResponderCallBack(topic, subscribeCallback, publishCallback, unsubscribeCallback) {
+        var status = false;
+        var callbacks = mapPubSubResponders[topic.toString()];
+        if (callbacks === undefined) {
+            if (topic instanceof RegExp) {
+                mapPubSubResponderRegEx[topic.toString()] = topic;
+                Logger.system.info("RouterClient: PubSub RegEx added for topic " + topic.toString()); // Note: topic may be a RegEx, so use toString() where applicable
+            }
+            mapPubSubResponders[topic.toString()] = { "subscribeCallback": subscribeCallback, "publishCallback": publishCallback, "unsubscribeCallback": unsubscribeCallback };
+            status = true;
+        }
+        return status;
+    }
+    // callback function for invokeSubscribePubSubCallback to notify new subscriber
+    function sendNotifyToSubscriber(err, notifyData) {
+        //@todo consider removing this log. Why log it? Why not log it _only_ if the dev wants a particular message logged. This can cause problems.
+        sendToRouterService(new NotifyMessage(this.header.subscribeID, this.header.topic, err, notifyData));
+        if (!err) {
+            // add new subscriber to list
+            addToPubSubListOfSubscribers(pubsubListOfSubscribers, this.header.topic, this.header.subscribeID);
+            Logger.system.info("RouterClient: incoming subscription added", "TOPIC", this.header.topic, "MESSAGE", this);
+        }
+        else {
+            Logger.system.warn("RouterClient: incoming subscription rejected by pubsub responder", "TOPIC", this.header.topic, "MESSAGE", this);
+        }
+    }
+    // for incoming subscribe: invoke notify callback for pubsub responder
+    function invokeSubscribePubSubCallback(subscribeMessage) {
+        var callbacks = mapPubSubResponders[subscribeMessage.header.topic];
+        //@todo consider removing this log. Why log it? Why not log it _onlY_ if the dev wants a particular message logged. This can cause problems.
+        if (callbacks === undefined) { // if undefined then may be a matching RegEx topic
+            for (var key in mapPubSubResponderRegEx) {
+                if (mapPubSubResponderRegEx[key].test(subscribeMessage.header.topic)) {
+                    callbacks = mapPubSubResponders[key];
+                    var initialState = mapPubSubResponderState[subscribeMessage.header.topic]; // may already be initial state defined from publish
+                    if (initialState === undefined) { // if there isn't already state defined then use default from regEx
+                        initialState = mapPubSubResponderState[key]; // initialize the state from RegEx topic
+                    }
+                    mapPubSubResponderState[subscribeMessage.header.topic] = initialState;
+                    break;
+                }
+            }
+        }
+        if (callbacks === undefined) { // if still undefined
+            Logger.system.warn("RouterClient: no pubsub responder defined for incoming subscribe", subscribeMessage);
+        }
+        else {
+            if (subscribeMessage.header.error) { // the router service uses the subscribe message in this case to return a pubsub error (ToDO: consider a generic error message)
+                Logger.system.warn("RouterClient: pubsub error received from router service: " + JSON.stringify(subscribeMessage.header.error));
+            }
+            else {
+                subscribeMessage.sendNotifyToSubscriber = sendNotifyToSubscriber; // add callback function to message so pubsub responder can respond with Notify message
+                if (callbacks.subscribeCallback) {
+                    subscribeMessage.data = mapPubSubResponderState[subscribeMessage.header.topic];
+                    callbacks.subscribeCallback(null, subscribeMessage); // invoke the callback (no error)
+                }
+                else { // since no subscribe callback defined, use default functionality
+                    subscribeMessage.sendNotifyToSubscriber(null, mapPubSubResponderState[subscribeMessage.header.topic]); // must invoke from message to set this properly
+                }
+            }
+        }
+    }
+    // support function for removeSubscriber callback --  remove one subscribeID from array for the given subscription topic
+    function removeFromPubSubListOfSubscribers(pubsubListOfSubscribers, topic, subscribeID) {
+        var removed = false;
+        if (topic in pubsubListOfSubscribers) {
+            var list = pubsubListOfSubscribers[topic];
+            for (var i = 0; i < list.length; i++) {
+                if (subscribeID === list[i]) {
+                    list.splice(i, 1);
+                    if (list.length === 0) {
+                        delete pubsubListOfSubscribers[topic];
+                    }
+                    removed = true;
+                    Logger.system.info("RouterClient: PubSub removeListener", "TOPIC", topic, "FROM", subscribeID);
+                    break;
+                }
+            }
+        }
+        if (!removed) {
+            Logger.system.warn("RouterClient: tried to remove non-existant listener on " + topic + " from " + JSON.stringify(subscribeID));
+        }
+    }
+    // callback function for invokeUnsubscribePubSubCallback to remove the subscriber from the subscription
+    function removeSubscriber() {
+        removeFromPubSubListOfSubscribers(pubsubListOfSubscribers, this.header.topic, this.header.subscribeID);
+    }
+    // for incoming unsubscribe: invoke unsubscribe callback for pubsub servier
+    function invokeUnsubscribePubSubCallback(unsubscribeMessage) {
+        var callbacks = mapPubSubResponders[unsubscribeMessage.header.topic];
+        if (callbacks === undefined) { // if undefined then may be a matching RegEx topic
+            for (var key in mapPubSubResponderRegEx) {
+                if (mapPubSubResponderRegEx[key].test(unsubscribeMessage.header.topic)) {
+                    callbacks = mapPubSubResponders[key];
+                    break;
+                }
+            }
+        }
+        if (callbacks === undefined) { // if still undefined
+            Logger.system.warn("RouterClient: no pubsub responder defined for incoming unsubscribe", "TOPIC", unsubscribeMessage.header.topic, "UNSUBSCRIBE MESSAGE", unsubscribeMessage);
+        }
+        else {
+            unsubscribeMessage.removeSubscriber = removeSubscriber; // add callback function to message for pubsub responder (but must always remove)
+            if (callbacks.unsubscribeCallback) {
+                Logger.system.info("RouterClient: incoming unsubscribe callback", "TOPIC", unsubscribeMessage.header.topic, "UNSUBSCRIBE MESSAGE", unsubscribeMessage);
+                callbacks.unsubscribeCallback(null, unsubscribeMessage); // invoke the callback (no error)
+            }
+            else { // since no unsubscribe callback defined, use default functionality
+                Logger.system.info("RouterClient: incoming unsubscribe", "TOPIC", unsubscribeMessage.header.topic, "UNSUBSCRIBE MESSAGE", unsubscribeMessage);
+                unsubscribeMessage.removeSubscriber();
+            }
+        }
+    }
+    // callback function for invokePublishPubSubCallback to send Notify
+    function sendNotifyToAllSubscribers(err, notifyData) {
+        if (!err) {
+            mapPubSubResponderState[this.header.topic] = notifyData; // store new state
+            var listOfSubscribers = pubsubListOfSubscribers[this.header.topic];
+            if (typeof (listOfSubscribers) !== "undefined") { // confirm subscribers to send to, if none then nothing to do
+                for (var i = 0; i < listOfSubscribers.length; i++) {
+                    Logger.system.info("RouterClient: sending pubsub notify", "TOPIC", this.header.topic, "NOTIFY DATA", notifyData);
+                    sendToRouterService(new NotifyMessage(listOfSubscribers[i], this.header.topic, err, notifyData));
+                }
+            }
+        }
+        else {
+            Logger.system.warn("RouterClient: income publish rejected by pubsub responder", err, notifyData);
+        }
+    }
+    // for incoming Publish: invoke publish callback for pubsub servier
+    function invokePublishPubSubCallback(publishMessage) {
+        var callbacks = mapPubSubResponders[publishMessage.header.topic];
+        if (callbacks === undefined) { // if undefined then may be a matching RegEx topic
+            for (var key in mapPubSubResponderRegEx) {
+                if (mapPubSubResponderRegEx[key].test(publishMessage.header.topic)) {
+                    callbacks = mapPubSubResponders[key];
+                    break;
+                }
+            }
+        }
+        if (callbacks === undefined) { // if still undefined
+            Logger.system.warn("RouterClient: no pubsub responder defined for incoming publish", "TOPIC", publishMessage.header.topic, "PUBLISH MESSAGE", publishMessage);
+        }
+        else {
+            publishMessage.sendNotifyToAllSubscribers = sendNotifyToAllSubscribers; // add callback function to message so pubsub responder can respond to publish
+            if (callbacks.publishCallback) {
+                Logger.system.info("RouterClient: incoming PubSub publish callback invoked", "TOPIC", publishMessage.header.topic, "PUBLISH MESSAGE", publishMessage);
+                callbacks.publishCallback(null, publishMessage); // invoke the callback (no error)
+            }
+            else { // since no pubish callback defined, use default functionality
+                Logger.system.info("RouterClient: incoming PubSub publish", "TOPIC", publishMessage.header.topic, "PUBLISH MESSAGE", publishMessage);
+                publishMessage.sendNotifyToAllSubscribers(null, publishMessage.data); // must call from publish message (like a callback) so 'this' is properly set
+            }
+        }
+    }
+    // for incoming Notify: invoke notify callback (that are attached to a specific channel and listener type)
+    function invokeNotifyCallback(mapSubscribersID, notifyMessage) {
+        var notifyCallback = mapSubscribersID[notifyMessage.header.subscribeID];
+        if (notifyCallback === undefined) {
+            Logger.system.warn("RouterClient: no subscription handler defined for incoming notify for subscriberID", notifyMessage.header.subscribeID, notifyMessage);
+        }
+        else {
+            if (!notifyMessage.header.error) {
+                notifyMessage.originatedHere = originatedHere; // add local function to test origin
+                Logger.system.info("RouterClient: incoming PubSub notify", "SUBSCRIBER ID", notifyMessage.header.subscribeID, "NOTIFY MESSAGE", notifyMessage);
+                notifyCallback(null, notifyMessage); // invoke the callback passing the response message
+            }
+            else {
+                Logger.system.info("RouterClient: incoming PubSub notify error for subscriberID", "SUBSCRIBER ID", notifyMessage.header.subscribeID, "NOTIFY MESSAGE", notifyMessage);
+                notifyCallback(notifyMessage.header.error, notifyMessage); // error from router service so pass it back instead of a message
+            }
+        }
+    }
+    // outgoing Unsubscribe: remove subscriber callbackHandler for the given channel
+    function removeSubscriberCallBack(mapSubscribersID, subscribeID) {
+        var status = false;
+        var notifyCallback = mapSubscribersID[subscribeID];
+        if (notifyCallback !== undefined) {
+            delete mapSubscribersID[subscribeID];
+            status = true;
+        }
+        return status;
+    }
+    // for outgoing addSubscriber -- add a callback Handler for the subscribe
+    function addSubscriberCallBack(mapSubscribersID, subscribeID, notifyCallback, topic) {
+        mapSubscribersID[subscribeID] = notifyCallback;
+        mapSubscribersTopic[subscribeID] = topic;
+    }
+    // for removePubSubResponder: remove responder callbackHandler for the given channel
+    function removeResponderCallBack(map, channel) {
+        var status = false;
+        var clientCallback = map[channel];
+        if (clientCallback !== undefined) {
+            delete map[channel];
+            status = true;
+        }
+        return status;
+    }
+    // for addListener: add a callbackHandler into the specified map (which depends on listener type) for the given channel
+    function addListenerCallBack(map, channel, callback) {
+        var firstChannelClient = false;
+        var clientCallbackArray = map[channel];
+        if (clientCallbackArray === undefined || clientCallbackArray.length === 0) {
+            map[channel] = [callback];
+            firstChannelClient = true;
+        }
+        else {
+            clientCallbackArray.push(callback);
+        }
+        return firstChannelClient;
+    }
+    // for removeListener: remove a callbackHandler from the specified map (which depends on listener type) for the given channel
+    function removeListenerCallBack(map, channel, callback) {
+        var lastChannelClient = false;
+        var clientCallbackArray = map[channel];
+        if (clientCallbackArray !== undefined) {
+            var index = clientCallbackArray.indexOf(callback);
+            if (index > -1) {
+                clientCallbackArray.splice(index, 1);
+                if (clientCallbackArray.length === 0) {
+                    lastChannelClient = true;
+                }
+            }
+            else {
+                Logger.system.warn("no listener defined for channel: " + channel);
+            }
+        }
+        return lastChannelClient;
+    }
+    // route incoming message to appropriate callback, which depends on the message type and channel
+    function routeIncomingMessage(incomingMessage) {
+        Logger.system.verbose("Incoming Message Type", incomingMessage.header.type, incomingMessage);
+        switch (incomingMessage.header.type) {
+            case "transmit":
+                invokeListenerCallbacks(mapListeners, incomingMessage);
+                break;
+            case "query":
+                invokeResponderCallback(mapResponders, incomingMessage);
+                break;
+            case "queryResponse":
+                invokeQueryResponseCallback(mapQueryResponses, incomingMessage);
+                break;
+            case "notify":
+                invokeNotifyCallback(mapSubscribersID, incomingMessage);
+                break;
+            case "publish":
+                invokePublishPubSubCallback(incomingMessage);
+                break;
+            case "subscribe":
+                invokeSubscribePubSubCallback(incomingMessage);
+                break;
+            case "unsubscribe":
+                invokeUnsubscribePubSubCallback(incomingMessage);
+                break;
+            case "timeCalibration":
+                timeCalibrationHandler(incomingMessage);
+                break;
+            case "initialHandshakeResponse":
+                handshakeHandler();
+                break;
+            default:
+        }
+    }
+    // *** all incoming messages from underlying transport arrive here ***
+    // although incoming transport information is available, it is not passed on because not needed
+    function incomingMessageHandler(incomingTransportInfo, message) {
+        // ToDo: good place to put a function to validate incoming message/data
+        message.header.lastClient = clientName; // add last client for diagnostics
+        message.header.incomingTransportInfo = incomingTransportInfo;
+        routeIncomingMessage(message);
+    }
+    // *** all outbound messages exit here though the appropriate transport ***
+    function sendToRouterService(message) {
+        if (!transport || (transport instanceof Promise)) {
+            Logger.system.warn("RouterClient: Queuing message since router initialization not complete", message);
+            queue.push(message);
+        }
+        else {
+            transport.send(message);
+        }
+    }
+    /**
+     * Estimates offset to align the reference time with Router Service.  Does this by exchanging messages with RouterService, getting the service's time, and estimating communication delay.
+     *
+     * @private
+     */
+    this.calibrateTimeWithRouterService = function (callback) {
+        const TARGET_HANDSHAKE_COUNT = 5;
+        var handshakeCounter = 0;
+        var timeOffset;
+        var offsetForFastest;
+        var fastestRRT = Infinity;
+        function calibrationCalculation(finalHandshakeMessage) {
+            var timeOffset = 0;
+            for (var i = 1; i < TARGET_HANDSHAKE_COUNT; i++) {
+                var startClientTime = finalHandshakeMessage.clientBaseTime[i - 1];
+                var stopClientTime = finalHandshakeMessage.clientBaseTime[i];
+                var rtt = stopClientTime - startClientTime; // round-trip time
+                var serviceTime = finalHandshakeMessage.serviceBaseTime[i - 1];
+                var offset = serviceTime - (startClientTime + (rtt / 2));
+                if (rtt < fastestRRT) {
+                    fastestRRT = rtt;
+                    offsetForFastest = offset;
+                }
+                timeOffset += offset;
+                Logger.system.debug("calibrationCalculation Intermediate Values", "lastRRT", rtt, "lastOffset", offset, "fastestOffset", offsetForFastest, "fastestRRT", fastestRRT);
+            }
+            timeOffset /= (TARGET_HANDSHAKE_COUNT - 1);
+            Logger.system.debug("RouterClient calibrationCalculation", "Average Offset", timeOffset, "Choosen FastestOffset", offsetForFastest, finalHandshakeMessage);
+            callback(offsetForFastest); // use the offset with the shortest RTT since it is often the most accurate
+        }
+        function timeCalibrationHandlerFunction(message) {
+            handshakeCounter++;
+            if (handshakeCounter > TARGET_HANDSHAKE_COUNT) {
+                calibrationCalculation(message); // enough handshake data gather, so do the calibration
+            }
+            else {
+                message.clientBaseTime.push(window.performance.timing.navigationStart + window.performance.now());
+                sendToRouterService(new TimeCalibrationHandshakeMessage(message.clientBaseTime, message.serviceBaseTime));
+            }
+        }
+        timeCalibrationHandler = timeCalibrationHandlerFunction; // used in routeIncomingMessage to route handshake response back to handler
+        timeCalibrationHandler(new TimeCalibrationHandshakeMessage([], [])); // invoke first time to start exchanging handshakes; will be invoked each time handshake message received back from FouterService
+    };
+    /**
+     * Backward compatibility?
+     * @private
+     */
+    this.ready = (cb) => this.onReady(cb);
+    /**
+ * Get router client name.
+ *
+ * @param {string} newClientName string identify the client
+ * FSBL.Clients.RouterClient.setClientName("MyComponent");
+ * @private
+ */
+    this.getClientName = function () {
+        Logger.system.debug("RouterClient.getClientName", clientName);
+        return clientName;
+    };
+    /////////////////////////////////////////////
+    // Public Functions -- The Router Client API
+    /////////////////////////////////////////////
+    /**
+     * Checks if router is ready. May be invoked multiple times. Invokes cb when ready, which may be immediately.  Router is not ready until underlying transport to router service is ready.
+     *
+     * @param {function} cb callback function to invoke when router is ready
+     */
+    this.onReady = function (cb) {
+        validate_1.default.args(cb, "function");
+        if (isRouterReady) {
+            cb();
+        }
+        else {
+            parentReadyCallbackQueue.push(cb);
+        }
+    };
+    /**
+     * Add listener for incoming transmit events on specified channel. Each of the incoming events will trigger the specified event handler. The number of listeners is not limited (either local to this Finsemble window or in a separate Finsemble window).
+     *
+     * See [transmit]{@link RouterClientConstructor#transmit} for sending a cooresponding event message to listener. See [removeListener]{@link RouterClientConstructor#removeListener} to remove the listener.
+     *
+     * @param {string} channel any unique string to identify the channel (must match correspond transmit channel name)
+     * @param {function} eventHandler function (see example below)
+     * @example
+     *
+     * FSBL.Clients.RouterClient.addListener("SomeChannelName", function (error, response) {
+     * 	if (error) {
+     *			Logger.system.log("ChannelA Error: " + JSON.stringify(error));
+     *		} else {
+     *			var data = response.data;
+     *			Logger.system.log("ChannelA Response: " + JSON.stringify(response));
+     *		}
+     * });
+     *
+     */
+    this.addListener = function (channel, eventHandler) {
+        Logger.system.info("RouterClient.addListener", "CHANNEL", channel);
+        validate_1.default.args(channel, "string", eventHandler, "function");
+        var firstChannelClient = addListenerCallBack(mapListeners, channel, eventHandler);
+        if (firstChannelClient) {
+            sendToRouterService(new AddListenerMessage(channel));
+        }
+    };
+    /**
+     * Transmit event to all listeners on the specified channel. If no listeners the event is discarded without error. All listeners to the channel in this Finsemble window and other Finsemble windows will receive the transmit.
+     *
+     * See [addListener]{@link RouterClientConstructor#addListener} to add a listener to receive the transmit.
+     *
+     * @param {string} toChannel any unique string to identify the channel (must match correspond listener channel name)
+     * @param {any} event any object or primitive type to be transmitted
+     * @param {object} [options] Options object for your transmit
+     * @param {boolean} [options.suppressWarnings=false] By default, the Router will log warnings if you transmit to a channel with no listeners. Set this to true to eliminate those warnings.
+     * @example
+     *
+     * FSBL.Clients.RouterClient.transmit("SomeChannelName", event);
+     *
+     */
+    this.transmit = function (toChannel, event, options = { suppressWarnings: false }) {
+        if (!Logger.isLogMessage(toChannel)) { // logger messages
+            Logger.system.info("RouterClient.transmit", "TO CHANNEL", toChannel, "EVENT", event);
+        }
+        validate_1.default.args(toChannel, "string", event, "any");
+        sendToRouterService(new TransmitMessage(toChannel, event, options));
+    };
+    /* @TODO - This works via object reference - it relies on the physical pointer to the function object originally passed in.
+    This is very confusing, and not idiomatic. Moreover, it entirely prevents a user from using anonymous functions, which will fall
+    quite unexpected if the user isn't prepared. A better API would be to pass in some unique ID, or have a unique ID automatically generated,
+    that could then be passed to this function, e.g:
+
+    RouterClient.addlistener('some-channel', 'my-unique-listener-id', () => { });
+    RouterClient.removeListener('some-channel', 'my-unique-listeenr-id');*/
+    /**
+     * Remove event listener from specified channel for the specific event handler (only listeners created locally can be removed).
+     *
+     * See [addListener]{@link RouterClientConstructor#addListener} for corresponding add of a listener.
+     *
+     * @param {string} channel unique channel name to remove listener from
+     * @param {function} eventHandler function used for the event handler when the listener was added
+     */
+    this.removeListener = function (channel, eventHandler) {
+        Logger.system.info("RouterClient.removelistener", "CHANNEL", channel, "EVENT HANDLER", eventHandler);
+        validate_1.default.args(channel, "string", eventHandler, "function");
+        var lastChannelListener = removeListenerCallBack(mapListeners, channel, eventHandler);
+        if (lastChannelListener) {
+            sendToRouterService(new RemoveListenerMessage(channel));
+        }
+    };
+    /**
+     * Add a query responder to the specified channel. The responder's queryEventHander function will receive all incoming queries for the specified channel (whether from this Finsemble window or remote Finsemble windows).
+     *
+     * *Note:* Only one responder is allowed per channel within the Finsemble application.
+     *
+     * See [query]{@link RouterClientConstructor#query} for sending a corresponding query-event message to this responder.
+     *
+     * @param {string} channel any unique string to identify the channel (must match correspond query channel name); only one responder allower per channel
+     * @param {function} queryEventHandler function to handle the incoming query (see example below); note incoming queryMessage contains function to send response
+     * @example
+     *
+     * FSBL.Clients.RouterClient.addResponder("ResponderChannelName", function (error, queryMessage) {
+     *	if (error) {
+     *		Logger.system.log('addResponder failed: ' + JSON.stringify(error));
+     *	} else {
+     *	console.log("incoming data=" + queryMessage.data);
+     * 	var response="Back at ya"; // Responses can be objects or strings
+     *	queryMessage.sendQueryResponse(null, response); // A QUERY RESPONSE MUST BE SENT OR THE REMOTE SIDE WILL HANG
+     *	}
+     * });
+     *
+     */
+    this.addResponder = function (channel, queryEventHandler) {
+        Logger.system.info("RouterClient.addResponder", "CHANNEL", channel);
+        validate_1.default.args(channel, "string", queryEventHandler, "function");
+        var status = addResponderCallBack(mapResponders, channel, queryEventHandler);
+        if (status) {
+            sendToRouterService(new addResponderMessage(channel));
+        }
+        else {
+            Logger.system.warn("RouterClient.addResponder: Responder already locally defined for channel " + channel);
+            queryEventHandler({
+                "RouteClient QueryError": "Responder already locally defined for channel" + channel
+            }, null); // immediately invoke callback passing error
+        }
+    };
+    /**
+     * Send a query to responder listening on specified channel. The responder may be in this Finsemble window or another Finsemble window.
+     *
+     * See [addResponder]{@link RouterClientConstructor#addResponder} to add a responder to receive the query.
+     *
+     * @param {string} responderChannel a unique string that identifies the channel (must match the channel name on which a responder is listening)
+     * @param {object} queryEvent event message sent to responder
+     * @param {any} params optional params
+     * @param {number} [params.timeout=20000]  timeout value for a query-response timer.  Timer defaults to 5000 milliseconds if no params value is passed in. Set timeout to zero to wait indefinitely. If the timer expires, this function call will return with an error.
+     * @param {function} responseEventHandler event handler to receive the query response (sent from a responder that is listening on this channel)
+     *
+     * @example
+     *
+     * FSBL.Clients.RouterClient.query("someChannelName", {}, function (error, queryResponseMessage) {
+     *	if (error) {
+     *		Logger.system.log('query failed: ' + JSON.stringify(error));
+     *	} else {
+     *		// process income query response message
+     *		var responseData = queryResponseMessage.data;
+     *		Logger.system.log('query response: ' + JSON.stringify(queryResponseMessage));
+     *	}
+     * });
+     *
+     * FSBL.Clients.RouterClient.query("someChannelName", { queryKey: "abc123"}, { timeout: 1000 }, function (error, queryResponseMessage) {
+     *	if (!error) {
+     *		// process income query response message
+     *		var responseData = queryResponseMessage.data;
+     *	}
+     * }); */
+    this.query = function (responderChannel, queryEvent, params, responseEventHandler = Function.prototype) {
+        var newQueryID = `${clientID()}.${responderChannel}`;
+        var timestamp = window.performance.timing.navigationStart + window.performance.now();
+        var navstart = window.performance.timing.navigationStart;
+        var timenow = window.performance.now(); // these timer values used for logging diagnostices
+        Logger.system.info("RouterClient.query", "RESPONDER CHANNEL", responderChannel, "QUERY EVENT", queryEvent, "PARAMS", params, "QUERYID", newQueryID, { timestamp, navstart, timenow });
+        if (arguments.length === 3) {
+            responseEventHandler = params;
+            params = { timeout: 20000 };
+        }
+        validate_1.default.args(responderChannel, "string", queryEvent, "any=", params, "object=", responseEventHandler, "function");
+        params = params || {};
+        validate_1.default.args2("params.timeout", params.timeout, "number");
+        function promiseResolver(resolve) {
+            //Allows us to await on queries, cleaning up code quite a bit.
+            const modifiedHandler = (err, response) => {
+                resolve({ err, response });
+                responseEventHandler(err, response);
+            };
+            addQueryResponseCallBack(mapQueryResponses, newQueryID, modifiedHandler);
+            addQueryResponseTimeout(mapQueryResponseTimeOut, newQueryID, responderChannel, params.timeout);
+            sendToRouterService(new QueryMessage(newQueryID, responderChannel, queryEvent));
+        }
+        return new Promise(promiseResolver);
+    };
+    /**
+     * Remove query responder from specified channel. Only a locally added responder can be removed (i.e. a responder defined in the same component or service).
+     *
+     * See [addResponder]{@link RouterClientConstructor#addResponder} for corresponding add of a query responder.
+     *
+     * @param {string} responderChannel string identifying the channel to remove responder from
+     *
+     * @example
+     *
+     * FSBL.Clients.RouterClient.removeResponder("someChannelName");
+     *
+     */
+    this.removeResponder = function (responderChannel) {
+        Logger.system.info("RouterClient.removeResponder", "RESPONDER CHANNEL", responderChannel);
+        validate_1.default.args(responderChannel, "string");
+        var status = removeResponderCallBack(mapResponders, responderChannel);
+        if (status) {
+            sendToRouterService(new RemoveResponderMessage(responderChannel));
+        }
+    };
+    /**
+     * Add a PubSub responder for specified topic. All subscribes and publishes to the topic will comes to responder (whether from local window or another window). Only one PubSub responder allowed per topic value in Finsemble application; however, the topic value may be a regular-expression representing a set of related topics, in which case the PubSub responder will responder to all matching topics. When a regEx topic is used, the same default functionality is provides for each matching topic -- the difference is only one PubSub responder is needed to cover a set of related topics, plus the same callback handers can be used (if provided).
+     *
+     * All the callback function are optional because each PubSub responder comes with build-in default functionality (described below).
+     *
+     * Note an exact topic match will take precedence over a regEx match, but otherwise results are unpredictable for overlapping RegEx topics.
+     *
+     * See [subscribe]{@link RouterClientConstructor#subscribe} and [publish]{@link RouterClientConstructor#publish} for corresponding functions sending to the PubSub responder.
+     *
+     * @param {string} topic unique topic for this responder, or a topic RegEx (e.g. '/abc.+/') to handle a set of topics
+     * @param {object} [initialState] initial state for the topic (defaults to empty struct); can be any object
+     * @param {object} [params] optional parameters
+     * @param {function} [params.subscribeCallback] allows responder know of incoming subscription and accept or reject it (default is to accept)
+     * @param {function} [params.publishCallback] allows responder to use the publish data to form a new state (default is the publish data becomes the new state)
+     * @param {function} [params.unsubscribeCallback] allows responder to know of the unsubscribe, but it must be accepted (the default accepts)
+     * @param {function} [callback] optional callback(err,res) function. If addPubSubResponder failed then err set; otherwise, res set to "success"
+     *
+     * @example
+     *
+     * function subscribeCallback(error, subscribe) {
+     * 	if (subscribe) {
+     * 		// must make this callback to accept or reject the subscribe (default is to accept). First parm is err and second is the initial state
+     * 		subscribe.sendNotifyToSubscriber(null, { "NOTIFICATION-STATE": "One" });
+     * 	}
+     * }
+     * function publishCallback(error, publish) {
+     * 	if (publish) {
+     * 		// must make this callback to send notify to all subscribers (if error parameter set then notify will not be sent)
+     * 		publish.sendNotifyToAllSubscribers(null, publish.data);
+     * 	}
+     * }
+     * function unsubscribeCallback(error, unsubscribe) {
+     * 	if (unsubscribe) {
+     * 		// must make this callback to acknowledge the unsubscribe
+     * 		unsubscribe.removeSubscriber();
+     * 	}
+     * }
+     * FSBL.Clients.RouterClient.addPubSubResponder("topicABC", { "State": "start" },
+     * 	{
+     * 		subscribeCallback:subscribeCallback,
+     * 		publishCallback:publishCallback,
+     * 		unsubscribeCallback:unsubscribeCallback
+     * 	});
+     *
+     *   or
+     *
+     * FSBL.Clients.RouterClient.addPubSubResponder("topicABC", { "State": "start" });
+     *
+     *   or
+     *
+     * FSBL.Clients.RouterClient.addPubSubResponder(\/topicA*\/, { "State": "start" });
+     *
+     */
+    this.addPubSubResponder = function (topic, initialState, params, callback) {
+        var error;
+        var response;
+        Logger.system.info("RouterClient.addPubSubResponder", "TOPIC", topic, "INITIAL STATE", initialState, "PARAMS", params);
+        validate_1.default.args(topic, "any", initialState, "object=", params, "object=");
+        params = params || {};
+        validate_1.default.args2("params.subscribeCallback", params.subscribeCallback, "function=", "params.publishCallback", params.publishCallback, "function=") &&
+            validate_1.default.args2("params.unsubscribeCallback", params.unsubscribeCallback, "function=");
+        var status = addPubSubResponderCallBack(topic, params.subscribeCallback, params.publishCallback, params.unsubscribeCallback);
+        if (status) {
+            initialState = initialState || {};
+            mapPubSubResponderState[topic.toString()] = Utils.clone(initialState);
+            sendToRouterService(new AddPubSubResponderMessage(topic.toString()));
+            response = "success";
+        }
+        else {
+            error = "RouterClient.addPubSubResponder: Responder already locally defined for topic " + topic;
+            Logger.system.warn(error);
+        }
+        if (callback) {
+            callback(error, response);
+        }
+    };
+    /**
+     * Remove pubsub responder from specified topic. Only locally created responders (i.e. created in local window) can be removed.
+     *
+     * See [addPubSubResponder]{@link RouterClientConstructor#addPubSubResponder} for corresponding add of a SubPub responder.
+     *
+     * @param {string} topic unique topic for responder being removed (may be RegEx, but if so much be exact regEx used previously with addPubSubResponder)
+     *
+     * @example
+     *
+     * FSBL.Clients.RouterClient.removePubSubResponder("topicABC");
+     *
+     */
+    this.removePubSubResponder = function (topic) {
+        Logger.system.info("RouterClient.removePubSubResponder", "TOPIC", topic);
+        validate_1.default.args(topic, "any");
+        var status = removeResponderCallBack(mapPubSubResponders, topic);
+        if (status) {
+            delete mapPubSubResponderState[topic.toString()]; // remove corresponding state
+            delete mapPubSubResponderRegEx[topic.toString()]; // may be a RegEx
+            sendToRouterService(new RemovePubSubResponderMessage(topic));
+        }
+        else {
+            Logger.system.warn("RouterClient.removePubSubResponder failed: Could not find responder for topic " + topic);
+        }
+    };
+    /**
+     * Subscribe to a PubSub Responder. Each responder topic can have many subscribers (local in this window or remote in other windows). Each subscriber immediately (but asyncronouly) receives back current state in a notify; new notifys are receive for each publish sent to the same topic.
+     *
+     * See [addPubSubResponder]{@link RouterClientConstructor#addPubSubResponder} for corresponding add of a SubPub responder to handle the subscribe. See [publish]{@link RouterClientConstructor#publish} for corresponding publish to notify the subscriber.
+     *
+     * @param {string} topic topic being subscribed to
+     * @param {function} notifyCallback invoked for each income notify for the given topic (i.e. initial notify plus for each publish)
+     * @returns {object} subscribe-id optionally used for unsubscribing later
+     *
+     * @example
+     *
+     * var subscribeId = RouterClient.subscribe("topicABC", function(err,notify) {
+     *		if (!err) {
+     *			var notificationStateData = notify.data;
+     *			// do something with notify data
+     *  	}
+     * });
+     *
+     */
+    this.subscribe = function (topic, notifyCallback) {
+        Logger.system.info("RouterClient.subscribe", "TOPIC", topic);
+        validate_1.default.args(topic, "string", notifyCallback, "function");
+        var subscribeID = clientID();
+        addSubscriberCallBack(mapSubscribersID, subscribeID, notifyCallback, topic);
+        sendToRouterService(new SubscribeMessage(subscribeID, topic));
+        return { "subscribeID": subscribeID, "topic": topic };
+    };
+    /**
+     * Publish to a PubSub Responder, which will trigger a corresponding Notify to be sent to all subscribers (local in this window or remote in other windows). There can be multiple publishers for a topic (again, in same window or remote windows)
+     *
+     * See [addPubSubResponder]{@link RouterClientConstructor#addPubSubResponder} for corresponding add of a SubPub responder to handle the publish (i.e. sending notifications to all subscriber). See [Subscribe]{@link RouterClientConstructor#addPubSubResponder} for corresponding subscription to receive publish results (in the form of a notify event)
+     *
+     * @param {string} topic topic being published to
+     * @param {object} event topic state to be published to all subscriber (unless the SubPub responder optionally modifies in between)
+     *
+     * @example
+     *
+     * FSBL.Clients.RouterClient.publish("topicABC", topicState);
+     *
+     */
+    this.publish = function (topic, event) {
+        Logger.system.info("RouterClient.publish", "TOPIC", topic, "EVENT", event);
+        validate_1.default.args(topic, "string", event, "any");
+        sendToRouterService(new PublishMessage(topic, event));
+    };
+    /**
+     * Unsubscribe from PubSub responder so no more notifications received (but doesn't affect other subscriptions). Only works from the window the PubSub responder was created in.
+     *
+     * See [subscribe]{@link RouterClientConstructor#subscribe} for corresponding subscription being removed.
+     *
+     * @param {object} subscribeID the id return from the corresponding subscribe for the topic
+     *
+     * @example
+     *
+     * FSBL.Clients.RouterClient.unsubscribe(subscribeId);
+     *
+     */
+    this.unsubscribe = function (subscribeIDStruct) {
+        Logger.system.info("RouterClient.unsubscribe", "SUBSCRIBE ID", subscribeIDStruct);
+        validate_1.default.args(subscribeIDStruct, "object") && validate_1.default.args2("subscribeIDStruct.subscribeID", subscribeIDStruct.subscribeID, "string");
+        var deletedSubscriber = removeSubscriberCallBack(mapSubscribersID, subscribeIDStruct.subscribeID);
+        if (deletedSubscriber) {
+            sendToRouterService(new UnsubscribeMessage(subscribeIDStruct.subscribeID, subscribeIDStruct.topic));
+        }
+        else {
+            Logger.system.warn("RouterClient.unsubscribe: Could not find subscribeID for topic " + subscribeIDStruct.topic);
+        }
+    };
+    /**
+     * Test an incoming router message to see if it originated from the same origin (e.g. a trusted source...not cross-domain). Currently same origin is known only because a sharedWorker transport is used (by definition SharedWorkers do not work cross-domain).  This means any message coming in over the Inter-application Bus will not be trusted; however, by default all same-origin components and services connect to the router using a SharedWorker transport.
+     * @param {object} incomingMessage an incoming router message (e.g. transmit, query, notification) to test to see if trusted.
+     *
+     * @example
+     * FSBL.Clients.RouterClient.trustedMessage(incomingRouterMessage);
+     */
+    this.trustedMessage = function (incomingMessage) {
+        var isTrusted = true; // temporarily make all trusted so no problems if changing router transport
+        Logger.system.debug("RouterClient.trustedMessage header", incomingMessage.header);
+        if (incomingMessage.header.originIncomingTransportInfo.transportID === "SharedWorker") {
+            isTrusted = true;
+        }
+        return isTrusted;
+    };
+    /*
+     * @TODO: consider adding disconnectAllListerns(), disconnectAllResponders(), disconnectAllSubscribers()
+    */
+    /**
+     * Removes all listeners, responders, and subscribers for this router client -- automatically called when client is shutting down. Can be called multiple times.
+     */
+    this.disconnectAll = function () {
+        Logger.system.info("RouterClient.disconnectAll");
+        for (var channel in mapListeners) {
+            Logger.system.debug("RouterClient.disconnectAll is removing listener on " + channel);
+            sendToRouterService(new RemoveListenerMessage(channel));
+            delete mapListeners[channel];
+        }
+        for (var responderChannel in mapResponders) {
+            Logger.system.debug("RouterClient.disconnectAll is removing responder on " + responderChannel);
+            sendToRouterService(new RemoveResponderMessage(responderChannel));
+            delete mapResponders[responderChannel];
+        }
+        for (var topic in mapPubSubResponders) {
+            Logger.system.debug("RouterClient.disconnectAll is removing pubsub responder on " + topic);
+            sendToRouterService(new RemovePubSubResponderMessage(topic));
+            delete mapPubSubResponders[topic.toString()]; // could be a RegEx
+            delete mapPubSubResponderState[topic.toString()]; // remove corresponding state
+            delete mapPubSubResponderRegEx[topic.toString()]; // may be a RegEx
+        }
+        for (var subscribeID in mapSubscribersID) {
+            var stopic = mapSubscribersTopic[subscribeID];
+            Logger.system.debug("RouterClient.disconnectAll is removing subscriber on " + stopic);
+            sendToRouterService(new UnsubscribeMessage(subscribeID, stopic));
+            delete mapSubscribersID[subscribeID];
+            delete mapSubscribersTopic[subscribeID];
+        }
+    };
+    //Prevent the loggerService window's routerClient from logging to itself. Instead, log locally for it. It's unlikely that we need to get the loggerService's routermessages. If we do, just uncomment this.
+    if (system_1.System.Window.getCurrent().name === "loggerService") {
+        Logger = new localLogger_1.LocalLogger();
+    }
+    clientName = baseClientName + "." + window.name;
+    /** @TODO - Move this to factory function, something like getRouterClient. */
+    if (clientName in Globals.FSBLData.RouterClients) { // if previously constructed then return that existing client
+        Logger.system.debug(`"RouterClient Check: reusing existing client for ${clientName}`);
+        console.debug(`"RouterClient Check: reusing existing client for ${clientName}`, window);
+    }
+    else {
+        Logger.system.debug(`"RouterClient Check: constructing new client for ${clientName}`);
+        console.debug(`"RouterClient Check: constructing new client for ${clientName}`, window);
+        Globals.FSBLData.RouterClients[clientName] = this;
+        constructor(clientName, transportName); // constructure new router client
+    }
+    return Globals.FSBLData.RouterClients[clientName];
+};
+
+
+/***/ }),
+
+/***/ 26:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process, module) {/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+
+/**
+ * @introduction
+ * <h2>Finsemble system wide settings for use by all components and services</h2>
+ *
+ */
+
+/**
+ * Constructor for Finsemble SystemSettings
+ * @private
+ * @constructor
+ */
+var SystemSettings = function () {
+	var currentDiagLevel = 3;
+
+	/**
+  * Returns diagnostic level
+  *
+  *@returns current diagnostic level
+  */
+	this.diagLevel = function () {
+		return currentDiagLevel;
+	};
+
+	/**
+  * Returns diagnostic level
+  *
+  *@returns current diagnostic level
+  */
+	this.setDiagLevel = function (level) {
+		currentDiagLevel = level;
+	};
+
+	/**
+  * Returns true if parameter validation is enabled
+  *
+  *@returns true if enable
+  */
+	this.validationEnabled = function () {
+		return currentDiagLevel >= 4;
+	};
+};
+
+/* harmony default export */ __webpack_exports__["a"] = (new SystemSettings());
+
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\systemSettings.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\systemSettings.js"); } } })();
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
+
+/***/ }),
+
+/***/ 27:
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
+    "use strict";
+
+    if (global.setImmediate) {
+        return;
+    }
+
+    var nextHandle = 1; // Spec says greater than zero
+    var tasksByHandle = {};
+    var currentlyRunningATask = false;
+    var doc = global.document;
+    var registerImmediate;
+
+    function setImmediate(callback) {
+      // Callback can either be a function or a string
+      if (typeof callback !== "function") {
+        callback = new Function("" + callback);
+      }
+      // Copy function arguments
+      var args = new Array(arguments.length - 1);
+      for (var i = 0; i < args.length; i++) {
+          args[i] = arguments[i + 1];
+      }
+      // Store and register the task
+      var task = { callback: callback, args: args };
+      tasksByHandle[nextHandle] = task;
+      registerImmediate(nextHandle);
+      return nextHandle++;
+    }
+
+    function clearImmediate(handle) {
+        delete tasksByHandle[handle];
+    }
+
+    function run(task) {
+        var callback = task.callback;
+        var args = task.args;
+        switch (args.length) {
+        case 0:
+            callback();
+            break;
+        case 1:
+            callback(args[0]);
+            break;
+        case 2:
+            callback(args[0], args[1]);
+            break;
+        case 3:
+            callback(args[0], args[1], args[2]);
+            break;
+        default:
+            callback.apply(undefined, args);
+            break;
+        }
+    }
+
+    function runIfPresent(handle) {
+        // From the spec: "Wait until any invocations of this algorithm started before this one have completed."
+        // So if we're currently running a task, we'll need to delay this invocation.
+        if (currentlyRunningATask) {
+            // Delay by doing a setTimeout. setImmediate was tried instead, but in Firefox 7 it generated a
+            // "too much recursion" error.
+            setTimeout(runIfPresent, 0, handle);
+        } else {
+            var task = tasksByHandle[handle];
+            if (task) {
+                currentlyRunningATask = true;
+                try {
+                    run(task);
+                } finally {
+                    clearImmediate(handle);
+                    currentlyRunningATask = false;
+                }
+            }
+        }
+    }
+
+    function installNextTickImplementation() {
+        registerImmediate = function(handle) {
+            process.nextTick(function () { runIfPresent(handle); });
+        };
+    }
+
+    function canUsePostMessage() {
+        // The test against `importScripts` prevents this implementation from being installed inside a web worker,
+        // where `global.postMessage` means something completely different and can't be used for this purpose.
+        if (global.postMessage && !global.importScripts) {
+            var postMessageIsAsynchronous = true;
+            var oldOnMessage = global.onmessage;
+            global.onmessage = function() {
+                postMessageIsAsynchronous = false;
+            };
+            global.postMessage("", "*");
+            global.onmessage = oldOnMessage;
+            return postMessageIsAsynchronous;
+        }
+    }
+
+    function installPostMessageImplementation() {
+        // Installs an event handler on `global` for the `message` event: see
+        // * https://developer.mozilla.org/en/DOM/window.postMessage
+        // * http://www.whatwg.org/specs/web-apps/current-work/multipage/comms.html#crossDocumentMessages
+
+        var messagePrefix = "setImmediate$" + Math.random() + "$";
+        var onGlobalMessage = function(event) {
+            if (event.source === global &&
+                typeof event.data === "string" &&
+                event.data.indexOf(messagePrefix) === 0) {
+                runIfPresent(+event.data.slice(messagePrefix.length));
+            }
+        };
+
+        if (global.addEventListener) {
+            global.addEventListener("message", onGlobalMessage, false);
+        } else {
+            global.attachEvent("onmessage", onGlobalMessage);
+        }
+
+        registerImmediate = function(handle) {
+            global.postMessage(messagePrefix + handle, "*");
+        };
+    }
+
+    function installMessageChannelImplementation() {
+        var channel = new MessageChannel();
+        channel.port1.onmessage = function(event) {
+            var handle = event.data;
+            runIfPresent(handle);
+        };
+
+        registerImmediate = function(handle) {
+            channel.port2.postMessage(handle);
+        };
+    }
+
+    function installReadyStateChangeImplementation() {
+        var html = doc.documentElement;
+        registerImmediate = function(handle) {
+            // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
+            // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called.
+            var script = doc.createElement("script");
+            script.onreadystatechange = function () {
+                runIfPresent(handle);
+                script.onreadystatechange = null;
+                html.removeChild(script);
+                script = null;
+            };
+            html.appendChild(script);
+        };
+    }
+
+    function installSetTimeoutImplementation() {
+        registerImmediate = function(handle) {
+            setTimeout(runIfPresent, 0, handle);
+        };
+    }
+
+    // If supported, we should attach to the prototype of global, since that is where setTimeout et al. live.
+    var attachTo = Object.getPrototypeOf && Object.getPrototypeOf(global);
+    attachTo = attachTo && attachTo.setTimeout ? attachTo : global;
+
+    // Don't get fooled by e.g. browserify environments.
+    if ({}.toString.call(global.process) === "[object process]") {
+        // For Node.js before 0.9
+        installNextTickImplementation();
+
+    } else if (canUsePostMessage()) {
+        // For non-IE10 modern browsers
+        installPostMessageImplementation();
+
+    } else if (global.MessageChannel) {
+        // For web workers, where supported
+        installMessageChannelImplementation();
+
+    } else if (doc && "onreadystatechange" in doc.createElement("script")) {
+        // For IE 6–8
+        installReadyStateChangeImplementation();
+
+    } else {
+        // For older browsers
+        installSetTimeoutImplementation();
+    }
+
+    attachTo.setImmediate = setImmediate;
+    attachTo.clearImmediate = clearImmediate;
+}(typeof self === "undefined" ? typeof global === "undefined" ? this : global : self));
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5), __webpack_require__(1)))
+
+/***/ }),
+
+/***/ 29:
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+const dependencyManager_1 = __webpack_require__(13);
+const routerClientInstance_1 = __webpack_require__(4);
+const logger_1 = __webpack_require__(0);
+const async_1 = __webpack_require__(9);
+const system_1 = __webpack_require__(3);
+const Constants = __webpack_require__(11);
+const { SERVICE_INITIALIZING_CHANNEL, SERVICE_READY_CHANNEL, SERVICE_CLOSING_CHANNEL, SERVICE_CLOSED_CHANNEL, SERVICE_STOP_CHANNEL } = Constants;
+const defaultBaseServiceParams = {
+    startupDependencies: {
+        services: [],
+        clients: []
+    },
+    shutdownDependencies: {
+        services: []
+    },
+    addOFWrapper: false,
+    name: window.name
+};
+/*
+ * @introduction
+ * <h2>Base Service</h2>
+ * Creates an instance of the Base Service which all service must inherit. Services are spawned from your *service.json* file and managed by a helper thread&mdash;the **Service Manager**.
+ * Services communicate their status and receive status of other service through the Service Manager.
+ * Services have an intial handshake with the Service Manager on load, and then either go online or wait for dependant services to come online.
+ * Service intialization is completly asynchronous, which allows all services to load at the same time, as long as their dependencies have been met.
+ * @constructor
+*/
+class BaseService {
+    constructor(params = defaultBaseServiceParams) {
+        fixParams(params);
+        this.name = params.name ? params.name : window.name;
+        this.startupDependencies = params.startupDependencies;
+        this.shutdownDependencies = params.shutdownDependencies;
+        this.Logger = logger_1.default;
+        this.RouterClient = routerClientInstance_1.default;
+        //This will be set to true after the debugServiceDelay is met. Defaults to 0, but devs can up it if they need to jump in and add breakpoints and are on a bad computer.
+        this.waitedLongEnough = false;
+        //this.parentUuid = System.Application.getCurrent().uuid;
+        this.onBaseServiceReadyCB = null;
+        this.setOnConnectionCompleteCB = null;
+        this.listeners = {};
+        this.start = this.waitForDependencies;
+        this.started = false;
+        /**
+         * Service status
+         * @type {ServiceState}
+         */
+        this.status = "initializing";
+        this.setOnline = this.setOnline.bind(this);
+        this.onBaseServiceReady = this.onBaseServiceReady.bind(this);
+        this.handleShutdown = this.handleShutdown.bind(this);
+        this.waitForDependencies();
+    }
+    /**
+    * Waits for the dependencies. At the end of this function, it will trigger the child service's initialze function (or onBaseServiceReady).
+    * @note This used to be BaseService.start
+    * @private
+    */
+    waitForDependencies() {
+        //For backwards compat. note Start used to be invoked after the constructor.
+        //note do this later
+        if (this.started)
+            return;
+        this.started = true;
+        var service = this;
+        logger_1.default.system.debug(`${this.name} starting`);
+        function cacheCustomData(done) {
+            logger_1.default.system.debug("BaseService.start.setParentUUID");
+            system_1.System.Window.getCurrent().getOptions((opts) => {
+                service.customData = opts.customData;
+                service.parentUuid = opts.customData.parentUuid;
+                done();
+            });
+        }
+        function onRouterReady(done) {
+            routerClientInstance_1.default.onReady(function () {
+                routerClientInstance_1.default.transmit(SERVICE_INITIALIZING_CHANNEL, { name: service.name });
+                window.addEventListener("beforeunload", service.RouterClient.disconnectAll);
+                logger_1.default.system.debug("APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start.onRouterReady");
+                done();
+            });
+        }
+        function readyToGo(done) {
+            logger_1.default.system.debug("APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start.readyToGo");
+            console.log(performance.now(), "ReadyToGo called");
+            console.log("Startup Dependencies for", service.name, service.startupDependencies);
+            console.log("Shutdown Dependencies for", service.name, service.shutdownDependencies);
+            service.waitedLongEnough = true;
+            dependencyManager_1.FSBLDependencyManagerSingleton.shutdown.waitFor(service.shutdownDependencies, service.handleShutdown);
+            routerClientInstance_1.default.transmit(`${system_1.System.Window.getCurrent().name}.onSpawned`, {});
+            //`done` invoked when all dependencies are up
+            let dependency = dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor(service.startupDependencies, done);
+            dependency.on("err", (err) => {
+                logger_1.default.system.error(err);
+            });
+        }
+        function showDeveloperTools(done) {
+            const myWindow = system_1.System.Window.getCurrent();
+            myWindow.isShowing((isShowing) => {
+                if (isShowing && service.customData.showDevConsoleOnVisible !== false) {
+                    system_1.System.showDeveloperTools(myWindow.uuid, myWindow.name, done);
+                }
+                else {
+                    logger_1.default.system.debug("APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start.delayStartup done");
+                    done();
+                }
+            });
+        }
+        return new Promise((resolve, reject) => {
+            async_1.series([
+                onRouterReady,
+                cacheCustomData,
+                showDeveloperTools,
+                readyToGo
+            ], () => {
+                resolve();
+                this.onDependenciesReady();
+            });
+        });
+    }
+    /**
+     * Transmits the serviceOnline message that the rest of the dependency manager objects system are listening for.
+     */
+    setOnline() {
+        if (this.status !== "ready") {
+            console.log("Setting service online", this.name);
+            logger_1.default.system.log("APPLICATION LIFECYCLE:STARTUP:SERVICE ONLINE", this.name);
+            routerClientInstance_1.default.transmit(SERVICE_READY_CHANNEL, { serviceName: this.name }); // notify service manager
+            this.RouterClient.addListener(SERVICE_STOP_CHANNEL + "." + this.name, (err, response) => {
+                this;
+                dependencyManager_1.FSBLDependencyManagerSingleton.shutdown.checkDependencies();
+            });
+            this.status = "ready";
+        }
+    }
+    /**
+     * Invokes a method passed in (or on) the object that inherits from the BaseService. In other words, the service instance will have its initialize function called, unless it's using old code, in which case we will have cached the callback earlier.
+     */
+    onDependenciesReady() {
+        logger_1.default.system.debug("APPLICATION LIFECYCLE:STARTUP:BaseService onDependenciesReady", this.name);
+        this.status = "initializing"; // must change from offline here; otherwise race condition waiting to call this.setOnline
+        routerClientInstance_1.default.onReady(() => {
+            //These first two blocks are for backward compatibility. The 3rd (initialize) is how it should be done.
+            if (this.onBaseServiceReadyCB) {
+                // if inheriting service provided a "connection complete" callback, then invoke before sending online
+                this.onBaseServiceReadyCB(this.setOnline);
+            }
+            else if (this.initialize) {
+                this.initialize(this.setOnline);
+            }
+            else {
+                //otherwise setOnline need sto be called manually.
+                setTimeout(() => {
+                    if (this.status !== "ready" && this.name !== "routerService") {
+                        console.error("No onBaseServiceReadyCB on initialize function defined on your service. Ensure that service.setOnline is called");
+                        logger_1.default.system.error("No onBaseServiceReadyCB on initialize function defined on your service. Ensure that service.setOnline is called");
+                    }
+                }, 3000);
+            }
+        });
+    }
+    onBaseServiceReady(func) {
+        if (this.status === "initializing") {
+            //onBaseServiceReady is backwards-compatability stuff.
+            this.onBaseServiceReadyCB = () => {
+                func(this.setOnline);
+            };
+        }
+        else {
+            func(this.setOnline);
+        }
+    }
+    /**
+     * Really only for shutdown right now. Simple array that gets looped through on shutdown.
+     * @param {string} listenerType
+     * @param {function} callback
+     */
+    addEventListener(listenerType, callback) {
+        if (!this.listeners[listenerType]) {
+            this.listeners[listenerType] = [];
+        }
+        this.listeners[listenerType].push(callback);
+    }
+    /**
+     * When the application sends out a shutdown message, this function is invoked. It iterates through any registered cleanup methods. When all of them have finished (or 10 seconds elapses), it sends a response to the application saying that it's completed cleanup (`shutdownComplete`, below).
+     * @private
+    */
+    onShutdown(cb) {
+        this.addEventListener("onShutdown", cb);
+    }
+    /**
+     * When the application sends out a shutdown message, this function is invoked. It iterates through any registered cleanup methods. When all of them have finished (or 10 seconds elapses), it sends a response to the application saying that it's completed cleanup (`shutdownComplete`, below).
+     * @private
+    */
+    handleShutdown(err, message) {
+        var self = this;
+        function handleShutdownAction(handler, done) {
+            let cleanup = async_1.asyncify(handler);
+            cleanup = async_1.timeout(cleanup, 10000); // services may need some time to cleanup (depends on service)
+            cleanup(null, done);
+        }
+        function shutdownComplete(err, data) {
+            if (err) {
+                logger_1.default.system.error(err);
+            }
+            self.shutdownComplete();
+        }
+        if (this.listeners.onShutdown) {
+            routerClientInstance_1.default.transmit(SERVICE_CLOSING_CHANNEL, {
+                waitForMe: true,
+                name: this.name
+            });
+            async_1.each(this.listeners.onShutdown, handleShutdownAction, shutdownComplete);
+        }
+        else {
+            routerClientInstance_1.default.transmit(SERVICE_CLOSING_CHANNEL, {
+                waitForMe: false,
+                name: this.name
+            });
+            self.shutdownComplete();
+        }
+    }
+    /**
+     * Fired when all cleanup methods have been finished.
+     * @private
+    */
+    shutdownComplete() {
+        logger_1.default.system.info(`"APPLICATION LIFECYCLE:SHUTDOWN:SERVICE SHUTDOWN: ${this.name}`);
+        routerClientInstance_1.default.transmit(SERVICE_CLOSED_CHANNEL, {
+            name: this.name,
+            uuid: system_1.System.Application.getCurrent().uuid
+        });
+    }
+}
+exports.BaseService = BaseService;
+// ensures all service errors will be caught
+window.addEventListener("error", function (errorObject) {
+    var stack = errorObject.error ? errorObject.error.stack.substring(errorObject.error.stack.search("at ")) : ""; // strip off irrelevant part of stack
+    logger_1.default.error(errorObject.message, "File: " + errorObject.filename, "Line: " + errorObject.lineno, "Column: " + errorObject.colno, "Error Stack: \n    " + stack);
+    return false;
+});
+//catch promise errors
+window.addEventListener("unhandledrejection", function (event) {
+    if (event.reason == "Cannot Wrap Service Manager or Services") {
+        logger_1.default.warn("A service tried To wrap itself. This is a side effect of using Clients in services.");
+    }
+    else {
+        logger_1.default.error("Unhandled rejection", "reason", event.reason);
+    }
+});
+/**
+ *
+ * @private
+ */
+function fixParams(params) {
+    if (params.startupDependencies) {
+        if (!params.startupDependencies.services)
+            params.startupDependencies.services = defaultBaseServiceParams.startupDependencies.services;
+        if (!params.startupDependencies.clients)
+            params.startupDependencies.clients = defaultBaseServiceParams.startupDependencies.clients;
+    }
+    else {
+        params.startupDependencies = defaultBaseServiceParams.startupDependencies;
+    }
+    if (params.shutdownDependencies) {
+        if (!params.shutdownDependencies.services)
+            params.shutdownDependencies.services = defaultBaseServiceParams.shutdownDependencies.services;
+    }
+    else {
+        params.shutdownDependencies = defaultBaseServiceParams.shutdownDependencies;
+    }
+}
+
+
+/***/ }),
+
+/***/ 3:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1152,32 +6680,34 @@ class System {
         const promiseResolver = (resolve) => {
             let t;
             let timeoutCleared = false;
-            // Need to terminate after closing because otherwise applications sit around in OpenFin with isRunning: false.
             let terminateAndResolve = () => {
                 if (timeoutCleared)
                     return;
-                timeoutCleared = true;
-                console.log("terminating ", app.uuid);
-                clearTimeout(t);
+                console.log("Attempting to terminate", app.uuid);
                 app.terminate(() => {
                     cb();
                     resolve();
                 }, () => {
+                    if (timeoutCleared)
+                        return;
+                    timeoutCleared = true;
+                    clearInterval(t);
+                    // If closing fails, force close
+                    console.log("force closing ", app.uuid);
                     app.terminate();
                 });
             };
-            // Sometimes app.close() never calls back (only happens with logger). So after 2 seconds terminate.
-            t = setTimeout(terminateAndResolve, 2000);
+            //Hanging apps can be unresponsive to close and terminate calls for a period of time, keep trying until they're closed
+            t = setInterval(terminateAndResolve, 2000);
             console.log("closing ", app.uuid);
-            // Try to close normally
-            app.close(false, terminateAndResolve, () => {
-                if (timeoutCleared)
-                    return;
-                clearTimeout(t);
-                // If closing fails, force close
-                console.log("force closing ", app.uuid);
-                app.close(true, terminateAndResolve, terminateAndResolve);
-            });
+            //OpenFin windows will wait to callback until close is successful, so no need to keep trying to close on a success callback.
+            app.close(false, () => {
+                console.log("app.close: successfully closed", app.uuid);
+                timeoutCleared = true;
+                clearInterval(t);
+                cb();
+                resolve();
+            }, terminateAndResolve);
         };
         return new Promise(promiseResolver);
     }
@@ -1187,191 +6717,837 @@ exports.System = System;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 5 */
+
+/***/ 30:
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(process) {
-/**
- * This is the web browser implementation of `debug()`.
- *
- * Expose `debug()` as the module.
- */
+"use strict";
 
-exports = module.exports = __webpack_require__(58);
-exports.log = log;
-exports.formatArgs = formatArgs;
-exports.save = save;
-exports.load = load;
-exports.useColors = useColors;
-exports.storage = 'undefined' != typeof chrome
-               && 'undefined' != typeof chrome.storage
-                  ? chrome.storage.local
-                  : localstorage();
-
-/**
- * Colors.
- */
-
-exports.colors = [
-  'lightseagreen',
-  'forestgreen',
-  'goldenrod',
-  'dodgerblue',
-  'darkorchid',
-  'crimson'
-];
-
-/**
- * Currently only WebKit-based Web Inspectors, Firefox >= v31,
- * and the Firebug extension (any Firefox version) are known
- * to support "%c" CSS customizations.
- *
- * TODO: add a `localStorage` variable to explicitly enable/disable colors
- */
-
-function useColors() {
-  // is webkit? http://stackoverflow.com/a/16459606/376773
-  // document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
-  return (typeof document !== 'undefined' && 'WebkitAppearance' in document.documentElement.style) ||
-    // is firebug? http://stackoverflow.com/a/398120/376773
-    (window.console && (console.firebug || (console.exception && console.table))) ||
-    // is firefox >= v31?
-    // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
-    (navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31);
-}
-
-/**
- * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
- */
-
-exports.formatters.j = function(v) {
-  try {
-    return JSON.stringify(v);
-  } catch (err) {
-    return '[UnexpectedJSONParseError]: ' + err.message;
-  }
-};
-
-
-/**
- * Colorize log arguments if enabled.
- *
- * @api public
- */
-
-function formatArgs() {
-  var args = arguments;
-  var useColors = this.useColors;
-
-  args[0] = (useColors ? '%c' : '')
-    + this.namespace
-    + (useColors ? ' %c' : ' ')
-    + args[0]
-    + (useColors ? '%c ' : ' ')
-    + '+' + exports.humanize(this.diff);
-
-  if (!useColors) return args;
-
-  var c = 'color: ' + this.color;
-  args = [args[0], c, 'color: inherit'].concat(Array.prototype.slice.call(args, 1));
-
-  // the final "%c" is somewhat tricky, because there could be other
-  // arguments passed either before or after the %c, so we need to
-  // figure out the correct index to insert the CSS into
-  var index = 0;
-  var lastC = 0;
-  args[0].replace(/%[a-z%]/g, function(match) {
-    if ('%%' === match) return;
-    index++;
-    if ('%c' === match) {
-      // we only are interested in the *last* %c
-      // (the user may have provided their own)
-      lastC = index;
+Object.defineProperty(exports, "__esModule", { value: true });
+const baseClient_1 = __webpack_require__(7);
+const StoreModel_1 = __webpack_require__(34);
+/** I'm not sure why we previously deferred requiring StoreModel, but we did.
+  * I've tried to stay as true to the original implementation as possible. -- Daniel 12/19/18 */
+let _StoreModel;
+/** The global `window` object. We cast it to a specific interface here to be
+ * explicit about what Finsemble-related properties it may have. */
+const Globals = window;
+var self;
+var localStore = {};
+function getGlobalStore(params, cb) {
+    function returnStore(err, response) {
+        if (err) {
+            return cb(err);
+        }
+        return cb(err, new _StoreModel(response.data, self.routerClient));
     }
-  });
-
-  args.splice(lastC, 0, c);
-  return args;
+    return self.routerClient.query("storeService.getStore", params, returnStore);
 }
-
-/**
- * Invokes `console.log()` when available.
- * No-op when `console.log` is not a "function".
- *
- * @api public
- */
-
-function log() {
-  // this hackery is required for IE8/9, where
-  // the `console.log` function doesn't have 'apply'
-  return 'object' === typeof console
-    && console.log
-    && Function.prototype.apply.call(console.log, console, arguments);
+function removeGlobalStore(params, cb) {
+    self.routerClient.query("storeService.removeStore", params, function (err, response) {
+        if (err) {
+            return cb(err, false);
+        }
+        return cb(err, response.data);
+    });
 }
-
 /**
- * Save `namespaces`.
  *
- * @param {String} namespaces
- * @api private
- */
+ * @introduction
+ * <h2>Distributed Store Client</h2>
+ * The Distributed Store Client handles creating, retrieving, and destroying stores. Stores are used to save and retrieve data either locally or globally.
+ * This data is not persisted. You can add listeners at multiple levels (store or field), and get the updated data as it's updated in the store.
+ * Fields are stored within the store as key/value pair.
+ *
+ * For more information, see the [Distributed Store tutorial](tutorial-DistributedStore.html).
 
-function save(namespaces) {
-  try {
-    if (null == namespaces) {
-      exports.storage.removeItem('debug');
-    } else {
-      exports.storage.debug = namespaces;
+ * @hideconstructor
+ * @constructor
+ */
+class DistributedStoreClient extends baseClient_1._BaseClient {
+    constructor(params) {
+        super(params);
+        /**
+         * @private
+         */
+        this.load = function (cb) {
+            cb();
+        };
+        self = this;
+        this.ls = localStore;
     }
-  } catch(e) {}
+    /**
+     * Get a store. If no store is set then we'll get the global Finsemble store. If global is not set we'll check local first then we'll check global.
+     * @param {Object} params - Params object
+     * @param {String} params.store -  The namespace of the value
+     * @param {boolean} params.global - If true, indicates the store is global.
+     * @param {function} cb -  Will return the value if found.
+     * @returns {StoreModel} - returns the store
+     * @example
+     * DistributedStoreClient.getStore({store:'store1'},function(storeObject){});
+     */
+    getStore(params, cb) {
+        if (params.global) {
+            return getGlobalStore(params, cb);
+        }
+        if (localStore[params.store]) {
+            return cb(null, localStore[params.store]);
+        }
+        return getGlobalStore(params, cb);
+    }
+    ;
+    /**
+     *Creates a store.
+     * @param params Params object
+     * @param {string} params.store The namespace of to use
+     * @param {any} [params.values] -  Starting values for the store
+     * @param {boolean} params.global If true, indicates the store is global.
+     * @param {boolean} [params.persist] - Should this store persists? THe store must be global to use this flag.
+     * @param {function} cb -  Will return the store on success.
+     * @returns {function} - Callback will receive the store
+     * @example
+     * DistributedStoreClient.createStore({store:"store1",global:false,values:{}},function(storeObject){});
+     */
+    createStore(params, cb = Function.prototype) {
+        const promiseResolver = (resolve, reject) => {
+            if (params.global) {
+                return this.routerClient.query("storeService.createStore", params, function (err, response) {
+                    if (err) {
+                        reject(err);
+                        return cb(err);
+                    }
+                    const data = new _StoreModel(response.data, self.routerClient);
+                    resolve({ err, data });
+                    return cb(err, data);
+                });
+            }
+            if (localStore[params.store]) {
+                resolve({ err: null, data: localStore[params.store] });
+                return cb(null, localStore[params.store]);
+            }
+            var ls = new _StoreModel(params, self.routerClient);
+            localStore[ls.name] = ls;
+            resolve({ err: null, data: ls });
+            return cb(null, ls);
+        };
+        return new Promise(promiseResolver);
+    }
+    ;
+    /**
+     * Remove a store . If global is not set and a local store isn't found we'll try to remove the global store
+     * @param {Object} params - Params object
+     * @param {String} params.store -  The namespace of to use
+     * @param {boolean} [params.global] - Is this a global store?
+     * @param {function} cb
+     * @example
+     * DistributedStoreClient.removeStore({store:"store1",global:true},function(){});
+     */
+    removeStore(params, cb) {
+        if (params.global) {
+            return removeGlobalStore(params, cb);
+        }
+        if (localStore[params.store]) {
+            delete localStore[params.store];
+            return cb(null, true);
+        }
+        removeGlobalStore(params, cb); // If global flag is not set but we don't find it local, try global////Should we have this?
+    }
+    ;
 }
+;
+var storeClient = new DistributedStoreClient({
+    startupDependencies: {
+        services: ["dataStoreService"]
+    },
+    onReady: function (cb) {
+        _StoreModel = StoreModel_1.default;
+        storeClient.load(cb);
+    },
+    name: "distributedStoreClient"
+});
+Globals.distributedStoreClient = storeClient;
+exports.default = storeClient;
 
-/**
- * Load `namespaces`.
- *
- * @return {String} returns the previously persisted debug modes
- * @api private
- */
-
-function load() {
-  var r;
-  try {
-    return exports.storage.debug;
-  } catch(e) {}
-
-  // If debug isn't set in LS, and we're in Electron, try to load $DEBUG
-  if (typeof process !== 'undefined' && 'env' in process) {
-    return process.env.DEBUG;
-  }
-}
-
-/**
- * Enable namespaces listed in `localStorage.debug` initially.
- */
-
-exports.enable(load());
-
-/**
- * Localstorage attempts to return the localstorage.
- *
- * This is necessary because safari throws
- * when a user disables cookies/localstorage
- * and you attempt to access it.
- *
- * @return {LocalStorage}
- * @api private
- */
-
-function localstorage(){
-  try {
-    return window.localStorage;
-  } catch (e) {}
-}
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 6 */
+
+/***/ 33:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony export (immutable) */ __webpack_exports__["byString"] = byString;
+/* harmony export (immutable) */ __webpack_exports__["initObject"] = initObject;
+/* harmony export (immutable) */ __webpack_exports__["mapField"] = mapField;
+/* harmony export (immutable) */ __webpack_exports__["checkForObjectChange"] = checkForObjectChange;
+/**
+ *
+ * This file handles common functionality needed in both the client and service.
+ *
+ */
+// Get a value from an object using a string. {abc:{123:"value"}} you would do byString(object,"abc.123")
+function byString(o, s) {
+	//Object,String
+	s = s.replace(/\[(\w+)\]/g, ".$1"); // convert indexes to properties
+	s = s.replace(/^\./, ""); // strip a leading dot
+	var a = s.split(".");
+	for (var i = 0, n = a.length; i < a.length; ++i) {
+		// Loop through and find the attribute that matches the string passed in
+		var k = a[i];
+		if (!o) {
+			return null;
+		}
+		if (typeof o === "string") return null; // Reached the end of the chain
+
+		if (k in o) {
+			o = o[k];
+		} else {
+			return null;
+		}
+	}
+	return o;
+}
+//can add values to an object from a string. Must be in `.` form abc.123
+const setPath = (object, path, value) => path.split(".").reduce((o, p) => o[p] = path.split(".").pop() === p ? value : o[p] || {}, object);
+/* harmony export (immutable) */ __webpack_exports__["setPath"] = setPath;
+
+
+// This handles the intial mapping for us. It will crawl through all child objects and map those too. Parent is the current location within the object(`parent.child`). Null is top level. The mapping is all flattened
+function initObject(object, parent, mapping) {
+	var mapLocation;
+
+	if (!parent) {
+		parent = null;
+	}
+
+	if (typeof object !== "object") {
+		mapLocation = parent ? parent + "." + n : n;
+		mapping[mapLocation] = parent;
+		return;
+	}
+
+	for (let n in object) {
+		if (typeof object[n] === "object" && object[n] !== "undefined") {
+			mapLocation = parent ? parent + "." + n : n;
+			mapping[mapLocation] = parent;
+			initObject(object[n], mapLocation, mapping); // If we have another object, map it
+		} else {
+			mapLocation = parent ? parent + "." + n : n;
+			mapping[mapLocation] = parent;
+		}
+	}
+}
+// Will map out a field in an object. So we don't have to loop through the whole thing everytime we have a change.
+function mapField(object, s, mapping) {
+	if (mapping[s]) {
+		return;
+	} // If we're already mapped move on.
+	s = s.replace(/\[(\w+)\]/g, ".$1"); // convert indexes to properties
+	s = s.replace(/^\./, ""); // strip a leading dot
+	var a = s.split(".");
+	var currentLocation = s;
+
+	if (!mapping.hasOwnProperty(currentLocation)) {
+		var newString = null;
+		if (a.length > 1) {
+			a.pop();
+			newString = a.join(".");
+		}
+
+		mapping[currentLocation] = newString;
+	}
+
+	var newObject = byString(object, currentLocation);
+	if (newObject === "undefined") {
+		return;
+	} // If the location doesnt exist exit.
+	if (typeof newObject === "object") {
+		for (var key in newObject) {
+			mapField(object, currentLocation + "." + key, mapping); // If we need to ke
+		}
+	}
+}
+// To see if we're replacing an existing field/object with an object/field that would make some of the mapping obsolete.
+function checkForObjectChange(object, field, mapping) {
+	var objectReplacing = byString(object, field);
+	if (objectReplacing === null) {
+		return false;
+	}
+	if (typeof objectReplacing === "object") {
+		// we're replacing an object which requires use to remapp at this level.
+		return removeChildMapping(mapping, field);
+	}
+	if (typeof objectReplacing !== "object" && typeof field === "object") {
+		//we're replacing a non object with an object. Need to map out this new object
+		return removeChildMapping(mapping, field);
+	}
+	return null;
+}
+//This will remove an item from mapping and pass back an array so that we can send out notifications
+function removeChildMapping(mapping, field) {
+	var removals = [];
+	for (var map in mapping) {
+		var lookField = field + ".";
+		if (map.includes(lookField)) {
+			removals.push(map);
+			delete mapping[map];
+		}
+	}
+	return removals;
+}
+
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\storeUtils.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\storeUtils.js"); } } })();
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
+
+/***/ }),
+
+/***/ 34:
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const async_1 = __webpack_require__(9);
+const storeUtils = __webpack_require__(33);
+const logger_1 = __webpack_require__(0);
+const baseClient_1 = __webpack_require__(7);
+/** The global `window` object. We cast it to a specific interface here to be
+ * explicit about what Finsemble-related properties it may have. */
+const Globals = window;
+/**
+ *
+ * @introduction
+ * <h2>Store Model</h2>
+ * The Store Model consists of store instances. It handles getters/setters of data.
+ * @hideConstructor
+ * @class
+ */
+class StoreModel extends baseClient_1._BaseClient {
+    constructor(params, routerClient) {
+        super(params);
+        this.values = {};
+        this.listeners = [];
+        this.registeredDispatchListeners = [];
+        this.mapping = {};
+        /** This is the Flux dispatcher. It can be used dispatch actions across stores. These action are not caught inside of the global store service. For more information, you can read the [Flux documentation](https://facebook.github.io/flux/docs/overview.html).
+         *
+         * Example:
+         * ```
+         * store.Dispatcher.register(function(action){
+         * 	if(action.actionType === "ACTION1") {
+         * 		// Do something with the action here.
+         * 	}
+         * })
+         * ```
+         */
+        this.Dispatcher = {
+            register: (fn) => {
+                this.registeredDispatchListeners.push(fn);
+            },
+            dispatch: (data) => {
+                if (this.isGlobal) {
+                    this.routerClient.transmit("storeService.dispatch." + this.name, data);
+                }
+                else {
+                    this.handleDispatchedMessages(null, {
+                        data: data
+                    });
+                }
+            }
+        };
+        /**
+         * Hanles all changes coming in from the service.
+         */
+        this.handleChanges = (err, response) => {
+            if (err) {
+                logger_1.default.system.error("DistributedStoreClient", err);
+            }
+            if (!response.data.store) {
+                return;
+            }
+            if (!response.data.field) {
+                response.data.field = null;
+            }
+            var combined = this.name + (response.data.field ? "." + response.data.field : "");
+            var val = response.data.storeData ? response.data.storeData : response.data.value;
+            this.triggerListeners(combined, val);
+        };
+        this.routerClient = routerClient;
+        this.isGlobal = params.global;
+        this.name = params.store ? params.store : "finsemble";
+        if (params.values)
+            this.values = params.values;
+        this.lst = this.listeners;
+        storeUtils.initObject(this.values, null, this.mapping);
+        // Add listeners for global stores. Not needed for local stores as everything happens internally.
+        if (this.isGlobal) {
+            this.routerClient.addListener("storeService.dispatch." + this.name, this.handleDispatchedMessages.bind(this));
+        }
+    }
+    /**
+     * @param {*} err
+     * @param {*} message
+     * @private
+     */
+    handleDispatchedMessages(err, message) {
+        for (var i = 0; i < this.registeredDispatchListeners.length; i++) {
+            this.registeredDispatchListeners[i](message.data);
+        }
+    }
+    ;
+    /**
+     * Set a value in the store. Two events will be triggered with topics of: store and field.
+     * @param {Object} params - Params object
+     * @param {String} params.field - The name of the field where data will be stored
+     * @param {String} params.value - Value to be stored
+     * @param {function} [cb] callback
+     * @returns {null}
+     *
+     * @example
+     * store.setValue({field:'field1',value:"new value"});
+     */
+    setValue(params, cb) {
+        if (!params.field) {
+            logger_1.default.system.error("DistributedStore.setValue:no field provided", params);
+        }
+        if (!params.hasOwnProperty("value")) {
+            logger_1.default.system.error("DistributedStore.setValue:no value provided", params);
+        }
+        if (this.isGlobal) {
+            var data = {
+                store: this.name,
+                field: params.field,
+                value: params.value
+            };
+            return Globals.distributedStoreClient.routerClient.query("storeService.setValue", data, function (err) {
+                return cb ? cb(err) : null;
+            });
+        }
+        const removals = storeUtils.checkForObjectChange(this.values, params.field, this.mapping);
+        storeUtils.setPath(this.values, params.field, params.value);
+        storeUtils.mapField(this.values, params.field, this.mapping);
+        if (removals) {
+            this.sendRemovals(removals);
+        }
+        this.triggerListeners(this.name, this);
+        this.publishObjectUpdates(params.field, this.mapping);
+        return cb ? cb(null) : null;
+    }
+    ;
+    /**
+     * Handles changes to the store. Will publish from the field that was changed and back.
+     */
+    publishObjectUpdates(startfield, mappings) {
+        const currentMapping = mappings;
+        while (startfield) {
+            this.triggerListeners(this.name + "." + startfield, storeUtils.byString(this.values, startfield));
+            startfield = currentMapping[startfield];
+        }
+    }
+    /**
+     * Send items that are no longer mapped or had their map change. If a value is remapped we'll send out the new value.
+    */
+    sendRemovals(removals) {
+        for (var i = 0; i < removals.length; i++) {
+            this.triggerListeners(this.name + "." + removals[i], storeUtils.byString(this.values, removals[i]));
+        }
+    }
+    /**
+     * This will set multiple values in the store.
+     * @param {Object[]} fields - An Array of field objects
+     * @param {String} fields.field - The name of the field
+     * @param {any} fields.value - Field value
+     * @param {function} [cb] callback
+     * @example
+     * store.setValues([{field:'field1',value:"new value"}]);
+     */
+    setValues(fields, cb) {
+        if (!fields) {
+            return logger_1.default.system.error("DistributedStore.setValues:no params given");
+        }
+        if (!Array.isArray(fields)) {
+            return logger_1.default.system.error("DistributedStore.setValues:params must be an array");
+        }
+        async_1.each(fields, (field, done) => {
+            this.setValue(field, done);
+        }, (err) => {
+            return cb ? cb(err) : null;
+        });
+    }
+    ;
+    /**
+     * Get a value from the store. If global is not set, we'll check local first then we'll check global.
+     * @param {string|object} params - Params object. This can also be a string
+     * @param {String} params.field - The field where the value is stored.
+     * @param {Function} [cb] -  Will return the value if found.
+     * @returns {any} - The value of the field. If no callback is given and the value is local, this will run synchronous
+     * @example
+    store.getValue({field:'field1'},function(err,value){});
+    store.getValue('field1',function(err,value){});
+     */
+    getValue(params, cb) {
+        if (typeof params === "string") {
+            params = { field: params };
+        }
+        if (!params.field) {
+            if (!cb) {
+                return "no field provided";
+            }
+            return cb("no field provided");
+        }
+        if (this.isGlobal) {
+            return this.getGlobalValue(params, cb);
+        }
+        var fieldValue = storeUtils.byString(this.values, params.field);
+        if (fieldValue !== undefined) {
+            if (!cb) {
+                return fieldValue;
+            }
+            return cb(null, fieldValue);
+        }
+        if (!cb) {
+            return null;
+        }
+        return cb("couldn't find a value");
+    }
+    ;
+    /**
+     * Get multiple values from the store.
+     * @param {Array.<object>|Array.<String>} fields - An Array of field objects. If there are no fields proviced, all values in the store are returned.
+     * @param {Function} [cb] -  Will return the value if found.
+     * @returns {Object} - returns an object of with the fields as keys.If no callback is given and the value is local, this will run synchronous
+     * @example
+     * store.getValues([{field:'field1'},{field:'field2'}],function(err,values){});
+     * store.getValues(['field1','field2'],function(err,values){});
+     */
+    getValues(fields, cb) {
+        if (typeof fields === "function") {
+            cb = fields;
+            if (this.isGlobal) {
+                return this.getGlobalValues(null, cb);
+            }
+            if (!cb) {
+                return this.values;
+            }
+            return cb(null, this.values);
+        }
+        if (!Array.isArray(fields)) {
+            return this.getValue(fields, cb);
+        }
+        if (this.isGlobal) {
+            return this.getGlobalValues(fields, cb);
+        }
+        var values = {};
+        for (var i = 0; i < fields.length; i++) {
+            var item = fields[i];
+            var field = typeof item === "string" ? item : item.field;
+            var combined = this.name + (field ? "." + field : "");
+            var fieldValue = storeUtils.byString(this.values, field);
+            values[field] = fieldValue;
+        }
+        if (!cb) {
+            return values;
+        }
+        return cb(null, values);
+    }
+    ;
+    /**
+     * Get a single value from the global store.
+     */
+    getGlobalValue(params, cb) {
+        Globals.distributedStoreClient.routerClient.query("storeService.getValue", {
+            store: this.name,
+            field: params.field
+        }, (err, response) => {
+            if (err) {
+                return cb(err);
+            }
+            return cb(err, response.data);
+        });
+    }
+    /**
+     * Get values from the global store.
+     */
+    getGlobalValues(params, cb) {
+        Globals.distributedStoreClient.routerClient.query("storeService.getValues", {
+            store: this.name,
+            fields: params
+        }, (err, response) => {
+            if (err) {
+                return cb(err);
+            }
+            return cb(err, response.data);
+        });
+    }
+    /**
+     * Remove a value from the store.
+    * @param {Object | String} params - Either an object or string
+     * @param {String} param.field - The name of the field
+     * @param {Function} [cb] -  returns an error if there is one
+     * @example
+     * store.removeValue({field:'field1'},function(err,bool){});
+     */
+    removeValue(params, cb) {
+        if (!params.field) {
+            if (params !== undefined) {
+                params = { field: params };
+            }
+            else {
+                return cb("no field provided");
+            }
+        }
+        params.value = null;
+        return this.setValue(params, cb);
+    }
+    ;
+    /**
+     * Removes multiple values from the store.
+     * @param {Object[] | String[]} params - An Array of field objects
+     * @param {String} param[].field - The name of the field
+     * @param {Function} [cb] -  returns an error if there is one.
+     * @example
+     * store.removeValue({field:'field1'},function(err,bool){});
+     */
+    removeValues(params, cb) {
+        if (!Array.isArray(params)) {
+            return cb("The passed in parameter needs to be an array");
+        }
+        async_1.map(params, this.removeValue, (err, data) => {
+            return cb(err, data);
+        });
+    }
+    ;
+    /**
+     * Destroys the store.
+     * @param {Function} [cb] -  Will return the value if found.
+     * @example
+     * store.destroy();
+     */
+    destroy(cb) {
+        var params = {
+            store: this.name,
+            global: this.isGlobal,
+        };
+        Globals.distributedStoreClient.removeStore(params, (err, response) => {
+            if (err) {
+                return cb(err);
+            }
+            return cb(null, true);
+        });
+    }
+    ;
+    /**
+     * NOTE: make sure we dont have duplicate router subscribers
+     * @private
+     */
+    changeSub(change) {
+        if (!this.subs)
+            this.subs = [];
+        if (!this.subs[change]) {
+            if (this.isGlobal) {
+                Globals.distributedStoreClient.routerClient.subscribe("storeService" + change, this.handleChanges);
+            }
+            this.subs[change] = true;
+        }
+    }
+    ;
+    /**
+    * Add a listener to the store at either the store or field level. If no field is given, the store level is used. You can also listen to nested object -- field1.nestedField
+    * @param {Object} params - Params object
+    * @param {String} params.field - The data field to listen for. If this is empty it listen to all changes of the store.
+    * @param {Function} fn -  the function to call when a listener is triggered
+    * @param {Function} [cb] - callback
+    * @example
+    *var myFunction = function(err,data){
+    }
+    * store.addListener({field:'field1'},myFunction,cb);
+
+    */
+    addListener(params, fn, cb) {
+        var field = null;
+        if (typeof params === "function") {
+            fn = params;
+            params = {};
+        }
+        if (params.field) {
+            field = params.field;
+        }
+        var combined = this.name + (field ? "." + field : "");
+        if (this.listeners[combined]) {
+            this.listeners[combined].push(fn);
+        }
+        else {
+            this.listeners[combined] = [fn];
+        }
+        this.changeSub(combined);
+        return cb ? cb() : null;
+    }
+    ;
+    /**
+    * Add an array of listeners as  objects or strings. If using strings, you must provide a function callback.
+    * @param {Object[] | String[]} params - Params object
+    * @param {String} params.field - The data field to listen for.
+    * @param {String} [params.listener] - the function to call when a listener is triggered. If this is empty, fn is used.
+    * @param {function} [fn] -  the function to call when a listener is triggered
+    * @param {function} [cb] callback
+    * @example
+    *var myFunction = function(err,data){
+
+    }
+    store.addListeners([{field:'field1',listener:myFunction},{field:'field2',listener:myFunction}],null,cb);
+
+    store.addListeners([{field:'field1'},{field:'field2',listener:myFunction}],myFunction,cb);
+
+    store.addListeners(['field1','field2'],myFunction,cb);
+    */
+    addListeners(params, fn, cb) {
+        if (!Array.isArray(params)) {
+            return this.addListener(params, fn, cb);
+        }
+        for (var i = 0; i < params.length; i++) {
+            var field = null;
+            var item = params[i];
+            var ls;
+            if (typeof item === "string") {
+                field = item;
+            }
+            else if (item.field) {
+                field = item.field;
+                ls = params[i].listener;
+            }
+            var combined = this.name + (field ? "." + field : "");
+            if (!ls) {
+                if (fn && typeof fn === "function") {
+                    ls = fn;
+                }
+            }
+            if (this.listeners[combined]) {
+                this.listeners[combined].push(ls);
+            }
+            else {
+                this.listeners[combined] = [ls];
+            }
+            this.changeSub(combined);
+        }
+        return cb ? cb() : null;
+    }
+    ;
+    /**
+     * Remove a listener from  store. If no field is given, we look for a store listener
+     * @param {Object} params - Params object
+     * @param {String} params.field - The data field
+     * @param {function} [fn] -  the function to remove from the listeners
+     * @param {function} [cb] -  returns true if it was succesfull in removing the listener.
+     *
+     * @example
+     * var myFunction = function(err,data){
+            }
+     * store.removeListener({field:'field1'},MyFunction,function(bool){});
+    StoreCstorelient.removeListener(MyFunction,function(bool){});
+     */
+    removeListener(params, fn, cb) {
+        var field = null;
+        if (typeof params === "function") {
+            cb = fn;
+            fn = params;
+            params = {};
+        }
+        if (params.field) {
+            field = params.field;
+        }
+        var combined = this.name + (field ? "." + field : "");
+        if (this.listeners[combined]) {
+            for (var i = 0; i < this.listeners[combined].length; i++) {
+                if (this.listeners[combined][i] === fn) {
+                    this.listeners[combined].pop(i);
+                    return cb ? cb(null, true) : null;
+                }
+            }
+        }
+        return cb ? cb(null, false) : null;
+    }
+    ;
+    /**
+     * Remove an array of listeners from the store
+     * @param {Object[] | String[]} params - Params object
+     * @param {String} params.field - The data field to listen for. If this is empty it listen to all changes of the store.
+     * @param {String} params.listener - The listener function
+     * @param {function} [fn] -  the function to remove from the listeners
+     * @param {function} [cb] -  returns true if it was succesfull in removing the listener.
+     *
+     * @example
+     * var myFunction = function(err,data){
+            }
+     * store.removeListeners({field:'field1'},MyFunction,function(bool){});
+    store.removeListeners([{field:'field1',listener:MyFunction}],function(bool){});
+    store.removeListeners(['field1'],MyFunction,function(bool){});
+     */
+    removeListeners(params, fn, cb) {
+        if (!Array.isArray(params)) {
+            if (typeof params === "function") {
+                this.removeListener({}, params, cb);
+            }
+            else if (params.field) {
+                this.removeListener(params, fn, cb);
+            }
+            return cb("missing fields");
+        }
+        var removeCount = 0;
+        for (var i = 0; i < params.length; i++) {
+            var field = null;
+            var item = params[i];
+            var ls;
+            if (typeof item === "string") {
+                field = item;
+            }
+            else if (item.field) {
+                field = item.field;
+                ls = params[i].listener;
+            }
+            var combined = this.name + (field ? "." + field : "");
+            if (!ls) {
+                if (fn && typeof fn === "function") {
+                    ls = fn;
+                }
+                else {
+                    continue;
+                }
+            }
+            for (var j = 0; j < this.listeners[combined].length; j++) {
+                if (this.listeners[combined][j] === ls) {
+                    this.listeners[combined].pop(i);
+                    removeCount++;
+                }
+            }
+        }
+        if (removeCount < params.length) {
+            return cb("All listeners could not be found", false);
+        }
+        return cb ? cb(null, true) : null;
+    }
+    ;
+    // Trigger any function that is listening for changes
+    triggerListeners(listenerKey, data) {
+        if (this.listeners[listenerKey]) {
+            for (var i = 0; i < this.listeners[listenerKey].length; i++) {
+                if (typeof this.listeners[listenerKey][i] === "function") {
+                    logger_1.default.system.debug("DistributedStore.triggerListeners", listenerKey, data);
+                    this.listeners[listenerKey][i](null, { field: listenerKey, value: data });
+                }
+                else {
+                    logger_1.default.system.warn("DistributedStoreClient:triggerListeners: listener is not a function", listenerKey, i, this.listeners[listenerKey][i]);
+                }
+            }
+        }
+    }
+}
+;
+exports.default = StoreModel;
+
+
+/***/ }),
+
+/***/ 4:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1394,8 +7570,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * @namespace routerClientInstance
  * @shouldBePublished false
  */
-const routerClientConstructor_1 = __webpack_require__(45);
-const logger_1 = __webpack_require__(2);
+const routerClientConstructor_1 = __webpack_require__(25);
+const logger_1 = __webpack_require__(0);
 let RCConstructor = routerClientConstructor_1.RouterClientConstructor;
 /** The logger needs a router client, and the router client needs a logger.
  * To get around this fundamental circular dependency, we pass a reference
@@ -1413,797 +7589,41 @@ exports.default = RouterClientInstance;
 
 
 /***/ }),
-/* 7 */
-/***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(global) {/**
- * Module dependencies.
- */
+/***/ 5:
+/***/ (function(module, exports) {
 
-var keys = __webpack_require__(65);
-var hasBinary = __webpack_require__(25);
-var sliceBuffer = __webpack_require__(57);
-var after = __webpack_require__(44);
-var utf8 = __webpack_require__(75);
+var g;
 
-var base64encoder;
-if (global && global.ArrayBuffer) {
-  base64encoder = __webpack_require__(47);
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || Function("return this")() || (1,eval)("this");
+} catch(e) {
+	// This works if the window reference is available
+	if(typeof window === "object")
+		g = window;
 }
 
-/**
- * Check if we are running an android browser. That requires us to use
- * ArrayBuffer with polling transports...
- *
- * http://ghinda.net/jpeg-blob-ajax-android/
- */
-
-var isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
-
-/**
- * Check if we are running in PhantomJS.
- * Uploading a Blob with PhantomJS does not work correctly, as reported here:
- * https://github.com/ariya/phantomjs/issues/11395
- * @type boolean
- */
-var isPhantomJS = typeof navigator !== 'undefined' && /PhantomJS/i.test(navigator.userAgent);
-
-/**
- * When true, avoids using Blobs to encode payloads.
- * @type boolean
- */
-var dontSendBlobs = isAndroid || isPhantomJS;
-
-/**
- * Current protocol version.
- */
-
-exports.protocol = 3;
-
-/**
- * Packet types.
- */
-
-var packets = exports.packets = {
-    open:     0    // non-ws
-  , close:    1    // non-ws
-  , ping:     2
-  , pong:     3
-  , message:  4
-  , upgrade:  5
-  , noop:     6
-};
-
-var packetslist = keys(packets);
-
-/**
- * Premade error packet.
- */
-
-var err = { type: 'error', data: 'parser error' };
-
-/**
- * Create a blob api even for blob builder when vendor prefixes exist
- */
-
-var Blob = __webpack_require__(48);
-
-/**
- * Encodes a packet.
- *
- *     <packet type id> [ <data> ]
- *
- * Example:
- *
- *     5hello world
- *     3
- *     4
- *
- * Binary is encoded in an identical principle
- *
- * @api private
- */
-
-exports.encodePacket = function (packet, supportsBinary, utf8encode, callback) {
-  if ('function' == typeof supportsBinary) {
-    callback = supportsBinary;
-    supportsBinary = false;
-  }
-
-  if ('function' == typeof utf8encode) {
-    callback = utf8encode;
-    utf8encode = null;
-  }
-
-  var data = (packet.data === undefined)
-    ? undefined
-    : packet.data.buffer || packet.data;
-
-  if (global.ArrayBuffer && data instanceof ArrayBuffer) {
-    return encodeArrayBuffer(packet, supportsBinary, callback);
-  } else if (Blob && data instanceof global.Blob) {
-    return encodeBlob(packet, supportsBinary, callback);
-  }
-
-  // might be an object with { base64: true, data: dataAsBase64String }
-  if (data && data.base64) {
-    return encodeBase64Object(packet, callback);
-  }
-
-  // Sending data as a utf-8 string
-  var encoded = packets[packet.type];
-
-  // data fragment is optional
-  if (undefined !== packet.data) {
-    encoded += utf8encode ? utf8.encode(String(packet.data)) : String(packet.data);
-  }
-
-  return callback('' + encoded);
-
-};
-
-function encodeBase64Object(packet, callback) {
-  // packet data is an object { base64: true, data: dataAsBase64String }
-  var message = 'b' + exports.packets[packet.type] + packet.data.data;
-  return callback(message);
-}
-
-/**
- * Encode packet helpers for binary types
- */
-
-function encodeArrayBuffer(packet, supportsBinary, callback) {
-  if (!supportsBinary) {
-    return exports.encodeBase64Packet(packet, callback);
-  }
-
-  var data = packet.data;
-  var contentArray = new Uint8Array(data);
-  var resultBuffer = new Uint8Array(1 + data.byteLength);
-
-  resultBuffer[0] = packets[packet.type];
-  for (var i = 0; i < contentArray.length; i++) {
-    resultBuffer[i+1] = contentArray[i];
-  }
-
-  return callback(resultBuffer.buffer);
-}
-
-function encodeBlobAsArrayBuffer(packet, supportsBinary, callback) {
-  if (!supportsBinary) {
-    return exports.encodeBase64Packet(packet, callback);
-  }
-
-  var fr = new FileReader();
-  fr.onload = function() {
-    packet.data = fr.result;
-    exports.encodePacket(packet, supportsBinary, true, callback);
-  };
-  return fr.readAsArrayBuffer(packet.data);
-}
-
-function encodeBlob(packet, supportsBinary, callback) {
-  if (!supportsBinary) {
-    return exports.encodeBase64Packet(packet, callback);
-  }
-
-  if (dontSendBlobs) {
-    return encodeBlobAsArrayBuffer(packet, supportsBinary, callback);
-  }
-
-  var length = new Uint8Array(1);
-  length[0] = packets[packet.type];
-  var blob = new Blob([length.buffer, packet.data]);
-
-  return callback(blob);
-}
-
-/**
- * Encodes a packet with binary data in a base64 string
- *
- * @param {Object} packet, has `type` and `data`
- * @return {String} base64 encoded message
- */
-
-exports.encodeBase64Packet = function(packet, callback) {
-  var message = 'b' + exports.packets[packet.type];
-  if (Blob && packet.data instanceof global.Blob) {
-    var fr = new FileReader();
-    fr.onload = function() {
-      var b64 = fr.result.split(',')[1];
-      callback(message + b64);
-    };
-    return fr.readAsDataURL(packet.data);
-  }
-
-  var b64data;
-  try {
-    b64data = String.fromCharCode.apply(null, new Uint8Array(packet.data));
-  } catch (e) {
-    // iPhone Safari doesn't let you apply with typed arrays
-    var typed = new Uint8Array(packet.data);
-    var basic = new Array(typed.length);
-    for (var i = 0; i < typed.length; i++) {
-      basic[i] = typed[i];
-    }
-    b64data = String.fromCharCode.apply(null, basic);
-  }
-  message += global.btoa(b64data);
-  return callback(message);
-};
-
-/**
- * Decodes a packet. Changes format to Blob if requested.
- *
- * @return {Object} with `type` and `data` (if any)
- * @api private
- */
-
-exports.decodePacket = function (data, binaryType, utf8decode) {
-  if (data === undefined) {
-    return err;
-  }
-  // String data
-  if (typeof data == 'string') {
-    if (data.charAt(0) == 'b') {
-      return exports.decodeBase64Packet(data.substr(1), binaryType);
-    }
-
-    if (utf8decode) {
-      data = tryDecode(data);
-      if (data === false) {
-        return err;
-      }
-    }
-    var type = data.charAt(0);
-
-    if (Number(type) != type || !packetslist[type]) {
-      return err;
-    }
-
-    if (data.length > 1) {
-      return { type: packetslist[type], data: data.substring(1) };
-    } else {
-      return { type: packetslist[type] };
-    }
-  }
-
-  var asArray = new Uint8Array(data);
-  var type = asArray[0];
-  var rest = sliceBuffer(data, 1);
-  if (Blob && binaryType === 'blob') {
-    rest = new Blob([rest]);
-  }
-  return { type: packetslist[type], data: rest };
-};
-
-function tryDecode(data) {
-  try {
-    data = utf8.decode(data);
-  } catch (e) {
-    return false;
-  }
-  return data;
-}
-
-/**
- * Decodes a packet encoded in a base64 string
- *
- * @param {String} base64 encoded message
- * @return {Object} with `type` and `data` (if any)
- */
-
-exports.decodeBase64Packet = function(msg, binaryType) {
-  var type = packetslist[msg.charAt(0)];
-  if (!base64encoder) {
-    return { type: type, data: { base64: true, data: msg.substr(1) } };
-  }
-
-  var data = base64encoder.decode(msg.substr(1));
-
-  if (binaryType === 'blob' && Blob) {
-    data = new Blob([data]);
-  }
-
-  return { type: type, data: data };
-};
-
-/**
- * Encodes multiple messages (payload).
- *
- *     <length>:data
- *
- * Example:
- *
- *     11:hello world2:hi
- *
- * If any contents are binary, they will be encoded as base64 strings. Base64
- * encoded strings are marked with a b before the length specifier
- *
- * @param {Array} packets
- * @api private
- */
-
-exports.encodePayload = function (packets, supportsBinary, callback) {
-  if (typeof supportsBinary == 'function') {
-    callback = supportsBinary;
-    supportsBinary = null;
-  }
-
-  var isBinary = hasBinary(packets);
-
-  if (supportsBinary && isBinary) {
-    if (Blob && !dontSendBlobs) {
-      return exports.encodePayloadAsBlob(packets, callback);
-    }
-
-    return exports.encodePayloadAsArrayBuffer(packets, callback);
-  }
-
-  if (!packets.length) {
-    return callback('0:');
-  }
-
-  function setLengthHeader(message) {
-    return message.length + ':' + message;
-  }
-
-  function encodeOne(packet, doneCallback) {
-    exports.encodePacket(packet, !isBinary ? false : supportsBinary, true, function(message) {
-      doneCallback(null, setLengthHeader(message));
-    });
-  }
-
-  map(packets, encodeOne, function(err, results) {
-    return callback(results.join(''));
-  });
-};
-
-/**
- * Async array map using after
- */
-
-function map(ary, each, done) {
-  var result = new Array(ary.length);
-  var next = after(ary.length, done);
-
-  var eachWithIndex = function(i, el, cb) {
-    each(el, function(error, msg) {
-      result[i] = msg;
-      cb(error, result);
-    });
-  };
-
-  for (var i = 0; i < ary.length; i++) {
-    eachWithIndex(i, ary[i], next);
-  }
-}
-
-/*
- * Decodes data when a payload is maybe expected. Possible binary contents are
- * decoded from their base64 representation
- *
- * @param {String} data, callback method
- * @api public
- */
-
-exports.decodePayload = function (data, binaryType, callback) {
-  if (typeof data != 'string') {
-    return exports.decodePayloadAsBinary(data, binaryType, callback);
-  }
-
-  if (typeof binaryType === 'function') {
-    callback = binaryType;
-    binaryType = null;
-  }
-
-  var packet;
-  if (data == '') {
-    // parser error - ignoring payload
-    return callback(err, 0, 1);
-  }
-
-  var length = ''
-    , n, msg;
-
-  for (var i = 0, l = data.length; i < l; i++) {
-    var chr = data.charAt(i);
-
-    if (':' != chr) {
-      length += chr;
-    } else {
-      if ('' == length || (length != (n = Number(length)))) {
-        // parser error - ignoring payload
-        return callback(err, 0, 1);
-      }
-
-      msg = data.substr(i + 1, n);
-
-      if (length != msg.length) {
-        // parser error - ignoring payload
-        return callback(err, 0, 1);
-      }
-
-      if (msg.length) {
-        packet = exports.decodePacket(msg, binaryType, true);
-
-        if (err.type == packet.type && err.data == packet.data) {
-          // parser error in individual packet - ignoring payload
-          return callback(err, 0, 1);
-        }
-
-        var ret = callback(packet, i + n, l);
-        if (false === ret) return;
-      }
-
-      // advance cursor
-      i += n;
-      length = '';
-    }
-  }
-
-  if (length != '') {
-    // parser error - ignoring payload
-    return callback(err, 0, 1);
-  }
-
-};
-
-/**
- * Encodes multiple messages (payload) as binary.
- *
- * <1 = binary, 0 = string><number from 0-9><number from 0-9>[...]<number
- * 255><data>
- *
- * Example:
- * 1 3 255 1 2 3, if the binary contents are interpreted as 8 bit integers
- *
- * @param {Array} packets
- * @return {ArrayBuffer} encoded payload
- * @api private
- */
-
-exports.encodePayloadAsArrayBuffer = function(packets, callback) {
-  if (!packets.length) {
-    return callback(new ArrayBuffer(0));
-  }
-
-  function encodeOne(packet, doneCallback) {
-    exports.encodePacket(packet, true, true, function(data) {
-      return doneCallback(null, data);
-    });
-  }
-
-  map(packets, encodeOne, function(err, encodedPackets) {
-    var totalLength = encodedPackets.reduce(function(acc, p) {
-      var len;
-      if (typeof p === 'string'){
-        len = p.length;
-      } else {
-        len = p.byteLength;
-      }
-      return acc + len.toString().length + len + 2; // string/binary identifier + separator = 2
-    }, 0);
-
-    var resultArray = new Uint8Array(totalLength);
-
-    var bufferIndex = 0;
-    encodedPackets.forEach(function(p) {
-      var isString = typeof p === 'string';
-      var ab = p;
-      if (isString) {
-        var view = new Uint8Array(p.length);
-        for (var i = 0; i < p.length; i++) {
-          view[i] = p.charCodeAt(i);
-        }
-        ab = view.buffer;
-      }
-
-      if (isString) { // not true binary
-        resultArray[bufferIndex++] = 0;
-      } else { // true binary
-        resultArray[bufferIndex++] = 1;
-      }
-
-      var lenStr = ab.byteLength.toString();
-      for (var i = 0; i < lenStr.length; i++) {
-        resultArray[bufferIndex++] = parseInt(lenStr[i]);
-      }
-      resultArray[bufferIndex++] = 255;
-
-      var view = new Uint8Array(ab);
-      for (var i = 0; i < view.length; i++) {
-        resultArray[bufferIndex++] = view[i];
-      }
-    });
-
-    return callback(resultArray.buffer);
-  });
-};
-
-/**
- * Encode as Blob
- */
-
-exports.encodePayloadAsBlob = function(packets, callback) {
-  function encodeOne(packet, doneCallback) {
-    exports.encodePacket(packet, true, true, function(encoded) {
-      var binaryIdentifier = new Uint8Array(1);
-      binaryIdentifier[0] = 1;
-      if (typeof encoded === 'string') {
-        var view = new Uint8Array(encoded.length);
-        for (var i = 0; i < encoded.length; i++) {
-          view[i] = encoded.charCodeAt(i);
-        }
-        encoded = view.buffer;
-        binaryIdentifier[0] = 0;
-      }
-
-      var len = (encoded instanceof ArrayBuffer)
-        ? encoded.byteLength
-        : encoded.size;
-
-      var lenStr = len.toString();
-      var lengthAry = new Uint8Array(lenStr.length + 1);
-      for (var i = 0; i < lenStr.length; i++) {
-        lengthAry[i] = parseInt(lenStr[i]);
-      }
-      lengthAry[lenStr.length] = 255;
-
-      if (Blob) {
-        var blob = new Blob([binaryIdentifier.buffer, lengthAry.buffer, encoded]);
-        doneCallback(null, blob);
-      }
-    });
-  }
-
-  map(packets, encodeOne, function(err, results) {
-    return callback(new Blob(results));
-  });
-};
-
-/*
- * Decodes data when a payload is maybe expected. Strings are decoded by
- * interpreting each byte as a key code for entries marked to start with 0. See
- * description of encodePayloadAsBinary
- *
- * @param {ArrayBuffer} data, callback method
- * @api public
- */
-
-exports.decodePayloadAsBinary = function (data, binaryType, callback) {
-  if (typeof binaryType === 'function') {
-    callback = binaryType;
-    binaryType = null;
-  }
-
-  var bufferTail = data;
-  var buffers = [];
-
-  var numberTooLong = false;
-  while (bufferTail.byteLength > 0) {
-    var tailArray = new Uint8Array(bufferTail);
-    var isString = tailArray[0] === 0;
-    var msgLength = '';
-
-    for (var i = 1; ; i++) {
-      if (tailArray[i] == 255) break;
-
-      if (msgLength.length > 310) {
-        numberTooLong = true;
-        break;
-      }
-
-      msgLength += tailArray[i];
-    }
-
-    if(numberTooLong) return callback(err, 0, 1);
-
-    bufferTail = sliceBuffer(bufferTail, 2 + msgLength.length);
-    msgLength = parseInt(msgLength);
-
-    var msg = sliceBuffer(bufferTail, 0, msgLength);
-    if (isString) {
-      try {
-        msg = String.fromCharCode.apply(null, new Uint8Array(msg));
-      } catch (e) {
-        // iPhone Safari doesn't let you apply to typed arrays
-        var typed = new Uint8Array(msg);
-        msg = '';
-        for (var i = 0; i < typed.length; i++) {
-          msg += String.fromCharCode(typed[i]);
-        }
-      }
-    }
-
-    buffers.push(msg);
-    bufferTail = sliceBuffer(bufferTail, msgLength);
-  }
-
-  var total = buffers.length;
-  buffers.forEach(function(buffer, i) {
-    callback(exports.decodePacket(buffer, binaryType, true), i, total);
-  });
-};
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
-
-/***/ }),
-/* 8 */
-/***/ (function(module, exports, __webpack_require__) {
-
-
-/**
- * Expose `Emitter`.
- */
-
-if (true) {
-  module.exports = Emitter;
-}
-
-/**
- * Initialize a new `Emitter`.
- *
- * @api public
- */
-
-function Emitter(obj) {
-  if (obj) return mixin(obj);
-};
-
-/**
- * Mixin the emitter properties.
- *
- * @param {Object} obj
- * @return {Object}
- * @api private
- */
-
-function mixin(obj) {
-  for (var key in Emitter.prototype) {
-    obj[key] = Emitter.prototype[key];
-  }
-  return obj;
-}
-
-/**
- * Listen on the given `event` with `fn`.
- *
- * @param {String} event
- * @param {Function} fn
- * @return {Emitter}
- * @api public
- */
-
-Emitter.prototype.on =
-Emitter.prototype.addEventListener = function(event, fn){
-  this._callbacks = this._callbacks || {};
-  (this._callbacks['$' + event] = this._callbacks['$' + event] || [])
-    .push(fn);
-  return this;
-};
-
-/**
- * Adds an `event` listener that will be invoked a single
- * time then automatically removed.
- *
- * @param {String} event
- * @param {Function} fn
- * @return {Emitter}
- * @api public
- */
-
-Emitter.prototype.once = function(event, fn){
-  function on() {
-    this.off(event, on);
-    fn.apply(this, arguments);
-  }
-
-  on.fn = fn;
-  this.on(event, on);
-  return this;
-};
-
-/**
- * Remove the given callback for `event` or all
- * registered callbacks.
- *
- * @param {String} event
- * @param {Function} fn
- * @return {Emitter}
- * @api public
- */
-
-Emitter.prototype.off =
-Emitter.prototype.removeListener =
-Emitter.prototype.removeAllListeners =
-Emitter.prototype.removeEventListener = function(event, fn){
-  this._callbacks = this._callbacks || {};
-
-  // all
-  if (0 == arguments.length) {
-    this._callbacks = {};
-    return this;
-  }
-
-  // specific event
-  var callbacks = this._callbacks['$' + event];
-  if (!callbacks) return this;
-
-  // remove all handlers
-  if (1 == arguments.length) {
-    delete this._callbacks['$' + event];
-    return this;
-  }
-
-  // remove specific handler
-  var cb;
-  for (var i = 0; i < callbacks.length; i++) {
-    cb = callbacks[i];
-    if (cb === fn || cb.fn === fn) {
-      callbacks.splice(i, 1);
-      break;
-    }
-  }
-  return this;
-};
-
-/**
- * Emit `event` with the given args.
- *
- * @param {String} event
- * @param {Mixed} ...
- * @return {Emitter}
- */
-
-Emitter.prototype.emit = function(event){
-  this._callbacks = this._callbacks || {};
-  var args = [].slice.call(arguments, 1)
-    , callbacks = this._callbacks['$' + event];
-
-  if (callbacks) {
-    callbacks = callbacks.slice(0);
-    for (var i = 0, len = callbacks.length; i < len; ++i) {
-      callbacks[i].apply(this, args);
-    }
-  }
-
-  return this;
-};
-
-/**
- * Return array of callbacks for `event`.
- *
- * @param {String} event
- * @return {Array}
- * @api public
- */
-
-Emitter.prototype.listeners = function(event){
-  this._callbacks = this._callbacks || {};
-  return this._callbacks['$' + event] || [];
-};
-
-/**
- * Check if this emitter has `event` handlers.
- *
- * @param {String} event
- * @return {Boolean}
- * @api public
- */
-
-Emitter.prototype.hasListeners = function(event){
-  return !! this.listeners(event).length;
-};
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
 
 
 /***/ }),
-/* 9 */
+
+/***/ 6:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__systemSettings__ = __webpack_require__(53);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__systemSettings__ = __webpack_require__(26);
 /*!
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
@@ -2376,11 +7796,311 @@ var Validate = function () {
 
 /* harmony default export */ __webpack_exports__["default"] = (new Validate());
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\common\\validate.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\common\\validate.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\validate.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\validate.js"); } } })();
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 10 */
+
+/***/ 7:
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+const routerClientInstance_1 = __webpack_require__(4);
+const validate_1 = __webpack_require__(6); // Finsemble args validator
+const logger_1 = __webpack_require__(0);
+const system_1 = __webpack_require__(3);
+const dependencyManager_1 = __webpack_require__(13);
+/**
+ * @introduction
+ * <h2>Base Client</h2>
+ * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependecies are met, either client or service, the client's `onReady` method is fired.
+ *
+ * We're currently halfway through migrating our clients from extending a normal function prototype to an ES6 class.
+ * "_BaseClient" represents the new class, while "BaseClient" is the original function. When the migration is complete,
+ * we will remove the old function and rename "_BaseClient" to "BaseClient".
+ * @constructor
+ * @param {Object} params
+ * @param {Function} params.onReady - A function to be called after the client has initialized.
+ * @param {String} params.name - The name of the client
+ * @shouldBePublished false
+    @example
+    import { _BaseClient as BaseClient } from "./baseClient";
+    var NewClient = function (params) {
+        BaseClient.call(this, params);
+        var self = this;
+
+        return this;
+    };
+
+    var clientInstance = new NewClient({
+        onReady: function (cb) {
+            Logger.system.log("NewClient Online");
+            cb();
+        },
+        name:"NewClient"
+    });
+    clientInstance.requiredServices = [REPLACE_THIS_ARRAY_WITH_DEPENENCIES];
+    clientInstance.initialize();
+    module.exports = clientInstance;
+    @private
+ */
+class _BaseClient {
+    constructor(params) {
+        /** The current status of this service. */
+        this.status = "offline";
+        this.startupTime = 0;
+        this.initialized = false;
+        this.startupDependencies = { services: [], clients: [] };
+        /** Gets the current window. */
+        this.finsembleWindow = null;
+        /** Gets the current window name. */
+        this.windowName = "";
+        /** Queue of functions to process once the client goes online. */
+        this.clientReadyQueue = [];
+        /**
+         * @private
+         *
+         */
+        this.processClientReadyQueue = () => {
+            for (let cb of this.clientReadyQueue) {
+                cb();
+            }
+            this.clientReadyQueue = [];
+        };
+        /**
+         * @private
+         *
+         */
+        this.onReady = (cb) => {
+            this.clientReadyQueue.push(cb);
+            if (this.status === "online") {
+                this.processClientReadyQueue();
+            }
+        };
+        /** Check to see if the client can come online. We check this against the required services and clients */
+        /**
+     * @private
+     *
+     */
+        this.setClientOnline = () => {
+            this.status = "online";
+            const onReadyMessage = `STARTUP:CLIENT ONLINE:${this.finWindow.name}:${this.name}`;
+            this.startupTime = window.performance.now() - this.startupTime;
+            const readyCB = () => {
+                this.logger.system.debug(onReadyMessage);
+                this.processClientReadyQueue();
+                dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(this.name);
+            };
+            if (this._onReady) {
+                this._onReady(readyCB);
+            }
+            else {
+                readyCB();
+            }
+        };
+        /**
+         * @private
+         *
+         */
+        this.initialize = (cb = Function.prototype) => {
+            if (this.initialized)
+                return;
+            this.initialized = true;
+            this.startupTime = performance.now();
+            this.routerClient.onReady(() => {
+                // TODO, [terry] allow the finsembleWindow to be passed in, so we can support proxying windowClient in RPC
+                this.finWindow = system_1.System.Window.getCurrent();
+                this.windowName = this.finWindow.name;
+                this.logger.system.debug("Baseclient Init Router Ready", this.name);
+                dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor(this.startupDependencies, () => {
+                    cb();
+                    this.setClientOnline();
+                });
+            });
+        };
+        /**
+         * @private
+         *
+         */
+        this.onClose = (cb) => {
+            if (cb)
+                cb();
+        };
+        this.name = params.name;
+        this._onReady = params.onReady;
+        this.startupDependencies = params.startupDependencies || {
+            services: [],
+            clients: []
+        };
+        // @TODO - Refactor this to use DI.
+        this.logger = logger_1.default;
+        /**
+         * Reference to the RouterClient
+         */
+        this.routerClient = routerClientInstance_1.default;
+    }
+}
+exports._BaseClient = _BaseClient;
+/**
+ * @introduction
+ * <h2>Base Client</h2>
+ * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependecies are met, either client or service, the client's `onReady` method is fired.
+ * @constructor
+ * @param {Object} params
+ * @param {Function} params.onReady - A function to be called after the client has initialized.
+ * @param {String} params.name - The name of the client
+ * @shouldBePublished false
+    @example
+    import { _BaseClient as BaseClient } from "./baseClient";
+    var NewClient = function (params) {
+        BaseClient.call(this, params);
+        var self = this;
+
+        return this;
+    };
+
+    var clientInstance = new NewClient({
+        onReady: function (cb) {
+            Logger.system.log("NewClient Online");
+            cb();
+        },
+        name:"NewClient"
+    });
+    clientInstance.requiredServices = [REPLACE_THIS_ARRAY_WITH_DEPENENCIES];
+    clientInstance.initialize();
+    module.exports = clientInstance;
+    @private
+ */
+var BaseClient = function (params) {
+    validate_1.default.args(params, "object=");
+    var self = this;
+    var status = "offline";
+    var onReady;
+    this.startupTime = 0;
+    if (params) {
+        if (params.onReady) {
+            onReady = params.onReady;
+        }
+        this.name = params.name;
+    }
+    this.initialized = false;
+    this.startupDependencies = params.startupDependencies || {
+        services: [],
+        clients: []
+    };
+    /**
+     * Reference to the RouterClient
+     *  @type {Object}
+     */
+    this.routerClient = routerClientInstance_1.default;
+    /**
+     * Gets the current openfin window - stays here for backward compatiblity
+     * @type {object}
+     */
+    this.finWindow = null;
+    /**
+     * Gets the current window
+     * @type {object}
+     */
+    this.finsembleWindow = null;
+    /**
+     * Gets the cusrrent window name
+     *  @type {string}
+     */
+    this.windowName = ""; //The current window
+    /**
+     * Services the are required to be online before the service can come online
+     *  @type {Array.<Object>}
+     */
+    this.requiredServices = [];
+    /**
+     * Clients the are required to be online before the service can come online
+     *  @type {Array.<Object>}
+     */
+    this.requiredClients = [];
+    /**
+     * Queue of functions to process once the client goes online.
+     * @private
+     */
+    this.clientReadyQueue = [];
+    /**
+     * Iterates through the clientReadyQueue, invoking each call to `.ready`.
+     */
+    this.processClientReadyQueue = function () {
+        for (var i = 0; i < this.clientReadyQueue.length; i++) {
+            let callback = this.clientReadyQueue[i];
+            if (typeof callback === "function") {
+                callback();
+            }
+        }
+        this.clientReadyQueue = [];
+    };
+    /**
+     * Method for adding callbacks to each client.
+     */
+    this.onReady = function (cb) {
+        this.clientReadyQueue.push(cb);
+        if (status === "online") {
+            this.processClientReadyQueue();
+        }
+    };
+    //Check to see if the client can come online. We check this against the required services and clients
+    this.setClientOnline = function () {
+        var self = this;
+        status = "online";
+        let onReadyMessage = `STARTUP:CLIENT ONLINE:${self.finWindow.name}:${self.name}`;
+        self.startupTime = performance.now() - self.startupTime;
+        if (onReady) {
+            onReady(function () {
+                logger_1.default.system.debug(onReadyMessage);
+                self.processClientReadyQueue();
+                dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(self.name);
+            });
+        }
+        else {
+            logger_1.default.system.debug(onReadyMessage);
+            self.processClientReadyQueue();
+            dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(self.name);
+        }
+    };
+    /**
+    * Starts the process of checking services and any other function required before the client can come online
+    */
+    this.initialize = function (cb = Function.prototype) {
+        if (self.initialized) {
+            return;
+        }
+        self.initialized = true;
+        self.setClientOnline = self.setClientOnline.bind(self);
+        self.startupTime = performance.now();
+        self.routerClient.onReady(function () {
+            // TODO, [terry] allow the finsembleWindow to be passed in, so we can support proxying windowClient in RPC
+            self.finWindow = system_1.System.Window.getCurrent();
+            self.windowName = self.finWindow.name;
+            logger_1.default.system.debug("Baseclient Init Router Ready", self.name);
+            dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor({
+                services: self.startupDependencies.services || [],
+                clients: self.startupDependencies.clients || []
+            }, () => {
+                cb();
+                self.setClientOnline();
+            });
+        });
+    };
+    this.onClose = function () { };
+};
+exports.default = BaseClient;
+
+
+/***/ }),
+
+/***/ 8:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2407,12 +8127,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (immutable) */ __webpack_exports__["guuid"] = guuid;
 /* harmony export (immutable) */ __webpack_exports__["injectJS"] = injectJS;
 /* harmony export (immutable) */ __webpack_exports__["openSharedData"] = openSharedData;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__system__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__ = __webpack_require__(41);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1__ = __webpack_require__(40);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1__ = __webpack_require__(21);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_uuid_v1__);
 /*!
  * Copyright 2017 by ChartIQ, Inc.
@@ -3057,11 +8777,12 @@ function openSharedData(params, cb) {
 	});
 };
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\common\\util.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\common\\util.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\util.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\util.js"); } } })();
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 11 */
+
+/***/ 9:
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(setImmediate, process, global, module) {(function (global, factory) {
@@ -8674,13619 +14395,22 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(43).setImmediate, __webpack_require__(1), __webpack_require__(0), __webpack_require__(15)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(24).setImmediate, __webpack_require__(1), __webpack_require__(5), __webpack_require__(16)(module)))
 
 /***/ }),
-/* 12 */
-/***/ (function(module, exports) {
 
-
-module.exports = function(a, b){
-  var fn = function(){};
-  fn.prototype = b.prototype;
-  a.prototype = new fn;
-  a.prototype.constructor = a;
-};
-
-/***/ }),
-/* 13 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-const routerClientInstance_1 = __webpack_require__(6);
-const validate_1 = __webpack_require__(9); // Finsemble args validator
-const logger_1 = __webpack_require__(2);
-const system_1 = __webpack_require__(4);
-const dependencyManager_1 = __webpack_require__(22);
-/**
- * @introduction
- * <h2>Base Client</h2>
- * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependecies are met, either client or service, the client's `onReady` method is fired.
- *
- * We're currently halfway through migrating our clients from extending a normal function prototype to an ES6 class.
- * "_BaseClient" represents the new class, while "BaseClient" is the original function. When the migration is complete,
- * we will remove the old function and rename "_BaseClient" to "BaseClient".
- * @constructor
- * @param {Object} params
- * @param {Function} params.onReady - A function to be called after the client has initialized.
- * @param {String} params.name - The name of the client
- * @shouldBePublished false
-    @example
-    import { _BaseClient as BaseClient } from "./baseClient";
-    var NewClient = function (params) {
-        BaseClient.call(this, params);
-        var self = this;
-
-        return this;
-    };
-
-    var clientInstance = new NewClient({
-        onReady: function (cb) {
-            Logger.system.log("NewClient Online");
-            cb();
-        },
-        name:"NewClient"
-    });
-    clientInstance.requiredServices = [REPLACE_THIS_ARRAY_WITH_DEPENENCIES];
-    clientInstance.initialize();
-    module.exports = clientInstance;
-    @private
- */
-class _BaseClient {
-    constructor(params) {
-        /** The current status of this service. */
-        this.status = "offline";
-        this.startupTime = 0;
-        this.initialized = false;
-        this.startupDependencies = { services: [], clients: [] };
-        /** Gets the current window. */
-        this.finsembleWindow = null;
-        /** Gets the current window name. */
-        this.windowName = "";
-        /** Queue of functions to process once the client goes online. */
-        this.clientReadyQueue = [];
-        this.processClientReadyQueue = () => {
-            for (let cb of this.clientReadyQueue) {
-                cb();
-            }
-            this.clientReadyQueue = [];
-        };
-        this.onReady = (cb) => {
-            this.clientReadyQueue.push(cb);
-            if (this.status === "online") {
-                this.processClientReadyQueue();
-            }
-        };
-        /** Check to see if the client can come online. We check this against the required services and clients */
-        this.setClientOnline = () => {
-            this.status = "online";
-            const onReadyMessage = `STARTUP:CLIENT ONLINE:${this.finWindow.name}:${this.name}`;
-            this.startupTime = window.performance.now() - this.startupTime;
-            const readyCB = () => {
-                this.logger.system.debug(onReadyMessage);
-                this.processClientReadyQueue();
-                dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(this.name);
-            };
-            if (this._onReady) {
-                this._onReady(readyCB);
-            }
-            else {
-                readyCB();
-            }
-        };
-        this.initialize = (cb = Function.prototype) => {
-            if (this.initialized)
-                return;
-            this.initialized = true;
-            this.startupTime = performance.now();
-            this.routerClient.onReady(() => {
-                // TODO, [terry] allow the finsembleWindow to be passed in, so we can support proxying windowClient in RPC
-                this.finWindow = system_1.System.Window.getCurrent();
-                this.windowName = this.finWindow.name;
-                this.logger.system.debug("Baseclient Init Router Ready", this.name);
-                dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor(this.startupDependencies, () => {
-                    cb();
-                    this.setClientOnline();
-                });
-            });
-        };
-        this.onClose = (cb) => {
-            if (cb)
-                cb();
-        };
-        this.name = params.name;
-        this._onReady = params.onReady;
-        this.startupDependencies = params.startupDependencies || {
-            services: [],
-            clients: []
-        };
-        // @TODO - Refactor this to use DI.
-        this.logger = logger_1.default;
-        /**
-         * Reference to the RouterClient
-         */
-        this.routerClient = routerClientInstance_1.default;
-    }
-}
-exports._BaseClient = _BaseClient;
-/**
- * @introduction
- * <h2>Base Client</h2>
- * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependecies are met, either client or service, the client's `onReady` method is fired.
- * @constructor
- * @param {Object} params
- * @param {Function} params.onReady - A function to be called after the client has initialized.
- * @param {String} params.name - The name of the client
- * @shouldBePublished false
-    @example
-    import { _BaseClient as BaseClient } from "./baseClient";
-    var NewClient = function (params) {
-        BaseClient.call(this, params);
-        var self = this;
-
-        return this;
-    };
-
-    var clientInstance = new NewClient({
-        onReady: function (cb) {
-            Logger.system.log("NewClient Online");
-            cb();
-        },
-        name:"NewClient"
-    });
-    clientInstance.requiredServices = [REPLACE_THIS_ARRAY_WITH_DEPENENCIES];
-    clientInstance.initialize();
-    module.exports = clientInstance;
-    @private
- */
-var BaseClient = function (params) {
-    validate_1.default.args(params, "object=");
-    var self = this;
-    var status = "offline";
-    var onReady;
-    this.startupTime = 0;
-    if (params) {
-        if (params.onReady) {
-            onReady = params.onReady;
-        }
-        this.name = params.name;
-    }
-    this.initialized = false;
-    this.startupDependencies = params.startupDependencies || {
-        services: [],
-        clients: []
-    };
-    /**
-     * Reference to the RouterClient
-     *  @type {Object}
-     */
-    this.routerClient = routerClientInstance_1.default;
-    /**
-     * Gets the current openfin window - stays here for backward compatiblity
-     * @type {object}
-     */
-    this.finWindow = null;
-    /**
-     * Gets the current window
-     * @type {object}
-     */
-    this.finsembleWindow = null;
-    /**
-     * Gets the cusrrent window name
-     *  @type {string}
-     */
-    this.windowName = ""; //The current window
-    /**
-     * Services the are required to be online before the service can come online
-     *  @type {Array.<Object>}
-     */
-    this.requiredServices = [];
-    /**
-     * Clients the are required to be online before the service can come online
-     *  @type {Array.<Object>}
-     */
-    this.requiredClients = [];
-    /**
-     * Queue of functions to process once the client goes online.
-     * @private
-     */
-    this.clientReadyQueue = [];
-    /**
-     * Iterates through the clientReadyQueue, invoking each call to `.ready`.
-     */
-    this.processClientReadyQueue = function () {
-        for (var i = 0; i < this.clientReadyQueue.length; i++) {
-            let callback = this.clientReadyQueue[i];
-            if (typeof callback === "function") {
-                callback();
-            }
-        }
-        this.clientReadyQueue = [];
-    };
-    /**
-     * Method for adding callbacks to each client.
-     */
-    this.onReady = function (cb) {
-        this.clientReadyQueue.push(cb);
-        if (status === "online") {
-            this.processClientReadyQueue();
-        }
-    };
-    //Check to see if the client can come online. We check this against the required services and clients
-    this.setClientOnline = function () {
-        var self = this;
-        status = "online";
-        let onReadyMessage = `StARTUP:CLIENT ONLINE:${self.finWindow.name}:${self.name}`;
-        self.startupTime = performance.now() - self.startupTime;
-        if (onReady) {
-            onReady(function () {
-                logger_1.default.system.debug(onReadyMessage);
-                self.processClientReadyQueue();
-                dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(self.name);
-            });
-        }
-        else {
-            logger_1.default.system.debug(onReadyMessage);
-            self.processClientReadyQueue();
-            dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(self.name);
-        }
-    };
-    /**
-    * Starts the process of checking services and any other function required before the client can come online
-    */
-    this.initialize = function (cb = Function.prototype) {
-        if (self.initialized) {
-            return;
-        }
-        self.initialized = true;
-        self.setClientOnline = self.setClientOnline.bind(self);
-        self.startupTime = performance.now();
-        self.routerClient.onReady(function () {
-            // TODO, [terry] allow the finsembleWindow to be passed in, so we can support proxying windowClient in RPC
-            self.finWindow = system_1.System.Window.getCurrent();
-            self.windowName = self.finWindow.name;
-            logger_1.default.system.debug("Baseclient Init Router Ready", self.name);
-            dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor({
-                services: self.startupDependencies.services || [],
-                clients: self.startupDependencies.clients || []
-            }, () => {
-                cb();
-                self.setClientOnline();
-            });
-        });
-    };
-    this.onClose = function () { };
-};
-exports.default = BaseClient;
-
-
-/***/ }),
-/* 14 */
+/***/ 94:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__util__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__system__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__system__);
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-
-
-
-
-
-
-var ConfigUtil = function () {
-
-	var self = this;
-
-	/**
-  * @introduction
-  * <h2>Finsemble Configuration Utility Functions</h2>
-  * @private
-  * @class ConfigUtil
-  */
-	// run through the configuration object and resolve any variables definitions (i.e. $applicationRoot)
-	this.resolveConfigVariables = function (finsembleConfig, startingConfigObject) {
-		var pass = 0;
-		var needsAnotherPass = true;
-
-		/**
-   * Called by resolveObject().
-   * This function parses a string to find variables.
-   * It looks up the value of any identified variables, replacing them in the string.
-   * The completed string is then returned.
-   * @TODO convert this function to use an actual tokenizer?
-   **/
-		function resolveString(configString) {
-			var delimiters = /[/\\:?=&\s]/; // delimiters in regex form
-			var tokens = configString.split(delimiters);
-			for (var i = 0; i < tokens.length; i++) {
-				if (tokens[i][0] === "$") {
-					// special variable character $ has to first char in string
-					var variableReference = tokens[i].substring(1); // string off the leading $
-					var variableResolution = finsembleConfig[variableReference]; // the variable value is another config property, which already must be set
-					var newValue = configString.replace(tokens[i], variableResolution); // replace the variable reference with new value
-					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.info("forceObjectsToLogger", "ConfigUtil.resolveConfigVariables:resolveString configString", tokens[i], variableReference, variableResolution, "oldvalue=", configString, "value=", newValue);
-					needsAnotherPass = true; // <<-- here is the only place needsAnotherPass is set, since still resolving variables
-					configString = newValue;
-				}
-			}
-			return configString;
-		}
-
-		// process an array of config items looking for variables to resolve (a recursive routine)
-		function resolveArray(configArray, pass, recursionLevel) {
-			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.info("forceObjectsToLogger", "resolveArray", "pass", pass, "recursionLevel", recursionLevel, "configArray:", configArray);
-			for (var i = 0; i < configArray.length; i++) {
-				var value = configArray[i];
-				if (typeof value === "string" && value.indexOf("$") > -1) {
-					configArray[i] = resolveString(value);
-				} else if (value instanceof Array) {
-					resolveArray(value, pass, recursionLevel + 1); // array reference passed so don't need return value
-				} else if (typeof value === "object") {
-					resolveObject(value, pass, recursionLevel + 1); // object reference passed so don't need return value
-				}
-			}
-		}
-
-		/**
-   * Expand "variables" within a config object. Variables are strings that begin with "$".
-   * For instance, `finsemble.bar:"help", foo:$bar` would be expanded into `finsemble.bar:"help",foo:"help"`
-   * This is a recursive routine
-   */
-		function resolveObject(configObject, pass, recursionLevel) {
-			configObject = configObject || {}; // don't error on bad config
-			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.info("forceObjectsToLogger", "ConfigUtil.resolveConfigVariables:resolveObject", "pass", pass, "recursionLevel", recursionLevel, "configObject:", configObject);
-			Object.keys(configObject).forEach(function (key) {
-				var value = configObject[key];
-				if (typeof value === "string" && value.indexOf("$") > -1) {
-					configObject[key] = resolveString(value);
-				} else if (value instanceof Array) {
-					resolveArray(value, pass, recursionLevel + 1); // array reference passed so don't need return value
-				} else if (typeof value === "object") {
-					resolveObject(value, pass, recursionLevel + 1); // object reference passed so don't need return value
-				}
-			});
-		}
-
-		// since variables may be nested, keep resolving till no more left
-		while (needsAnotherPass) {
-			needsAnotherPass = false; // don't need another pass afterwards unless a variable is resolved somewhere in finsembleConfig
-			resolveObject(startingConfigObject, ++pass, 1);
-		}
-	};
-
-	// This does mimimal processing of the manifest, just enough to support getting the router up, which is only expanding variables (e.g. moduleRoot) in the raw manifest
-	this.getExpandedRawManifest = function (callback, errorCB) {
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("ConfigUtil.getExpandedRawManifest starting");
-
-		function getRawManifest(callback, application, level) {
-			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getRawManifest", application, level);
-
-			application.getManifest(function (manifest) {
-				// get raw openfin manifest
-				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getExpandedRawManifest: manifest retrieved. Pre-variable resolution", manifest);
-				self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables first time so can fild config config location
-				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getExpandedRawManifest:Complete. post-variable resolution", manifest);
-				callback(manifest);
-			}, function (err) {
-				if (err) {
-					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("ConfigUtil.getExpandedRawManifest:application.getManifest:err", err);
-					if (errorCb) errorCB();
-				}
-				// no manifest so try parent
-				application.getParentUuid(function (parentUuid) {
-					var parentApplication = __WEBPACK_IMPORTED_MODULE_2__system__["System"].Application.wrap(parentUuid);
-					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "uuid", parentUuid, "parentApplication", parentApplication);
-					if (level < 10) {
-						getRawManifest(callback, parentApplication, ++level);
-					} else {
-						// still could find so must be a problem (i.e. avoid infinite loop)
-						callback("could not find manifest in parent applications");
-					}
-				});
-			});
-		}
-
-		__WEBPACK_IMPORTED_MODULE_2__system__["System"].ready(function () {
-			// make sure openfin is ready
-			var application = __WEBPACK_IMPORTED_MODULE_2__system__["System"].Application.getCurrent();
-			getRawManifest(callback, application, 1);
-		});
-	};
-
-	// async read of JSON config file
-	this.readConfigFile = function (coreConfigFile, importCallback) {
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("fetching " + coreConfigFile);
-		fetch(coreConfigFile, {
-			credentials: "include"
-		}).then(function (response) {
-			return response.json();
-		}).catch(function (err) {
-			importCallback("failure importing: " + err, null);
-		}).then(function (importObject) {
-			importCallback(null, importObject);
-		});
-	};
-
-	// This does a "first stage" processing of the manifest, providing enought config to start finsemble.
-	// Pull in the initial manifest, which includes gettig the "hiddlen" core config file along with its import definitions, and expand all variables.
-	// However, the full config processing, incluing actually doing the imports, is only done in the Config Service.
-	this.getInitialManifest = function (callback) {
-
-		__WEBPACK_IMPORTED_MODULE_2__system__["System"].ready(function () {
-			// make sure openfin is ready
-			var application = __WEBPACK_IMPORTED_MODULE_2__system__["System"].Application.getCurrent();
-			application.getManifest(function (manifest) {
-				// get raw openfin manifest
-				manifest.finsemble = manifest.finsemble || {}; // don't error on bad config
-				self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables first time so can find config config location
-				let CORE_CONFIG = manifest.finsemble.moduleRoot + "/configs/core/config.json"; // <<<--- here is the "hidden" core config file
-				self.readConfigFile(CORE_CONFIG, function (error, newFinsembleConfigObject) {
-					// fetch the core config file
-					if (!error) {
-						Object.keys(newFinsembleConfigObject).forEach(function (key) {
-							if (key === "importConfig") {
-								// add any importConfig items from the core to the existing importConifg
-								manifest.finsemble.importConfig = manifest.finsemble.importConfig || [];
-								for (let i = 0; i < newFinsembleConfigObject.importConfig.length; i++) {
-									manifest.finsemble.importConfig.unshift(newFinsembleConfigObject.importConfig[i]);
-								}
-							} else if (key === "importThirdPartyConfig") {
-								// add any importThirdPartyConfig items from the core to the existing importConifg
-								manifest.finsemble.importThirdPartyConfig = manifest.finsemble.importThirdPartyConfig || [];
-								for (let i = 0; i < newFinsembleConfigObject.importThirdPartyConfig.length; i++) {
-									manifest.finsemble.importThirdPartyConfig.unshift(newFinsembleConfigObject.importThirdPartyConfig[i]);
-								}
-							} else {
-								manifest.finsemble[key] = newFinsembleConfigObject[key];
-							}
-						});
-						self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables with finsemble config
-						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getInitialManifest:getCoreConfig:Initial Manifest after variables Resolved", manifest);
-					} else {
-						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("ConfigUtil.getInitialManifest:getCoreConfig:failed importing into finsemble config", error);
-					}
-					callback(manifest);
-				});
-			});
-		});
-	};
-
-	// output JSON objecvt to file
-	this.promptAndSaveJSONToLocalFile = function (filename, jsonObject) {
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("saveJSONToLocalFile", filename, jsonObject);
-
-		let dataStr = JSON.stringify(jsonObject, null, "\t");
-		let dataUri = "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
-
-		let exportFileDefaultName = filename + ".json";
-
-		let linkElement = document.createElement("a");
-		linkElement.setAttribute("href", dataUri);
-		linkElement.setAttribute("download", exportFileDefaultName);
-		linkElement.click();
-	};
-
-	// utility function for future use
-	this.configFormatForExport = function (typeOfConfig, configObject) {
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("configFormatForExport starting", typeOfConfig, configObject);
-		var exportConfig = __WEBPACK_IMPORTED_MODULE_0__util__["default"].clone(configObject);
-
-		if (typeOfConfig === "raw") {
-			// do nothing since config is ready to export as is
-		} else if (typeOfConfig === "all") {
-			delete exportConfig.importConfig;
-			delete exportConfig.comment;
-		} else if (typeOfConfig === "application") {
-			delete exportConfig.importConfig;
-			delete exportConfig.comment;
-			delete exportConfig.system;
-			delete exportConfig.services;
-		} else if (typeOfConfig === "workspace") {
-			exportConfig = { workspace: exportConfig };
-		} else if (typeOfConfig === "workspaceTemplate") {
-			let workspaceDefinition = {};
-			workspaceDefinition[exportConfig.name] = exportConfig;
-			exportConfig = { workspaceTemplates: workspaceDefinition };
-		} else if (typeOfConfig === "services") {
-			exportConfig = exportConfig.services;
-		} else if (typeOfConfig === "components") {
-			exportConfig = exportConfig.components;
-		}
-
-		return exportConfig;
-	};
-
-	/////////////////////////////////////////////////////////////////////////
-	/////////////// Remaining code is for config verification ///////////////
-	/////////////////////////////////////////////////////////////////////////
-
-	// convenience constructor to return record used in configVerifyObject.
-	this.VerifyConfigRecord = function (propertyType, propertyCondition) {
-		this._verify = {
-			type: propertyType,
-			condition: propertyCondition
-		};
-	};
-
-	// convenience constants for definiting verification object. See example usage in ServiceManager or ConfigService.
-	// Required means startup will break without it, so error.
-	// Optional means startup will not break without it; however, it is documented and expected as part of the config that should always be there.  So warning message only.
-	// Deprecated mean startup will no break but old config format is used and should be updated.
-	this.REQUIRED_STRING = new this.VerifyConfigRecord("string", "required");
-	this.REQUIRED_OBJECT = new this.VerifyConfigRecord("object", "required");
-	this.REQUIRED_BOOLEAN = new this.VerifyConfigRecord("boolean", "required");
-	this.REQUIRED_ARRAY = new this.VerifyConfigRecord("array", "required");
-	this.OPTIONAL_EXPECTED_STRING = new this.VerifyConfigRecord("string", "optional");
-	this.OPTIONAL_EXPECTED_OBJECT = new this.VerifyConfigRecord("object", "optional");
-	this.OPTIONAL_EXPECTED_BOOLEAN = new this.VerifyConfigRecord("boolean", "optional");
-	this.OPTIONAL_EXPECTED_ARRAY = new this.VerifyConfigRecord("array", "optional");
-	this.DEPRECATED_STRING = new this.VerifyConfigRecord("string", "DEPRECATED");
-	this.DEPRECATED_OBJECT = new this.VerifyConfigRecord("object", "DEPRECATED");
-	this.DEPRECATED_BOOLEAN = new this.VerifyConfigRecord("boolean", "DEPRECATED");
-	this.DEPRECATED_ARRAY = new this.VerifyConfigRecord("array", "DEPRECATED");
-
-	// check type of one config property. Return true if ok; otherwise false. Must handle null configProperty (returning false).
-	function checkType(configProperty, type) {
-		var typeOk = true;
-		if (configProperty) {
-			if (type == "array") {
-				if (!Array.isArray(configProperty)) {
-					typeOk = false;
-				}
-			} else {
-				// note "array" type is being distinguished from "object" type, so configProperty type shouldn't be an array
-				if (Array.isArray(configProperty) || typeof configProperty !== type) {
-					typeOk = false;
-				}
-			}
-		} else {
-			typeOk = false;
-		}
-		return typeOk;
-	}
-
-	// Verifies one config property given it's corresponding verifyRecord and returns appropriate result.
-	function verifyConfigProperty(fullPathName, configProperty, verifyRecord) {
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose(`verifyConfigProperty for ${fullPathName}`, configProperty, verifyRecord);
-		var resultOk = true;
-		switch (verifyRecord._verify.condition) {
-			case "required":
-				resultOk = checkType(configProperty, verifyRecord._verify.type);
-				if (!resultOk) {
-					// required must exist and have correct type
-					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`Illegally formatted configuration.  Type of ${fullPathName} is not an expected ${verifyRecord._verify.type}`, configProperty, verifyRecord);
-				}
-				break;
-			case "optional":
-				if (!configProperty) {
-					// missing optional only generates warning
-					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.warn(`CONFIGURATION WARNING: Expected configuration missing for ${fullPathName}.`, configProperty, verifyRecord);
-				} else {
-					resultOk = checkType(configProperty, verifyRecord._verify.type);
-					if (!resultOk) {
-						// optional only errors with wrong type
-						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`Illegally formatted configuration. Type of ${fullPathName} is not an expected ${verifyRecord._verify.type}`, configProperty, verifyRecord);
-					}
-				}
-				break;
-			case "DEPRECATED":
-				if (configProperty) {
-					// DEPRECATED generates warning
-					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.warn(`CONFIGURATION WARNING: DEPRECATED configuration ${fullPathName}.`, configProperty, verifyRecord);
-					resultOk = checkType(configProperty, verifyRecord._verify.type);
-					if (!resultOk) {
-						// DEPRECATED only errors with wrong type
-						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`Config ${fullPathName} is DEPRECATED and illegally formatted.  Expected type is ${verifyRecord._verify.type}.`, configProperty, verifyRecord);
-					}
-				}
-				break;
-			default:
-				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`Illegally formatted config record.  Condition ${verifyRecord._verify.condition} unknown`, configProperty, verifyRecord);
-		}
-		return resultOk;
-	}
-
-	/**
-  * Verifies config is correct and logs messages as needed. Recursively walks configObject and configVerifyObject.
-  *
-  * @param {object} fullPathName path name of config being verfied (e.g. "manifest", "manifest.finsemble"); used for error messages
-  * @param {object} configObject the configuration object to verify (typically the manifest object or manifest.finsemble object)
-  * @param {object} configVerifyObject object to drive the verification; data driven.
-  *
-  * Example configVerifyObject below.
-  * 		Note verification records (e.g. REQUIRED_STRING) only go at the leaf level, but code must handle corresponding undefined config at all levels.
-  *
-  * 		var configVerifyObject = {
-  *		finsemble: {
-  *			applicationRoot: REQUIRED_STRING,
-  *			moduleRoot: REQUIRED_STRING,
-  *			system: {
-  *				FSBLVersion: REQUIRED_STRING,
-  *				requiredServicesConfig: REQUIRED_OBJECT,
-  *			},
-  *			splinteringConfig: {
-  *				splinterAgents: OPTIONAL_EXPECTED_ARRAY
-  *			},
-  *			storage: {
-  *				LocalStorageAdapter: DEPRECATED_STRING
-  *			},
-  *		}
-  *	};
- 	 *
-  *
-  * @returns If correct, return true (with no log messages generated); return false otherwise. For optional or DEPRECATED generate warning if not defined, but no error unless if wrong type.
-  *
-  * @example See ConfigService for example usuage.
-  *
-  * @private
-  */
-	this.verifyConfigObject = function (fullPathName, configObject, configVerifyObject) {
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose(`verifyConfigObject for ${fullPathName}`, configObject, configVerifyObject);
-		var verifyConfigObjectOk = true;
-
-		if (configVerifyObject._verify) {
-			// currently config records only defined at leaf level (could enhance by allowing at any level)
-			verifyConfigObjectOk = verifyConfigProperty(fullPathName, configObject, configVerifyObject);
-		} else {
-			if (!configVerifyObject) {
-				// shouldn't happen unless by api input
-				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`configUtil.verify: configVerifyObject not defined for ${fullPathName}`, configObject, configVerifyObject);
-			} else {
-				var propertyList = Object.keys(configVerifyObject);
-				if (!propertyList) {
-					// shouldn't happen unless by api input
-					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`configUtil.verify: illegally formatted verification record for ${fullPathName}`, configObject, configVerifyObject);
-				} else {
-					// not at leaf level so recursively iterate though all the properties
-					for (let i = 0; i < propertyList.length; i++) {
-						let property = propertyList[i];
-						let thisPropertyPath = fullPathName + "." + property;
-						let thisConfigProperty = null;
-						if (configObject && property in configObject) {
-							thisConfigProperty = configObject[property];
-						}
-						// the order of the conditional (i.e. "&&") insures verification will continue after error(s)
-						verifyConfigObjectOk = this.verifyConfigObject(thisPropertyPath, thisConfigProperty, configVerifyObject[property]) && verifyConfigObjectOk;
-					}
-				}
-			}
-		}
-		return verifyConfigObjectOk;
-	};
-
-	/**
-  * Convenience function to get a default value from config.
-  *
-  * @param {object} base base path of config object
-  * @param {string} path path string of config property
-  * @param {any} defaultValue if path value not defined or null, then use default value
-  *
-  * @returns {object} return config value or default value
-  *
-  * @example
-  *
-  *		defaultAdaptor = ConfigUtil.getDefault(manifest, "manifest.finsemble.defaultStorage", "LocalStorageAdapter");
-  *		sameDomainTransport = ConfigUtil.getDefault(finConfig, "finConfig.router.sameDomainTransport", "SharedWorker");
-  *		var serverAddress = getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress", "wss://localhost.chartiq.com:3376");
-  *
-  */
-	this.getDefault = function (base, path, defaultValue) {
-		var result = defaultValue;
-		if (base) {
-			try {
-				let properties = path.split(".");
-				let currentValue = base;
-				for (let i = 1; i < properties.length; i++) {
-					currentValue = currentValue[properties[i]];
-				}
-				result = currentValue;
-			} catch (err) {
-				result = defaultValue;
-			}
-
-			if (typeof result === "undefined") result = defaultValue;
-		}
-		return result;
-	};
-};
-
-const ConfigUtilInstance = new ConfigUtil();
-/* harmony export (immutable) */ __webpack_exports__["ConfigUtilInstance"] = ConfigUtilInstance;
-
-
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\common\\configUtil.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\common\\configUtil.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
-
-/***/ }),
-/* 15 */
-/***/ (function(module, exports) {
-
-module.exports = function(module) {
-	if(!module.webpackPolyfill) {
-		module.deprecate = function() {};
-		module.paths = [];
-		// module.parent = undefined by default
-		if(!module.children) module.children = [];
-		Object.defineProperty(module, "loaded", {
-			enumerable: true,
-			get: function() {
-				return module.l;
-			}
-		});
-		Object.defineProperty(module, "id", {
-			enumerable: true,
-			get: function() {
-				return module.i;
-			}
-		});
-		module.webpackPolyfill = 1;
-	}
-	return module;
-};
-
-
-/***/ }),
-/* 16 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.WRAPPERS = {
-    /*
-        TODO: For the time being these are just events our windows fire but not OpenFin (this is used in the OF wrapper. Long term we might have to reverse this)
-        TODO: Event naming is inconsistent. Our events should not be camel case to mantain consistency.
-    */
-    EVENTS: ["title-changed", "bringToFront", "setBounds", "alwaysOnTop", "setOpacity"]
-};
-exports.APPLICATION_STATE_CHANNEL = "Finsemble.Application.State";
-//These next four channels are used in service => service manager communication. The SM receives these messages and then pushes out state updates to the rest of the system.
-exports.SERVICE_INITIALIZING_CHANNEL = "Finsemble.ServiceManager.serviceInitializing";
-exports.SERVICE_READY_CHANNEL = "Finsemble.ServiceManager.serviceReady";
-exports.SERVICE_CLOSING_CHANNEL = "Finsemble.ServiceManager.serviceClosing";
-exports.SERVICE_CLOSED_CHANNEL = "Finsemble.ServiceManager.serviceClosed";
-//This channel is where the aggregated state of all services is sent out on.
-exports.SERVICES_STATE_CHANNEL = "Finsemble.State.Services";
-exports.WINDOWSTATE = {
-    NORMAL: 0,
-    MINIMIZED: 1,
-    MAXIMIZED: 2,
-    HIDDEN: 3
-};
-//These channels are to start and stop services dynamically.
-exports.SERVICE_START_CHANNEL = "Finsemble.Service.Start";
-exports.SERVICE_STOP_CHANNEL = "Finsemble.Service.Stop";
-// These channels are for interrupting events
-exports.EVENT_INTERRUPT_CHANNEL = "Finsemble.Event.Interrupt";
-exports.INTERRUPTIBLE_EVENTS = ["close-requested", "closed", "close-complete", "_container-close-handlers"];
-exports.WORKSPACE = {
-    STORAGE_TOPIC: "finsemble.workspace",
-    CACHE_STORAGE_TOPIC: "finsemble.workspace.cache",
-    API_CHANNELS: {
-        SAVE: "Finsemble.Workspace.Save",
-        RENAME: "Finsemble.Workspace.Rename",
-        SAVE_AS: "Finsemble.Workspace.SaveAs",
-        SWITCH_TO: "Finsemble.Workspace.SwitchTo",
-        IMPORT: "Finsemble.Workspace.Import",
-        EXPORT: "Finsemble.Workspace.Export",
-        REMOVE: "Finsemble.Workspace.Remove",
-        SAVE_GLOBAL_DATA: "Finsemble.Workspace.SaveGlobalData",
-        SAVE_VIEW_DATA: "Finsemble.Workspace.SaveViewData",
-        GET_GLOBAL_DATA: "Finsemble.Workspace.GetGlobalData",
-        GET_VIEW_DATA: "Finsemble.Workspace.GetViewData",
-        GET_WORKSPACES: "Finsemble.Workspace.GetWorkspaces",
-        SET_WORKSPACE_ORDER: "Finsemble.Workspace.SetWorkspaceOrder",
-        SET_ACTIVEWORKSPACE_DIRTY: "Finsemble.Workspace.SetActiveWorkspaceDirty",
-        GET_TEMPLATES: "Finsemble.Workspace.GetTemplates",
-        IMPORT_TEMPLATE: "Finsemble.Workspace.ImportTemplate",
-        EXPORT_TEMPLATE: "Finsemble.Workspace.ExportTemplate",
-        REMOVE_TEMPLATE: "Finsemble.Workspace.RemoveTemplate",
-    }
-};
-// These channels are to publish LifeCycle events on.
-// Currently unused but placeholder here for implementation, at least for Workspace.
-exports.APPLICATION_LIFECYCLE = {};
-
-
-/***/ }),
-/* 17 */
-/***/ (function(module, exports) {
-
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-function EventEmitter() {
-  this._events = this._events || {};
-  this._maxListeners = this._maxListeners || undefined;
-}
-module.exports = EventEmitter;
-
-// Backwards-compat with node 0.10.x
-EventEmitter.EventEmitter = EventEmitter;
-
-EventEmitter.prototype._events = undefined;
-EventEmitter.prototype._maxListeners = undefined;
-
-// By default EventEmitters will print a warning if more than 10 listeners are
-// added to it. This is a useful default which helps finding memory leaks.
-EventEmitter.defaultMaxListeners = 10;
-
-// Obviously not all Emitters should be limited to 10. This function allows
-// that to be increased. Set to zero for unlimited.
-EventEmitter.prototype.setMaxListeners = function(n) {
-  if (!isNumber(n) || n < 0 || isNaN(n))
-    throw TypeError('n must be a positive number');
-  this._maxListeners = n;
-  return this;
-};
-
-EventEmitter.prototype.emit = function(type) {
-  var er, handler, len, args, i, listeners;
-
-  if (!this._events)
-    this._events = {};
-
-  // If there is no 'error' event listener then throw.
-  if (type === 'error') {
-    if (!this._events.error ||
-        (isObject(this._events.error) && !this._events.error.length)) {
-      er = arguments[1];
-      if (er instanceof Error) {
-        throw er; // Unhandled 'error' event
-      } else {
-        // At least give some kind of context to the user
-        var err = new Error('Uncaught, unspecified "error" event. (' + er + ')');
-        err.context = er;
-        throw err;
-      }
-    }
-  }
-
-  handler = this._events[type];
-
-  if (isUndefined(handler))
-    return false;
-
-  if (isFunction(handler)) {
-    switch (arguments.length) {
-      // fast cases
-      case 1:
-        handler.call(this);
-        break;
-      case 2:
-        handler.call(this, arguments[1]);
-        break;
-      case 3:
-        handler.call(this, arguments[1], arguments[2]);
-        break;
-      // slower
-      default:
-        args = Array.prototype.slice.call(arguments, 1);
-        handler.apply(this, args);
-    }
-  } else if (isObject(handler)) {
-    args = Array.prototype.slice.call(arguments, 1);
-    listeners = handler.slice();
-    len = listeners.length;
-    for (i = 0; i < len; i++)
-      listeners[i].apply(this, args);
-  }
-
-  return true;
-};
-
-EventEmitter.prototype.addListener = function(type, listener) {
-  var m;
-
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  if (!this._events)
-    this._events = {};
-
-  // To avoid recursion in the case that type === "newListener"! Before
-  // adding it to the listeners, first emit "newListener".
-  if (this._events.newListener)
-    this.emit('newListener', type,
-              isFunction(listener.listener) ?
-              listener.listener : listener);
-
-  if (!this._events[type])
-    // Optimize the case of one listener. Don't need the extra array object.
-    this._events[type] = listener;
-  else if (isObject(this._events[type]))
-    // If we've already got an array, just append.
-    this._events[type].push(listener);
-  else
-    // Adding the second element, need to change to array.
-    this._events[type] = [this._events[type], listener];
-
-  // Check for listener leak
-  if (isObject(this._events[type]) && !this._events[type].warned) {
-    if (!isUndefined(this._maxListeners)) {
-      m = this._maxListeners;
-    } else {
-      m = EventEmitter.defaultMaxListeners;
-    }
-
-    if (m && m > 0 && this._events[type].length > m) {
-      this._events[type].warned = true;
-      console.error('(node) warning: possible EventEmitter memory ' +
-                    'leak detected. %d listeners added. ' +
-                    'Use emitter.setMaxListeners() to increase limit.',
-                    this._events[type].length);
-      if (typeof console.trace === 'function') {
-        // not supported in IE 10
-        console.trace();
-      }
-    }
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.on = EventEmitter.prototype.addListener;
-
-EventEmitter.prototype.once = function(type, listener) {
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  var fired = false;
-
-  function g() {
-    this.removeListener(type, g);
-
-    if (!fired) {
-      fired = true;
-      listener.apply(this, arguments);
-    }
-  }
-
-  g.listener = listener;
-  this.on(type, g);
-
-  return this;
-};
-
-// emits a 'removeListener' event iff the listener was removed
-EventEmitter.prototype.removeListener = function(type, listener) {
-  var list, position, length, i;
-
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  if (!this._events || !this._events[type])
-    return this;
-
-  list = this._events[type];
-  length = list.length;
-  position = -1;
-
-  if (list === listener ||
-      (isFunction(list.listener) && list.listener === listener)) {
-    delete this._events[type];
-    if (this._events.removeListener)
-      this.emit('removeListener', type, listener);
-
-  } else if (isObject(list)) {
-    for (i = length; i-- > 0;) {
-      if (list[i] === listener ||
-          (list[i].listener && list[i].listener === listener)) {
-        position = i;
-        break;
-      }
-    }
-
-    if (position < 0)
-      return this;
-
-    if (list.length === 1) {
-      list.length = 0;
-      delete this._events[type];
-    } else {
-      list.splice(position, 1);
-    }
-
-    if (this._events.removeListener)
-      this.emit('removeListener', type, listener);
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.removeAllListeners = function(type) {
-  var key, listeners;
-
-  if (!this._events)
-    return this;
-
-  // not listening for removeListener, no need to emit
-  if (!this._events.removeListener) {
-    if (arguments.length === 0)
-      this._events = {};
-    else if (this._events[type])
-      delete this._events[type];
-    return this;
-  }
-
-  // emit removeListener for all listeners on all events
-  if (arguments.length === 0) {
-    for (key in this._events) {
-      if (key === 'removeListener') continue;
-      this.removeAllListeners(key);
-    }
-    this.removeAllListeners('removeListener');
-    this._events = {};
-    return this;
-  }
-
-  listeners = this._events[type];
-
-  if (isFunction(listeners)) {
-    this.removeListener(type, listeners);
-  } else if (listeners) {
-    // LIFO order
-    while (listeners.length)
-      this.removeListener(type, listeners[listeners.length - 1]);
-  }
-  delete this._events[type];
-
-  return this;
-};
-
-EventEmitter.prototype.listeners = function(type) {
-  var ret;
-  if (!this._events || !this._events[type])
-    ret = [];
-  else if (isFunction(this._events[type]))
-    ret = [this._events[type]];
-  else
-    ret = this._events[type].slice();
-  return ret;
-};
-
-EventEmitter.prototype.listenerCount = function(type) {
-  if (this._events) {
-    var evlistener = this._events[type];
-
-    if (isFunction(evlistener))
-      return 1;
-    else if (evlistener)
-      return evlistener.length;
-  }
-  return 0;
-};
-
-EventEmitter.listenerCount = function(emitter, type) {
-  return emitter.listenerCount(type);
-};
-
-function isFunction(arg) {
-  return typeof arg === 'function';
-}
-
-function isNumber(arg) {
-  return typeof arg === 'number';
-}
-
-function isObject(arg) {
-  return typeof arg === 'object' && arg !== null;
-}
-
-function isUndefined(arg) {
-  return arg === void 0;
-}
-
-
-/***/ }),
-/* 18 */
-/***/ (function(module, exports) {
-
-/**
- * Compiles a querystring
- * Returns string representation of the object
- *
- * @param {Object}
- * @api private
- */
-
-exports.encode = function (obj) {
-  var str = '';
-
-  for (var i in obj) {
-    if (obj.hasOwnProperty(i)) {
-      if (str.length) str += '&';
-      str += encodeURIComponent(i) + '=' + encodeURIComponent(obj[i]);
-    }
-  }
-
-  return str;
-};
-
-/**
- * Parses a simple querystring into an object
- *
- * @param {String} qs
- * @api private
- */
-
-exports.decode = function(qs){
-  var qry = {};
-  var pairs = qs.split('&');
-  for (var i = 0, l = pairs.length; i < l; i++) {
-    var pair = pairs[i].split('=');
-    qry[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
-  }
-  return qry;
-};
-
-
-/***/ }),
-/* 19 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/**
- * Module dependencies.
- */
-
-var parser = __webpack_require__(7);
-var Emitter = __webpack_require__(8);
-
-/**
- * Module exports.
- */
-
-module.exports = Transport;
-
-/**
- * Transport abstract constructor.
- *
- * @param {Object} options.
- * @api private
- */
-
-function Transport (opts) {
-  this.path = opts.path;
-  this.hostname = opts.hostname;
-  this.port = opts.port;
-  this.secure = opts.secure;
-  this.query = opts.query;
-  this.timestampParam = opts.timestampParam;
-  this.timestampRequests = opts.timestampRequests;
-  this.readyState = '';
-  this.agent = opts.agent || false;
-  this.socket = opts.socket;
-  this.enablesXDR = opts.enablesXDR;
-
-  // SSL options for Node.js client
-  this.pfx = opts.pfx;
-  this.key = opts.key;
-  this.passphrase = opts.passphrase;
-  this.cert = opts.cert;
-  this.ca = opts.ca;
-  this.ciphers = opts.ciphers;
-  this.rejectUnauthorized = opts.rejectUnauthorized;
-  this.forceNode = opts.forceNode;
-
-  // other options for Node.js client
-  this.extraHeaders = opts.extraHeaders;
-  this.localAddress = opts.localAddress;
-}
-
-/**
- * Mix in `Emitter`.
- */
-
-Emitter(Transport.prototype);
-
-/**
- * Emits an error.
- *
- * @param {String} str
- * @return {Transport} for chaining
- * @api public
- */
-
-Transport.prototype.onError = function (msg, desc) {
-  var err = new Error(msg);
-  err.type = 'TransportError';
-  err.description = desc;
-  this.emit('error', err);
-  return this;
-};
-
-/**
- * Opens the transport.
- *
- * @api public
- */
-
-Transport.prototype.open = function () {
-  if ('closed' === this.readyState || '' === this.readyState) {
-    this.readyState = 'opening';
-    this.doOpen();
-  }
-
-  return this;
-};
-
-/**
- * Closes the transport.
- *
- * @api private
- */
-
-Transport.prototype.close = function () {
-  if ('opening' === this.readyState || 'open' === this.readyState) {
-    this.doClose();
-    this.onClose();
-  }
-
-  return this;
-};
-
-/**
- * Sends multiple packets.
- *
- * @param {Array} packets
- * @api private
- */
-
-Transport.prototype.send = function (packets) {
-  if ('open' === this.readyState) {
-    this.write(packets);
-  } else {
-    throw new Error('Transport not open');
-  }
-};
-
-/**
- * Called upon open
- *
- * @api private
- */
-
-Transport.prototype.onOpen = function () {
-  this.readyState = 'open';
-  this.writable = true;
-  this.emit('open');
-};
-
-/**
- * Called with data.
- *
- * @param {String} data
- * @api private
- */
-
-Transport.prototype.onData = function (data) {
-  var packet = parser.decodePacket(data, this.socket.binaryType);
-  this.onPacket(packet);
-};
-
-/**
- * Called with a decoded packet.
- */
-
-Transport.prototype.onPacket = function (packet) {
-  this.emit('packet', packet);
-};
-
-/**
- * Called upon close.
- *
- * @api private
- */
-
-Transport.prototype.onClose = function () {
-  this.readyState = 'closed';
-  this.emit('close');
-};
-
-
-/***/ }),
-/* 20 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {// browser shim for xmlhttprequest module
-
-var hasCORS = __webpack_require__(50);
-
-module.exports = function (opts) {
-  var xdomain = opts.xdomain;
-
-  // scheme must be same when usign XDomainRequest
-  // http://blogs.msdn.com/b/ieinternals/archive/2010/05/13/xdomainrequest-restrictions-limitations-and-workarounds.aspx
-  var xscheme = opts.xscheme;
-
-  // XDomainRequest has a flow of not sending cookie, therefore it should be disabled as a default.
-  // https://github.com/Automattic/engine.io-client/pull/217
-  var enablesXDR = opts.enablesXDR;
-
-  // XMLHttpRequest can be disabled on IE
-  try {
-    if ('undefined' !== typeof XMLHttpRequest && (!xdomain || hasCORS)) {
-      return new XMLHttpRequest();
-    }
-  } catch (e) { }
-
-  // Use XDomainRequest for IE8 if enablesXDR is true
-  // because loading bar keeps flashing when using jsonp-polling
-  // https://github.com/yujiosaka/socke.io-ie8-loading-example
-  try {
-    if ('undefined' !== typeof XDomainRequest && !xscheme && enablesXDR) {
-      return new XDomainRequest();
-    }
-  } catch (e) { }
-
-  if (!xdomain) {
-    try {
-      return new global[['Active'].concat('Object').join('X')]('Microsoft.XMLHTTP');
-    } catch (e) { }
-  }
-};
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
-
-/***/ }),
-/* 21 */
-/***/ (function(module, exports, __webpack_require__) {
-
-
-/**
- * Module dependencies.
- */
-
-var debug = __webpack_require__(70)('socket.io-parser');
-var json = __webpack_require__(51);
-var Emitter = __webpack_require__(69);
-var binary = __webpack_require__(68);
-var isBuf = __webpack_require__(33);
-
-/**
- * Protocol version.
- *
- * @api public
- */
-
-exports.protocol = 4;
-
-/**
- * Packet types.
- *
- * @api public
- */
-
-exports.types = [
-  'CONNECT',
-  'DISCONNECT',
-  'EVENT',
-  'ACK',
-  'ERROR',
-  'BINARY_EVENT',
-  'BINARY_ACK'
-];
-
-/**
- * Packet type `connect`.
- *
- * @api public
- */
-
-exports.CONNECT = 0;
-
-/**
- * Packet type `disconnect`.
- *
- * @api public
- */
-
-exports.DISCONNECT = 1;
-
-/**
- * Packet type `event`.
- *
- * @api public
- */
-
-exports.EVENT = 2;
-
-/**
- * Packet type `ack`.
- *
- * @api public
- */
-
-exports.ACK = 3;
-
-/**
- * Packet type `error`.
- *
- * @api public
- */
-
-exports.ERROR = 4;
-
-/**
- * Packet type 'binary event'
- *
- * @api public
- */
-
-exports.BINARY_EVENT = 5;
-
-/**
- * Packet type `binary ack`. For acks with binary arguments.
- *
- * @api public
- */
-
-exports.BINARY_ACK = 6;
-
-/**
- * Encoder constructor.
- *
- * @api public
- */
-
-exports.Encoder = Encoder;
-
-/**
- * Decoder constructor.
- *
- * @api public
- */
-
-exports.Decoder = Decoder;
-
-/**
- * A socket.io Encoder instance
- *
- * @api public
- */
-
-function Encoder() {}
-
-/**
- * Encode a packet as a single string if non-binary, or as a
- * buffer sequence, depending on packet type.
- *
- * @param {Object} obj - packet object
- * @param {Function} callback - function to handle encodings (likely engine.write)
- * @return Calls callback with Array of encodings
- * @api public
- */
-
-Encoder.prototype.encode = function(obj, callback){
-  debug('encoding packet %j', obj);
-
-  if (exports.BINARY_EVENT == obj.type || exports.BINARY_ACK == obj.type) {
-    encodeAsBinary(obj, callback);
-  }
-  else {
-    var encoding = encodeAsString(obj);
-    callback([encoding]);
-  }
-};
-
-/**
- * Encode packet as string.
- *
- * @param {Object} packet
- * @return {String} encoded
- * @api private
- */
-
-function encodeAsString(obj) {
-  var str = '';
-  var nsp = false;
-
-  // first is type
-  str += obj.type;
-
-  // attachments if we have them
-  if (exports.BINARY_EVENT == obj.type || exports.BINARY_ACK == obj.type) {
-    str += obj.attachments;
-    str += '-';
-  }
-
-  // if we have a namespace other than `/`
-  // we append it followed by a comma `,`
-  if (obj.nsp && '/' != obj.nsp) {
-    nsp = true;
-    str += obj.nsp;
-  }
-
-  // immediately followed by the id
-  if (null != obj.id) {
-    if (nsp) {
-      str += ',';
-      nsp = false;
-    }
-    str += obj.id;
-  }
-
-  // json data
-  if (null != obj.data) {
-    if (nsp) str += ',';
-    str += json.stringify(obj.data);
-  }
-
-  debug('encoded %j as %s', obj, str);
-  return str;
-}
-
-/**
- * Encode packet as 'buffer sequence' by removing blobs, and
- * deconstructing packet into object with placeholders and
- * a list of buffers.
- *
- * @param {Object} packet
- * @return {Buffer} encoded
- * @api private
- */
-
-function encodeAsBinary(obj, callback) {
-
-  function writeEncoding(bloblessData) {
-    var deconstruction = binary.deconstructPacket(bloblessData);
-    var pack = encodeAsString(deconstruction.packet);
-    var buffers = deconstruction.buffers;
-
-    buffers.unshift(pack); // add packet info to beginning of data list
-    callback(buffers); // write all the buffers
-  }
-
-  binary.removeBlobs(obj, writeEncoding);
-}
-
-/**
- * A socket.io Decoder instance
- *
- * @return {Object} decoder
- * @api public
- */
-
-function Decoder() {
-  this.reconstructor = null;
-}
-
-/**
- * Mix in `Emitter` with Decoder.
- */
-
-Emitter(Decoder.prototype);
-
-/**
- * Decodes an ecoded packet string into packet JSON.
- *
- * @param {String} obj - encoded packet
- * @return {Object} packet
- * @api public
- */
-
-Decoder.prototype.add = function(obj) {
-  var packet;
-  if ('string' == typeof obj) {
-    packet = decodeString(obj);
-    if (exports.BINARY_EVENT == packet.type || exports.BINARY_ACK == packet.type) { // binary packet's json
-      this.reconstructor = new BinaryReconstructor(packet);
-
-      // no attachments, labeled binary but no binary data to follow
-      if (this.reconstructor.reconPack.attachments === 0) {
-        this.emit('decoded', packet);
-      }
-    } else { // non-binary full packet
-      this.emit('decoded', packet);
-    }
-  }
-  else if (isBuf(obj) || obj.base64) { // raw binary data
-    if (!this.reconstructor) {
-      throw new Error('got binary data when not reconstructing a packet');
-    } else {
-      packet = this.reconstructor.takeBinaryData(obj);
-      if (packet) { // received final buffer
-        this.reconstructor = null;
-        this.emit('decoded', packet);
-      }
-    }
-  }
-  else {
-    throw new Error('Unknown type: ' + obj);
-  }
-};
-
-/**
- * Decode a packet String (JSON data)
- *
- * @param {String} str
- * @return {Object} packet
- * @api private
- */
-
-function decodeString(str) {
-  var p = {};
-  var i = 0;
-
-  // look up type
-  p.type = Number(str.charAt(0));
-  if (null == exports.types[p.type]) return error();
-
-  // look up attachments if type binary
-  if (exports.BINARY_EVENT == p.type || exports.BINARY_ACK == p.type) {
-    var buf = '';
-    while (str.charAt(++i) != '-') {
-      buf += str.charAt(i);
-      if (i == str.length) break;
-    }
-    if (buf != Number(buf) || str.charAt(i) != '-') {
-      throw new Error('Illegal attachments');
-    }
-    p.attachments = Number(buf);
-  }
-
-  // look up namespace (if any)
-  if ('/' == str.charAt(i + 1)) {
-    p.nsp = '';
-    while (++i) {
-      var c = str.charAt(i);
-      if (',' == c) break;
-      p.nsp += c;
-      if (i == str.length) break;
-    }
-  } else {
-    p.nsp = '/';
-  }
-
-  // look up id
-  var next = str.charAt(i + 1);
-  if ('' !== next && Number(next) == next) {
-    p.id = '';
-    while (++i) {
-      var c = str.charAt(i);
-      if (null == c || Number(c) != c) {
-        --i;
-        break;
-      }
-      p.id += str.charAt(i);
-      if (i == str.length) break;
-    }
-    p.id = Number(p.id);
-  }
-
-  // look up json data
-  if (str.charAt(++i)) {
-    p = tryParse(p, str.substr(i));
-  }
-
-  debug('decoded %s as %j', str, p);
-  return p;
-}
-
-function tryParse(p, str) {
-  try {
-    p.data = json.parse(str);
-  } catch(e){
-    return error();
-  }
-  return p; 
-};
-
-/**
- * Deallocates a parser's resources
- *
- * @api public
- */
-
-Decoder.prototype.destroy = function() {
-  if (this.reconstructor) {
-    this.reconstructor.finishedReconstruction();
-  }
-};
-
-/**
- * A manager of a binary event's 'buffer sequence'. Should
- * be constructed whenever a packet of type BINARY_EVENT is
- * decoded.
- *
- * @param {Object} packet
- * @return {BinaryReconstructor} initialized reconstructor
- * @api private
- */
-
-function BinaryReconstructor(packet) {
-  this.reconPack = packet;
-  this.buffers = [];
-}
-
-/**
- * Method to be called when binary data received from connection
- * after a BINARY_EVENT packet.
- *
- * @param {Buffer | ArrayBuffer} binData - the raw binary data received
- * @return {null | Object} returns null if more binary data is expected or
- *   a reconstructed packet object if all buffers have been received.
- * @api private
- */
-
-BinaryReconstructor.prototype.takeBinaryData = function(binData) {
-  this.buffers.push(binData);
-  if (this.buffers.length == this.reconPack.attachments) { // done with buffer list
-    var packet = binary.reconstructPacket(this.reconPack, this.buffers);
-    this.finishedReconstruction();
-    return packet;
-  }
-  return null;
-};
-
-/**
- * Cleans up binary packet reconstruction variables.
- *
- * @api private
- */
-
-BinaryReconstructor.prototype.finishedReconstruction = function() {
-  this.reconPack = null;
-  this.buffers = [];
-};
-
-function error(data){
-  return {
-    type: exports.ERROR,
-    data: 'parser error'
-  };
-}
-
-
-/***/ }),
-/* 22 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const events_1 = __webpack_require__(17);
-const routerClientInstance_1 = __webpack_require__(6);
-const STARTUP_TIMEOUT_DURATION = 10000;
-const constants_1 = __webpack_require__(16);
-/**
- * Small class to hold on to dependencies and callbacks. Also emits a timeout event that the startupManager is listening for. When it times out, the startupManager catches the event and generates a message that includes all of the offline clients and services. It then causes this class to emit an  err event that the baseService is listening for. This arrangement is set up for a couple of reasons.
- * 1. I can't use the logger in here because the logger uses the startupManager, and there'd be a circular dependency.
- * 2. FSBLDependencyManager is a singleton, and there can be multiple services living in a single window. I didn't want them all to log that they were offline if they weren't (e.g., if I'd put the emitter on the StartupManager instead of this class).
- */
-class StartupDependency extends events_1.EventEmitter {
-    constructor(params) {
-        super();
-        this.callback = params.callback;
-        this.dependencies = params.dependencies;
-        this.startupTimer = null;
-        this.setStartupTimer = this.setStartupTimer.bind(this);
-        this.clearStartupTimer = this.clearStartupTimer.bind(this);
-        this.setStartupTimer();
-    }
-    /**
-     * Removes the startup timer (because the dependency was resolved within the allotted time);
-     */
-    clearStartupTimer() {
-        clearTimeout(this.startupTimer);
-        delete this.startupTimer;
-    }
-    /**
-     * If the dependency hasn't resolved within STARTUP_TIMEOUT_DURATION, emit a timeout event that the StartupManager can catch.
-     */
-    setStartupTimer() {
-        let self = this;
-        //+ coerces the result to a number, making typescript happy.
-        this.startupTimer = +setTimeout(() => {
-            self.emit("timeout");
-        }, STARTUP_TIMEOUT_DURATION);
-    }
-}
-/**
- * Used to generate a unique ID for the list of dependencies.
- */
-function uuidv4() {
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-        var r = Math.random() * 16 | 0, v = c === "x" ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-}
-/**
- * @private
- */
-class StartupManager {
-    /**
-     * @private
-     */
-    constructor() {
-        this.servicesAreAllOnline = {};
-        this.clientsAreAllOnline = {};
-        this.onlineClients = [];
-        this.onlineServices = [];
-        this.dependencies = {};
-        this.AuthorizationCompleted = false;
-        this.startupTimers = {};
-        this.startupTimerFired = false;
-        this.bindCorrectContext();
-    }
-    /**
-     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required depenencies are ready.
-     *
-     * @param {FinsembleDependency} dependencies
-     * @param {any} callback
-     * @memberof StartupManager
-     */
-    waitFor(dependencies, callback) {
-        let id = uuidv4();
-        //Set defaults to an empty array if they aren't passed in.
-        if (!dependencies.services)
-            dependencies.services = [];
-        if (!dependencies.clients)
-            dependencies.clients = [];
-        //The dependency manager can pass in a name to the dependency. If it does, we'll use it. If not, we won't.
-        if (dependencies.clients.length) {
-            if (this.AuthorizationCompleted === false && dependencies.clients.includes("authenticationClient")) {
-                dependencies.clients.splice(dependencies.clients.indexOf("authenticationClient"), 1);
-            }
-            //Lowercase the first letter of the client.
-            dependencies.clients = dependencies.clients.map(clientName => {
-                return clientName.charAt(0).toLowerCase() + clientName.slice(1);
-            });
-        }
-        let dependency = new StartupDependency({ dependencies, callback });
-        //If the dependency times out, throw an error that the baseService can catch. It will then log out why it's not online.
-        dependency.on("timeout", () => {
-            this.onDependencyTimeout(dependency);
-        });
-        this.dependencies[id] = dependency;
-        this.checkDependencies();
-        return dependency;
-    }
-    /**
-     * This method generates a helpful error message giving possible reasons for why the service is offline. After the message is generated, it emits an event on the dependency that's passed in as a parameter. The BaseService is listening for this event, and logs the error message to the central logger.
-     * @param {Dependency} dependency
-     */
-    onDependencyTimeout(dependency) {
-        const NEW_LINE = "\n", TAB = "\u0009", BULLET = "\u2022", BULLET_POINT = NEW_LINE + TAB + BULLET, STORAGE_ADAPTER_ERROR = "The default storage adapter failed to fully initialize, or has a syntax error. Ensure that the default storage adapter is up, connected, and sending/receiving data properly.";
-        const HELPFUL_MESSAGES = {
-            preferencesService: [
-                `PreferencesService failed to start.${BULLET_POINT}Typically this is caused by a failure to retrieve data from your default storage adapter. ${STORAGE_ADAPTER_ERROR}`
-            ],
-            storageService: [
-                `StorageService failed to start. Here are some common reasons for failure:${BULLET_POINT}${STORAGE_ADAPTER_ERROR}${BULLET_POINT}The data coming back from your adapter is improperly formatted or otherwise corrupted. Try clearing your storage and restarting. If the problem persists, the issue may not be in your adapter.`
-            ],
-            routerService: [
-                "RouterService failed to start. This is a fatal error. Contact finsemble support."
-            ],
-            workspaceService: [
-                `WorkspaceService failed to start. Here are some common reasons for failure:${BULLET_POINT}${STORAGE_ADAPTER_ERROR}.${BULLET_POINT}Your active workspace is corrupted.`
-            ],
-            assimilationService: [
-                "AssimilationService failed to start. Check to see that the 'FinsembleAssimilation' is active in your taskManager. If it is, please contact finsemble support."
-            ]
-        };
-        let offlineClients = this.getOfflineClients();
-        let offlineServices = this.getOfflineServices();
-        let errorMessage = `APPLICATION LIFECYCLE:STARTUP:Dependency not online after ${STARTUP_TIMEOUT_DURATION / 1000} seconds.`;
-        if (offlineClients.length) {
-            errorMessage += ` Waiting for these clients: ${offlineClients.join(", ")}.`;
-        }
-        if (offlineServices.length) {
-            errorMessage += ` Waiting for these services: ${offlineServices.join(", ")}.`;
-        }
-        //For every service that's offline, check to see if we have any helpful messages for it. If so, iterate through the array and append to the error message.
-        offlineServices.forEach((service) => {
-            if (HELPFUL_MESSAGES[service]) {
-                HELPFUL_MESSAGES[service].forEach((msg) => {
-                    errorMessage += NEW_LINE + NEW_LINE + msg + NEW_LINE;
-                });
-                //puts a line between our helpful messages and the log stack.
-                errorMessage += NEW_LINE;
-            }
-        });
-        //The BaseService is listening for this event, and will log the errorMessage to the central logger.
-        dependency.emit("err", errorMessage);
-    }
-    /**
-     * This function loops through all of the registered dependencies and checks to see if the conditions have been met. If so, it invokes the callback and removes the reference to the dependency.
-     *
-     * @memberof StartupManager
-     */
-    checkDependencies() {
-        for (let id in this.dependencies) {
-            let dependency = this.dependencies[id];
-            let { dependencies, callback } = dependency;
-            if (dependencies.services.length && !this.servicesAreAllOnline[id]) {
-                this.servicesAreAllOnline[id] = this.checkServices(dependencies.services);
-                if (!this.servicesAreAllOnline[id]) {
-                    continue;
-                }
-            }
-            if (dependencies.clients.length && !this.clientsAreAllOnline[id]) {
-                this.clientsAreAllOnline[id] = this.checkClients(dependencies.clients);
-                if (!this.clientsAreAllOnline[id]) {
-                    continue;
-                }
-            }
-            delete this.dependencies[id];
-            dependency.clearStartupTimer();
-            if (callback) {
-                callback();
-            }
-        }
-    }
-    getOfflineClients() {
-        let offlineClients = [];
-        for (let id in this.dependencies) {
-            let { dependencies } = this.dependencies[id];
-            offlineClients = offlineClients.concat(dependencies.clients.filter((dep) => !this.onlineClients.includes(dep)));
-        }
-        //return deduped list.
-        return offlineClients.filter((client, i) => offlineClients.indexOf(client) === i);
-    }
-    getOfflineServices() {
-        let offlineServices = [];
-        for (let id in this.dependencies) {
-            let { dependencies } = this.dependencies[id];
-            offlineServices = offlineServices.concat(dependencies.services.filter((dep) => !this.onlineServices.includes(dep)));
-        }
-        return offlineServices.filter((client, i) => offlineServices.indexOf(client) === i);
-    }
-    /**
-     * Iterates through required service list, returns false if any required service is offline.
-     *
-     * @param {any} serviceList
-     * @memberof StartupManager
-     */
-    checkServices(serviceList) {
-        return serviceList.every(service => this.onlineServices.includes(service));
-    }
-    /**
-     * Iterates through required client list, returns false if any required client is offline.
-     *
-     * @param {any} clientList
-
-     * @memberof StartupManager
-     */
-    checkClients(clientList) {
-        return clientList.every(client => this.onlineClients.includes(client));
-    }
-    /**
-     * When a service comes online, we push it onto our array of online services, and run through all of the registered dependencies.
-     *
-     * @param {any} serviceName
-     * @memberof StartupManager
-     */
-    setServiceOnline(serviceName) {
-        this.onlineServices.push(serviceName);
-        this.checkDependencies();
-    }
-    /**
-     * Sets an array of services online. Only happens once at startup.
-     *
-     * @param {any} serviceList
-     * @memberof StartupManager
-     */
-    setServicesOnline(serviceList) {
-        this.onlineServices = this.onlineServices.concat(serviceList);
-        this.checkDependencies();
-    }
-    /**
-     *
-     *
-     * @param {any} clientName
-
-     * @memberof StartupManager
-     */
-    setClientOnline(clientName) {
-        //This check is done because multiple clients of the same type can be on a page.
-        if (this.onlineClients.includes(clientName)) {
-            return;
-        }
-        this.onlineClients.push(clientName);
-        this.checkDependencies();
-    }
-    /**
-     * Returns the array of online clients.
-     *
-
-     * @memberof StartupManager
-     */
-    getOnlineClients() {
-        return this.onlineClients;
-    }
-    /**
-     * Returns the array of online services.
-     *
-
-     * @memberof StartupManager
-     */
-    getOnlineServices() {
-        return this.onlineServices;
-    }
-    /**
-     * Method to make sure that `this` is correct when the callbacks are invoked.
-     *
-     * @memberof StartupManager
-     */
-    bindCorrectContext() {
-        this.checkDependencies = this.checkDependencies.bind(this);
-        this.checkServices = this.checkServices.bind(this);
-        this.checkClients = this.checkClients.bind(this);
-        this.getOfflineClients = this.getOfflineClients.bind(this);
-        this.getOfflineServices = this.getOfflineServices.bind(this);
-        this.onDependencyTimeout = this.onDependencyTimeout.bind(this);
-        this.waitFor = this.waitFor.bind(this);
-    }
-}
-/**
- * @private
- */
-class ShutdownManager {
-    /**
-     * @private
-     */
-    constructor() {
-        this.offlineServices = [];
-        this.dependencies = {};
-        this.checkDependencies = this.checkDependencies.bind(this);
-    }
-    /**
-     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required depenencies are ready.
-     *
-     * @param {FinsembleDependency} dependencies
-     * @param {any} callback
-     * @memberof StartupManager
-     */
-    waitFor(dependencies, callback) {
-        //Set defaults to an empty array if they aren't passed in.
-        if (!dependencies.services) {
-            dependencies.services = [];
-        }
-        let id = uuidv4();
-        this.dependencies[id] = { dependencies, callback };
-    }
-    /**
-     * This function loops through all of the registered dependencies and checks to see if the conditions have been met. If so, it invokes the callback and removes the reference to the dependency.
-     *
-     * @memberof ShutdownDependencies
-     */
-    checkDependencies() {
-        console.debug("checkDependencies", this.dependencies);
-        if (Object.keys(this.dependencies)) {
-            for (let id in this.dependencies) {
-                let { dependencies, callback } = this.dependencies[id];
-                console.debug("checkDependency", dependencies.services, this.offlineServices);
-                if (dependencies.services.length) {
-                    let servicesAreAllOffline = this.checkServices(dependencies.services);
-                    if (!servicesAreAllOffline) {
-                        continue;
-                    }
-                }
-                console.debug("checkDependencies callback");
-                delete this.dependencies[id];
-                if (callback) {
-                    callback();
-                }
-            }
-        }
-    }
-    /**
-     * Iterates through required service list, returns false if any required service is offline.
-     *
-     * @param {any} serviceList
-
-     * @memberof StartupManager
-     */
-    checkServices(serviceList) {
-        return serviceList.every(service => this.offlineServices.includes(service));
-    }
-    setServiceOffline(service) {
-        console.debug("setServiceOffline", service);
-        this.offlineServices.push(service);
-        this.checkDependencies();
-    }
-}
-/**
- * This is a class that handles FSBL client/service dependnecy management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
- * @shouldBePublished false
- * @private
- * @class FSBLDependencyManager
- */
-class FSBLDependencyManager extends events_1.EventEmitter {
-    constructor() {
-        super();
-        this.startup = new StartupManager();
-        this.shutdown = new ShutdownManager();
-        this.RouterClient = routerClientInstance_1.default;
-        this.AuthorizationCompleted = false;
-        this.bindCorrectContext();
-        this.onAuthorizationCompleted(this.startup.checkDependencies);
-        routerClientInstance_1.default.onReady(this.listenForServices);
-    }
-    /**
- * Method to make sure that `this` is correct when the callbacks are invoked.
- *
- * @memberof StartupManager
- */
-    bindCorrectContext() {
-        this.listenForServices = this.listenForServices.bind(this);
-        this.onAuthorizationCompleted = this.onAuthorizationCompleted.bind(this);
-    }
-    setClientOnline(client) {
-        this.startup.setClientOnline(client);
-    }
-    /*
-    * handler for when a service changes its state. If a service comes online or goes offline, dependencies are checked and callbacks invoked.
-    */
-    onServiceStateChange(data) {
-        let ServiceNames = Object.keys(data);
-        //Iterate through all services. If it was online but isn't anymore, set it offline. If it was offline but now is, set it online.
-        ServiceNames.forEach((serviceName) => {
-            let state = data[serviceName].state;
-            let wasOnline = this.startup.onlineServices.includes(serviceName);
-            let isOnline = state === "ready";
-            if (!wasOnline && isOnline) {
-                this.startup.setServiceOnline(serviceName);
-            }
-            if (wasOnline && !isOnline && state === "closed") {
-                this.shutdown.setServiceOffline(serviceName);
-            }
-        });
-    }
-    /**
-     * Listens on the router for services to come online. The first subscriber gets the activeServices as of object instantiation. The 2nd subscriber listens for services to come online after the object is created. We should consider make this all one subscriber, though I see the advantage of having this setup.
-     *
-     */
-    listenForServices() {
-        console.debug("dependency manager: listenForServices in " + this.name);
-        this.RouterClient.subscribe(constants_1.SERVICES_STATE_CHANNEL, (err, event) => {
-            this.onServiceStateChange(event.data);
-        });
-        // TODO: The pubsub responder doesnt seem to work here. IT works for the above when not closing.
-        this.RouterClient.addListener(constants_1.SERVICE_CLOSED_CHANNEL, (err, event) => {
-            let services = {};
-            services[event.data.name] = {
-                state: "closed"
-            };
-            this.onServiceStateChange(services);
-        });
-        this.RouterClient.subscribe(constants_1.APPLICATION_STATE_CHANNEL, (err, response) => {
-            switch (response.data.state) {
-                //authenticated will only be caught by components/services that are up before auth does its thing. Otherwise, a component/service coming up will have the 'ready' application state. In either case, we need to do the things below. But only once.
-                case "authenticated":
-                case "ready":
-                    //No need to send this message out twice.
-                    if (this.AuthorizationCompleted)
-                        break;
-                    console.debug("Authorization Completed");
-                    this.AuthorizationCompleted = true;
-                    this.startup.AuthorizationCompleted = true;
-                    this.emit("AuthorizationCompleted");
-                    break;
-                case "closing":
-                    this.shutdown.checkDependencies();
-                    break;
-            }
-        });
-    }
-    onAuthorizationCompleted(callback) {
-        if (this.AuthorizationCompleted) {
-            callback();
-        }
-        else {
-            this.addListener("AuthorizationCompleted", callback);
-        }
-    }
-}
-/**
- * This is a class that handles FSBL client/service dependnecy management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
- * @shouldBePublished false
- * @private
- * @class FSBLDependencyManager
- */
-exports.FSBLDependencyManagerSingleton = new FSBLDependencyManager();
-exports.default = exports.FSBLDependencyManagerSingleton;
-
-
-/***/ }),
-/* 23 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-/*!
-* Copyright 2018 by ChartIQ, Inc.
-* All rights reserved.
-*/
-Object.defineProperty(exports, "__esModule", { value: true });
-const { debug, warn, log, /*info,*/ error } = console;
-const info = () => { };
-const verbose = info;
-const logger = {
-    warn, info, log, debug,
-    error, verbose
-};
-// This is all stolen from the logger.
-// @TODO - make consumers agnostic of this stuff and remove from the interface.
-const LOCAL_ONLY_DEFAULT = false;
-var DEFAULT_LOG_SETTING = { Error: true, Warn: true, Info: true, Log: true, Debug: true, Verbose: true, LocalOnly: LOCAL_ONLY_DEFAULT }; // if true captured for logger
-var CONSOLE_DEFAULT_LOG_SETTING = { Error: true, Warn: true, Info: true, Log: true, Debug: true }; // if true then goes to console and captured for logger
-var initialLogState = {
-    console: CONSOLE_DEFAULT_LOG_SETTING,
-    dev: DEFAULT_LOG_SETTING,
-    system: DEFAULT_LOG_SETTING,
-    perf: DEFAULT_LOG_SETTING,
-}; // will be updated on registration with Central Logger, but capture everything until then
-function IsLogMessage(channel) {
-    return (channel === "logger.service.logMessages");
-}
-;
-function traceString() {
-    function getPosition(string, subString, index) {
-        return string.split(subString, index).join(subString).length;
-    }
-    function getErrorObject() {
-        try {
-            throw Error("");
-        }
-        catch (err) {
-            return err;
-        }
-    }
-    var stack = getErrorObject().stack;
-    var position = getPosition(stack, "\n", 4);
-    var tString = stack.substring(position); // strip off irrelevant part of stack
-    var final = "Log Stack: \n" + tString.substr(1); // insert description
-    return final;
-}
-/** An implementation of the ICentralLogger interface that
- * merely logs straight to the console rather than going over to
- * Central Logging serice. Used in situations where use of the
- * Central Logging service is not possible (such as in test
- * environments, or in the Central Logging service itself).
- */
-class LocalLogger {
-    constructor() {
-        // Loggery things.
-        // @TODO - Make consumers agnostic of these and remove from interface.
-        this.start = () => { };
-        this.isLogMessage = IsLogMessage;
-        this.setting = () => initialLogState;
-        this.callStack = () => traceString();
-        this.unregisterClient = (_) => { };
-        this.setRouterClient = () => { };
-        // Top level logging methods
-        this.warn = warn;
-        this.info = info;
-        this.log = log;
-        this.debug = debug;
-        this.error = error;
-        this.verbose = verbose;
-        // "Namespaced" methods - they still point to console.
-        this.system = logger;
-        this.perf = logger;
-    }
-}
-exports.LocalLogger = LocalLogger;
-
-
-/***/ }),
-/* 24 */
-/***/ (function(module, exports) {
-
-/**
- * Slice reference.
- */
-
-var slice = [].slice;
-
-/**
- * Bind `obj` to `fn`.
- *
- * @param {Object} obj
- * @param {Function|String} fn or string
- * @return {Function}
- * @api public
- */
-
-module.exports = function(obj, fn){
-  if ('string' == typeof fn) fn = obj[fn];
-  if ('function' != typeof fn) throw new Error('bind() requires a function');
-  var args = slice.call(arguments, 2);
-  return function(){
-    return fn.apply(obj, args.concat(slice.call(arguments)));
-  }
-};
-
-
-/***/ }),
-/* 25 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {
-/*
- * Module requirements.
- */
-
-var isArray = __webpack_require__(49);
-
-/**
- * Module exports.
- */
-
-module.exports = hasBinary;
-
-/**
- * Checks for binary data.
- *
- * Right now only Buffer and ArrayBuffer are supported..
- *
- * @param {Object} anything
- * @api public
- */
-
-function hasBinary(data) {
-
-  function _hasBinary(obj) {
-    if (!obj) return false;
-
-    if ( (global.Buffer && global.Buffer.isBuffer && global.Buffer.isBuffer(obj)) ||
-         (global.ArrayBuffer && obj instanceof ArrayBuffer) ||
-         (global.Blob && obj instanceof Blob) ||
-         (global.File && obj instanceof File)
-        ) {
-      return true;
-    }
-
-    if (isArray(obj)) {
-      for (var i = 0; i < obj.length; i++) {
-          if (_hasBinary(obj[i])) {
-              return true;
-          }
-      }
-    } else if (obj && 'object' == typeof obj) {
-      // see: https://github.com/Automattic/has-binary/pull/4
-      if (obj.toJSON && 'function' == typeof obj.toJSON) {
-        obj = obj.toJSON();
-      }
-
-      for (var key in obj) {
-        if (Object.prototype.hasOwnProperty.call(obj, key) && _hasBinary(obj[key])) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  return _hasBinary(data);
-}
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
-
-/***/ }),
-/* 26 */
-/***/ (function(module, exports) {
-
-
-var indexOf = [].indexOf;
-
-module.exports = function(arr, obj){
-  if (indexOf) return arr.indexOf(obj);
-  for (var i = 0; i < arr.length; ++i) {
-    if (arr[i] === obj) return i;
-  }
-  return -1;
-};
-
-/***/ }),
-/* 27 */
-/***/ (function(module, exports) {
-
-/**
- * Parses an URI
- *
- * @author Steven Levithan <stevenlevithan.com> (MIT license)
- * @api private
- */
-
-var re = /^(?:(?![^:@]+:[^:@\/]*@)(http|https|ws|wss):\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?((?:[a-f0-9]{0,4}:){2,7}[a-f0-9]{0,4}|[^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/;
-
-var parts = [
-    'source', 'protocol', 'authority', 'userInfo', 'user', 'password', 'host', 'port', 'relative', 'path', 'directory', 'file', 'query', 'anchor'
-];
-
-module.exports = function parseuri(str) {
-    var src = str,
-        b = str.indexOf('['),
-        e = str.indexOf(']');
-
-    if (b != -1 && e != -1) {
-        str = str.substring(0, b) + str.substring(b, e).replace(/:/g, ';') + str.substring(e, str.length);
-    }
-
-    var m = re.exec(str || ''),
-        uri = {},
-        i = 14;
-
-    while (i--) {
-        uri[parts[i]] = m[i] || '';
-    }
-
-    if (b != -1 && e != -1) {
-        uri.source = src;
-        uri.host = uri.host.substring(1, uri.host.length - 1).replace(/;/g, ':');
-        uri.authority = uri.authority.replace('[', '').replace(']', '').replace(/;/g, ':');
-        uri.ipv6uri = true;
-    }
-
-    return uri;
-};
-
-
-/***/ }),
-/* 28 */
-/***/ (function(module, exports, __webpack_require__) {
-
-
-/**
- * Module dependencies.
- */
-
-var eio = __webpack_require__(59);
-var Socket = __webpack_require__(30);
-var Emitter = __webpack_require__(8);
-var parser = __webpack_require__(21);
-var on = __webpack_require__(29);
-var bind = __webpack_require__(24);
-var debug = __webpack_require__(5)('socket.io-client:manager');
-var indexOf = __webpack_require__(26);
-var Backoff = __webpack_require__(46);
-
-/**
- * IE6+ hasOwnProperty
- */
-
-var has = Object.prototype.hasOwnProperty;
-
-/**
- * Module exports
- */
-
-module.exports = Manager;
-
-/**
- * `Manager` constructor.
- *
- * @param {String} engine instance or engine uri/opts
- * @param {Object} options
- * @api public
- */
-
-function Manager (uri, opts) {
-  if (!(this instanceof Manager)) return new Manager(uri, opts);
-  if (uri && ('object' === typeof uri)) {
-    opts = uri;
-    uri = undefined;
-  }
-  opts = opts || {};
-
-  opts.path = opts.path || '/socket.io';
-  this.nsps = {};
-  this.subs = [];
-  this.opts = opts;
-  this.reconnection(opts.reconnection !== false);
-  this.reconnectionAttempts(opts.reconnectionAttempts || Infinity);
-  this.reconnectionDelay(opts.reconnectionDelay || 1000);
-  this.reconnectionDelayMax(opts.reconnectionDelayMax || 5000);
-  this.randomizationFactor(opts.randomizationFactor || 0.5);
-  this.backoff = new Backoff({
-    min: this.reconnectionDelay(),
-    max: this.reconnectionDelayMax(),
-    jitter: this.randomizationFactor()
-  });
-  this.timeout(null == opts.timeout ? 20000 : opts.timeout);
-  this.readyState = 'closed';
-  this.uri = uri;
-  this.connecting = [];
-  this.lastPing = null;
-  this.encoding = false;
-  this.packetBuffer = [];
-  this.encoder = new parser.Encoder();
-  this.decoder = new parser.Decoder();
-  this.autoConnect = opts.autoConnect !== false;
-  if (this.autoConnect) this.open();
-}
-
-/**
- * Propagate given event to sockets and emit on `this`
- *
- * @api private
- */
-
-Manager.prototype.emitAll = function () {
-  this.emit.apply(this, arguments);
-  for (var nsp in this.nsps) {
-    if (has.call(this.nsps, nsp)) {
-      this.nsps[nsp].emit.apply(this.nsps[nsp], arguments);
-    }
-  }
-};
-
-/**
- * Update `socket.id` of all sockets
- *
- * @api private
- */
-
-Manager.prototype.updateSocketIds = function () {
-  for (var nsp in this.nsps) {
-    if (has.call(this.nsps, nsp)) {
-      this.nsps[nsp].id = this.engine.id;
-    }
-  }
-};
-
-/**
- * Mix in `Emitter`.
- */
-
-Emitter(Manager.prototype);
-
-/**
- * Sets the `reconnection` config.
- *
- * @param {Boolean} true/false if it should automatically reconnect
- * @return {Manager} self or value
- * @api public
- */
-
-Manager.prototype.reconnection = function (v) {
-  if (!arguments.length) return this._reconnection;
-  this._reconnection = !!v;
-  return this;
-};
-
-/**
- * Sets the reconnection attempts config.
- *
- * @param {Number} max reconnection attempts before giving up
- * @return {Manager} self or value
- * @api public
- */
-
-Manager.prototype.reconnectionAttempts = function (v) {
-  if (!arguments.length) return this._reconnectionAttempts;
-  this._reconnectionAttempts = v;
-  return this;
-};
-
-/**
- * Sets the delay between reconnections.
- *
- * @param {Number} delay
- * @return {Manager} self or value
- * @api public
- */
-
-Manager.prototype.reconnectionDelay = function (v) {
-  if (!arguments.length) return this._reconnectionDelay;
-  this._reconnectionDelay = v;
-  this.backoff && this.backoff.setMin(v);
-  return this;
-};
-
-Manager.prototype.randomizationFactor = function (v) {
-  if (!arguments.length) return this._randomizationFactor;
-  this._randomizationFactor = v;
-  this.backoff && this.backoff.setJitter(v);
-  return this;
-};
-
-/**
- * Sets the maximum delay between reconnections.
- *
- * @param {Number} delay
- * @return {Manager} self or value
- * @api public
- */
-
-Manager.prototype.reconnectionDelayMax = function (v) {
-  if (!arguments.length) return this._reconnectionDelayMax;
-  this._reconnectionDelayMax = v;
-  this.backoff && this.backoff.setMax(v);
-  return this;
-};
-
-/**
- * Sets the connection timeout. `false` to disable
- *
- * @return {Manager} self or value
- * @api public
- */
-
-Manager.prototype.timeout = function (v) {
-  if (!arguments.length) return this._timeout;
-  this._timeout = v;
-  return this;
-};
-
-/**
- * Starts trying to reconnect if reconnection is enabled and we have not
- * started reconnecting yet
- *
- * @api private
- */
-
-Manager.prototype.maybeReconnectOnOpen = function () {
-  // Only try to reconnect if it's the first time we're connecting
-  if (!this.reconnecting && this._reconnection && this.backoff.attempts === 0) {
-    // keeps reconnection from firing twice for the same reconnection loop
-    this.reconnect();
-  }
-};
-
-/**
- * Sets the current transport `socket`.
- *
- * @param {Function} optional, callback
- * @return {Manager} self
- * @api public
- */
-
-Manager.prototype.open =
-Manager.prototype.connect = function (fn, opts) {
-  debug('readyState %s', this.readyState);
-  if (~this.readyState.indexOf('open')) return this;
-
-  debug('opening %s', this.uri);
-  this.engine = eio(this.uri, this.opts);
-  var socket = this.engine;
-  var self = this;
-  this.readyState = 'opening';
-  this.skipReconnect = false;
-
-  // emit `open`
-  var openSub = on(socket, 'open', function () {
-    self.onopen();
-    fn && fn();
-  });
-
-  // emit `connect_error`
-  var errorSub = on(socket, 'error', function (data) {
-    debug('connect_error');
-    self.cleanup();
-    self.readyState = 'closed';
-    self.emitAll('connect_error', data);
-    if (fn) {
-      var err = new Error('Connection error');
-      err.data = data;
-      fn(err);
-    } else {
-      // Only do this if there is no fn to handle the error
-      self.maybeReconnectOnOpen();
-    }
-  });
-
-  // emit `connect_timeout`
-  if (false !== this._timeout) {
-    var timeout = this._timeout;
-    debug('connect attempt will timeout after %d', timeout);
-
-    // set timer
-    var timer = setTimeout(function () {
-      debug('connect attempt timed out after %d', timeout);
-      openSub.destroy();
-      socket.close();
-      socket.emit('error', 'timeout');
-      self.emitAll('connect_timeout', timeout);
-    }, timeout);
-
-    this.subs.push({
-      destroy: function () {
-        clearTimeout(timer);
-      }
-    });
-  }
-
-  this.subs.push(openSub);
-  this.subs.push(errorSub);
-
-  return this;
-};
-
-/**
- * Called upon transport open.
- *
- * @api private
- */
-
-Manager.prototype.onopen = function () {
-  debug('open');
-
-  // clear old subs
-  this.cleanup();
-
-  // mark as open
-  this.readyState = 'open';
-  this.emit('open');
-
-  // add new subs
-  var socket = this.engine;
-  this.subs.push(on(socket, 'data', bind(this, 'ondata')));
-  this.subs.push(on(socket, 'ping', bind(this, 'onping')));
-  this.subs.push(on(socket, 'pong', bind(this, 'onpong')));
-  this.subs.push(on(socket, 'error', bind(this, 'onerror')));
-  this.subs.push(on(socket, 'close', bind(this, 'onclose')));
-  this.subs.push(on(this.decoder, 'decoded', bind(this, 'ondecoded')));
-};
-
-/**
- * Called upon a ping.
- *
- * @api private
- */
-
-Manager.prototype.onping = function () {
-  this.lastPing = new Date();
-  this.emitAll('ping');
-};
-
-/**
- * Called upon a packet.
- *
- * @api private
- */
-
-Manager.prototype.onpong = function () {
-  this.emitAll('pong', new Date() - this.lastPing);
-};
-
-/**
- * Called with data.
- *
- * @api private
- */
-
-Manager.prototype.ondata = function (data) {
-  this.decoder.add(data);
-};
-
-/**
- * Called when parser fully decodes a packet.
- *
- * @api private
- */
-
-Manager.prototype.ondecoded = function (packet) {
-  this.emit('packet', packet);
-};
-
-/**
- * Called upon socket error.
- *
- * @api private
- */
-
-Manager.prototype.onerror = function (err) {
-  debug('error', err);
-  this.emitAll('error', err);
-};
-
-/**
- * Creates a new socket for the given `nsp`.
- *
- * @return {Socket}
- * @api public
- */
-
-Manager.prototype.socket = function (nsp, opts) {
-  var socket = this.nsps[nsp];
-  if (!socket) {
-    socket = new Socket(this, nsp, opts);
-    this.nsps[nsp] = socket;
-    var self = this;
-    socket.on('connecting', onConnecting);
-    socket.on('connect', function () {
-      socket.id = self.engine.id;
-    });
-
-    if (this.autoConnect) {
-      // manually call here since connecting evnet is fired before listening
-      onConnecting();
-    }
-  }
-
-  function onConnecting () {
-    if (!~indexOf(self.connecting, socket)) {
-      self.connecting.push(socket);
-    }
-  }
-
-  return socket;
-};
-
-/**
- * Called upon a socket close.
- *
- * @param {Socket} socket
- */
-
-Manager.prototype.destroy = function (socket) {
-  var index = indexOf(this.connecting, socket);
-  if (~index) this.connecting.splice(index, 1);
-  if (this.connecting.length) return;
-
-  this.close();
-};
-
-/**
- * Writes a packet.
- *
- * @param {Object} packet
- * @api private
- */
-
-Manager.prototype.packet = function (packet) {
-  debug('writing packet %j', packet);
-  var self = this;
-  if (packet.query && packet.type === 0) packet.nsp += '?' + packet.query;
-
-  if (!self.encoding) {
-    // encode, then write to engine with result
-    self.encoding = true;
-    this.encoder.encode(packet, function (encodedPackets) {
-      for (var i = 0; i < encodedPackets.length; i++) {
-        self.engine.write(encodedPackets[i], packet.options);
-      }
-      self.encoding = false;
-      self.processPacketQueue();
-    });
-  } else { // add packet to the queue
-    self.packetBuffer.push(packet);
-  }
-};
-
-/**
- * If packet buffer is non-empty, begins encoding the
- * next packet in line.
- *
- * @api private
- */
-
-Manager.prototype.processPacketQueue = function () {
-  if (this.packetBuffer.length > 0 && !this.encoding) {
-    var pack = this.packetBuffer.shift();
-    this.packet(pack);
-  }
-};
-
-/**
- * Clean up transport subscriptions and packet buffer.
- *
- * @api private
- */
-
-Manager.prototype.cleanup = function () {
-  debug('cleanup');
-
-  var subsLength = this.subs.length;
-  for (var i = 0; i < subsLength; i++) {
-    var sub = this.subs.shift();
-    sub.destroy();
-  }
-
-  this.packetBuffer = [];
-  this.encoding = false;
-  this.lastPing = null;
-
-  this.decoder.destroy();
-};
-
-/**
- * Close the current socket.
- *
- * @api private
- */
-
-Manager.prototype.close =
-Manager.prototype.disconnect = function () {
-  debug('disconnect');
-  this.skipReconnect = true;
-  this.reconnecting = false;
-  if ('opening' === this.readyState) {
-    // `onclose` will not fire because
-    // an open event never happened
-    this.cleanup();
-  }
-  this.backoff.reset();
-  this.readyState = 'closed';
-  if (this.engine) this.engine.close();
-};
-
-/**
- * Called upon engine close.
- *
- * @api private
- */
-
-Manager.prototype.onclose = function (reason) {
-  debug('onclose');
-
-  this.cleanup();
-  this.backoff.reset();
-  this.readyState = 'closed';
-  this.emit('close', reason);
-
-  if (this._reconnection && !this.skipReconnect) {
-    this.reconnect();
-  }
-};
-
-/**
- * Attempt a reconnection.
- *
- * @api private
- */
-
-Manager.prototype.reconnect = function () {
-  if (this.reconnecting || this.skipReconnect) return this;
-
-  var self = this;
-
-  if (this.backoff.attempts >= this._reconnectionAttempts) {
-    debug('reconnect failed');
-    this.backoff.reset();
-    this.emitAll('reconnect_failed');
-    this.reconnecting = false;
-  } else {
-    var delay = this.backoff.duration();
-    debug('will wait %dms before reconnect attempt', delay);
-
-    this.reconnecting = true;
-    var timer = setTimeout(function () {
-      if (self.skipReconnect) return;
-
-      debug('attempting reconnect');
-      self.emitAll('reconnect_attempt', self.backoff.attempts);
-      self.emitAll('reconnecting', self.backoff.attempts);
-
-      // check again for the case socket closed in above events
-      if (self.skipReconnect) return;
-
-      self.open(function (err) {
-        if (err) {
-          debug('reconnect attempt error');
-          self.reconnecting = false;
-          self.reconnect();
-          self.emitAll('reconnect_error', err.data);
-        } else {
-          debug('reconnect success');
-          self.onreconnect();
-        }
-      });
-    }, delay);
-
-    this.subs.push({
-      destroy: function () {
-        clearTimeout(timer);
-      }
-    });
-  }
-};
-
-/**
- * Called upon successful reconnect.
- *
- * @api private
- */
-
-Manager.prototype.onreconnect = function () {
-  var attempt = this.backoff.attempts;
-  this.reconnecting = false;
-  this.backoff.reset();
-  this.updateSocketIds();
-  this.emitAll('reconnect', attempt);
-};
-
-
-/***/ }),
-/* 29 */
-/***/ (function(module, exports) {
-
-
-/**
- * Module exports.
- */
-
-module.exports = on;
-
-/**
- * Helper for subscriptions.
- *
- * @param {Object|EventEmitter} obj with `Emitter` mixin or `EventEmitter`
- * @param {String} event name
- * @param {Function} callback
- * @api public
- */
-
-function on (obj, ev, fn) {
-  obj.on(ev, fn);
-  return {
-    destroy: function () {
-      obj.removeListener(ev, fn);
-    }
-  };
-}
-
-
-/***/ }),
-/* 30 */
-/***/ (function(module, exports, __webpack_require__) {
-
-
-/**
- * Module dependencies.
- */
-
-var parser = __webpack_require__(21);
-var Emitter = __webpack_require__(8);
-var toArray = __webpack_require__(73);
-var on = __webpack_require__(29);
-var bind = __webpack_require__(24);
-var debug = __webpack_require__(5)('socket.io-client:socket');
-var hasBin = __webpack_require__(25);
-
-/**
- * Module exports.
- */
-
-module.exports = exports = Socket;
-
-/**
- * Internal events (blacklisted).
- * These events can't be emitted by the user.
- *
- * @api private
- */
-
-var events = {
-  connect: 1,
-  connect_error: 1,
-  connect_timeout: 1,
-  connecting: 1,
-  disconnect: 1,
-  error: 1,
-  reconnect: 1,
-  reconnect_attempt: 1,
-  reconnect_failed: 1,
-  reconnect_error: 1,
-  reconnecting: 1,
-  ping: 1,
-  pong: 1
-};
-
-/**
- * Shortcut to `Emitter#emit`.
- */
-
-var emit = Emitter.prototype.emit;
-
-/**
- * `Socket` constructor.
- *
- * @api public
- */
-
-function Socket (io, nsp, opts) {
-  this.io = io;
-  this.nsp = nsp;
-  this.json = this; // compat
-  this.ids = 0;
-  this.acks = {};
-  this.receiveBuffer = [];
-  this.sendBuffer = [];
-  this.connected = false;
-  this.disconnected = true;
-  if (opts && opts.query) {
-    this.query = opts.query;
-  }
-  if (this.io.autoConnect) this.open();
-}
-
-/**
- * Mix in `Emitter`.
- */
-
-Emitter(Socket.prototype);
-
-/**
- * Subscribe to open, close and packet events
- *
- * @api private
- */
-
-Socket.prototype.subEvents = function () {
-  if (this.subs) return;
-
-  var io = this.io;
-  this.subs = [
-    on(io, 'open', bind(this, 'onopen')),
-    on(io, 'packet', bind(this, 'onpacket')),
-    on(io, 'close', bind(this, 'onclose'))
-  ];
-};
-
-/**
- * "Opens" the socket.
- *
- * @api public
- */
-
-Socket.prototype.open =
-Socket.prototype.connect = function () {
-  if (this.connected) return this;
-
-  this.subEvents();
-  this.io.open(); // ensure open
-  if ('open' === this.io.readyState) this.onopen();
-  this.emit('connecting');
-  return this;
-};
-
-/**
- * Sends a `message` event.
- *
- * @return {Socket} self
- * @api public
- */
-
-Socket.prototype.send = function () {
-  var args = toArray(arguments);
-  args.unshift('message');
-  this.emit.apply(this, args);
-  return this;
-};
-
-/**
- * Override `emit`.
- * If the event is in `events`, it's emitted normally.
- *
- * @param {String} event name
- * @return {Socket} self
- * @api public
- */
-
-Socket.prototype.emit = function (ev) {
-  if (events.hasOwnProperty(ev)) {
-    emit.apply(this, arguments);
-    return this;
-  }
-
-  var args = toArray(arguments);
-  var parserType = parser.EVENT; // default
-  if (hasBin(args)) { parserType = parser.BINARY_EVENT; } // binary
-  var packet = { type: parserType, data: args };
-
-  packet.options = {};
-  packet.options.compress = !this.flags || false !== this.flags.compress;
-
-  // event ack callback
-  if ('function' === typeof args[args.length - 1]) {
-    debug('emitting packet with ack id %d', this.ids);
-    this.acks[this.ids] = args.pop();
-    packet.id = this.ids++;
-  }
-
-  if (this.connected) {
-    this.packet(packet);
-  } else {
-    this.sendBuffer.push(packet);
-  }
-
-  delete this.flags;
-
-  return this;
-};
-
-/**
- * Sends a packet.
- *
- * @param {Object} packet
- * @api private
- */
-
-Socket.prototype.packet = function (packet) {
-  packet.nsp = this.nsp;
-  this.io.packet(packet);
-};
-
-/**
- * Called upon engine `open`.
- *
- * @api private
- */
-
-Socket.prototype.onopen = function () {
-  debug('transport is open - connecting');
-
-  // write connect packet if necessary
-  if ('/' !== this.nsp) {
-    if (this.query) {
-      this.packet({type: parser.CONNECT, query: this.query});
-    } else {
-      this.packet({type: parser.CONNECT});
-    }
-  }
-};
-
-/**
- * Called upon engine `close`.
- *
- * @param {String} reason
- * @api private
- */
-
-Socket.prototype.onclose = function (reason) {
-  debug('close (%s)', reason);
-  this.connected = false;
-  this.disconnected = true;
-  delete this.id;
-  this.emit('disconnect', reason);
-};
-
-/**
- * Called with socket packet.
- *
- * @param {Object} packet
- * @api private
- */
-
-Socket.prototype.onpacket = function (packet) {
-  if (packet.nsp !== this.nsp) return;
-
-  switch (packet.type) {
-    case parser.CONNECT:
-      this.onconnect();
-      break;
-
-    case parser.EVENT:
-      this.onevent(packet);
-      break;
-
-    case parser.BINARY_EVENT:
-      this.onevent(packet);
-      break;
-
-    case parser.ACK:
-      this.onack(packet);
-      break;
-
-    case parser.BINARY_ACK:
-      this.onack(packet);
-      break;
-
-    case parser.DISCONNECT:
-      this.ondisconnect();
-      break;
-
-    case parser.ERROR:
-      this.emit('error', packet.data);
-      break;
-  }
-};
-
-/**
- * Called upon a server event.
- *
- * @param {Object} packet
- * @api private
- */
-
-Socket.prototype.onevent = function (packet) {
-  var args = packet.data || [];
-  debug('emitting event %j', args);
-
-  if (null != packet.id) {
-    debug('attaching ack callback to event');
-    args.push(this.ack(packet.id));
-  }
-
-  if (this.connected) {
-    emit.apply(this, args);
-  } else {
-    this.receiveBuffer.push(args);
-  }
-};
-
-/**
- * Produces an ack callback to emit with an event.
- *
- * @api private
- */
-
-Socket.prototype.ack = function (id) {
-  var self = this;
-  var sent = false;
-  return function () {
-    // prevent double callbacks
-    if (sent) return;
-    sent = true;
-    var args = toArray(arguments);
-    debug('sending ack %j', args);
-
-    var type = hasBin(args) ? parser.BINARY_ACK : parser.ACK;
-    self.packet({
-      type: type,
-      id: id,
-      data: args
-    });
-  };
-};
-
-/**
- * Called upon a server acknowlegement.
- *
- * @param {Object} packet
- * @api private
- */
-
-Socket.prototype.onack = function (packet) {
-  var ack = this.acks[packet.id];
-  if ('function' === typeof ack) {
-    debug('calling ack %s with %j', packet.id, packet.data);
-    ack.apply(this, packet.data);
-    delete this.acks[packet.id];
-  } else {
-    debug('bad ack %s', packet.id);
-  }
-};
-
-/**
- * Called upon server connect.
- *
- * @api private
- */
-
-Socket.prototype.onconnect = function () {
-  this.connected = true;
-  this.disconnected = false;
-  this.emit('connect');
-  this.emitBuffered();
-};
-
-/**
- * Emit buffered events (received and emitted).
- *
- * @api private
- */
-
-Socket.prototype.emitBuffered = function () {
-  var i;
-  for (i = 0; i < this.receiveBuffer.length; i++) {
-    emit.apply(this, this.receiveBuffer[i]);
-  }
-  this.receiveBuffer = [];
-
-  for (i = 0; i < this.sendBuffer.length; i++) {
-    this.packet(this.sendBuffer[i]);
-  }
-  this.sendBuffer = [];
-};
-
-/**
- * Called upon server disconnect.
- *
- * @api private
- */
-
-Socket.prototype.ondisconnect = function () {
-  debug('server disconnect (%s)', this.nsp);
-  this.destroy();
-  this.onclose('io server disconnect');
-};
-
-/**
- * Called upon forced client/server side disconnections,
- * this method ensures the manager stops tracking us and
- * that reconnections don't get triggered for this.
- *
- * @api private.
- */
-
-Socket.prototype.destroy = function () {
-  if (this.subs) {
-    // clean subscriptions to avoid reconnections
-    for (var i = 0; i < this.subs.length; i++) {
-      this.subs[i].destroy();
-    }
-    this.subs = null;
-  }
-
-  this.io.destroy(this);
-};
-
-/**
- * Disconnects the socket manually.
- *
- * @return {Socket} self
- * @api public
- */
-
-Socket.prototype.close =
-Socket.prototype.disconnect = function () {
-  if (this.connected) {
-    debug('performing disconnect (%s)', this.nsp);
-    this.packet({ type: parser.DISCONNECT });
-  }
-
-  // remove socket from pool
-  this.destroy();
-
-  if (this.connected) {
-    // fire events
-    this.onclose('io client disconnect');
-  }
-  return this;
-};
-
-/**
- * Sets the compress flag.
- *
- * @param {Boolean} if `true`, compresses the sending data
- * @return {Socket} self
- * @api public
- */
-
-Socket.prototype.compress = function (compress) {
-  this.flags = this.flags || {};
-  this.flags.compress = compress;
-  return this;
-};
-
-
-/***/ }),
-/* 31 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {/**
- * Module dependencies
- */
-
-var XMLHttpRequest = __webpack_require__(20);
-var XHR = __webpack_require__(63);
-var JSONP = __webpack_require__(62);
-var websocket = __webpack_require__(64);
-
-/**
- * Export transports.
- */
-
-exports.polling = polling;
-exports.websocket = websocket;
-
-/**
- * Polling transport polymorphic constructor.
- * Decides on xhr vs jsonp based on feature detection.
- *
- * @api private
- */
-
-function polling (opts) {
-  var xhr;
-  var xd = false;
-  var xs = false;
-  var jsonp = false !== opts.jsonp;
-
-  if (global.location) {
-    var isSSL = 'https:' === location.protocol;
-    var port = location.port;
-
-    // some user agents have empty `location.port`
-    if (!port) {
-      port = isSSL ? 443 : 80;
-    }
-
-    xd = opts.hostname !== location.hostname || port !== opts.port;
-    xs = opts.secure !== isSSL;
-  }
-
-  opts.xdomain = xd;
-  opts.xscheme = xs;
-  xhr = new XMLHttpRequest(opts);
-
-  if ('open' in xhr && !opts.forceJSONP) {
-    return new XHR(opts);
-  } else {
-    if (!jsonp) throw new Error('JSONP disabled');
-    return new JSONP(opts);
-  }
-}
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
-
-/***/ }),
-/* 32 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/**
- * Module dependencies.
- */
-
-var Transport = __webpack_require__(19);
-var parseqs = __webpack_require__(18);
-var parser = __webpack_require__(7);
-var inherit = __webpack_require__(12);
-var yeast = __webpack_require__(34);
-var debug = __webpack_require__(5)('engine.io-client:polling');
-
-/**
- * Module exports.
- */
-
-module.exports = Polling;
-
-/**
- * Is XHR2 supported?
- */
-
-var hasXHR2 = (function () {
-  var XMLHttpRequest = __webpack_require__(20);
-  var xhr = new XMLHttpRequest({ xdomain: false });
-  return null != xhr.responseType;
-})();
-
-/**
- * Polling interface.
- *
- * @param {Object} opts
- * @api private
- */
-
-function Polling (opts) {
-  var forceBase64 = (opts && opts.forceBase64);
-  if (!hasXHR2 || forceBase64) {
-    this.supportsBinary = false;
-  }
-  Transport.call(this, opts);
-}
-
-/**
- * Inherits from Transport.
- */
-
-inherit(Polling, Transport);
-
-/**
- * Transport name.
- */
-
-Polling.prototype.name = 'polling';
-
-/**
- * Opens the socket (triggers polling). We write a PING message to determine
- * when the transport is open.
- *
- * @api private
- */
-
-Polling.prototype.doOpen = function () {
-  this.poll();
-};
-
-/**
- * Pauses polling.
- *
- * @param {Function} callback upon buffers are flushed and transport is paused
- * @api private
- */
-
-Polling.prototype.pause = function (onPause) {
-  var self = this;
-
-  this.readyState = 'pausing';
-
-  function pause () {
-    debug('paused');
-    self.readyState = 'paused';
-    onPause();
-  }
-
-  if (this.polling || !this.writable) {
-    var total = 0;
-
-    if (this.polling) {
-      debug('we are currently polling - waiting to pause');
-      total++;
-      this.once('pollComplete', function () {
-        debug('pre-pause polling complete');
-        --total || pause();
-      });
-    }
-
-    if (!this.writable) {
-      debug('we are currently writing - waiting to pause');
-      total++;
-      this.once('drain', function () {
-        debug('pre-pause writing complete');
-        --total || pause();
-      });
-    }
-  } else {
-    pause();
-  }
-};
-
-/**
- * Starts polling cycle.
- *
- * @api public
- */
-
-Polling.prototype.poll = function () {
-  debug('polling');
-  this.polling = true;
-  this.doPoll();
-  this.emit('poll');
-};
-
-/**
- * Overloads onData to detect payloads.
- *
- * @api private
- */
-
-Polling.prototype.onData = function (data) {
-  var self = this;
-  debug('polling got data %s', data);
-  var callback = function (packet, index, total) {
-    // if its the first message we consider the transport open
-    if ('opening' === self.readyState) {
-      self.onOpen();
-    }
-
-    // if its a close packet, we close the ongoing requests
-    if ('close' === packet.type) {
-      self.onClose();
-      return false;
-    }
-
-    // otherwise bypass onData and handle the message
-    self.onPacket(packet);
-  };
-
-  // decode payload
-  parser.decodePayload(data, this.socket.binaryType, callback);
-
-  // if an event did not trigger closing
-  if ('closed' !== this.readyState) {
-    // if we got data we're not polling
-    this.polling = false;
-    this.emit('pollComplete');
-
-    if ('open' === this.readyState) {
-      this.poll();
-    } else {
-      debug('ignoring poll - transport state "%s"', this.readyState);
-    }
-  }
-};
-
-/**
- * For polling, send a close packet.
- *
- * @api private
- */
-
-Polling.prototype.doClose = function () {
-  var self = this;
-
-  function close () {
-    debug('writing close packet');
-    self.write([{ type: 'close' }]);
-  }
-
-  if ('open' === this.readyState) {
-    debug('transport open - closing');
-    close();
-  } else {
-    // in case we're trying to close while
-    // handshaking is in progress (GH-164)
-    debug('transport not open - deferring close');
-    this.once('open', close);
-  }
-};
-
-/**
- * Writes a packets payload.
- *
- * @param {Array} data packets
- * @param {Function} drain callback
- * @api private
- */
-
-Polling.prototype.write = function (packets) {
-  var self = this;
-  this.writable = false;
-  var callbackfn = function () {
-    self.writable = true;
-    self.emit('drain');
-  };
-
-  parser.encodePayload(packets, this.supportsBinary, function (data) {
-    self.doWrite(data, callbackfn);
-  });
-};
-
-/**
- * Generates uri for connection.
- *
- * @api private
- */
-
-Polling.prototype.uri = function () {
-  var query = this.query || {};
-  var schema = this.secure ? 'https' : 'http';
-  var port = '';
-
-  // cache busting is forced
-  if (false !== this.timestampRequests) {
-    query[this.timestampParam] = yeast();
-  }
-
-  if (!this.supportsBinary && !query.sid) {
-    query.b64 = 1;
-  }
-
-  query = parseqs.encode(query);
-
-  // avoid port if default for schema
-  if (this.port && (('https' === schema && Number(this.port) !== 443) ||
-     ('http' === schema && Number(this.port) !== 80))) {
-    port = ':' + this.port;
-  }
-
-  // prepend ? to query
-  if (query.length) {
-    query = '?' + query;
-  }
-
-  var ipv6 = this.hostname.indexOf(':') !== -1;
-  return schema + '://' + (ipv6 ? '[' + this.hostname + ']' : this.hostname) + port + this.path + query;
-};
-
-
-/***/ }),
-/* 33 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {
-module.exports = isBuf;
-
-/**
- * Returns true if obj is a buffer or an arraybuffer.
- *
- * @api private
- */
-
-function isBuf(obj) {
-  return (global.Buffer && global.Buffer.isBuffer(obj)) ||
-         (global.ArrayBuffer && obj instanceof ArrayBuffer);
-}
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
-
-/***/ }),
-/* 34 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'.split('')
-  , length = 64
-  , map = {}
-  , seed = 0
-  , i = 0
-  , prev;
-
-/**
- * Return a string representing the specified number.
- *
- * @param {Number} num The number to convert.
- * @returns {String} The string representation of the number.
- * @api public
- */
-function encode(num) {
-  var encoded = '';
-
-  do {
-    encoded = alphabet[num % length] + encoded;
-    num = Math.floor(num / length);
-  } while (num > 0);
-
-  return encoded;
-}
-
-/**
- * Return the integer value specified by the given string.
- *
- * @param {String} str The string to convert.
- * @returns {Number} The integer value represented by the string.
- * @api public
- */
-function decode(str) {
-  var decoded = 0;
-
-  for (i = 0; i < str.length; i++) {
-    decoded = decoded * length + map[str.charAt(i)];
-  }
-
-  return decoded;
-}
-
-/**
- * Yeast: A tiny growing id generator.
- *
- * @returns {String} A unique id.
- * @api public
- */
-function yeast() {
-  var now = encode(+new Date());
-
-  if (now !== prev) return seed = 0, prev = now;
-  return now +'.'+ encode(seed++);
-}
-
-//
-// Map each character to its index.
-//
-for (; i < length; i++) map[alphabet[i]] = i;
-
-//
-// Expose the `yeast`, `encode` and `decode` functions.
-//
-yeast.encode = encode;
-yeast.decode = decode;
-module.exports = yeast;
-
-
-/***/ }),
-/* 35 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const validate_1 = __webpack_require__(9); // Finsemble args validator
-const baseClient_1 = __webpack_require__(13);
-const async_1 = __webpack_require__(11);
-const logger_1 = __webpack_require__(2);
-/**
- * @introduction
- * <h2>Config Client</h2>
- *
- * This client provides run-time access to Finsemble's configuration. See the [Configuration tutorial](tutorial-Configuration.html) for a configuration overview.
- * The Config Client functions similar to a global store created with the DistributedStoreClient and offers many of the same methods.
- * Values modified at runtime are not persisted.
- *
- * @hideconstructor
- * @constructor
- */
-var ConfigClient = function (params) {
-    var self = this;
-    var listeners = [];
-    baseClient_1.default.call(this, params);
-    /**
-     * Get a value from the config.
-     * @param {Object | String} params - Params object. This can also be a string
-     * @param {String} params.field - The field where the value is stored.
-     * @param {Function} cb -  Will return the value if found.
-     * @returns {any} - The value of the field. If no callback is given and the value is local, this will run synchronous
-     * @example
-     * 	FSBL.Clients.ConfigClient.getValue({field:'field1'},function(err,value){});
-     *  FSBL.Clients.ConfigClient.getValue('field1',function(err,value){});
-     */
-    this.getValue = function (params, cb = Function.prototype) {
-        if (typeof params === "string") {
-            params = { field: params };
-        }
-        const promiseResolver = (resolve, reject) => {
-            if (!params.field) {
-                const err = "no field provided";
-                reject(err);
-                return cb(err);
-            }
-            self.routerClient.query("configService.getValue", { field: params.field }, function (err, response) {
-                if (err) {
-                    return cb(err);
-                }
-                resolve({ err, data: response.data });
-                return cb(err, response.data);
-            });
-        };
-        return new Promise(promiseResolver);
-    };
-    /**
-     * Get multiple values from the config.
-    * @param {Object[] | String[]} fields - An array of field objects. If there are no fields proviced, the complete configuration manifest are returned.
-     * @param {String} fields[].field - The name of the field
-     * @param {Function} [cb] -  Will return the value if found.
-     * @returns {Object} - returns an object of with the fields as keys.If no callback is given and the value is local, this will run synchronous
-     * @example
-    FSBL.Clients.ConfigClient.getValues([{field:'field1'},{field2:'field2'}],function(err,values){});
-    FSBL.Clients.ConfigClient.getValues(['field1','field2'],function(err,values){});
-    FSBL.Clients.ConfigClient.get(null, callback); // returns the complete manifest containing the finsemble property
-    */
-    this.getValues = function (fields, cb = Function.prototype) {
-        if (typeof fields === "function") {
-            cb = fields;
-            fields = null;
-        }
-        if (fields && !Array.isArray(fields)) {
-            return this.getValue(fields, cb);
-        }
-        const promiseResolver = (resolve) => {
-            self.routerClient.query("configService.getValues", {
-                fields: fields
-            }, function (err, response) {
-                if (err) {
-                    return cb(err);
-                }
-                resolve({ err, data: response.data });
-                return cb(err, response.data);
-            });
-        };
-        return new Promise(promiseResolver);
-    };
-    /**
-     * Set a value in the config. Setting a value will trigger events that you can listen to using addListener
-     * @param {Object} params - Params object
-     * @param {String} params.field - The name of the field where data will be stored
-     * @param {any} params.value - Value to be stored
-     * @param {function} [cb] optional callback
-     * @returns {null}
-     *
-     * @example
-     * FSBL.Clients.ConfigClient.setValue({field:'field1',value:"new value"});
-     */
-    this.setValue = function (params, cb) {
-        var data = {
-            field: params.field,
-            value: params.value
-        };
-        return self.routerClient.query("configService.setValue", data, function (err) {
-            return cb ? cb(err) : null;
-        });
-    };
-    /**
-     * This will set multiple values in the config.
-     * @param {Object} fields - An Array of field objects
-     * @param {String} fields.field - The name of the field
-     * @param {any} fields.value - Field value
-     * @param {function} [cb] optional callback
-     * @returns {null}
-     *
-     * @example
-     * FSBL.Clients.ConfigClient.setValues([{field:'field1',value:"new value"}]);
-     */
-    this.setValues = function (fields, cb) {
-        if (!fields) {
-            return logger_1.default.system.error("ConfigClient.SetValues. No params given");
-        }
-        if (!Array.isArray(fields)) {
-            return logger_1.default.system.error("ConfigClient.SetValues. Params must be an array");
-        }
-        return self.routerClient.query("configService.setValues", fields, function (err) {
-            return cb ? cb(err) : null;
-        });
-    };
-    /**
-     * Remove a value from the config.
-     * @param {Object | String} params - Either an object or string
-     * @param {String} param.field - The name of the field
-     * @param {Function} [cb] -  returns an error if there is one
-     * @example
-     * FSBL.Clients.ConfigClient.removeValue({field:'field1'},function(err,bool){});
-     */
-    this.removeValue = function (params, cb = Function.prototype) {
-        if (!params.field) {
-            if (params !== undefined) {
-                params = { field: params };
-            }
-            else {
-                return cb("no field provided");
-            }
-        }
-        params.value = null;
-        return self.setValue(params, cb);
-    };
-    /**
-     * Removes multiple values from the config.
-     * @param {Array.<Object>} params - An Array of field objects
-     * @param {Function} [cb] -  returns an error if there is one.
-     * @example
-     * FSBL.Clients.ConfigClient.removeValue({field:'field1'},function(err,bool){});
-     */
-    this.removeValues = function (params, cb = Function.prototype) {
-        if (!Array.isArray(params)) {
-            return cb("The passed in parameter needs to be an array");
-        }
-        async_1.map(params, this.removeValue, function (err, data) {
-            return cb(err, data);
-        });
-    };
-    /**
-     * make sure we dont have duplicate router subscribers
-     * @private
-     */
-    this.changeSub = function (change) {
-        if (!this.subs)
-            this.subs = {};
-        if (!this.subs[change]) {
-            this.routerClient.query("configService.addListener", change, function (err, queryResponse) {
-                self.routerClient.subscribe(change, handleChanges);
-            });
-            this.subs[change] = true;
-        }
-    };
-    /**
-    * Add a listener to the config at either the root config level or field level. If no field is given, the root config level is used. You can also listen for changes to config fields any number of levels deep -- finsemble.configitem.deeperconfigitem.evendeeperconfigitem
-    * @param {Object} params - Params object
-    * @param {String} [params.field] - The data field to listen for. If this is empty it listen to all changes of the store.
-    * @param {Function} fn -  the function to call when a listener is triggered
-    * @param {Function} [cb] - callback
-    * @example
-    *var myFunction = function(err,data){
-    }
-    * FSBL.Clients.ConfigClient.addListener({field:'field1'},myFunction,cb);
-
-    */
-    this.addListener = function (params, fn, cb) {
-        var field = null;
-        if (typeof params === "function") {
-            fn = params;
-            params = {};
-        }
-        if (params.field) {
-            field = params.field;
-        }
-        var combined = "configService" + (field ? "." + field : "");
-        if (listeners[combined]) {
-            listeners[combined].push(fn);
-        }
-        else {
-            listeners[combined] = [fn];
-        }
-        self.changeSub(combined);
-        return cb ? cb() : null;
-    };
-    /**
-     *
-    * Add an array of listeners as objects or strings. If using strings, you must provide a function callback.
-    * @param {Object | Array.<Object>} params - Params object
-    * @param {String} params[].field - The data field to listen for.
-    * @param {String} params[].listener - the function to call when a listener is triggered. If this is empty, fn is used.
-    * @param {function} [fn] -  the function to call when a listener is triggered
-    * @param {function} [cb]
-    * @todo make the typing proper.
-    * @example
-    *var myFunction = function(err,data){
-
-    }
-    FSBL.Clients.ConfigClient.addListeners([{field:'field1',listener:myFunction},{field:'field2',listener:myFunction}],null,cb);
-
-    FSBL.Clients.ConfigClient.addListeners([{field:'field1'},{field:'field2',listener:myFunction}],myFunction,cb);
-
-    FSBL.Clients.ConfigClient.addListeners(['field1','field2'],myFunction,cb);
-    */
-    this.addListeners = function (params, fn, cb) {
-        if (!Array.isArray(params)) {
-            return this.addListener(params, fn, cb);
-        }
-        for (var i = 0; i < params.length; i++) {
-            var field = null;
-            var item = params[i];
-            var ls;
-            if (typeof item === "string") {
-                field = item;
-            }
-            else if (item.field) {
-                field = item.field;
-                ls = params[i].listener;
-            }
-            var combined = "configService" + (field ? "." + field : "");
-            if (!ls) {
-                if (fn && typeof fn === "function") {
-                    ls = fn;
-                }
-            }
-            if (listeners[combined]) {
-                listeners[combined].push(ls);
-            }
-            else {
-                listeners[combined] = [ls];
-            }
-            self.changeSub(combined);
-        }
-        return cb ? cb() : null;
-    };
-    /**
-     * Remove a listener from config. If no field is given, we look for a config root listener
-     * @param {Object} params - Params object
-     * @param {String} [params.field] - The data field
-     * @param {function} [fn] -  the function to remove from the listeners
-     * @param {function} [cb] -  returns true if it was succesfull in removing the listener.
-     *
-     * @example
-     * var myFunction = function(err,data){
-            }
-     * FSBL.Clients.ConfigClient.removeListener({field:'field1'},MyFunction,function(bool){});
-    FSBL.Clients.ConfigClient.removeListener(MyFunction,function(bool){});
-     */
-    this.removeListener = function (params, fn, cb) {
-        var field = null;
-        if (typeof params === "function") {
-            cb = fn;
-            fn = params;
-            params = {};
-        }
-        if (params.field) {
-            field = params.field;
-        }
-        var combined = this.name + (field ? "." + field : "");
-        if (listeners[combined]) {
-            for (var i = 0; i < listeners[combined].length; i++) {
-                if (listeners[combined][i] === fn) {
-                    listeners[combined].pop(i);
-                    return cb ? cb(null, true) : null;
-                }
-            }
-        }
-        return cb ? cb(null, false) : null;
-    };
-    /**
-     * Remove an array of listeners from the config
-     * @param {Object | Array.<Object>} params - Params object
-     * @param {String} params.field - The data field to listen for. If this is empty it listen to all changes of the store.
-     * @param {function} params.listener - The listener function
-     * @param {function} [fn] -  the function to remove from the listeners
-     * @param {function} [cb] -  returns true if it was succesfull in removing the listener.
-     *
-     * @example
-     * var myFunction = function(err,data){
-            }
-     * FSBL.Clients.ConfigClient.removeListeners({field:'field1'},MyFunction,function(bool){});
-    FSBL.Clients.ConfigClient.removeListeners([{field:'field1',listener:MyFunction}],function(bool){});
-    FSBL.Clients.ConfigClient.removeListeners(['field1'],MyFunction,function(bool){});
-     */
-    this.removeListeners = function (params, fn, cb) {
-        if (!Array.isArray(params)) {
-            if (typeof params === "function") {
-                this.removeListener({}, params, cb);
-            }
-            else if (params.field) {
-                this.removeListener(params, fn, cb);
-            }
-            return cb("missing fields");
-        }
-        var removeCount = 0;
-        for (var i = 0; i < params.length; i++) {
-            var field = null;
-            var item = params[i];
-            var ls;
-            if (typeof item === "string") {
-                field = item;
-            }
-            else if (item.field) {
-                field = item.field;
-                ls = params[i].listener;
-            }
-            var combined = "configService" + (field ? "." + field : "");
-            if (!ls) {
-                if (fn && typeof fn === "function") {
-                    ls = fn;
-                }
-                else {
-                    continue;
-                }
-            }
-            for (var j = 0; j < listeners[combined].length; j++) {
-                if (listeners[combined][j] === ls) {
-                    listeners[combined].pop(i);
-                    removeCount++;
-                }
-            }
-        }
-        if (removeCount < params.length) {
-            return cb("All listeners could not be found", false);
-        }
-        return cb ? cb(null, true) : null;
-    };
-    //This handles all changes coming in from the service
-    function handleChanges(err, response) {
-        if (err) {
-            logger_1.default.system.error(err);
-        }
-        if (!response.data.field) {
-            response.data.field = null;
-        }
-        //var combined = "configService" + (response.data.field ? "." + response.data.field : "");
-        var val = response.data.storeData ? response.data.storeData : response.data.value;
-        triggerListeners(response.data.field ? response.data.field : "configService", val);
-    }
-    // Trigger any function that is listening for changes
-    function triggerListeners(listenerKey, data) {
-        if (listeners[listenerKey]) {
-            for (var i = 0; i < listeners[listenerKey].length; i++) {
-                if (typeof listeners[listenerKey][i] === "function") {
-                    listeners[listenerKey][i](null, { field: listenerKey, value: data });
-                }
-                else {
-                    logger_1.default.system.warn("ConfigClient:triggerListeners: listener is not a function", listenerKey);
-                }
-            }
-        }
-    }
-    /**
-     * Get all or a portion of the configuration from the Config Service. Typically this function is used to return Finsemble configuration
-     * (e.g. "finesemble.components"); however, if can also return all or part of the manifest which contains the Finsemble config property.
-     * If no configReference parameter is passed in (i.e. only the callback parameter is specified), then the complete manifest object is returned
-     * (including manifest.finsemble).
-     *
-     * @param {object=} params field property indentifies specific config to return
-     * @param {function} callback callback function(error, data) to get the configuration data
-     * @private
-     * @example
-     *
-     * FSBL.Clients.ConfigClient.get({ field: "finsemble" },function(err, finsemble) {
-     *		if (!err) {
-     *			finsembleConfig = finsemble;
-     *		} else {
-     *			console.error("failed to get finsemble configuration");
-     *		}
-     * });
-     *
-     * FSBL.Clients.ConfigClient.get({ field: "finsemble.isAuthEnabled" }, function(err, isAuthEnabled) {
-     *		var authorizationOn = isAuthEnabled;
-     * });
-     *
-     * FSBL.Clients.ConfigClient.get(callback); // returns the complete manifest containing the finsemble property
-     * FSBL.Clients.ConfigClient.get(null, callback); // alternate form; returns the complete manifest containing the finsemble property
-     * FSBL.Clients.ConfigClient.get({}, callback); // alternate form; returns the complete manifest containing the finsemble property
-     * FSBL.Clients.ConfigClient.get({ field: "finsemble.components" }, callback);
-     * FSBL.Clients.ConfigClient.get({ field: "finsemble.services" }, callback);
-     * FSBL.Clients.ConfigClient.get({ field: "finsemble.components" },callback);
-     * FSBL.Clients.ConfigClient.get({ field: "finsemble.assimilation.whitelist" }, callback);
-     * FSBL.Clients.ConfigClient.get({ field: "runtime.version",callback) }; // returns the manifest's runtime.version property
-     */
-    this.get = function (params, callback) {
-        logger_1.default.system.debug("ConfigClient.Get", params);
-        logger_1.default.system.warn("This functionality has been deprecated. It will be removed in Finsemble version 3.0. Use getValue instead.", params);
-        // if only one argument then assume no filtering parameters -- the complete manifest will be returned
-        if (arguments.length === 1) {
-            callback = params; // since only one arg, it must be the callback
-            validate_1.default.args(callback, "function");
-            params = {};
-        }
-        else {
-            validate_1.default.args(params, "object", callback, "function");
-        }
-        this.routerClient.query("config.get", params, function (queryErr, queryResponse) {
-            callback(queryErr, queryResponse ? queryResponse.data : null);
-        });
-    };
-    /**
-     * This is designed to mirror the get. Private because security TBD.
-     * @private
-     *
-     * @param {object} params
-     * @param {function} callback
-     */
-    function set(params, callback) {
-        logger_1.default.system.debug("ConfigClient.Set", params);
-        // if only one argument then assume no filtering parameters -- the complete manifest will be returned
-        if (arguments.length === 1) {
-            callback = params; // since only one arg, it must be the callback
-            validate_1.default.args(callback, "function");
-            params = {};
-        }
-        else {
-            validate_1.default.args(params, "object", callback, "function");
-        }
-        this.routerClient.query("config.set", params, function (queryErr, queryResponse) {
-            callback(queryErr, queryResponse ? queryResponse.data : null);
-        });
-    }
-    /**
-     * Dynamically set config values within the Finsemble configuration.  New config properties may be set or existing ones modified. Note that configuration changes will not necessarily dynamically modify the components or services that use the corresponding configuration -- it depends if the component or service handles the corresponding change notifications (either though PubSub or the Config's DataStore). Also, these changes do not persist in any config files.)
-     *
-     * Special Note: Anytime config is set using this API, the newConfig along with the updated manifest will by published to the PubSub topic "Config.changeNotification".  To get these notifications any component or service can subscribe to the topic. An example is shown below.
-     *
-     * Special Note: Anytime config is set using this API, the dataStore underlying configuration 'Finsemble-Configuration-Store' will also be updated. To get these dataStore events a listener can be set as shown in the example below. However, any config modifications made directly though the DataStore will not result in corresponding PubSub notifications.
-     *
-     * @param {object} params
-     * @param {object} params.newConfig  provides the configuration properties to add into the existing configuration under manifest.finsemble. This config must match the Finsembe config requirements as described in [Understanding Finsemble's Configuration]{@tutorial Configuration}. It can include importConfig references to dynamically fetch additional configuration files.
-     * @param {boolean=} params.overwrite if true then overwrite any preexisting config with new config (can only set to true when running from same origin, not cross-domain); if false then newConfig must not match properties of existing config, including service and component configuration.
-     * @param {boolean=} params.replace true specifies any component or service definitions in the new config will place all existing non-system component and service configuration
-     * @param {function} [cb] callback to be invoked upon task completion.
-     * @example
-     * // Examples using processAndSet()
-     *FSBL.Clients.ConfigClient.processAndSet({ newConfig: { myNewConfigField: 12345 }, overwrite: false});
-     *FSBL.Clients.ConfigClient.processAndSet(
-     *{
-     *	newConfig: {
-     *		"myNewConfigField": 12345,
-     *		"myNewConfigObject": {
-     *			A: "this is a test",
-     *			B: "more test"
-     *		},
-     *		"importConfig": [
-     *			"$applicationRoot/configs/application/test.json",
-     *		]
-     *	},
-     *	overwrite: true,
-     *  replace: false,
-     *},
-     *	function (err, finsemble) {
-     *		if (err) {
-     *			console.error("ConfigClient.set", err);
-     *		} else {
-     *			console.log("new finsemble config", finsemble);
-     *		}
-     *	}
-     * );
-     *
-     *  // example subscribing to PubSub to get notifications of dynamic updates
-     *RouterClient.subscribe("Config.changeNotification", function (err, notify) {
-     *		console.log("set notification", notify.data.newConfig, notify.data.finsemble);
-     *	});
-     *
-     *  // example using DataStore to get notifications of dynamic updates
-     *DistributedStoreClient.getStore({ store: 'Finsemble-Configuration-Store', global: true }, function (err, configStore) {
-     *		configStore.addListener({ field: "finsemble" }, function (err, newFinsembleConfig) {
-     *			console.log("new manifest.finsemble configuration", newFinsembleConfig);
-     *		});
-     *});
-     *
-     */
-    this.processAndSet = function (params, callback) {
-        logger_1.default.system.debug("ConfigClient.processAndSet", params);
-        validate_1.default.args(params, "object", callback, "function=") &&
-            validate_1.default.args2("params.newConfig", params.newConfig, "object", "params.overwrite", params.overwrite, "boolean=", "params.replace", params.replace, "boolean=");
-        if (!params.overwrite && params.replace) {
-            var errMsg = "cannot use replace option unless overwrite is also true";
-            logger_1.default.system.warn("ConfigClient.processAndSet:", errMsg);
-            if (callback) {
-                callback(errMsg, null);
-            }
-        }
-        else {
-            this.routerClient.query("config.processAndSet", params, function (queryErr, queryResponse) {
-                if (callback) {
-                    callback(queryErr, queryResponse ? queryResponse.data : null);
-                }
-            });
-        }
-    };
-    /**
-     * Sets a value on the configStore and persists that value to storage. On application restart, this value will overwrite any application defaults.
-     * @param {Object} params - Params object
-     * @param {String} params.field - The name of the field where data will be stored
-     * @param {any} params.value - Value to be stored
-     * @param {function} callback - callback to be invoked when preferences have been retrieved from the service.
-     * @example
-     * FSBL.Clients.ConfigClient.setPreference({field: "finsemble.initialWorkspace", value: "Workspace 2" }, (err, response) => {
-     * 		//preference has been set
-     * });
-     */
-    this.setPreference = function (params, callback) {
-        this.routerClient.query("PreferencesService.setPreference", params, function (queryErr, queryResponse) {
-            if (callback) {
-                callback(queryErr, queryResponse ? queryResponse.data : null);
-            }
-        });
-    };
-    /**
-     * Retrieves all of the preferences set for the application.
-     * @param {Object} params - parameters to pass to getPreferences. Optional. Defaults to null.
-     * @param {function} callback - callback to be invoked when preferences have been retrieved from the service.
-     * @example
-     * FSBL.Clients.ConfigClient.getPreferences((err, preferences)=>{
-     * 		//use preferences.
-     * });
-     */
-    this.getPreferences = function (params, callback) {
-        if (typeof params === "function") {
-            callback = params;
-            params = null;
-        }
-        this.routerClient.query("PreferencesService.getPreferences", params, function (queryErr, queryResponse) {
-            if (callback) {
-                callback(queryErr, queryResponse ? queryResponse.data : null);
-            }
-        });
-    };
-};
-var configClient = new ConfigClient({
-    onReady: function (cb) {
-        if (cb) {
-            cb();
-        }
-    },
-    name: "configClient"
-});
-exports.default = configClient;
-
-
-/***/ }),
-/* 36 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__configUtil__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__common_system__);
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-
-
-
-
-
-var ConfigClient = null;
-
-"use strict";
-
-/**
- * @hideConstructor true
- * @constructor
- */
-var UserNotification = function () {
-	var alertOnceSinceStartUp = {};
-	var alertCurrentCount = {};
-	var defaultTemplateURL = null;
-
-	/**
-  * Gets the default template URL from the manifest at finsemble->notificationURL. If that doesn't exist then it falls back to the system template location.
-  * @private
-  */
-	this.getDefaultTemplateURL = function (cb) {
-		if (defaultTemplateURL) {
-			setTimeout(function () {
-				// Ensure async, just like else clause
-				cb(defaultTemplateURL);
-			}, 0);
-		} else {
-			// Require configClient here instead of at top of page to avoid a dependency error (Router uses UserNotification before config service is ready).
-			if (!ConfigClient) ConfigClient = __webpack_require__(35).default;
-			ConfigClient.get({ field: "finsemble" }, function (err, finConfig) {
-				defaultTemplateURL = __WEBPACK_IMPORTED_MODULE_1__configUtil__["ConfigUtilInstance"].getDefault(finConfig, "finsemble.notificationURL", finConfig.moduleRoot + "/components/system/notification/notification.html");
-				cb(defaultTemplateURL);
-			});
-		}
-	};
-
-	/**
-  * Conditionally alerts the end user using a desktop notification.
-  *
-  * @param {string} topic specifies a category for the notification. Topic is currently unused, but in the future it will be used to filter notifications (e.g. applying regEx's defined in config to determine which notifications are displayed). Any topic string can be specified; however "system" is the recommended topic for system notifications applicable both to end uses and to developers. "dev" is the recommended topic for notifications applicable only during development (e.g. a notification that config.json has an illegal value).
-  * @param {string} frequency Either "ALWAYS", "ONCE-SINCE-STARTUP", or "MAX-COUNT" to determine if alert should be displayed. Note, the frequencies are based on the number of notifications emitted from a window (as opposed to system wide.)
-  * @param {string} identifier uniquely identifies this specific notification message. Used when "frequency" is set to "ONCE-SINCE-STARTUP" or "MAX-COUNT"
-  * @param {any} message message to display in the notification. Typically a string. Finsemble's built in templating accepts and object. See src-built-in/components/notification/notification.html.
-  * @param {object=} params
-  * @param {number} params.maxCount specifies the max number of notifications to display for specified identifier when frequency="MAX-COUNT" (default is 1)
-  * @param {number} params.duration time in milliseconds before auto-dismissing the notification (defaults to 24 hours)
-  * @param {number} params.url the URL for for notification HTML. If not provided then the system default will be used. Defaults to Finsemble's built-in version at "/finsemble/components/system/notification/notification.html".
-  *
-  * @example
-  *		FSBL.UserNotification.alert("system", "ONCE-SINCE-STARTUP", "MANIFEST-Error", message);
- *		FSBL.UserNotification.alert("dev", "ALWAYS", "Config-Error", message, { url: notificationURL, duration: 1000 * 5 });
- *		FSBL.UserNotification.alert("dev", "MAX-COUNT", "Transport-Failure", message, { url: notificationURL, maxCount: 2 });
- */
-
-	this.alert = function (topic, frequency, identifier, message, params) {
-		var self = this;
-		// If the url for the template is passed in then don't bother fetching the config
-		if (params && params.url) {
-			this.alertInternal(topic, frequency, identifier, message, params, params.url);
-		} else {
-			// If no url, then we need to get the template from config
-			this.getDefaultTemplateURL(function (url) {
-				self.alertInternal(topic, frequency, identifier, message, params, url);
-			});
-		}
-	};
-
-	/**
-  * @private
-  */
-	this.alertInternal = function (topic, frequency, identifier, message, params, url) {
-		params = params || {};
-		var alertUser = false;
-		var key = "UserNotification.alert." + identifier;
-		var duration = params.duration || 1000 * 60 * 60 * 24;
-
-		switch (frequency) {
-			case "ONCE-SINCE-STARTUP":
-				if (key in alertOnceSinceStartUp) {
-					alertUser = false;
-				} else {
-					// if no key then must be first time
-					alertUser = true;
-					alertOnceSinceStartUp[key] = true;
-				}
-				break;
-			case "MAX-COUNT":
-				let currentCount = 0;
-				let maxCount = params.maxCount || 1;
-				if (key in alertCurrentCount) {
-					currentCount = alertCurrentCount[key];
-				}
-				alertCurrentCount[key] = ++currentCount; // increment and store
-				if (currentCount <= maxCount) {
-					alertUser = true;
-				}
-				break;
-			default:
-				// default to "ALWAYS"
-				alertUser = true;
-		}
-
-		__WEBPACK_IMPORTED_MODULE_0__clients_logger___default.a.log("UserNotification.alert", topic, alertUser, frequency, identifier, message, params);
-		if (alertUser) {
-			var notifyObject = {
-				url: url,
-				message: message,
-				timeout: duration
-			};
-			new __WEBPACK_IMPORTED_MODULE_2__common_system__["System"].Notification(notifyObject);
-		}
-	};
-};
-
-/* harmony default export */ __webpack_exports__["default"] = (new UserNotification());
-
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\common\\userNotification.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\common\\userNotification.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
-
-/***/ }),
-/* 37 */
-/***/ (function(module, exports) {
-
-/**
- * Convert array of 16 byte values to UUID string format of the form:
- * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
- */
-var byteToHex = [];
-for (var i = 0; i < 256; ++i) {
-  byteToHex[i] = (i + 0x100).toString(16).substr(1);
-}
-
-function bytesToUuid(buf, offset) {
-  var i = offset || 0;
-  var bth = byteToHex;
-  // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
-  return ([bth[buf[i++]], bth[buf[i++]], 
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]],
-	bth[buf[i++]], bth[buf[i++]],
-	bth[buf[i++]], bth[buf[i++]]]).join('');
-}
-
-module.exports = bytesToUuid;
-
-
-/***/ }),
-/* 38 */
-/***/ (function(module, exports) {
-
-// Unique ID creation requires a high quality random # generator.  In the
-// browser this is a little complicated due to unknown quality of Math.random()
-// and inconsistent support for the `crypto` API.  We do the best we can via
-// feature-detection
-
-// getRandomValues needs to be invoked in a context where "this" is a Crypto
-// implementation. Also, find the complete implementation of crypto on IE11.
-var getRandomValues = (typeof(crypto) != 'undefined' && crypto.getRandomValues && crypto.getRandomValues.bind(crypto)) ||
-                      (typeof(msCrypto) != 'undefined' && typeof window.msCrypto.getRandomValues == 'function' && msCrypto.getRandomValues.bind(msCrypto));
-
-if (getRandomValues) {
-  // WHATWG crypto RNG - http://wiki.whatwg.org/wiki/Crypto
-  var rnds8 = new Uint8Array(16); // eslint-disable-line no-undef
-
-  module.exports = function whatwgRNG() {
-    getRandomValues(rnds8);
-    return rnds8;
-  };
-} else {
-  // Math.random()-based (RNG)
-  //
-  // If all else fails, use Math.random().  It's fast, but is of unspecified
-  // quality.
-  var rnds = new Array(16);
-
-  module.exports = function mathRNG() {
-    for (var i = 0, r; i < 16; i++) {
-      if ((i & 0x03) === 0) r = Math.random() * 0x100000000;
-      rnds[i] = r >>> ((i & 0x03) << 3) & 0xff;
-    }
-
-    return rnds;
-  };
-}
-
-
-/***/ }),
-/* 39 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {/**
- * lodash (Custom Build) <https://lodash.com/>
- * Build: `lodash modularize exports="npm" -o ./`
- * Copyright jQuery Foundation and other contributors <https://jquery.org/>
- * Released under MIT license <https://lodash.com/license>
- * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
- * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
- */
-
-/** Used as the `TypeError` message for "Functions" methods. */
-var FUNC_ERROR_TEXT = 'Expected a function';
-
-/** Used as references for various `Number` constants. */
-var NAN = 0 / 0;
-
-/** `Object#toString` result references. */
-var symbolTag = '[object Symbol]';
-
-/** Used to match leading and trailing whitespace. */
-var reTrim = /^\s+|\s+$/g;
-
-/** Used to detect bad signed hexadecimal string values. */
-var reIsBadHex = /^[-+]0x[0-9a-f]+$/i;
-
-/** Used to detect binary string values. */
-var reIsBinary = /^0b[01]+$/i;
-
-/** Used to detect octal string values. */
-var reIsOctal = /^0o[0-7]+$/i;
-
-/** Built-in method references without a dependency on `root`. */
-var freeParseInt = parseInt;
-
-/** Detect free variable `global` from Node.js. */
-var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
-
-/** Detect free variable `self`. */
-var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
-
-/** Used as a reference to the global object. */
-var root = freeGlobal || freeSelf || Function('return this')();
-
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/**
- * Used to resolve the
- * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
- * of values.
- */
-var objectToString = objectProto.toString;
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeMax = Math.max,
-    nativeMin = Math.min;
-
-/**
- * Gets the timestamp of the number of milliseconds that have elapsed since
- * the Unix epoch (1 January 1970 00:00:00 UTC).
- *
- * @static
- * @memberOf _
- * @since 2.4.0
- * @category Date
- * @returns {number} Returns the timestamp.
- * @example
- *
- * _.defer(function(stamp) {
- *   console.log(_.now() - stamp);
- * }, _.now());
- * // => Logs the number of milliseconds it took for the deferred invocation.
- */
-var now = function() {
-  return root.Date.now();
-};
-
-/**
- * Creates a debounced function that delays invoking `func` until after `wait`
- * milliseconds have elapsed since the last time the debounced function was
- * invoked. The debounced function comes with a `cancel` method to cancel
- * delayed `func` invocations and a `flush` method to immediately invoke them.
- * Provide `options` to indicate whether `func` should be invoked on the
- * leading and/or trailing edge of the `wait` timeout. The `func` is invoked
- * with the last arguments provided to the debounced function. Subsequent
- * calls to the debounced function return the result of the last `func`
- * invocation.
- *
- * **Note:** If `leading` and `trailing` options are `true`, `func` is
- * invoked on the trailing edge of the timeout only if the debounced function
- * is invoked more than once during the `wait` timeout.
- *
- * If `wait` is `0` and `leading` is `false`, `func` invocation is deferred
- * until to the next tick, similar to `setTimeout` with a timeout of `0`.
- *
- * See [David Corbacho's article](https://css-tricks.com/debouncing-throttling-explained-examples/)
- * for details over the differences between `_.debounce` and `_.throttle`.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Function
- * @param {Function} func The function to debounce.
- * @param {number} [wait=0] The number of milliseconds to delay.
- * @param {Object} [options={}] The options object.
- * @param {boolean} [options.leading=false]
- *  Specify invoking on the leading edge of the timeout.
- * @param {number} [options.maxWait]
- *  The maximum time `func` is allowed to be delayed before it's invoked.
- * @param {boolean} [options.trailing=true]
- *  Specify invoking on the trailing edge of the timeout.
- * @returns {Function} Returns the new debounced function.
- * @example
- *
- * // Avoid costly calculations while the window size is in flux.
- * jQuery(window).on('resize', _.debounce(calculateLayout, 150));
- *
- * // Invoke `sendMail` when clicked, debouncing subsequent calls.
- * jQuery(element).on('click', _.debounce(sendMail, 300, {
- *   'leading': true,
- *   'trailing': false
- * }));
- *
- * // Ensure `batchLog` is invoked once after 1 second of debounced calls.
- * var debounced = _.debounce(batchLog, 250, { 'maxWait': 1000 });
- * var source = new EventSource('/stream');
- * jQuery(source).on('message', debounced);
- *
- * // Cancel the trailing debounced invocation.
- * jQuery(window).on('popstate', debounced.cancel);
- */
-function debounce(func, wait, options) {
-  var lastArgs,
-      lastThis,
-      maxWait,
-      result,
-      timerId,
-      lastCallTime,
-      lastInvokeTime = 0,
-      leading = false,
-      maxing = false,
-      trailing = true;
-
-  if (typeof func != 'function') {
-    throw new TypeError(FUNC_ERROR_TEXT);
-  }
-  wait = toNumber(wait) || 0;
-  if (isObject(options)) {
-    leading = !!options.leading;
-    maxing = 'maxWait' in options;
-    maxWait = maxing ? nativeMax(toNumber(options.maxWait) || 0, wait) : maxWait;
-    trailing = 'trailing' in options ? !!options.trailing : trailing;
-  }
-
-  function invokeFunc(time) {
-    var args = lastArgs,
-        thisArg = lastThis;
-
-    lastArgs = lastThis = undefined;
-    lastInvokeTime = time;
-    result = func.apply(thisArg, args);
-    return result;
-  }
-
-  function leadingEdge(time) {
-    // Reset any `maxWait` timer.
-    lastInvokeTime = time;
-    // Start the timer for the trailing edge.
-    timerId = setTimeout(timerExpired, wait);
-    // Invoke the leading edge.
-    return leading ? invokeFunc(time) : result;
-  }
-
-  function remainingWait(time) {
-    var timeSinceLastCall = time - lastCallTime,
-        timeSinceLastInvoke = time - lastInvokeTime,
-        result = wait - timeSinceLastCall;
-
-    return maxing ? nativeMin(result, maxWait - timeSinceLastInvoke) : result;
-  }
-
-  function shouldInvoke(time) {
-    var timeSinceLastCall = time - lastCallTime,
-        timeSinceLastInvoke = time - lastInvokeTime;
-
-    // Either this is the first call, activity has stopped and we're at the
-    // trailing edge, the system time has gone backwards and we're treating
-    // it as the trailing edge, or we've hit the `maxWait` limit.
-    return (lastCallTime === undefined || (timeSinceLastCall >= wait) ||
-      (timeSinceLastCall < 0) || (maxing && timeSinceLastInvoke >= maxWait));
-  }
-
-  function timerExpired() {
-    var time = now();
-    if (shouldInvoke(time)) {
-      return trailingEdge(time);
-    }
-    // Restart the timer.
-    timerId = setTimeout(timerExpired, remainingWait(time));
-  }
-
-  function trailingEdge(time) {
-    timerId = undefined;
-
-    // Only invoke if we have `lastArgs` which means `func` has been
-    // debounced at least once.
-    if (trailing && lastArgs) {
-      return invokeFunc(time);
-    }
-    lastArgs = lastThis = undefined;
-    return result;
-  }
-
-  function cancel() {
-    if (timerId !== undefined) {
-      clearTimeout(timerId);
-    }
-    lastInvokeTime = 0;
-    lastArgs = lastCallTime = lastThis = timerId = undefined;
-  }
-
-  function flush() {
-    return timerId === undefined ? result : trailingEdge(now());
-  }
-
-  function debounced() {
-    var time = now(),
-        isInvoking = shouldInvoke(time);
-
-    lastArgs = arguments;
-    lastThis = this;
-    lastCallTime = time;
-
-    if (isInvoking) {
-      if (timerId === undefined) {
-        return leadingEdge(lastCallTime);
-      }
-      if (maxing) {
-        // Handle invocations in a tight loop.
-        timerId = setTimeout(timerExpired, wait);
-        return invokeFunc(lastCallTime);
-      }
-    }
-    if (timerId === undefined) {
-      timerId = setTimeout(timerExpired, wait);
-    }
-    return result;
-  }
-  debounced.cancel = cancel;
-  debounced.flush = flush;
-  return debounced;
-}
-
-/**
- * Creates a throttled function that only invokes `func` at most once per
- * every `wait` milliseconds. The throttled function comes with a `cancel`
- * method to cancel delayed `func` invocations and a `flush` method to
- * immediately invoke them. Provide `options` to indicate whether `func`
- * should be invoked on the leading and/or trailing edge of the `wait`
- * timeout. The `func` is invoked with the last arguments provided to the
- * throttled function. Subsequent calls to the throttled function return the
- * result of the last `func` invocation.
- *
- * **Note:** If `leading` and `trailing` options are `true`, `func` is
- * invoked on the trailing edge of the timeout only if the throttled function
- * is invoked more than once during the `wait` timeout.
- *
- * If `wait` is `0` and `leading` is `false`, `func` invocation is deferred
- * until to the next tick, similar to `setTimeout` with a timeout of `0`.
- *
- * See [David Corbacho's article](https://css-tricks.com/debouncing-throttling-explained-examples/)
- * for details over the differences between `_.throttle` and `_.debounce`.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Function
- * @param {Function} func The function to throttle.
- * @param {number} [wait=0] The number of milliseconds to throttle invocations to.
- * @param {Object} [options={}] The options object.
- * @param {boolean} [options.leading=true]
- *  Specify invoking on the leading edge of the timeout.
- * @param {boolean} [options.trailing=true]
- *  Specify invoking on the trailing edge of the timeout.
- * @returns {Function} Returns the new throttled function.
- * @example
- *
- * // Avoid excessively updating the position while scrolling.
- * jQuery(window).on('scroll', _.throttle(updatePosition, 100));
- *
- * // Invoke `renewToken` when the click event is fired, but not more than once every 5 minutes.
- * var throttled = _.throttle(renewToken, 300000, { 'trailing': false });
- * jQuery(element).on('click', throttled);
- *
- * // Cancel the trailing throttled invocation.
- * jQuery(window).on('popstate', throttled.cancel);
- */
-function throttle(func, wait, options) {
-  var leading = true,
-      trailing = true;
-
-  if (typeof func != 'function') {
-    throw new TypeError(FUNC_ERROR_TEXT);
-  }
-  if (isObject(options)) {
-    leading = 'leading' in options ? !!options.leading : leading;
-    trailing = 'trailing' in options ? !!options.trailing : trailing;
-  }
-  return debounce(func, wait, {
-    'leading': leading,
-    'maxWait': wait,
-    'trailing': trailing
-  });
-}
-
-/**
- * Checks if `value` is the
- * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
- * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an object, else `false`.
- * @example
- *
- * _.isObject({});
- * // => true
- *
- * _.isObject([1, 2, 3]);
- * // => true
- *
- * _.isObject(_.noop);
- * // => true
- *
- * _.isObject(null);
- * // => false
- */
-function isObject(value) {
-  var type = typeof value;
-  return !!value && (type == 'object' || type == 'function');
-}
-
-/**
- * Checks if `value` is object-like. A value is object-like if it's not `null`
- * and has a `typeof` result of "object".
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
- * @example
- *
- * _.isObjectLike({});
- * // => true
- *
- * _.isObjectLike([1, 2, 3]);
- * // => true
- *
- * _.isObjectLike(_.noop);
- * // => false
- *
- * _.isObjectLike(null);
- * // => false
- */
-function isObjectLike(value) {
-  return !!value && typeof value == 'object';
-}
-
-/**
- * Checks if `value` is classified as a `Symbol` primitive or object.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
- * @example
- *
- * _.isSymbol(Symbol.iterator);
- * // => true
- *
- * _.isSymbol('abc');
- * // => false
- */
-function isSymbol(value) {
-  return typeof value == 'symbol' ||
-    (isObjectLike(value) && objectToString.call(value) == symbolTag);
-}
-
-/**
- * Converts `value` to a number.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to process.
- * @returns {number} Returns the number.
- * @example
- *
- * _.toNumber(3.2);
- * // => 3.2
- *
- * _.toNumber(Number.MIN_VALUE);
- * // => 5e-324
- *
- * _.toNumber(Infinity);
- * // => Infinity
- *
- * _.toNumber('3.2');
- * // => 3.2
- */
-function toNumber(value) {
-  if (typeof value == 'number') {
-    return value;
-  }
-  if (isSymbol(value)) {
-    return NAN;
-  }
-  if (isObject(value)) {
-    var other = typeof value.valueOf == 'function' ? value.valueOf() : value;
-    value = isObject(other) ? (other + '') : other;
-  }
-  if (typeof value != 'string') {
-    return value === 0 ? value : +value;
-  }
-  value = value.replace(reTrim, '');
-  var isBinary = reIsBinary.test(value);
-  return (isBinary || reIsOctal.test(value))
-    ? freeParseInt(value.slice(2), isBinary ? 2 : 8)
-    : (reIsBadHex.test(value) ? NAN : +value);
-}
-
-module.exports = throttle;
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
-
-/***/ }),
-/* 40 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var rng = __webpack_require__(38);
-var bytesToUuid = __webpack_require__(37);
-
-// **`v1()` - Generate time-based UUID**
-//
-// Inspired by https://github.com/LiosK/UUID.js
-// and http://docs.python.org/library/uuid.html
-
-var _nodeId;
-var _clockseq;
-
-// Previous uuid creation time
-var _lastMSecs = 0;
-var _lastNSecs = 0;
-
-// See https://github.com/broofa/node-uuid for API details
-function v1(options, buf, offset) {
-  var i = buf && offset || 0;
-  var b = buf || [];
-
-  options = options || {};
-  var node = options.node || _nodeId;
-  var clockseq = options.clockseq !== undefined ? options.clockseq : _clockseq;
-
-  // node and clockseq need to be initialized to random values if they're not
-  // specified.  We do this lazily to minimize issues related to insufficient
-  // system entropy.  See #189
-  if (node == null || clockseq == null) {
-    var seedBytes = rng();
-    if (node == null) {
-      // Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
-      node = _nodeId = [
-        seedBytes[0] | 0x01,
-        seedBytes[1], seedBytes[2], seedBytes[3], seedBytes[4], seedBytes[5]
-      ];
-    }
-    if (clockseq == null) {
-      // Per 4.2.2, randomize (14 bit) clockseq
-      clockseq = _clockseq = (seedBytes[6] << 8 | seedBytes[7]) & 0x3fff;
-    }
-  }
-
-  // UUID timestamps are 100 nano-second units since the Gregorian epoch,
-  // (1582-10-15 00:00).  JSNumbers aren't precise enough for this, so
-  // time is handled internally as 'msecs' (integer milliseconds) and 'nsecs'
-  // (100-nanoseconds offset from msecs) since unix epoch, 1970-01-01 00:00.
-  var msecs = options.msecs !== undefined ? options.msecs : new Date().getTime();
-
-  // Per 4.2.1.2, use count of uuid's generated during the current clock
-  // cycle to simulate higher resolution clock
-  var nsecs = options.nsecs !== undefined ? options.nsecs : _lastNSecs + 1;
-
-  // Time since last uuid creation (in msecs)
-  var dt = (msecs - _lastMSecs) + (nsecs - _lastNSecs)/10000;
-
-  // Per 4.2.1.2, Bump clockseq on clock regression
-  if (dt < 0 && options.clockseq === undefined) {
-    clockseq = clockseq + 1 & 0x3fff;
-  }
-
-  // Reset nsecs if clock regresses (new clockseq) or we've moved onto a new
-  // time interval
-  if ((dt < 0 || msecs > _lastMSecs) && options.nsecs === undefined) {
-    nsecs = 0;
-  }
-
-  // Per 4.2.1.2 Throw error if too many uuids are requested
-  if (nsecs >= 10000) {
-    throw new Error('uuid.v1(): Can\'t create more than 10M uuids/sec');
-  }
-
-  _lastMSecs = msecs;
-  _lastNSecs = nsecs;
-  _clockseq = clockseq;
-
-  // Per 4.1.4 - Convert from unix epoch to Gregorian epoch
-  msecs += 12219292800000;
-
-  // `time_low`
-  var tl = ((msecs & 0xfffffff) * 10000 + nsecs) % 0x100000000;
-  b[i++] = tl >>> 24 & 0xff;
-  b[i++] = tl >>> 16 & 0xff;
-  b[i++] = tl >>> 8 & 0xff;
-  b[i++] = tl & 0xff;
-
-  // `time_mid`
-  var tmh = (msecs / 0x100000000 * 10000) & 0xfffffff;
-  b[i++] = tmh >>> 8 & 0xff;
-  b[i++] = tmh & 0xff;
-
-  // `time_high_and_version`
-  b[i++] = tmh >>> 24 & 0xf | 0x10; // include version
-  b[i++] = tmh >>> 16 & 0xff;
-
-  // `clock_seq_hi_and_reserved` (Per 4.2.2 - include variant)
-  b[i++] = clockseq >>> 8 | 0x80;
-
-  // `clock_seq_low`
-  b[i++] = clockseq & 0xff;
-
-  // `node`
-  for (var n = 0; n < 6; ++n) {
-    b[i + n] = node[n];
-  }
-
-  return buf ? buf : bytesToUuid(b);
-}
-
-module.exports = v1;
-
-
-/***/ }),
-/* 41 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events__ = __webpack_require__(17);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_events__);
-function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
-
-
-/** Singleton of the System class shared among all instances of Monitors
- * @TODO Refactor to instance member of class.
- */
-let System;
-class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
-	/**
-  *
-  * @param {function} readyCB Function to be invoked when monitors are retrieved from the system for the first time.
-  * @param {function} changeCB Function to be invoked when monitor information changes
-  * @param {Object} dependencies Dependency object that provides a system object capable of retrieving monitors.
-  */
-	constructor(readyCB, changeCB, dependencies) {
-		super();
-		if (dependencies && dependencies.System) {
-			System = dependencies.System;
-		} else {
-			throw new Error("Monitors class requires dependency injection. Ensure that System is being passed in.");
-		}
-		this.bindAllFunctions();
-		this.refreshMonitors(readyCB);
-
-		System.addEventListener("monitor-info-changed", () => {
-			this.refreshMonitors(changeCB);
-		});
-
-		//This is to handle 'wake events'. This is technically only going to handle unlock events (user locks screen or logs out then logs back in)
-		//Technically, if the user has disabled 'lock on sleep', then this will not fire, but openfin does not have an event for waking/sleeping
-		System.addEventListener("session-changed", params => {
-			if (params.reason === "unlock") {
-				this.refreshMonitors(changeCB);
-			}
-		});
-	}
-
-	bindAllFunctions() {
-		let self = this;
-		for (let name of Object.getOwnPropertyNames(Object.getPrototypeOf(self))) {
-			let method = self[name];
-			// skip constructor
-			if (!(method instanceof Function) || method === Monitors) continue;
-			self[name] = self[name].bind(self);
-		}
-	}
-
-	asyncIt(data, cb) {
-		cb(data);
-		return data;
-	}
-
-	rationalizeMonitor(monitor) {
-		monitor.monitorRect.width = monitor.monitorRect.right - monitor.monitorRect.left;
-		monitor.monitorRect.height = monitor.monitorRect.bottom - monitor.monitorRect.top;
-		monitor.availableRect.width = monitor.availableRect.right - monitor.availableRect.left;
-		monitor.availableRect.height = monitor.availableRect.bottom - monitor.availableRect.top;
-	}
-
-	calculateMonitorScale(dipRect, scaledRect) {
-		return (scaledRect.right - scaledRect.left) / (dipRect.right - dipRect.left);
-	}
-
-	refreshMonitors(cb = Function.prototype) {
-		System.getMonitorInfo(monitorInfo => {
-			//console.log("getAllMonitors");
-			this.allMonitors = [];
-			var primaryMonitor = monitorInfo.primaryMonitor;
-			this.primaryMonitor = primaryMonitor;
-			primaryMonitor.whichMonitor = "primary";
-			primaryMonitor.deviceScaleFactor = this.calculateMonitorScale(primaryMonitor.monitor.dipRect, primaryMonitor.monitor.scaledRect);
-
-			primaryMonitor.position = 0;
-			this.allMonitors.push(primaryMonitor);
-			for (let i = 0; i < monitorInfo.nonPrimaryMonitors.length; i++) {
-				let monitor = monitorInfo.nonPrimaryMonitors[i];
-				monitor.deviceScaleFactor = this.calculateMonitorScale(monitor.monitor.dipRect, monitor.monitor.scaledRect);
-				monitor.whichMonitor = i;
-				monitor.position = i + 1;
-				this.allMonitors.push(monitor);
-			}
-			for (let i = 0; i < this.allMonitors.length; i++) {
-				let monitor = this.allMonitors[i];
-				this.rationalizeMonitor(monitor);
-			}
-			cb(this.allMonitors);
-			this.ready = true;
-			this.emit("monitors-changed", this.allMonitors);
-		});
-	}
-
-	/**
-  * Gets All Monitors.
-  * @param {*} cb
-  */
-	getAllMonitors(cb = Function.prototype) {
-		if (!this.ready) {
-			if (cb) this.refreshMonitors(cb);else return "not ready";
-		} else {
-			return this.asyncIt(this.allMonitors, cb);
-		}
-	}
-
-	/**
-  * Gets the monitor on which the point is or null if not on any monitor. This assumes scaled dimensions for the monitor (For example from Openfin or WPF directly).
-  * @param {*} x
-  * @param {*} y
-  * @param {*} cb
-  */
-	getMonitorFromScaledXY(x, y, cb = Function.prototype) {
-		let promiseResolver = resolve => {
-			if (!this.ready) {
-				this.refreshMonitors(() => {
-					this.getMonitorFromScaledXY(x, y, cb);
-				});
-				//This will recursively call until we have monitors.
-				return "not ready";
-			}
-			let theMonitor = null;
-			var monitors = this.allMonitors;
-			for (var i = 0; i < monitors.length; i++) {
-				var monitor = monitors[i];
-				var monitorRect = monitor.monitorRect;
-				// Are our coordinates inside the monitor? Note that
-				// left and top are inclusive. right and bottom are exclusive
-				// In OpenFin, two adjacent monitors will share a right and left pixel value!
-				if (x >= monitorRect.left && x < monitorRect.right && y >= monitorRect.top && y < monitorRect.bottom) {
-					theMonitor = monitor;
-					break;
-				}
-			}
-			resolve(theMonitor);
-			cb(theMonitor);
-		};
-		return new Promise(promiseResolver);
-	}
-
-	/**
-  * Gets the monitor on which the point is or null if not on any monitor. This assumes unscaled positions of x,y (for example from windows API).
-  *
-  * @param {any} x
-  * @param {any} y
-  * @param {any} [cb=function () { }]
-  * @returns monitor if found or null
-  * @memberof Monitors
-  */
-	getMonitorFromUnscaledXY(x, y, cb = Function.prototype) {
-		if (!this.ready) {
-			this.refreshMonitors(() => {
-				this.getMonitorFromUnscaledXY(x, y, cb);
-			});
-			return "not ready";
-		}
-		var monitors = this.allMonitors;
-		for (var i = 0; i < monitors.length; i++) {
-			var monitor = monitors[i];
-			var monitorRect = monitor.monitor.scaledRect;
-			if (x >= monitorRect.left && x < monitorRect.right && y >= monitorRect.top && y < monitorRect.bottom) {
-				return this.asyncIt(monitor, cb);
-			}
-		}
-		return this.asyncIt(null, cb);
-	}
-
-	/**
-  * Converts Point from scaled (e.g. from OpenFin/WPF) to unscaled (e.g. to give Windows API) position
-  *
-  * @param {any} point
-  * @param {any} [cb=function () { }]
-  * @returns monitor if found or null
-  * @memberof Monitors
-  */
-	translatePointFromScaled(params, cb = Function.prototype) {
-		var _this = this;
-
-		return _asyncToGenerator(function* () {
-			if (!_this.ready) {
-				_this.refreshMonitors(function () {
-					_this.translatePointFromScaled(params, cb);
-				});
-				return "not ready";
-			}
-			var point;
-			if (params.point) point = params.point;else point = params;
-			var monitor = params.monitor;
-			if (!monitor) {
-				let result = yield _this.getMonitorFromScaledXY(point.x, point.y);
-				monitor = result.data;
-			}
-
-			let unscaledPoint = null;
-			if (monitor) {
-				var relativeX = point.x - monitor.monitorRect.left;
-				var relativeY = point.y - monitor.monitorRect.top;
-				var unscaledRelativeX = relativeX * monitor.deviceScaleFactor;
-				var unscaledRelativeY = relativeY * monitor.deviceScaleFactor;
-				unscaledPoint = {
-					x: unscaledRelativeX + monitor.monitor.scaledRect.left,
-					y: unscaledRelativeY + monitor.monitor.scaledRect.top
-				};
-			}
-
-			cb(unscaledPoint);
-			return Promise.resolve(unscaledPoint);
-		})();
-	}
-
-	/**
-  * Converts Point to scaled (e.g. from OpenFin/WPF) from unscaled (e.g. to give Windows API) position
-  *
-  * @param {any} point
-  * @param {any} [cb=function () { }]
-  * @returns point if on monitor or null
-  * @memberof Monitors
-  */
-	translatePointToScaled(params, cb = Function.prototype) {
-		if (!this.ready) {
-			this.refreshMonitors(() => {
-				this.translatePointToScaled(params, cb);
-			});
-			return "not ready";
-		}
-		var point;
-		if (params.point) point = params.point;else point = params;
-		var monitor = params.monitor || this.getMonitorFromUnscaledXY(point.x, point.y);
-		if (!monitor) return this.asyncIt(null, cb);
-		var relativeX = point.x - monitor.monitor.scaledRect.left;
-		var relativeY = point.y - monitor.monitor.scaledRect.top;
-		var scaledRelativeX = relativeX / monitor.deviceScaleFactor;
-		var scaledRelativeY = relativeY / monitor.deviceScaleFactor;
-		var scaledPoint = {
-			x: scaledRelativeX + monitor.monitorRect.left,
-			y: scaledRelativeY + monitor.monitorRect.top
-		};
-		return this.asyncIt(scaledPoint, cb);
-	}
-
-	/**
-  * Converts Rectangle (top, left, bottom, right) from unscaled to scaled. Mainly for use to translate window locations to/from Windows API.
-  *
-  * @param {any} rect
-  * @param {any} [cb=function () { }]
-  * @returns rect
-  * @memberof Monitors
-  */
-	translateRectToScaled(rect, cb = Function.prototype) {
-		var _this2 = this;
-
-		return _asyncToGenerator(function* () {
-			if (!_this2.ready) {
-				_this2.refreshMonitors(function () {
-					_this2.translateRectToScaled(rect, cb);
-				});
-				return "not ready";
-			}
-			var topLeft = _this2.translatePointToScaled({ x: rect.left, y: rect.top });
-			var bottomRight = _this2.translatePointToScaled({ x: rect.right, y: rect.bottom });
-			if (!topLeft && bottomRight) {
-				monitor = yield _this2.getMonitorFromScaledXY(bottomRight);
-				topLeft = _this2.translatePointToScaled({
-					monitor,
-					point: { x: rect.left, y: rect.top }
-				});
-			}
-			if (!bottomRight && topLeft) {
-				monitor = yield _this2.getMonitorFromScaledXY(bottomRight);
-				bottomRight = _this2.translatePointToScaled({
-					monitor,
-					point: { x: rect.right, y: rect.bottom }
-				});
-			}
-			return _this2.asyncIt({
-				top: topLeft ? topLeft.y : null,
-				left: topLeft ? topLeft.x : null,
-				bottom: bottomRight ? bottomRight.y : null,
-				right: bottomRight ? bottomRight.x : null,
-				height: topLeft && bottomRight ? bottomRight.y - topLeft.y : null,
-				width: topLeft && bottomRight ? bottomRight.x - topLeft.x : null
-			}, cb);
-		})();
-	}
-
-	/**
-  * Converts Rectangle (top, left, bottom, right) to unscaled from scaled. Mainly for use to translate window locations to/from Windows API.
-  *
-  * @param {any} rect
-  * @param {any} [cb=function () { }]
-  * @returns rect
-  * @memberof Monitors
-  */
-	translateRectFromScaled(rect, cb = Function.prototype) {
-		if (!this.ready) {
-			this.refreshMonitors(() => {
-				this.translateRectFromScaled(rect, cb);
-			});
-			return "not ready";
-		}
-		var topLeft = this.translatePointFromScaled({ x: rect.left, y: rect.top });
-		var bottomRight = this.translatePointFromScaled({ x: rect.right, y: rect.bottom });
-		if (!topLeft && bottomRight) {
-			topLeft = this.translatePointFromScaled({
-				monitor: this.getMonitorFromUnscaledXY(bottomRight),
-				point: { x: rect.left, y: rect.top }
-			});
-		}
-		if (!bottomRight && topLeft) {
-			bottomRight = this.translatePointFromScaled({
-				monitor: this.getMonitorFromUnscaledXY(topLeft),
-				point: { x: rect.right, y: rect.bottom }
-			});
-		}
-		return this.asyncIt({
-			top: topLeft ? topLeft.y : null,
-			left: topLeft ? topLeft.x : null,
-			bottom: bottomRight ? bottomRight.y : null,
-			right: bottomRight ? bottomRight.x : null,
-			height: topLeft && bottomRight ? bottomRight.y - topLeft.y : null,
-			width: topLeft && bottomRight ? bottomRight.x - topLeft.x : null
-		}, cb);
-	}
-}
-/* harmony default export */ __webpack_exports__["a"] = (Monitors);
-
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\common\\monitorsAndScaling.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\common\\monitorsAndScaling.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
-
-/***/ }),
-/* 42 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__configUtil__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_socket_io_client__ = __webpack_require__(55);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_socket_io_client___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_socket_io_client__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_system__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__common_system__);
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-
-// This routerTransport module is shared between router clients and the router service.  It supports
-// the addition of new transports without any change to the router code. Each transport is
-// point-to-point between a router client and the router service (i.e. hub and spoke).  Each router
-// client can use a different transport (i.e. the router service connects to them all).
-
-
-
-
-
-
-
-
-/**
- * @introduction
- * <h2>Router Transport</h2>
- * **Service-Level Module**.  Manages and contains the point-to-point transports (i.e., Layer 2) supported by Finsemble.
- * Each transport communicates between a Finsemble services or component (i.e. a router client on one end) and the Finsemble router service (another router client on the other end).
- *
- * Integration into routerService.js is automatic on startup.
- *
- * Developer Notes on Adding New Transport:
- * 1) Create new transport constructor.
- * 2) Call RouterTransport.addTransport() to make the transport constructor (see the bottom of this file)
- *
- * Each transport constructor must be implemented with the following interface:
- *
- *	ExampleTransportConstructor(params, parentMessageHandler, source, destination) where
- *
- * 			params is a passed in object including data that may (or may not) be needed for implementing the transport
- * 					params.FinsembleUUID: globally unique identifier for Finsemble (one per host machine)
- *					params.applicationRoot:  value of manifest.finsemble.applicationRoot,
- *					params.routerDomainRoot: value of manifest.finsemble.moduleRoot,
- *					params.sameDomainTransport: transport to use for same domain clients
- *					params.crossDomainTransport: transport to use for cross domain clients
- *					params.transportSettings: transport settings from finsemble.router.transportSettings if defined, otherwise an empty object
- *
- * 			parentMessageHandler(incomingTransportInfo, routerMessage) where
- * 					incomingTransportInfo is a transport-specific object containing essential information to route back to the same client.
- * 						The same object will be returned on a send() so the transport can use to send the message to that client.
- * 						It's up to the developer to decide what to put in the incomingTransportInfo object. The RouterService never
- * 						directly uses the object, except to do a property-based comparison for equality (so equality must be based on the top-level properties within the object.)
- * 					routerMessage is an object containing a single router message. The transport generally does not need to know the contents --
- * 						it only sends and receives these messages. However, the router's header (routerMessage.header) is available to the transport if needed.
- *
- * 			source is either the source's client name or "RouterService" (when the RouterService is the source)
- *
- * 			destination is either the destination's client name or "RouterService" (when the RouterService is the desgination)
- *
- * 			callback(this) returns the constructor.  Normally a constructor is not asyncronous, but support in case the constructed transport requires async initialization.
- *
- * The transport constructor must implement two functions.
- * 		1) send(transport, routerMessage) -- transport object contains destination transport info; routerMessage is the message to send
- * 		2) identifier() -- returns transport's name
- *
- * These functions along with the parentMessageHandler callback all that's needed to interface with the higher-level router (either a client or router service):
- *
- * The three transports implemented at the bottom of this file can serve as examples.
- *
- * @namespace RouterTransport
- */
-var RouterTransport = {
-
-	activeTransports: {},
-
-	/**
-  * Adds a new type of router transport to pass message between RouterClient and RouterService.
-  *
-  * @param {string} transportName identifies the new transport
-  * @param {object} transportConstructor returns an instance of the new transport
-  */
-	addTransport: function (transportName, transportConstructor) {
-		this.activeTransports[transportName] = transportConstructor;
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log(`RouterTransport ${transportName} added to activeTransports`);
-	},
-
-	/**
-  * Gets array of active transports.  What is active depends both on config and what is supported by the environment. Typically, if OF IAB is defined then the IAB transport is added to active list.  Likewise, if SharedWorker defined, then SharedWork transport added to the active list.  Special transports that don't have backwards compatability (e.g. FinsembleTransport) are only added if specified in the config.
-  *
-  * @param {string} params transport paramters
-  *
-  * @returns array of active transport names
-  */
-	getActiveTransports: function (params) {
-		var transportNames = [];
-
-		// convenience funciton to add transport to active list only if it's not already in the list
-		function addToActive(transportName) {
-			if (transportNames.indexOf(transportName) === -1) {
-				// if not already in the list, then add it
-				transportNames.push(transportName);
-			}
-		}
-
-		// if OpenFin IAB available, then add IAB to active list
-		if (fin && fin.desktop && fin.desktop.InterApplicationBus) addToActive("OpenFinBus");
-
-		// If electron, always have FinsembleTransport active
-		if (fin && fin.container === "Electron") addToActive("FinsembleTransport");
-
-		// if shared worker available, then add shared-worker transport to active list
-		if (SharedWorker) addToActive("SharedWorker");
-
-		// add whatever the sameDomainTrasnport is to the active list
-		addToActive(params.sameDomainTransport);
-
-		// add whatever the crossDomainTrasnport is to the active list
-		addToActive(params.crossDomainTransport);
-
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log("getActiveTransports", transportNames);
-		return transportNames;
-	},
-
-	/**
-  * Get default transport for event router&mdash;this is the most reliable transport across all contexts.
-  *
- 	 * @param {object} params parameters for transport
-  * @param {any} incomingMessageHandler
-  * @param {any} source
-  * @param {any} destination
-  * @returns the transport object
-  */
-	getDefaultTransport: function (params, incomingMessageHandler, source, destination) {
-		return RouterTransport.getTransport(params, "OpenFinBus", incomingMessageHandler, source, destination);
-	},
-
-	/**
-  * Get best client transport based on the run-time context. Will only return cross-domain transport if current context is inter-domain.
-  *
- 	 * @param {object} params parameters for transport
-  * @param {any} incomingMessageHandler
-  * @param {any} source
-  * @param {any} destination
-  * @returns the transport object
-  */
-	getRecommendedTransport: function (params, incomingMessageHandler, source, destination) {
-
-		// returns true if this window's location is in another domain
-		function crossDomain() {
-			var parser = document.createElement("a");
-			parser.href = params.routerDomainRoot;
-
-			var isSameHost = window.location.hostname === parser.hostname;
-
-			var isSameProtocol = window.location.protocol === parser.protocol;
-
-			var wport = window.location.port === undefined ? window.location.port : 80;
-			var pport = parser.port === undefined ? parser.port : 80;
-			var isSamePort = wport === pport;
-
-			var isCrossDomain = !(isSameHost && isSamePort && isSameProtocol);
-			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("Transport crossDomain=" + isCrossDomain + " (" + isSameHost + ":" + isSameProtocol + ":" + isSamePort + ")");
-			return isCrossDomain;
-		}
-
-		// returns name of the best transport for communicating with router service
-		function recommendedTransportName() {
-			var sameDomainTransport = params.sameDomainTransport;
-			var crossDomainTransport = params.crossDomainTransport;
-
-			var selectedTransport = sameDomainTransport;
-			if (crossDomain()) {
-				selectedTransport = crossDomainTransport;
-			}
-
-			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log(`Transport Info: Selected=${selectedTransport} SameDomainDefault=${sameDomainTransport} CrossDomainDefault=${crossDomainTransport}`);
-			console.log(`Transport Info: Selected=${selectedTransport} SameDomainDefault=${sameDomainTransport} CrossDomainDefault=${crossDomainTransport}`);
-
-			return selectedTransport;
-		}
-
-		var transportName = recommendedTransportName();
-		return RouterTransport.getTransport(params, transportName, incomingMessageHandler, source, destination);
-	},
-
-	/**
-  * Get a specific transport by name. The transport must be in list of the active transports (i.e. previously added).
-  *
- 	 * @param {object} params parameters for transport
-  * @param {any} transportName
-  * @param {any} incomingMessageHandler
-  * @param {any} source
-  * @param {any} destination
-  * @returns the transport object
-  */
-	getTransport: function (params, transportName, incomingMessageHandler, source, destination) {
-		var self = this;
-		return new Promise(function (resolve, reject) {
-			var transportConstructor = self.activeTransports[transportName];
-			if (transportConstructor) {
-				new transportConstructor(params, incomingMessageHandler, source, destination, function (newTransport) {
-					resolve(newTransport);
-				});
-			} else {
-				reject("unknown router transport name: " + transportName);
-			}
-		});
-	}
-};
-
-//////////////////////////////////////////////////////////////
-// Below all transports are defined then added to active list
-//////////////////////////////////////////////////////////////
-
-var RouterTransportImplementation = {}; // a convenience namespace for router-transport implementations
-
-/*
- * Implements the SharedWorker Transport.
- *
- * Required Functions (used by transport clients):
- * 		send(routerMessage) -- transports the event
- * 		identifier() -- returns transport name/identifier
- *
- * @param {object} params various parms to support transports
- * @param {any} parentMessageHandler callback for incoming event
- * @param {any} source either the client name or "RouterService"
- * @param {any} destination either the client name or "RouterService" (unused in SharedWorker)
- */
-RouterTransportImplementation.SharedWorkerTransport = function (params, parentMessageHandler, source, destination, callback) {
-	var routerThread;
-	var self = this;
-
-	// receives incoming shared-worker messages then passes on to parent with correct "wrapper"
-	function sharedWorkerMessageHandler(swMessage) {
-		var port = swMessage.data[0];
-		var routerMessage = swMessage.data[1];
-		var incomingTransportInfo = { "transportID": self.identifier(), "port": port };
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("SharedWorkerTransport Incoming Transport", incomingTransportInfo, "Message", routerMessage);
-		parentMessageHandler(incomingTransportInfo, routerMessage);
-	}
-
-	//required function for parent (i.e. routeClient or routeService)
-	this.send = function (transport, routerMessage) {
-		// handle optional transport parm
-		if (arguments.length === 1) {
-			// clients use just one parm -- routerMessage
-			routerMessage = arguments[0];
-			transport = null;
-		} else {
-			// router services uses both parameters
-			transport = arguments[0];
-			routerMessage = arguments[1];
-		}
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("SharedWorkerTransport Outgoing Transport", routerMessage);
-
-		try {
-			routerThread.port.postMessage([transport, routerMessage]);
-		} catch (e) {
-			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("SharedWorkerTransport: post message failed: " + JSON.stringify(e), "Probable cause is sending illegal data type (e.g. function).");
-		}
-	};
-
-	//required function for parent (i.e. routeClient or routeService)
-	this.identifier = function () {
-		return "SharedWorker";
-	};
-
-	var workerPath = params.transportSettings.SharedWorker && params.transportSettings.SharedWorker.workerPath ? params.transportSettings.SharedWorker.workerPath : params.routerDomainRoot + "/common/routerSharedWorker.js";
-
-	__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log(`SharedWorker Transport Initializing for ${source} using ${workerPath}`);
-	console.log(`SharedWorker Transport Initializing for ${source} using ${workerPath}`);
-
-	routerThread = new SharedWorker(workerPath, { name: "Finsemble", credentials: "included" });
-	routerThread.port.onmessage = sharedWorkerMessageHandler;
-	routerThread.onerror = function (e) {
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("SharedWorkerTransport Transport Error" + JSON.stringify(e));
-	};
-	routerThread.port.start();
-
-	if (source === "RouterService") {
-		// send first message though shared worker to identify router service
-		routerThread.port.postMessage({ data: "connect", source: "RouterService" });
-	}
-
-	callback(this);
-};
-
-/*
- * Implements the OpenFin Bus Transport.
- *
- * Required Functions (used by transport clients):
- * 		send(transport, routerMessage) -- transport object contains destination transport info; routerMessage is the message to send
- * 		identifier() -- returns transport's name
- *
- * @param {object} params unused in OpenFin transport
- * @param {any} parentMessageHandler callback for incoming event
- * @param {any} source either the client name or "RouterService"
- * @param {any} destination either the client name or "RouterService"
- */
-RouterTransportImplementation.OpenFinTransport = function (params, parentMessageHandler, source, destination, callback) {
-	var uuid = __WEBPACK_IMPORTED_MODULE_3__common_system__["System"].Application.getCurrent().uuid;
-	var self = this;
-
-	// receives incoming OpenFin bus messages then passes on to parent with correct "wrapper"
-	function openFinMessageHandler(routerMessage, senderUuid) {
-		var incomingTransportInfo = { "transportID": self.identifier(), "senderUuid": senderUuid, "name": routerMessage.header.origin };
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("OpenFinTransport Incoming Transport", incomingTransportInfo, "Message", routerMessage);
-		parentMessageHandler(incomingTransportInfo, routerMessage);
-	}
-
-	function subscribeFailure(reason) {
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("OpenFinBus Subscribe Failure: " + reason);
-	}
-
-	//required function for the parent (i.e. routeClient or routeService)
-	this.send = function (transport, routerMessage) {
-		var destTopic;
-
-		// handle optional transport parm
-		if (arguments.length === 1) {
-			// client use just one parameter - routerMessage
-			destTopic = destination;
-			routerMessage = arguments[0];
-		} else {
-			// router service uses both parameters
-			destTopic = transport.name;
-			routerMessage = arguments[1];
-		}
-
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("OpenFinTransport Outgoing Transport", uuid, destTopic, "Message", routerMessage);
-		fin.desktop.InterApplicationBus.publish(destTopic, routerMessage, function () {}, function (err) {});
-	};
-
-	//required function for the parent (i.e. routeClient or routeService)
-	this.identifier = function () {
-		return "OpenFinBus";
-	};
-
-	__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log(`OpenFinBus Transport Initializing for ${source}`);
-	console.log(`OpenFinBus Transport Initializing for ${source}`);
-	fin.desktop.InterApplicationBus.subscribe("*", source, openFinMessageHandler, null, subscribeFailure);
-
-	callback(this);
-};
-
-/*
- * Implements the FinsembleTransport (alternative to IAB without iFrame problems with supporting server commonly running on local server).
- *
- * Required Functions (used by transport clients):
- * 		send(event) -- transports the event
- * 		identifier() -- returns transport name/identifier
- *
- * @param {object} params various parms to support transports
- * @param {any} parentMessageHandler callback for incoming event
- * @param {any} source either the client name or "RouterService"
- * @param {any} destination either the client name or "RouterService" (unused in FinsembleTransport)
- */
-RouterTransportImplementation.FinsembleTransport = function (params, parentMessageHandler, source, destination, callback) {
-	/** @TODO - split into two separate vars for clarity. */
-	var serverAddress = __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress", __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.IAC.serverAddress", "wss://localhost.chartiq.com:3376"));
-	const SOCKET_SERVER_ADDRESS = serverAddress + "/router"; // "router" is the socket namespace used on server
-
-	var self = this;
-
-	// receives incoming messages then passes on to parent (what's passed to parent should be same routerMessage received in send()
-	function finsembleMessageHandler(routerMessage) {
-		var incomingTransportInfo = { "transportID": self.identifier(), "client": routerMessage.clientMessage.header.origin };
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("FinsembleTransport Incoming Transport", incomingTransportInfo, "Message", routerMessage);
-		parentMessageHandler(incomingTransportInfo, routerMessage.clientMessage);
-	}
-
-	// Both sending and receiving is based on the following routing functionality located in a local node server (the below is a copy of the node server code)
-	// 		// destination is RouterClient (message.client)
-	//  	client.on('ROUTER_CLIENT', function(message) {
-	// 			routerServer.emit(message.client, message);
-	// 		});
-	// 		// destination is RouterService
-	// 		client.on('ROUTER_SERVICE', function(message) {
-	// 			routerServer.emit('ROUTER_SERVICE_IN', message);
-	// 		});
-
-	//required function for the parent (i.e. routeClient or routeService)
-	this.send = function (transport, routerMessage) {
-		var dest;
-		var newMessage;
-
-		// decide how to route the message based on whether client or routerservice is sending
-		if (arguments.length === 1) {
-			// clients use just one parameter, so send client message to RouterService
-			dest = "ROUTER_SERVICE";
-			routerMessage = arguments[0];
-			newMessage = { clientMessage: routerMessage }; // no client property needed to route on server since always going to router service
-		} else {
-			// router service uses both parameters, so send router-service mssage to a client
-			dest = "ROUTER_CLIENT";
-			routerMessage = arguments[1];
-			newMessage = { client: transport.client, clientMessage: routerMessage }; // client property used to router on server
-		}
-
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("FinsembleTransport Outgoing Transport", dest, "NewMessage", newMessage);
-		routerServerSocket.emit(dest, newMessage);
-	};
-
-	//required function for the parent (i.e. routeClient or routeService)
-	this.identifier = function () {
-		return "FinsembleTransport";
-	};
-
-	__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log(`FinsembleTransport Transport Initializing for ${source} using ${SOCKET_SERVER_ADDRESS}`);
-	console.log(`FinsembleTransport Transport Initializing for ${source} using ${SOCKET_SERVER_ADDRESS}`);
-
-	function connectTimeoutHandler() {
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`FinsembleTransport Connection Timeout for ${source}`);
-		callback(self);
-	}
-
-	// set up for receiving incoming messages
-	var routerServerSocket;
-	if (SOCKET_SERVER_ADDRESS.indexOf("ws:") !== -1 || SOCKET_SERVER_ADDRESS.indexOf("wss:") !== -1) {
-		routerServerSocket = __WEBPACK_IMPORTED_MODULE_2_socket_io_client___default.a.connect(SOCKET_SERVER_ADDRESS, { transports: ["websocket"], upgrade: false }); // if websocket address then use ws transport
-	} else {
-		routerServerSocket = __WEBPACK_IMPORTED_MODULE_2_socket_io_client___default.a.connect(SOCKET_SERVER_ADDRESS, {}); // if not ws then http
-	}
-	var connectTimer = setTimeout(connectTimeoutHandler, 3000); // cleared in setServiceOnline
-
-	routerServerSocket.on("connect", function () {
-		clearTimeout(connectTimer);
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log("FinsembleTransport Connected to Server");
-		console.log("FinsembleTransport Connected to Server");
-		if (source === "RouterService") {
-			// if this transport is for router service, use hardcoded socket address ("ROUTER_SERVICE_IN")
-			routerServerSocket.on("ROUTER_SERVICE_IN", function (data) {
-				finsembleMessageHandler(data);
-			});
-		} else {
-			// for all other clients, the source == client name, so each socket address is based on client name
-			routerServerSocket.on(source, function (data) {
-				finsembleMessageHandler(data);
-			});
-		}
-		callback(self);
-	});
-};
-
-/*
- * Implements the FinsembleCloudTransport (a version of FinsembleTransport with server commonly running on remote server).
- *
- * Required Functions (used by transport clients):
- * 		send(event) -- transports the event
- * 		identifier() -- returns transport name/identifier
- *
- * @param {object} params various parms to support transports
- * @param {any} parentMessageHandler callback for incoming event
- * @param {any} source either the client name or "RouterService"
- * @param {any} destination either the client name or "RouterService" (unused in FinsembleCloudTransport)
- */
-RouterTransportImplementation.FinsembleCloudTransport = function (params, parentMessageHandler, source, destination, callback) {
-	var serverAddress;
-	var defaultAddress = __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.transportSettings.FinsembleCloudTransport.serverAddress", params.applicationRoot);
-	var FinsembleUUID = params.FinsembleUUID;
-
-	if (defaultAddress.substr(defaultAddress.length - 1) === "/") {
-		serverAddress = defaultAddress.substring(0, defaultAddress.length - 1); // truncate and trailing slash because it causes problem with socket.io namespace
-	} else {
-		serverAddress = defaultAddress;
-	}
-
-	const SOCKET_SERVER_ADDRESS = serverAddress + "/router"; // "router" is the socket namespace used on server
-
-	var self = this;
-
-	// receives incoming messages then passes on to parent (what's passed to parent should be same routerMessage received in send()
-	function finsembleMessageHandler(routerMessage) {
-		var incomingTransportInfo = { "transportID": self.identifier(), "client": routerMessage.clientMessage.header.origin };
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("FinsembleCloudTransport Incoming Transport", incomingTransportInfo, "Message", routerMessage);
-		parentMessageHandler(incomingTransportInfo, routerMessage.clientMessage);
-	}
-
-	//required function for the parent (i.e. routeClient or routeService)
-	this.send = function (transport, routerMessage) {
-		var dest;
-		var newMessage;
-
-		// decide how to route the message based on whether client or routerservice is sending
-		if (arguments.length === 1) {
-			// clients use just one parameter, so send client message to RouterService
-			dest = "ROUTER_SERVICE";
-			routerMessage = arguments[0];
-			newMessage = { FinsembleUUID, clientMessage: routerMessage }; // no client property needed to route on server since always going to router service
-		} else {
-			// router service uses both parameters, so send router-service mssage to a client
-			dest = "ROUTER_CLIENT";
-			routerMessage = arguments[1];
-			newMessage = { FinsembleUUID, client: transport.client, clientMessage: routerMessage }; // client property used to router on server
-		}
-
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("FinsembleCloudTransport Outgoing Transport", dest, "NewMessage", newMessage);
-		routerServerSocket.emit(dest, newMessage);
-	};
-
-	//required function for the parent (i.e. routeClient or routeService)
-	this.identifier = function () {
-		return "FinsembleCloudTransport";
-	};
-
-	__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log(`FinsembleCloudTransport Transport Initializing for ${source} using ${SOCKET_SERVER_ADDRESS}`);
-	console.log(`FinsembleCloudTransport Transport Initializing for ${source} using ${SOCKET_SERVER_ADDRESS}`);
-
-	function connectTimeoutHandler() {
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`FinsembleCloudTransport Connection Timeout for ${source}`);
-		callback(self);
-	}
-
-	// set up for receiving incoming messages
-	var routerServerSocket;
-	if (SOCKET_SERVER_ADDRESS.indexOf("ws:") !== -1) {
-		routerServerSocket = __WEBPACK_IMPORTED_MODULE_2_socket_io_client___default.a.connect(SOCKET_SERVER_ADDRESS, { transports: ["websocket"], upgrade: false }); // if websocket address then use ws transport
-	} else {
-		routerServerSocket = __WEBPACK_IMPORTED_MODULE_2_socket_io_client___default.a.connect(SOCKET_SERVER_ADDRESS, {}); // if not ws then http
-	}
-	var connectTimer = setTimeout(connectTimeoutHandler, 3000); // cleared in setServiceOnline
-
-	routerServerSocket.on("connect", function () {
-		clearTimeout(connectTimer);
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log("FinsembleCloudTransport Connected to Server", FinsembleUUID);
-		console.log("FinsembleCloudTransport Connected to Server");
-		if (source === "RouterService") {
-			// if this transport is for router service, use hardcoded socket address ("ROUTER_SERVICE_IN") along with FinsembleUUID
-			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("Setting Up Socket Connection", "ROUTER_SERVICE_IN" + FinsembleUUID);
-			console.log("Setting Up Socket Connection", "ROUTER_SERVICE_IN" + FinsembleUUID);
-			routerServerSocket.on("ROUTER_SERVICE_IN" + FinsembleUUID, function (data) {
-				finsembleMessageHandler(data);
-			});
-		} else {
-			// for all other clients, the source == client name, so each socket address is based on client name along with FinsembleUUID
-			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("Setting Up Socket Connection", source + FinsembleUUID);
-			console.log("SETTING UP Socket CONNECTION", source + FinsembleUUID);
-			routerServerSocket.on(source + FinsembleUUID, function (data) {
-				finsembleMessageHandler(data);
-			});
-		}
-		callback(self);
-	});
-};
-
-// add the transports to the available/active list
-RouterTransport.addTransport("SharedWorker", RouterTransportImplementation.SharedWorkerTransport);
-RouterTransport.addTransport("OpenFinBus", RouterTransportImplementation.OpenFinTransport);
-RouterTransport.addTransport("FinsembleTransport", RouterTransportImplementation.FinsembleTransport);
-
-/* harmony default export */ __webpack_exports__["default"] = (RouterTransport);
-
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\common\\routerTransport.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\common\\routerTransport.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
-
-/***/ }),
-/* 43 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {var scope = (typeof global !== "undefined" && global) ||
-            (typeof self !== "undefined" && self) ||
-            window;
-var apply = Function.prototype.apply;
-
-// DOM APIs, for completeness
-
-exports.setTimeout = function() {
-  return new Timeout(apply.call(setTimeout, scope, arguments), clearTimeout);
-};
-exports.setInterval = function() {
-  return new Timeout(apply.call(setInterval, scope, arguments), clearInterval);
-};
-exports.clearTimeout =
-exports.clearInterval = function(timeout) {
-  if (timeout) {
-    timeout.close();
-  }
-};
-
-function Timeout(id, clearFn) {
-  this._id = id;
-  this._clearFn = clearFn;
-}
-Timeout.prototype.unref = Timeout.prototype.ref = function() {};
-Timeout.prototype.close = function() {
-  this._clearFn.call(scope, this._id);
-};
-
-// Does not start the time, just sets up the members needed.
-exports.enroll = function(item, msecs) {
-  clearTimeout(item._idleTimeoutId);
-  item._idleTimeout = msecs;
-};
-
-exports.unenroll = function(item) {
-  clearTimeout(item._idleTimeoutId);
-  item._idleTimeout = -1;
-};
-
-exports._unrefActive = exports.active = function(item) {
-  clearTimeout(item._idleTimeoutId);
-
-  var msecs = item._idleTimeout;
-  if (msecs >= 0) {
-    item._idleTimeoutId = setTimeout(function onTimeout() {
-      if (item._onTimeout)
-        item._onTimeout();
-    }, msecs);
-  }
-};
-
-// setimmediate attaches itself to the global object
-__webpack_require__(54);
-// On some exotic environments, it's not clear which object `setimmediate` was
-// able to install onto.  Search each possibility in the same order as the
-// `setimmediate` library.
-exports.setImmediate = (typeof self !== "undefined" && self.setImmediate) ||
-                       (typeof global !== "undefined" && global.setImmediate) ||
-                       (this && this.setImmediate);
-exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
-                         (typeof global !== "undefined" && global.clearImmediate) ||
-                         (this && this.clearImmediate);
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
-
-/***/ }),
-/* 44 */
-/***/ (function(module, exports) {
-
-module.exports = after
-
-function after(count, callback, err_cb) {
-    var bail = false
-    err_cb = err_cb || noop
-    proxy.count = count
-
-    return (count === 0) ? callback() : proxy
-
-    function proxy(err, result) {
-        if (proxy.count <= 0) {
-            throw new Error('after called too many times')
-        }
-        --proxy.count
-
-        // after first error, rest are passed to err_cb
-        if (err) {
-            bail = true
-            callback(err)
-            // future error callbacks will go to error handler
-            callback = err_cb
-        } else if (proxy.count === 0 && !bail) {
-            callback(null, result)
-        }
-    }
-}
-
-function noop() {}
-
-
-/***/ }),
-/* 45 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const routerTransport_1 = __webpack_require__(42);
-const Utils = __webpack_require__(10);
-const configUtil_1 = __webpack_require__(14);
-const validate_1 = __webpack_require__(9); // Finsemble args validator
-const userNotification_1 = __webpack_require__(36);
-const system_1 = __webpack_require__(4);
-const logger_1 = __webpack_require__(2);
-var queue = []; // should never be used, but message sent before router ready will be queue
-const Globals = window;
-const localLogger_1 = __webpack_require__(23);
-let Logger = logger_1.Logger;
-// Use global data for these objects in case multiple clients running in same window (a side effect of injection and perhaps other edge conditions).
-Globals.FSBLData = Globals.FSBLData || {};
-Globals.FSBLData.clientIDCounter = Globals.FSBLData.clientIDCounter || 1000;
-Globals.FSBLData.RouterClients = Globals.FSBLData.RouterClients || {};
-/**
- * @introduction
- *
- * <h2>Router Client</h2>
- *
- * The Router Client sends and receives event messages between Finsemble components and services. See the <a href=tutorial-TheRouter.html>Router tutorial</a> for an overview of the Router's functionality.
- *
- * Router callbacks for incoming messages are **always** in the form `callback(error, event)`. If `error` is null, then the incoming data is always in `event.data`. If `error` is set, it contains a diagnostic object and message. On error, the `event` parameter is not undefined.
- *
- *
- * @constructor
- * @hideconstructor
- * @publishedName RouterClient
- * @param {string} clientName router base client name for human readable messages (window name is concatenated to baseClientName)
- * @param {string=} transportName router transport name, currently either "SharedWorker" or "OpenFinBus" (usually this is autoconfigured internally but can be selected for testing or special configurations)
- */
-// uncomment for optimization.
-// console.time("FinMainStartup");
-exports.RouterClientConstructor = function (params) {
-    validate_1.default.args(params, "object") && validate_1.default.args2("params.clientName", params.clientName, "string", "params.transportName", params.transportName, "string=");
-    // console.timeStamp("Router");
-    // console.profile("Router");
-    ///////////////////////////
-    // Private Data
-    ///////////////////////////
-    var baseClientName = params.clientName;
-    var transportName = params.transportName;
-    var handshakeHandler;
-    var timeCalibrationHandler;
-    var mapListeners = {};
-    var mapResponders = {};
-    var mapPubSubResponders = {};
-    var mapPubSubResponderState = {};
-    var mapPubSubResponderRegEx = {};
-    var pubsubListOfSubscribers = {};
-    var mapSubscribersID = {};
-    var mapSubscribersTopic = {};
-    var mapQueryResponses = {};
-    var mapQueryResponseTimeOut = {};
-    var clientName;
-    var transport = null;
-    var isRouterReady = false;
-    var parentReadyCallbackQueue = []; // must be queue because may be multiple waiters
-    var self = this;
-    this.startupTime = 0;
-    /////////////////////////////////////////////////////////////////////
-    // Private Message Contructors for Communicating with RouterService
-    /////////////////////////////////////////////////////////////////////
-    function InitialHandshakeMessage() {
-        this.header = {
-            "origin": clientName,
-            "type": "initialHandshake",
-        };
-    }
-    function TimeCalibrationHandshakeMessage(clientBaseTime, serviceBaseTime) {
-        this.header = {
-            "origin": clientName,
-            "type": "timeCalibration",
-        };
-        this.clientBaseTime = clientBaseTime;
-        this.serviceBaseTime = serviceBaseTime;
-    }
-    function AddListenerMessage(channel) {
-        this.header = {
-            "origin": clientName,
-            "type": "addListener",
-            "channel": channel
-        };
-    }
-    function TransmitMessage(toChannel, data, options) {
-        this.header = {
-            "origin": clientName,
-            "type": "transmit",
-            "channel": toChannel
-        };
-        this.data = data;
-        this.options = options;
-    }
-    function RemoveListenerMessage(channel) {
-        this.header = {
-            "origin": clientName,
-            "type": "removeListener",
-            "channel": channel
-        };
-    }
-    function addResponderMessage(channel) {
-        this.header = {
-            "origin": clientName,
-            "type": "addResponder",
-            "channel": channel
-        };
-    }
-    function QueryMessage(queryID, channel, data) {
-        this.header = {
-            "origin": clientName,
-            "type": "query",
-            "queryID": queryID,
-            "channel": channel
-        };
-        this.data = data;
-    }
-    function QueryResponseMessage(queryID, error, data) {
-        this.header = {
-            "origin": clientName,
-            "type": "queryResponse",
-            "queryID": queryID,
-            "error": error
-        };
-        this.data = data;
-    }
-    function RemoveResponderMessage(channel) {
-        this.header = {
-            "origin": clientName,
-            "type": "removeResponder",
-            "channel": channel
-        };
-    }
-    function SubscribeMessage(subscribeID, topic) {
-        this.header = {
-            "origin": clientName,
-            "type": "subscribe",
-            "subscribeID": subscribeID,
-            "topic": topic
-        };
-    }
-    function UnsubscribeMessage(subscribeID, topic) {
-        this.header = {
-            "origin": clientName,
-            "type": "unsubscribe",
-            "subscribeID": subscribeID,
-            "topic": topic
-        };
-    }
-    function PublishMessage(topic, data) {
-        this.header = {
-            "origin": clientName,
-            "type": "publish",
-            "topic": topic
-        };
-        this.data = data;
-    }
-    function NotifyMessage(subscribeID, topic, error, data) {
-        this.header = {
-            "origin": clientName,
-            "type": "notify",
-            "subscribeID": subscribeID,
-            "topic": topic,
-            "error": error
-        };
-        this.data = data;
-    }
-    function AddPubSubResponderMessage(topic) {
-        this.header = {
-            "origin": clientName,
-            "type": "addPubSubResponder",
-            "topic": topic
-        };
-    }
-    function RemovePubSubResponderMessage(topic) {
-        this.header = {
-            "origin": clientName,
-            "type": "removePubSubResponder",
-            "topic": topic
-        };
-    }
-    function JoinGroupMessage(group) {
-        this.header = {
-            "origin": clientName,
-            "type": "joinGroup",
-            "group": group
-        };
-    }
-    function LeaveGroupMessage(group) {
-        this.header = {
-            "origin": clientName,
-            "type": "leaveGroup",
-            "group": group
-        };
-    }
-    function GroupTransmitMessage(group, toChannel, message, data) {
-        this.header = {
-            "origin": clientName,
-            "type": "groupTransmit",
-            "group": group,
-            "channel": toChannel
-        };
-        this.data = data;
-    }
-    //////////////////////
-    // Private Functions
-    //////////////////////
-    // router client is being terminated so cleanup
-    function destructor(event) {
-        Logger.system.info("WINDOW LIFECYCLE:Shutdown:RouterClient:Shutting down.");
-        self.disconnectAll(); // this will let the router know the client is terminating
-    }
-    // invoked when router init is complete
-    function onReadyCallBack() {
-        self.startupTime = performance.now() - self.startupTime;
-        Logger.system.debug("WINDOW LIFECYCLE:STARTUP:RouterClient Ready");
-        isRouterReady = true;
-        // console.profileEnd("Router");
-        // invoke all the parent callbacks waiting for router to be ready
-        while (parentReadyCallbackQueue.length > 0) {
-            Logger.system.debug("WINDOW LIFECYCLE:STARTUP:RouterClient parentReady invoked");
-            var nextParentCallback = parentReadyCallbackQueue.shift();
-            nextParentCallback();
-        }
-    }
-    // called once on router-client creation
-    function constructor(clientName, transportName) {
-        Logger.system.debug("WINDOW LIFECYCLE:STARTUP:RouterClient Constructor:Name:", clientName);
-        var callbackCounter = 0;
-        function processManifest(manifest) {
-            Logger.system.info("WINDOW LIFECYCLE:STARTUP:RouterClient:processManifest");
-            //If manifest is a string, then there was an error getting the manifest because in a separate application
-            if (!manifest || typeof (manifest) === "string") {
-                Logger.system.error("WINDOW LIFECYCLE:STARTUP:RouterClient:processManifest failed -- fatal error", manifest);
-            }
-            else {
-                asyncConnectToEventRouter(manifest, clientName, transportName, onReadyCallBack); /**** establish connection to router service ****/
-            }
-        }
-        //This is the only place we need to wait for desktop.main
-        system_1.System.ready(function () {
-            var finWindow = system_1.System.Window.getCurrent();
-            Logger.system.debug(`WINDOW LIFECYCLE:STARTUP: fin.main invoked in ${finWindow.name}`);
-            window.console.debug(`WINDOW LIFECYCLE:STARTUP: fin.main invoked in ${finWindow.name}`);
-            self.startupTime = performance.now();
-            // uncomment for optimization.
-            // console.timeEnd("FinMainStartup");
-            if (callbackCounter++ === 0) { // this check should  not be needed; patch for OpenFin bug which invokes callback twice
-                // catch "window closing" event so can cleanup
-                //got rid of onClose destructors because it's handled inside of the baseService and inside of FSBL. if we disconnect all before other close handlers complete, we could end up with a hanging window.
-                finWindow.getOptions((opts) => {
-                    // now the manifest data is available in custom data for all windows except the service manager window (i.e. the first window)
-                    if (opts.customData && opts.customData.manifest) {
-                        Logger.system.debug("Router Init using custom data");
-                        processManifest(opts.customData.manifest);
-                    }
-                    else {
-                        configUtil_1.ConfigUtilInstance.getExpandedRawManifest(function (manifest) {
-                            Logger.system.debug("Router Init using getExpandedRawManifest");
-                            if (Globals.FinsembleUUID) {
-                                manifest.finsemble.FinsembleUUID = Globals.FinsembleUUID; // every window except serviceManager has FinsembleUUID -- this case covers the service manager,
-                            }
-                            processManifest(manifest);
-                        }, function (err) {
-                            Logger.system.error("WINDOW LIFECYCLE:STARTUP:RouterClient:manifest error", err);
-                        });
-                    }
-                }, function (err) {
-                    Logger.system.error("WINDOW LIFECYCLE:STARTUP:finWindow.getOptions error", err);
-                });
-            }
-        });
-    }
-    // connects to event-router service. will retry various ways if needed
-    function asyncConnectToEventRouter(manifest, clientName, transportName, onReadyCallBack) {
-        var transportNotSpecified = (typeof (transportName) === "undefined");
-        var myTimer;
-        var myRetryCounter;
-        var isFinished = false;
-        var handshakeFailedCount = 0;
-        var finConfig = manifest.finsemble;
-        var isElectron = fin && fin.container == "Electron";
-        var routerParams = {
-            FinsembleUUID: finConfig.FinsembleUUID,
-            applicationRoot: finConfig.applicationRoot,
-            routerDomainRoot: finConfig.moduleRoot,
-            forceWindowTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.forceWindowTransport", {}),
-            sameDomainTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.sameDomainTransport", "SharedWorker"),
-            crossDomainTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.crossDomainTransport", isElectron ? "FinsembleTransport" : "OpenFinBus"),
-            transportSettings: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.transportSettings", {})
-        };
-        function getClientTransport() {
-            Logger.system.debug("WINDOW LIFECYCLE:STARTUP:RouterClient:getClientTransport", "ROUTER PARAMS:", routerParams);
-            if (transportNotSpecified) {
-                transport = routerTransport_1.default.getRecommendedTransport(routerParams, incomingMessageHandler, clientName, "RouterService")
-                    .then(transportReady)
-                    .catch(errHandler);
-            }
-            else { // tranport specified...typically only for regression testing
-                transport = routerTransport_1.default.getTransport(routerParams, transportName, incomingMessageHandler, clientName, "RouterService")
-                    .then(transportReady)
-                    .catch(errHandler);
-            }
-        }
-        function transportReady(transportObj) {
-            myRetryCounter = 0;
-            Logger.system.debug("WINDOW LIFECYCLE:STARTUP:RouterClient:transport ready", "TRANSPORT OBJECT", transportObj);
-            transport = transportObj;
-            handshakeHandler = finished; // set function to receive handshake response
-            sendHandshake();
-            myTimer = setInterval(sendHandshake, 200); // start time to retry if response not recieved back from router service
-        }
-        function handshakeFailedHandler() {
-            clearInterval(myTimer);
-            handshakeFailedCount++;
-            if (handshakeFailedCount <= 3) {
-                Logger.system.error("WINDOW LIFECYCLE:STARTUP:RouterClient: failure to connect to router service. Retrying...", handshakeFailedCount, routerParams);
-                getClientTransport();
-            }
-            else {
-                let failureMessage = `Router ${transport.identifier()} failure for window ${window.name} after multiple retries.`;
-                Logger.system.error(failureMessage, routerParams);
-                let notificationURL = configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.notificationURL", finConfig.moduleRoot + "/components/system/notification/notification.html");
-                userNotification_1.default.alert("dev", "ONCE-SINCE-STARTUP", "FSBL-Internal-Transport-Failure", failureMessage, { url: notificationURL });
-            }
-        }
-        function sendHandshake() {
-            Logger.system.debug("WINDOW LIFECYCLE:STARTUP:RouterClient: sendHandshake", myRetryCounter);
-            sendToRouterService(new InitialHandshakeMessage());
-            if (myRetryCounter++ > 50) {
-                handshakeFailedHandler();
-            }
-        }
-        function finished() {
-            if (!isFinished) { // ensure only invoked once
-                Logger.system.debug("WINDOW LIFECYCLE:STARTUP:RouterClient connected: Starting " + clientName + " with transport " + transport.identifier());
-                isFinished = true;
-                clearInterval(myTimer);
-                if (queue) { // this should not happen with proper startup order, which waits on routerClient to be ready
-                    for (var i = 0; i < queue.length; i++) {
-                        Logger.system.debug("RouterClient: firing queued msg");
-                        var msg = queue[i];
-                        transport.send(msg);
-                    }
-                }
-                // notify initialization is complete
-                if (onReadyCallBack) {
-                    onReadyCallBack();
-                }
-            }
-        }
-        function errHandler(errorMessage) {
-            Logger.system.error("RouterClientError", errorMessage);
-        }
-        // main code for this asyncConnectToEventRouter function -- only executed once
-        getClientTransport();
-    }
-    // provides unique id within one router client for queries
-    function clientID() {
-        return clientName + "." + (++Globals.FSBLData.clientIDCounter);
-    }
-    // returns true if this routerClient originated the message
-    function originatedHere() {
-        return this.header.origin === this.header.lastClient;
-    }
-    // invoke client callbacks in the input array (that are attached to a specific channel and listener type)
-    function invokeListenerCallbacks(map, message) {
-        var originalClientCallbackArray = map[message.header.channel] || {};
-        var clientCallbackArray = [];
-        if (clientCallbackArray === undefined) {
-            Logger.system.warn("RouterClient: no listener for incoming transmit on channel " + message.header.channel + " from " + message.header.origin, message);
-        }
-        else {
-            message.originatedHere = originatedHere; // add local function to test origin
-            //@note, have to operate off of a copy because a callback may call removeListener, which will modify map[message.header.channel].
-            originalClientCallbackArray.forEach(cb => {
-                clientCallbackArray.push(cb);
-            });
-            for (var i = 0; i < clientCallbackArray.length; i++) { // for each callback defined for the channel
-                if (!Logger.isLogMessage(message.header.channel)) { // logger messages
-                    Logger.system.info("RouterClient: incoming transmit", "CHANNEL", message.header.channel, "FROM", message.header.origin, "MESSAGE", message);
-                }
-                clientCallbackArray[i](null, message); // invoke the callback; the error parameter is always null for this case
-            }
-        }
-    }
-    function sendQueryResponse(err, responseData) {
-        //@todo consider removing this log. Why log it? Why not log it _only_ if the dev wants a particular message logged. This can cause problems.
-        Logger.system.info("RouterClient: outgoing query response", "CHANNEL", this.header.channel, "RESPONSE DATA", responseData, "QUERY ID", this.header.queryID);
-        sendToRouterService(new QueryResponseMessage(this.header.queryID, err, responseData));
-    }
-    // invoke responder-listener callback (attached to a specific channel)
-    function invokeResponderCallback(map, queryMessage) {
-        var responderCallback = map[queryMessage.header.channel];
-        if (responderCallback === undefined) {
-            Logger.system.warn("RouterClient: no query responder define on channel " + queryMessage.header.channel + " incoming from " + queryMessage.header.origin, queryMessage);
-            responderCallback(null, queryMessage); // invoke the callback (no error), queryMessage);
-        }
-        else {
-            if (!queryMessage.header.error) {
-                queryMessage.originatedHere = originatedHere; // add local function to test origin
-                queryMessage.sendQueryResponse = sendQueryResponse.bind(queryMessage); // add callback function to message so responder can respond to query
-                Logger.system.info("RouterClient: incoming query", "CHANNEL", queryMessage.header.channel, "FROM", queryMessage.header.origin, "QUERY MESSAGE", queryMessage);
-                responderCallback(null, queryMessage); // invoke the callback (no error)
-            }
-            else { // invoke the callback with error since  flag in message (from router service)
-                Logger.system.warn("RouterClient: queryResponder error", queryMessage);
-                responderCallback(queryMessage.header.error, null);
-                delete map[queryMessage.header.channel]; // this is a bad responder (e.g. duplicate) so remove it
-            }
-        }
-    }
-    // add a callbackHandler into the query-response map for the given queryID
-    function addQueryResponseCallBack(map, queryID, responseCallback) {
-        map[queryID] = responseCallback;
-    }
-    // add timer to wait for query response
-    function addQueryResponseTimeout(mapQueryResponseTimeOut, newQueryID, channel, timeout) {
-        if (timeout > 0) {
-            mapQueryResponseTimeOut[newQueryID] = setTimeout(function () {
-                Logger.system.warn("RouterClient: timeout waiting on query response on channel " + channel + " for queryID " + newQueryID +
-                    " on timer " + mapQueryResponseTimeOut[newQueryID] + " timeout=" + timeout);
-            }, timeout);
-        }
-    }
-    // delete timer waiting on query response (if it exists)
-    function deleteQueryResponseTimeout(mapQueryResponseTimeOut, newQueryID) {
-        var theTimer = mapQueryResponseTimeOut[newQueryID];
-        if (theTimer !== undefined) {
-            clearTimeout(theTimer);
-        }
-    }
-    // invoke query-response callback (that is attached to a specific channel and listener type)
-    function invokeQueryResponseCallback(map, responseMessage) {
-        var clientCallback = map[responseMessage.header.queryID];
-        if (clientCallback === undefined) {
-            Logger.system.warn("RouterClient: no handler for incoming query response", "QUERY ID", responseMessage.header.queryID);
-        }
-        else {
-            // delete any existing timer waiting on the response
-            deleteQueryResponseTimeout(mapQueryResponseTimeOut, responseMessage.header.queryID);
-            if (!responseMessage.header.error) {
-                //@todo consider removing this log. Why log it? Why not log it _only_ if the dev wants a particular message logged. This can cause problems.
-                Logger.system.info("RouterClient: incoming query response", "RESPONSE MESSAGE", responseMessage, "QUERY ID", responseMessage.header.queryID);
-                clientCallback(null, responseMessage); // invoke the callback passing the response message
-            }
-            else {
-                Logger.system.warn("RouterClient: incoming queryResponse error", responseMessage.header, "QUERY ID", responseMessage.header.queryID);
-                clientCallback(responseMessage.header.error, responseMessage); // error from router service so pass it back instead of a message
-            }
-            delete map[responseMessage.header.queryID];
-        }
-    }
-    // add responder callbackHandler for the given channel
-    function addResponderCallBack(map, channel, callback) {
-        var status = false;
-        var clientCallback = map[channel];
-        if (clientCallback === undefined) {
-            map[channel] = callback;
-            status = true;
-        }
-        return status;
-    }
-    // support function for sendNotifyToSubscriber -- maintains local list of subscribers for pubsub responder
-    function addToPubSubListOfSubscribers(pubsubListOfSubscribers, topic, subscribeID) {
-        if (!(topic in pubsubListOfSubscribers)) {
-            pubsubListOfSubscribers[topic] = [subscribeID];
-        }
-        else {
-            pubsubListOfSubscribers[topic].push(subscribeID);
-        }
-    }
-    // support function for addPubSubResponder -- add pubsub responder callbackHandler for the given channel
-    function addPubSubResponderCallBack(topic, subscribeCallback, publishCallback, unsubscribeCallback) {
-        var status = false;
-        var callbacks = mapPubSubResponders[topic.toString()];
-        if (callbacks === undefined) {
-            if (topic instanceof RegExp) {
-                mapPubSubResponderRegEx[topic.toString()] = topic;
-                Logger.system.info("RouterClient: PubSub RegEx added for topic " + topic.toString()); // Note: topic may be a RegEx, so use toString() where applicable
-            }
-            mapPubSubResponders[topic.toString()] = { "subscribeCallback": subscribeCallback, "publishCallback": publishCallback, "unsubscribeCallback": unsubscribeCallback };
-            status = true;
-        }
-        return status;
-    }
-    // callback function for invokeSubscribePubSubCallback to notify new subscriber
-    function sendNotifyToSubscriber(err, notifyData) {
-        //@todo consider removing this log. Why log it? Why not log it _only_ if the dev wants a particular message logged. This can cause problems.
-        sendToRouterService(new NotifyMessage(this.header.subscribeID, this.header.topic, err, notifyData));
-        if (!err) {
-            // add new subscriber to list
-            addToPubSubListOfSubscribers(pubsubListOfSubscribers, this.header.topic, this.header.subscribeID);
-            Logger.system.info("RouterClient: incoming subscription added", "TOPIC", this.header.topic, "MESSAGE", this);
-        }
-        else {
-            Logger.system.warn("RouterClient: incoming subscription rejected by pubsub responder", "TOPIC", this.header.topic, "MESSAGE", this);
-        }
-    }
-    // for incoming subscribe: invoke notify callback for pubsub responder
-    function invokeSubscribePubSubCallback(subscribeMessage) {
-        var callbacks = mapPubSubResponders[subscribeMessage.header.topic];
-        //@todo consider removing this log. Why log it? Why not log it _onlY_ if the dev wants a particular message logged. This can cause problems.
-        if (callbacks === undefined) { // if undefined then may be a matching RegEx topic
-            for (var key in mapPubSubResponderRegEx) {
-                if (mapPubSubResponderRegEx[key].test(subscribeMessage.header.topic)) {
-                    callbacks = mapPubSubResponders[key];
-                    var initialState = mapPubSubResponderState[subscribeMessage.header.topic]; // may already be initial state defined from publish
-                    if (initialState === undefined) { // if there isn't already state defined then use default from regEx
-                        initialState = mapPubSubResponderState[key]; // initialize the state from RegEx topic
-                    }
-                    mapPubSubResponderState[subscribeMessage.header.topic] = initialState;
-                    break;
-                }
-            }
-        }
-        if (callbacks === undefined) { // if still undefined
-            Logger.system.warn("RouterClient: no pubsub responder defined for incoming subscribe", subscribeMessage);
-        }
-        else {
-            if (subscribeMessage.header.error) { // the router service uses the subscribe message in this case to return a pubsub error (ToDO: consider a generic error message)
-                Logger.system.warn("RouterClient: pubsub error received from router service: " + JSON.stringify(subscribeMessage.header.error));
-            }
-            else {
-                subscribeMessage.sendNotifyToSubscriber = sendNotifyToSubscriber; // add callback function to message so pubsub responder can respond with Notify message
-                if (callbacks.subscribeCallback) {
-                    subscribeMessage.data = mapPubSubResponderState[subscribeMessage.header.topic];
-                    callbacks.subscribeCallback(null, subscribeMessage); // invoke the callback (no error)
-                }
-                else { // since no subscribe callback defined, use default functionality
-                    subscribeMessage.sendNotifyToSubscriber(null, mapPubSubResponderState[subscribeMessage.header.topic]); // must invoke from message to set this properly
-                }
-            }
-        }
-    }
-    // support function for removeSubscriber callback --  remove one subscribeID from array for the given subscription topic
-    function removeFromPubSubListOfSubscribers(pubsubListOfSubscribers, topic, subscribeID) {
-        var removed = false;
-        if (topic in pubsubListOfSubscribers) {
-            var list = pubsubListOfSubscribers[topic];
-            for (var i = 0; i < list.length; i++) {
-                if (subscribeID === list[i]) {
-                    list.splice(i, 1);
-                    if (list.length === 0) {
-                        delete pubsubListOfSubscribers[topic];
-                    }
-                    removed = true;
-                    Logger.system.info("RouterClient: PubSub removeListener", "TOPIC", topic, "FROM", subscribeID);
-                    break;
-                }
-            }
-        }
-        if (!removed) {
-            Logger.system.warn("RouterClient: tried to remove non-existant listener on " + topic + " from " + JSON.stringify(subscribeID));
-        }
-    }
-    // callback function for invokeUnsubscribePubSubCallback to remove the subscriber from the subscription
-    function removeSubscriber() {
-        removeFromPubSubListOfSubscribers(pubsubListOfSubscribers, this.header.topic, this.header.subscribeID);
-    }
-    // for incoming unsubscribe: invoke unsubscribe callback for pubsub servier
-    function invokeUnsubscribePubSubCallback(unsubscribeMessage) {
-        var callbacks = mapPubSubResponders[unsubscribeMessage.header.topic];
-        if (callbacks === undefined) { // if undefined then may be a matching RegEx topic
-            for (var key in mapPubSubResponderRegEx) {
-                if (mapPubSubResponderRegEx[key].test(unsubscribeMessage.header.topic)) {
-                    callbacks = mapPubSubResponders[key];
-                    break;
-                }
-            }
-        }
-        if (callbacks === undefined) { // if still undefined
-            Logger.system.warn("RouterClient: no pubsub responder defined for incoming unsubscribe", "TOPIC", unsubscribeMessage.header.topic, "UNSUBSCRIBE MESSAGE", unsubscribeMessage);
-        }
-        else {
-            unsubscribeMessage.removeSubscriber = removeSubscriber; // add callback function to message for pubsub responder (but must always remove)
-            if (callbacks.unsubscribeCallback) {
-                Logger.system.info("RouterClient: incoming unsubscribe callback", "TOPIC", unsubscribeMessage.header.topic, "UNSUBSCRIBE MESSAGE", unsubscribeMessage);
-                callbacks.unsubscribeCallback(null, unsubscribeMessage); // invoke the callback (no error)
-            }
-            else { // since no unsubscribe callback defined, use default functionality
-                Logger.system.info("RouterClient: incoming unsubscribe", "TOPIC", unsubscribeMessage.header.topic, "UNSUBSCRIBE MESSAGE", unsubscribeMessage);
-                unsubscribeMessage.removeSubscriber();
-            }
-        }
-    }
-    // callback function for invokePublishPubSubCallback to send Notify
-    function sendNotifyToAllSubscribers(err, notifyData) {
-        if (!err) {
-            mapPubSubResponderState[this.header.topic] = notifyData; // store new state
-            var listOfSubscribers = pubsubListOfSubscribers[this.header.topic];
-            if (typeof (listOfSubscribers) !== "undefined") { // confirm subscribers to send to, if none then nothing to do
-                for (var i = 0; i < listOfSubscribers.length; i++) {
-                    Logger.system.info("RouterClient: sending pubsub notify", "TOPIC", this.header.topic, "NOTIFY DATA", notifyData);
-                    sendToRouterService(new NotifyMessage(listOfSubscribers[i], this.header.topic, err, notifyData));
-                }
-            }
-        }
-        else {
-            Logger.system.warn("RouterClient: income publish rejected by pubsub responder", err, notifyData);
-        }
-    }
-    // for incoming Publish: invoke publish callback for pubsub servier
-    function invokePublishPubSubCallback(publishMessage) {
-        var callbacks = mapPubSubResponders[publishMessage.header.topic];
-        if (callbacks === undefined) { // if undefined then may be a matching RegEx topic
-            for (var key in mapPubSubResponderRegEx) {
-                if (mapPubSubResponderRegEx[key].test(publishMessage.header.topic)) {
-                    callbacks = mapPubSubResponders[key];
-                    break;
-                }
-            }
-        }
-        if (callbacks === undefined) { // if still undefined
-            Logger.system.warn("RouterClient: no pubsub responder defined for incoming publish", "TOPIC", publishMessage.header.topic, "PUBLISH MESSAGE", publishMessage);
-        }
-        else {
-            publishMessage.sendNotifyToAllSubscribers = sendNotifyToAllSubscribers; // add callback function to message so pubsub responder can respond to publish
-            if (callbacks.publishCallback) {
-                Logger.system.info("RouterClient: incoming PubSub publish callback invoked", "TOPIC", publishMessage.header.topic, "PUBLISH MESSAGE", publishMessage);
-                callbacks.publishCallback(null, publishMessage); // invoke the callback (no error)
-            }
-            else { // since no pubish callback defined, use default functionality
-                Logger.system.info("RouterClient: incoming PubSub publish", "TOPIC", publishMessage.header.topic, "PUBLISH MESSAGE", publishMessage);
-                publishMessage.sendNotifyToAllSubscribers(null, publishMessage.data); // must call from publish message (like a callback) so 'this' is properly set
-            }
-        }
-    }
-    // for incoming Notify: invoke notify callback (that are attached to a specific channel and listener type)
-    function invokeNotifyCallback(mapSubscribersID, notifyMessage) {
-        var notifyCallback = mapSubscribersID[notifyMessage.header.subscribeID];
-        if (notifyCallback === undefined) {
-            Logger.system.warn("RouterClient: no subscription handler defined for incoming notify for subscriberID", notifyMessage.header.subscribeID, notifyMessage);
-        }
-        else {
-            if (!notifyMessage.header.error) {
-                notifyMessage.originatedHere = originatedHere; // add local function to test origin
-                Logger.system.info("RouterClient: incoming PubSub notify", "SUBSCRIBER ID", notifyMessage.header.subscribeID, "NOTIFY MESSAGE", notifyMessage);
-                notifyCallback(null, notifyMessage); // invoke the callback passing the response message
-            }
-            else {
-                Logger.system.info("RouterClient: incoming PubSub notify error for subscriberID", "SUBSCRIBER ID", notifyMessage.header.subscribeID, "NOTIFY MESSAGE", notifyMessage);
-                notifyCallback(notifyMessage.header.error, notifyMessage); // error from router service so pass it back instead of a message
-            }
-        }
-    }
-    // outgoing Unsubscribe: remove subscriber callbackHandler for the given channel
-    function removeSubscriberCallBack(mapSubscribersID, subscribeID) {
-        var status = false;
-        var notifyCallback = mapSubscribersID[subscribeID];
-        if (notifyCallback !== undefined) {
-            delete mapSubscribersID[subscribeID];
-            status = true;
-        }
-        return status;
-    }
-    // for outgoing addSubscriber -- add a callback Handler for the subscribe
-    function addSubscriberCallBack(mapSubscribersID, subscribeID, notifyCallback, topic) {
-        mapSubscribersID[subscribeID] = notifyCallback;
-        mapSubscribersTopic[subscribeID] = topic;
-    }
-    // for removePubSubResponder: remove responder callbackHandler for the given channel
-    function removeResponderCallBack(map, channel) {
-        var status = false;
-        var clientCallback = map[channel];
-        if (clientCallback !== undefined) {
-            delete map[channel];
-            status = true;
-        }
-        return status;
-    }
-    // for addListener: add a callbackHandler into the specified map (which depends on listener type) for the given channel
-    function addListenerCallBack(map, channel, callback) {
-        var firstChannelClient = false;
-        var clientCallbackArray = map[channel];
-        if (clientCallbackArray === undefined || clientCallbackArray.length === 0) {
-            map[channel] = [callback];
-            firstChannelClient = true;
-        }
-        else {
-            clientCallbackArray.push(callback);
-        }
-        return firstChannelClient;
-    }
-    // for removeListener: remove a callbackHandler from the specified map (which depends on listener type) for the given channel
-    function removeListenerCallBack(map, channel, callback) {
-        var lastChannelClient = false;
-        var clientCallbackArray = map[channel];
-        if (clientCallbackArray !== undefined) {
-            var index = clientCallbackArray.indexOf(callback);
-            if (index > -1) {
-                clientCallbackArray.splice(index, 1);
-                if (clientCallbackArray.length === 0) {
-                    lastChannelClient = true;
-                }
-            }
-            else {
-                Logger.system.warn("no listener defined for channel: " + channel);
-            }
-        }
-        return lastChannelClient;
-    }
-    // route incoming message to appropriate callback, which depends on the message type and channel
-    function routeIncomingMessage(incomingMessage) {
-        Logger.system.verbose("Incoming Message Type", incomingMessage.header.type, incomingMessage);
-        switch (incomingMessage.header.type) {
-            case "transmit":
-                invokeListenerCallbacks(mapListeners, incomingMessage);
-                break;
-            case "query":
-                invokeResponderCallback(mapResponders, incomingMessage);
-                break;
-            case "queryResponse":
-                invokeQueryResponseCallback(mapQueryResponses, incomingMessage);
-                break;
-            case "notify":
-                invokeNotifyCallback(mapSubscribersID, incomingMessage);
-                break;
-            case "publish":
-                invokePublishPubSubCallback(incomingMessage);
-                break;
-            case "subscribe":
-                invokeSubscribePubSubCallback(incomingMessage);
-                break;
-            case "unsubscribe":
-                invokeUnsubscribePubSubCallback(incomingMessage);
-                break;
-            case "timeCalibration":
-                timeCalibrationHandler(incomingMessage);
-                break;
-            case "initialHandshakeResponse":
-                handshakeHandler();
-                break;
-            default:
-        }
-    }
-    // *** all incoming messages from underlying transport arrive here ***
-    // although incoming transport information is available, it is not passed on because not needed
-    function incomingMessageHandler(incomingTransportInfo, message) {
-        // ToDo: good place to put a function to validate incoming message/data
-        message.header.lastClient = clientName; // add last client for diagnostics
-        message.header.incomingTransportInfo = incomingTransportInfo;
-        routeIncomingMessage(message);
-    }
-    // *** all outbound messages exit here though the appropriate transport ***
-    function sendToRouterService(message) {
-        if (!transport || (transport instanceof Promise)) {
-            Logger.system.warn("RouterClient: Queuing message since router initialization not complete", message);
-            queue.push(message);
-        }
-        else {
-            transport.send(message);
-        }
-    }
-    /**
-     * Estimates offset to align the reference time with Router Service.  Does this by exchanging messages with RouterService, getting the service's time, and estimating communication delay.
-     *
-     * @private
-     */
-    this.calibrateTimeWithRouterService = function (callback) {
-        const TARGET_HANDSHAKE_COUNT = 5;
-        var handshakeCounter = 0;
-        var timeOffset;
-        var offsetForFastest;
-        var fastestRRT = Infinity;
-        function calibrationCalculation(finalHandshakeMessage) {
-            var timeOffset = 0;
-            for (var i = 1; i < TARGET_HANDSHAKE_COUNT; i++) {
-                var startClientTime = finalHandshakeMessage.clientBaseTime[i - 1];
-                var stopClientTime = finalHandshakeMessage.clientBaseTime[i];
-                var rtt = stopClientTime - startClientTime; // round-trip time
-                var serviceTime = finalHandshakeMessage.serviceBaseTime[i - 1];
-                var offset = serviceTime - (startClientTime + (rtt / 2));
-                if (rtt < fastestRRT) {
-                    fastestRRT = rtt;
-                    offsetForFastest = offset;
-                }
-                timeOffset += offset;
-                Logger.system.debug("calibrationCalculation Intermediate Values", "lastRRT", rtt, "lastOffset", offset, "fastestOffset", offsetForFastest, "fastestRRT", fastestRRT);
-            }
-            timeOffset /= (TARGET_HANDSHAKE_COUNT - 1);
-            Logger.system.debug("RouterClient calibrationCalculation", "Average Offset", timeOffset, "Choosen FastestOffset", offsetForFastest, finalHandshakeMessage);
-            callback(offsetForFastest); // use the offset with the shortest RTT since it is often the most accurate
-        }
-        function timeCalibrationHandlerFunction(message) {
-            handshakeCounter++;
-            if (handshakeCounter > TARGET_HANDSHAKE_COUNT) {
-                calibrationCalculation(message); // enough handshake data gather, so do the calibration
-            }
-            else {
-                message.clientBaseTime.push(window.performance.timing.navigationStart + window.performance.now());
-                sendToRouterService(new TimeCalibrationHandshakeMessage(message.clientBaseTime, message.serviceBaseTime));
-            }
-        }
-        timeCalibrationHandler = timeCalibrationHandlerFunction; // used in routeIncomingMessage to route handshake response back to handler
-        timeCalibrationHandler(new TimeCalibrationHandshakeMessage([], [])); // invoke first time to start exchanging handshakes; will be invoked each time handshake message received back from FouterService
-    };
-    /**
-     * Backward compatibility?
-     * @private
-     */
-    this.ready = (cb) => this.onReady(cb);
-    /**
- * Get router client name.
- *
- * @param {string} newClientName string identify the client
- * FSBL.Clients.RouterClient.setClientName("MyComponent");
- * @private
- */
-    this.getClientName = function () {
-        Logger.system.debug("RouterClient.getClientName", clientName);
-        return clientName;
-    };
-    /////////////////////////////////////////////
-    // Public Functions -- The Router Client API
-    /////////////////////////////////////////////
-    /**
-     * Checks if router is ready. May be invoked multiple times. Invokes cb when ready, which may be immediately.  Router is not ready until underlying transport to router service is ready.
-     *
-     * @param {function} cb callback function to invoke when router is ready
-     */
-    this.onReady = function (cb) {
-        validate_1.default.args(cb, "function");
-        if (isRouterReady) {
-            cb();
-        }
-        else {
-            parentReadyCallbackQueue.push(cb);
-        }
-    };
-    /**
-     * Add listener for incoming transmit events on specified channel. Each of the incoming events will trigger the specified event handler. The number of listeners is not limited (either local to this Finsemble window or in a separate Finsemble window).
-     *
-     * See [transmit]{@link RouterClientConstructor#transmit} for sending a cooresponding event message to listener. See [removeListener]{@link RouterClientConstructor#removeListener} to remove the listener.
-     *
-     * @param {string} channel any unique string to identify the channel (must match correspond transmit channel name)
-     * @param {function} eventHandler function (see example below)
-     * @example
-     *
-     * FSBL.Clients.RouterClient.addListener("SomeChannelName", function (error, response) {
-            if (error) {
-                Logger.system.log("ChannelA Error: " + JSON.stringify(error));
-            } else {
-                var data = response.data;
-                Logger.system.log("ChannelA Response: " + JSON.stringify(response));
-            }
-     * });
-     *
-     */
-    this.addListener = function (channel, eventHandler) {
-        Logger.system.info("RouterClient.addListener", "CHANNEL", channel);
-        validate_1.default.args(channel, "string", eventHandler, "function");
-        var firstChannelClient = addListenerCallBack(mapListeners, channel, eventHandler);
-        if (firstChannelClient) {
-            sendToRouterService(new AddListenerMessage(channel));
-        }
-    };
-    /**
-     * Transmit event to all listeners on the specified channel. If no listeners the event is discarded without error. All listeners to the channel in this Finsemble window and other Finsemble windows will receive the transmit.
-     *
-     * See [addListener]{@link RouterClientConstructor#addListener} to add a listener to receive the transmit.
-     *
-     * @param {string} toChannel any unique string to identify the channel (must match correspond listener channel name)
-     * @param {any} event any object or primitive type to be transmitted
-     * @param {object} [options] Options object for your transmit
-     * @param {boolean} [options.suppressWarnings=false] By default, the Router will log warnings if you transmit to a channel with no listeners. Set this to true to eliminate those warnings.
-     * @example
-     *
-     * FSBL.Clients.RouterClient.transmit("SomeChannelName", event);
-     *
-     */
-    this.transmit = function (toChannel, event, options = { suppressWarnings: false }) {
-        if (!Logger.isLogMessage(toChannel)) { // logger messages
-            Logger.system.info("RouterClient.transmit", "TO CHANNEL", toChannel, "EVENT", event);
-        }
-        validate_1.default.args(toChannel, "string", event, "any");
-        sendToRouterService(new TransmitMessage(toChannel, event, options));
-    };
-    /* @TODO - This works via object reference - it relies on the physical pointer to the function object originally passed in.
-    This is very confusing, and not idiomatic. Moreover, it entirely prevents a user from using anonymous functions, which will fall
-    quite unexpected if the user isn't prepared. A better API would be to pass in some unique ID, or have a unique ID automatically generated,
-    that could then be passed to this function, e.g:
-
-    RouterClient.addlistener('some-channel', 'my-unique-listener-id', () => { });
-    RouterClient.removeListener('some-channel', 'my-unique-listeenr-id');*/
-    /**
-     * Remove event listener from specified channel for the specific event handler (only listeners created locally can be removed).
-     *
-     * See [addListener]{@link RouterClientConstructor#addListener} for corresponding add of a listener.
-     *
-     * @param {string} channel unique channel name to remove listener from
-     * @param {function} eventHandler function used for the event handler when the listener was added
-     */
-    this.removeListener = function (channel, eventHandler) {
-        Logger.system.info("RouterClient.removelistener", "CHANNEL", channel, "EVENT HANDLER", eventHandler);
-        validate_1.default.args(channel, "string", eventHandler, "function");
-        var lastChannelListener = removeListenerCallBack(mapListeners, channel, eventHandler);
-        if (lastChannelListener) {
-            sendToRouterService(new RemoveListenerMessage(channel));
-        }
-    };
-    /**
-     * Add a query responder to the specified channel. The responder's queryEventHander function will receive all incoming queries for the specified channel (whether from this Finsemble window or remote Finsemble windows).
-     *
-     * *Note:* Only one responder is allowed per channel within the Finsemble application.
-     *
-     * See [query]{@link RouterClientConstructor#query} for sending a corresponding query-event message to this responder.
-     *
-     * @param {string} channel any unique string to identify the channel (must match correspond query channel name); only one responder allower per channel
-     * @param {function} queryEventHandler function to handle the incoming query (see example below); note incoming queryMessage contains function to send response
-     * @example
-     *
-     * FSBL.Clients.RouterClient.addResponder("ResponderChannelName", function (error, queryMessage) {
-     *	if (error) {
-     *		Logger.system.log('addResponder failed: ' + JSON.stringify(error));
-     *	} else {
-            console.log("incoming data=" + queryMessage.data);
-            var response="Back at ya"; // Responses can be objects or strings
-     *		queryMessage.sendQueryResponse(null, response); // A QUERY RESPONSE MUST BE SENT OR THE REMOTE SIDE WILL HANG
-     *	}
-     * });
-     *
-     */
-    this.addResponder = function (channel, queryEventHandler) {
-        Logger.system.info("RouterClient.addResponder", "CHANNEL", channel);
-        validate_1.default.args(channel, "string", queryEventHandler, "function");
-        var status = addResponderCallBack(mapResponders, channel, queryEventHandler);
-        if (status) {
-            sendToRouterService(new addResponderMessage(channel));
-        }
-        else {
-            Logger.system.warn("RouterClient.addResponder: Responder already locally defined for channel " + channel);
-            queryEventHandler({
-                "RouteClient QueryError": "Responder already locally defined for channel" + channel
-            }, null); // immediately invoke callback passing error
-        }
-    };
-    /**
-     * Send a query to responder listening on specified channel. The responder may be in this Finsemble window or another Finsemble window.
-     *
-     * See [addResponder]{@link RouterClientConstructor#addResponder} to add a responder to receive the query.
-     *
-     * @param {string} responderChannel a unique string that identifies the channel (must match the channel name on which a responder is listening)
-     * @param {object} queryEvent event message sent to responder
-     * @param {any} params optional params
-     * @param {number} [params.timeout=20000]  timeout value for a query-response timer.  Timer defaults to 5000 milliseconds if no params value is passed in. Set timeout to zero to wait indefinitely. If the timer expires, this function call will return with an error.
-     * @param {function} responseEventHandler event handler to receive the query response (sent from a responder that is listening on this channel)
-     *
-     * @example
-     *
-     * FSBL.Clients.RouterClient.query("someChannelName", {}, function (error, queryResponseMessage) {
-     *	if (error) {
-     *		Logger.system.log('query failed: ' + JSON.stringify(error));
-     *	} else {
-     *		// process income query response message
-     *		var responseData = queryResponseMessage.data;
-     *		Logger.system.log('query response: ' + JSON.stringify(queryResponseMessage));
-     *	}
-     * });
-     *
-     * FSBL.Clients.RouterClient.query("someChannelName", { queryKey: "abc123"}, { timeout: 1000 }, function (error, queryResponseMessage) {
-     *	if (!error) {
-     *		// process income query response message
-     *		var responseData = queryResponseMessage.data;
-     *	}
-     * }); */
-    this.query = function (responderChannel, queryEvent, params, responseEventHandler = Function.prototype) {
-        var newQueryID = `${clientID()}.${responderChannel}`;
-        var timestamp = window.performance.timing.navigationStart + window.performance.now();
-        var navstart = window.performance.timing.navigationStart;
-        var timenow = window.performance.now(); // these timer values used for logging diagnostices
-        Logger.system.info("RouterClient.query", "RESPONDER CHANNEL", responderChannel, "QUERY EVENT", queryEvent, "PARAMS", params, "QUERYID", newQueryID, { timestamp, navstart, timenow });
-        if (arguments.length === 3) {
-            responseEventHandler = params;
-            params = { timeout: 20000 };
-        }
-        validate_1.default.args(responderChannel, "string", queryEvent, "any=", params, "object=", responseEventHandler, "function");
-        params = params || {};
-        validate_1.default.args2("params.timeout", params.timeout, "number");
-        function promiseResolver(resolve) {
-            //Allows us to await on queries, cleaning up code quite a bit.
-            const modifiedHandler = (err, response) => {
-                resolve({ err, response });
-                responseEventHandler(err, response);
-            };
-            addQueryResponseCallBack(mapQueryResponses, newQueryID, modifiedHandler);
-            addQueryResponseTimeout(mapQueryResponseTimeOut, newQueryID, responderChannel, params.timeout);
-            sendToRouterService(new QueryMessage(newQueryID, responderChannel, queryEvent));
-        }
-        return new Promise(promiseResolver);
-    };
-    /**
-     * Remove query responder from specified channel. Only a locally added responder can be removed (i.e. a responder defined in the same component or service).
-     *
-     * See [addResponder]{@link RouterClientConstructor#addResponder} for corresponding add of a query responder.
-     *
-     * @param {string} responderChannel string identifying the channel to remove responder from
-     *
-     * @example
-     *
-     * FSBL.Clients.RouterClient.removeResponder("someChannelName");
-     *
-     */
-    this.removeResponder = function (responderChannel) {
-        Logger.system.info("RouterClient.removeResponder", "RESPONDER CHANNEL", responderChannel);
-        validate_1.default.args(responderChannel, "string");
-        var status = removeResponderCallBack(mapResponders, responderChannel);
-        if (status) {
-            sendToRouterService(new RemoveResponderMessage(responderChannel));
-        }
-    };
-    /**
-     * Add a PubSub responder for specified topic. All subscribes and publishes to the topic will comes to responder (whether from local window or another window). Only one PubSub responder allowed per topic value in Finsemble application; however, the topic value may be a regular-expression representing a set of related topics, in which case the PubSub responder will responder to all matching topics. When a regEx topic is used, the same default functionality is provides for each matching topic -- the difference is only one PubSub responder is needed to cover a set of related topics, plus the same callback handers can be used (if provided).
-     *
-     * All the callback function are optional because each PubSub responder comes with build-in default functionality (described below).
-     *
-     * Note an exact topic match will take precedence over a regEx match, but otherwise results are unpredictable for overlapping RegEx topics.
-     *
-     * See [subscribe]{@link RouterClientConstructor#subscribe} and [publish]{@link RouterClientConstructor#publish} for corresponding functions sending to the PubSub responder.
-     *
-     * @param {string} topic unique topic for this responder, or a topic RegEx (e.g. '/abc.+/') to handle a set of topics
-     * @param {object} [initialState] initial state for the topic (defaults to empty struct); can be any object
-     * @param {object} [params] optional parameters
-     * @param {function} [params.subscribeCallback] allows responder know of incoming subscription and accept or reject it (default is to accept)
-     * @param {function} [params.publishCallback] allows responder to use the publish data to form a new state (default is the publish data becomes the new state)
-     * @param {function} [params.unsubscribeCallback] allows responder to know of the unsubscribe, but it must be accepted (the default accepts)
-     * @param {function} [callback] optional callback(err,res) function. If addPubSubResponder failed then err set; otherwise, res set to "success"
-     *
-     * @example
-     *
-     * function subscribeCallback(error, subscribe) {
-     * 	if (subscribe) {
-     * 		// must make this callback to accept or reject the subscribe (default is to accept). First parm is err and second is the initial state
-     * 		subscribe.sendNotifyToSubscriber(null, { "NOTIFICATION-STATE": "One" });
-     * 	}
-     * }
-     * function publishCallback(error, publish) {
-     * 	if (publish) {
-     * 		// must make this callback to send notify to all subscribers (if error parameter set then notify will not be sent)
-     * 		publish.sendNotifyToAllSubscribers(null, publish.data);
-     * 	}
-     * }
-     * function unsubscribeCallback(error, unsubscribe) {
-     * 	if (unsubscribe) {
-     * 		// must make this callback to acknowledge the unsubscribe
-     * 		unsubscribe.removeSubscriber();
-     * 	}
-     * }
-     * FSBL.Clients.RouterClient.addPubSubResponder("topicABC", { "State": "start" },
-     * 	{
-     * 		subscribeCallback:subscribeCallback,
-     * 		publishCallback:publishCallback,
-     * 		unsubscribeCallback:unsubscribeCallback
-     * 	});
-     *
-     *   or
-     *
-     * FSBL.Clients.RouterClient.addPubSubResponder("topicABC", { "State": "start" });
-     *
-     *   or
-     *
-     * FSBL.Clients.RouterClient.addPubSubResponder(\/topicA*\/, { "State": "start" });
-     *
-     */
-    this.addPubSubResponder = function (topic, initialState, params, callback) {
-        var error;
-        var response;
-        Logger.system.info("RouterClient.addPubSubResponder", "TOPIC", topic, "INITIAL STATE", initialState, "PARAMS", params);
-        validate_1.default.args(topic, "any", initialState, "object=", params, "object=");
-        params = params || {};
-        validate_1.default.args2("params.subscribeCallback", params.subscribeCallback, "function=", "params.publishCallback", params.publishCallback, "function=") &&
-            validate_1.default.args2("params.unsubscribeCallback", params.unsubscribeCallback, "function=");
-        var status = addPubSubResponderCallBack(topic, params.subscribeCallback, params.publishCallback, params.unsubscribeCallback);
-        if (status) {
-            initialState = initialState || {};
-            mapPubSubResponderState[topic.toString()] = Utils.clone(initialState);
-            sendToRouterService(new AddPubSubResponderMessage(topic.toString()));
-            response = "success";
-        }
-        else {
-            error = "RouterClient.addPubSubResponder: Responder already locally defined for topic " + topic;
-            Logger.system.warn(error);
-        }
-        if (callback) {
-            callback(error, response);
-        }
-    };
-    /**
-     * Remove pubsub responder from specified topic. Only locally created responders (i.e. created in local window) can be removed.
-     *
-     * See [addPubSubResponder]{@link RouterClientConstructor#addPubSubResponder} for corresponding add of a SubPub responder.
-     *
-     * @param {string} topic unique topic for responder being removed (may be RegEx, but if so much be exact regEx used previously with addPubSubResponder)
-     *
-     * @example
-     *
-     * FSBL.Clients.RouterClient.removePubSubResponder("topicABC");
-     *
-     */
-    this.removePubSubResponder = function (topic) {
-        Logger.system.info("RouterClient.removePubSubResponder", "TOPIC", topic);
-        validate_1.default.args(topic, "any");
-        var status = removeResponderCallBack(mapPubSubResponders, topic);
-        if (status) {
-            delete mapPubSubResponderState[topic.toString()]; // remove corresponding state
-            delete mapPubSubResponderRegEx[topic.toString()]; // may be a RegEx
-            sendToRouterService(new RemovePubSubResponderMessage(topic));
-        }
-        else {
-            Logger.system.warn("RouterClient.removePubSubResponder failed: Could not find responder for topic " + topic);
-        }
-    };
-    /**
-     * Subscribe to a PubSub Responder. Each responder topic can have many subscribers (local in this window or remote in other windows). Each subscriber immediately (but asyncronouly) receives back current state in a notify; new notifys are receive for each publish sent to the same topic.
-     *
-     * See [addPubSubResponder]{@link RouterClientConstructor#addPubSubResponder} for corresponding add of a SubPub responder to handle the subscribe. See [publish]{@link RouterClientConstructor#publish} for corresponding publish to notify the subscriber.
-     *
-     * @param {string} topic topic being subscribed to
-     * @param {function} notifyCallback invoked for each income notify for the given topic (i.e. initial notify plus for each publish)
-     * @returns {object} subscribe-id optionally used for unsubscribing later
-     *
-     * @example
-     *
-     * var subscribeId = RouterClient.subscribe("topicABC", function(err,notify) {
-     *		if (!err) {
-     *			var notificationStateData = notify.data;
-     *			// do something with notify data
-     *  	}
-     * });
-     *
-     */
-    this.subscribe = function (topic, notifyCallback) {
-        Logger.system.info("RouterClient.subscribe", "TOPIC", topic);
-        validate_1.default.args(topic, "string", notifyCallback, "function");
-        var subscribeID = clientID();
-        addSubscriberCallBack(mapSubscribersID, subscribeID, notifyCallback, topic);
-        sendToRouterService(new SubscribeMessage(subscribeID, topic));
-        return { "subscribeID": subscribeID, "topic": topic };
-    };
-    /**
-     * Publish to a PubSub Responder, which will trigger a corresponding Notify to be sent to all subscribers (local in this window or remote in other windows). There can be multiple publishers for a topic (again, in same window or remote windows)
-     *
-     * See [addPubSubResponder]{@link RouterClientConstructor#addPubSubResponder} for corresponding add of a SubPub responder to handle the publish (i.e. sending notifications to all subscriber). See [Subscribe]{@link RouterClientConstructor#addPubSubResponder} for corresponding subscription to receive publish results (in the form of a notify event)
-     *
-     * @param {string} topic topic being published to
-     * @param {object} event topic state to be published to all subscriber (unless the SubPub responder optionally modifies in between)
-     *
-     * @example
-     *
-     * FSBL.Clients.RouterClient.publish("topicABC", topicState);
-     *
-     */
-    this.publish = function (topic, event) {
-        Logger.system.info("RouterClient.publish", "TOPIC", topic, "EVENT", event);
-        validate_1.default.args(topic, "string", event, "any");
-        sendToRouterService(new PublishMessage(topic, event));
-    };
-    /**
-     * Unsubscribe from PubSub responder so no more notifications received (but doesn't affect other subscriptions). Only works from the window the PubSub responder was created in.
-     *
-     * See [subscribe]{@link RouterClientConstructor#subscribe} for corresponding subscription being removed.
-     *
-     * @param {object} subscribeID the id return from the corresponding subscribe for the topic
-     *
-     * @example
-     *
-     * FSBL.Clients.RouterClient.unsubscribe(subscribeId);
-     *
-     */
-    this.unsubscribe = function (subscribeIDStruct) {
-        Logger.system.info("RouterClient.unsubscribe", "SUBSCRIBE ID", subscribeIDStruct);
-        validate_1.default.args(subscribeIDStruct, "object") && validate_1.default.args2("subscribeIDStruct.subscribeID", subscribeIDStruct.subscribeID, "string");
-        var deletedSubscriber = removeSubscriberCallBack(mapSubscribersID, subscribeIDStruct.subscribeID);
-        if (deletedSubscriber) {
-            sendToRouterService(new UnsubscribeMessage(subscribeIDStruct.subscribeID, subscribeIDStruct.topic));
-        }
-        else {
-            Logger.system.warn("RouterClient.unsubscribe: Could not find subscribeID for topic " + subscribeIDStruct.topic);
-        }
-    };
-    /**
-     * Test an incoming router message to see if it originated from the same origin (e.g. a trusted source...not cross-domain). Currently same origin is known only because a sharedWorker transport is used (by definition SharedWorkers do not work cross-domain).  This means any message coming in over the Inter-application Bus will not be trusted; however, by default all same-origin components and services connect to the router using a SharedWorker transport.
-     * @param {object} incomingMessage an incoming router message (e.g. transmit, query, notification) to test to see if trusted.
-     *
-     * @example
-     * FSBL.Clients.RouterClient.trustedMessage(incomingRouterMessage);
-     */
-    this.trustedMessage = function (incomingMessage) {
-        var isTrusted = true; // temporarily make all trusted so no problems if changing router transport
-        Logger.system.debug("RouterClient.trustedMessage header", incomingMessage.header);
-        if (incomingMessage.header.originIncomingTransportInfo.transportID === "SharedWorker") {
-            isTrusted = true;
-        }
-        return isTrusted;
-    };
-    /*
-     * @TODO: consider adding disconnectAllListerns(), disconnectAllResponders(), disconnectAllSubscribers()
-    */
-    /**
-     * Removes all listeners, responders, and subscribers for this router client -- automatically called when client is shutting down. Can be called multiple times.
-     */
-    this.disconnectAll = function () {
-        Logger.system.info("RouterClient.disconnectAll");
-        for (var channel in mapListeners) {
-            Logger.system.debug("RouterClient.disconnectAll is removing listener on " + channel);
-            sendToRouterService(new RemoveListenerMessage(channel));
-            delete mapListeners[channel];
-        }
-        for (var responderChannel in mapResponders) {
-            Logger.system.debug("RouterClient.disconnectAll is removing responder on " + responderChannel);
-            sendToRouterService(new RemoveResponderMessage(responderChannel));
-            delete mapResponders[responderChannel];
-        }
-        for (var topic in mapPubSubResponders) {
-            Logger.system.debug("RouterClient.disconnectAll is removing pubsub responder on " + topic);
-            sendToRouterService(new RemovePubSubResponderMessage(topic));
-            delete mapPubSubResponders[topic.toString()]; // could be a RegEx
-            delete mapPubSubResponderState[topic.toString()]; // remove corresponding state
-            delete mapPubSubResponderRegEx[topic.toString()]; // may be a RegEx
-        }
-        for (var subscribeID in mapSubscribersID) {
-            var stopic = mapSubscribersTopic[subscribeID];
-            Logger.system.debug("RouterClient.disconnectAll is removing subscriber on " + stopic);
-            sendToRouterService(new UnsubscribeMessage(subscribeID, stopic));
-            delete mapSubscribersID[subscribeID];
-            delete mapSubscribersTopic[subscribeID];
-        }
-    };
-    //Prevent the loggerService window's routerClient from logging to itself. Instead, log locally for it. It's unlikely that we need to get the loggerService's routermessages. If we do, just uncomment this.
-    if (system_1.System.Window.getCurrent().name === "loggerService") {
-        Logger = new localLogger_1.LocalLogger();
-    }
-    clientName = baseClientName + "." + window.name;
-    /** @TODO - Move this to factory function, something like getRouterClient. */
-    if (clientName in Globals.FSBLData.RouterClients) { // if previously constructed then return that existing client
-        Logger.system.debug(`"RouterClient Check: reusing existing client for ${clientName}`);
-        console.debug(`"RouterClient Check: reusing existing client for ${clientName}`, window);
-    }
-    else {
-        Logger.system.debug(`"RouterClient Check: constructing new client for ${clientName}`);
-        console.debug(`"RouterClient Check: constructing new client for ${clientName}`, window);
-        Globals.FSBLData.RouterClients[clientName] = this;
-        constructor(clientName, transportName); // constructure new router client
-    }
-    return Globals.FSBLData.RouterClients[clientName];
-};
-
-
-/***/ }),
-/* 46 */
-/***/ (function(module, exports) {
-
-
-/**
- * Expose `Backoff`.
- */
-
-module.exports = Backoff;
-
-/**
- * Initialize backoff timer with `opts`.
- *
- * - `min` initial timeout in milliseconds [100]
- * - `max` max timeout [10000]
- * - `jitter` [0]
- * - `factor` [2]
- *
- * @param {Object} opts
- * @api public
- */
-
-function Backoff(opts) {
-  opts = opts || {};
-  this.ms = opts.min || 100;
-  this.max = opts.max || 10000;
-  this.factor = opts.factor || 2;
-  this.jitter = opts.jitter > 0 && opts.jitter <= 1 ? opts.jitter : 0;
-  this.attempts = 0;
-}
-
-/**
- * Return the backoff duration.
- *
- * @return {Number}
- * @api public
- */
-
-Backoff.prototype.duration = function(){
-  var ms = this.ms * Math.pow(this.factor, this.attempts++);
-  if (this.jitter) {
-    var rand =  Math.random();
-    var deviation = Math.floor(rand * this.jitter * ms);
-    ms = (Math.floor(rand * 10) & 1) == 0  ? ms - deviation : ms + deviation;
-  }
-  return Math.min(ms, this.max) | 0;
-};
-
-/**
- * Reset the number of attempts.
- *
- * @api public
- */
-
-Backoff.prototype.reset = function(){
-  this.attempts = 0;
-};
-
-/**
- * Set the minimum duration
- *
- * @api public
- */
-
-Backoff.prototype.setMin = function(min){
-  this.ms = min;
-};
-
-/**
- * Set the maximum duration
- *
- * @api public
- */
-
-Backoff.prototype.setMax = function(max){
-  this.max = max;
-};
-
-/**
- * Set the jitter
- *
- * @api public
- */
-
-Backoff.prototype.setJitter = function(jitter){
-  this.jitter = jitter;
-};
-
-
-
-/***/ }),
-/* 47 */
-/***/ (function(module, exports) {
-
-/*
- * base64-arraybuffer
- * https://github.com/niklasvh/base64-arraybuffer
- *
- * Copyright (c) 2012 Niklas von Hertzen
- * Licensed under the MIT license.
- */
-(function(){
-  "use strict";
-
-  var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-  // Use a lookup table to find the index.
-  var lookup = new Uint8Array(256);
-  for (var i = 0; i < chars.length; i++) {
-    lookup[chars.charCodeAt(i)] = i;
-  }
-
-  exports.encode = function(arraybuffer) {
-    var bytes = new Uint8Array(arraybuffer),
-    i, len = bytes.length, base64 = "";
-
-    for (i = 0; i < len; i+=3) {
-      base64 += chars[bytes[i] >> 2];
-      base64 += chars[((bytes[i] & 3) << 4) | (bytes[i + 1] >> 4)];
-      base64 += chars[((bytes[i + 1] & 15) << 2) | (bytes[i + 2] >> 6)];
-      base64 += chars[bytes[i + 2] & 63];
-    }
-
-    if ((len % 3) === 2) {
-      base64 = base64.substring(0, base64.length - 1) + "=";
-    } else if (len % 3 === 1) {
-      base64 = base64.substring(0, base64.length - 2) + "==";
-    }
-
-    return base64;
-  };
-
-  exports.decode =  function(base64) {
-    var bufferLength = base64.length * 0.75,
-    len = base64.length, i, p = 0,
-    encoded1, encoded2, encoded3, encoded4;
-
-    if (base64[base64.length - 1] === "=") {
-      bufferLength--;
-      if (base64[base64.length - 2] === "=") {
-        bufferLength--;
-      }
-    }
-
-    var arraybuffer = new ArrayBuffer(bufferLength),
-    bytes = new Uint8Array(arraybuffer);
-
-    for (i = 0; i < len; i+=4) {
-      encoded1 = lookup[base64.charCodeAt(i)];
-      encoded2 = lookup[base64.charCodeAt(i+1)];
-      encoded3 = lookup[base64.charCodeAt(i+2)];
-      encoded4 = lookup[base64.charCodeAt(i+3)];
-
-      bytes[p++] = (encoded1 << 2) | (encoded2 >> 4);
-      bytes[p++] = ((encoded2 & 15) << 4) | (encoded3 >> 2);
-      bytes[p++] = ((encoded3 & 3) << 6) | (encoded4 & 63);
-    }
-
-    return arraybuffer;
-  };
-})();
-
-
-/***/ }),
-/* 48 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {/**
- * Create a blob builder even when vendor prefixes exist
- */
-
-var BlobBuilder = global.BlobBuilder
-  || global.WebKitBlobBuilder
-  || global.MSBlobBuilder
-  || global.MozBlobBuilder;
-
-/**
- * Check if Blob constructor is supported
- */
-
-var blobSupported = (function() {
-  try {
-    var a = new Blob(['hi']);
-    return a.size === 2;
-  } catch(e) {
-    return false;
-  }
-})();
-
-/**
- * Check if Blob constructor supports ArrayBufferViews
- * Fails in Safari 6, so we need to map to ArrayBuffers there.
- */
-
-var blobSupportsArrayBufferView = blobSupported && (function() {
-  try {
-    var b = new Blob([new Uint8Array([1,2])]);
-    return b.size === 2;
-  } catch(e) {
-    return false;
-  }
-})();
-
-/**
- * Check if BlobBuilder is supported
- */
-
-var blobBuilderSupported = BlobBuilder
-  && BlobBuilder.prototype.append
-  && BlobBuilder.prototype.getBlob;
-
-/**
- * Helper function that maps ArrayBufferViews to ArrayBuffers
- * Used by BlobBuilder constructor and old browsers that didn't
- * support it in the Blob constructor.
- */
-
-function mapArrayBufferViews(ary) {
-  for (var i = 0; i < ary.length; i++) {
-    var chunk = ary[i];
-    if (chunk.buffer instanceof ArrayBuffer) {
-      var buf = chunk.buffer;
-
-      // if this is a subarray, make a copy so we only
-      // include the subarray region from the underlying buffer
-      if (chunk.byteLength !== buf.byteLength) {
-        var copy = new Uint8Array(chunk.byteLength);
-        copy.set(new Uint8Array(buf, chunk.byteOffset, chunk.byteLength));
-        buf = copy.buffer;
-      }
-
-      ary[i] = buf;
-    }
-  }
-}
-
-function BlobBuilderConstructor(ary, options) {
-  options = options || {};
-
-  var bb = new BlobBuilder();
-  mapArrayBufferViews(ary);
-
-  for (var i = 0; i < ary.length; i++) {
-    bb.append(ary[i]);
-  }
-
-  return (options.type) ? bb.getBlob(options.type) : bb.getBlob();
-};
-
-function BlobConstructor(ary, options) {
-  mapArrayBufferViews(ary);
-  return new Blob(ary, options || {});
-};
-
-module.exports = (function() {
-  if (blobSupported) {
-    return blobSupportsArrayBufferView ? global.Blob : BlobConstructor;
-  } else if (blobBuilderSupported) {
-    return BlobBuilderConstructor;
-  } else {
-    return undefined;
-  }
-})();
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
-
-/***/ }),
-/* 49 */
-/***/ (function(module, exports) {
-
-module.exports = Array.isArray || function (arr) {
-  return Object.prototype.toString.call(arr) == '[object Array]';
-};
-
-
-/***/ }),
-/* 50 */
-/***/ (function(module, exports) {
-
-
-/**
- * Module exports.
- *
- * Logic borrowed from Modernizr:
- *
- *   - https://github.com/Modernizr/Modernizr/blob/master/feature-detects/cors.js
- */
-
-try {
-  module.exports = typeof XMLHttpRequest !== 'undefined' &&
-    'withCredentials' in new XMLHttpRequest();
-} catch (err) {
-  // if XMLHttp support is disabled in IE then it will throw
-  // when trying to create
-  module.exports = false;
-}
-
-
-/***/ }),
-/* 51 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(module, global) {var __WEBPACK_AMD_DEFINE_RESULT__;/*! JSON v3.3.2 | http://bestiejs.github.io/json3 | Copyright 2012-2014, Kit Cambridge | http://kit.mit-license.org */
-;(function () {
-  // Detect the `define` function exposed by asynchronous module loaders. The
-  // strict `define` check is necessary for compatibility with `r.js`.
-  var isLoader = "function" === "function" && __webpack_require__(74);
-
-  // A set of types used to distinguish objects from primitives.
-  var objectTypes = {
-    "function": true,
-    "object": true
-  };
-
-  // Detect the `exports` object exposed by CommonJS implementations.
-  var freeExports = objectTypes[typeof exports] && exports && !exports.nodeType && exports;
-
-  // Use the `global` object exposed by Node (including Browserify via
-  // `insert-module-globals`), Narwhal, and Ringo as the default context,
-  // and the `window` object in browsers. Rhino exports a `global` function
-  // instead.
-  var root = objectTypes[typeof window] && window || this,
-      freeGlobal = freeExports && objectTypes[typeof module] && module && !module.nodeType && typeof global == "object" && global;
-
-  if (freeGlobal && (freeGlobal["global"] === freeGlobal || freeGlobal["window"] === freeGlobal || freeGlobal["self"] === freeGlobal)) {
-    root = freeGlobal;
-  }
-
-  // Public: Initializes JSON 3 using the given `context` object, attaching the
-  // `stringify` and `parse` functions to the specified `exports` object.
-  function runInContext(context, exports) {
-    context || (context = root["Object"]());
-    exports || (exports = root["Object"]());
-
-    // Native constructor aliases.
-    var Number = context["Number"] || root["Number"],
-        String = context["String"] || root["String"],
-        Object = context["Object"] || root["Object"],
-        Date = context["Date"] || root["Date"],
-        SyntaxError = context["SyntaxError"] || root["SyntaxError"],
-        TypeError = context["TypeError"] || root["TypeError"],
-        Math = context["Math"] || root["Math"],
-        nativeJSON = context["JSON"] || root["JSON"];
-
-    // Delegate to the native `stringify` and `parse` implementations.
-    if (typeof nativeJSON == "object" && nativeJSON) {
-      exports.stringify = nativeJSON.stringify;
-      exports.parse = nativeJSON.parse;
-    }
-
-    // Convenience aliases.
-    var objectProto = Object.prototype,
-        getClass = objectProto.toString,
-        isProperty, forEach, undef;
-
-    // Test the `Date#getUTC*` methods. Based on work by @Yaffle.
-    var isExtended = new Date(-3509827334573292);
-    try {
-      // The `getUTCFullYear`, `Month`, and `Date` methods return nonsensical
-      // results for certain dates in Opera >= 10.53.
-      isExtended = isExtended.getUTCFullYear() == -109252 && isExtended.getUTCMonth() === 0 && isExtended.getUTCDate() === 1 &&
-        // Safari < 2.0.2 stores the internal millisecond time value correctly,
-        // but clips the values returned by the date methods to the range of
-        // signed 32-bit integers ([-2 ** 31, 2 ** 31 - 1]).
-        isExtended.getUTCHours() == 10 && isExtended.getUTCMinutes() == 37 && isExtended.getUTCSeconds() == 6 && isExtended.getUTCMilliseconds() == 708;
-    } catch (exception) {}
-
-    // Internal: Determines whether the native `JSON.stringify` and `parse`
-    // implementations are spec-compliant. Based on work by Ken Snyder.
-    function has(name) {
-      if (has[name] !== undef) {
-        // Return cached feature test result.
-        return has[name];
-      }
-      var isSupported;
-      if (name == "bug-string-char-index") {
-        // IE <= 7 doesn't support accessing string characters using square
-        // bracket notation. IE 8 only supports this for primitives.
-        isSupported = "a"[0] != "a";
-      } else if (name == "json") {
-        // Indicates whether both `JSON.stringify` and `JSON.parse` are
-        // supported.
-        isSupported = has("json-stringify") && has("json-parse");
-      } else {
-        var value, serialized = '{"a":[1,true,false,null,"\\u0000\\b\\n\\f\\r\\t"]}';
-        // Test `JSON.stringify`.
-        if (name == "json-stringify") {
-          var stringify = exports.stringify, stringifySupported = typeof stringify == "function" && isExtended;
-          if (stringifySupported) {
-            // A test function object with a custom `toJSON` method.
-            (value = function () {
-              return 1;
-            }).toJSON = value;
-            try {
-              stringifySupported =
-                // Firefox 3.1b1 and b2 serialize string, number, and boolean
-                // primitives as object literals.
-                stringify(0) === "0" &&
-                // FF 3.1b1, b2, and JSON 2 serialize wrapped primitives as object
-                // literals.
-                stringify(new Number()) === "0" &&
-                stringify(new String()) == '""' &&
-                // FF 3.1b1, 2 throw an error if the value is `null`, `undefined`, or
-                // does not define a canonical JSON representation (this applies to
-                // objects with `toJSON` properties as well, *unless* they are nested
-                // within an object or array).
-                stringify(getClass) === undef &&
-                // IE 8 serializes `undefined` as `"undefined"`. Safari <= 5.1.7 and
-                // FF 3.1b3 pass this test.
-                stringify(undef) === undef &&
-                // Safari <= 5.1.7 and FF 3.1b3 throw `Error`s and `TypeError`s,
-                // respectively, if the value is omitted entirely.
-                stringify() === undef &&
-                // FF 3.1b1, 2 throw an error if the given value is not a number,
-                // string, array, object, Boolean, or `null` literal. This applies to
-                // objects with custom `toJSON` methods as well, unless they are nested
-                // inside object or array literals. YUI 3.0.0b1 ignores custom `toJSON`
-                // methods entirely.
-                stringify(value) === "1" &&
-                stringify([value]) == "[1]" &&
-                // Prototype <= 1.6.1 serializes `[undefined]` as `"[]"` instead of
-                // `"[null]"`.
-                stringify([undef]) == "[null]" &&
-                // YUI 3.0.0b1 fails to serialize `null` literals.
-                stringify(null) == "null" &&
-                // FF 3.1b1, 2 halts serialization if an array contains a function:
-                // `[1, true, getClass, 1]` serializes as "[1,true,],". FF 3.1b3
-                // elides non-JSON values from objects and arrays, unless they
-                // define custom `toJSON` methods.
-                stringify([undef, getClass, null]) == "[null,null,null]" &&
-                // Simple serialization test. FF 3.1b1 uses Unicode escape sequences
-                // where character escape codes are expected (e.g., `\b` => `\u0008`).
-                stringify({ "a": [value, true, false, null, "\x00\b\n\f\r\t"] }) == serialized &&
-                // FF 3.1b1 and b2 ignore the `filter` and `width` arguments.
-                stringify(null, value) === "1" &&
-                stringify([1, 2], null, 1) == "[\n 1,\n 2\n]" &&
-                // JSON 2, Prototype <= 1.7, and older WebKit builds incorrectly
-                // serialize extended years.
-                stringify(new Date(-8.64e15)) == '"-271821-04-20T00:00:00.000Z"' &&
-                // The milliseconds are optional in ES 5, but required in 5.1.
-                stringify(new Date(8.64e15)) == '"+275760-09-13T00:00:00.000Z"' &&
-                // Firefox <= 11.0 incorrectly serializes years prior to 0 as negative
-                // four-digit years instead of six-digit years. Credits: @Yaffle.
-                stringify(new Date(-621987552e5)) == '"-000001-01-01T00:00:00.000Z"' &&
-                // Safari <= 5.1.5 and Opera >= 10.53 incorrectly serialize millisecond
-                // values less than 1000. Credits: @Yaffle.
-                stringify(new Date(-1)) == '"1969-12-31T23:59:59.999Z"';
-            } catch (exception) {
-              stringifySupported = false;
-            }
-          }
-          isSupported = stringifySupported;
-        }
-        // Test `JSON.parse`.
-        if (name == "json-parse") {
-          var parse = exports.parse;
-          if (typeof parse == "function") {
-            try {
-              // FF 3.1b1, b2 will throw an exception if a bare literal is provided.
-              // Conforming implementations should also coerce the initial argument to
-              // a string prior to parsing.
-              if (parse("0") === 0 && !parse(false)) {
-                // Simple parsing test.
-                value = parse(serialized);
-                var parseSupported = value["a"].length == 5 && value["a"][0] === 1;
-                if (parseSupported) {
-                  try {
-                    // Safari <= 5.1.2 and FF 3.1b1 allow unescaped tabs in strings.
-                    parseSupported = !parse('"\t"');
-                  } catch (exception) {}
-                  if (parseSupported) {
-                    try {
-                      // FF 4.0 and 4.0.1 allow leading `+` signs and leading
-                      // decimal points. FF 4.0, 4.0.1, and IE 9-10 also allow
-                      // certain octal literals.
-                      parseSupported = parse("01") !== 1;
-                    } catch (exception) {}
-                  }
-                  if (parseSupported) {
-                    try {
-                      // FF 4.0, 4.0.1, and Rhino 1.7R3-R4 allow trailing decimal
-                      // points. These environments, along with FF 3.1b1 and 2,
-                      // also allow trailing commas in JSON objects and arrays.
-                      parseSupported = parse("1.") !== 1;
-                    } catch (exception) {}
-                  }
-                }
-              }
-            } catch (exception) {
-              parseSupported = false;
-            }
-          }
-          isSupported = parseSupported;
-        }
-      }
-      return has[name] = !!isSupported;
-    }
-
-    if (!has("json")) {
-      // Common `[[Class]]` name aliases.
-      var functionClass = "[object Function]",
-          dateClass = "[object Date]",
-          numberClass = "[object Number]",
-          stringClass = "[object String]",
-          arrayClass = "[object Array]",
-          booleanClass = "[object Boolean]";
-
-      // Detect incomplete support for accessing string characters by index.
-      var charIndexBuggy = has("bug-string-char-index");
-
-      // Define additional utility methods if the `Date` methods are buggy.
-      if (!isExtended) {
-        var floor = Math.floor;
-        // A mapping between the months of the year and the number of days between
-        // January 1st and the first of the respective month.
-        var Months = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
-        // Internal: Calculates the number of days between the Unix epoch and the
-        // first day of the given month.
-        var getDay = function (year, month) {
-          return Months[month] + 365 * (year - 1970) + floor((year - 1969 + (month = +(month > 1))) / 4) - floor((year - 1901 + month) / 100) + floor((year - 1601 + month) / 400);
-        };
-      }
-
-      // Internal: Determines if a property is a direct property of the given
-      // object. Delegates to the native `Object#hasOwnProperty` method.
-      if (!(isProperty = objectProto.hasOwnProperty)) {
-        isProperty = function (property) {
-          var members = {}, constructor;
-          if ((members.__proto__ = null, members.__proto__ = {
-            // The *proto* property cannot be set multiple times in recent
-            // versions of Firefox and SeaMonkey.
-            "toString": 1
-          }, members).toString != getClass) {
-            // Safari <= 2.0.3 doesn't implement `Object#hasOwnProperty`, but
-            // supports the mutable *proto* property.
-            isProperty = function (property) {
-              // Capture and break the object's prototype chain (see section 8.6.2
-              // of the ES 5.1 spec). The parenthesized expression prevents an
-              // unsafe transformation by the Closure Compiler.
-              var original = this.__proto__, result = property in (this.__proto__ = null, this);
-              // Restore the original prototype chain.
-              this.__proto__ = original;
-              return result;
-            };
-          } else {
-            // Capture a reference to the top-level `Object` constructor.
-            constructor = members.constructor;
-            // Use the `constructor` property to simulate `Object#hasOwnProperty` in
-            // other environments.
-            isProperty = function (property) {
-              var parent = (this.constructor || constructor).prototype;
-              return property in this && !(property in parent && this[property] === parent[property]);
-            };
-          }
-          members = null;
-          return isProperty.call(this, property);
-        };
-      }
-
-      // Internal: Normalizes the `for...in` iteration algorithm across
-      // environments. Each enumerated key is yielded to a `callback` function.
-      forEach = function (object, callback) {
-        var size = 0, Properties, members, property;
-
-        // Tests for bugs in the current environment's `for...in` algorithm. The
-        // `valueOf` property inherits the non-enumerable flag from
-        // `Object.prototype` in older versions of IE, Netscape, and Mozilla.
-        (Properties = function () {
-          this.valueOf = 0;
-        }).prototype.valueOf = 0;
-
-        // Iterate over a new instance of the `Properties` class.
-        members = new Properties();
-        for (property in members) {
-          // Ignore all properties inherited from `Object.prototype`.
-          if (isProperty.call(members, property)) {
-            size++;
-          }
-        }
-        Properties = members = null;
-
-        // Normalize the iteration algorithm.
-        if (!size) {
-          // A list of non-enumerable properties inherited from `Object.prototype`.
-          members = ["valueOf", "toString", "toLocaleString", "propertyIsEnumerable", "isPrototypeOf", "hasOwnProperty", "constructor"];
-          // IE <= 8, Mozilla 1.0, and Netscape 6.2 ignore shadowed non-enumerable
-          // properties.
-          forEach = function (object, callback) {
-            var isFunction = getClass.call(object) == functionClass, property, length;
-            var hasProperty = !isFunction && typeof object.constructor != "function" && objectTypes[typeof object.hasOwnProperty] && object.hasOwnProperty || isProperty;
-            for (property in object) {
-              // Gecko <= 1.0 enumerates the `prototype` property of functions under
-              // certain conditions; IE does not.
-              if (!(isFunction && property == "prototype") && hasProperty.call(object, property)) {
-                callback(property);
-              }
-            }
-            // Manually invoke the callback for each non-enumerable property.
-            for (length = members.length; property = members[--length]; hasProperty.call(object, property) && callback(property));
-          };
-        } else if (size == 2) {
-          // Safari <= 2.0.4 enumerates shadowed properties twice.
-          forEach = function (object, callback) {
-            // Create a set of iterated properties.
-            var members = {}, isFunction = getClass.call(object) == functionClass, property;
-            for (property in object) {
-              // Store each property name to prevent double enumeration. The
-              // `prototype` property of functions is not enumerated due to cross-
-              // environment inconsistencies.
-              if (!(isFunction && property == "prototype") && !isProperty.call(members, property) && (members[property] = 1) && isProperty.call(object, property)) {
-                callback(property);
-              }
-            }
-          };
-        } else {
-          // No bugs detected; use the standard `for...in` algorithm.
-          forEach = function (object, callback) {
-            var isFunction = getClass.call(object) == functionClass, property, isConstructor;
-            for (property in object) {
-              if (!(isFunction && property == "prototype") && isProperty.call(object, property) && !(isConstructor = property === "constructor")) {
-                callback(property);
-              }
-            }
-            // Manually invoke the callback for the `constructor` property due to
-            // cross-environment inconsistencies.
-            if (isConstructor || isProperty.call(object, (property = "constructor"))) {
-              callback(property);
-            }
-          };
-        }
-        return forEach(object, callback);
-      };
-
-      // Public: Serializes a JavaScript `value` as a JSON string. The optional
-      // `filter` argument may specify either a function that alters how object and
-      // array members are serialized, or an array of strings and numbers that
-      // indicates which properties should be serialized. The optional `width`
-      // argument may be either a string or number that specifies the indentation
-      // level of the output.
-      if (!has("json-stringify")) {
-        // Internal: A map of control characters and their escaped equivalents.
-        var Escapes = {
-          92: "\\\\",
-          34: '\\"',
-          8: "\\b",
-          12: "\\f",
-          10: "\\n",
-          13: "\\r",
-          9: "\\t"
-        };
-
-        // Internal: Converts `value` into a zero-padded string such that its
-        // length is at least equal to `width`. The `width` must be <= 6.
-        var leadingZeroes = "000000";
-        var toPaddedString = function (width, value) {
-          // The `|| 0` expression is necessary to work around a bug in
-          // Opera <= 7.54u2 where `0 == -0`, but `String(-0) !== "0"`.
-          return (leadingZeroes + (value || 0)).slice(-width);
-        };
-
-        // Internal: Double-quotes a string `value`, replacing all ASCII control
-        // characters (characters with code unit values between 0 and 31) with
-        // their escaped equivalents. This is an implementation of the
-        // `Quote(value)` operation defined in ES 5.1 section 15.12.3.
-        var unicodePrefix = "\\u00";
-        var quote = function (value) {
-          var result = '"', index = 0, length = value.length, useCharIndex = !charIndexBuggy || length > 10;
-          var symbols = useCharIndex && (charIndexBuggy ? value.split("") : value);
-          for (; index < length; index++) {
-            var charCode = value.charCodeAt(index);
-            // If the character is a control character, append its Unicode or
-            // shorthand escape sequence; otherwise, append the character as-is.
-            switch (charCode) {
-              case 8: case 9: case 10: case 12: case 13: case 34: case 92:
-                result += Escapes[charCode];
-                break;
-              default:
-                if (charCode < 32) {
-                  result += unicodePrefix + toPaddedString(2, charCode.toString(16));
-                  break;
-                }
-                result += useCharIndex ? symbols[index] : value.charAt(index);
-            }
-          }
-          return result + '"';
-        };
-
-        // Internal: Recursively serializes an object. Implements the
-        // `Str(key, holder)`, `JO(value)`, and `JA(value)` operations.
-        var serialize = function (property, object, callback, properties, whitespace, indentation, stack) {
-          var value, className, year, month, date, time, hours, minutes, seconds, milliseconds, results, element, index, length, prefix, result;
-          try {
-            // Necessary for host object support.
-            value = object[property];
-          } catch (exception) {}
-          if (typeof value == "object" && value) {
-            className = getClass.call(value);
-            if (className == dateClass && !isProperty.call(value, "toJSON")) {
-              if (value > -1 / 0 && value < 1 / 0) {
-                // Dates are serialized according to the `Date#toJSON` method
-                // specified in ES 5.1 section 15.9.5.44. See section 15.9.1.15
-                // for the ISO 8601 date time string format.
-                if (getDay) {
-                  // Manually compute the year, month, date, hours, minutes,
-                  // seconds, and milliseconds if the `getUTC*` methods are
-                  // buggy. Adapted from @Yaffle's `date-shim` project.
-                  date = floor(value / 864e5);
-                  for (year = floor(date / 365.2425) + 1970 - 1; getDay(year + 1, 0) <= date; year++);
-                  for (month = floor((date - getDay(year, 0)) / 30.42); getDay(year, month + 1) <= date; month++);
-                  date = 1 + date - getDay(year, month);
-                  // The `time` value specifies the time within the day (see ES
-                  // 5.1 section 15.9.1.2). The formula `(A % B + B) % B` is used
-                  // to compute `A modulo B`, as the `%` operator does not
-                  // correspond to the `modulo` operation for negative numbers.
-                  time = (value % 864e5 + 864e5) % 864e5;
-                  // The hours, minutes, seconds, and milliseconds are obtained by
-                  // decomposing the time within the day. See section 15.9.1.10.
-                  hours = floor(time / 36e5) % 24;
-                  minutes = floor(time / 6e4) % 60;
-                  seconds = floor(time / 1e3) % 60;
-                  milliseconds = time % 1e3;
-                } else {
-                  year = value.getUTCFullYear();
-                  month = value.getUTCMonth();
-                  date = value.getUTCDate();
-                  hours = value.getUTCHours();
-                  minutes = value.getUTCMinutes();
-                  seconds = value.getUTCSeconds();
-                  milliseconds = value.getUTCMilliseconds();
-                }
-                // Serialize extended years correctly.
-                value = (year <= 0 || year >= 1e4 ? (year < 0 ? "-" : "+") + toPaddedString(6, year < 0 ? -year : year) : toPaddedString(4, year)) +
-                  "-" + toPaddedString(2, month + 1) + "-" + toPaddedString(2, date) +
-                  // Months, dates, hours, minutes, and seconds should have two
-                  // digits; milliseconds should have three.
-                  "T" + toPaddedString(2, hours) + ":" + toPaddedString(2, minutes) + ":" + toPaddedString(2, seconds) +
-                  // Milliseconds are optional in ES 5.0, but required in 5.1.
-                  "." + toPaddedString(3, milliseconds) + "Z";
-              } else {
-                value = null;
-              }
-            } else if (typeof value.toJSON == "function" && ((className != numberClass && className != stringClass && className != arrayClass) || isProperty.call(value, "toJSON"))) {
-              // Prototype <= 1.6.1 adds non-standard `toJSON` methods to the
-              // `Number`, `String`, `Date`, and `Array` prototypes. JSON 3
-              // ignores all `toJSON` methods on these objects unless they are
-              // defined directly on an instance.
-              value = value.toJSON(property);
-            }
-          }
-          if (callback) {
-            // If a replacement function was provided, call it to obtain the value
-            // for serialization.
-            value = callback.call(object, property, value);
-          }
-          if (value === null) {
-            return "null";
-          }
-          className = getClass.call(value);
-          if (className == booleanClass) {
-            // Booleans are represented literally.
-            return "" + value;
-          } else if (className == numberClass) {
-            // JSON numbers must be finite. `Infinity` and `NaN` are serialized as
-            // `"null"`.
-            return value > -1 / 0 && value < 1 / 0 ? "" + value : "null";
-          } else if (className == stringClass) {
-            // Strings are double-quoted and escaped.
-            return quote("" + value);
-          }
-          // Recursively serialize objects and arrays.
-          if (typeof value == "object") {
-            // Check for cyclic structures. This is a linear search; performance
-            // is inversely proportional to the number of unique nested objects.
-            for (length = stack.length; length--;) {
-              if (stack[length] === value) {
-                // Cyclic structures cannot be serialized by `JSON.stringify`.
-                throw TypeError();
-              }
-            }
-            // Add the object to the stack of traversed objects.
-            stack.push(value);
-            results = [];
-            // Save the current indentation level and indent one additional level.
-            prefix = indentation;
-            indentation += whitespace;
-            if (className == arrayClass) {
-              // Recursively serialize array elements.
-              for (index = 0, length = value.length; index < length; index++) {
-                element = serialize(index, value, callback, properties, whitespace, indentation, stack);
-                results.push(element === undef ? "null" : element);
-              }
-              result = results.length ? (whitespace ? "[\n" + indentation + results.join(",\n" + indentation) + "\n" + prefix + "]" : ("[" + results.join(",") + "]")) : "[]";
-            } else {
-              // Recursively serialize object members. Members are selected from
-              // either a user-specified list of property names, or the object
-              // itself.
-              forEach(properties || value, function (property) {
-                var element = serialize(property, value, callback, properties, whitespace, indentation, stack);
-                if (element !== undef) {
-                  // According to ES 5.1 section 15.12.3: "If `gap` {whitespace}
-                  // is not the empty string, let `member` {quote(property) + ":"}
-                  // be the concatenation of `member` and the `space` character."
-                  // The "`space` character" refers to the literal space
-                  // character, not the `space` {width} argument provided to
-                  // `JSON.stringify`.
-                  results.push(quote(property) + ":" + (whitespace ? " " : "") + element);
-                }
-              });
-              result = results.length ? (whitespace ? "{\n" + indentation + results.join(",\n" + indentation) + "\n" + prefix + "}" : ("{" + results.join(",") + "}")) : "{}";
-            }
-            // Remove the object from the traversed object stack.
-            stack.pop();
-            return result;
-          }
-        };
-
-        // Public: `JSON.stringify`. See ES 5.1 section 15.12.3.
-        exports.stringify = function (source, filter, width) {
-          var whitespace, callback, properties, className;
-          if (objectTypes[typeof filter] && filter) {
-            if ((className = getClass.call(filter)) == functionClass) {
-              callback = filter;
-            } else if (className == arrayClass) {
-              // Convert the property names array into a makeshift set.
-              properties = {};
-              for (var index = 0, length = filter.length, value; index < length; value = filter[index++], ((className = getClass.call(value)), className == stringClass || className == numberClass) && (properties[value] = 1));
-            }
-          }
-          if (width) {
-            if ((className = getClass.call(width)) == numberClass) {
-              // Convert the `width` to an integer and create a string containing
-              // `width` number of space characters.
-              if ((width -= width % 1) > 0) {
-                for (whitespace = "", width > 10 && (width = 10); whitespace.length < width; whitespace += " ");
-              }
-            } else if (className == stringClass) {
-              whitespace = width.length <= 10 ? width : width.slice(0, 10);
-            }
-          }
-          // Opera <= 7.54u2 discards the values associated with empty string keys
-          // (`""`) only if they are used directly within an object member list
-          // (e.g., `!("" in { "": 1})`).
-          return serialize("", (value = {}, value[""] = source, value), callback, properties, whitespace, "", []);
-        };
-      }
-
-      // Public: Parses a JSON source string.
-      if (!has("json-parse")) {
-        var fromCharCode = String.fromCharCode;
-
-        // Internal: A map of escaped control characters and their unescaped
-        // equivalents.
-        var Unescapes = {
-          92: "\\",
-          34: '"',
-          47: "/",
-          98: "\b",
-          116: "\t",
-          110: "\n",
-          102: "\f",
-          114: "\r"
-        };
-
-        // Internal: Stores the parser state.
-        var Index, Source;
-
-        // Internal: Resets the parser state and throws a `SyntaxError`.
-        var abort = function () {
-          Index = Source = null;
-          throw SyntaxError();
-        };
-
-        // Internal: Returns the next token, or `"$"` if the parser has reached
-        // the end of the source string. A token may be a string, number, `null`
-        // literal, or Boolean literal.
-        var lex = function () {
-          var source = Source, length = source.length, value, begin, position, isSigned, charCode;
-          while (Index < length) {
-            charCode = source.charCodeAt(Index);
-            switch (charCode) {
-              case 9: case 10: case 13: case 32:
-                // Skip whitespace tokens, including tabs, carriage returns, line
-                // feeds, and space characters.
-                Index++;
-                break;
-              case 123: case 125: case 91: case 93: case 58: case 44:
-                // Parse a punctuator token (`{`, `}`, `[`, `]`, `:`, or `,`) at
-                // the current position.
-                value = charIndexBuggy ? source.charAt(Index) : source[Index];
-                Index++;
-                return value;
-              case 34:
-                // `"` delimits a JSON string; advance to the next character and
-                // begin parsing the string. String tokens are prefixed with the
-                // sentinel `@` character to distinguish them from punctuators and
-                // end-of-string tokens.
-                for (value = "@", Index++; Index < length;) {
-                  charCode = source.charCodeAt(Index);
-                  if (charCode < 32) {
-                    // Unescaped ASCII control characters (those with a code unit
-                    // less than the space character) are not permitted.
-                    abort();
-                  } else if (charCode == 92) {
-                    // A reverse solidus (`\`) marks the beginning of an escaped
-                    // control character (including `"`, `\`, and `/`) or Unicode
-                    // escape sequence.
-                    charCode = source.charCodeAt(++Index);
-                    switch (charCode) {
-                      case 92: case 34: case 47: case 98: case 116: case 110: case 102: case 114:
-                        // Revive escaped control characters.
-                        value += Unescapes[charCode];
-                        Index++;
-                        break;
-                      case 117:
-                        // `\u` marks the beginning of a Unicode escape sequence.
-                        // Advance to the first character and validate the
-                        // four-digit code point.
-                        begin = ++Index;
-                        for (position = Index + 4; Index < position; Index++) {
-                          charCode = source.charCodeAt(Index);
-                          // A valid sequence comprises four hexdigits (case-
-                          // insensitive) that form a single hexadecimal value.
-                          if (!(charCode >= 48 && charCode <= 57 || charCode >= 97 && charCode <= 102 || charCode >= 65 && charCode <= 70)) {
-                            // Invalid Unicode escape sequence.
-                            abort();
-                          }
-                        }
-                        // Revive the escaped character.
-                        value += fromCharCode("0x" + source.slice(begin, Index));
-                        break;
-                      default:
-                        // Invalid escape sequence.
-                        abort();
-                    }
-                  } else {
-                    if (charCode == 34) {
-                      // An unescaped double-quote character marks the end of the
-                      // string.
-                      break;
-                    }
-                    charCode = source.charCodeAt(Index);
-                    begin = Index;
-                    // Optimize for the common case where a string is valid.
-                    while (charCode >= 32 && charCode != 92 && charCode != 34) {
-                      charCode = source.charCodeAt(++Index);
-                    }
-                    // Append the string as-is.
-                    value += source.slice(begin, Index);
-                  }
-                }
-                if (source.charCodeAt(Index) == 34) {
-                  // Advance to the next character and return the revived string.
-                  Index++;
-                  return value;
-                }
-                // Unterminated string.
-                abort();
-              default:
-                // Parse numbers and literals.
-                begin = Index;
-                // Advance past the negative sign, if one is specified.
-                if (charCode == 45) {
-                  isSigned = true;
-                  charCode = source.charCodeAt(++Index);
-                }
-                // Parse an integer or floating-point value.
-                if (charCode >= 48 && charCode <= 57) {
-                  // Leading zeroes are interpreted as octal literals.
-                  if (charCode == 48 && ((charCode = source.charCodeAt(Index + 1)), charCode >= 48 && charCode <= 57)) {
-                    // Illegal octal literal.
-                    abort();
-                  }
-                  isSigned = false;
-                  // Parse the integer component.
-                  for (; Index < length && ((charCode = source.charCodeAt(Index)), charCode >= 48 && charCode <= 57); Index++);
-                  // Floats cannot contain a leading decimal point; however, this
-                  // case is already accounted for by the parser.
-                  if (source.charCodeAt(Index) == 46) {
-                    position = ++Index;
-                    // Parse the decimal component.
-                    for (; position < length && ((charCode = source.charCodeAt(position)), charCode >= 48 && charCode <= 57); position++);
-                    if (position == Index) {
-                      // Illegal trailing decimal.
-                      abort();
-                    }
-                    Index = position;
-                  }
-                  // Parse exponents. The `e` denoting the exponent is
-                  // case-insensitive.
-                  charCode = source.charCodeAt(Index);
-                  if (charCode == 101 || charCode == 69) {
-                    charCode = source.charCodeAt(++Index);
-                    // Skip past the sign following the exponent, if one is
-                    // specified.
-                    if (charCode == 43 || charCode == 45) {
-                      Index++;
-                    }
-                    // Parse the exponential component.
-                    for (position = Index; position < length && ((charCode = source.charCodeAt(position)), charCode >= 48 && charCode <= 57); position++);
-                    if (position == Index) {
-                      // Illegal empty exponent.
-                      abort();
-                    }
-                    Index = position;
-                  }
-                  // Coerce the parsed value to a JavaScript number.
-                  return +source.slice(begin, Index);
-                }
-                // A negative sign may only precede numbers.
-                if (isSigned) {
-                  abort();
-                }
-                // `true`, `false`, and `null` literals.
-                if (source.slice(Index, Index + 4) == "true") {
-                  Index += 4;
-                  return true;
-                } else if (source.slice(Index, Index + 5) == "false") {
-                  Index += 5;
-                  return false;
-                } else if (source.slice(Index, Index + 4) == "null") {
-                  Index += 4;
-                  return null;
-                }
-                // Unrecognized token.
-                abort();
-            }
-          }
-          // Return the sentinel `$` character if the parser has reached the end
-          // of the source string.
-          return "$";
-        };
-
-        // Internal: Parses a JSON `value` token.
-        var get = function (value) {
-          var results, hasMembers;
-          if (value == "$") {
-            // Unexpected end of input.
-            abort();
-          }
-          if (typeof value == "string") {
-            if ((charIndexBuggy ? value.charAt(0) : value[0]) == "@") {
-              // Remove the sentinel `@` character.
-              return value.slice(1);
-            }
-            // Parse object and array literals.
-            if (value == "[") {
-              // Parses a JSON array, returning a new JavaScript array.
-              results = [];
-              for (;; hasMembers || (hasMembers = true)) {
-                value = lex();
-                // A closing square bracket marks the end of the array literal.
-                if (value == "]") {
-                  break;
-                }
-                // If the array literal contains elements, the current token
-                // should be a comma separating the previous element from the
-                // next.
-                if (hasMembers) {
-                  if (value == ",") {
-                    value = lex();
-                    if (value == "]") {
-                      // Unexpected trailing `,` in array literal.
-                      abort();
-                    }
-                  } else {
-                    // A `,` must separate each array element.
-                    abort();
-                  }
-                }
-                // Elisions and leading commas are not permitted.
-                if (value == ",") {
-                  abort();
-                }
-                results.push(get(value));
-              }
-              return results;
-            } else if (value == "{") {
-              // Parses a JSON object, returning a new JavaScript object.
-              results = {};
-              for (;; hasMembers || (hasMembers = true)) {
-                value = lex();
-                // A closing curly brace marks the end of the object literal.
-                if (value == "}") {
-                  break;
-                }
-                // If the object literal contains members, the current token
-                // should be a comma separator.
-                if (hasMembers) {
-                  if (value == ",") {
-                    value = lex();
-                    if (value == "}") {
-                      // Unexpected trailing `,` in object literal.
-                      abort();
-                    }
-                  } else {
-                    // A `,` must separate each object member.
-                    abort();
-                  }
-                }
-                // Leading commas are not permitted, object property names must be
-                // double-quoted strings, and a `:` must separate each property
-                // name and value.
-                if (value == "," || typeof value != "string" || (charIndexBuggy ? value.charAt(0) : value[0]) != "@" || lex() != ":") {
-                  abort();
-                }
-                results[value.slice(1)] = get(lex());
-              }
-              return results;
-            }
-            // Unexpected token encountered.
-            abort();
-          }
-          return value;
-        };
-
-        // Internal: Updates a traversed object member.
-        var update = function (source, property, callback) {
-          var element = walk(source, property, callback);
-          if (element === undef) {
-            delete source[property];
-          } else {
-            source[property] = element;
-          }
-        };
-
-        // Internal: Recursively traverses a parsed JSON object, invoking the
-        // `callback` function for each value. This is an implementation of the
-        // `Walk(holder, name)` operation defined in ES 5.1 section 15.12.2.
-        var walk = function (source, property, callback) {
-          var value = source[property], length;
-          if (typeof value == "object" && value) {
-            // `forEach` can't be used to traverse an array in Opera <= 8.54
-            // because its `Object#hasOwnProperty` implementation returns `false`
-            // for array indices (e.g., `![1, 2, 3].hasOwnProperty("0")`).
-            if (getClass.call(value) == arrayClass) {
-              for (length = value.length; length--;) {
-                update(value, length, callback);
-              }
-            } else {
-              forEach(value, function (property) {
-                update(value, property, callback);
-              });
-            }
-          }
-          return callback.call(source, property, value);
-        };
-
-        // Public: `JSON.parse`. See ES 5.1 section 15.12.2.
-        exports.parse = function (source, callback) {
-          var result, value;
-          Index = 0;
-          Source = "" + source;
-          result = get(lex());
-          // If a JSON string contains multiple tokens, it is invalid.
-          if (lex() != "$") {
-            abort();
-          }
-          // Reset the parser state.
-          Index = Source = null;
-          return callback && getClass.call(callback) == functionClass ? walk((value = {}, value[""] = result, value), "", callback) : result;
-        };
-      }
-    }
-
-    exports["runInContext"] = runInContext;
-    return exports;
-  }
-
-  if (freeExports && !isLoader) {
-    // Export for CommonJS environments.
-    runInContext(root, freeExports);
-  } else {
-    // Export for web browsers and JavaScript engines.
-    var nativeJSON = root.JSON,
-        previousJSON = root["JSON3"],
-        isRestored = false;
-
-    var JSON3 = runInContext(root, (root["JSON3"] = {
-      // Public: Restores the original value of the global `JSON` object and
-      // returns a reference to the `JSON3` object.
-      "noConflict": function () {
-        if (!isRestored) {
-          isRestored = true;
-          root.JSON = nativeJSON;
-          root["JSON3"] = previousJSON;
-          nativeJSON = previousJSON = null;
-        }
-        return JSON3;
-      }
-    }));
-
-    root.JSON = {
-      "parse": JSON3.parse,
-      "stringify": JSON3.stringify
-    };
-  }
-
-  // Export for asynchronous module loaders.
-  if (isLoader) {
-    !(__WEBPACK_AMD_DEFINE_RESULT__ = function () {
-      return JSON3;
-    }.call(exports, __webpack_require__, exports, module),
-				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-  }
-}).call(this);
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(15)(module), __webpack_require__(0)))
-
-/***/ }),
-/* 52 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {/**
- * JSON parse.
- *
- * @see Based on jQuery#parseJSON (MIT) and JSON2
- * @api private
- */
-
-var rvalidchars = /^[\],:{}\s]*$/;
-var rvalidescape = /\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g;
-var rvalidtokens = /"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g;
-var rvalidbraces = /(?:^|:|,)(?:\s*\[)+/g;
-var rtrimLeft = /^\s+/;
-var rtrimRight = /\s+$/;
-
-module.exports = function parsejson(data) {
-  if ('string' != typeof data || !data) {
-    return null;
-  }
-
-  data = data.replace(rtrimLeft, '').replace(rtrimRight, '');
-
-  // Attempt to parse using the native JSON parser first
-  if (global.JSON && JSON.parse) {
-    return JSON.parse(data);
-  }
-
-  if (rvalidchars.test(data.replace(rvalidescape, '@')
-      .replace(rvalidtokens, ']')
-      .replace(rvalidbraces, ''))) {
-    return (new Function('return ' + data))();
-  }
-};
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
-
-/***/ }),
-/* 53 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-
-/**
- * @introduction
- * <h2>Finsemble system wide settings for use by all components and services</h2>
- *
- */
-
-/**
- * Constructor for Finsemble SystemSettings
- * @private
- * @constructor
- */
-var SystemSettings = function () {
-	var currentDiagLevel = 3;
-
-	/**
-  * Returns diagnostic level
-  *
-  *@returns current diagnostic level
-  */
-	this.diagLevel = function () {
-		return currentDiagLevel;
-	};
-
-	/**
-  * Returns diagnostic level
-  *
-  *@returns current diagnostic level
-  */
-	this.setDiagLevel = function (level) {
-		currentDiagLevel = level;
-	};
-
-	/**
-  * Returns true if parameter validation is enabled
-  *
-  *@returns true if enable
-  */
-	this.validationEnabled = function () {
-		return currentDiagLevel >= 4;
-	};
-};
-
-/* harmony default export */ __webpack_exports__["a"] = (new SystemSettings());
-
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\common\\systemSettings.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\common\\systemSettings.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
-
-/***/ }),
-/* 54 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
-    "use strict";
-
-    if (global.setImmediate) {
-        return;
-    }
-
-    var nextHandle = 1; // Spec says greater than zero
-    var tasksByHandle = {};
-    var currentlyRunningATask = false;
-    var doc = global.document;
-    var registerImmediate;
-
-    function setImmediate(callback) {
-      // Callback can either be a function or a string
-      if (typeof callback !== "function") {
-        callback = new Function("" + callback);
-      }
-      // Copy function arguments
-      var args = new Array(arguments.length - 1);
-      for (var i = 0; i < args.length; i++) {
-          args[i] = arguments[i + 1];
-      }
-      // Store and register the task
-      var task = { callback: callback, args: args };
-      tasksByHandle[nextHandle] = task;
-      registerImmediate(nextHandle);
-      return nextHandle++;
-    }
-
-    function clearImmediate(handle) {
-        delete tasksByHandle[handle];
-    }
-
-    function run(task) {
-        var callback = task.callback;
-        var args = task.args;
-        switch (args.length) {
-        case 0:
-            callback();
-            break;
-        case 1:
-            callback(args[0]);
-            break;
-        case 2:
-            callback(args[0], args[1]);
-            break;
-        case 3:
-            callback(args[0], args[1], args[2]);
-            break;
-        default:
-            callback.apply(undefined, args);
-            break;
-        }
-    }
-
-    function runIfPresent(handle) {
-        // From the spec: "Wait until any invocations of this algorithm started before this one have completed."
-        // So if we're currently running a task, we'll need to delay this invocation.
-        if (currentlyRunningATask) {
-            // Delay by doing a setTimeout. setImmediate was tried instead, but in Firefox 7 it generated a
-            // "too much recursion" error.
-            setTimeout(runIfPresent, 0, handle);
-        } else {
-            var task = tasksByHandle[handle];
-            if (task) {
-                currentlyRunningATask = true;
-                try {
-                    run(task);
-                } finally {
-                    clearImmediate(handle);
-                    currentlyRunningATask = false;
-                }
-            }
-        }
-    }
-
-    function installNextTickImplementation() {
-        registerImmediate = function(handle) {
-            process.nextTick(function () { runIfPresent(handle); });
-        };
-    }
-
-    function canUsePostMessage() {
-        // The test against `importScripts` prevents this implementation from being installed inside a web worker,
-        // where `global.postMessage` means something completely different and can't be used for this purpose.
-        if (global.postMessage && !global.importScripts) {
-            var postMessageIsAsynchronous = true;
-            var oldOnMessage = global.onmessage;
-            global.onmessage = function() {
-                postMessageIsAsynchronous = false;
-            };
-            global.postMessage("", "*");
-            global.onmessage = oldOnMessage;
-            return postMessageIsAsynchronous;
-        }
-    }
-
-    function installPostMessageImplementation() {
-        // Installs an event handler on `global` for the `message` event: see
-        // * https://developer.mozilla.org/en/DOM/window.postMessage
-        // * http://www.whatwg.org/specs/web-apps/current-work/multipage/comms.html#crossDocumentMessages
-
-        var messagePrefix = "setImmediate$" + Math.random() + "$";
-        var onGlobalMessage = function(event) {
-            if (event.source === global &&
-                typeof event.data === "string" &&
-                event.data.indexOf(messagePrefix) === 0) {
-                runIfPresent(+event.data.slice(messagePrefix.length));
-            }
-        };
-
-        if (global.addEventListener) {
-            global.addEventListener("message", onGlobalMessage, false);
-        } else {
-            global.attachEvent("onmessage", onGlobalMessage);
-        }
-
-        registerImmediate = function(handle) {
-            global.postMessage(messagePrefix + handle, "*");
-        };
-    }
-
-    function installMessageChannelImplementation() {
-        var channel = new MessageChannel();
-        channel.port1.onmessage = function(event) {
-            var handle = event.data;
-            runIfPresent(handle);
-        };
-
-        registerImmediate = function(handle) {
-            channel.port2.postMessage(handle);
-        };
-    }
-
-    function installReadyStateChangeImplementation() {
-        var html = doc.documentElement;
-        registerImmediate = function(handle) {
-            // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
-            // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called.
-            var script = doc.createElement("script");
-            script.onreadystatechange = function () {
-                runIfPresent(handle);
-                script.onreadystatechange = null;
-                html.removeChild(script);
-                script = null;
-            };
-            html.appendChild(script);
-        };
-    }
-
-    function installSetTimeoutImplementation() {
-        registerImmediate = function(handle) {
-            setTimeout(runIfPresent, 0, handle);
-        };
-    }
-
-    // If supported, we should attach to the prototype of global, since that is where setTimeout et al. live.
-    var attachTo = Object.getPrototypeOf && Object.getPrototypeOf(global);
-    attachTo = attachTo && attachTo.setTimeout ? attachTo : global;
-
-    // Don't get fooled by e.g. browserify environments.
-    if ({}.toString.call(global.process) === "[object process]") {
-        // For Node.js before 0.9
-        installNextTickImplementation();
-
-    } else if (canUsePostMessage()) {
-        // For non-IE10 modern browsers
-        installPostMessageImplementation();
-
-    } else if (global.MessageChannel) {
-        // For web workers, where supported
-        installMessageChannelImplementation();
-
-    } else if (doc && "onreadystatechange" in doc.createElement("script")) {
-        // For IE 6–8
-        installReadyStateChangeImplementation();
-
-    } else {
-        // For older browsers
-        installSetTimeoutImplementation();
-    }
-
-    attachTo.setImmediate = setImmediate;
-    attachTo.clearImmediate = clearImmediate;
-}(typeof self === "undefined" ? typeof global === "undefined" ? this : global : self));
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0), __webpack_require__(1)))
-
-/***/ }),
-/* 55 */
-/***/ (function(module, exports, __webpack_require__) {
-
-
-/**
- * Module dependencies.
- */
-
-var url = __webpack_require__(56);
-var parser = __webpack_require__(21);
-var Manager = __webpack_require__(28);
-var debug = __webpack_require__(5)('socket.io-client');
-
-/**
- * Module exports.
- */
-
-module.exports = exports = lookup;
-
-/**
- * Managers cache.
- */
-
-var cache = exports.managers = {};
-
-/**
- * Looks up an existing `Manager` for multiplexing.
- * If the user summons:
- *
- *   `io('http://localhost/a');`
- *   `io('http://localhost/b');`
- *
- * We reuse the existing instance based on same scheme/port/host,
- * and we initialize sockets for each namespace.
- *
- * @api public
- */
-
-function lookup (uri, opts) {
-  if (typeof uri === 'object') {
-    opts = uri;
-    uri = undefined;
-  }
-
-  opts = opts || {};
-
-  var parsed = url(uri);
-  var source = parsed.source;
-  var id = parsed.id;
-  var path = parsed.path;
-  var sameNamespace = cache[id] && path in cache[id].nsps;
-  var newConnection = opts.forceNew || opts['force new connection'] ||
-                      false === opts.multiplex || sameNamespace;
-
-  var io;
-
-  if (newConnection) {
-    debug('ignoring socket cache for %s', source);
-    io = Manager(source, opts);
-  } else {
-    if (!cache[id]) {
-      debug('new io instance for %s', source);
-      cache[id] = Manager(source, opts);
-    }
-    io = cache[id];
-  }
-  if (parsed.query && !opts.query) {
-    opts.query = parsed.query;
-  } else if (opts && 'object' === typeof opts.query) {
-    opts.query = encodeQueryString(opts.query);
-  }
-  return io.socket(parsed.path, opts);
-}
-/**
- *  Helper method to parse query objects to string.
- * @param {object} query
- * @returns {string}
- */
-function encodeQueryString (obj) {
-  var str = [];
-  for (var p in obj) {
-    if (obj.hasOwnProperty(p)) {
-      str.push(encodeURIComponent(p) + '=' + encodeURIComponent(obj[p]));
-    }
-  }
-  return str.join('&');
-}
-/**
- * Protocol version.
- *
- * @api public
- */
-
-exports.protocol = parser.protocol;
-
-/**
- * `connect`.
- *
- * @param {String} uri
- * @api public
- */
-
-exports.connect = lookup;
-
-/**
- * Expose constructors for standalone build.
- *
- * @api public
- */
-
-exports.Manager = __webpack_require__(28);
-exports.Socket = __webpack_require__(30);
-
-
-/***/ }),
-/* 56 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {
-/**
- * Module dependencies.
- */
-
-var parseuri = __webpack_require__(27);
-var debug = __webpack_require__(5)('socket.io-client:url');
-
-/**
- * Module exports.
- */
-
-module.exports = url;
-
-/**
- * URL parser.
- *
- * @param {String} url
- * @param {Object} An object meant to mimic window.location.
- *                 Defaults to window.location.
- * @api public
- */
-
-function url (uri, loc) {
-  var obj = uri;
-
-  // default to window.location
-  loc = loc || global.location;
-  if (null == uri) uri = loc.protocol + '//' + loc.host;
-
-  // relative path support
-  if ('string' === typeof uri) {
-    if ('/' === uri.charAt(0)) {
-      if ('/' === uri.charAt(1)) {
-        uri = loc.protocol + uri;
-      } else {
-        uri = loc.host + uri;
-      }
-    }
-
-    if (!/^(https?|wss?):\/\//.test(uri)) {
-      debug('protocol-less url %s', uri);
-      if ('undefined' !== typeof loc) {
-        uri = loc.protocol + '//' + uri;
-      } else {
-        uri = 'https://' + uri;
-      }
-    }
-
-    // parse
-    debug('parse %s', uri);
-    obj = parseuri(uri);
-  }
-
-  // make sure we treat `localhost:80` and `localhost` equally
-  if (!obj.port) {
-    if (/^(http|ws)$/.test(obj.protocol)) {
-      obj.port = '80';
-    } else if (/^(http|ws)s$/.test(obj.protocol)) {
-      obj.port = '443';
-    }
-  }
-
-  obj.path = obj.path || '/';
-
-  var ipv6 = obj.host.indexOf(':') !== -1;
-  var host = ipv6 ? '[' + obj.host + ']' : obj.host;
-
-  // define unique id
-  obj.id = obj.protocol + '://' + host + ':' + obj.port;
-  // define href
-  obj.href = obj.protocol + '://' + host + (loc && loc.port === obj.port ? '' : (':' + obj.port));
-
-  return obj;
-}
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
-
-/***/ }),
-/* 57 */
-/***/ (function(module, exports) {
-
-/**
- * An abstraction for slicing an arraybuffer even when
- * ArrayBuffer.prototype.slice is not supported
- *
- * @api public
- */
-
-module.exports = function(arraybuffer, start, end) {
-  var bytes = arraybuffer.byteLength;
-  start = start || 0;
-  end = end || bytes;
-
-  if (arraybuffer.slice) { return arraybuffer.slice(start, end); }
-
-  if (start < 0) { start += bytes; }
-  if (end < 0) { end += bytes; }
-  if (end > bytes) { end = bytes; }
-
-  if (start >= bytes || start >= end || bytes === 0) {
-    return new ArrayBuffer(0);
-  }
-
-  var abv = new Uint8Array(arraybuffer);
-  var result = new Uint8Array(end - start);
-  for (var i = start, ii = 0; i < end; i++, ii++) {
-    result[ii] = abv[i];
-  }
-  return result.buffer;
-};
-
-
-/***/ }),
-/* 58 */
-/***/ (function(module, exports, __webpack_require__) {
-
-
-/**
- * This is the common logic for both the Node.js and web browser
- * implementations of `debug()`.
- *
- * Expose `debug()` as the module.
- */
-
-exports = module.exports = debug.debug = debug;
-exports.coerce = coerce;
-exports.disable = disable;
-exports.enable = enable;
-exports.enabled = enabled;
-exports.humanize = __webpack_require__(67);
-
-/**
- * The currently active debug mode names, and names to skip.
- */
-
-exports.names = [];
-exports.skips = [];
-
-/**
- * Map of special "%n" handling functions, for the debug "format" argument.
- *
- * Valid key names are a single, lowercased letter, i.e. "n".
- */
-
-exports.formatters = {};
-
-/**
- * Previously assigned color.
- */
-
-var prevColor = 0;
-
-/**
- * Previous log timestamp.
- */
-
-var prevTime;
-
-/**
- * Select a color.
- *
- * @return {Number}
- * @api private
- */
-
-function selectColor() {
-  return exports.colors[prevColor++ % exports.colors.length];
-}
-
-/**
- * Create a debugger with the given `namespace`.
- *
- * @param {String} namespace
- * @return {Function}
- * @api public
- */
-
-function debug(namespace) {
-
-  // define the `disabled` version
-  function disabled() {
-  }
-  disabled.enabled = false;
-
-  // define the `enabled` version
-  function enabled() {
-
-    var self = enabled;
-
-    // set `diff` timestamp
-    var curr = +new Date();
-    var ms = curr - (prevTime || curr);
-    self.diff = ms;
-    self.prev = prevTime;
-    self.curr = curr;
-    prevTime = curr;
-
-    // add the `color` if not set
-    if (null == self.useColors) self.useColors = exports.useColors();
-    if (null == self.color && self.useColors) self.color = selectColor();
-
-    var args = new Array(arguments.length);
-    for (var i = 0; i < args.length; i++) {
-      args[i] = arguments[i];
-    }
-
-    args[0] = exports.coerce(args[0]);
-
-    if ('string' !== typeof args[0]) {
-      // anything else let's inspect with %o
-      args = ['%o'].concat(args);
-    }
-
-    // apply any `formatters` transformations
-    var index = 0;
-    args[0] = args[0].replace(/%([a-z%])/g, function(match, format) {
-      // if we encounter an escaped % then don't increase the array index
-      if (match === '%%') return match;
-      index++;
-      var formatter = exports.formatters[format];
-      if ('function' === typeof formatter) {
-        var val = args[index];
-        match = formatter.call(self, val);
-
-        // now we need to remove `args[index]` since it's inlined in the `format`
-        args.splice(index, 1);
-        index--;
-      }
-      return match;
-    });
-
-    // apply env-specific formatting
-    args = exports.formatArgs.apply(self, args);
-
-    var logFn = enabled.log || exports.log || console.log.bind(console);
-    logFn.apply(self, args);
-  }
-  enabled.enabled = true;
-
-  var fn = exports.enabled(namespace) ? enabled : disabled;
-
-  fn.namespace = namespace;
-
-  return fn;
-}
-
-/**
- * Enables a debug mode by namespaces. This can include modes
- * separated by a colon and wildcards.
- *
- * @param {String} namespaces
- * @api public
- */
-
-function enable(namespaces) {
-  exports.save(namespaces);
-
-  var split = (namespaces || '').split(/[\s,]+/);
-  var len = split.length;
-
-  for (var i = 0; i < len; i++) {
-    if (!split[i]) continue; // ignore empty strings
-    namespaces = split[i].replace(/[\\^$+?.()|[\]{}]/g, '\\$&').replace(/\*/g, '.*?');
-    if (namespaces[0] === '-') {
-      exports.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
-    } else {
-      exports.names.push(new RegExp('^' + namespaces + '$'));
-    }
-  }
-}
-
-/**
- * Disable debug output.
- *
- * @api public
- */
-
-function disable() {
-  exports.enable('');
-}
-
-/**
- * Returns true if the given mode name is enabled, false otherwise.
- *
- * @param {String} name
- * @return {Boolean}
- * @api public
- */
-
-function enabled(name) {
-  var i, len;
-  for (i = 0, len = exports.skips.length; i < len; i++) {
-    if (exports.skips[i].test(name)) {
-      return false;
-    }
-  }
-  for (i = 0, len = exports.names.length; i < len; i++) {
-    if (exports.names[i].test(name)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
- * Coerce `val`.
- *
- * @param {Mixed} val
- * @return {Mixed}
- * @api private
- */
-
-function coerce(val) {
-  if (val instanceof Error) return val.stack || val.message;
-  return val;
-}
-
-
-/***/ }),
-/* 59 */
-/***/ (function(module, exports, __webpack_require__) {
-
-
-module.exports = __webpack_require__(60);
-
-
-/***/ }),
-/* 60 */
-/***/ (function(module, exports, __webpack_require__) {
-
-
-module.exports = __webpack_require__(61);
-
-/**
- * Exports parser
- *
- * @api public
- *
- */
-module.exports.parser = __webpack_require__(7);
-
-
-/***/ }),
-/* 61 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {/**
- * Module dependencies.
- */
-
-var transports = __webpack_require__(31);
-var Emitter = __webpack_require__(8);
-var debug = __webpack_require__(5)('engine.io-client:socket');
-var index = __webpack_require__(26);
-var parser = __webpack_require__(7);
-var parseuri = __webpack_require__(27);
-var parsejson = __webpack_require__(52);
-var parseqs = __webpack_require__(18);
-
-/**
- * Module exports.
- */
-
-module.exports = Socket;
-
-/**
- * Socket constructor.
- *
- * @param {String|Object} uri or options
- * @param {Object} options
- * @api public
- */
-
-function Socket (uri, opts) {
-  if (!(this instanceof Socket)) return new Socket(uri, opts);
-
-  opts = opts || {};
-
-  if (uri && 'object' === typeof uri) {
-    opts = uri;
-    uri = null;
-  }
-
-  if (uri) {
-    uri = parseuri(uri);
-    opts.hostname = uri.host;
-    opts.secure = uri.protocol === 'https' || uri.protocol === 'wss';
-    opts.port = uri.port;
-    if (uri.query) opts.query = uri.query;
-  } else if (opts.host) {
-    opts.hostname = parseuri(opts.host).host;
-  }
-
-  this.secure = null != opts.secure ? opts.secure
-    : (global.location && 'https:' === location.protocol);
-
-  if (opts.hostname && !opts.port) {
-    // if no port is specified manually, use the protocol default
-    opts.port = this.secure ? '443' : '80';
-  }
-
-  this.agent = opts.agent || false;
-  this.hostname = opts.hostname ||
-    (global.location ? location.hostname : 'localhost');
-  this.port = opts.port || (global.location && location.port
-      ? location.port
-      : (this.secure ? 443 : 80));
-  this.query = opts.query || {};
-  if ('string' === typeof this.query) this.query = parseqs.decode(this.query);
-  this.upgrade = false !== opts.upgrade;
-  this.path = (opts.path || '/engine.io').replace(/\/$/, '') + '/';
-  this.forceJSONP = !!opts.forceJSONP;
-  this.jsonp = false !== opts.jsonp;
-  this.forceBase64 = !!opts.forceBase64;
-  this.enablesXDR = !!opts.enablesXDR;
-  this.timestampParam = opts.timestampParam || 't';
-  this.timestampRequests = opts.timestampRequests;
-  this.transports = opts.transports || ['polling', 'websocket'];
-  this.readyState = '';
-  this.writeBuffer = [];
-  this.prevBufferLen = 0;
-  this.policyPort = opts.policyPort || 843;
-  this.rememberUpgrade = opts.rememberUpgrade || false;
-  this.binaryType = null;
-  this.onlyBinaryUpgrades = opts.onlyBinaryUpgrades;
-  this.perMessageDeflate = false !== opts.perMessageDeflate ? (opts.perMessageDeflate || {}) : false;
-
-  if (true === this.perMessageDeflate) this.perMessageDeflate = {};
-  if (this.perMessageDeflate && null == this.perMessageDeflate.threshold) {
-    this.perMessageDeflate.threshold = 1024;
-  }
-
-  // SSL options for Node.js client
-  this.pfx = opts.pfx || null;
-  this.key = opts.key || null;
-  this.passphrase = opts.passphrase || null;
-  this.cert = opts.cert || null;
-  this.ca = opts.ca || null;
-  this.ciphers = opts.ciphers || null;
-  this.rejectUnauthorized = opts.rejectUnauthorized === undefined ? null : opts.rejectUnauthorized;
-  this.forceNode = !!opts.forceNode;
-
-  // other options for Node.js client
-  var freeGlobal = typeof global === 'object' && global;
-  if (freeGlobal.global === freeGlobal) {
-    if (opts.extraHeaders && Object.keys(opts.extraHeaders).length > 0) {
-      this.extraHeaders = opts.extraHeaders;
-    }
-
-    if (opts.localAddress) {
-      this.localAddress = opts.localAddress;
-    }
-  }
-
-  // set on handshake
-  this.id = null;
-  this.upgrades = null;
-  this.pingInterval = null;
-  this.pingTimeout = null;
-
-  // set on heartbeat
-  this.pingIntervalTimer = null;
-  this.pingTimeoutTimer = null;
-
-  this.open();
-}
-
-Socket.priorWebsocketSuccess = false;
-
-/**
- * Mix in `Emitter`.
- */
-
-Emitter(Socket.prototype);
-
-/**
- * Protocol version.
- *
- * @api public
- */
-
-Socket.protocol = parser.protocol; // this is an int
-
-/**
- * Expose deps for legacy compatibility
- * and standalone browser access.
- */
-
-Socket.Socket = Socket;
-Socket.Transport = __webpack_require__(19);
-Socket.transports = __webpack_require__(31);
-Socket.parser = __webpack_require__(7);
-
-/**
- * Creates transport of the given type.
- *
- * @param {String} transport name
- * @return {Transport}
- * @api private
- */
-
-Socket.prototype.createTransport = function (name) {
-  debug('creating transport "%s"', name);
-  var query = clone(this.query);
-
-  // append engine.io protocol identifier
-  query.EIO = parser.protocol;
-
-  // transport name
-  query.transport = name;
-
-  // session id if we already have one
-  if (this.id) query.sid = this.id;
-
-  var transport = new transports[name]({
-    agent: this.agent,
-    hostname: this.hostname,
-    port: this.port,
-    secure: this.secure,
-    path: this.path,
-    query: query,
-    forceJSONP: this.forceJSONP,
-    jsonp: this.jsonp,
-    forceBase64: this.forceBase64,
-    enablesXDR: this.enablesXDR,
-    timestampRequests: this.timestampRequests,
-    timestampParam: this.timestampParam,
-    policyPort: this.policyPort,
-    socket: this,
-    pfx: this.pfx,
-    key: this.key,
-    passphrase: this.passphrase,
-    cert: this.cert,
-    ca: this.ca,
-    ciphers: this.ciphers,
-    rejectUnauthorized: this.rejectUnauthorized,
-    perMessageDeflate: this.perMessageDeflate,
-    extraHeaders: this.extraHeaders,
-    forceNode: this.forceNode,
-    localAddress: this.localAddress
-  });
-
-  return transport;
-};
-
-function clone (obj) {
-  var o = {};
-  for (var i in obj) {
-    if (obj.hasOwnProperty(i)) {
-      o[i] = obj[i];
-    }
-  }
-  return o;
-}
-
-/**
- * Initializes transport to use and starts probe.
- *
- * @api private
- */
-Socket.prototype.open = function () {
-  var transport;
-  if (this.rememberUpgrade && Socket.priorWebsocketSuccess && this.transports.indexOf('websocket') !== -1) {
-    transport = 'websocket';
-  } else if (0 === this.transports.length) {
-    // Emit error on next tick so it can be listened to
-    var self = this;
-    setTimeout(function () {
-      self.emit('error', 'No transports available');
-    }, 0);
-    return;
-  } else {
-    transport = this.transports[0];
-  }
-  this.readyState = 'opening';
-
-  // Retry with the next transport if the transport is disabled (jsonp: false)
-  try {
-    transport = this.createTransport(transport);
-  } catch (e) {
-    this.transports.shift();
-    this.open();
-    return;
-  }
-
-  transport.open();
-  this.setTransport(transport);
-};
-
-/**
- * Sets the current transport. Disables the existing one (if any).
- *
- * @api private
- */
-
-Socket.prototype.setTransport = function (transport) {
-  debug('setting transport %s', transport.name);
-  var self = this;
-
-  if (this.transport) {
-    debug('clearing existing transport %s', this.transport.name);
-    this.transport.removeAllListeners();
-  }
-
-  // set up transport
-  this.transport = transport;
-
-  // set up transport listeners
-  transport
-  .on('drain', function () {
-    self.onDrain();
-  })
-  .on('packet', function (packet) {
-    self.onPacket(packet);
-  })
-  .on('error', function (e) {
-    self.onError(e);
-  })
-  .on('close', function () {
-    self.onClose('transport close');
-  });
-};
-
-/**
- * Probes a transport.
- *
- * @param {String} transport name
- * @api private
- */
-
-Socket.prototype.probe = function (name) {
-  debug('probing transport "%s"', name);
-  var transport = this.createTransport(name, { probe: 1 });
-  var failed = false;
-  var self = this;
-
-  Socket.priorWebsocketSuccess = false;
-
-  function onTransportOpen () {
-    if (self.onlyBinaryUpgrades) {
-      var upgradeLosesBinary = !this.supportsBinary && self.transport.supportsBinary;
-      failed = failed || upgradeLosesBinary;
-    }
-    if (failed) return;
-
-    debug('probe transport "%s" opened', name);
-    transport.send([{ type: 'ping', data: 'probe' }]);
-    transport.once('packet', function (msg) {
-      if (failed) return;
-      if ('pong' === msg.type && 'probe' === msg.data) {
-        debug('probe transport "%s" pong', name);
-        self.upgrading = true;
-        self.emit('upgrading', transport);
-        if (!transport) return;
-        Socket.priorWebsocketSuccess = 'websocket' === transport.name;
-
-        debug('pausing current transport "%s"', self.transport.name);
-        self.transport.pause(function () {
-          if (failed) return;
-          if ('closed' === self.readyState) return;
-          debug('changing transport and sending upgrade packet');
-
-          cleanup();
-
-          self.setTransport(transport);
-          transport.send([{ type: 'upgrade' }]);
-          self.emit('upgrade', transport);
-          transport = null;
-          self.upgrading = false;
-          self.flush();
-        });
-      } else {
-        debug('probe transport "%s" failed', name);
-        var err = new Error('probe error');
-        err.transport = transport.name;
-        self.emit('upgradeError', err);
-      }
-    });
-  }
-
-  function freezeTransport () {
-    if (failed) return;
-
-    // Any callback called by transport should be ignored since now
-    failed = true;
-
-    cleanup();
-
-    transport.close();
-    transport = null;
-  }
-
-  // Handle any error that happens while probing
-  function onerror (err) {
-    var error = new Error('probe error: ' + err);
-    error.transport = transport.name;
-
-    freezeTransport();
-
-    debug('probe transport "%s" failed because of error: %s', name, err);
-
-    self.emit('upgradeError', error);
-  }
-
-  function onTransportClose () {
-    onerror('transport closed');
-  }
-
-  // When the socket is closed while we're probing
-  function onclose () {
-    onerror('socket closed');
-  }
-
-  // When the socket is upgraded while we're probing
-  function onupgrade (to) {
-    if (transport && to.name !== transport.name) {
-      debug('"%s" works - aborting "%s"', to.name, transport.name);
-      freezeTransport();
-    }
-  }
-
-  // Remove all listeners on the transport and on self
-  function cleanup () {
-    transport.removeListener('open', onTransportOpen);
-    transport.removeListener('error', onerror);
-    transport.removeListener('close', onTransportClose);
-    self.removeListener('close', onclose);
-    self.removeListener('upgrading', onupgrade);
-  }
-
-  transport.once('open', onTransportOpen);
-  transport.once('error', onerror);
-  transport.once('close', onTransportClose);
-
-  this.once('close', onclose);
-  this.once('upgrading', onupgrade);
-
-  transport.open();
-};
-
-/**
- * Called when connection is deemed open.
- *
- * @api public
- */
-
-Socket.prototype.onOpen = function () {
-  debug('socket open');
-  this.readyState = 'open';
-  Socket.priorWebsocketSuccess = 'websocket' === this.transport.name;
-  this.emit('open');
-  this.flush();
-
-  // we check for `readyState` in case an `open`
-  // listener already closed the socket
-  if ('open' === this.readyState && this.upgrade && this.transport.pause) {
-    debug('starting upgrade probes');
-    for (var i = 0, l = this.upgrades.length; i < l; i++) {
-      this.probe(this.upgrades[i]);
-    }
-  }
-};
-
-/**
- * Handles a packet.
- *
- * @api private
- */
-
-Socket.prototype.onPacket = function (packet) {
-  if ('opening' === this.readyState || 'open' === this.readyState ||
-      'closing' === this.readyState) {
-    debug('socket receive: type "%s", data "%s"', packet.type, packet.data);
-
-    this.emit('packet', packet);
-
-    // Socket is live - any packet counts
-    this.emit('heartbeat');
-
-    switch (packet.type) {
-      case 'open':
-        this.onHandshake(parsejson(packet.data));
-        break;
-
-      case 'pong':
-        this.setPing();
-        this.emit('pong');
-        break;
-
-      case 'error':
-        var err = new Error('server error');
-        err.code = packet.data;
-        this.onError(err);
-        break;
-
-      case 'message':
-        this.emit('data', packet.data);
-        this.emit('message', packet.data);
-        break;
-    }
-  } else {
-    debug('packet received with socket readyState "%s"', this.readyState);
-  }
-};
-
-/**
- * Called upon handshake completion.
- *
- * @param {Object} handshake obj
- * @api private
- */
-
-Socket.prototype.onHandshake = function (data) {
-  this.emit('handshake', data);
-  this.id = data.sid;
-  this.transport.query.sid = data.sid;
-  this.upgrades = this.filterUpgrades(data.upgrades);
-  this.pingInterval = data.pingInterval;
-  this.pingTimeout = data.pingTimeout;
-  this.onOpen();
-  // In case open handler closes socket
-  if ('closed' === this.readyState) return;
-  this.setPing();
-
-  // Prolong liveness of socket on heartbeat
-  this.removeListener('heartbeat', this.onHeartbeat);
-  this.on('heartbeat', this.onHeartbeat);
-};
-
-/**
- * Resets ping timeout.
- *
- * @api private
- */
-
-Socket.prototype.onHeartbeat = function (timeout) {
-  clearTimeout(this.pingTimeoutTimer);
-  var self = this;
-  self.pingTimeoutTimer = setTimeout(function () {
-    if ('closed' === self.readyState) return;
-    self.onClose('ping timeout');
-  }, timeout || (self.pingInterval + self.pingTimeout));
-};
-
-/**
- * Pings server every `this.pingInterval` and expects response
- * within `this.pingTimeout` or closes connection.
- *
- * @api private
- */
-
-Socket.prototype.setPing = function () {
-  var self = this;
-  clearTimeout(self.pingIntervalTimer);
-  self.pingIntervalTimer = setTimeout(function () {
-    debug('writing ping packet - expecting pong within %sms', self.pingTimeout);
-    self.ping();
-    self.onHeartbeat(self.pingTimeout);
-  }, self.pingInterval);
-};
-
-/**
-* Sends a ping packet.
-*
-* @api private
-*/
-
-Socket.prototype.ping = function () {
-  var self = this;
-  this.sendPacket('ping', function () {
-    self.emit('ping');
-  });
-};
-
-/**
- * Called on `drain` event
- *
- * @api private
- */
-
-Socket.prototype.onDrain = function () {
-  this.writeBuffer.splice(0, this.prevBufferLen);
-
-  // setting prevBufferLen = 0 is very important
-  // for example, when upgrading, upgrade packet is sent over,
-  // and a nonzero prevBufferLen could cause problems on `drain`
-  this.prevBufferLen = 0;
-
-  if (0 === this.writeBuffer.length) {
-    this.emit('drain');
-  } else {
-    this.flush();
-  }
-};
-
-/**
- * Flush write buffers.
- *
- * @api private
- */
-
-Socket.prototype.flush = function () {
-  if ('closed' !== this.readyState && this.transport.writable &&
-    !this.upgrading && this.writeBuffer.length) {
-    debug('flushing %d packets in socket', this.writeBuffer.length);
-    this.transport.send(this.writeBuffer);
-    // keep track of current length of writeBuffer
-    // splice writeBuffer and callbackBuffer on `drain`
-    this.prevBufferLen = this.writeBuffer.length;
-    this.emit('flush');
-  }
-};
-
-/**
- * Sends a message.
- *
- * @param {String} message.
- * @param {Function} callback function.
- * @param {Object} options.
- * @return {Socket} for chaining.
- * @api public
- */
-
-Socket.prototype.write =
-Socket.prototype.send = function (msg, options, fn) {
-  this.sendPacket('message', msg, options, fn);
-  return this;
-};
-
-/**
- * Sends a packet.
- *
- * @param {String} packet type.
- * @param {String} data.
- * @param {Object} options.
- * @param {Function} callback function.
- * @api private
- */
-
-Socket.prototype.sendPacket = function (type, data, options, fn) {
-  if ('function' === typeof data) {
-    fn = data;
-    data = undefined;
-  }
-
-  if ('function' === typeof options) {
-    fn = options;
-    options = null;
-  }
-
-  if ('closing' === this.readyState || 'closed' === this.readyState) {
-    return;
-  }
-
-  options = options || {};
-  options.compress = false !== options.compress;
-
-  var packet = {
-    type: type,
-    data: data,
-    options: options
-  };
-  this.emit('packetCreate', packet);
-  this.writeBuffer.push(packet);
-  if (fn) this.once('flush', fn);
-  this.flush();
-};
-
-/**
- * Closes the connection.
- *
- * @api private
- */
-
-Socket.prototype.close = function () {
-  if ('opening' === this.readyState || 'open' === this.readyState) {
-    this.readyState = 'closing';
-
-    var self = this;
-
-    if (this.writeBuffer.length) {
-      this.once('drain', function () {
-        if (this.upgrading) {
-          waitForUpgrade();
-        } else {
-          close();
-        }
-      });
-    } else if (this.upgrading) {
-      waitForUpgrade();
-    } else {
-      close();
-    }
-  }
-
-  function close () {
-    self.onClose('forced close');
-    debug('socket closing - telling transport to close');
-    self.transport.close();
-  }
-
-  function cleanupAndClose () {
-    self.removeListener('upgrade', cleanupAndClose);
-    self.removeListener('upgradeError', cleanupAndClose);
-    close();
-  }
-
-  function waitForUpgrade () {
-    // wait for upgrade to finish since we can't send packets while pausing a transport
-    self.once('upgrade', cleanupAndClose);
-    self.once('upgradeError', cleanupAndClose);
-  }
-
-  return this;
-};
-
-/**
- * Called upon transport error
- *
- * @api private
- */
-
-Socket.prototype.onError = function (err) {
-  debug('socket error %j', err);
-  Socket.priorWebsocketSuccess = false;
-  this.emit('error', err);
-  this.onClose('transport error', err);
-};
-
-/**
- * Called upon transport close.
- *
- * @api private
- */
-
-Socket.prototype.onClose = function (reason, desc) {
-  if ('opening' === this.readyState || 'open' === this.readyState || 'closing' === this.readyState) {
-    debug('socket close with reason: "%s"', reason);
-    var self = this;
-
-    // clear timers
-    clearTimeout(this.pingIntervalTimer);
-    clearTimeout(this.pingTimeoutTimer);
-
-    // stop event from firing again for transport
-    this.transport.removeAllListeners('close');
-
-    // ensure transport won't stay open
-    this.transport.close();
-
-    // ignore further transport communication
-    this.transport.removeAllListeners();
-
-    // set ready state
-    this.readyState = 'closed';
-
-    // clear session id
-    this.id = null;
-
-    // emit close event
-    this.emit('close', reason, desc);
-
-    // clean buffers after, so users can still
-    // grab the buffers on `close` event
-    self.writeBuffer = [];
-    self.prevBufferLen = 0;
-  }
-};
-
-/**
- * Filters upgrades, returning only those matching client transports.
- *
- * @param {Array} server upgrades
- * @api private
- *
- */
-
-Socket.prototype.filterUpgrades = function (upgrades) {
-  var filteredUpgrades = [];
-  for (var i = 0, j = upgrades.length; i < j; i++) {
-    if (~index(this.transports, upgrades[i])) filteredUpgrades.push(upgrades[i]);
-  }
-  return filteredUpgrades;
-};
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
-
-/***/ }),
-/* 62 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {
-/**
- * Module requirements.
- */
-
-var Polling = __webpack_require__(32);
-var inherit = __webpack_require__(12);
-
-/**
- * Module exports.
- */
-
-module.exports = JSONPPolling;
-
-/**
- * Cached regular expressions.
- */
-
-var rNewline = /\n/g;
-var rEscapedNewline = /\\n/g;
-
-/**
- * Global JSONP callbacks.
- */
-
-var callbacks;
-
-/**
- * Noop.
- */
-
-function empty () { }
-
-/**
- * JSONP Polling constructor.
- *
- * @param {Object} opts.
- * @api public
- */
-
-function JSONPPolling (opts) {
-  Polling.call(this, opts);
-
-  this.query = this.query || {};
-
-  // define global callbacks array if not present
-  // we do this here (lazily) to avoid unneeded global pollution
-  if (!callbacks) {
-    // we need to consider multiple engines in the same page
-    if (!global.___eio) global.___eio = [];
-    callbacks = global.___eio;
-  }
-
-  // callback identifier
-  this.index = callbacks.length;
-
-  // add callback to jsonp global
-  var self = this;
-  callbacks.push(function (msg) {
-    self.onData(msg);
-  });
-
-  // append to query string
-  this.query.j = this.index;
-
-  // prevent spurious errors from being emitted when the window is unloaded
-  if (global.document && global.addEventListener) {
-    global.addEventListener('beforeunload', function () {
-      if (self.script) self.script.onerror = empty;
-    }, false);
-  }
-}
-
-/**
- * Inherits from Polling.
- */
-
-inherit(JSONPPolling, Polling);
-
-/*
- * JSONP only supports binary as base64 encoded strings
- */
-
-JSONPPolling.prototype.supportsBinary = false;
-
-/**
- * Closes the socket.
- *
- * @api private
- */
-
-JSONPPolling.prototype.doClose = function () {
-  if (this.script) {
-    this.script.parentNode.removeChild(this.script);
-    this.script = null;
-  }
-
-  if (this.form) {
-    this.form.parentNode.removeChild(this.form);
-    this.form = null;
-    this.iframe = null;
-  }
-
-  Polling.prototype.doClose.call(this);
-};
-
-/**
- * Starts a poll cycle.
- *
- * @api private
- */
-
-JSONPPolling.prototype.doPoll = function () {
-  var self = this;
-  var script = document.createElement('script');
-
-  if (this.script) {
-    this.script.parentNode.removeChild(this.script);
-    this.script = null;
-  }
-
-  script.async = true;
-  script.src = this.uri();
-  script.onerror = function (e) {
-    self.onError('jsonp poll error', e);
-  };
-
-  var insertAt = document.getElementsByTagName('script')[0];
-  if (insertAt) {
-    insertAt.parentNode.insertBefore(script, insertAt);
-  } else {
-    (document.head || document.body).appendChild(script);
-  }
-  this.script = script;
-
-  var isUAgecko = 'undefined' !== typeof navigator && /gecko/i.test(navigator.userAgent);
-
-  if (isUAgecko) {
-    setTimeout(function () {
-      var iframe = document.createElement('iframe');
-      document.body.appendChild(iframe);
-      document.body.removeChild(iframe);
-    }, 100);
-  }
-};
-
-/**
- * Writes with a hidden iframe.
- *
- * @param {String} data to send
- * @param {Function} called upon flush.
- * @api private
- */
-
-JSONPPolling.prototype.doWrite = function (data, fn) {
-  var self = this;
-
-  if (!this.form) {
-    var form = document.createElement('form');
-    var area = document.createElement('textarea');
-    var id = this.iframeId = 'eio_iframe_' + this.index;
-    var iframe;
-
-    form.className = 'socketio';
-    form.style.position = 'absolute';
-    form.style.top = '-1000px';
-    form.style.left = '-1000px';
-    form.target = id;
-    form.method = 'POST';
-    form.setAttribute('accept-charset', 'utf-8');
-    area.name = 'd';
-    form.appendChild(area);
-    document.body.appendChild(form);
-
-    this.form = form;
-    this.area = area;
-  }
-
-  this.form.action = this.uri();
-
-  function complete () {
-    initIframe();
-    fn();
-  }
-
-  function initIframe () {
-    if (self.iframe) {
-      try {
-        self.form.removeChild(self.iframe);
-      } catch (e) {
-        self.onError('jsonp polling iframe removal error', e);
-      }
-    }
-
-    try {
-      // ie6 dynamic iframes with target="" support (thanks Chris Lambacher)
-      var html = '<iframe src="javascript:0" name="' + self.iframeId + '">';
-      iframe = document.createElement(html);
-    } catch (e) {
-      iframe = document.createElement('iframe');
-      iframe.name = self.iframeId;
-      iframe.src = 'javascript:0';
-    }
-
-    iframe.id = self.iframeId;
-
-    self.form.appendChild(iframe);
-    self.iframe = iframe;
-  }
-
-  initIframe();
-
-  // escape \n to prevent it from being converted into \r\n by some UAs
-  // double escaping is required for escaped new lines because unescaping of new lines can be done safely on server-side
-  data = data.replace(rEscapedNewline, '\\\n');
-  this.area.value = data.replace(rNewline, '\\n');
-
-  try {
-    this.form.submit();
-  } catch (e) {}
-
-  if (this.iframe.attachEvent) {
-    this.iframe.onreadystatechange = function () {
-      if (self.iframe.readyState === 'complete') {
-        complete();
-      }
-    };
-  } else {
-    this.iframe.onload = complete;
-  }
-};
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
-
-/***/ }),
-/* 63 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {/**
- * Module requirements.
- */
-
-var XMLHttpRequest = __webpack_require__(20);
-var Polling = __webpack_require__(32);
-var Emitter = __webpack_require__(8);
-var inherit = __webpack_require__(12);
-var debug = __webpack_require__(5)('engine.io-client:polling-xhr');
-
-/**
- * Module exports.
- */
-
-module.exports = XHR;
-module.exports.Request = Request;
-
-/**
- * Empty function
- */
-
-function empty () {}
-
-/**
- * XHR Polling constructor.
- *
- * @param {Object} opts
- * @api public
- */
-
-function XHR (opts) {
-  Polling.call(this, opts);
-  this.requestTimeout = opts.requestTimeout;
-
-  if (global.location) {
-    var isSSL = 'https:' === location.protocol;
-    var port = location.port;
-
-    // some user agents have empty `location.port`
-    if (!port) {
-      port = isSSL ? 443 : 80;
-    }
-
-    this.xd = opts.hostname !== global.location.hostname ||
-      port !== opts.port;
-    this.xs = opts.secure !== isSSL;
-  } else {
-    this.extraHeaders = opts.extraHeaders;
-  }
-}
-
-/**
- * Inherits from Polling.
- */
-
-inherit(XHR, Polling);
-
-/**
- * XHR supports binary
- */
-
-XHR.prototype.supportsBinary = true;
-
-/**
- * Creates a request.
- *
- * @param {String} method
- * @api private
- */
-
-XHR.prototype.request = function (opts) {
-  opts = opts || {};
-  opts.uri = this.uri();
-  opts.xd = this.xd;
-  opts.xs = this.xs;
-  opts.agent = this.agent || false;
-  opts.supportsBinary = this.supportsBinary;
-  opts.enablesXDR = this.enablesXDR;
-
-  // SSL options for Node.js client
-  opts.pfx = this.pfx;
-  opts.key = this.key;
-  opts.passphrase = this.passphrase;
-  opts.cert = this.cert;
-  opts.ca = this.ca;
-  opts.ciphers = this.ciphers;
-  opts.rejectUnauthorized = this.rejectUnauthorized;
-  opts.requestTimeout = this.requestTimeout;
-
-  // other options for Node.js client
-  opts.extraHeaders = this.extraHeaders;
-
-  return new Request(opts);
-};
-
-/**
- * Sends data.
- *
- * @param {String} data to send.
- * @param {Function} called upon flush.
- * @api private
- */
-
-XHR.prototype.doWrite = function (data, fn) {
-  var isBinary = typeof data !== 'string' && data !== undefined;
-  var req = this.request({ method: 'POST', data: data, isBinary: isBinary });
-  var self = this;
-  req.on('success', fn);
-  req.on('error', function (err) {
-    self.onError('xhr post error', err);
-  });
-  this.sendXhr = req;
-};
-
-/**
- * Starts a poll cycle.
- *
- * @api private
- */
-
-XHR.prototype.doPoll = function () {
-  debug('xhr poll');
-  var req = this.request();
-  var self = this;
-  req.on('data', function (data) {
-    self.onData(data);
-  });
-  req.on('error', function (err) {
-    self.onError('xhr poll error', err);
-  });
-  this.pollXhr = req;
-};
-
-/**
- * Request constructor
- *
- * @param {Object} options
- * @api public
- */
-
-function Request (opts) {
-  this.method = opts.method || 'GET';
-  this.uri = opts.uri;
-  this.xd = !!opts.xd;
-  this.xs = !!opts.xs;
-  this.async = false !== opts.async;
-  this.data = undefined !== opts.data ? opts.data : null;
-  this.agent = opts.agent;
-  this.isBinary = opts.isBinary;
-  this.supportsBinary = opts.supportsBinary;
-  this.enablesXDR = opts.enablesXDR;
-  this.requestTimeout = opts.requestTimeout;
-
-  // SSL options for Node.js client
-  this.pfx = opts.pfx;
-  this.key = opts.key;
-  this.passphrase = opts.passphrase;
-  this.cert = opts.cert;
-  this.ca = opts.ca;
-  this.ciphers = opts.ciphers;
-  this.rejectUnauthorized = opts.rejectUnauthorized;
-
-  // other options for Node.js client
-  this.extraHeaders = opts.extraHeaders;
-
-  this.create();
-}
-
-/**
- * Mix in `Emitter`.
- */
-
-Emitter(Request.prototype);
-
-/**
- * Creates the XHR object and sends the request.
- *
- * @api private
- */
-
-Request.prototype.create = function () {
-  var opts = { agent: this.agent, xdomain: this.xd, xscheme: this.xs, enablesXDR: this.enablesXDR };
-
-  // SSL options for Node.js client
-  opts.pfx = this.pfx;
-  opts.key = this.key;
-  opts.passphrase = this.passphrase;
-  opts.cert = this.cert;
-  opts.ca = this.ca;
-  opts.ciphers = this.ciphers;
-  opts.rejectUnauthorized = this.rejectUnauthorized;
-
-  var xhr = this.xhr = new XMLHttpRequest(opts);
-  var self = this;
-
-  try {
-    debug('xhr open %s: %s', this.method, this.uri);
-    xhr.open(this.method, this.uri, this.async);
-    try {
-      if (this.extraHeaders) {
-        xhr.setDisableHeaderCheck(true);
-        for (var i in this.extraHeaders) {
-          if (this.extraHeaders.hasOwnProperty(i)) {
-            xhr.setRequestHeader(i, this.extraHeaders[i]);
-          }
-        }
-      }
-    } catch (e) {}
-    if (this.supportsBinary) {
-      // This has to be done after open because Firefox is stupid
-      // http://stackoverflow.com/questions/13216903/get-binary-data-with-xmlhttprequest-in-a-firefox-extension
-      xhr.responseType = 'arraybuffer';
-    }
-
-    if ('POST' === this.method) {
-      try {
-        if (this.isBinary) {
-          xhr.setRequestHeader('Content-type', 'application/octet-stream');
-        } else {
-          xhr.setRequestHeader('Content-type', 'text/plain;charset=UTF-8');
-        }
-      } catch (e) {}
-    }
-
-    try {
-      xhr.setRequestHeader('Accept', '*/*');
-    } catch (e) {}
-
-    // ie6 check
-    if ('withCredentials' in xhr) {
-      xhr.withCredentials = true;
-    }
-
-    if (this.requestTimeout) {
-      xhr.timeout = this.requestTimeout;
-    }
-
-    if (this.hasXDR()) {
-      xhr.onload = function () {
-        self.onLoad();
-      };
-      xhr.onerror = function () {
-        self.onError(xhr.responseText);
-      };
-    } else {
-      xhr.onreadystatechange = function () {
-        if (4 !== xhr.readyState) return;
-        if (200 === xhr.status || 1223 === xhr.status) {
-          self.onLoad();
-        } else {
-          // make sure the `error` event handler that's user-set
-          // does not throw in the same tick and gets caught here
-          setTimeout(function () {
-            self.onError(xhr.status);
-          }, 0);
-        }
-      };
-    }
-
-    debug('xhr data %s', this.data);
-    xhr.send(this.data);
-  } catch (e) {
-    // Need to defer since .create() is called directly fhrom the constructor
-    // and thus the 'error' event can only be only bound *after* this exception
-    // occurs.  Therefore, also, we cannot throw here at all.
-    setTimeout(function () {
-      self.onError(e);
-    }, 0);
-    return;
-  }
-
-  if (global.document) {
-    this.index = Request.requestsCount++;
-    Request.requests[this.index] = this;
-  }
-};
-
-/**
- * Called upon successful response.
- *
- * @api private
- */
-
-Request.prototype.onSuccess = function () {
-  this.emit('success');
-  this.cleanup();
-};
-
-/**
- * Called if we have data.
- *
- * @api private
- */
-
-Request.prototype.onData = function (data) {
-  this.emit('data', data);
-  this.onSuccess();
-};
-
-/**
- * Called upon error.
- *
- * @api private
- */
-
-Request.prototype.onError = function (err) {
-  this.emit('error', err);
-  this.cleanup(true);
-};
-
-/**
- * Cleans up house.
- *
- * @api private
- */
-
-Request.prototype.cleanup = function (fromError) {
-  if ('undefined' === typeof this.xhr || null === this.xhr) {
-    return;
-  }
-  // xmlhttprequest
-  if (this.hasXDR()) {
-    this.xhr.onload = this.xhr.onerror = empty;
-  } else {
-    this.xhr.onreadystatechange = empty;
-  }
-
-  if (fromError) {
-    try {
-      this.xhr.abort();
-    } catch (e) {}
-  }
-
-  if (global.document) {
-    delete Request.requests[this.index];
-  }
-
-  this.xhr = null;
-};
-
-/**
- * Called upon load.
- *
- * @api private
- */
-
-Request.prototype.onLoad = function () {
-  var data;
-  try {
-    var contentType;
-    try {
-      contentType = this.xhr.getResponseHeader('Content-Type').split(';')[0];
-    } catch (e) {}
-    if (contentType === 'application/octet-stream') {
-      data = this.xhr.response || this.xhr.responseText;
-    } else {
-      if (!this.supportsBinary) {
-        data = this.xhr.responseText;
-      } else {
-        try {
-          data = String.fromCharCode.apply(null, new Uint8Array(this.xhr.response));
-        } catch (e) {
-          var ui8Arr = new Uint8Array(this.xhr.response);
-          var dataArray = [];
-          for (var idx = 0, length = ui8Arr.length; idx < length; idx++) {
-            dataArray.push(ui8Arr[idx]);
-          }
-
-          data = String.fromCharCode.apply(null, dataArray);
-        }
-      }
-    }
-  } catch (e) {
-    this.onError(e);
-  }
-  if (null != data) {
-    this.onData(data);
-  }
-};
-
-/**
- * Check if it has XDomainRequest.
- *
- * @api private
- */
-
-Request.prototype.hasXDR = function () {
-  return 'undefined' !== typeof global.XDomainRequest && !this.xs && this.enablesXDR;
-};
-
-/**
- * Aborts the request.
- *
- * @api public
- */
-
-Request.prototype.abort = function () {
-  this.cleanup();
-};
-
-/**
- * Aborts pending requests when unloading the window. This is needed to prevent
- * memory leaks (e.g. when using IE) and to ensure that no spurious error is
- * emitted.
- */
-
-Request.requestsCount = 0;
-Request.requests = {};
-
-if (global.document) {
-  if (global.attachEvent) {
-    global.attachEvent('onunload', unloadHandler);
-  } else if (global.addEventListener) {
-    global.addEventListener('beforeunload', unloadHandler, false);
-  }
-}
-
-function unloadHandler () {
-  for (var i in Request.requests) {
-    if (Request.requests.hasOwnProperty(i)) {
-      Request.requests[i].abort();
-    }
-  }
-}
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
-
-/***/ }),
-/* 64 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {/**
- * Module dependencies.
- */
-
-var Transport = __webpack_require__(19);
-var parser = __webpack_require__(7);
-var parseqs = __webpack_require__(18);
-var inherit = __webpack_require__(12);
-var yeast = __webpack_require__(34);
-var debug = __webpack_require__(5)('engine.io-client:websocket');
-var BrowserWebSocket = global.WebSocket || global.MozWebSocket;
-var NodeWebSocket;
-if (typeof window === 'undefined') {
-  try {
-    NodeWebSocket = __webpack_require__(76);
-  } catch (e) { }
-}
-
-/**
- * Get either the `WebSocket` or `MozWebSocket` globals
- * in the browser or try to resolve WebSocket-compatible
- * interface exposed by `ws` for Node-like environment.
- */
-
-var WebSocket = BrowserWebSocket;
-if (!WebSocket && typeof window === 'undefined') {
-  WebSocket = NodeWebSocket;
-}
-
-/**
- * Module exports.
- */
-
-module.exports = WS;
-
-/**
- * WebSocket transport constructor.
- *
- * @api {Object} connection options
- * @api public
- */
-
-function WS (opts) {
-  var forceBase64 = (opts && opts.forceBase64);
-  if (forceBase64) {
-    this.supportsBinary = false;
-  }
-  this.perMessageDeflate = opts.perMessageDeflate;
-  this.usingBrowserWebSocket = BrowserWebSocket && !opts.forceNode;
-  if (!this.usingBrowserWebSocket) {
-    WebSocket = NodeWebSocket;
-  }
-  Transport.call(this, opts);
-}
-
-/**
- * Inherits from Transport.
- */
-
-inherit(WS, Transport);
-
-/**
- * Transport name.
- *
- * @api public
- */
-
-WS.prototype.name = 'websocket';
-
-/*
- * WebSockets support binary
- */
-
-WS.prototype.supportsBinary = true;
-
-/**
- * Opens socket.
- *
- * @api private
- */
-
-WS.prototype.doOpen = function () {
-  if (!this.check()) {
-    // let probe timeout
-    return;
-  }
-
-  var uri = this.uri();
-  var protocols = void (0);
-  var opts = {
-    agent: this.agent,
-    perMessageDeflate: this.perMessageDeflate
-  };
-
-  // SSL options for Node.js client
-  opts.pfx = this.pfx;
-  opts.key = this.key;
-  opts.passphrase = this.passphrase;
-  opts.cert = this.cert;
-  opts.ca = this.ca;
-  opts.ciphers = this.ciphers;
-  opts.rejectUnauthorized = this.rejectUnauthorized;
-  if (this.extraHeaders) {
-    opts.headers = this.extraHeaders;
-  }
-  if (this.localAddress) {
-    opts.localAddress = this.localAddress;
-  }
-
-  try {
-    this.ws = this.usingBrowserWebSocket ? new WebSocket(uri) : new WebSocket(uri, protocols, opts);
-  } catch (err) {
-    return this.emit('error', err);
-  }
-
-  if (this.ws.binaryType === undefined) {
-    this.supportsBinary = false;
-  }
-
-  if (this.ws.supports && this.ws.supports.binary) {
-    this.supportsBinary = true;
-    this.ws.binaryType = 'nodebuffer';
-  } else {
-    this.ws.binaryType = 'arraybuffer';
-  }
-
-  this.addEventListeners();
-};
-
-/**
- * Adds event listeners to the socket
- *
- * @api private
- */
-
-WS.prototype.addEventListeners = function () {
-  var self = this;
-
-  this.ws.onopen = function () {
-    self.onOpen();
-  };
-  this.ws.onclose = function () {
-    self.onClose();
-  };
-  this.ws.onmessage = function (ev) {
-    self.onData(ev.data);
-  };
-  this.ws.onerror = function (e) {
-    self.onError('websocket error', e);
-  };
-};
-
-/**
- * Writes data to socket.
- *
- * @param {Array} array of packets.
- * @api private
- */
-
-WS.prototype.write = function (packets) {
-  var self = this;
-  this.writable = false;
-
-  // encodePacket efficient as it uses WS framing
-  // no need for encodePayload
-  var total = packets.length;
-  for (var i = 0, l = total; i < l; i++) {
-    (function (packet) {
-      parser.encodePacket(packet, self.supportsBinary, function (data) {
-        if (!self.usingBrowserWebSocket) {
-          // always create a new object (GH-437)
-          var opts = {};
-          if (packet.options) {
-            opts.compress = packet.options.compress;
-          }
-
-          if (self.perMessageDeflate) {
-            var len = 'string' === typeof data ? global.Buffer.byteLength(data) : data.length;
-            if (len < self.perMessageDeflate.threshold) {
-              opts.compress = false;
-            }
-          }
-        }
-
-        // Sometimes the websocket has already been closed but the browser didn't
-        // have a chance of informing us about it yet, in that case send will
-        // throw an error
-        try {
-          if (self.usingBrowserWebSocket) {
-            // TypeError is thrown when passing the second argument on Safari
-            self.ws.send(data);
-          } else {
-            self.ws.send(data, opts);
-          }
-        } catch (e) {
-          debug('websocket closed before onclose event');
-        }
-
-        --total || done();
-      });
-    })(packets[i]);
-  }
-
-  function done () {
-    self.emit('flush');
-
-    // fake drain
-    // defer to next tick to allow Socket to clear writeBuffer
-    setTimeout(function () {
-      self.writable = true;
-      self.emit('drain');
-    }, 0);
-  }
-};
-
-/**
- * Called upon close
- *
- * @api private
- */
-
-WS.prototype.onClose = function () {
-  Transport.prototype.onClose.call(this);
-};
-
-/**
- * Closes socket.
- *
- * @api private
- */
-
-WS.prototype.doClose = function () {
-  if (typeof this.ws !== 'undefined') {
-    this.ws.close();
-  }
-};
-
-/**
- * Generates uri for connection.
- *
- * @api private
- */
-
-WS.prototype.uri = function () {
-  var query = this.query || {};
-  var schema = this.secure ? 'wss' : 'ws';
-  var port = '';
-
-  // avoid port if default for schema
-  if (this.port && (('wss' === schema && Number(this.port) !== 443) ||
-    ('ws' === schema && Number(this.port) !== 80))) {
-    port = ':' + this.port;
-  }
-
-  // append timestamp to URI
-  if (this.timestampRequests) {
-    query[this.timestampParam] = yeast();
-  }
-
-  // communicate binary support capabilities
-  if (!this.supportsBinary) {
-    query.b64 = 1;
-  }
-
-  query = parseqs.encode(query);
-
-  // prepend ? to query
-  if (query.length) {
-    query = '?' + query;
-  }
-
-  var ipv6 = this.hostname.indexOf(':') !== -1;
-  return schema + '://' + (ipv6 ? '[' + this.hostname + ']' : this.hostname) + port + this.path + query;
-};
-
-/**
- * Feature detection for WebSocket.
- *
- * @return {Boolean} whether this transport is available.
- * @api public
- */
-
-WS.prototype.check = function () {
-  return !!WebSocket && !('__initialize' in WebSocket && this.name === WS.prototype.name);
-};
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
-
-/***/ }),
-/* 65 */
-/***/ (function(module, exports) {
-
-
-/**
- * Gets the keys for an object.
- *
- * @return {Array} keys
- * @api private
- */
-
-module.exports = Object.keys || function keys (obj){
-  var arr = [];
-  var has = Object.prototype.hasOwnProperty;
-
-  for (var i in obj) {
-    if (has.call(obj, i)) {
-      arr.push(i);
-    }
-  }
-  return arr;
-};
-
-
-/***/ }),
-/* 66 */
-/***/ (function(module, exports) {
-
-module.exports = Array.isArray || function (arr) {
-  return Object.prototype.toString.call(arr) == '[object Array]';
-};
-
-
-/***/ }),
-/* 67 */
-/***/ (function(module, exports) {
-
-/**
- * Helpers.
- */
-
-var s = 1000
-var m = s * 60
-var h = m * 60
-var d = h * 24
-var y = d * 365.25
-
-/**
- * Parse or format the given `val`.
- *
- * Options:
- *
- *  - `long` verbose formatting [false]
- *
- * @param {String|Number} val
- * @param {Object} options
- * @throws {Error} throw an error if val is not a non-empty string or a number
- * @return {String|Number}
- * @api public
- */
-
-module.exports = function (val, options) {
-  options = options || {}
-  var type = typeof val
-  if (type === 'string' && val.length > 0) {
-    return parse(val)
-  } else if (type === 'number' && isNaN(val) === false) {
-    return options.long ?
-			fmtLong(val) :
-			fmtShort(val)
-  }
-  throw new Error('val is not a non-empty string or a valid number. val=' + JSON.stringify(val))
-}
-
-/**
- * Parse the given `str` and return milliseconds.
- *
- * @param {String} str
- * @return {Number}
- * @api private
- */
-
-function parse(str) {
-  str = String(str)
-  if (str.length > 10000) {
-    return
-  }
-  var match = /^((?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|years?|yrs?|y)?$/i.exec(str)
-  if (!match) {
-    return
-  }
-  var n = parseFloat(match[1])
-  var type = (match[2] || 'ms').toLowerCase()
-  switch (type) {
-    case 'years':
-    case 'year':
-    case 'yrs':
-    case 'yr':
-    case 'y':
-      return n * y
-    case 'days':
-    case 'day':
-    case 'd':
-      return n * d
-    case 'hours':
-    case 'hour':
-    case 'hrs':
-    case 'hr':
-    case 'h':
-      return n * h
-    case 'minutes':
-    case 'minute':
-    case 'mins':
-    case 'min':
-    case 'm':
-      return n * m
-    case 'seconds':
-    case 'second':
-    case 'secs':
-    case 'sec':
-    case 's':
-      return n * s
-    case 'milliseconds':
-    case 'millisecond':
-    case 'msecs':
-    case 'msec':
-    case 'ms':
-      return n
-    default:
-      return undefined
-  }
-}
-
-/**
- * Short format for `ms`.
- *
- * @param {Number} ms
- * @return {String}
- * @api private
- */
-
-function fmtShort(ms) {
-  if (ms >= d) {
-    return Math.round(ms / d) + 'd'
-  }
-  if (ms >= h) {
-    return Math.round(ms / h) + 'h'
-  }
-  if (ms >= m) {
-    return Math.round(ms / m) + 'm'
-  }
-  if (ms >= s) {
-    return Math.round(ms / s) + 's'
-  }
-  return ms + 'ms'
-}
-
-/**
- * Long format for `ms`.
- *
- * @param {Number} ms
- * @return {String}
- * @api private
- */
-
-function fmtLong(ms) {
-  return plural(ms, d, 'day') ||
-    plural(ms, h, 'hour') ||
-    plural(ms, m, 'minute') ||
-    plural(ms, s, 'second') ||
-    ms + ' ms'
-}
-
-/**
- * Pluralization helper.
- */
-
-function plural(ms, n, name) {
-  if (ms < n) {
-    return
-  }
-  if (ms < n * 1.5) {
-    return Math.floor(ms / n) + ' ' + name
-  }
-  return Math.ceil(ms / n) + ' ' + name + 's'
-}
-
-
-/***/ }),
-/* 68 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {/*global Blob,File*/
-
-/**
- * Module requirements
- */
-
-var isArray = __webpack_require__(66);
-var isBuf = __webpack_require__(33);
-
-/**
- * Replaces every Buffer | ArrayBuffer in packet with a numbered placeholder.
- * Anything with blobs or files should be fed through removeBlobs before coming
- * here.
- *
- * @param {Object} packet - socket.io event packet
- * @return {Object} with deconstructed packet and list of buffers
- * @api public
- */
-
-exports.deconstructPacket = function(packet){
-  var buffers = [];
-  var packetData = packet.data;
-
-  function _deconstructPacket(data) {
-    if (!data) return data;
-
-    if (isBuf(data)) {
-      var placeholder = { _placeholder: true, num: buffers.length };
-      buffers.push(data);
-      return placeholder;
-    } else if (isArray(data)) {
-      var newData = new Array(data.length);
-      for (var i = 0; i < data.length; i++) {
-        newData[i] = _deconstructPacket(data[i]);
-      }
-      return newData;
-    } else if ('object' == typeof data && !(data instanceof Date)) {
-      var newData = {};
-      for (var key in data) {
-        newData[key] = _deconstructPacket(data[key]);
-      }
-      return newData;
-    }
-    return data;
-  }
-
-  var pack = packet;
-  pack.data = _deconstructPacket(packetData);
-  pack.attachments = buffers.length; // number of binary 'attachments'
-  return {packet: pack, buffers: buffers};
-};
-
-/**
- * Reconstructs a binary packet from its placeholder packet and buffers
- *
- * @param {Object} packet - event packet with placeholders
- * @param {Array} buffers - binary buffers to put in placeholder positions
- * @return {Object} reconstructed packet
- * @api public
- */
-
-exports.reconstructPacket = function(packet, buffers) {
-  var curPlaceHolder = 0;
-
-  function _reconstructPacket(data) {
-    if (data && data._placeholder) {
-      var buf = buffers[data.num]; // appropriate buffer (should be natural order anyway)
-      return buf;
-    } else if (isArray(data)) {
-      for (var i = 0; i < data.length; i++) {
-        data[i] = _reconstructPacket(data[i]);
-      }
-      return data;
-    } else if (data && 'object' == typeof data) {
-      for (var key in data) {
-        data[key] = _reconstructPacket(data[key]);
-      }
-      return data;
-    }
-    return data;
-  }
-
-  packet.data = _reconstructPacket(packet.data);
-  packet.attachments = undefined; // no longer useful
-  return packet;
-};
-
-/**
- * Asynchronously removes Blobs or Files from data via
- * FileReader's readAsArrayBuffer method. Used before encoding
- * data as msgpack. Calls callback with the blobless data.
- *
- * @param {Object} data
- * @param {Function} callback
- * @api private
- */
-
-exports.removeBlobs = function(data, callback) {
-  function _removeBlobs(obj, curKey, containingObject) {
-    if (!obj) return obj;
-
-    // convert any blob
-    if ((global.Blob && obj instanceof Blob) ||
-        (global.File && obj instanceof File)) {
-      pendingBlobs++;
-
-      // async filereader
-      var fileReader = new FileReader();
-      fileReader.onload = function() { // this.result == arraybuffer
-        if (containingObject) {
-          containingObject[curKey] = this.result;
-        }
-        else {
-          bloblessData = this.result;
-        }
-
-        // if nothing pending its callback time
-        if(! --pendingBlobs) {
-          callback(bloblessData);
-        }
-      };
-
-      fileReader.readAsArrayBuffer(obj); // blob -> arraybuffer
-    } else if (isArray(obj)) { // handle array
-      for (var i = 0; i < obj.length; i++) {
-        _removeBlobs(obj[i], i, obj);
-      }
-    } else if (obj && 'object' == typeof obj && !isBuf(obj)) { // and object
-      for (var key in obj) {
-        _removeBlobs(obj[key], key, obj);
-      }
-    }
-  }
-
-  var pendingBlobs = 0;
-  var bloblessData = data;
-  _removeBlobs(bloblessData);
-  if (!pendingBlobs) {
-    callback(bloblessData);
-  }
-};
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
-
-/***/ }),
-/* 69 */
-/***/ (function(module, exports) {
-
-
-/**
- * Expose `Emitter`.
- */
-
-module.exports = Emitter;
-
-/**
- * Initialize a new `Emitter`.
- *
- * @api public
- */
-
-function Emitter(obj) {
-  if (obj) return mixin(obj);
-};
-
-/**
- * Mixin the emitter properties.
- *
- * @param {Object} obj
- * @return {Object}
- * @api private
- */
-
-function mixin(obj) {
-  for (var key in Emitter.prototype) {
-    obj[key] = Emitter.prototype[key];
-  }
-  return obj;
-}
-
-/**
- * Listen on the given `event` with `fn`.
- *
- * @param {String} event
- * @param {Function} fn
- * @return {Emitter}
- * @api public
- */
-
-Emitter.prototype.on =
-Emitter.prototype.addEventListener = function(event, fn){
-  this._callbacks = this._callbacks || {};
-  (this._callbacks[event] = this._callbacks[event] || [])
-    .push(fn);
-  return this;
-};
-
-/**
- * Adds an `event` listener that will be invoked a single
- * time then automatically removed.
- *
- * @param {String} event
- * @param {Function} fn
- * @return {Emitter}
- * @api public
- */
-
-Emitter.prototype.once = function(event, fn){
-  var self = this;
-  this._callbacks = this._callbacks || {};
-
-  function on() {
-    self.off(event, on);
-    fn.apply(this, arguments);
-  }
-
-  on.fn = fn;
-  this.on(event, on);
-  return this;
-};
-
-/**
- * Remove the given callback for `event` or all
- * registered callbacks.
- *
- * @param {String} event
- * @param {Function} fn
- * @return {Emitter}
- * @api public
- */
-
-Emitter.prototype.off =
-Emitter.prototype.removeListener =
-Emitter.prototype.removeAllListeners =
-Emitter.prototype.removeEventListener = function(event, fn){
-  this._callbacks = this._callbacks || {};
-
-  // all
-  if (0 == arguments.length) {
-    this._callbacks = {};
-    return this;
-  }
-
-  // specific event
-  var callbacks = this._callbacks[event];
-  if (!callbacks) return this;
-
-  // remove all handlers
-  if (1 == arguments.length) {
-    delete this._callbacks[event];
-    return this;
-  }
-
-  // remove specific handler
-  var cb;
-  for (var i = 0; i < callbacks.length; i++) {
-    cb = callbacks[i];
-    if (cb === fn || cb.fn === fn) {
-      callbacks.splice(i, 1);
-      break;
-    }
-  }
-  return this;
-};
-
-/**
- * Emit `event` with the given args.
- *
- * @param {String} event
- * @param {Mixed} ...
- * @return {Emitter}
- */
-
-Emitter.prototype.emit = function(event){
-  this._callbacks = this._callbacks || {};
-  var args = [].slice.call(arguments, 1)
-    , callbacks = this._callbacks[event];
-
-  if (callbacks) {
-    callbacks = callbacks.slice(0);
-    for (var i = 0, len = callbacks.length; i < len; ++i) {
-      callbacks[i].apply(this, args);
-    }
-  }
-
-  return this;
-};
-
-/**
- * Return array of callbacks for `event`.
- *
- * @param {String} event
- * @return {Array}
- * @api public
- */
-
-Emitter.prototype.listeners = function(event){
-  this._callbacks = this._callbacks || {};
-  return this._callbacks[event] || [];
-};
-
-/**
- * Check if this emitter has `event` handlers.
- *
- * @param {String} event
- * @return {Boolean}
- * @api public
- */
-
-Emitter.prototype.hasListeners = function(event){
-  return !! this.listeners(event).length;
-};
-
-
-/***/ }),
-/* 70 */
-/***/ (function(module, exports, __webpack_require__) {
-
-
-/**
- * This is the web browser implementation of `debug()`.
- *
- * Expose `debug()` as the module.
- */
-
-exports = module.exports = __webpack_require__(71);
-exports.log = log;
-exports.formatArgs = formatArgs;
-exports.save = save;
-exports.load = load;
-exports.useColors = useColors;
-exports.storage = 'undefined' != typeof chrome
-               && 'undefined' != typeof chrome.storage
-                  ? chrome.storage.local
-                  : localstorage();
-
-/**
- * Colors.
- */
-
-exports.colors = [
-  'lightseagreen',
-  'forestgreen',
-  'goldenrod',
-  'dodgerblue',
-  'darkorchid',
-  'crimson'
-];
-
-/**
- * Currently only WebKit-based Web Inspectors, Firefox >= v31,
- * and the Firebug extension (any Firefox version) are known
- * to support "%c" CSS customizations.
- *
- * TODO: add a `localStorage` variable to explicitly enable/disable colors
- */
-
-function useColors() {
-  // is webkit? http://stackoverflow.com/a/16459606/376773
-  return ('WebkitAppearance' in document.documentElement.style) ||
-    // is firebug? http://stackoverflow.com/a/398120/376773
-    (window.console && (console.firebug || (console.exception && console.table))) ||
-    // is firefox >= v31?
-    // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
-    (navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31);
-}
-
-/**
- * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
- */
-
-exports.formatters.j = function(v) {
-  return JSON.stringify(v);
-};
-
-
-/**
- * Colorize log arguments if enabled.
- *
- * @api public
- */
-
-function formatArgs() {
-  var args = arguments;
-  var useColors = this.useColors;
-
-  args[0] = (useColors ? '%c' : '')
-    + this.namespace
-    + (useColors ? ' %c' : ' ')
-    + args[0]
-    + (useColors ? '%c ' : ' ')
-    + '+' + exports.humanize(this.diff);
-
-  if (!useColors) return args;
-
-  var c = 'color: ' + this.color;
-  args = [args[0], c, 'color: inherit'].concat(Array.prototype.slice.call(args, 1));
-
-  // the final "%c" is somewhat tricky, because there could be other
-  // arguments passed either before or after the %c, so we need to
-  // figure out the correct index to insert the CSS into
-  var index = 0;
-  var lastC = 0;
-  args[0].replace(/%[a-z%]/g, function(match) {
-    if ('%%' === match) return;
-    index++;
-    if ('%c' === match) {
-      // we only are interested in the *last* %c
-      // (the user may have provided their own)
-      lastC = index;
-    }
-  });
-
-  args.splice(lastC, 0, c);
-  return args;
-}
-
-/**
- * Invokes `console.log()` when available.
- * No-op when `console.log` is not a "function".
- *
- * @api public
- */
-
-function log() {
-  // this hackery is required for IE8/9, where
-  // the `console.log` function doesn't have 'apply'
-  return 'object' === typeof console
-    && console.log
-    && Function.prototype.apply.call(console.log, console, arguments);
-}
-
-/**
- * Save `namespaces`.
- *
- * @param {String} namespaces
- * @api private
- */
-
-function save(namespaces) {
-  try {
-    if (null == namespaces) {
-      exports.storage.removeItem('debug');
-    } else {
-      exports.storage.debug = namespaces;
-    }
-  } catch(e) {}
-}
-
-/**
- * Load `namespaces`.
- *
- * @return {String} returns the previously persisted debug modes
- * @api private
- */
-
-function load() {
-  var r;
-  try {
-    r = exports.storage.debug;
-  } catch(e) {}
-  return r;
-}
-
-/**
- * Enable namespaces listed in `localStorage.debug` initially.
- */
-
-exports.enable(load());
-
-/**
- * Localstorage attempts to return the localstorage.
- *
- * This is necessary because safari throws
- * when a user disables cookies/localstorage
- * and you attempt to access it.
- *
- * @return {LocalStorage}
- * @api private
- */
-
-function localstorage(){
-  try {
-    return window.localStorage;
-  } catch (e) {}
-}
-
-
-/***/ }),
-/* 71 */
-/***/ (function(module, exports, __webpack_require__) {
-
-
-/**
- * This is the common logic for both the Node.js and web browser
- * implementations of `debug()`.
- *
- * Expose `debug()` as the module.
- */
-
-exports = module.exports = debug;
-exports.coerce = coerce;
-exports.disable = disable;
-exports.enable = enable;
-exports.enabled = enabled;
-exports.humanize = __webpack_require__(72);
-
-/**
- * The currently active debug mode names, and names to skip.
- */
-
-exports.names = [];
-exports.skips = [];
-
-/**
- * Map of special "%n" handling functions, for the debug "format" argument.
- *
- * Valid key names are a single, lowercased letter, i.e. "n".
- */
-
-exports.formatters = {};
-
-/**
- * Previously assigned color.
- */
-
-var prevColor = 0;
-
-/**
- * Previous log timestamp.
- */
-
-var prevTime;
-
-/**
- * Select a color.
- *
- * @return {Number}
- * @api private
- */
-
-function selectColor() {
-  return exports.colors[prevColor++ % exports.colors.length];
-}
-
-/**
- * Create a debugger with the given `namespace`.
- *
- * @param {String} namespace
- * @return {Function}
- * @api public
- */
-
-function debug(namespace) {
-
-  // define the `disabled` version
-  function disabled() {
-  }
-  disabled.enabled = false;
-
-  // define the `enabled` version
-  function enabled() {
-
-    var self = enabled;
-
-    // set `diff` timestamp
-    var curr = +new Date();
-    var ms = curr - (prevTime || curr);
-    self.diff = ms;
-    self.prev = prevTime;
-    self.curr = curr;
-    prevTime = curr;
-
-    // add the `color` if not set
-    if (null == self.useColors) self.useColors = exports.useColors();
-    if (null == self.color && self.useColors) self.color = selectColor();
-
-    var args = Array.prototype.slice.call(arguments);
-
-    args[0] = exports.coerce(args[0]);
-
-    if ('string' !== typeof args[0]) {
-      // anything else let's inspect with %o
-      args = ['%o'].concat(args);
-    }
-
-    // apply any `formatters` transformations
-    var index = 0;
-    args[0] = args[0].replace(/%([a-z%])/g, function(match, format) {
-      // if we encounter an escaped % then don't increase the array index
-      if (match === '%%') return match;
-      index++;
-      var formatter = exports.formatters[format];
-      if ('function' === typeof formatter) {
-        var val = args[index];
-        match = formatter.call(self, val);
-
-        // now we need to remove `args[index]` since it's inlined in the `format`
-        args.splice(index, 1);
-        index--;
-      }
-      return match;
-    });
-
-    if ('function' === typeof exports.formatArgs) {
-      args = exports.formatArgs.apply(self, args);
-    }
-    var logFn = enabled.log || exports.log || console.log.bind(console);
-    logFn.apply(self, args);
-  }
-  enabled.enabled = true;
-
-  var fn = exports.enabled(namespace) ? enabled : disabled;
-
-  fn.namespace = namespace;
-
-  return fn;
-}
-
-/**
- * Enables a debug mode by namespaces. This can include modes
- * separated by a colon and wildcards.
- *
- * @param {String} namespaces
- * @api public
- */
-
-function enable(namespaces) {
-  exports.save(namespaces);
-
-  var split = (namespaces || '').split(/[\s,]+/);
-  var len = split.length;
-
-  for (var i = 0; i < len; i++) {
-    if (!split[i]) continue; // ignore empty strings
-    namespaces = split[i].replace(/\*/g, '.*?');
-    if (namespaces[0] === '-') {
-      exports.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
-    } else {
-      exports.names.push(new RegExp('^' + namespaces + '$'));
-    }
-  }
-}
-
-/**
- * Disable debug output.
- *
- * @api public
- */
-
-function disable() {
-  exports.enable('');
-}
-
-/**
- * Returns true if the given mode name is enabled, false otherwise.
- *
- * @param {String} name
- * @return {Boolean}
- * @api public
- */
-
-function enabled(name) {
-  var i, len;
-  for (i = 0, len = exports.skips.length; i < len; i++) {
-    if (exports.skips[i].test(name)) {
-      return false;
-    }
-  }
-  for (i = 0, len = exports.names.length; i < len; i++) {
-    if (exports.names[i].test(name)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
- * Coerce `val`.
- *
- * @param {Mixed} val
- * @return {Mixed}
- * @api private
- */
-
-function coerce(val) {
-  if (val instanceof Error) return val.stack || val.message;
-  return val;
-}
-
-
-/***/ }),
-/* 72 */
-/***/ (function(module, exports) {
-
-/**
- * Helpers.
- */
-
-var s = 1000;
-var m = s * 60;
-var h = m * 60;
-var d = h * 24;
-var y = d * 365.25;
-
-/**
- * Parse or format the given `val`.
- *
- * Options:
- *
- *  - `long` verbose formatting [false]
- *
- * @param {String|Number} val
- * @param {Object} options
- * @return {String|Number}
- * @api public
- */
-
-module.exports = function(val, options){
-  options = options || {};
-  if ('string' == typeof val) return parse(val);
-  return options.long
-    ? long(val)
-    : short(val);
-};
-
-/**
- * Parse the given `str` and return milliseconds.
- *
- * @param {String} str
- * @return {Number}
- * @api private
- */
-
-function parse(str) {
-  str = '' + str;
-  if (str.length > 10000) return;
-  var match = /^((?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|years?|yrs?|y)?$/i.exec(str);
-  if (!match) return;
-  var n = parseFloat(match[1]);
-  var type = (match[2] || 'ms').toLowerCase();
-  switch (type) {
-    case 'years':
-    case 'year':
-    case 'yrs':
-    case 'yr':
-    case 'y':
-      return n * y;
-    case 'days':
-    case 'day':
-    case 'd':
-      return n * d;
-    case 'hours':
-    case 'hour':
-    case 'hrs':
-    case 'hr':
-    case 'h':
-      return n * h;
-    case 'minutes':
-    case 'minute':
-    case 'mins':
-    case 'min':
-    case 'm':
-      return n * m;
-    case 'seconds':
-    case 'second':
-    case 'secs':
-    case 'sec':
-    case 's':
-      return n * s;
-    case 'milliseconds':
-    case 'millisecond':
-    case 'msecs':
-    case 'msec':
-    case 'ms':
-      return n;
-  }
-}
-
-/**
- * Short format for `ms`.
- *
- * @param {Number} ms
- * @return {String}
- * @api private
- */
-
-function short(ms) {
-  if (ms >= d) return Math.round(ms / d) + 'd';
-  if (ms >= h) return Math.round(ms / h) + 'h';
-  if (ms >= m) return Math.round(ms / m) + 'm';
-  if (ms >= s) return Math.round(ms / s) + 's';
-  return ms + 'ms';
-}
-
-/**
- * Long format for `ms`.
- *
- * @param {Number} ms
- * @return {String}
- * @api private
- */
-
-function long(ms) {
-  return plural(ms, d, 'day')
-    || plural(ms, h, 'hour')
-    || plural(ms, m, 'minute')
-    || plural(ms, s, 'second')
-    || ms + ' ms';
-}
-
-/**
- * Pluralization helper.
- */
-
-function plural(ms, n, name) {
-  if (ms < n) return;
-  if (ms < n * 1.5) return Math.floor(ms / n) + ' ' + name;
-  return Math.ceil(ms / n) + ' ' + name + 's';
-}
-
-
-/***/ }),
-/* 73 */
-/***/ (function(module, exports) {
-
-module.exports = toArray
-
-function toArray(list, index) {
-    var array = []
-
-    index = index || 0
-
-    for (var i = index || 0; i < list.length; i++) {
-        array[i - index] = list[i]
-    }
-
-    return array
-}
-
-
-/***/ }),
-/* 74 */
-/***/ (function(module, exports) {
-
-/* WEBPACK VAR INJECTION */(function(__webpack_amd_options__) {/* globals __webpack_amd_options__ */
-module.exports = __webpack_amd_options__;
-
-/* WEBPACK VAR INJECTION */}.call(exports, {}))
-
-/***/ }),
-/* 75 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(module, global) {var __WEBPACK_AMD_DEFINE_RESULT__;/*! https://mths.be/wtf8 v1.0.0 by @mathias */
-;(function(root) {
-
-	// Detect free variables `exports`
-	var freeExports = typeof exports == 'object' && exports;
-
-	// Detect free variable `module`
-	var freeModule = typeof module == 'object' && module &&
-		module.exports == freeExports && module;
-
-	// Detect free variable `global`, from Node.js or Browserified code,
-	// and use it as `root`
-	var freeGlobal = typeof global == 'object' && global;
-	if (freeGlobal.global === freeGlobal || freeGlobal.window === freeGlobal) {
-		root = freeGlobal;
-	}
-
-	/*--------------------------------------------------------------------------*/
-
-	var stringFromCharCode = String.fromCharCode;
-
-	// Taken from https://mths.be/punycode
-	function ucs2decode(string) {
-		var output = [];
-		var counter = 0;
-		var length = string.length;
-		var value;
-		var extra;
-		while (counter < length) {
-			value = string.charCodeAt(counter++);
-			if (value >= 0xD800 && value <= 0xDBFF && counter < length) {
-				// high surrogate, and there is a next character
-				extra = string.charCodeAt(counter++);
-				if ((extra & 0xFC00) == 0xDC00) { // low surrogate
-					output.push(((value & 0x3FF) << 10) + (extra & 0x3FF) + 0x10000);
-				} else {
-					// unmatched surrogate; only append this code unit, in case the next
-					// code unit is the high surrogate of a surrogate pair
-					output.push(value);
-					counter--;
-				}
-			} else {
-				output.push(value);
-			}
-		}
-		return output;
-	}
-
-	// Taken from https://mths.be/punycode
-	function ucs2encode(array) {
-		var length = array.length;
-		var index = -1;
-		var value;
-		var output = '';
-		while (++index < length) {
-			value = array[index];
-			if (value > 0xFFFF) {
-				value -= 0x10000;
-				output += stringFromCharCode(value >>> 10 & 0x3FF | 0xD800);
-				value = 0xDC00 | value & 0x3FF;
-			}
-			output += stringFromCharCode(value);
-		}
-		return output;
-	}
-
-	/*--------------------------------------------------------------------------*/
-
-	function createByte(codePoint, shift) {
-		return stringFromCharCode(((codePoint >> shift) & 0x3F) | 0x80);
-	}
-
-	function encodeCodePoint(codePoint) {
-		if ((codePoint & 0xFFFFFF80) == 0) { // 1-byte sequence
-			return stringFromCharCode(codePoint);
-		}
-		var symbol = '';
-		if ((codePoint & 0xFFFFF800) == 0) { // 2-byte sequence
-			symbol = stringFromCharCode(((codePoint >> 6) & 0x1F) | 0xC0);
-		}
-		else if ((codePoint & 0xFFFF0000) == 0) { // 3-byte sequence
-			symbol = stringFromCharCode(((codePoint >> 12) & 0x0F) | 0xE0);
-			symbol += createByte(codePoint, 6);
-		}
-		else if ((codePoint & 0xFFE00000) == 0) { // 4-byte sequence
-			symbol = stringFromCharCode(((codePoint >> 18) & 0x07) | 0xF0);
-			symbol += createByte(codePoint, 12);
-			symbol += createByte(codePoint, 6);
-		}
-		symbol += stringFromCharCode((codePoint & 0x3F) | 0x80);
-		return symbol;
-	}
-
-	function wtf8encode(string) {
-		var codePoints = ucs2decode(string);
-		var length = codePoints.length;
-		var index = -1;
-		var codePoint;
-		var byteString = '';
-		while (++index < length) {
-			codePoint = codePoints[index];
-			byteString += encodeCodePoint(codePoint);
-		}
-		return byteString;
-	}
-
-	/*--------------------------------------------------------------------------*/
-
-	function readContinuationByte() {
-		if (byteIndex >= byteCount) {
-			throw Error('Invalid byte index');
-		}
-
-		var continuationByte = byteArray[byteIndex] & 0xFF;
-		byteIndex++;
-
-		if ((continuationByte & 0xC0) == 0x80) {
-			return continuationByte & 0x3F;
-		}
-
-		// If we end up here, it’s not a continuation byte.
-		throw Error('Invalid continuation byte');
-	}
-
-	function decodeSymbol() {
-		var byte1;
-		var byte2;
-		var byte3;
-		var byte4;
-		var codePoint;
-
-		if (byteIndex > byteCount) {
-			throw Error('Invalid byte index');
-		}
-
-		if (byteIndex == byteCount) {
-			return false;
-		}
-
-		// Read the first byte.
-		byte1 = byteArray[byteIndex] & 0xFF;
-		byteIndex++;
-
-		// 1-byte sequence (no continuation bytes)
-		if ((byte1 & 0x80) == 0) {
-			return byte1;
-		}
-
-		// 2-byte sequence
-		if ((byte1 & 0xE0) == 0xC0) {
-			var byte2 = readContinuationByte();
-			codePoint = ((byte1 & 0x1F) << 6) | byte2;
-			if (codePoint >= 0x80) {
-				return codePoint;
-			} else {
-				throw Error('Invalid continuation byte');
-			}
-		}
-
-		// 3-byte sequence (may include unpaired surrogates)
-		if ((byte1 & 0xF0) == 0xE0) {
-			byte2 = readContinuationByte();
-			byte3 = readContinuationByte();
-			codePoint = ((byte1 & 0x0F) << 12) | (byte2 << 6) | byte3;
-			if (codePoint >= 0x0800) {
-				return codePoint;
-			} else {
-				throw Error('Invalid continuation byte');
-			}
-		}
-
-		// 4-byte sequence
-		if ((byte1 & 0xF8) == 0xF0) {
-			byte2 = readContinuationByte();
-			byte3 = readContinuationByte();
-			byte4 = readContinuationByte();
-			codePoint = ((byte1 & 0x0F) << 0x12) | (byte2 << 0x0C) |
-				(byte3 << 0x06) | byte4;
-			if (codePoint >= 0x010000 && codePoint <= 0x10FFFF) {
-				return codePoint;
-			}
-		}
-
-		throw Error('Invalid WTF-8 detected');
-	}
-
-	var byteArray;
-	var byteCount;
-	var byteIndex;
-	function wtf8decode(byteString) {
-		byteArray = ucs2decode(byteString);
-		byteCount = byteArray.length;
-		byteIndex = 0;
-		var codePoints = [];
-		var tmp;
-		while ((tmp = decodeSymbol()) !== false) {
-			codePoints.push(tmp);
-		}
-		return ucs2encode(codePoints);
-	}
-
-	/*--------------------------------------------------------------------------*/
-
-	var wtf8 = {
-		'version': '1.0.0',
-		'encode': wtf8encode,
-		'decode': wtf8decode
-	};
-
-	// Some AMD build optimizers, like r.js, check for specific condition patterns
-	// like the following:
-	if (
-		true
-	) {
-		!(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
-			return wtf8;
-		}.call(exports, __webpack_require__, exports, module),
-				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-	}	else if (freeExports && !freeExports.nodeType) {
-		if (freeModule) { // in Node.js or RingoJS v0.8.0+
-			freeModule.exports = wtf8;
-		} else { // in Narwhal or RingoJS v0.7.0-
-			var object = {};
-			var hasOwnProperty = object.hasOwnProperty;
-			for (var key in wtf8) {
-				hasOwnProperty.call(wtf8, key) && (freeExports[key] = wtf8[key]);
-			}
-		}
-	} else { // in Rhino or a web browser
-		root.wtf8 = wtf8;
-	}
-
-}(this));
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(15)(module), __webpack_require__(0)))
-
-/***/ }),
-/* 76 */
-/***/ (function(module, exports) {
-
-/* (ignored) */
-
-/***/ }),
-/* 77 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-const dependencyManager_1 = __webpack_require__(22);
-const routerClientInstance_1 = __webpack_require__(6);
-const logger_1 = __webpack_require__(2);
-const async_1 = __webpack_require__(11);
-const system_1 = __webpack_require__(4);
-const Constants = __webpack_require__(16);
-const { SERVICE_INITIALIZING_CHANNEL, SERVICE_READY_CHANNEL, SERVICE_CLOSING_CHANNEL, SERVICE_CLOSED_CHANNEL, SERVICE_STOP_CHANNEL } = Constants;
-const defaultBaseServiceParams = {
-    startupDependencies: {
-        services: [],
-        clients: []
-    },
-    shutdownDependencies: {
-        services: []
-    },
-    addOFWrapper: false,
-    name: window.name
-};
-/*
- * @introduction
- * <h2>Base Service</h2>
- * Creates an instance of the Base Service which all service must inherit. Services are spawned from your *service.json* file and managed by a helper thread&mdash;the **Service Manager**.
- * Services communicate their status and receive status of other service through the Service Manager.
- * Services have an intial handshake with the Service Manager on load, and then either go online or wait for dependant services to come online.
- * Service intialization is completly asynchronous, which allows all services to load at the same time, as long as their dependencies have been met.
- * @constructor
-*/
-class BaseService {
-    constructor(params = defaultBaseServiceParams) {
-        fixParams(params);
-        this.name = params.name ? params.name : window.name;
-        this.startupDependencies = params.startupDependencies;
-        this.shutdownDependencies = params.shutdownDependencies;
-        this.Logger = logger_1.default;
-        this.RouterClient = routerClientInstance_1.default;
-        //This will be set to true after the debugServiceDelay is met. Defaults to 0, but devs can up it if they need to jump in and add breakpoints and are on a bad computer.
-        this.waitedLongEnough = false;
-        //this.parentUuid = System.Application.getCurrent().uuid;
-        this.onBaseServiceReadyCB = null;
-        this.setOnConnectionCompleteCB = null;
-        this.listeners = {};
-        this.start = this.waitForDependencies;
-        this.started = false;
-        /**
-         * Service status
-         * @type {ServiceState}
-         */
-        this.status = "initializing";
-        this.setOnline = this.setOnline.bind(this);
-        this.onBaseServiceReady = this.onBaseServiceReady.bind(this);
-        this.handleShutdown = this.handleShutdown.bind(this);
-        this.waitForDependencies();
-    }
-    /**
-    * Waits for the dependencies. At the end of this function, it will trigger the child service's initialze function (or onBaseServiceReady).
-    * @note This used to be BaseService.start
-    * @private
-    */
-    waitForDependencies() {
-        //For backwards compat. note Start used to be invoked after the constructor.
-        //note do this later
-        if (this.started)
-            return;
-        this.started = true;
-        var service = this;
-        logger_1.default.system.debug(`${this.name} starting`);
-        function cacheCustomData(done) {
-            logger_1.default.system.debug("BaseService.start.setParentUUID");
-            system_1.System.Window.getCurrent().getOptions((opts) => {
-                service.customData = opts.customData;
-                service.parentUuid = opts.customData.parentUuid;
-                done();
-            });
-        }
-        function onRouterReady(done) {
-            routerClientInstance_1.default.onReady(function () {
-                routerClientInstance_1.default.transmit(SERVICE_INITIALIZING_CHANNEL, { name: service.name });
-                window.addEventListener("beforeunload", service.RouterClient.disconnectAll);
-                logger_1.default.system.debug("APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start.onRouterReady");
-                done();
-            });
-        }
-        function readyToGo(done) {
-            logger_1.default.system.debug("APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start.readyToGo");
-            console.log(performance.now(), "ReadyToGo called");
-            console.log("Startup Dependencies for", service.name, service.startupDependencies);
-            console.log("Shutdown Dependencies for", service.name, service.shutdownDependencies);
-            service.waitedLongEnough = true;
-            dependencyManager_1.FSBLDependencyManagerSingleton.shutdown.waitFor(service.shutdownDependencies, service.handleShutdown);
-            routerClientInstance_1.default.transmit(`${system_1.System.Window.getCurrent().name}.onSpawned`, {});
-            //`done` invoked when all dependencies are up
-            let dependency = dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor(service.startupDependencies, done);
-            dependency.on("err", (err) => {
-                logger_1.default.system.error(err);
-            });
-        }
-        function showDeveloperTools(done) {
-            const myWindow = system_1.System.Window.getCurrent();
-            myWindow.isShowing((isShowing) => {
-                if (isShowing && service.customData.showDevConsoleOnVisible) {
-                    system_1.System.showDeveloperTools(myWindow.uuid, myWindow.name, done);
-                }
-                else {
-                    logger_1.default.system.debug("APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start.delayStartup done");
-                    done();
-                }
-            });
-        }
-        return new Promise((resolve, reject) => {
-            async_1.series([
-                onRouterReady,
-                cacheCustomData,
-                showDeveloperTools,
-                readyToGo
-            ], () => {
-                resolve();
-                this.onDependenciesReady();
-            });
-        });
-    }
-    /**
-     * Transmits the serviceOnline message that the rest of the dependency manager objects system are listening for.
-     */
-    setOnline() {
-        if (this.status !== "ready") {
-            console.log("Setting service online", this.name);
-            logger_1.default.system.log("APPLICATION LIFECYCLE:STARTUP:SERVICE ONLINE", this.name);
-            routerClientInstance_1.default.transmit(SERVICE_READY_CHANNEL, { serviceName: this.name }); // notify service manager
-            this.RouterClient.addListener(SERVICE_STOP_CHANNEL + "." + this.name, (err, response) => {
-                this;
-                dependencyManager_1.FSBLDependencyManagerSingleton.shutdown.checkDependencies();
-            });
-            this.status = "ready";
-        }
-    }
-    /**
-     * Invokes a method passed in (or on) the object that inherits from the BaseService. In other words, the service instance will have its initialize function called, unless it's using old code, in which case we will have cached the callback earlier.
-     */
-    onDependenciesReady() {
-        logger_1.default.system.debug("APPLICATION LIFECYCLE:STARTUP:BaseService onDependenciesReady", this.name);
-        this.status = "initializing"; // must change from offline here; otherwise race condition waiting to call this.setOnline
-        routerClientInstance_1.default.onReady(() => {
-            //These first two blocks are for backward compatibility. The 3rd (initialize) is how it should be done.
-            if (this.onBaseServiceReadyCB) {
-                // if inheriting service provided a "connection complete" callback, then invoke before sending online
-                this.onBaseServiceReadyCB(this.setOnline);
-            }
-            else if (this.initialize) {
-                this.initialize(this.setOnline);
-            }
-            else {
-                //otherwise setOnline need sto be called manually.
-                setTimeout(() => {
-                    if (this.status !== "ready" && this.name !== "routerService") {
-                        console.error("No onBaseServiceReadyCB on initialize function defined on your service. Ensure that service.setOnline is called");
-                        logger_1.default.system.error("No onBaseServiceReadyCB on initialize function defined on your service. Ensure that service.setOnline is called");
-                    }
-                }, 3000);
-            }
-        });
-    }
-    onBaseServiceReady(func) {
-        if (this.status === "initializing") {
-            //onBaseServiceReady is backwards-compatability stuff.
-            this.onBaseServiceReadyCB = () => {
-                func(this.setOnline);
-            };
-        }
-        else {
-            func(this.setOnline);
-        }
-    }
-    /**
-     * Really only for shutdown right now. Simple array that gets looped through on shutdown.
-     * @param {string} listenerType
-     * @param {function} callback
-     */
-    addEventListener(listenerType, callback) {
-        if (!this.listeners[listenerType]) {
-            this.listeners[listenerType] = [];
-        }
-        this.listeners[listenerType].push(callback);
-    }
-    /**
-     * When the application sends out a shutdown message, this function is invoked. It iterates through any registered cleanup methods. When all of them have finished (or 10 seconds elapses), it sends a response to the application saying that it's completed cleanup (`shutdownComplete`, below).
-     * @private
-    */
-    onShutdown(cb) {
-        this.addEventListener("onShutdown", cb);
-    }
-    /**
-     * When the application sends out a shutdown message, this function is invoked. It iterates through any registered cleanup methods. When all of them have finished (or 10 seconds elapses), it sends a response to the application saying that it's completed cleanup (`shutdownComplete`, below).
-     * @private
-    */
-    handleShutdown(err, message) {
-        var self = this;
-        function handleShutdownAction(handler, done) {
-            let cleanup = async_1.asyncify(handler);
-            cleanup = async_1.timeout(cleanup, 10000); // services may need some time to cleanup (depends on service)
-            cleanup(null, done);
-        }
-        function shutdownComplete(err, data) {
-            if (err) {
-                logger_1.default.system.error(err);
-            }
-            self.shutdownComplete();
-        }
-        if (this.listeners.onShutdown) {
-            routerClientInstance_1.default.transmit(SERVICE_CLOSING_CHANNEL, {
-                waitForMe: true,
-                name: this.name
-            });
-            async_1.each(this.listeners.onShutdown, handleShutdownAction, shutdownComplete);
-        }
-        else {
-            routerClientInstance_1.default.transmit(SERVICE_CLOSING_CHANNEL, {
-                waitForMe: false,
-                name: this.name
-            });
-            self.shutdownComplete();
-        }
-    }
-    /**
-     * Fired when all cleanup methods have been finished.
-     * @private
-    */
-    shutdownComplete() {
-        logger_1.default.system.info(`"APPLICATION LIFECYCLE:SHUTDOWN:SERVICE SHUTDOWN: ${this.name}`);
-        routerClientInstance_1.default.transmit(SERVICE_CLOSED_CHANNEL, {
-            name: this.name,
-            uuid: system_1.System.Application.getCurrent().uuid
-        });
-    }
-}
-exports.BaseService = BaseService;
-// ensures all service errors will be caught
-window.addEventListener("error", function (errorObject) {
-    var stack = errorObject.error ? errorObject.error.stack.substring(errorObject.error.stack.search("at ")) : ""; // strip off irrelevant part of stack
-    logger_1.default.error(errorObject.message, "File: " + errorObject.filename, "Line: " + errorObject.lineno, "Column: " + errorObject.colno, "Error Stack: \n    " + stack);
-    return false;
-});
-//catch promise errors
-window.addEventListener("unhandledrejection", function (event) {
-    if (event.reason == "Cannot Wrap Service Manager or Services") {
-        logger_1.default.warn("A service tried To wrap itself. This is a side effect of using Clients in services.");
-    }
-    else {
-        logger_1.default.error("Unhandled rejection", "reason", event.reason);
-    }
-});
-/**
- *
- * @private
- */
-function fixParams(params) {
-    if (params.startupDependencies) {
-        if (!params.startupDependencies.services)
-            params.startupDependencies.services = defaultBaseServiceParams.startupDependencies.services;
-        if (!params.startupDependencies.clients)
-            params.startupDependencies.clients = defaultBaseServiceParams.startupDependencies.clients;
-    }
-    else {
-        params.startupDependencies = defaultBaseServiceParams.startupDependencies;
-    }
-    if (params.shutdownDependencies) {
-        if (!params.shutdownDependencies.services)
-            params.shutdownDependencies.services = defaultBaseServiceParams.shutdownDependencies.services;
-    }
-    else {
-        params.shutdownDependencies = defaultBaseServiceParams.shutdownDependencies;
-    }
-}
-
-
-/***/ }),
-/* 78 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const baseClient_1 = __webpack_require__(13);
-const StoreModel_1 = __webpack_require__(83);
-/** I'm not sure why we previously deferred requiring StoreModel, but we did.
-  * I've tried to stay as true to the original implementation as possible. -- Daniel 12/19/18 */
-let _StoreModel;
-/** The global `window` object. We cast it to a specific interface here to be
- * explicit about what Finsemble-related properties it may have. */
-const Globals = window;
-/**
- *
- * @introduction
- * <h2>Distributed Store Client</h2>
- * The Distributed Store Client handles creating, retrieving, and destroying stores. Stores are used to save and retrieve data either locally or globally.
- * This data is not persisted. You can add listeners at multiple levels (store or field), and get the updated data as it's updated in the store.
- * Fields are stored within the store as key/value pair.
- *
- * For more information, see the [Distributed Store tutorial](tutorial-DistributedStore.html).
-
- * @hideconstructor
- * @constructor
- */
-var DistributedStoreClient = function (params) {
-    baseClient_1.default.call(this, params);
-    var self = this;
-    var localStore = {};
-    this.ls = localStore;
-    /**
-     * Get a store. If no store is set then we'll get the global Finsemble store. If global is not set we'll check local first then we'll check global.
-     * @param {Object} params - Params object
-     * @param {String} [params.store] -  The namespace of the value
-     * @param {boolean} [params.global] - Is this a global store?
-     * @param {function} cb -  Will return the value if found.
-     * @returns {StoreModel} - returns the store
-     * @example
-     * DistributedStoreClient.getStore({store:'store1'},function(storeObject){});
-     */
-    this.getStore = function (params, cb) {
-        if (params.global) {
-            return getGlobalStore(params, cb);
-        }
-        if (localStore[params.store]) {
-            return cb(null, localStore[params.store]);
-        }
-        return getGlobalStore(params, cb);
-    };
-    function getGlobalStore(params, cb) {
-        function returnStore(err, response) {
-            if (err) {
-                return cb(err);
-            }
-            return cb(err, new _StoreModel(response.data, self.routerClient));
-        }
-        return self.routerClient.query("storeService.getStore", params, returnStore);
-    }
-    /**
-     *Creates a store.
-     * @param {Object} params - Params object
-     * @param {String} params.store -  The namespace of to use
-     * @param {any} [params.values]-  Starting values for the store
-     * @param {boolean} [params.global] - Is this a global store?
-     * @param {function} cb -  Will return the store on success.
-     * @returns {function} - Callback will receive the store
-     * @example
-     * DistributedStoreClient.createStore({store:"store1",global:false,values:{}},function(storeObject){});
-     */
-    this.createStore = function (params, cb = Function.prototype) {
-        const promiseResolver = (resolve, reject) => {
-            if (params.global) {
-                return this.routerClient.query("storeService.createStore", params, function (err, response) {
-                    if (err) {
-                        reject(err);
-                        return cb(err);
-                    }
-                    const data = new _StoreModel(response.data, self.routerClient);
-                    resolve({ err, data });
-                    return cb(err, data);
-                });
-            }
-            if (localStore[params.store]) {
-                resolve({ err: null, data: localStore[params.store] });
-                return cb(null, localStore[params.store]);
-            }
-            var ls = new _StoreModel(params, self.routerClient);
-            localStore[ls.name] = ls;
-            resolve({ err: null, data: ls });
-            return cb(null, ls);
-        };
-        return new Promise(promiseResolver);
-    };
-    /**
-     * Remove a store . If global is not set and a local store isn't found we'll try to remove the global store
-     * @param {Object} params - Params object
-     * @param {String} params.store -  The namespace of to use
-     * @param {boolean} [params.global] - Is this a global store?
-     * @param {function} cb
-     * @example
-     * DistributedStoreClient.removeStore({store:"store1",global:true},function(){});
-     */
-    this.removeStore = function (params, cb) {
-        if (params.global) {
-            return removeGlobalStore(params, cb);
-        }
-        if (localStore[params.store]) {
-            delete localStore[params.store];
-            return cb(null, true);
-        }
-        removeGlobalStore(params, cb); // If global flag is not set but we don't find it local, try global////Should we have this?
-    };
-    function removeGlobalStore(params, cb) {
-        self.routerClient.query("storeService.removeStore", params, function (err, response) {
-            if (err) {
-                return cb(err, false);
-            }
-            return cb(err, response.data);
-        });
-    }
-    this.load = function (cb) {
-        cb();
-    };
-};
-var storeClient = new DistributedStoreClient({
-    startupDependencies: {
-        services: ["dataStoreService"]
-    },
-    onReady: function (cb) {
-        _StoreModel = StoreModel_1.default;
-        storeClient.load(cb);
-    },
-    name: "distributedStoreClient"
-});
-Globals.distributedStoreClient = storeClient;
-exports.default = storeClient;
-
-
-/***/ }),
-/* 79 */,
-/* 80 */,
-/* 81 */,
-/* 82 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony export (immutable) */ __webpack_exports__["byString"] = byString;
-/* harmony export (immutable) */ __webpack_exports__["initObject"] = initObject;
-/* harmony export (immutable) */ __webpack_exports__["mapField"] = mapField;
-/* harmony export (immutable) */ __webpack_exports__["checkForObjectChange"] = checkForObjectChange;
-/**
- *
- * This file handles common functionality needed in both the client and service.
- *
- */
-// Get a value from an object using a string. {abc:{123:"value"}} you would do byString(object,"abc.123")
-function byString(o, s) {
-	//Object,String
-	s = s.replace(/\[(\w+)\]/g, ".$1"); // convert indexes to properties
-	s = s.replace(/^\./, ""); // strip a leading dot
-	var a = s.split(".");
-	for (var i = 0, n = a.length; i < a.length; ++i) {
-		// Loop through and find the attribute that matches the string passed in
-		var k = a[i];
-		if (!o) {
-			return null;
-		}
-		if (typeof o === "string") return null; // Reached the end of the chain
-
-		if (k in o) {
-			o = o[k];
-		} else {
-			return null;
-		}
-	}
-	return o;
-}
-//can add values to an object from a string. Must be in `.` form abc.123
-const setPath = (object, path, value) => path.split(".").reduce((o, p) => o[p] = path.split(".").pop() === p ? value : o[p] || {}, object);
-/* harmony export (immutable) */ __webpack_exports__["setPath"] = setPath;
-
-
-// This handles the intial mapping for us. It will crawl through all child objects and map those too. Parent is the current location within the object(`parent.child`). Null is top level. The mapping is all flattened
-function initObject(object, parent, mapping) {
-	var mapLocation;
-
-	if (!parent) {
-		parent = null;
-	}
-
-	if (typeof object !== "object") {
-		mapLocation = parent ? parent + "." + n : n;
-		mapping[mapLocation] = parent;
-		return;
-	}
-
-	for (let n in object) {
-		if (typeof object[n] === "object" && object[n] !== "undefined") {
-			mapLocation = parent ? parent + "." + n : n;
-			mapping[mapLocation] = parent;
-			initObject(object[n], mapLocation, mapping); // If we have another object, map it
-		} else {
-			mapLocation = parent ? parent + "." + n : n;
-			mapping[mapLocation] = parent;
-		}
-	}
-}
-// Will map out a field in an object. So we don't have to loop through the whole thing everytime we have a change.
-function mapField(object, s, mapping) {
-	if (mapping[s]) {
-		return;
-	} // If we're already mapped move on.
-	s = s.replace(/\[(\w+)\]/g, ".$1"); // convert indexes to properties
-	s = s.replace(/^\./, ""); // strip a leading dot
-	var a = s.split(".");
-	var currentLocation = s;
-
-	if (!mapping.hasOwnProperty(currentLocation)) {
-		var newString = null;
-		if (a.length > 1) {
-			a.pop();
-			newString = a.join(".");
-		}
-
-		mapping[currentLocation] = newString;
-	}
-
-	var newObject = byString(object, currentLocation);
-	if (newObject === "undefined") {
-		return;
-	} // If the location doesnt exist exit.
-	if (typeof newObject === "object") {
-		for (var key in newObject) {
-			mapField(object, currentLocation + "." + key, mapping); // If we need to ke
-		}
-	}
-}
-// To see if we're replacing an existing field/object with an object/field that would make some of the mapping obsolete.
-function checkForObjectChange(object, field, mapping) {
-	var objectReplacing = byString(object, field);
-	if (objectReplacing === null) {
-		return false;
-	}
-	if (typeof objectReplacing === "object") {
-		// we're replacing an object which requires use to remapp at this level.
-		return removeChildMapping(mapping, field);
-	}
-	if (typeof objectReplacing !== "object" && typeof field === "object") {
-		//we're replacing a non object with an object. Need to map out this new object
-		return removeChildMapping(mapping, field);
-	}
-	return null;
-}
-//This will remove an item from mapping and pass back an array so that we can send out notifications
-function removeChildMapping(mapping, field) {
-	var removals = [];
-	for (var map in mapping) {
-		var lookField = field + ".";
-		if (map.includes(lookField)) {
-			removals.push(map);
-			delete mapping[map];
-		}
-	}
-	return removals;
-}
-
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\common\\storeUtils.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\common\\storeUtils.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
-
-/***/ }),
-/* 83 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const async_1 = __webpack_require__(11);
-const storeUtils = __webpack_require__(82);
-const logger_1 = __webpack_require__(2);
-/** The global `window` object. We cast it to a specific interface here to be
- * explicit about what Finsemble-related properties it may have. */
-const Globals = window;
-/**
- *
- * @introduction
- * <h2>Store Model</h2>
- * The Store Model consists of store instances. It handles getters/setters of data.
- * @hideConstructor
- * @class
- */
-var StoreModel = function (params, routerClient) {
-    this.routerClient = routerClient;
-    var isGlobal = params.global;
-    var self = this;
-    this.name = params.store ? params.store : "finsemble";
-    this.values = params.values ? params.values : {};
-    var listeners = [];
-    this.lst = listeners;
-    this.registeredDispatchListeners = [];
-    var mapping = {};
-    storeUtils.initObject(this.values, null, mapping);
-    /** @member {Object}  - This is the Flux dispatcher. It can be used dispatch actions across stores. These action are not caught inside of the global store service. For more information, you can read the [Flux documentation](https://facebook.github.io/flux/docs/overview.html).
-
-    * @example
-    store.Dispatcher.register(function(action){
-        if(action.actionType === "ACTION1"){
-
-        // Do something with the action here
-        }
-    });
-
-    store.Dispatcher.dispatch({actionType:ACTION1,data:myData});
-    */
-    this.Dispatcher = {
-        register: function (fn) {
-            self.registeredDispatchListeners.push(fn);
-        },
-        dispatch: function (data) {
-            if (isGlobal) {
-                self.routerClient.transmit("storeService.dispatch." + self.name, data);
-            }
-            else {
-                self.handleDispatchedMessages(null, {
-                    data: data
-                });
-            }
-        }
-    };
-    /**
-     * @param {*} err
-     * @param {*} message
-     * @private
-     */
-    this.handleDispatchedMessages = function (err, message) {
-        for (var i = 0; i < self.registeredDispatchListeners.length; i++) {
-            self.registeredDispatchListeners[i](message.data);
-        }
-    };
-    // Add listeners for global stores. Not needed for local stores as everything happens internally.
-    if (isGlobal) {
-        this.routerClient.addListener("storeService.dispatch." + self.name, this.handleDispatchedMessages);
-    }
-    /**
-     * Set a value in the store. Two events will be triggered with topics of: store and field.
-     * @param {Object} params - Params object
-     * @param {String} params.field - The name of the field where data will be stored
-     * @param {String} params.value - Value to be stored
-     * @param {function} [cb] callback
-     * @returns {null}
-     *
-     * @example
-     * store.setValue({field:'field1',value:"new value"});
-     */
-    this.setValue = function (params, cb) {
-        if (!params.field) {
-            logger_1.default.system.error("DistributedStore.setValue:no field provided", params);
-        }
-        if (!params.hasOwnProperty("value")) {
-            logger_1.default.system.error("DistributedStore.setValue:no value provided", params);
-        }
-        if (isGlobal) {
-            var data = {
-                store: self.name,
-                field: params.field,
-                value: params.value
-            };
-            return Globals.distributedStoreClient.routerClient.query("storeService.setValue", data, function (err) {
-                return cb ? cb(err) : null;
-            });
-        }
-        var removals = storeUtils.checkForObjectChange(this.values, params.field, mapping);
-        storeUtils.setPath(this.values, params.field, params.value);
-        storeUtils.mapField(this.values, params.field, mapping);
-        if (removals) {
-            sendRemovals(removals);
-        }
-        var combined = this.name + (params.field ? "." + params.field : "");
-        triggerListeners(self.name, this);
-        publishObjectUpdates(params.field, mapping);
-        return cb ? cb() : null;
-    };
-    // Handles changes to the store. Will publish from the field that was changed and back.
-    function publishObjectUpdates(startfield, mappings) {
-        var currentMapping = mappings;
-        while (startfield) {
-            triggerListeners(self.name + "." + startfield, storeUtils.byString(self.values, startfield));
-            startfield = currentMapping[startfield];
-        }
-    }
-    //Send items that are no longer mapped or had their map change. If a value is remapped we'll send out the new value.
-    function sendRemovals(removals) {
-        for (var i = 0; i < removals.length; i++) {
-            triggerListeners(self.name + "." + removals[i], storeUtils.byString(self.values, removals[i]));
-        }
-    }
-    /**
-     * This will set multiple values in the store.
-     * @param {Object[]} fields - An Array of field objects
-     * @param {String} fields.field - The name of the field
-     * @param {any} fields.value - Field value
-     * @param {function} [cb] callback
-     * @example
-     * store.setValues([{field:'field1',value:"new value"}]);
-     */
-    this.setValues = function (fields, cb) {
-        var self = this;
-        if (!fields) {
-            return logger_1.default.system.error("DistributedStore.setValues:no params given");
-        }
-        if (!Array.isArray(fields)) {
-            return logger_1.default.system.error("DistributedStore.setValues:params must be an array");
-        }
-        async_1.each(fields, function (field, done) {
-            self.setValue(field, done);
-        }, function (err) {
-            return cb ? cb(err) : null;
-        });
-    };
-    /**
-     * Get a value from the store. If global is not set, we'll check local first then we'll check global.
-     * @param {string|object} params - Params object. This can also be a string
-     * @param {String} params.field - The field where the value is stored.
-     * @param {Function} [cb] -  Will return the value if found.
-     * @returns {any} - The value of the field. If no callback is given and the value is local, this will run synchronous
-     * @example
-    store.getValue({field:'field1'},function(err,value){});
-store.getValue('field1',function(err,value){});
-     */
-    this.getValue = function (params, cb) {
-        if (typeof params === "string") {
-            params = { field: params };
-        }
-        if (!params.field) {
-            if (!cb) {
-                return "no field provided";
-            }
-            return cb("no field provided");
-        }
-        if (isGlobal) {
-            return getGlobalValue(params, cb);
-        }
-        var combined = this.name + (params.field ? "." + params.field : "");
-        var fieldValue = storeUtils.byString(this.values, params.field);
-        if (fieldValue !== undefined) {
-            if (!cb) {
-                return fieldValue;
-            }
-            return cb(null, fieldValue);
-        }
-        if (!cb) {
-            return null;
-        }
-        return cb("couldn't find a value");
-    };
-    /**
-     * Get multiple values from the store.
-    * @param {Array.<object>|Array.<String>} fields - An Array of field objects. If there are no fields proviced, all values in the store are returned.
-     * @param {Function} [cb] -  Will return the value if found.
-     * @returns {Object} - returns an object of with the fields as keys.If no callback is given and the value is local, this will run synchronous
-     * @example
-     * store.getValues([{field:'field1'},{field2:'field2'}],function(err,values){});
-store.getValues(['field1','field2'],function(err,values){});
-     */
-    this.getValues = function (fields, cb) {
-        if (typeof fields === "function") {
-            cb = fields;
-            if (isGlobal) {
-                return getGlobalValues(null, cb);
-            }
-            if (!cb) {
-                return this.values;
-            }
-            return cb(null, this.values);
-        }
-        if (!Array.isArray(fields)) {
-            return this.getValue(fields, cb);
-        }
-        if (isGlobal) {
-            return getGlobalValues(fields, cb);
-        }
-        var values = {};
-        for (var i = 0; i < fields.length; i++) {
-            var item = fields[i];
-            var field = typeof item === "string" ? item : item.field;
-            var combined = this.name + (field ? "." + field : "");
-            var fieldValue = storeUtils.byString(this.values, field);
-            values[field] = fieldValue;
-        }
-        if (!cb) {
-            return values;
-        }
-        return cb(null, values);
-    };
-    //get a single value from the global store
-    function getGlobalValue(params, cb) {
-        Globals.distributedStoreClient.routerClient.query("storeService.getValue", {
-            store: self.name,
-            field: params.field
-        }, function (err, response) {
-            if (err) {
-                return cb(err);
-            }
-            return cb(err, response.data);
-        });
-    }
-    //get values from the global store
-    function getGlobalValues(params, cb) {
-        Globals.distributedStoreClient.routerClient.query("storeService.getValues", {
-            store: self.name,
-            fields: params
-        }, function (err, response) {
-            if (err) {
-                return cb(err);
-            }
-            return cb(err, response.data);
-        });
-    }
-    /**
-     * Remove a value from the store.
-    * @param {Object | String} params - Either an object or string
-     * @param {String} param.field - The name of the field
-     * @param {Function} [cb] -  returns an error if there is one
-     * @example
-     * store.removeValue({field:'field1'},function(err,bool){});
-     */
-    this.removeValue = function (params, cb) {
-        if (!params.field) {
-            if (params !== undefined) {
-                params = { field: params };
-            }
-            else {
-                return cb("no field provided");
-            }
-        }
-        params.value = null;
-        return self.setValue(params, cb);
-    };
-    /**
-     * Removes multiple values from the store.
-     * @param {Object[] | String[]} params - An Array of field objects
-     * @param {String} param[].field - The name of the field
-     * @param {Function} [cb] -  returns an error if there is one.
-     * @example
-     * store.removeValue({field:'field1'},function(err,bool){});
-     */
-    this.removeValues = function (params, cb) {
-        if (!Array.isArray(params)) {
-            return cb("The passed in parameter needs to be an array");
-        }
-        async_1.map(params, this.removeValue, function (err, data) {
-            return cb(err, data);
-        });
-    };
-    /**
-     * Destroys the store.
-     * @param {Function} [cb] -  Will return the value if found.
-     * @example
-     * store.destroy();
-     */
-    this.destroy = function (cb) {
-        var self = this;
-        var params = {
-            store: this.name,
-            global: isGlobal,
-        };
-        Globals.distributedStoreClient.removeStore(params, function (err, response) {
-            if (err) {
-                return cb(err);
-            }
-            self = null;
-            return cb(null, true);
-        });
-    };
-    /**
-     * NOTE: make sure we dont have duplicate router subscribers
-     * @private
-     */
-    this.changeSub = function (change) {
-        if (!this.subs)
-            this.subs = [];
-        if (!this.subs[change]) {
-            if (isGlobal) {
-                Globals.distributedStoreClient.routerClient.subscribe("storeService" + change, handleChanges);
-            }
-            this.subs[change] = true;
-        }
-    };
-    /**
-    * Add a listener to the store at either the store or field level. If no field is given, the store level is used. You can also listen to nested object -- field1.nestedField
-    * @param {Object} params - Params object
-    * @param {String} params.field - The data field to listen for. If this is empty it listen to all changes of the store.
-    * @param {Function} fn -  the function to call when a listener is triggered
-    * @param {Function} [cb] - callback
-    * @example
-    *var myFunction = function(err,data){
-    }
-    * store.addListener({field:'field1'},myFunction,cb);
-
-    */
-    this.addListener = function (params, fn, cb) {
-        var field = null;
-        if (typeof params === "function") {
-            fn = params;
-            params = {};
-        }
-        if (params.field) {
-            field = params.field;
-        }
-        var combined = this.name + (field ? "." + field : "");
-        if (listeners[combined]) {
-            listeners[combined].push(fn);
-        }
-        else {
-            listeners[combined] = [fn];
-        }
-        this.changeSub(combined);
-        return cb ? cb() : null;
-    };
-    /**
-    * Add an array of listeners as  objects or strings. If using strings, you must provide a function callback.
-    * @param {Object[] | String[]} params - Params object
-    * @param {String} params.field - The data field to listen for.
-    * @param {String} [params.listener] - the function to call when a listener is triggered. If this is empty, fn is used.
-    * @param {function} [fn] -  the function to call when a listener is triggered
-    * @param {function} [cb] callback
-    * @example
-    *var myFunction = function(err,data){
-
-    }
-    store.addListeners([{field:'field1',listener:myFunction},{field:'field2',listener:myFunction}],null,cb);
-
-    store.addListeners([{field:'field1'},{field:'field2',listener:myFunction}],myFunction,cb);
-
-    store.addListeners(['field1','field2'],myFunction,cb);
-    */
-    this.addListeners = function (params, fn, cb) {
-        if (!Array.isArray(params)) {
-            return this.addListener(params, fn, cb);
-        }
-        for (var i = 0; i < params.length; i++) {
-            var field = null;
-            var item = params[i];
-            var ls;
-            if (typeof item === "string") {
-                field = item;
-            }
-            else if (item.field) {
-                field = item.field;
-                ls = params[i].listener;
-            }
-            var combined = this.name + (field ? "." + field : "");
-            if (!ls) {
-                if (fn && typeof fn === "function") {
-                    ls = fn;
-                }
-            }
-            if (listeners[combined]) {
-                listeners[combined].push(ls);
-            }
-            else {
-                listeners[combined] = [ls];
-            }
-            this.changeSub(combined);
-        }
-        return cb ? cb() : null;
-    };
-    /**
-     * Remove a listener from  store. If no field is given, we look for a store listener
-     * @param {Object} params - Params object
-     * @param {String} params.field - The data field
-     * @param {function} [fn] -  the function to remove from the listeners
-     * @param {function} [cb] -  returns true if it was succesfull in removing the listener.
-     *
-     * @example
-     * var myFunction = function(err,data){
-            }
-     * store.removeListener({field:'field1'},MyFunction,function(bool){});
-    StoreCstorelient.removeListener(MyFunction,function(bool){});
-     */
-    this.removeListener = function (params, fn, cb) {
-        var field = null;
-        if (typeof params === "function") {
-            cb = fn;
-            fn = params;
-            params = {};
-        }
-        if (params.field) {
-            field = params.field;
-        }
-        var combined = this.name + (field ? "." + field : "");
-        if (listeners[combined]) {
-            for (var i = 0; i < listeners[combined].length; i++) {
-                if (listeners[combined][i] === fn) {
-                    listeners[combined].pop(i);
-                    return cb ? cb(null, true) : null;
-                }
-            }
-        }
-        return cb ? cb(null, false) : null;
-    };
-    /**
-     * Remove an array of listeners from the store
-     * @param {Object[] | String[]} params - Params object
-     * @param {String} params.field - The data field to listen for. If this is empty it listen to all changes of the store.
-     * @param {String} params.listener - The listener function
-     * @param {function} [fn] -  the function to remove from the listeners
-     * @param {function} [cb] -  returns true if it was succesfull in removing the listener.
-     *
-     * @example
-     * var myFunction = function(err,data){
-            }
-     * store.removeListeners({field:'field1'},MyFunction,function(bool){});
-    store.removeListeners([{field:'field1',listener:MyFunction}],function(bool){});
-    store.removeListeners(['field1'],MyFunction,function(bool){});
-     */
-    this.removeListeners = function (params, fn, cb) {
-        if (!Array.isArray(params)) {
-            if (typeof params === "function") {
-                this.removeListener({}, params, cb);
-            }
-            else if (params.field) {
-                this.removeListener(params, fn, cb);
-            }
-            return cb("missing fields");
-        }
-        var removeCount = 0;
-        for (var i = 0; i < params.length; i++) {
-            var field = null;
-            var item = params[i];
-            var ls;
-            if (typeof item === "string") {
-                field = item;
-            }
-            else if (item.field) {
-                field = item.field;
-                ls = params[i].listener;
-            }
-            var combined = this.name + (field ? "." + field : "");
-            if (!ls) {
-                if (fn && typeof fn === "function") {
-                    ls = fn;
-                }
-                else {
-                    continue;
-                }
-            }
-            for (var j = 0; j < listeners[combined].length; j++) {
-                if (listeners[combined][j] === ls) {
-                    listeners[combined].pop(i);
-                    removeCount++;
-                }
-            }
-        }
-        if (removeCount < params.length) {
-            return cb("All listeners could not be found", false);
-        }
-        return cb ? cb(null, true) : null;
-    };
-    //This handles all changes coming in from the service
-    function handleChanges(err, response) {
-        if (err) {
-            logger_1.default.system.error("DistributedStoreClient", err);
-        }
-        if (!response.data.store) {
-            return;
-        }
-        if (!response.data.field) {
-            response.data.field = null;
-        }
-        var combined = self.name + (response.data.field ? "." + response.data.field : "");
-        var val = response.data.storeData ? response.data.storeData : response.data.value;
-        triggerListeners(combined, val);
-    }
-    // Trigger any function that is listening for changes
-    function triggerListeners(listenerKey, data) {
-        if (listeners[listenerKey]) {
-            for (var i = 0; i < listeners[listenerKey].length; i++) {
-                if (typeof listeners[listenerKey][i] === "function") {
-                    logger_1.default.system.debug("DistributedStore.triggerListeners", listenerKey, data);
-                    listeners[listenerKey][i](null, { field: listenerKey, value: data });
-                }
-                else {
-                    logger_1.default.system.warn("DistributedStoreClient:triggerListeners: listener is not a function", listenerKey, i, listeners[listenerKey][i]);
-                }
-            }
-        }
-    }
-    return this;
-};
-exports.default = StoreModel;
-
-
-/***/ }),
-/* 84 */,
-/* 85 */,
-/* 86 */,
-/* 87 */,
-/* 88 */,
-/* 89 */,
-/* 90 */,
-/* 91 */,
-/* 92 */,
-/* 93 */,
-/* 94 */,
-/* 95 */,
-/* 96 */,
-/* 97 */,
-/* 98 */,
-/* 99 */,
-/* 100 */,
-/* 101 */,
-/* 102 */,
-/* 103 */,
-/* 104 */,
-/* 105 */,
-/* 106 */,
-/* 107 */,
-/* 108 */,
-/* 109 */,
-/* 110 */,
-/* 111 */,
-/* 112 */,
-/* 113 */,
-/* 114 */,
-/* 115 */,
-/* 116 */,
-/* 117 */,
-/* 118 */,
-/* 119 */,
-/* 120 */,
-/* 121 */,
-/* 122 */,
-/* 123 */,
-/* 124 */,
-/* 125 */,
-/* 126 */,
-/* 127 */,
-/* 128 */,
-/* 129 */,
-/* 130 */,
-/* 131 */,
-/* 132 */,
-/* 133 */,
-/* 134 */,
-/* 135 */,
-/* 136 */,
-/* 137 */,
-/* 138 */,
-/* 139 */,
-/* 140 */,
-/* 141 */,
-/* 142 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__baseService__ = __webpack_require__(77);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__baseService__ = __webpack_require__(29);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__baseService___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__baseService__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_distributedStoreClient__ = __webpack_require__(78);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_distributedStoreClient__ = __webpack_require__(30);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_distributedStoreClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_distributedStoreClient__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__clients_logger__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__clients_logger__);
 /*!
 * Copyright 2017 by ChartIQ, Inc.
@@ -22438,108 +14562,10 @@ function uuidv4() {
 	});
 }
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "c:\\projects\\finsemble\\src\\services\\search\\searchService.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "c:\\projects\\finsemble\\src\\services\\search\\searchService.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(3)(module)))
-
-/***/ }),
-/* 143 */,
-/* 144 */,
-/* 145 */,
-/* 146 */,
-/* 147 */,
-/* 148 */,
-/* 149 */,
-/* 150 */,
-/* 151 */,
-/* 152 */,
-/* 153 */,
-/* 154 */,
-/* 155 */,
-/* 156 */,
-/* 157 */,
-/* 158 */,
-/* 159 */,
-/* 160 */,
-/* 161 */,
-/* 162 */,
-/* 163 */,
-/* 164 */,
-/* 165 */,
-/* 166 */,
-/* 167 */,
-/* 168 */,
-/* 169 */,
-/* 170 */,
-/* 171 */,
-/* 172 */,
-/* 173 */,
-/* 174 */,
-/* 175 */,
-/* 176 */,
-/* 177 */,
-/* 178 */,
-/* 179 */,
-/* 180 */,
-/* 181 */,
-/* 182 */,
-/* 183 */,
-/* 184 */,
-/* 185 */,
-/* 186 */,
-/* 187 */,
-/* 188 */,
-/* 189 */,
-/* 190 */,
-/* 191 */,
-/* 192 */,
-/* 193 */,
-/* 194 */,
-/* 195 */,
-/* 196 */,
-/* 197 */,
-/* 198 */,
-/* 199 */,
-/* 200 */,
-/* 201 */,
-/* 202 */,
-/* 203 */,
-/* 204 */,
-/* 205 */,
-/* 206 */,
-/* 207 */,
-/* 208 */,
-/* 209 */,
-/* 210 */,
-/* 211 */,
-/* 212 */,
-/* 213 */,
-/* 214 */,
-/* 215 */,
-/* 216 */,
-/* 217 */,
-/* 218 */,
-/* 219 */,
-/* 220 */,
-/* 221 */,
-/* 222 */,
-/* 223 */,
-/* 224 */,
-/* 225 */,
-/* 226 */,
-/* 227 */,
-/* 228 */,
-/* 229 */,
-/* 230 */,
-/* 231 */,
-/* 232 */,
-/* 233 */,
-/* 234 */,
-/* 235 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(142);
-
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\services\\search\\searchService.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\services\\search\\searchService.js"); } } })();
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ })
-/******/ ]);
+
+/******/ });
 //# sourceMappingURL=searchService.js.map

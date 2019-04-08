@@ -14,7 +14,6 @@ import * as Constants from "../../../common/constants";
 import { MockDockableWindow } from "../Common/MockDockableWindow";
 import { WindowPoolSingleton } from "../Common/Pools/PoolSingletons";
 
-
 export class WindowPrimitives {
 	dockingMain: any;
 	eventInterruptors: any;
@@ -587,7 +586,7 @@ export class WindowPrimitives {
 					promiseResolved = true;
 					resolvePromise();
 				} else {
-					Logger.system.debug("waiting on ", delayers);
+					Logger.system.debug("closeHandler: Waiting on ", delayers);
 				}
 			}, 1000);
 			let listener = (sid, eventGuid, response) => {
@@ -613,7 +612,8 @@ export class WindowPrimitives {
 				} else if (Object.keys(this.eventInterruptors[windowIdentifier.name][eventName]).length == 0) {
 					promiseResolved = true;
 					resolvePromise();
-				}
+					clearTimeout(gotResponses);
+				} 
 			};
 
 			let p = new Promise(function (resolve, reject) {

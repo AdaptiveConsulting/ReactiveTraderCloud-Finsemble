@@ -80,10 +80,14 @@ class StackedWindowManager implements StackedWindowManagement {
 		this.eventHandlerFunction = {}; // holds event handlers functions (needed to remove listeners)
 		this.childNameToSID = {}; // mapping from child window name to it parent stackedWindowIdentifier
 
+		/**
+		 * The following events (and these only) should be propogated from the children to the stack.
+		 */
 		this.childEventsToHandle = [
 			"minimized", "restored", "shown", "hidden", "focused",
-			"broughtToFront", "setBounds", "closed", "alwaysOnTop", "setOpacity",
-			"title-changed", "bounds-change-request", "bounds-change-end", "bounds-changed"
+			"broughtToFront", "setBounds", "alwaysOnTop", "setOpacity",
+			"title-changed", "bounds-change-request", "bounds-change-end", "bounds-changed",
+			"system-maximized", "system-bounds-changed", "system-restored"
 		];
 
 		this.bindAllFunctions();
@@ -344,10 +348,7 @@ class StackedWindowManager implements StackedWindowManagement {
 		}
 		Logger.system.verbose("StackedWindowManager transmitting event", event.eventName, this.eventChannelName(stackedWindowName, event.eventName), event);
 
-		let doNotForwardToStackedWindowList = ["closed"];
-		if (!doNotForwardToStackedWindowList.includes(event.eventName)) {
-			stackWrap.eventManager.trigger(event.eventName, event);
-		}
+		stackWrap.eventManager.trigger(event.eventName, event);
 	};
 
 
@@ -643,6 +644,8 @@ class StackedWindowManager implements StackedWindowManagement {
 							// Notify interested listeners (e.g. BaseWindow wrappers for added window) that window was added to the stack
 							Logger.system.debug("StackedWindowManager publish parent notification", windowIdentifier.windowName);
 							RouterClient.publish(`Finsemble.parentChange.${windowIdentifier.windowName}`, { type: "Added", stackedWindowIdentifier });
+							//Publish Exists event right after the Added event because windows use this event type to track parent state.
+							RouterClient.publish(`Finsemble.parentChange.${windowIdentifier.windowName}`, { type: "Exists", stackedWindowIdentifier });
 
 							callback(err);
 							err ? reject(err) : resolve();
@@ -795,18 +798,20 @@ class StackedWindowManager implements StackedWindowManagement {
 
 				if (!noCloseStack && thisStackRecord.childWindowIdentifiers.length === 1) { // normally if no more child windows then unregister and close the stackedWindow
 					//@early-exit. If you uncomment this return statement, the callback will be invoked twice. That causes errors and looks bad
+					//save the child value first because sometimes it's removed from the stackrecord before the query returns, but it still needs to be unregistered
+					let lastChild = thisStackRecord.childWindowIdentifiers[0];
 					return RouterClient.query("DockingService.getGroupsForWindow", { name: thisStackRecord.name }, (err, response) => {
-						this.registerWithDockingManager({ windowIdentifier: thisStackRecord.childWindowIdentifiers[0] }, async () => {
+						this.registerWithDockingManager({ windowIdentifier: lastChild }, async () => {
 							let groups = response.data;
 							if (groups) {
 								for (let group of groups) {
 									RouterClient.transmit("DockingService.joinGroup", {
 										groupName: group,
-										name: thisStackRecord.childWindowIdentifiers[0].windowName
+										name: lastChild.windowName
 									});
 								}
 							}
-							let childWrapper = this.childWindow[thisStackRecord.childWindowIdentifiers[0].windowName];
+							let childWrapper = this.childWindow[lastChild.windowName];
 							childWrapper._show({ invokedByParent: true });
 
 							let { wrap } = await FinsembleWindow.getInstance(params.stackedWindowIdentifier);

@@ -11,7 +11,7 @@ import windowClient from "./windowClient";
 import distributedStoreClient from "./distributedStoreClient";
 import { FinsembleWindow } from "../common/window/FinsembleWindow";
 import { openSharedData } from "../common/util";
-import { each as asyncEach, parallel as asyncParallel} from "async";
+import { each as asyncEach, parallel as asyncParallel } from "async";
 
 const DRAG_START_CHANNEL = "DragAndDropClient.dragStart";
 const DRAG_END_CHANNEL = "DragAndDropClient.dragEnd";
@@ -21,6 +21,22 @@ const SHARE_METHOD = {
 	SPAWN: "spawn",
 	LINKER: "linker"
 };
+
+type receiver = {
+	type: string;
+	handler: Function;
+};
+
+type receiverUpdate = {
+	type: string;
+	handler: Function;
+	oldHandler: Function;
+}
+
+type emitter = {
+	type: string,
+	data: any
+}
 
 /**
  *
@@ -95,7 +111,8 @@ class DragAndDropClient extends BaseClient {
 		this.bindAllFunctions();
 	}
 
-	/* private */
+	/**
+	 * @private */
 	bindAllFunctions() {
 		let self = this;
 		for (let name of Object.getOwnPropertyNames(Object.getPrototypeOf(self))) {
@@ -126,7 +143,9 @@ class DragAndDropClient extends BaseClient {
 	* 	]
 	* })
 	*/
-	setEmitters(params) {
+	setEmitters(params: {
+		emitters: emitter[]
+	}) {
 		if (!Array.isArray(params.emitters)) { return; }
 		let self = this;
 
@@ -175,7 +194,9 @@ class DragAndDropClient extends BaseClient {
 	 * })
 	 */
 
-	addReceivers(params) {
+	addReceivers(params: {
+		receivers: receiver[]
+	}) {
 		if (!Array.isArray(params.receivers)) { return; }
 		let self = this;
 
@@ -251,7 +272,9 @@ class DragAndDropClient extends BaseClient {
 	 * 		}
 	 * 	])
 	 */
-	updateReceivers(params) {
+	updateReceivers(params: {
+		receivers: receiverUpdate[]
+	}) {
 		if (!Array.isArray(params.receivers)) { return; }
 		let self = this;
 
@@ -306,7 +329,9 @@ class DragAndDropClient extends BaseClient {
 	 * 		}
 	 * 	])
 	 */
-	removeReceivers(params) {
+	removeReceivers(params: {
+		receivers: receiver[]
+	}) {
 		if (!Array.isArray(params.receivers)) { return; }
 		let self = this;
 
@@ -335,7 +360,7 @@ class DragAndDropClient extends BaseClient {
 	 * @param {event} event
 	 *
 	 */
-	dragStart(event) {
+	dragStart(event: any) {
 		this.routerClient.transmit(DRAG_START_CHANNEL, Object.keys(this.emitters));
 		var data = {
 			FSBL: true,
@@ -363,7 +388,7 @@ class DragAndDropClient extends BaseClient {
 	 * })
 	 *
 	 */
-	dragStartWithData(event, data) {
+	dragStartWithData(event: any, data: any) {
 		this.routerClient.transmit(DRAG_START_CHANNEL, Object.keys(data));
 		var dragdata = {
 			FSBL: true,
@@ -410,7 +435,7 @@ class DragAndDropClient extends BaseClient {
 	 *
 	 * @param {event} event
 	 */
-	drop(event) {
+	drop(event: any) {
 		let self = this;
 		if (!event.dataTransfer) { event.dataTransfer = event.originalEvent.dataTransfer; } // deal with jQuery events not having dataTransfer
 		var data = event.dataTransfer.getData("text/plain");
@@ -452,7 +477,7 @@ class DragAndDropClient extends BaseClient {
 	 * @param {object} params This is a list of strands whose data is required
 	 * @private
 	 */
-	emit(error, params: { data: string[], sendQueryResponse: (err?, data?) => void}) {
+	emit(error, params: { data: string[], sendQueryResponse: (err?, data?) => void }) {
 		let values = {};
 		var self = this;
 
@@ -513,15 +538,19 @@ class DragAndDropClient extends BaseClient {
 	 * @experimental
 	 *
 	 * @param {object} params
-	 * @param {any} [params.data]
-	 * @param {boolean} [params.publishOnly] if the component is linked, this will only publish the data, not force open a window if it does not exist. If the component is not linked, this is ignored.
-	 * @param {function} [params.multipleOpenerHandler] Optional. This function is called with on object that contains a map of componentTypes to the data types they can open. It must return a list of components to be opened. If no handler is provided, the first found component will be chosen. It is possible that the component opened may not handle all the data provided.
+	 * @param {any} params.data
+	 * @param {boolean} params.publishOnly if the component is linked, this will only publish the data, not force open a window if it does not exist. If the component is not linked, this is ignored.
+	 * @param {function} params.multipleOpenerHandler Optional. This function is called with on object that contains a map of componentTypes to the data types they can open. It must return a list of components to be opened. If no handler is provided, the first found component will be chosen. It is possible that the component opened may not handle all the data provided.
 	 * @param {function} cb Callback invoked with action taken.
 	 *
 	 * @since 1.5: multipleOpenerHandler and callback added
 	 *
 	 */
-	openSharedData(params, cb) {
+	openSharedData(params: {
+		data?: any,
+		publishOnly?: boolean,
+		multipleOpenerHandler?: Function
+	}, cb: StandardCallback) {
 		openSharedData(params, cb);
 	}
 
@@ -649,6 +678,12 @@ class DragAndDropClient extends BaseClient {
 		});
 	}
 
+	/**
+	 * @private
+	 *
+	 * @param {*} cb
+	 * @memberof DragAndDropClient
+	 */
 	getFinsembleWindow(cb) {
 		FinsembleWindow.getInstance({ name: this.finWindow.name, uuid: this.finWindow.uuid }, (err, response) => {
 			this.finsembleWindow = response;
@@ -672,4 +707,4 @@ var dragAndDropClient = new DragAndDropClient({
 	name: "dragAndDropClient"
 });
 
-export default  dragAndDropClient;
+export default dragAndDropClient;

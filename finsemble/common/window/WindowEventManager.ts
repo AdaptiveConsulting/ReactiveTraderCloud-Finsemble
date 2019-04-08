@@ -138,7 +138,7 @@ export class WindowEventManager extends EventEmitter implements WindowEventManag
 		Logger.system.info("WRAP CLOSE. WindowEventManager.cleanup. Removing router subscriptions", this.windowName, eventSubscriptions);
 
 		eventSubscriptions.forEach(channelName => {
-			let handlers: Array<StandardCallBack> = this.remoteEventSubscriptions[channelName];
+			let handlers: Array<StandardCallback> = this.remoteEventSubscriptions[channelName];
 			handlers.forEach(handler => {
 				RouterClient.removeListener(channelName, handler);
 			});

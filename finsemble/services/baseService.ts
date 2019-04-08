@@ -50,10 +50,10 @@ export class BaseService {
 	setOnConnectionCompleteCB: null | Function;
 	shutdownDependencies: FinsembleDependencyObject;
 	start: Function;
-	started: Boolean;
+	started: boolean;
 	startupDependencies: FinsembleDependencyObject
 	status: ServiceState;
-	waitedLongEnough: Boolean;
+	waitedLongEnough: boolean;
 
 	constructor(params = defaultBaseServiceParams) {
 		fixParams(params);
@@ -131,7 +131,7 @@ export class BaseService {
 		function showDeveloperTools(done) {
 			const myWindow = System.Window.getCurrent();
 			myWindow.isShowing((isShowing) => {
-				if (isShowing && service.customData.showDevConsoleOnVisible) {
+				if (isShowing && service.customData.showDevConsoleOnVisible!==false) {
 					System.showDeveloperTools(
 						myWindow.uuid,
 						myWindow.name,

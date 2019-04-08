@@ -268,25 +268,6 @@ export class FinsembleWindow {
 	setupListeners(name) {
 		Logger.system.debug("FinsembleWindow parent change notification setup", name);
 
-		this.parentSubscribeID = RouterClient.subscribe(`Finsemble.parentChange.${name}`, (err, message) => {
-			if (err) {
-				Logger.system.error("FinsembleWindow parent change notification error", err);
-			} else {
-				var parentState = message.data;
-				parentState = parentState || {};
-
-				if (parentState.type == "Added") {
-					Logger.system.debug("FinsembleWindow Parent Notification: window.addedToStack listener", parentState);
-					this.setParent(parentState.stackedWindowIdentifier);
-				} else if (parentState.type == "Removed") {
-					Logger.system.debug("FinsembleWindow Parent Notification: window.removedFromStack listener", parentState);
-					this.clearParent();
-				} else if (parentState.type) { // if defined but unknown type
-					Logger.system.error("FinsembleWindow Parent Notification: unknown type", parentState);
-				}
-			}
-		});
-
 		this.TITLE_CHANGED_SUBSCRIPTION = RouterClient.subscribe(this.TITLE_CHANGED_CHANNEL, this.onTitleChanged);
 	}
 
@@ -456,6 +437,7 @@ export class FinsembleWindow {
 			delete paramsForWindow.windowType; //Prevent infinite loop
 
 			Logger.system.debug("WRAP LIFECYCLE: Placing wrap into the local cache.", identifier.windowName);
+
 			let BW = FinsembleWindow as any; //have to do this because we're mutating the class using static functions and all kinds of bad stuff. This tells the typescript compiler that the FinsembleWindow here is of type any -- basically don't worry about its type.
 			window._FSBLCache.windows[identifier.windowName] = new BW(paramsForWindow);
 			wrap = window._FSBLCache.windows[identifier.windowName]
@@ -472,8 +454,35 @@ export class FinsembleWindow {
 				wrap.windowState = FinsembleWindow.WINDOWSTATE.NORMAL;
 			});
 
-			//window.addEventListener("beforeunload", wrap.handleWrapRemoveRequest);
-			resolve({ wrap });
+			//Subscribe to parent inside the wrap so if getinstance is called after window creation the parent window will be availble.
+			wrap.parentSubscribeID = RouterClient.subscribe(`Finsemble.parentChange.${identifier.windowName}`, (err, message) => {
+				if (err) {
+					Logger.system.error("FinsembleWindow parent change notification error", err);
+					resolve({wrap});
+				} else {
+					var parentState = message.data || {};
+	
+					if (parentState.type === "Added") {
+						Logger.system.debug("FinsembleWindow Parent Notification: window.addedToStack listener", parentState);
+						wrap.setParent(parentState.stackedWindowIdentifier, () => {resolve({ wrap });});
+					} else if (parentState.type === "Exists") {
+						Logger.system.debug("FinsembleWindow Parent Notification: Parent already exists, checking if added to wrap", parentState);
+						wrap.setParentOnWrap(parentState.stackedWindowIdentifier, () => {resolve({ wrap });});
+					} else if (parentState.type === "Removed") {
+						Logger.system.debug("FinsembleWindow Parent Notification: window.removedFromStack listener", parentState);
+						wrap.clearParent();
+						resolve({ wrap });
+					} else if (parentState.type) { // if defined but unknown type
+						Logger.system.error("FinsembleWindow Parent Notification: unknown type", parentState);
+						resolve({ wrap });
+					}
+					else {
+						resolve({wrap});
+					}
+				}
+				
+			});
+			
 		}
 		return new Promise(promiseResolver);
 	}
@@ -503,6 +512,9 @@ export class FinsembleWindow {
 		}
 		Logger.system.log("WRAP Destructor. removeEventListener DONE");
 		console.log("handleWrapRemoveRequest name Done!");
+
+		RouterClient.unsubscribe(this.parentSubscribeID);
+
 		if (event) event.done();
 
 		this.eventManager.cleanup();
@@ -938,7 +950,6 @@ export class FinsembleWindow {
 				FinsembleWindow.getInstance(stackedWindowIdentifier, (err, wrappedStackedWindow) => {
 					if (!err) {
 						Logger.system.debug("FinsembleWindow.setParent wrap success", stackedWindowIdentifier);
-						console.debug("FinsembleWindow.setParent wrap success", this, wrappedStackedWindow);
 						this.parentWindow = wrappedStackedWindow;
 						if (!this.parentWindow.windowType.includes("StackedWindow")) {
 							Logger.system.error("FinsembleWindow.setParent error", this.parentWindow.name, stackedWindowIdentifier.windowName);
@@ -948,6 +959,38 @@ export class FinsembleWindow {
 					}
 					this.settingParent = false;
 					this.eventManager.trigger("parent-set", { parentName: this.parentWindow.name });
+					cb(err, wrappedStackedWindow);
+				});
+			});
+
+		}
+	}
+
+	/**
+	 * Sets the parent window (e.g. stackedWindow) on a window wrap.
+	 * This is for the case where a window already has a parent but it's wrap doesn't know about it.
+	 *
+	 * @param {object} stackedWindowIdentifier identifer of window to set as parent (e.g. stackedWindowIdentifier).
+	 *
+	 */
+	setParentOnWrap(stackedWindowIdentifier, cb = Function.prototype) {
+		if (this.parentWindow && (this.parentWindow.name === stackedWindowIdentifier.windowName)) {
+			Logger.system.debug("FinsembleWindow.setParentOnWrap already set", stackedWindowIdentifier);
+			cb(null, this.parentWindow);
+		} else {
+			this.queryWindowService("setParent", stackedWindowIdentifier, (err, message) => {
+				Logger.system.debug("FinsembleWindow.setParentOnWrap", stackedWindowIdentifier);
+				FinsembleWindow.getInstance(stackedWindowIdentifier, (err, wrappedStackedWindow) => {
+					if (!err) {
+						Logger.system.debug("FinsembleWindow.setParentOnWrap success getting wrap", stackedWindowIdentifier);
+						console.debug("FinsembleWindow.setParentOnWrap success getting wrap", this, wrappedStackedWindow);
+						this.parentWindow = wrappedStackedWindow;
+						if (this.parentWindow.windowType.includes("StackedWindow") === false) {
+							Logger.system.error("FinsembleWindow.setParentOnWrap error", this.parentWindow.name, stackedWindowIdentifier.windowName);
+						}
+					} else {
+						Logger.system.error("FinsembleWindow.setParentOnWrap error", err);
+					}
 					cb(err, wrappedStackedWindow);
 				});
 			});

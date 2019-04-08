@@ -66,6 +66,10 @@ export class BaseWindow extends EventEmitter {
 	eventlistenerHandlerMap: object = {}
 	guid: "string";
 	dockedPosition: number;
+	enableWindowsAeroSnap: boolean;
+	finishedMove: boolean;
+	isMaximizing: boolean;
+
 	constructor(params) {
 		super();
 		this.types = {};
@@ -80,6 +84,7 @@ export class BaseWindow extends EventEmitter {
 		this.bounds = {};
 		this.name;
 		this.windowOptions = {};
+		this.enableWindowsAeroSnap = false;
 		//because we were doing this[i]=params[i] in the constructor jscrambler was creating a reference to "this" above _super_, causing everything to break and it made me cry.
 		this.doConstruction(params);
 		this.TITLE_CHANGED_CHANNEL = "Finsemble." + this.name + ".titleChanged";
@@ -89,6 +94,9 @@ export class BaseWindow extends EventEmitter {
 		BaseWindow.bindFunctions(this);
 		this.wrapStateChangeSubscription = RouterClient.subscribe("Finsemble.Component.State." + this.name, this.handleWrapStateChange);
 		this.eventManager = new WindowEventManager({ name: this.name });
+		this.finishedMove = true;
+		// Prevents duplicate calls to maximize from corrupting the window state for OpenfinWindow and stackedWindow implementations
+		this.isMaximizing = false;
 	}
 
 	public static WINDOWSTATE = constants.WINDOWSTATE;
@@ -114,6 +122,15 @@ export class BaseWindow extends EventEmitter {
 			window._FSBLCache.windowStore = store;
 			cb(store);
 		});
+	}
+
+	_startMove() {
+		window["aeroMode"] = false;
+		this.finishedMove = false;
+	}
+
+ 	_stopMove() {
+		this.finishedMove = true;
 	}
 
 	doConstruction(params) {
@@ -194,6 +211,7 @@ export class BaseWindow extends EventEmitter {
 				} else if (parentState.type == "Removed") {
 					Logger.system.debug("BaseWindow Parent Notification: window.removedFromStack listener", parentState);
 					this.clearParent();
+				} else if (parentState.type === "Exists") { // Do nothing
 				} else if (parentState.type) { // if defined but unknown type
 					Logger.system.error("BaseWindow Parent Notification: unknown type", parentState);
 				}
@@ -1221,7 +1239,7 @@ export class BaseWindow extends EventEmitter {
 		this.windowState = state;
 	}
 
-	saveCompleteWindowState(state, cb = Function.prototype) {
+	saveCompleteWindowState(state, cb?) {
 		if (!state) return cb("No State Provided");
 		if (state.customData && state.customData.manifest) {
 			delete state.customData.manifest;

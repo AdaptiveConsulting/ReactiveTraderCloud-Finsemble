@@ -7,7 +7,7 @@ import Validate from "../common/validate";
 
 import Logger from "./logger";
 
-import BaseClient from "./baseClient";
+import { _BaseClient } from "./baseClient";
 
 /**
  *
@@ -18,11 +18,7 @@ import BaseClient from "./baseClient";
  *  @todo add clear method
  * @constructor
  */
-var StorageClient = function (params) {
-	Validate.args(params, "object=") && params && (Validate as any).args2("params.onReady", params.onReady, "function=");
-	var self = this;
-	BaseClient.call(this, params);
-
+class StorageClient extends _BaseClient {
 	/**
 	 * Define the username for storage (i.e., each user has unique storage)
 	 * @param {Object} params - Params object
@@ -30,15 +26,12 @@ var StorageClient = function (params) {
 	 * @param {function} [cb] -  callback to be called on success
 	 *
 	 * @example
-	 * StorageClient.setUser({ user: "JohnDoe"});
+	 * StorageClient.setUser({ user: "JohnDeere"});
 	 */
-	this.setUser = function (params, cb) {
+	setUser(params: { user: string }, cb?: StandardCallback) {
 		Validate.args(params.user, "string", cb, "function=");
-		self.routerClient.query("Storage.setUser", { user: params.user }, function (err, response) {
-			let logMethod = Logger.system.log;
-			if (err) {
-				logMethod = Logger.system.error;
-			}
+		this.routerClient.query("Storage.setUser", { user: params.user }, function (err, response) {
+			const logMethod = err ? Logger.system.error : Logger.system.info;
 			logMethod("APPLICATION LIFECYCLE:StorageClient.setUser", params, err, response);
 			if (cb) {
 				cb(err, response.data);
@@ -56,14 +49,11 @@ var StorageClient = function (params) {
 	 * @example
 	 * StorageClient.setStore({topic:"finsemble", dataStore:"redis"})
 	 */
-	this.setStore = function (params, cb) {
+	setStore(params: { topic: string, dataStore?: string }, cb?: StandardCallback) {
 		Validate.args(params.topic, "string", params.dataStore, "string=", cb, "function=");
 		Logger.system.log("APPLICATION LIFECYCLE:StorageClient.setStore", params, cb);
-		self.routerClient.query("Storage.setStore", params, function (err, response) {
-			let logMethod = Logger.system.info;
-			if (err) {
-				logMethod = Logger.system.error;
-			}
+		this.routerClient.query("Storage.setStore", params, (err, response) => {
+			const logMethod = err ? Logger.system.error : Logger.system.info;
 			logMethod("Storage.setStore", err, response);
 			if (cb) {
 				cb(err, response.data);
@@ -82,14 +72,11 @@ var StorageClient = function (params) {
 	 * @example
 	 * StorageClient.save({topic:"finsemble", key:"testKey", value:"testValue"})
 	 */
-	this.save = function (params, cb) {
+	save(params: { key: string, topic: string, value: any }, cb?: StandardCallback) {
 		const promiseResolver = (resolve, reject) => {
 			Validate.args(params.topic, "string", params.key, "string", params.value, "any", cb, "function=");
-			self.routerClient.query("Storage.save", params, function (err, response) {
-				let logMethod = Logger.system.debug;
-				if (err) {
-					logMethod = Logger.system.error;
-				}
+			this.routerClient.query("Storage.save", params, (err, response) => {
+				const logMethod = err ? Logger.system.error : Logger.system.info;
 				logMethod("Storage.save", err, response);
 				if (cb) {
 					cb(err, response.data);
@@ -99,7 +86,7 @@ var StorageClient = function (params) {
 				} else {
 					resolve({ err: err, data: response.data });
 				}
-				
+
 			});
 		};
 		return new Promise(promiseResolver);
@@ -116,17 +103,17 @@ var StorageClient = function (params) {
 	 *	var myData = data;
 	 * });
 	 */
-	this.get = function (params, cb = Function.prototype) {
+	get(params: { key: string, topic: string }, cb?: StandardCallback) {
 		const promiseResolver = (resolve, reject) => {
 			Validate.args(params.topic, "string", params.key, "string", cb, "function=");
-			self.routerClient.query("Storage.get", params, function (err, response) {
+			this.routerClient.query("Storage.get", params, (err, response) => {
 				if (err) {
 					Logger.system.error("Storage.get", err, response);
 					cb(err, response ? response.data : null);
 					return reject(err, response ? response.data : null);
 				}
 				Logger.system.info("Storage.get", err, response);
-				cb(err, response.data);
+				if (cb) cb(err, response.data);
 				resolve(response.data);
 			});
 		};
@@ -145,14 +132,11 @@ var StorageClient = function (params) {
 	 *	var myKeys = data;
 	 * });
 	 */
-	this.keys = function (params, cb) {
+	keys(params: { topic: string, keyPrefix?: string }, cb?: StandardCallback) {
 		Validate.args(params.topic, "string", cb, "function=");
 		Logger.system.debug("StorageClient.keys", params, cb);
-		self.routerClient.query("Storage.keys", params, function (err, response) {
-			let logMethod = Logger.system.info;
-			if (err) {
-				logMethod = Logger.system.error;
-			}
+		this.routerClient.query("Storage.keys", params, function (err, response) {
+			const logMethod = err ? Logger.system.error : Logger.system.info;
 			logMethod("Storage.keys", err, response);
 			if (cb) {
 				cb(err, response.data);
@@ -168,13 +152,10 @@ var StorageClient = function (params) {
 	 * @example
 	 * StorageClient.get({key:"testKey"});
 	 */
-	this.getMultiple = function (params, cb) {
+	getMultiple(params, cb?: StandardCallback) {
 		Logger.system.info("StorageClient.getMultiple", params, cb);
-		self.routerClient.query("Storage.getMultiple", params, function (err, response) {
-			let logMethod = Logger.system.info;
-			if (err) {
-				logMethod = Logger.system.error;
-			}
+		this.routerClient.query("Storage.getMultiple", params, function (err, response) {
+			const logMethod = err ? Logger.system.error : Logger.system.info;
 			logMethod("StorageClient.getMultiple:", params, response);
 			if (cb) {
 				cb(err, response);
@@ -188,14 +169,11 @@ var StorageClient = function (params) {
 	 * @example
 	 * StorageClient.remove({key:"testKey"})
 	 */
-	this.remove = function (params, cb) {
+	remove(params: { key: string, topic: string }, cb?: StandardCallback) {
 		const promiseResolver = (resolve, reject) => {
 			Validate.args(params.topic, "string", params.key, "string", cb, "function=");
-			self.routerClient.query("Storage.delete", params, function (err, response) {
-				let logMethod = Logger.system.info;
-				if (err) {
-					logMethod = Logger.system.error;
-				}
+			this.routerClient.query("Storage.delete", params, function (err, response) {
+				const logMethod = err ? Logger.system.error : Logger.system.info;
 				logMethod("StorageClient.delete", err, response);
 				if (cb) {
 					cb(err, response.data);
@@ -211,15 +189,12 @@ var StorageClient = function (params) {
 	};
 
 	//Did this because "delete" is a reserved keyword; for autocomplete the client is exported as a namespace with a bunch of functions and wouldn't work with a function called delete.
-	this.delete = this.remove;
-	this.clearCache = function (cb) {
-		Validate.args(params.topic, "string", params.key, "string", cb, "function=");
+	delete = this.remove;
+
+	clearCache(cb?: StandardCallback) {
 		Logger.system.log("StorageClient.clearCache", cb);
-		self.routerClient.query("Storage.clearCache", null, function (err, response) {
-			let logMethod = Logger.system.info;
-			if (err) {
-				logMethod = Logger.system.error;
-			}
+		this.routerClient.query("Storage.clearCache", null, function (err, response) {
+			const logMethod = err ? Logger.system.error : Logger.system.info;
 			logMethod("StorageClient.clearCache", err, response);
 			if (cb) {
 				cb(err, response.data);

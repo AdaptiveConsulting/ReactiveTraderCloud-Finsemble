@@ -5,7 +5,7 @@ export interface IRouterClient {
 	 *
 	 * @param {function} cb Callback function to invoke when router is ready.
 	 */
-	onReady: (cb: () => void) => void;
+	onReady(cb: () => void): void;
 
 	/**
 	 * Adds a listener for incoming transmit events on the specified channel. Each of the incoming events will trigger the specified event handler. The number of listeners is not limited (either local to this Finsemble window or in a separate Finsemble window).
@@ -26,7 +26,7 @@ export interface IRouterClient {
 	 * });
 	 *
 	 */
-	addListener: (channel: string, eventHandler: StandardCallBack) => void;
+	addListener(channel: string, eventHandler: StandardCallback): void;
 
 	/**
 	 * Transmits an event to all listeners on the specified channel. If no there are no listeners on the channel, the event is discarded without error. All listeners on the channel in this Finsemble window and other Finsemble windows will receive the transmit.
@@ -35,14 +35,14 @@ export interface IRouterClient {
 	 *
 	 * @param {string} toChannel A unique string to identify the channel (must match corresponding listener channel name).
 	 * @param {any} event An object or primitive type to be transmitted.
-	 * @param {object} [options] An object containing options for your transmission.
-	 * @param {boolean} [options.suppressWarnings=false] By default, the Router will log warnings if you transmit to a channel with no listeners. Set this to true to eliminate those warnings.
+	 * @param {object} options An object containing options for your transmission.
+	 * @param {boolean} options.suppressWarnings By default, the Router will log warnings if you transmit to a channel with no listeners. Set this to true to eliminate those warnings.
 	 * @example
 	 *
 	 * FSBL.Clients.RouterClient.transmit("SomeChannelName", event);
 	 *
 	 */
-	transmit: (toChannel: string, event: any, options?: { suppressWarnings: boolean }) => void;
+	transmit(toChannel: string, event: any, options?: { suppressWarnings: boolean }): void;
 
 	/**
 	 * Removes an event listener from the specified channel for the specific event handler (only listeners created locally can be removed).
@@ -52,7 +52,7 @@ export interface IRouterClient {
 	 * @param {string} channel unique channel name to remove listener from
 	 * @param {function} eventHandler function used for the event handler when the listener was added
 	 */
-	removeListener: (channel: string, eventHandler: StandardCallBack) => void;
+	removeListener(channel: string, eventHandler: StandardCallback): void;
 
 	/**
 	 * Adds a query responder to the specified channel. The responder's queryEventHandler function will receive all incoming queries for the specified channel (whether from this Finsemble window or remote Finsemble windows).
@@ -76,15 +76,15 @@ export interface IRouterClient {
 	 * });
 	 *
 	 */
-	addResponder: (channel: string, queryEventHander: StandardCallBack) => void;
+	addResponder(channel: string, queryEventHandler: StandardCallback): void;
 
 	/**@TODO - Standardize how we do overloads. This is experimental. */
 
 	/**
 	 * Sends a query to the responder listening on the specified channel. The responder may be in this Finsemble window or another Finsemble window.
-	 * 
+	 *
 	 * In the other overload for this method, you may specify optional parameters.
-	 * 
+	 *
 	 * See [addResponder]{@link RouterClientConstructor#addResponder} to add a responder to receive the query.
 	 *
 	 * @param {string} responderChannel A unique string that identifies the channel (must match the channel name on which a responder is listening).
@@ -109,42 +109,11 @@ export interface IRouterClient {
 	 *		var responseData = queryResponseMessage.data;
 	 *	}
 	 * }); */
-	query(responerChannel: string, queryEvent: any, responseEventHandler: StandardCallBack): Promise<any>;
-
-	/**
-	 * Sends a query to the responder listening on the specified channel. The responder may be in this Finsemble window or another Finsemble window.
-	 *
-	 * See [addResponder]{@link RouterClientConstructor#addResponder} to add a responder to receive the query.
-	 *
-	 * @param {string} responderChannel A unique string that identifies the channel (must match the channel name on which a responder is listening).
-	 * @param {object} queryEvent The event message sent to the responder.
-	 * @param {any} params Optional parameters.
-	 * @param {number} [params.timeout=20000]  A timeout value for a query-response timer. The timer defaults to 5000 milliseconds if no params value is passed in. Set timeout to zero to wait indefinitely. If the timer expires, this function call will return with an error.
-	 * @param {function} responseEventHandler An event handler to receive the query response (sent from a responder that is listening on this channel).
-	 *
-	 * @example
-	 *
-	 * FSBL.Clients.RouterClient.query("someChannelName", {}, function (error, queryResponseMessage) {
-	 *	if (error) {
-	 *		Logger.system.log('query failed: ' + JSON.stringify(error));
-	 *	} else {
-	 *		// process income query response message
-	 *		var responseData = queryResponseMessage.data;
-	 *		Logger.system.log('query response: ' + JSON.stringify(queryResponseMessage));
-	 *	}
-	 * });
-	 *
-	 * FSBL.Clients.RouterClient.query("someChannelName", { queryKey: "abc123"}, { timeout: 1000 }, function (error, queryResponseMessage) {
-	 *	if (!error) {
-	 *		// process income query response message
-	 *		var responseData = queryResponseMessage.data;
-	 *	}
-	 * }); */
-	query(responerChannel: string, queryEvent: any, params: { timeout?: number }, responseEventHandler: StandardCallBack): Promise<any>;
+	query(responderChannel: string, queryEvent: any, responseEventHandler: StandardCallback): Promise<any>;
 
 	/**
 	 * Removes the query responder from the specified channel. Only a locally added responder can be removed (i.e. a responder defined in the same component or service).
-	 * 
+	 *
 	 * See [addResponder]{@link RouterClientConstructor#addResponder} for adding a query responder.
 	 *
 	 * @param {string} responderChannel String identifying the channel from which to remove the responder.
@@ -154,7 +123,7 @@ export interface IRouterClient {
 	 * FSBL.Clients.RouterClient.removeResponder("someChannelName");
 	 *
 	 */
-	removeResponder: (responderChannel: string) => void;
+	removeResponder(responderChannel: string): void;
 
 	/**
 	 * Adds a PubSub responder for specified topic. All subscriptions and publications to the topic will come to the responder (whether from local window or another window).
@@ -170,12 +139,12 @@ export interface IRouterClient {
 	 * See [subscribe]{@link RouterClientConstructor#subscribe} and [publish]{@link RouterClientConstructor#publish} for interacting with a PubSub responder.
 	 *
 	 * @param {string} topic A unique topic for this responder, or a topic RegEx (e.g. '/abc.+/') to handle a set of topics.
-	 * @param {object} [initialState] The initial state for the topic (defaults to empty object).
-	 * @param {object} [params] Optional parameters.
-	 * @param {function} [params.subscribeCallback] Used to set custom behavior regarding whether an incoming subscribe request is accepted or rejcted (the default callback automatically accepts all incoming requests).
-	 * @param {function} [params.publishCallback] Used to set custom behavior in publishing data (the default callback automatically sets the publish data as the new state).
-	 * @param {function} [params.unsubscribeCallback] Used to set custom behavior when receiving an unsubscribe request. The default callback automatically accepts the request by calling `.removeSubscriber()`. See example code.
-	 * @param {function} [callback] An optional callback function, accepting a possible error and the response. If addPubSubResponder failed, then the error will be set; otherwise, the response will have a value of "success".
+	 * @param {object} initialState The initial state for the topic (defaults to empty object).
+	 * @param {object} params Optional parameters.
+	 * @param {function} params.subscribeCallback Used to set custom behavior regarding whether an incoming subscribe request is accepted or rejcted (the default callback automatically accepts all incoming requests).
+	 * @param {function} params.publishCallback Used to set custom behavior in publishing data (the default callback automatically sets the publish data as the new state).
+	 * @param {function} params.unsubscribeCallback Used to set custom behavior when receiving an unsubscribe request. The default callback automatically accepts the request by calling `.removeSubscriber()`. See example code.
+	 * @param {function} callback An optional callback function, accepting a possible error and the response. If addPubSubResponder failed, then the error will be set; otherwise, the response will have a value of "success".
 	 *
 	 * @example
 	 *
@@ -213,15 +182,15 @@ export interface IRouterClient {
 	 * FSBL.Clients.RouterClient.addPubSubResponder(\/topicA*\/, { "State": "start" });
 	 *
 	 */
-	addPubSubResponder: (
+	addPubSubResponder(
 		topic: string | RegExp,
 		initialState?: object,
 		params?: {
-			subscribeCallback?: StandardCallBack,
-			unsubscribeCallback?: StandardCallBack,
-			publishCallback?: StandardCallBack,
+			subscribeCallback?: StandardCallback,
+			unsubscribeCallback?: StandardCallback,
+			publishCallback?: StandardCallback,
 		},
-		callback?: (err?: string | Error, result?: string) => void) => void;
+		callback?: (err?: string | Error, result?: string) => void): void;
 
 	/**
 	 * Removes a PubSub responder from the specified topic. Only locally created responders (i.e. created in the local window) can be removed.
@@ -235,7 +204,7 @@ export interface IRouterClient {
 	 * FSBL.Clients.RouterClient.removePubSubResponder("topicABC");
 	 *
 	 */
-	removePubSubResponder: (topic: string | RegExp) => void;
+	removePubSubResponder(topic: string | RegExp): void;
 	/**
 	 * Subscribe to a PubSub Responder. Each responder topic can have many subscribers (local in this window or remote in other windows). Each subscriber immediately (but asyncronouly) receives back current state in a notify; new notifys are receive for each publish sent to the same topic.
 	 *
@@ -255,7 +224,7 @@ export interface IRouterClient {
 	 * });
 	 *
 	 */
-	subscribe: (topic: string, notifyCallback: StandardCallBack) => { subscribeID: string, topic: string }
+	subscribe(topic: string, notifyCallback: StandardCallback): { subscribeID: string, topic: string }
 
 	/**
 	 * Publish to a PubSub Responder, which will trigger a corresponding notification to all subscribers (local in this window or remote in other windows). There may be multiple publishers for a topic (again, in same window or remote windows)
@@ -270,38 +239,40 @@ export interface IRouterClient {
 	 * FSBL.Clients.RouterClient.publish("topicABC", topicState);
 	 *
 	 */
-	publish: (topic: string, event: any) => void;
+	publish(topic: string, event: any): void;
 
 	/**
 	 * Unsubscribes from a PubSub responder so no more notifications are received (but doesn't affect other subscriptions). Only works from the window the PubSub responder was created in.
 	 *
 	 * See [subscribe]{@link RouterClientConstructor#subscribe} for corresponding subscription being removed.
 	 *
-	 * @param {object} subscribeID The id returned from the corresponding subscribiption to the topic.
+	 * @param {object} subscribeIDStruct
+	 * @param {string} subscribeIDStruct.subscribeID The id returned from the corresponding subscription to the topic.
+	 * @param {string} subscribeIDStruct.topic The topic for the subscription.
 	 *
 	 * @example
 	 *
 	 * FSBL.Clients.RouterClient.unsubscribe(subscribeId);
 	 *
 	 */
-	unsubscribe: (subscribeIDStruct: { subscribeID: string, topic: string }) => void
+	unsubscribe(subscribeIDStruct: { subscribeID: string, topic: string }): void
 
 	/** @TODO - Fix the second sentance - it's confusing. */
 	/**
 	 * Tests an incoming router message to see if it originated from the same origin (e.g. a trusted source...not cross-domain).
-	 * 
+	 *
 	 * Currently identity of the origin is determined via the SharedWorker transport (by definition, SharedWorkers do not work across domains).
 	 * This means any message coming in over the Inter-application Bus will not be trusted; however, by default, all same-origin components
 	 * and services connect to the router using a SharedWorker transport.
 	 * @param {object} incomingMessage An incoming router message (e.g. transmit, query, notification) to test to see if trusted.
-	 * 
+	 *
 	 * @example
 	 * FSBL.Clients.RouterClient.trustedMessage(incomingRouterMessage);
 	 */
-	trustedMessage: (incomingMessage: any) => boolean;
+	trustedMessage(incomingMessage: any): boolean;
 
 	/**
 	 * Removes all listeners, responders, and subscribers for this router client -- automatically called when the client is shutting down. Can be called multiple times.
 	 */
-	disconnectAll: () => void;
+	disconnectAll(): void;
 }

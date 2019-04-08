@@ -1,7 +1,8 @@
-import { each as asyncEach, map as asyncMap} from "async";
+import { each as asyncEach, map as asyncMap } from "async";
 import * as storeUtils from "../common/storeUtils";
 import Logger from "./logger";
 import { IGlobals } from "../common/Globals";
+import { _BaseClient } from "./baseClient";
 /** The global `window` object. We cast it to a specific interface here to be
  * explicit about what Finsemble-related properties it may have. */
 const Globals = window as IGlobals;
@@ -14,40 +15,51 @@ const Globals = window as IGlobals;
  * @class
  */
 
-var StoreModel = function (params, routerClient) {
+class StoreModel extends _BaseClient {
+	routerClient;
+	isGlobal: boolean;
+	values = {};
+	listeners = [];
+	lst;
+	registeredDispatchListeners = [];
+	mapping = {};
+	subs;
+	constructor(params, routerClient) {
+		super(params);
+		this.routerClient = routerClient;
+		this.isGlobal = params.global;
+		this.name = params.store ? params.store : "finsemble";
+		if (params.values) this.values = params.values;
+		this.lst = this.listeners;
 
-	this.routerClient = routerClient;
-	var isGlobal = params.global;
-	var self = this;
-	this.name = params.store ? params.store : "finsemble";
-	this.values = params.values ? params.values : {};
-	var listeners = [];
-	this.lst = listeners;
-	this.registeredDispatchListeners = [];
-	var mapping = {};
-	storeUtils.initObject(this.values, null, mapping);
+		storeUtils.initObject(this.values, null, this.mapping);
 
-	/** @member {Object}  - This is the Flux dispatcher. It can be used dispatch actions across stores. These action are not caught inside of the global store service. For more information, you can read the [Flux documentation](https://facebook.github.io/flux/docs/overview.html).
-
-	* @example
-	store.Dispatcher.register(function(action){
-		if(action.actionType === "ACTION1"){
-
-		// Do something with the action here
+		// Add listeners for global stores. Not needed for local stores as everything happens internally.
+		if (this.isGlobal) {
+			this.routerClient.addListener("storeService.dispatch." + this.name, this.handleDispatchedMessages.bind(this));
 		}
-	});
+	}
 
-	store.Dispatcher.dispatch({actionType:ACTION1,data:myData});
-	*/
-	this.Dispatcher = {
-		register: function (fn) {
-			self.registeredDispatchListeners.push(fn);
+	/** This is the Flux dispatcher. It can be used dispatch actions across stores. These action are not caught inside of the global store service. For more information, you can read the [Flux documentation](https://facebook.github.io/flux/docs/overview.html).
+	 *
+	 * Example:
+	 * ```
+	 * store.Dispatcher.register(function(action){
+	 * 	if(action.actionType === "ACTION1") {
+	 * 		// Do something with the action here.
+	 * 	}
+	 * })
+	 * ```
+	 */
+	Dispatcher = {
+		register: (fn) => {
+			this.registeredDispatchListeners.push(fn);
 		},
-		dispatch: function (data) {
-			if (isGlobal) {
-				self.routerClient.transmit("storeService.dispatch." + self.name, data);
+		dispatch: (data) => {
+			if (this.isGlobal) {
+				this.routerClient.transmit("storeService.dispatch." + this.name, data);
 			} else {
-				self.handleDispatchedMessages(null, {
+				this.handleDispatchedMessages(null, {
 					data: data
 				});
 			}
@@ -59,16 +71,11 @@ var StoreModel = function (params, routerClient) {
 	 * @param {*} message
 	 * @private
 	 */
-	this.handleDispatchedMessages = function (err, message) {
-		for (var i=0; i < self.registeredDispatchListeners.length; i++) {
-			self.registeredDispatchListeners[i](message.data);
+	handleDispatchedMessages(err, message: { data: any }) {
+		for (var i = 0; i < this.registeredDispatchListeners.length; i++) {
+			this.registeredDispatchListeners[i](message.data);
 		}
 	};
-
-	// Add listeners for global stores. Not needed for local stores as everything happens internally.
-	if (isGlobal) {
-		this.routerClient.addListener("storeService.dispatch." + self.name, this.handleDispatchedMessages);
-	}
 
 	/**
 	 * Set a value in the store. Two events will be triggered with topics of: store and field.
@@ -81,12 +88,12 @@ var StoreModel = function (params, routerClient) {
 	 * @example
 	 * store.setValue({field:'field1',value:"new value"});
 	 */
-	this.setValue = function (params, cb) {
+	setValue(params: { field: string, value: any }, cb: StandardCallback) {
 		if (!params.field) { Logger.system.error("DistributedStore.setValue:no field provided", params); }
 		if (!params.hasOwnProperty("value")) { Logger.system.error("DistributedStore.setValue:no value provided", params); }
-		if (isGlobal) {
+		if (this.isGlobal) {
 			var data = {
-				store: self.name,
+				store: this.name,
 				field: params.field,
 				value: params.value
 			};
@@ -95,34 +102,36 @@ var StoreModel = function (params, routerClient) {
 			});
 		}
 
-		var removals = storeUtils.checkForObjectChange(this.values, params.field, mapping);
+		const removals = storeUtils.checkForObjectChange(this.values, params.field, this.mapping);
 
 		storeUtils.setPath(this.values, params.field, params.value);
 
-		storeUtils.mapField(this.values, params.field, mapping);
+		storeUtils.mapField(this.values, params.field, this.mapping);
 
-		if (removals) { sendRemovals(removals); }
+		if (removals) { this.sendRemovals(removals); }
 
-		var combined = this.name + (params.field ? "." + params.field : "");
-
-		triggerListeners(self.name, this);
-		publishObjectUpdates(params.field, mapping);
-		return cb ? cb() : null;
+		this.triggerListeners(this.name, this);
+		this.publishObjectUpdates(params.field, this.mapping);
+		return cb ? cb(null) : null;
 	};
 
-	// Handles changes to the store. Will publish from the field that was changed and back.
-	function publishObjectUpdates(startfield, mappings) {
-		var currentMapping = mappings;
+	/**
+	 * Handles changes to the store. Will publish from the field that was changed and back.
+	 */
+	private publishObjectUpdates(startfield, mappings) {
+		const currentMapping = mappings;
 		while (startfield) {
-			triggerListeners(self.name + "." + startfield, storeUtils.byString(self.values, startfield));
+			this.triggerListeners(this.name + "." + startfield, storeUtils.byString(this.values, startfield));
 			startfield = currentMapping[startfield];
 		}
 	}
 
-	//Send items that are no longer mapped or had their map change. If a value is remapped we'll send out the new value.
-	function sendRemovals(removals) {
+	/**
+	 * Send items that are no longer mapped or had their map change. If a value is remapped we'll send out the new value.
+	*/
+	private sendRemovals(removals) {
 		for (var i = 0; i < removals.length; i++) {
-			triggerListeners(self.name + "." + removals[i], storeUtils.byString(self.values, removals[i]));
+			this.triggerListeners(this.name + "." + removals[i], storeUtils.byString(this.values, removals[i]));
 		}
 	}
 
@@ -135,17 +144,19 @@ var StoreModel = function (params, routerClient) {
 	 * @example
 	 * store.setValues([{field:'field1',value:"new value"}]);
 	 */
-	this.setValues = function (fields, cb) {
-		var self = this;
+	setValues(
+		fields: { field: string, value: any }[],
+		cb?: StandardCallback,
+	) {
 		if (!fields) {
 			return Logger.system.error("DistributedStore.setValues:no params given");
 		}
 
 		if (!Array.isArray(fields)) { return Logger.system.error("DistributedStore.setValues:params must be an array"); }
 
-		asyncEach(fields, function (field, done) {
-			self.setValue(field, done);
-		}, function (err) {
+		asyncEach(fields, (field, done) => {
+			this.setValue(field, done);
+		}, (err) => {
 			return cb ? cb(err) : null;
 		});
 	};
@@ -158,17 +169,16 @@ var StoreModel = function (params, routerClient) {
 	 * @returns {any} - The value of the field. If no callback is given and the value is local, this will run synchronous
 	 * @example
 	store.getValue({field:'field1'},function(err,value){});
-store.getValue('field1',function(err,value){});
+	store.getValue('field1',function(err,value){});
 	 */
-	this.getValue = function (params, cb) {
+	getValue(params: { field: string } | string, cb: StandardCallback) {
 		if (typeof params === "string") { params = { field: params }; }
 		if (!params.field) {
 			if (!cb) { return "no field provided"; }
 			return cb("no field provided");
 		}
 
-		if (isGlobal) { return getGlobalValue(params, cb); }
-		var combined = this.name + (params.field ? "." + params.field : "");
+		if (this.isGlobal) { return this.getGlobalValue(params, cb); }
 		var fieldValue = storeUtils.byString(this.values, params.field);
 		if (fieldValue !== undefined) {
 			if (!cb) { return fieldValue; }
@@ -180,17 +190,17 @@ store.getValue('field1',function(err,value){});
 
 	/**
 	 * Get multiple values from the store.
-	* @param {Array.<object>|Array.<String>} fields - An Array of field objects. If there are no fields proviced, all values in the store are returned.
+	 * @param {Array.<object>|Array.<String>} fields - An Array of field objects. If there are no fields proviced, all values in the store are returned.
 	 * @param {Function} [cb] -  Will return the value if found.
 	 * @returns {Object} - returns an object of with the fields as keys.If no callback is given and the value is local, this will run synchronous
 	 * @example
-	 * store.getValues([{field:'field1'},{field2:'field2'}],function(err,values){});
-store.getValues(['field1','field2'],function(err,values){});
+	 * store.getValues([{field:'field1'},{field:'field2'}],function(err,values){});
+	 * store.getValues(['field1','field2'],function(err,values){});
 	 */
-	this.getValues = function (fields, cb) {
+	getValues(fields: { field: string }[] | string[], cb): { [k: string]: any } | void {
 		if (typeof fields === "function") {
 			cb = fields;
-			if (isGlobal) { return getGlobalValues(null, cb); }
+			if (this.isGlobal) { return this.getGlobalValues(null, cb); }
 
 			if (!cb) { return this.values; }
 			return cb(null, this.values);
@@ -199,7 +209,7 @@ store.getValues(['field1','field2'],function(err,values){});
 			return this.getValue(fields, cb);
 		}
 
-		if (isGlobal) { return getGlobalValues(fields, cb); }
+		if (this.isGlobal) { return this.getGlobalValues(fields, cb); }
 		var values = {};
 
 		for (var i = 0; i < fields.length; i++) {
@@ -213,26 +223,30 @@ store.getValues(['field1','field2'],function(err,values){});
 		return cb(null, values);
 	};
 
-	//get a single value from the global store
-	function getGlobalValue(params, cb) {
+	/**
+	 * Get a single value from the global store.
+	 */
+	private getGlobalValue(params, cb) {
 		Globals.distributedStoreClient.routerClient.query("storeService.getValue",
 			{
-				store: self.name,
+				store: this.name,
 				field: params.field
 			}
-			, function (err, response) {
+			, (err, response) => {
 				if (err) { return cb(err); }
 				return cb(err, response.data);
 			});
 	}
-	//get values from the global store
-	function getGlobalValues(params, cb) {
+	/**
+	 * Get values from the global store.
+	 */
+	private getGlobalValues(params, cb) {
 		Globals.distributedStoreClient.routerClient.query("storeService.getValues",
 			{
-				store: self.name,
+				store: this.name,
 				fields: params
 			}
-			, function (err, response) {
+			, (err, response) => {
 				if (err) { return cb(err); }
 				return cb(err, response.data);
 			});
@@ -246,7 +260,7 @@ store.getValues(['field1','field2'],function(err,values){});
 	 * @example
 	 * store.removeValue({field:'field1'},function(err,bool){});
 	 */
-	this.removeValue = function (params, cb) {
+	removeValue(params, cb) {
 		if (!params.field) {
 			if (params !== undefined) {
 				params = { field: params };
@@ -256,7 +270,7 @@ store.getValues(['field1','field2'],function(err,values){});
 			}
 		}
 		params.value = null;
-		return self.setValue(params, cb);
+		return this.setValue(params, cb);
 	};
 
 	/**
@@ -267,9 +281,9 @@ store.getValues(['field1','field2'],function(err,values){});
 	 * @example
 	 * store.removeValue({field:'field1'},function(err,bool){});
 	 */
-	this.removeValues = function (params, cb) {
+	removeValues(params, cb) {
 		if (!Array.isArray(params)) { return cb("The passed in parameter needs to be an array"); }
-		asyncMap(params, this.removeValue, function (err, data) {
+		asyncMap(params, this.removeValue, (err, data) => {
 			return cb(err, data);
 		});
 	};
@@ -280,16 +294,14 @@ store.getValues(['field1','field2'],function(err,values){});
 	 * @example
 	 * store.destroy();
 	 */
-	this.destroy = function (cb) {
-		var self = this;
+	destroy(cb) {
 		var params = {
 			store: this.name,
-			global: isGlobal,
+			global: this.isGlobal,
 		};
-		
-		Globals.distributedStoreClient.removeStore(params, function (err, response) {
+
+		Globals.distributedStoreClient.removeStore(params, (err, response) => {
 			if (err) { return cb(err); }
-			self = null;
 			return cb(null, true);
 		});
 	};
@@ -298,10 +310,10 @@ store.getValues(['field1','field2'],function(err,values){});
 	 * NOTE: make sure we dont have duplicate router subscribers
 	 * @private
 	 */
-	this.changeSub = function (change) {
+	changeSub(change) {
 		if (!this.subs) this.subs = [];
 		if (!this.subs[change]) {
-			if (isGlobal) { Globals.distributedStoreClient.routerClient.subscribe("storeService" + change, handleChanges); }
+			if (this.isGlobal) { Globals.distributedStoreClient.routerClient.subscribe("storeService" + change, this.handleChanges); }
 			this.subs[change] = true;
 		}
 	};
@@ -318,7 +330,7 @@ store.getValues(['field1','field2'],function(err,values){});
 	* store.addListener({field:'field1'},myFunction,cb);
 
 	*/
-	this.addListener = function (params, fn, cb) {
+	addListener(params, fn, cb) {
 		var field = null;
 		if (typeof params === "function") {
 			fn = params;
@@ -327,11 +339,11 @@ store.getValues(['field1','field2'],function(err,values){});
 		if (params.field) { field = params.field; }
 
 		var combined = this.name + (field ? "." + field : "");
-		if (listeners[combined]) {
-			listeners[combined].push(fn);
+		if (this.listeners[combined]) {
+			this.listeners[combined].push(fn);
 		}
 		else {
-			listeners[combined] = [fn];
+			this.listeners[combined] = [fn];
 		}
 
 		this.changeSub(combined);
@@ -355,7 +367,7 @@ store.getValues(['field1','field2'],function(err,values){});
 
 	store.addListeners(['field1','field2'],myFunction,cb);
 	*/
-	this.addListeners = function (params, fn, cb) {
+	addListeners(params, fn, cb) {
 		if (!Array.isArray(params)) {
 			return this.addListener(params, fn, cb);
 		}
@@ -377,11 +389,11 @@ store.getValues(['field1','field2'],function(err,values){});
 					ls = fn;
 				}
 			}
-			if (listeners[combined]) {
-				listeners[combined].push(ls);
+			if (this.listeners[combined]) {
+				this.listeners[combined].push(ls);
 			}
 			else {
-				listeners[combined] = [ls];
+				this.listeners[combined] = [ls];
 			}
 			this.changeSub(combined);
 		}
@@ -402,7 +414,7 @@ store.getValues(['field1','field2'],function(err,values){});
 	 * store.removeListener({field:'field1'},MyFunction,function(bool){});
 	StoreCstorelient.removeListener(MyFunction,function(bool){});
 	 */
-	this.removeListener = function (params, fn, cb) {
+	removeListener(params, fn, cb) {
 		var field = null;
 
 		if (typeof params === "function") {
@@ -413,10 +425,10 @@ store.getValues(['field1','field2'],function(err,values){});
 
 		if (params.field) { field = params.field; }
 		var combined = this.name + (field ? "." + field : "");
-		if (listeners[combined]) {
-			for (var i = 0; i < listeners[combined].length; i++) {
-				if (listeners[combined][i] === fn) {
-					listeners[combined].pop(i);
+		if (this.listeners[combined]) {
+			for (var i = 0; i < this.listeners[combined].length; i++) {
+				if (this.listeners[combined][i] === fn) {
+					this.listeners[combined].pop(i);
 					return cb ? cb(null, true) : null;
 				}
 			}
@@ -439,7 +451,7 @@ store.getValues(['field1','field2'],function(err,values){});
 	store.removeListeners([{field:'field1',listener:MyFunction}],function(bool){});
 	store.removeListeners(['field1'],MyFunction,function(bool){});
 	 */
-	this.removeListeners = function (params, fn, cb) {
+	removeListeners(params, fn, cb) {
 		if (!Array.isArray(params)) {
 			if (typeof params === "function") {
 				this.removeListener({}, params, cb);
@@ -469,9 +481,9 @@ store.getValues(['field1','field2'],function(err,values){});
 				}
 			}
 
-			for (var j = 0; j < listeners[combined].length; j++) {
-				if (listeners[combined][j] === ls) {
-					listeners[combined].pop(i);
+			for (var j = 0; j < this.listeners[combined].length; j++) {
+				if (this.listeners[combined][j] === ls) {
+					this.listeners[combined].pop(i);
 					removeCount++;
 				}
 			}
@@ -483,30 +495,31 @@ store.getValues(['field1','field2'],function(err,values){});
 		return cb ? cb(null, true) : null;
 	};
 
-	//This handles all changes coming in from the service
-	function handleChanges(err, response) {// we use this to format our responses
+	/**
+	 * Hanles all changes coming in from the service.
+	 */
+	private handleChanges = (err, response) => {// we use this to format our responses
 		if (err) { Logger.system.error("DistributedStoreClient", err); }
 		if (!response.data.store) { return; }
 		if (!response.data.field) { response.data.field = null; }
-		var combined = self.name + (response.data.field ? "." + response.data.field : "");
+		var combined = this.name + (response.data.field ? "." + response.data.field : "");
 		var val = response.data.storeData ? response.data.storeData : response.data.value;
-		triggerListeners(combined, val);
+		this.triggerListeners(combined, val);
 	}
 
 	// Trigger any function that is listening for changes
-	function triggerListeners(listenerKey, data) {
-		if (listeners[listenerKey]) {
-			for (var i = 0; i < listeners[listenerKey].length; i++) {
-				if (typeof listeners[listenerKey][i] === "function") {
+	private triggerListeners(listenerKey, data) {
+		if (this.listeners[listenerKey]) {
+			for (var i = 0; i < this.listeners[listenerKey].length; i++) {
+				if (typeof this.listeners[listenerKey][i] === "function") {
 					Logger.system.debug("DistributedStore.triggerListeners", listenerKey, data);
-					listeners[listenerKey][i](null, { field: listenerKey, value: data });
+					this.listeners[listenerKey][i](null, { field: listenerKey, value: data });
 				} else {
-					Logger.system.warn("DistributedStoreClient:triggerListeners: listener is not a function", listenerKey, i, listeners[listenerKey][i]);
+					Logger.system.warn("DistributedStoreClient:triggerListeners: listener is not a function", listenerKey, i, this.listeners[listenerKey][i]);
 				}
 			}
 		}
 	}
-	return this;
 };
 
-export default  StoreModel;
+export default StoreModel;

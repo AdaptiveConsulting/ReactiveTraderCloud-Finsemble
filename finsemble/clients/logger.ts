@@ -224,7 +224,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 
 	// filter out message containing certain substrings;
 	function filterMessage(message) {
-		var result = (message.logData.indexOf("heartbeat") !== -1);
+		var result = (message.logData.includes("Finsemble.heartbeat") === true);
 		return result;
 	}
 

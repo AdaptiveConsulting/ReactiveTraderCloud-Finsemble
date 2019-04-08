@@ -139,33 +139,35 @@ export class System {
 		const promiseResolver = (resolve) => {
 			let t;
 			let timeoutCleared = false;
-
-			// Need to terminate after closing because otherwise applications sit around in OpenFin with isRunning: false.
+			
 			let terminateAndResolve = () => {
 				if (timeoutCleared) return;
-				timeoutCleared = true;
-				console.log("terminating ", app.uuid);
-				clearTimeout(t);
+				console.log("Attempting to terminate", app.uuid);			
 				app.terminate(() => {
 					cb();
 					resolve();
 				}, () => {
+					if (timeoutCleared) return;
+					timeoutCleared = true;
+					clearInterval(t);
+					// If closing fails, force close
+					console.log("force closing ", app.uuid);
 					app.terminate();
-				});
+				});				
 			}
 
-			// Sometimes app.close() never calls back (only happens with logger). So after 2 seconds terminate.
-			t = setTimeout(terminateAndResolve, 2000);
+			//Hanging apps can be unresponsive to close and terminate calls for a period of time, keep trying until they're closed
+			t = setInterval(terminateAndResolve, 2000);
 
 			console.log("closing ", app.uuid);
-			// Try to close normally
-			app.close(false, terminateAndResolve, () => {
-				if (timeoutCleared) return;
-				clearTimeout(t);
-				// If closing fails, force close
-				console.log("force closing ", app.uuid);
-				app.close(true, terminateAndResolve, terminateAndResolve);
-			});
+			//OpenFin windows will wait to callback until close is successful, so no need to keep trying to close on a success callback.
+			app.close(false, () => {
+				console.log("app.close: successfully closed", app.uuid);
+				timeoutCleared = true;
+				clearInterval(t);
+				cb();
+				resolve();
+			}, terminateAndResolve);
 		}
 		return new Promise(promiseResolver);
 	}

@@ -31,6 +31,9 @@ function onRouterReady() {
 	}, 5000);
 }
 
+const thisApp = System.Application.getCurrent();
+const finWindow = System.Window.getCurrent();
+
 /**
  * Spawns a new window by interfacing with the underlying container (OpenFin or Electron).
  *
@@ -53,15 +56,17 @@ export function onSpawnRequest(err, message: { data: { windowDescriptor: any } }
 	} else {
 		descriptor.customData = { manifest: manifestToUse };
 	}
+	// Anything created via `spawn` will have this property. Services created in the Service Manager will not.
+	if (!descriptor.execJSWhitelist) descriptor.execJSWhitelist = [];
+	// This window is the 'parent' of the window being created. It should be able to add itself to the execJSWhitelist.
+	descriptor.execJSWhitelist.push(finWindow.name);
+
 	new System.Window(descriptor, function () {
 		Logger.system.debug(`SplinterAgentSlave.onSpawnRequest: Window successfully spawned. WindowName: ${descriptor.name}`, descriptor);
 	}, function (err) {
 		Logger.system.error("SplinterAgentSlave.onSpawnRequest ERROR", err);
 	});
 }
-
-const thisApp = System.Application.getCurrent();
-const finWindow = System.Window.getCurrent();
 
 /*
 	This file is imported into windowService createSplinterAndInject. Without this shielding, we get spurious onspawned transmits from onRouterReady.

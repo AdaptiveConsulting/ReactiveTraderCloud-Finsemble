@@ -12,7 +12,6 @@
 
 import { ConfigUtilInstance as ConfigUtils } from "./configUtil";
 import Logger from "../clients/logger";
-import WebSocketClient from "socket.io-client";
 import { System } from "../common/system";
 
 /**
@@ -375,23 +374,23 @@ RouterTransportImplementation.FinsembleTransport = function (params, parentMessa
 
 	//required function for the parent (i.e. routeClient or routeService)
 	this.send = function (transport, routerMessage) {
-		var dest;
-		var newMessage;
+		let dest;
+		let message;
 
 		// decide how to route the message based on whether client or routerservice is sending
 		if (arguments.length === 1) { // clients use just one parameter, so send client message to RouterService
 			dest = "ROUTER_SERVICE";
 			routerMessage = arguments[0];
-			newMessage = { clientMessage: routerMessage };  // no client property needed to route on server since always going to router service
+			message = { clientMessage: routerMessage };  // no client property needed to route on server since always going to router service
 
 		} else { // router service uses both parameters, so send router-service mssage to a client
 			dest = "ROUTER_CLIENT";
 			routerMessage = arguments[1];
-			newMessage = { client: transport.client, clientMessage: routerMessage }; // client property used to router on server
+			message = { client: transport.client, clientMessage: routerMessage }; // client property used to router on server
 		}
 
-		Logger.system.verbose("FinsembleTransport Outgoing Transport", dest, "NewMessage", newMessage);
-		routerServerSocket.emit(dest, newMessage);
+		Logger.system.verbose("FinsembleTransport Outgoing Transport", dest, "NewMessage", message);
+		routerServerSocket.send(JSON.stringify({ dest, message }));
 	};
 
 	//required function for the parent (i.e. routeClient or routeService)
@@ -409,32 +408,32 @@ RouterTransportImplementation.FinsembleTransport = function (params, parentMessa
 
 	// set up for receiving incoming messages
 	var routerServerSocket;
-	if ((SOCKET_SERVER_ADDRESS.indexOf("ws:") !== -1) || (SOCKET_SERVER_ADDRESS.indexOf("wss:") !== -1)) {
-		routerServerSocket = WebSocketClient.connect(SOCKET_SERVER_ADDRESS, { transports: ["websocket"], upgrade: false }); // if websocket address then use ws transport
+	if (SOCKET_SERVER_ADDRESS.startsWith("ws:") || SOCKET_SERVER_ADDRESS.startsWith("wss:")) {
+		routerServerSocket = new WebSocket(SOCKET_SERVER_ADDRESS);
 	} else {
-		routerServerSocket = WebSocketClient.connect(SOCKET_SERVER_ADDRESS, {}); // if not ws then http
+		console.error("wss not found as SOCKET_SERVER_ADDRESS.  Use wss!", SOCKET_SERVER_ADDRESS);
+		routerServerSocket = new WebSocket(SOCKET_SERVER_ADDRESS);
 	}
 	var connectTimer = setTimeout(connectTimeoutHandler, 3000); // cleared in setServiceOnline
 
-	routerServerSocket.on("connect", function () {
+	routerServerSocket.addEventListener("open", () => {
 		clearTimeout(connectTimer);
 		Logger.system.log("FinsembleTransport Connected to Server");
 		console.log("FinsembleTransport Connected to Server");
-		if (source === "RouterService") {
-			// if this transport is for router service, use hardcoded socket address ("ROUTER_SERVICE_IN")
-			routerServerSocket.on("ROUTER_SERVICE_IN", function (data) {
-				finsembleMessageHandler(data);
-			});
-		} else {
-			// for all other clients, the source == client name, so each socket address is based on client name
-			routerServerSocket.on(source, function (data) {
-				finsembleMessageHandler(data);
-			});
-		}
+		// TODO: Currently all messages are broadcast to everyone and filtering happens here. Need to implement a system similar to socket.io to prevent this or only send messages to proper destinations.
+		routerServerSocket.addEventListener("message", (event) => {
+			let data = JSON.parse(event.data);
+			if (source === "RouterService" && data.dest == "ROUTER_SERVICE") {
+				finsembleMessageHandler(data.message);
+			} else if (source === data.message.client) {
+				finsembleMessageHandler(data.message);
+			}
+		});
 		callback(self);
 	});
 
 };
+
 
 /*
  * Implements the FinsembleCloudTransport (a version of FinsembleTransport with server commonly running on remote server).
@@ -507,9 +506,10 @@ RouterTransportImplementation.FinsembleCloudTransport = function (params, parent
 	// set up for receiving incoming messages
 	var routerServerSocket;
 	if (SOCKET_SERVER_ADDRESS.indexOf("ws:") !== -1) {
-		routerServerSocket = WebSocketClient.connect(SOCKET_SERVER_ADDRESS, { transports: ["websocket"], upgrade: false }); // if websocket address then use ws transport
+		routerServerSocket = new ws(SOCKET_SERVER_ADDRESS);
 	} else {
-		routerServerSocket = WebSocketClient.connect(SOCKET_SERVER_ADDRESS, {}); // if not ws then http
+		console.error("SOCKET_SERVER_ADDRESS not wss!", SOCKET_SERVER_ADDRESS);
+		routerServerSocket = new ws(SOCKET_SERVER_ADDRESS); // if not ws then http
 	}
 	var connectTimer = setTimeout(connectTimeoutHandler, 3000); // cleared in setServiceOnline
 

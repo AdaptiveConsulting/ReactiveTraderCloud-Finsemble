@@ -17,8 +17,26 @@ import { parallel as asyncParallel } from "async";
 import RouterClient from "./routerClientInstance";
 import { debug } from "util";
 
+const lodashGet = require('lodash.get');
 const WORKSPACE_CACHE_TOPIC = "finsemble.workspace.cache"; // window data stored in this topic for access by workspace service
-import { WORKSPACE } from "../common/constants";
+
+import { WORKSPACE, DELIVERY_MECHANISM } from "../common/constants";
+import configClient from "./configClient";
+
+type InjectHeaderParams = {
+	component?: string,
+	bumpElements?: {
+		fixed?: boolean | "all" | "0Positioned",
+		absolute?: boolean | "all" | "0Positioned",
+		bumpBy?: string
+	},
+	bodyMarginTop?: string,
+	forceHeaderHeight: boolean
+};
+type getStackedWindowParams = {
+	create?: boolean,
+	windowIdentifiers?: WindowIdentifier[]
+};
 
 var finsembleWindow;
 /**
@@ -93,6 +111,7 @@ class WindowClient extends BaseClient {
 	componentState: { [x: string]: any; };
 	windowState: string;
 	hasHeader: boolean;
+	enableWindowsAeroSnap: boolean;
 	minimizeWithDockedWindows: (cb: any) => void;
 	isInAService: boolean;
 	startedRegistrationWithDocking: boolean;
@@ -128,6 +147,8 @@ class WindowClient extends BaseClient {
 		this.windowState = "normal";
 		// This gets set to true if the window has a header
 		this.hasHeader = false;
+		//If true, will send router messages to have docking respond to windows aero snap. Otherwise, will restore from those events when they happen
+		this.enableWindowsAeroSnap = false;
 
 		this.bindFunctions();
 
@@ -141,6 +162,9 @@ class WindowClient extends BaseClient {
 		this.minimizeWithDockedWindows = this.minimize;
 	}
 
+	/**
+	 * @private
+	 */
 	bindFunctions() {
 		this.onWindowRestored = this.onWindowRestored.bind(this);
 		this.onWindowMaximized = this.onWindowMaximized.bind(this);
@@ -162,27 +186,42 @@ class WindowClient extends BaseClient {
 		this.updateHeaderState("Maximize", { hide: false });
 	}
 
+	/**
+	 * @private
+	 */
 	onWindowMaximized() {
 		this.updateHeaderState("Maximize", { hide: true });
 	}
 
+	/**
+	 * @private
+	 */
 	onWindowBlurred() {
 		if (this.hasHeader) {
 			this.setActive(false);
 		}
 	}
 
+	/**
+	 * @private
+	 */
 	onWindowFocused() {
 		if (this.hasHeader) {
 			this.setActive(true);
 		}
 	}
 
+	/**
+	 * @private
+	 */
 	onMinimizedRestored() {
 		this.routerClient.transmit("DockingService.windowRestored", finsembleWindow.name);
 		finsembleWindow.removeEventListener("restored", this.onMinimizedRestored);
 	}
 
+	/**
+	 * @private
+	 */
 	onWindowMinimized() {
 		this.routerClient.query("DockingService.windowMinimized", finsembleWindow.name, Function.prototype);
 		finsembleWindow.addEventListener("restored", this.onMinimizedRestored);
@@ -196,12 +235,12 @@ class WindowClient extends BaseClient {
 	 * Defaults are to remove the window from the workspace if the user presses the X button, but not if the window is closed via an app-level request (e.g., we need to switch workspaces, so all windows need to close).
 	 * @param {function} [cb] callback
 	 * @example
-	 *	//Close window and remove from workspace (e.g., user closes the window).
-	 *	FSBL.Clients.WindowClient.close(true);
-	 *	//Close window and keep in workspace (e.g., application requests that all windows close themselves).
-	 *	FSBL.Clients.WindowClient.close(false);
+	 * //Close window and remove from workspace (e.g., user closes the window).
+	 * FSBL.Clients.WindowClient.close(true);
+	 * //Close window and keep in workspace (e.g., application requests that all windows close themselves).
+	 * FSBL.Clients.WindowClient.close(false);
 	 */
-	close(params, cb = Function.prototype) {
+	close(params, cb: StandardCallback = () => { }) {
 		if (!params) { params = { removeFromWorkspace: true, closeWindow: true }; }
 		let parentWindow = finsembleWindow.parentWindow;
 		if (params.userInitiated && parentWindow) {
@@ -372,7 +411,7 @@ class WindowClient extends BaseClient {
 	 *	self.saveWindowBounds(bounds);
 	 *});
 	 */
-	saveWindowBounds(bounds, setActiveWorkspaceDirty) {
+	saveWindowBounds(bounds: WindowBounds, setActiveWorkspaceDirty: boolean) {
 		Logger.system.debug("WINDOW LIFECYCLE:SavingBounds:", bounds, "setActiveWOrkspaceDirty", setActiveWorkspaceDirty);
 		if (typeof setActiveWorkspaceDirty === "undefined") {
 			setActiveWorkspaceDirty = false;
@@ -416,7 +455,7 @@ class WindowClient extends BaseClient {
 	 * @example
 	 * FSBL.Clients.WindowClient.minimize();
 	 */
-	minimize(cb) {
+	minimize(cb: StandardCallback) {
 		this.cacheBounds(function () {
 			finsembleWindow.minimize(null, function (err) {
 				if (!err) {
@@ -438,7 +477,7 @@ class WindowClient extends BaseClient {
 	 * @example
 	 * FSBL.Clients.WindowClient.setAlwaysOnTop(true);
 	 */
-	setAlwaysOnTop(alwaysOnTop, cb) {
+	setAlwaysOnTop(alwaysOnTop: boolean, cb?: Function) {
 		finsembleWindow.updateOptions({ options: { alwaysOnTop: alwaysOnTop } }, () => {
 			if (cb) cb();
 		});
@@ -452,7 +491,7 @@ class WindowClient extends BaseClient {
 	 * @example
 	 * FSBL.Clients.WindowClient.restore();
 	 */
-	restore(cb = Function.prototype) {
+	restore(cb: StandardCallback = (e, r) => { }) {
 		//finsembleWindow.getState((err, windowState) => {
 		finsembleWindow.restore(null, function (err) {
 			if (!err) {
@@ -464,7 +503,10 @@ class WindowClient extends BaseClient {
 		});
 	};
 
-	cacheBounds(cb) {
+	/**
+	 * @private
+	 */
+	cacheBounds(cb: Function) {
 		this.getBounds((err, bounds) => {
 			if (err) {
 				cb();
@@ -495,7 +537,7 @@ class WindowClient extends BaseClient {
 	 * @example
 	 * FSBL.Clients.WindowClient.maximize();
 	 */
-	maximize(cb) {
+	maximize(cb: Function) {
 		this.cacheBounds(function () {
 			finsembleWindow.maximize();
 			//finsembleWindow.windowState = "maximized";
@@ -545,7 +587,7 @@ class WindowClient extends BaseClient {
 	 * @return {object} Reference to a RouterClient.query
 	 * @private
 	 */
-	injectFSBL(params, cb) {
+	injectFSBL(params: InjectHeaderParams, cb: StandardCallback) {
 		//This flag is set by the launcher service. It tells us if FSBL was injected
 		this.routerClient.query(`WindowService-Request-injectTitleBar`, { config: finsembleWindow.windowOptions, titleComponent: params.component },
 			(err, response) => {
@@ -580,23 +622,28 @@ class WindowClient extends BaseClient {
 	 * @example <caption>The example below shows how we retrieve data to restore the layout in our charts.</caption>
 	 * FSBL.Clients.WindowClient.getComponentState({
 	 *	 field: 'myChartLayout',
-	 *}, function (err, state) {
-	 *	if (state === null) {
-	 *		return;
+	 * }, function (err, state) {
+	 * 	if (state === null) {
+	 * 		return;
 	 *	}
-	 *	importLayout(state);
-	 *});
+	 * 	importLayout(state);
+	 * });
+	 *
 	 * FSBL.Clients.WindowClient.getComponentState({
-	 *	 fields: ['myChartLayout', 'chartType'],
-	 *}, function (err, state) {
+	 * 		fields: ['myChartLayout', 'chartType'],
+	 * }, function (err, state) {
 	 *	if (state === null) {
 	 *		return;
 	 *	}
 	 * 	var chartType = state['chartType'];
-	 *  var myChartLayout = state['myChartLayout'];
-	 *});
+	 * 	var myChartLayout = state['myChartLayout'];
+	 * });
 	 **/
-	getComponentState(params, cb) {
+	getComponentState(params: {
+		field?: string,
+		fields?: string[],
+		windowName?: string
+	}, cb: StandardCallback) {
 
 		if (!params) { params = {}; }
 		if (params.fields && !Array.isArray(params.fields)) { params.fields = [params.fields]; }
@@ -646,7 +693,11 @@ class WindowClient extends BaseClient {
 	 * @param {function} cb Callback
 	 * @private
 	 */
-	compareSavedState(params, cb = Function.prototype) {
+	compareSavedState(params: {
+		field: string,
+		value: any,
+		windowName: string
+	}, cb: Function = Function.prototype) {
 		// if (!WorkspaceClient || WorkspaceClient.activeWorkspace.isDirty) { return; }
 		/* Once upon a time, a component could have multiple sub-containers. This hash has the window name repeating
 		twice because of that now defunct requirement. In the future we will eliminate the duplication but at the
@@ -689,7 +740,12 @@ class WindowClient extends BaseClient {
 	 * FSBL.Clients.WindowClient.setComponentState({ field: 'myChartLayout', value: s });
 	 * FSBL.Clients.WindowClient.setComponentState({ fields: [{field:'myChartLayout', value: s }, {field:'chartType', value: 'mountain'}]);
 	 **/
-	setComponentState(params, cb = Function.prototype) {
+	setComponentState(params: {
+		field?: string,
+		fields?: { field: string, value: any }[],
+		value?: any,
+		windowName?: string
+	}, cb: StandardCallback = (e, r) => { }) {
 		Validate.args(params, "object", cb, "function=") && (Validate as any).args2("params.field", params.field, "string");
 		if (finsembleWindow) {
 			return finsembleWindow.setComponentState(params, cb);
@@ -699,18 +755,34 @@ class WindowClient extends BaseClient {
 		var hash = this.getContainerHash(params.windowName);
 		let fields = params.fields;
 
-		if (params.field) {
+		if (typeof params.field === "undefined") {
+			// If the user hasn't provided field or fields, exit.
+			if (!fields) {
+				return cb({
+					message: "setComponentState requires a field parameter or a fields parameter. Neither were provided.",
+					code: "invalid_arguments"
+				});
+			}
+		} else {
 			fields = [{
 				field: params.field,
 				value: params.value
 			}];
 		}
+
 		for (let i = 0; i < fields.length; i++) {
 			let field = fields[i];
 			if (!field.field || !field.value) { continue; }
 			this.componentState[field.field] = field.value;
 		}
-		this.compareSavedState(params, () => {
+
+		let _params = {
+			field: params.field || "",
+			value: params.value,
+			windowName: params.windowName
+		}
+
+		this.compareSavedState(_params, () => {
 			Logger.system.debug("COMPONENT LIFECYCLE:SAVING STATE:", this.componentState);
 			StorageClient.save({ topic: WORKSPACE_CACHE_TOPIC, key: hash, value: this.componentState }, function (err, response) {
 				if (cb) { cb(err, response); }
@@ -730,7 +802,7 @@ class WindowClient extends BaseClient {
 	 * @returns {string} Hash for the window
 	 * @private
 	 */
-	getContainerHash(windowName) {
+	getContainerHash(windowName: string) {
 		return util.camelCase(this.windowHash, windowName);
 	}
 
@@ -926,21 +998,21 @@ class WindowClient extends BaseClient {
 	 * @param {object} [params.bumpElements]
 	 * @param {boolean|string} [params.bumpElements.fixed] Either false, "all" or "0Positioned". If all, all fixed elements are moved. 0Positioned only moves elements that have top 0. Default is all.
 	 * @param {boolean|string} [params.bumpElements.absolute] Either false, "all" or "0Positioned". If all, all fixed elements are moved. 0Positioned only moves elements that have top 0. Only applies to children of the body. Default is all.
-	 * @param {string} [params.bumpElements.bumpBy] default is "25px".
-	 * @param {string} [params.bodyMarginTop] Sets the body margin. Default is "30px".
-	 * @param {string} [params.forceHeaderHeight] Sets a height to the main FSBLHeader div.
+	 * @param {string} [params.bumpElements.bumpBy] Sets the amount to bump elements by (e.g. "25px"). Default is "auto" which will measure the height of the injected component when rendered.
+	 * @param {string} [params.bodyMarginTop] Sets the body margin (e.g. "25px"). Default is "auto" which will measure the height of the injected component when rendered.
+	 * @param {string} [params.forceHeaderHeight] Sets a height on the main FSBLHeader div. Either false or a specified height (e.g. "25px").
 	 */
-	injectHeader(params, cb = Function.prototype) {
+	injectHeader(params?: InjectHeaderParams | boolean, cb: StandardCallback = () => { }) {
 		//FIXME(Terry) windowService should inject directly from a config:
 		// components."*".component.inject|preload="windowTitleBar.js" <-- set the windowTitleBar
 		// components."welcome".component.inject|preload="windowTitleBar.js" <-- override the windowTitleBar
-		// Everything from here down then goes into windowTitleBar.jsx inside FSBLREady()
+		// Everything from here down then goes into windowTitleBar.jsx inside FSBLReady()
 
 		let self = this;
 		if (this.hasHeader) return;
 		this.hasHeader = true;
 
-		var defaultParams = {
+		var defaultParams: InjectHeaderParams = {
 			component: "windowTitleBar",
 			bumpElements: {
 				fixed: "all",
@@ -950,7 +1022,9 @@ class WindowClient extends BaseClient {
 			bodyMarginTop: "auto",
 			forceHeaderHeight: false
 		};
-		if (!params || params === true) {
+
+		//this will catch true, false, or undefined.
+		if (typeof params !== "object") {
 			params = defaultParams;
 		} else {
 			params = Object.assign(defaultParams, params);
@@ -1033,6 +1107,9 @@ class WindowClient extends BaseClient {
 		});
 	};
 
+	/**
+	 * @private
+	 */
 	injectStylesheetOverride() {
 		var node = document.createElement("style");
 		node.type = "text/css";
@@ -1071,30 +1148,49 @@ class WindowClient extends BaseClient {
 	 */
 	rejectWindowsKeyResizes() {
 		let keysDown = {};
-		//Checking here for windows key + arrowLeft or arrowRight. This triggers an aero-resize that really messes with docking/
-		//When that combination is captured, we set our bounds back to where they were to begin with.
+		//Responds to key events here in order to send router messages and determine whether a system-bounds-changed event should occur. Essentially, this is catching actions to allow Finsemble to respond to windows aero snap functionality.
+
 		const onKeyUp = async (e) => {
-			let keys = Object.keys(keysDown);
-			//which key was just pressed.
-			let ArrowPressed = e.key === "ArrowLeft" || e.key === "ArrowRight";
-			let WindowsKeyPressed = e.key === "Meta";
+			//If windows aero snap is disabled we check the list of captured keys and what was released to determine if an event needs to
+			//be responded to. Basically, if this is disabled, we see if a Windows Key + Left/Right was released, if so, restore from the windows new bounds
+			//which were set by the OS
+			if (this.enableWindowsAeroSnap) {
+				//If the key being released is the windows key, send a router message to docking
+				if (e.key === "Meta") {
+					RouterClient.transmit("Finsemble.WindowService.WindowsKey", "up");
+				}
+			} else {
+				let keys = Object.keys(keysDown);
+				//which key was just pressed.
+				let ArrowPressed = e.key === "ArrowLeft" || e.key === "ArrowRight";
+				let WindowsKeyPressed = e.key === "Meta";
 
-			//Which key was pressed previously.
-			let ArrowIsDown = keys.includes("ArrowLeft") || keys.includes("ArrowRight");
-			let WindowsKeyDown = keys.includes("Meta");
+				//Which key was pressed previously.
+				let ArrowIsDown = keys.includes("ArrowLeft") || keys.includes("ArrowRight");
+				let WindowsKeyDown = keys.includes("Meta");
 
-			//Either we pressed the arrow first or the windows key first. Doesn't matter. Code should still work.
-			if ((ArrowIsDown && WindowsKeyPressed) || (WindowsKeyDown && ArrowPressed)) {
-				let { data: bounds } = await finsembleWindow.getBounds();
-				finsembleWindow.setBounds(bounds);
+				//Either we pressed the arrow first or the windows key first. Doesn't matter. Code should still work.
+				if ((ArrowIsDown && WindowsKeyPressed) || (WindowsKeyDown && ArrowPressed)) {
+					let { data: bounds } = await finsembleWindow.getBounds();
+					finsembleWindow.setBounds(bounds);
+				}
+
+				//Key isn't down any more. Delete it if it was down.
+				//Added a timeout to better handle when someone is playing Beethoven's 5th Symphony on key chords.
+				setTimeout(() => delete keysDown[e.key], 50);
 			}
-
-			//Key isn't down any more. Delete it if it was down.
-			delete keysDown[e.key];
 		};
 		//Store the key on our object.
 		const onKeyDown = (e) => {
-			keysDown[e.key] = true;
+			//If windows aero snap is disabled, add this new key to the list of 'tracked' (held down) keys.
+			if (this.enableWindowsAeroSnap) {
+				//If the key being pressed is the windows key, send a message to docking
+				if (e.key === "Meta") {
+					RouterClient.transmit("Finsemble.WindowService.WindowsKey", "down");
+				}
+			} else {
+				keysDown[e.key] = true;
+			}
 		};
 		if (FSBL) {
 			HotkeyClient.onReady(() => {
@@ -1110,7 +1206,7 @@ class WindowClient extends BaseClient {
 	 * @private
 	 * @param {function} [cb]
 	 */
-	addListeners(cb = Function.prototype) {
+	addListeners(cb: Function = Function.prototype) {
 		var self = this;
 		this.listenForHashChanges();
 		this.preventUnintendedDropEvents();
@@ -1118,7 +1214,9 @@ class WindowClient extends BaseClient {
 		//FinsembleWindow listenrs
 		//@todo, make the openfin window trigger an event on the finsemble window, which will emit up. we then use addListener instead of addEventListener
 		finsembleWindow.addListener("clearParent", () => {
-			Logger.system.info("WindowClient.clearParent registerWithDockingManager");
+			Logger.system.info("WindowClient.clearParent show");
+			//sometimes a window ends up hidden if the stack it's exiting is under load, call show to prevent that
+			finsembleWindow.show();
 			//this.registerWithDockingManager(); // stack takes care of this
 		});
 		finsembleWindow.addListener("setParent", () => {
@@ -1156,7 +1254,7 @@ class WindowClient extends BaseClient {
 	 * @param {string} command The state object to set
 	 * @param {object} state The new state (merged with existing)
 	 */
-	updateHeaderState(command, state) {
+	updateHeaderState(command: string, state: any) {
 		if (!this.commandChannel) {
 			return;
 		}
@@ -1168,7 +1266,7 @@ class WindowClient extends BaseClient {
 	 * update header state via this channel.
 	 * @param {function} commandChannel A function callback that receives commands
 	 */
-	headerCommandChannel(commandChannel) {
+	headerCommandChannel(commandChannel: (arg0: any, arg1: any) => void) {
 		this.commandChannel = commandChannel;
 	}
 
@@ -1232,12 +1330,12 @@ class WindowClient extends BaseClient {
 	 * @private
 	 * @todo convert to use monitor util function and make sure current bounds are correct. For some windows (e.g., toolbars/menus that don't track their own bounds because they don't have drag regions), options.default will represent the data _on spawn_, not the bounds when the function is called.
 	 */
-	getDesktopBoundingBox(element) {
+	getDesktopBoundingBox(element: string | Element) {
 		var el = element;
 		if (typeof (element) === "string") {
 			el = document.querySelector(element);
 		}
-		let box = el.getBoundingClientRect();
+		let box = (el as Element).getBoundingClientRect();
 		let boundingBox = {
 			top: this.options.defaultTop - box.top,
 			left: this.options.defaultLeft + box.left,
@@ -1253,7 +1351,20 @@ class WindowClient extends BaseClient {
 		return boundingBox;
 	}
 
-	isPointInBox(point, box) {
+	/**
+	 * @private
+	 */
+	isPointInBox(point: {
+		x: number,
+		y: number
+	}, box: {
+		top: number,
+		left: number,
+		bottom?: number,
+		right?: number,
+		width: number,
+		height: number
+	}) {
 		if (!box.bottom) box.bottom = box.top + box.height;
 		if (!box.right) box.right = box.left + box.width;
 		return (point.x > box.left && point.x < box.right && point.y < box.bottom && point.y > box.top);
@@ -1265,7 +1376,7 @@ class WindowClient extends BaseClient {
 	 * @param {function} cb A function that returns a boolean
 	 * @private
 	 */
-	isMouseOverDOMElement(element, cb) {
+	isMouseOverDOMElement(element: Element, cb: Function) {
 		var boundingBox = this.getDesktopBoundingBox(element);
 		System.getMousePosition((err, position) => {
 			cb(this.isPointInBox(position, boundingBox));
@@ -1292,7 +1403,7 @@ class WindowClient extends BaseClient {
 	 *
 	 * @param {boolean} active  Set to false to turn off activity
 	 */
-	setActive(active) {
+	setActive(active: boolean) {
 		if (active) {
 			addClass(document.documentElement, "desktop-active");
 		} else {
@@ -1304,7 +1415,7 @@ class WindowClient extends BaseClient {
 	 * Returns the bounds for the current window.
 	 * @param {function} cb
 	 */
-	getBounds(cb) {
+	getBounds(cb: StandardCallback) {
 		finsembleWindow.getBounds(function (err, bounds) {
 			cb(err, bounds);
 		});
@@ -1315,8 +1426,10 @@ class WindowClient extends BaseClient {
 	 * @param {*} params - params.windowIdentifier is required.
 	 * @param {*} cb
 	 */
-	startTilingOrTabbing(params, cb = Function.prototype) {
-		RouterClient.transmit("DockingService.startTilingOrTabbing", params);
+	startTilingOrTabbing(params: {
+		windowIdentifier: WindowIdentifier
+	}, cb: Function = Function.prototype) {
+		FSBL.Clients.RouterClient.transmit("DockingService.startTilingOrTabbing", params);
 		cb();
 	};
 
@@ -1325,7 +1438,9 @@ class WindowClient extends BaseClient {
 	 * @param {*} params - put windowIdentifier in params.windowIdentifier. If not provided, must set params.waitForIdentifier true
 	 * @param {*} cb
 	 */
-	cancelTilingOrTabbing(params, cb = Function.prototype) {
+	cancelTilingOrTabbing(params: {
+		windowIdentifier: WindowIdentifier
+	}, cb: Function = Function.prototype) {
 		console.debug("CancelTilingOrTabbing");
 		RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
 		cb();
@@ -1336,17 +1451,29 @@ class WindowClient extends BaseClient {
 	 * @param {*} params - windowIdentifier is required
 	 * @param {*} cb
 	 */
-	sendIdentifierForTilingOrTabbing(params, cb = Function.prototype) {
-		RouterClient.transmit("DockingService.identifierForTilingOrTabbing", params);
+	sendIdentifierForTilingOrTabbing(params: {
+		windowIdentifier: WindowIdentifier
+	}, cb: Function = Function.prototype) {
+		FSBL.Clients.RouterClient.transmit("DockingService.identifierForTilingOrTabbing", params);
 		cb();
 	};
 
 	/**
 	 *
-	 * @param {*} params - params.windowIdentifier is required.
+	 * @param {*} params
+	 * @param {object} params.mousePosition Where the pointer is on the screen
+	 * @param {number} params.mousePosition.x X position of the pointer
+	 * @param {number} params.mousePosition.y Y position of the pointer
+	 * @param {boolean} allowDropOnSelf Determines whether a tab can be dropped on the window where the drag originated.
 	 * @param {*} cb
 	 */
-	stopTilingOrTabbing(params: any = {}, cb = Function.prototype) {
+	stopTilingOrTabbing(params: {
+		mousePosition?: {
+			x: number,
+			y: number
+		},
+		allowDropOnSelf?: boolean
+	}, cb: Function = Function.prototype) {
 		let windowPosition = {
 			left: finsembleWindow.windowOptions.left,
 			top: finsembleWindow.windowOptions.top,
@@ -1403,10 +1530,10 @@ class WindowClient extends BaseClient {
 	 * Typically used by Tabbing Presentation component.
 	 *
 	 */
-	getStackedWindow(params, cb) {
+	getStackedWindow(params?: getStackedWindowParams | StandardCallback, cb?: StandardCallback) {
 		Logger.system.debug("WindowClient.getStackedWindow", params);
-		cb = cb || params;
-		params = params || {};
+		cb = cb || (params as StandardCallback);
+		params = (params as getStackedWindowParams) || {};
 		params.windowIdentifiers = params.windowIdentifiers || [];
 
 		if (!finsembleWindow.parentWindow && params.create) {
@@ -1460,11 +1587,20 @@ class WindowClient extends BaseClient {
 	 * Automatically resizes the height of the window to fit the full DOM of the current window..
 	 * @param {object} [params]
 	 * @param {object} [params.padding]
-	 * @param {number} [params.padding.height]
-	 * @param {number} [params.padding.width]
+	 * @param {number} [params.padding.height] How much padding around the DOM to add to the height of the window
+	 * @param {number} [params.padding.width] How much padding around the DOM to add to the width of the window
+	 * @param {number} [params.maxHeight] Maximum height to make the window
+	 * @param {number} [params.maxWidth] Maximum width to make the window
 	 * @param {function} [cb] Optional callback when complete
 	 */
-	fitToDOM(params, cb) {
+	fitToDOM(params?: {
+		padding?: {
+			height: number,
+			width: number
+		},
+		maxHeight?: number,
+		maxWidth?: number
+	}, cb?: Function) {
 		var children = document.body.children;
 		var element = document.getElementsByTagName("body")[0],
 			style = window.getComputedStyle(element),
@@ -1535,13 +1671,16 @@ class WindowClient extends BaseClient {
 	 * See the [windowTitleBar tutorial](tutorial-PresentationComponents.html#window-title-bar) for more information.
 	 * @private
 	 */
-	start(callback = Function.prototype) {
+	async start(callback = Function.prototype) {
 		Validate.args(callback, "function");
-		var customData = null,
+		const self = this;
+		const finsembleConfig = await configClient.getValue("finsemble")
+		const deliveryMechanism = finsembleConfig.data["Window Manager"].deliveryMechanism ||
+			DELIVERY_MECHANISM.PRELOAD;
+		let customData = null,
 			isCompoundWindow = false,
-			shouldInjectHeader = false,
-			shouldInjectCSS = false;
-
+			shouldInjectCSS = false,
+			componentSupportsHeader = false;
 		//where we store componentState for the window.
 		this.componentState = {};
 		let getFinsembleWindow = (done) => {
@@ -1564,6 +1703,9 @@ class WindowClient extends BaseClient {
 			});
 		};
 
+		/**
+		 * @private
+		 */
 		getFinsembleWindow(() => {
 			this.retrieveMonitorDimensions();
 			this.getInitialOptions(() => {
@@ -1578,18 +1720,17 @@ class WindowClient extends BaseClient {
 				}
 
 				customData = finsembleWindow.windowOptions.customData;
+
 				if (customData) {
-					isCompoundWindow = typeof customData.window === "undefined" ? false : customData.window.compound;
+					isCompoundWindow = lodashGet(customData, 'window.compound', false);
 					if (customData.cssOverride) {
 						Logger.system.debug("Window has cssOverride. See local window to inspect object");
-						console.debug(customData.cssOverride);
 						shouldInjectCSS = true;
 					}
-
-					shouldInjectHeader = customData.foreign && !isCompoundWindow && customData.foreign.components["Window Manager"].FSBLHeader;
+					componentSupportsHeader = !isCompoundWindow && lodashGet(customData,
+						['foreign', 'components', 'Window Manager', 'FSBLHeader'], false);
 				}
 
-				let self = this;
 				asyncParallel([
 					function addWorkspaceAndBoundsListeners(done) {
 						if (!isCompoundWindow) {
@@ -1604,35 +1745,200 @@ class WindowClient extends BaseClient {
 						done();
 					},
 					function injectHeader(done) {
-						console.log('will attempt to injectHeader');
-						if (shouldInjectHeader) {
+						Logger.system.debug('Will attempt to inject header.');
+						if (componentSupportsHeader && deliveryMechanism === DELIVERY_MECHANISM.INJECTION) {
 							self.injectHeader(customData.foreign.components["Window Manager"].FSBLHeader, done);
 						} else {
 							done();
 						}
 					},
+
+					function setupAeroSnap(done) {
+						//Get the 'enableWindowsAeroSnap' variable from the docking config and set this windows instance
+						configClient.getValue('finsemble', (err, config) => {
+							if (err) {
+								Logger.system.error("Error reading windowService config from finsemble");
+							}
+							let aeroSnap = config.services.windowService.config.enableWindowsAeroSnap;
+
+							self.enableWindowsAeroSnap = configUtil.getDefault(config, "config.servicesConfig.docking.enableWindowsAeroSnap", aeroSnap);
+							done();
+						});
+					},
 					function registerWithDocking(done) {
+
+						/**
+						 * Checks the config for a deprecated value or new value under windowService, or dockingService if windowService doesn't exist.
+						 * @param {array || string} deprecatedValues The deprecated value, if its an array, its multiple values to check for
+						 * @param {string} newValue The new value to check for if the deprecated value doesn't exist
+						 * @param {boolean} defaultVal The default value if the prop is unfound under both windowService and dockingService
+						 */
+						const checkDeprecatedAndCompare = (params) => {
+							//Ex. params.baseString = "customData.foreign.services";
+							//Ex. params.newPath = "windowService"
+							//Ex. searchString = "customData.foreign.services.windowService"
+							let searchString = params.baseString + "." + params.newPath;
+
+							//Checks for new path - new properties
+							let value = configUtil.getDefault(customData, searchString + "." + params.newValue, null);
+							// console.log('checked for ', searchString, '.', params.newValue, ' and result is: ', value);
+							if (value === null) {
+								searchString = params.baseString + "." + params.oldPath;
+								//Checks for old path - new properties
+								value = configUtil.getDefault(customData, searchString + "." + params.newValue, null);
+								// console.log('checked for ', searchString, '.', params.newValue, ' and result is: ', value);
+
+								if (value === null) {
+									if (Array.isArray(params.oldValue)) {
+										for (let i = 0; i < params.oldValue.length; i++) {
+											let depVal = params.oldValue[i];
+
+											searchString = params.baseString + "." + params.oldPath;
+											value = configUtil.getDefault(customData, searchString + "." + depVal, null);
+											// console.log('checked for ', searchString + "." + depVal, ' and result is: ', value);
+											if (value !== null) break;
+										}
+									} else {
+										searchString = params.baseString + "." + params.oldPath;
+										//Checks for old path - old properties
+										value = configUtil.getDefault(customData, searchString + "." + params.oldValue, params.default);
+										// console.log('checked for ', searchString, '.', params.oldValue, ' and result is: ', value);
+									}
+								}
+							}
+
+							// console.log('returning: ', value)
+
+							return value;
+						}
+
 						// Additional function to register any dockable components with docking.
 						// This will make docking aware of those dockable windows
 						// and allow control over docking to window edges/moving windows out of claimed space
 						if (customData && customData.component && customData.component.type !== "service") {
-							let isArrangable = configUtil.getDefault(customData, "customData.foreign.services.dockingService.isArrangable", true);
-							let shouldRegister = configUtil.getDefault(customData, "customData.window.dockable", isArrangable);
+
+							let manageMovement = configUtil.getDefault(customData, "customData.foreign.services.windowService.manageWindowMovement", false);
+							if (!manageMovement) {
+								manageMovement = configUtil.getDefault(customData, "customData.foreign.services.dockingService.manageWindowMovement", false);
+							}
+
+							let FSBLHeader = configUtil.getDefault(customData, "customData.foreign.components.Window Manager.FSBLHeader", false);
+
+							let isDockable = configUtil.getDefault(customData, "customData.window.dockable", false);
+
+							//If 'manageWindowMovement' wasn't found, we still want to register with docking (and manage window movement) if the component isDockable or has an FSBLHeader
+							manageMovement = manageMovement || FSBLHeader || isDockable;
+
+							//Checks the config for deprecated props 'isArrangable' and 'isArrangeable'. If niether of these is found, will search 'allowAutoArrange'
+							let autoArrange = checkDeprecatedAndCompare({
+								baseString: "customData.foreign.services",
+								newPath: "windowService",
+								oldPath: "dockingService",
+								oldValue: ["isArrangable", "isArrangeable"],
+								newValue: "allowAutoArrange",
+								default: manageMovement
+							});
+
+							//If the component wants its movement managed (or to be auto-arrangeable) it should register with docking
+							let shouldRegister = manageMovement || autoArrange;
+
 							if (!shouldRegister) return done();
+
+							//Checks the config for deprecated prop 'ignoreSnappingRequests'. If not found, will search 'allowSnapping'.
+							customData.window.snapping = checkDeprecatedAndCompare({
+								baseString: "customData.foreign.services",
+								newPath: "windowService",
+								oldPath: "dockingService",
+								oldValue: "ignoreSnappingRequests",
+								newValue: "allowSnapping",
+								default: manageMovement
+							});
+
+							//Since 'allowSnapping' is esentially 'if true enable' and 'ignoreSnappingRequests' is essentially 'if true disable' we need to toggle this value depending on what prop was found. The core code still uses 'ignoreSnappingRequests'.
+							if (customData && customData.foreign && customData.foreign.services) {
+								let service = customData.foreign.services.windowService !== undefined ? "windowService" : "dockingService";
+
+								if (customData.foreign.services[service].ignoreSnappingRequests !== undefined) {
+									customData.window.snapping = !customData.foreign.services[service].ignoreSnappingRequests;
+								}
+							}
+
+							//Checks for an ephemeral component. Ephemeral components don't snap
+							const ephemeral = configUtil.getDefault(customData, "customData.window.ephemeral", false);
+							if (ephemeral && !customData.window.snapping) {
+								customData.window.snapping = false;
+							}
+
+							//Checks the config for the deprecated prop 'ignoreTilingAndTabbingRequests'. If not found, will search 'allowTiling'.
+							customData.window.tiling = checkDeprecatedAndCompare({
+								baseString: "customData.foreign.services",
+								newPath: "windowService",
+								oldPath: "dockingService",
+								oldValue: "ignoreTilingAndTabbingRequests",
+								newValue: "allowTiling",
+								default: manageMovement
+							});
+
+							//Checks the config for deprecated prop 'ignoreTilingAndTabbingRequests'. If not found, will search 'allowTabbing'.
+							customData.window.tabbing = checkDeprecatedAndCompare({
+								baseString: "customData.foreign.services",
+								newPath: "windowService",
+								oldPath: "dockingService",
+								oldValue: "ignoreTilingAndTabbingRequests",
+								newValue: "allowTabbing",
+								default: manageMovement
+							});
+
+							//Since 'allowTiling'/'allowTabbing' is esentially 'if true enable' and 'ignoreTilingAndTabbingRequests' is essentially 'if true disable' we need to toggle this value depending on what prop was found.
+							if (customData && customData.foreign && customData.foreign.services) {
+								let service = customData.foreign.services.windowService !== undefined ? "windowService" : "dockingService";
+
+								if (customData.foreign.services[service].ignoreTilingAndTabbingRequests !== undefined) {
+									customData.window.tiling = !customData.window.tiling;
+									customData.window.tabbing = !customData.window.tabbing;
+								}
+							}
+
+							//Checks the deprecated config prop 'canGroup'. If not found, will search 'allowGrouping'.
+							customData.window.canGroup = checkDeprecatedAndCompare({
+								baseString: "customData.foreign.services",
+								newPath: "windowService",
+								oldPath: "dockingService",
+								oldValue: "canGroup",
+								newValue: "allowGrouping",
+								default: manageMovement
+							});
+
+							//Checks the config for deprecated prop 'canMinimize'. If not found, will search 'allowMinimize'
+							customData.window.canMinimize = checkDeprecatedAndCompare({
+								baseString: "customData.foreign.services",
+								newPath: "windowService",
+								oldPath: "dockingService",
+								oldValue: "canMinimize",
+								newValue: "allowMinimize",
+								default: undefined
+							});
+
+							/** The canMinimize and canMaximize config could be one
+							 * of two locations. In a future (4.0) version, we should
+							 * consolidate this to one location.
+							 */
+							if (customData.window.canMinimize === undefined) {
+								customData.window.canMinimize = customData.component.canMinimize;
+								if (customData.window.canMinimize === undefined) {
+									customData.window.canMinimize = manageMovement;
+								}
+							}
+
+							if (customData.window.canMaximize === undefined) {
+								customData.window.canMaximize = customData.component.canMaximize;
+								if (customData.window.canMaximize === undefined) {
+									customData.window.canMaximize = manageMovement;
+								}
+							}
 
 							//Determines whether a dockable component should retrieve its state from memory, or start with default (config defined) options everytime
 							customData.window.overwriteStartDocked = configUtil.getDefault(customData, "customData.foreign.services.workspaceService.global", false);
-
-							//Determines whether a component should be capable of tabbing/tiling
-							customData.window.ignoreTilingAndTabbingRequests = configUtil.getDefault(customData, "customData.foreign.services.dockingService.ignoreTilingAndTabbingRequests", false);
-
-							/* Determines wether a dockable component should be able to snap to other windows
-
-								 For purposes of snapping, 'ephemeral' and 'ignoreSnappingRequests' are aliases for each other.
-							*/
-							const ignoreSnappingRequests = configUtil.getDefault(customData, "customData.foreign.services.dockingService.ignoreSnappingRequests", false);
-							const ephemeral = configUtil.getDefault(customData, "customData.window.ephemeral", false);
-							customData.window.ignoreSnappingRequests = ignoreSnappingRequests || ephemeral;
 
 							self.registerWithDockingManager(customData.window, () => {
 								self.cacheInitialBounds(done);

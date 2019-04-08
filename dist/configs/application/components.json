@@ -94,14 +94,9 @@
                     },
                     "Window Manager": {
                         "FSBLHeader": {
-                            "component": "windowTitleBar",
-                            "bumpElements": {
-                                "fixed": "all",
-                                "absolute": "all",
-                                "bumpBy": "auto"
-                            },
-                            "bodyMarginTop": "auto",
-                            "forceHeaderHeight": false,
+                            "title": "EURJPY",
+                            "FSBLHeader": true,
+                            "persistWindowState": false,
                             "showLinker": true
                         },
                         "title": "EURUSD",

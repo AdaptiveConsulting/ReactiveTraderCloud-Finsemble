@@ -91,7 +91,7 @@ Keystroke.prototype.keyup = function (e) {
 
 Keystroke.prototype.keydown = function (e) {
 	if (this.noKeyCapture) return;
-	
+
 	this.key = e.key;
 	switch (e.key) {
 		case "Meta":
@@ -194,12 +194,12 @@ class HotkeyClient extends BaseClient {
 	 *Adds a local hotkey, firing only when the window calling the method is in focus. If you execute this function more than once for the same key combination, both hotkeys will coexist, and would need to be remove separately.
 	 * @param {Array.<string>} keyArr Array of strings representing hotkey key combination. We're not very picky about exactly what strings you use - for example "control", "ctrl" and "CTRL" all work for the control key.
 	 * @param {function} handler Function to be executed when the hotkey combination is pressed. It is recommended that you define a variable to represent the handler function, as the same function must be passed in order to remove the hotkey.
-	 * @param {function} [cb] Callback to be called after local hotkey is added.
+	 * @param {function} cb Callback to be called after local hotkey is added.
 	 * @example
 	 * var myFunction = function () {...}
 	 * FSBL.Clients.HotkeyClient.addLocalHotkey(["ctrl","shift","s"],myFunction,cb)
 	 */
-	addLocalHotkey(keyArr, handler, cb = Function.prototype) {
+	addLocalHotkey(keyArr: string[], handler: Function | any, cb: StandardCallback = (err, response): void => { }) {
 		Logger.system.info("HotkeyClient.addLocalHotkey");
 		Logger.system.debug("HotkeyClient.addLocalHotkey, keyArr: ", keyArr);
 		let keyString = translateKeys({ keys: keyArr }).sort().toString();
@@ -216,7 +216,7 @@ class HotkeyClient extends BaseClient {
 		}
 		this.localListeners[keyString][handler] = wrap;
 		eventEmitter.addListener(keyString, wrap);
-		this.routerClient.query("hotkeyService.registerGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb);
+		this.routerClient.query("hotkeysService.registerGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb);
 	}
 
 	/**
@@ -231,7 +231,7 @@ class HotkeyClient extends BaseClient {
 	 * var myFunction = function () {...}
 	 * FSBL.Clients.HotkeyClient.addBrowserHotkey(["ctrl","shift","s"],myFunction,cb)
 	 */
-	addBrowserHotkey(keyArr, handler) {
+	addBrowserHotkey(keyArr: string[], handler: Function) {
 		// Lazily create a keystroke handler for this web page if one doesn't already exist
 		if (!this.KeyStroke) {
 			this.KeyStroke = new Keystroke(function (params) {
@@ -255,18 +255,18 @@ class HotkeyClient extends BaseClient {
 	 *Removes a local hotkey.
 	 * @param {Array.<string>} keyArr Array of strings representing hotkey key combination. We're not very picky about exactly what strings you use - for example "control", "ctrl" and "CTRL" all work for the control key.
 	 * @param {function} handler Handler registered for the hotkey to be removed.
-	 * @param {function} [cb] Callback to be called after local hotkey is removed.
+	 * @param {function} cb Callback to be called after local hotkey is removed.
 	 * @example
 	 *
 	 * FSBL.Clients.HotkeyClient.removeLocalHotkey(["ctrl","shift","s"],myFunction,cb)
 	 */
-	removeLocalHotkey(keyArr, handler, cb = Function.prototype) {
+	removeLocalHotkey(keyArr: string[], handler: Function | any, cb: StandardCallback = (err, response): void => { }) {
 		Logger.system.info("HotkeyClient.removeLocalHotkey");
 		Logger.system.debug("HotkeyClient.removeLocalHotkey, keyArr: ", keyArr);
 		let keyString = translateKeys({ keys: keyArr }).sort().toString();
 		let wrap = this.localListeners[keyString][handler];
 		eventEmitter.removeListener(keyString, wrap);
-		this.routerClient.query("hotkeyService.unregisterGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb); //TODO: query
+		this.routerClient.query("hotkeysService.unregisterGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb); //TODO: query
 	}
 
 	/**
@@ -278,29 +278,29 @@ class HotkeyClient extends BaseClient {
 	 * var myFunction = function () {...}
 	 * FSBL.Clients.HotkeyClient.addGlobalHotkey(["ctrl","shift","s"],myFunction,cb)
 	 */
-	addGlobalHotkey(keyArr, handler, cb = Function.prototype) {
+	addGlobalHotkey(keyArr: string[], handler: Function | any, cb: StandardCallback = (err, response): void => { }) {
 		Logger.system.info("HotkeyClient.addGlobalHotkey");
 		Logger.system.debug("HotkeyClient.addGlobalHotkey, keyArr: ", keyArr);
 		let keyString = translateKeys({ keys: keyArr }).sort().toString();
 		eventEmitter.addListener(keyString, handler);
-		this.routerClient.query("hotkeyService.registerGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb);
+		this.routerClient.query("hotkeysService.registerGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb);
 	}
 
 	/**
 	 *Removes a global hotkey.
 	 * @param {Array.<string>} keyArr Array of strings representing hotkey key combination. We're not very picky about exactly what strings you use - for example "control", "ctrl" and "CTRL" all work for the control key.
 	 * @param {function} handler Handler registered for the hotkey to be removed.
-	 * @param {function} [cb] Callback to be called after local hotkey is removed.
+	 * @param {function} cb Callback to be called after local hotkey is removed.
 	 * @example
 	 *
 	 * FSBL.Clients.HotkeyClient.removeGlobalHotkey(["ctrl","shift","s"],myFunction,cb)
 	 */
-	removeGlobalHotkey(keyArr, handler, cb = Function.prototype) {
+	removeGlobalHotkey(keyArr: string[], handler: Function | any, cb: StandardCallback = (err, response): void => { }) {
 		Logger.system.info("HotkeyClient.removeGlobalHotkey");
 		Logger.system.debug("HotkeyClient.removeGlobalHotkey, keyArr: ", keyArr);
 		let keyString = translateKeys({ keys: keyArr }).sort().toString();
 		eventEmitter.removeListener(keyString, handler);
-		this.routerClient.query("hotkeyService.unregisterGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb); //TODO: query
+		this.routerClient.query("hotkeysService.unregisterGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb); //TODO: query
 	}
 
 	/**
@@ -308,7 +308,7 @@ class HotkeyClient extends BaseClient {
 	 */
 	/* getHotkeys() { //TODO: MAKE WORK
 		Logger.system.info("HotkeyClient.getHotkeys");
-		this.routerClient.transmit("hotkeyService.getRegisteredHotkeys", { request: true });
+		this.routerClient.transmit("hotkeysService.getRegisteredHotkeys", { request: true });
 	} */
 
 	/**
@@ -333,14 +333,15 @@ class HotkeyClient extends BaseClient {
 	 * @param {function} cb Optional callback function
 	 *
 	 */
-	removeAllHotkeys(cb) {
+	removeAllHotkeys(cb: StandardCallback) {
 		eventEmitter.removeAllListeners();
-		this.routerClient.query("hotkeyService.removeAllHotkeysForWindow", { windowName: this.windowName }, cb);
+		this.routerClient.query("hotkeysService.removeAllHotkeysForWindow", { windowName: this.windowName }, cb);
 	}
 
 	/**
 	 * Automatically unregisters all hotkeys when the window containing the client closes
 	 * @param {function} cb
+	 * @private
 	 */
 	onClose = (cb) => {
 		this.removeAllHotkeys(cb);
@@ -349,7 +350,7 @@ class HotkeyClient extends BaseClient {
 
 var hotkeyClient = new HotkeyClient({
 	startupDependencies: {
-		services: ["hotkeyService"]
+		services: ["hotkeysService"]
 	},
 	onReady: function (cb) {
 		if (cb) {
@@ -362,4 +363,4 @@ var hotkeyClient = new HotkeyClient({
 // @TODO - use proper exports instead of global scope.
 Globals.Keystroke = Keystroke;
 
-export default  hotkeyClient;
+export default hotkeyClient;

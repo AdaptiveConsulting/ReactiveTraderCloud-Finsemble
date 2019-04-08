@@ -151,9 +151,11 @@ class WorkspaceClient extends _BaseClient {
 	 * @private
 	 * @param {object} params
 	 * @param {string} params.name Window name
-	 * @param {function} [cb] Callback
+	 * @param {function} cb Callback
 	 */
-	addWindow(params, cb = Function.prototype) {
+	addWindow(params: {
+		name: string
+	}, cb = Function.prototype) {
 		Validate.args(params, "object", cb, "function=") && params && (Validate.args2 as any)("params.name", params.name, "string");
 		this.routerClient.query("WorkspaceService.addWindow", params, (err, response) => {
 			Logger.system.log(`WORKSPACE LIFECYCLE: Window added:WorkspaceClient.addWindow: Name (${params.name})`);
@@ -166,13 +168,15 @@ class WorkspaceClient extends _BaseClient {
 	 * @private
 	 * @param {object} params
 	 * @param {string} params.name Window name
-	 * @param {function} [cb] Callback
+	 * @param {function} cb Callback
 	 * @example <caption>This method removes a window from a workspace. It is rarely called by the developer. It is called when a window that is using the window manager is closed. That way, the next time the app is loaded, that window is not spawned.</caption>
-	 *FSBL.Clients.WorkspaceClient.removeWindow({name:windowName}, function(err, response){
-		 //do something after removing the window.
-	 });
+	 * FSBL.Clients.WorkspaceClient.removeWindow({name:windowName}, function(err, response){
+	 * 	//do something after removing the window.
+	 * });
 	 */
-	removeWindow(params, cb = Function.prototype) {
+	removeWindow(params: {
+		name: string
+	}, cb = Function.prototype) {
 		Validate.args(params, "object", cb, "function=") && (Validate.args2 as any)("params.name", params.name, "string");
 		this.routerClient.query("WorkspaceService.removeWindow", params,
 			(err, response) => {
@@ -192,14 +196,17 @@ class WorkspaceClient extends _BaseClient {
 	/**
 	 * AutoArranges windows.
 	 * @param {object} params Parameters
-	 * @param {string} [params.monitor="mine"] Same options as {@link LauncherClient#showWindow}. Default is monitor of calling window.
-	 * @param {function} [cb] Callback
+	 * @param {string} params.monitor Same options as {@link LauncherClient#showWindow}. Default is monitor of calling window.
+	 * @param {function} cb Callback
 	 * @example
 	 * FSBL.Clients.WorkspaceClient.autoArrange(function(err, response){
 	 * 		//do something after the autoarrange, maybe make all of the windows flash or notify the user that their monitor is now tidy.
 	 * });
 	 */
-	autoArrange(params, cb = Function.prototype) {
+	autoArrange(params: {
+		monitor?: string,
+		monitorDimensions?: any
+	}, cb = Function.prototype) {
 		Validate.args(params, "object", cb, "function=");
 		params = params ? params : {};
 		Util.getMyWindowIdentifier((myWindowIdentifier) => {
@@ -217,11 +224,14 @@ class WorkspaceClient extends _BaseClient {
 	 * Minimizes all windows.
 	 * @param {object} params
 	 * @param {string} 	[params.monitor="all"] Same options as {@link LauncherClient#showWindow} except that "all" will work for all monitors. Defaults to all.
-	 * @param {function} [cb] Callback.
+	 * @param {function} cb Callback.
 	 * @example
 	 * FSBL.Clients.WorkspaceClient.bringWindowsToFront();
 	 */
-	minimizeAll(params, cb = Function.prototype) {
+	minimizeAll(params?: {
+		monitor: string,
+		windowIdentifier?: any
+	}, cb = Function.prototype) {
 		Validate.args(params, "object", cb, "function=");
 		params = params ? params : { monitor: "all" };
 		Util.getMyWindowIdentifier((myWindowIdentifier) => {
@@ -235,12 +245,15 @@ class WorkspaceClient extends _BaseClient {
 	/**
 	 * Brings all windows to the front.
 	 * @param {object} params
-	 * @param {string} 	[params.monitor] Same options as {@link LauncherClient#showWindow} except that "all" will work for all monitors. Defaults to the monitor for the current window.
-	 * @param {function} [cb] Callback.
+	 * @param {string} 	params.monitor Same options as {@link LauncherClient#showWindow} except that "all" will work for all monitors. Defaults to the monitor for the current window.
+	 * @param {function} cb Callback.
 	 * @example
 	 * FSBL.Clients.WorkspaceClient.bringWindowsToFront();
 	 */
-	bringWindowsToFront(params, cb = Function.prototype) {
+	bringWindowsToFront(params?: {
+		monitor: string,
+		windowIdentifier?: any
+	}, cb = Function.prototype) {
 		Validate.args(params, "object", cb, "function=");
 		params = params ? params : { monitor: "all" };
 		Util.getMyWindowIdentifier((myWindowIdentifier) => {
@@ -256,12 +269,12 @@ class WorkspaceClient extends _BaseClient {
 	 * @param {function} cb Callback
 	 * @example <caption>This function is useful for setting the initial state of a menu or dialog. It is used in the toolbar component to set the initial state.</caption>
 	 *
-	FSBL.Clients.WorkspaceClient.getActiveWorkspace((err, response) => {
-		//setState is a React component method.
-		self.setState({
-			workspaces: response
-		});
-	});
+	 * FSBL.Clients.WorkspaceClient.getActiveWorkspace((err, response) => {
+	 * 	//setState is a React component method.
+	 * 	self.setState({
+	 * 		workspaces: response
+	 * 	});
+	 * });
 	 */
 	getActiveWorkspace(cb) {
 		Validate.args(cb, "function");
@@ -280,12 +293,12 @@ class WorkspaceClient extends _BaseClient {
 	 * @param {function} cb Callback
 	 * @example <caption>This function is useful for setting the initial state of a menu or dialog.</caption>
 	 *
-	FSBL.Clients.WorkspaceClient.getWorkspaces((err, response) => {
-		//setState is a React component method.
-		self.setState({
-			workspaces: response
-		});
-	});
+	 * FSBL.Clients.WorkspaceClient.getActiveWorkspace((err, response) => {
+	 * 	//setState is a React component method.
+	 * 	self.setState({
+	 * 		workspaces: response
+	 * 	});
+	 * });
 	 */
 	getWorkspaces(cb) {
 		Validate.args(cb, "function");
@@ -298,6 +311,14 @@ class WorkspaceClient extends _BaseClient {
 		return new Promise(getWorkspacesPromiseResolver);
 	}
 
+	/**
+	 * @private
+	 *
+	 * @param {*} params
+	 * @param {*} cb
+	 * @returns
+	 * @memberof WorkspaceClient
+	 */
 	setWorkspaceOrder(params, cb) {
 		let { workspaces } = params;
 		Validate.args(cb, "function");
@@ -315,17 +336,20 @@ class WorkspaceClient extends _BaseClient {
 	/**
 	 * Removes a workspace. Either the workspace object or its name must be provided.
 	 * @param {object} params
-	 * @param {Object} 	[params.workspace] Workspace
-	 * @param {string} 	[params.name] Workspace Name
-	 * @param {function} [cb] Callback to fire after 'Finsemble.WorkspaceService.update' is transmitted.
+	 * @param {Object} 	params.workspace Workspace
+	 * @param {string} 	params.name Workspace Name
+	 * @param {function} cb Callback to fire after 'Finsemble.WorkspaceService.update' is transmitted.
 	 * @example <caption>This function removes 'My Workspace' from the main menu and the default storage tied to the applicaton.</caption>
 	 * FSBL.Clients.WorkspaceClient.remove({
-		name: 'My Workspace'
-	  }, function(err, response){
-	 		//You typically won't do anything here. If you'd like to do something when a workspace change happens, we suggest listening on the `Finsemble.WorkspaceService.update` channel.
-	  });
+	 * 	name: 'My Workspace'
+	 * }, function(err, response) {
+	 * 	//You typically won't do anything here. If you'd like to do something when a workspace change happens, we suggest listening on the `Finsemble.WorkspaceService.update` channel.
+	 * });
 	 */
-	remove(params, cb = Function.prototype) {
+	remove(params: {
+		workspace?: { name: string },
+		name?: string
+	}, cb = Function.prototype) {
 		Validate.args(params, "object", cb, "function=") && !(params.name || params.workspace) && (Validate.args2 as any)("params.name", params.name, "string");
 		Logger.system.debug("WorkspaceClient.remove", params);
 		const removePromiseResolver = (resolve, reject) => {
@@ -352,19 +376,24 @@ class WorkspaceClient extends _BaseClient {
 	 * @param {object} params
 	 * @param {string} params.oldName Name of workspace to rename.
 	 * @param {string} params.newName What to rename the workspace to.
-	 * @param {boolean} [params.removeOldWorkspace=true] Whether to remove references to old workspace after renaming.
-	 * @param {boolean} [params.overwriteExisting=false] Whether to overwrite an existing workspace.
-	 * @param {function} [cb] Callback
+	 * @param {boolean} params.removeOldWorkspace Whether to remove references to old workspace after renaming.
+	 * @param {boolean} params.overwriteExisting Whether to overwrite an existing workspace.
+	 * @param {function} cb Callback
 	 * @example <caption>This method is used to rename workspaces. It is used in the main Menu component.</caption>
 	 * FSBL.Clients.WorkspaceClient.rename({
-		oldName: 'My Workspace',
-		newName: 'The best workspace',
-		removeOldWorkspace: true,
-	  }, function(err, response){
-	 		//Do something.
-	  });
+	 * 	oldName: 'My Workspace',
+	 * 	newName: 'The best workspace',
+	 * 	removeOldWorkspace: true,
+	 * }, function(err, response){
+	 * 	//Do something.
+	 * });
 	 */
-	rename(params, cb = Function.prototype) {
+	rename(params: {
+		oldName: string,
+		newName: string,
+		removeOldWorkspace?: boolean,
+		overwriteExisting?: boolean
+	}, cb = Function.prototype) {
 		Validate.args(params, "object", cb, "function=") && (Validate.args2 as any)("params.oldName", params.oldName, "string", "params.newName", params.newName, "string");
 		Logger.system.debug("WorkspaceClient.rename", params);
 		const renamePromiseResolver = (resolve, reject) => {
@@ -386,31 +415,38 @@ class WorkspaceClient extends _BaseClient {
 	 * @param {object} params
 	 * @param {string} params.name Name of workspace to clone.
 	 * @param {string} params.newName Name of workspace to clone.
-	 * @param {function} [cb] cb(err,response) with response set to the name of the cloned workspace if no error
+	 * @param {function} cb cb(err,response) with response set to the name of the cloned workspace if no error
 	 * @example <caption>This method is used to clone workspaces. </caption>
 	 * FSBL.Clients.WorkspaceClient.clone({
-		name: 'The best workspace'
-	  }, function(err, response){
-				//Do something.
-	  });
+	 * 	name: 'The best workspace'
+	 * }, function(err, response){
+	 * 	//Do something.
+	 * });
 	 */
 	// Keeping for backward compatibility
-	clone(params, cb = Function.prototype) {
+	clone(params: {
+		name: string,
+		newName: string,
+		removeOldWorkspace?: boolean
+	}, cb: Function = Function.prototype) {
 		Validate.args(params, "object", cb, "function=") && (Validate.args2 as any)("params.name", params.name, "string");
-		params.oldName = params.name;
 		delete params.name;
 		if (!params.newName) { params.newName = params.name + "_clone"; }
 		params.removeOldWorkspace = false;
-		return this.rename(params, cb);
+		return this.rename({
+			removeOldWorkspace: false,
+			newName: params.newName,
+			oldName: params.name
+		}, cb);
 	};
 
 	/**
 	 * Saves the currently active workspace. It does not overwrite the saved instance of the workspace. It simply overwrites the <code>activeWorkspace</code> key in storage.
-	 * @param {function} [cb] Callback
+	 * @param {function} cb Callback
 	 * @example <caption>This function persists the currently active workspace.</caption>
 	 * FSBL.Clients.WorkspaceClient.save(function(err, response){
-				//Do something.
-	  });
+	 * 	//Do something.
+	 * });
 	 */
 	save(cb = Function.prototype) {
 		Logger.system.debug("WorkspaceClient.save");
@@ -441,16 +477,19 @@ class WorkspaceClient extends _BaseClient {
 	 * Saves the currently active workspace with the provided name.
 	 * @param {object} params
 	 * @param {string} params.name new name to save workspace under.
-	 * @param {string} [params.force=false] Whether to overwrite a workspace already saved with the provided name.
-	 * @param {function} [cb] Callback
+	 * @param {string} params.force Whether to overwrite a workspace already saved with the provided name.
+	 * @param {function} cb Callback
 	 * @example <caption>This function persists the currently active workspace with the provided name.</caption>
 	 * FSBL.Clients.WorkspaceClient.saveAs({
-		name: 'My Workspace',
-	  }, function(err, response){
-				//Do something.
-	  });
+	 * 	name: 'My Workspace',
+	 * }, function(err, response){
+	 * 	//Do something.
+	 * });
 	 */
-	saveAs(params, cb = Function.prototype) {
+	saveAs(params: {
+		name?: string,
+		force: boolean
+	}, cb = Function.prototype) {
 		Validate.args(params, "object", cb, "function=") && (Validate.args2 as any)("params.name", params.name, "string");
 		Logger.system.debug("WorkspaceClient.saveAs", params);
 		const saveAsPromiseResolver = (resolve, reject) => {
@@ -468,15 +507,18 @@ class WorkspaceClient extends _BaseClient {
 	 * Switches to a workspace.
 	 * @param {object} params
 	 * @param {string} 	params.name Workspace Name
-	 * @param {function} [cb] Callback
+	 * @param {function} cb Callback
 	 * @example <caption>This function loads the workspace 'My Workspace' from the storage tied to the application.</caption>
 	 * FSBL.Clients.WorkspaceClient.switchTo({
-		name: 'My Workspace',
-	  }, function(err, response){
-				//Do something.
-	  });
+	 * 	name: 'My Workspace',
+	 * }, function(err, response){
+	 * 	//Do something.
+	 * });
 	 */
-	switchTo(params, cb = Function.prototype) {
+	switchTo(params: {
+		name: string,
+		templateName?: string
+	}, cb = Function.prototype) {
 		//Logger.system.log("APPLICATION LIFECYLE:Loading Workspace:WorkspaceClient.switchTo:" + params.name); This should be in the service.
 		Validate.args(params, "object", cb, "function") && (Validate.args2 as any)("params.name", params.name, "string");
 		Logger.system.debug("WorkspaceClient.switchTo");
@@ -497,8 +539,8 @@ class WorkspaceClient extends _BaseClient {
 	 * @param {Function} Callback cb(err,response) with response set to true if dirty and false otherwise (when no error)
 	 * @example <caption>This function will let you know if the activeWorkspace is dirty.</caption>
 	 * FSBL.Clients.WorkspaceClient.isWorkspaceDirty(function(err, response){
-				//Do something like prompt the user if they'd like to save the currently loaded workspace before switching.
-	  });
+	 * 		//Do something like prompt the user if they'd like to save the currently loaded workspace before switching.
+	 * });
 	 */
 	isWorkspaceDirty(cb) {
 		Validate.args(cb, "function");
@@ -525,7 +567,7 @@ class WorkspaceClient extends _BaseClient {
 	 * getWorkspaceName("ketchup") returns "ketchup (8)".
 	 *
 	 */
-	getWorkspaceName(workspaceName) {
+	getWorkspaceName(workspaceName: string) {
 		var workspaces = FSBL.Clients.WorkspaceClient.workspaces;
 		let workspaceNames = workspaces.map((workspace) => workspace.name);
 		let escapedName = escapeRegExp(workspaceName);
@@ -564,11 +606,11 @@ class WorkspaceClient extends _BaseClient {
 
 	/**
 	 * Creates a new workspace. After creation the new workspace becomes the active workspace.
-	 * @param {String} workspaceName name for new workspace
-	 * @param {Object} [params] optional params
-	 * @param {string} [params.templateName] name of template to use when creating workspace; if no template then empty workspace will be created
-	 * @param {boolean} [params.switchAfterCreation = true] Whether to switch to the new workspace after creating it.
-	 * @param {Function} [cb] cb(err,response) with response set to new workspace object if no error
+	 * @param {String} workspaceName Name for new workspace.
+	 * @param {Object} params Optional params
+	 * @param {string} params.templateName Name of template to use when creating workspace; if no template then empty workspace will be created.
+	 * @param {boolean} params.switchAfterCreation Whether to switch to the new workspace after creating it.
+	 * @param {Function} cb cb(err,response) With response, set to new workspace object if no error.
 	 * @example <caption>This function creates the workspace 'My Workspace'.</caption>
 	 * FSBL.Clients.WorkspaceClient.createWorkspace(function(err, response){
 	 *		if (!err) {}
@@ -576,9 +618,14 @@ class WorkspaceClient extends _BaseClient {
 	 *		}
 	 * });
 	 */
-	createWorkspace(workspaceName, params, cb = Function.prototype) {
+	createWorkspace(workspaceName, params: {
+		templateName?: string,
+		switchAfterCreation?: boolean
+	}, cb: Function = Function.prototype) {
 		if (arguments.length === 2) { // if no params then second argument must be the cb
-			cb = params;
+			if (typeof params === "function") {
+				cb = params;
+			}
 			params = {};
 		}
 
@@ -603,6 +650,9 @@ class WorkspaceClient extends _BaseClient {
 			}, cb);
 		}
 	}
+	/**
+	 * @private
+	 */
 	createNewWorkspace = this.createWorkspace; //Backward Compatiblity
 
 	/**
@@ -612,14 +662,16 @@ class WorkspaceClient extends _BaseClient {
 	 * @param {string} params.workspaceName the workspace name
 	 * @param {function} cb callback(error,workspaceDefinition)
 	 */
-	export(params, cb) {
+	export(params: {
+		workspaceName: string
+	}, cb) {
 		Validate.args(params, "object", cb, "function") && (Validate.args2 as any)("params.workspaceName", params.workspaceName, "string");
 		Logger.system.debug("WorkspaceClient.export", params);
 		const exportPromiseResolver = (resolve, reject) => {
 			this.routerClient.query(WORKSPACE.API_CHANNELS.EXPORT, params, (err, response) => {
 				let workspaceExport = {};
 				workspaceExport[params.workspaceName] = response.data;
-				this._serviceResponseHandler(err, {data: workspaceExport}, resolve, reject, cb);
+				this._serviceResponseHandler(err, { data: workspaceExport }, resolve, reject, cb);
 			});
 		}
 		return new Promise(exportPromiseResolver);
@@ -634,7 +686,9 @@ class WorkspaceClient extends _BaseClient {
 	 * @param {function=} cb cb(err) where the operation was successful if !err; otherwise, err carries diagnostics
 	 *
 	 */
-	import(params, cb) {
+	import(params: {
+		workspaceJSONDefinition: any
+	}, cb) {
 		Validate.args(params, "object", cb, "function=") && (Validate.args2 as any)("params.workspaceJSONDefinition", params.workspaceJSONDefinition, "object");
 		Logger.system.debug("WorkspaceClient.import", params);
 		const importPromiseResolver = (resolve, reject) => {
@@ -650,7 +704,7 @@ class WorkspaceClient extends _BaseClient {
 				workspaceDefinition[viableWorkspaceName].name = viableWorkspaceName;
 			}
 
-			this.routerClient.query(WORKSPACE.API_CHANNELS.IMPORT, {workspaceJSONDefinition: workspaceDefinition} , (err, response) => {
+			this.routerClient.query(WORKSPACE.API_CHANNELS.IMPORT, { workspaceJSONDefinition: workspaceDefinition }, (err, response) => {
 				this._serviceResponseHandler(err, response, resolve, reject, cb);
 			});
 		}
@@ -665,7 +719,10 @@ class WorkspaceClient extends _BaseClient {
 	 * @param {object} params.workspaceDefinition a workspace JSON definition return from getWorkspaceDefinition()
 	 * @returns the new template definition. If null then an error occurred because workspaceDefinition wasn't a legal JSON definition for a workspace
 	 */
-	convertWorkspaceDefinitionToTemplate(params) {
+	convertWorkspaceDefinitionToTemplate(params: {
+		newTemplateName: string,
+		workspaceDefinition: any
+	}) {
 		Logger.system.info("WorkspaceClient.convertWorkspaceDefinitionToTemplate", params);
 		Validate.args(params, "object") && (Validate.args2 as any)("params.newTemplateName", params.newTemplateName, "string",
 			"params.workspaceDefinition", params.workspaceDefinition, "object");
@@ -684,7 +741,9 @@ class WorkspaceClient extends _BaseClient {
 	 * @param {function} cb
 	 * @private
 	 */
-	exportTemplate(params, cb) {
+	exportTemplate(params: {
+		templateName: string
+	}, cb) {
 		Validate.args(params, "object", cb, "function") && (Validate.args2 as any)("params.newTemplateName", params.templateName, "string");
 		Logger.system.debug("WorkspaceClient.exportTemplate", params);
 		const exportTemplatePromiseResolver = (resolve, reject) => {
@@ -692,7 +751,7 @@ class WorkspaceClient extends _BaseClient {
 				let exportFormat = {
 					[params.templateName]: response.data
 				};
-				this._serviceResponseHandler(err, {data: exportFormat}, resolve, reject, cb);
+				this._serviceResponseHandler(err, { data: exportFormat }, resolve, reject, cb);
 			});
 		}
 		return new Promise(exportTemplatePromiseResolver);
@@ -708,8 +767,11 @@ class WorkspaceClient extends _BaseClient {
 	 * @param {function} cb
 	 * @private
 	 */
-	importTemplate(params, cb) {
-		Validate.args(params, "object", cb, "function=") && (Validate.args2 as any)("params.workspaceTemplateJSONDefinition", params.workspaceTemplateJSONDefinition, "object");
+	importTemplate(params: {
+		workspaceTemplateDefinition: any,
+		force: boolean
+	}, cb) {
+		Validate.args(params, "object", cb, "function=") && (Validate.args2 as any)("params.workspaceTemplateJSONDefinition", params.workspaceTemplateDefinition, "object");
 		Logger.system.debug("WorkspaceClient.importTemplate", params);
 		const savePromiseResolver = (resolve, reject) => {
 			let workspaceTemplateDefinition = params.workspaceTemplateDefinition;
@@ -745,10 +807,12 @@ class WorkspaceClient extends _BaseClient {
 	 *
 	 * @param {object} params
 	 * @param {string} params.workspaceTemplateName
-	 * @param {function} [cb] callback(err) is invoked on completion. If !err then the operation was successful; otherwise, err carries diagnostics
+	 * @param {function} cb callback(err) is invoked on completion. If !err then the operation was successful; otherwise, err carries diagnostics
 	 * @private
 	 */
-	removeTemplate(params, cb) {
+	removeTemplate(params: {
+		workspaceTemplateName: string
+	}, cb) {
 		Validate.args(params, "object", cb, "function=") && (Validate.args2 as any)("params.workspaceTemplateName", params.workspaceTemplateName, "string");
 		Logger.system.debug("WorkspaceClient.removeTemplate");
 		const removeTemplatePromiseResolver = (resolve, reject) => {
@@ -767,7 +831,9 @@ class WorkspaceClient extends _BaseClient {
 	 * @param {object} params.workspaceTemplateDefinition legal template definition returned by either getWorkspaceTemplateDefinition() or convertWorkspaceDefinitionToTemplate()
 	 * @private
 	 */
-	exportToFile(params) {
+	exportToFile(params: {
+		workspaceTemplateDefinition: any
+	}) {
 		// TODO: Make it possible to export both workspaces and templates.
 		Logger.system.info("workspaceClient.saveWorkspaceTemplateToConfigFile", params);
 		Validate.args(params, "object") && (Validate.args2 as any)("params.workspaceTemplateDefinition", params.workspaceTemplateDefinition, "object");

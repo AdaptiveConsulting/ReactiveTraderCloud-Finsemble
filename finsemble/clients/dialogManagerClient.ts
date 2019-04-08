@@ -9,10 +9,11 @@ import WindowClient from "./windowClient";
 import StoreClient from "./distributedStoreClient";
 import * as Utils from "../common/util";
 import Validate from "../common/validate";
-import BaseClient from "./baseClient";
+import { _BaseClient } from "./baseClient";
 import { FinsembleWindow } from "../common/window/FinsembleWindow";
 import Logger from "./logger";
 import { System } from "../common/system";
+import { SpawnParams } from "../services/window/Launcher/launcher";
 
 WindowClient.initialize();
 LauncherClient.initialize();
@@ -35,11 +36,16 @@ StoreClient.initialize();
  * @constructor
  * @hideconstructor
  */
-var DialogManagerClient = function (params) {
-	Validate.args(params, "object=") && params && (Validate as any).args2("params.onReady", params.onReady, "function=");
-
-	BaseClient.call(this, params);
-	var self = this;
+class DialogManagerClient extends _BaseClient {
+	/** Deprecated var.
+	 * @TODO - Remove this.
+	 */
+	userInputTimeout;
+	constructor(params) {
+		super(params);
+		//Methods were formally an arrow function. If we want our documentation build to read nested parameters, we need to use this instead of an arrow.
+		this.spawnDialog = this.spawnDialog.bind(this);
+	}
 	/////////////////////////////////////////////
 	// Public Functions -- Dialog Parent Side
 	/////////////////////////////////////////////
@@ -69,7 +75,7 @@ var DialogManagerClient = function (params) {
 	 * 	{
 	 * 		someData: 12345
 	 * 	},
-	 * 		function (error, responseParameters) {
+	 * 		(error, responseParameters) => {
 	 *			if (!error) {
 	 * 				console.log(">>>> spawnDialog response: " + JSON.stringify(responseParameters));
 	 *			}
@@ -78,9 +84,8 @@ var DialogManagerClient = function (params) {
 	 * @todo support paramter to make the dialog modal
 	 */
 
-	this.spawnDialog = function (params, inputParams, dialogResponseCallback, cb) {
+	spawnDialog(params: SpawnParams, inputParams, dialogResponseCallback, cb?: StandardCallback) {
 		Validate.args(params, "object", inputParams, "object", dialogResponseCallback, "function");
-		let self = this;
 		let responseChannel = Utils.getUniqueName("DialogChannel");
 
 		params.data = { inputParams, responseChannel: responseChannel };
@@ -92,11 +97,11 @@ var DialogManagerClient = function (params) {
 		if (!params.top && params.top !== 0 && !params.bottom && params.bottom !== 0) {
 			params.top = "center";
 		}
-		self.routerClient.addListener(responseChannel, function cb(err, response) {
+		this.routerClient.addListener(responseChannel, (err, response) => {
 			dialogResponseCallback(err, response.data);
-			self.routerClient.removeListener(responseChannel, cb);
+			this.routerClient.removeListener(responseChannel, cb);
 		});
-		LauncherClient.spawn("dialogTemplate", params, function (err, response) {
+		LauncherClient.spawn("dialogTemplate", params, (err, response) => {
 			if (err) {
 				Logger.system.error("ERROR", err);
 				dialogResponseCallback(err, response);
@@ -116,7 +121,7 @@ var DialogManagerClient = function (params) {
 	 * @example
 	 * var dialogData = FSBL.Clients.DialogManager.getParametersFromInDialog();
 	 */
-	this.getParametersFromInDialog = function () {
+	getParametersFromInDialog = () => {
 		var inputParams = WindowClient.getSpawnData().inputParams;
 		Logger.system.debug("DialogManagerClient:getParametersFromInDialog: " + JSON.stringify(inputParams));
 		return inputParams;
@@ -130,7 +135,7 @@ var DialogManagerClient = function (params) {
 	 * @example
 	 * FSBL.Clients.DialogManager.respondAndExitFromInDialog({ choice: response });
 	 */
-	this.respondAndExitFromInDialog = function (responseParameters) {
+	respondAndExitFromInDialog = (responseParameters: any) => {
 		Validate.args(responseParameters, "any");
 		Logger.system.debug("DialogManagerClient:respondAndExitFromInDialog: " + JSON.stringify(responseParameters));
 		var responseChannel = WindowClient.getSpawnData().responseChannel;
@@ -142,7 +147,7 @@ var DialogManagerClient = function (params) {
 	 * @param {string} type
 	 * @param {function} cb
 	 */
-	this.getAvailableDialog = function (type, cb) {
+	getAvailableDialog = (type, cb) => {
 		this.DialogStore.getValue("dialogs.available", (err, availableDialogs) => {
 			for (let dialogName in availableDialogs) {
 				let dialog = availableDialogs[dialogName];
@@ -159,18 +164,18 @@ var DialogManagerClient = function (params) {
 	 * @private
 	 * @param {object} identifier
 	 */
-	this.generateDialogReadyChannel = function (identifier) {
+	generateDialogReadyChannel = (identifier) => {
 		let concat = identifier.windowName + identifier.uuid;
 		return `Dialog.${concat}.ready`;
 	};
 	/**
 	 * Broadcasts a message to the window that opened the dialog saying "I'm ready, please show me."
 	 */
-	this.showDialog = function () {
-		let listenerChannel = self.generateDialogReadyChannel(LauncherClient.myWindowIdentifier);
+	showDialog = () => {
+		let listenerChannel = this.generateDialogReadyChannel(LauncherClient.myWindowIdentifier);
 		//tells the dialog manager in the opening window that the dialog is ready to be shown.
-		self.routerClient.transmit(listenerChannel, {
-			userInputTimeout: typeof self.userInputTimeout === "undefined" ? 10000 : self.userInputTimeout
+		this.routerClient.transmit(listenerChannel, {
+			userInputTimeout: typeof this.userInputTimeout === "undefined" ? 10000 : this.userInputTimeout
 		});
 	};
 	/**
@@ -179,7 +184,7 @@ var DialogManagerClient = function (params) {
 	 * @param {object} options Any data to send to the dialog for its initialization
 	 * @param {function} onUserInput callback to be invoked after the user interacts with the dialog.
 	 */
-	this.sendQueryToDialog = function (identifier, options, onUserInput) {
+	sendQueryToDialog = (identifier: WindowIdentifier, options: any, onUserInput) => {
 		function warn(timeout) {
 			console.warn(`No response from dialog ${identifier.windowName} after ${timeout / 1000} seconds. Check to make sure your dialog is sending back data.`);
 		}
@@ -189,27 +194,27 @@ var DialogManagerClient = function (params) {
 		let queryChannel = `Dialog.${concat}.Show`;
 		let listenerChannel = this.generateDialogReadyChannel(identifier);
 		let warning;
-		function onDialogReady(err, response) {
+		const onDialogReady = (err, response) => {
 			warning = setTimeout(warn.bind(null, response.data.userInputTimeout), response.data.userInputTimeout);
 			Logger.perf.info("DialogManagerClient:sendQueryToDialog:Dialog: ShowWindow Start");
 			LauncherClient.showWindow(identifier, {
 				monitor: options.monitor || "mine",
 				left: "center",
 				top: "center"
-			}, function (err, response) {
+			}, (err, response) => {
 				FinsembleWindow.getInstance({ name: response.finWindow.name }, (err, wrap) => {
 					wrap.bringToFront();
 					wrap.focus();
 				});
 				Logger.perf.info("DialogManagerClient:sendQueryToDialog:ShowWindow finish");
 			});
-			self.routerClient.removeListener(listenerChannel, onDialogReady);
+			this.routerClient.removeListener(listenerChannel, onDialogReady);
 		}
 		this.routerClient.addListener(listenerChannel, onDialogReady);
 		Logger.perf.info("DialogManagerClient:sendQueryToDialog ShowWindow Query begin.");
-		this.routerClient.query(queryChannel, options, function (err, response) {
+		this.routerClient.query(queryChannel, options, (err, response) => {
 			clearTimeout(warning);
-			self.moveDialogFromOpenedToAvailable(identifier);
+			this.moveDialogFromOpenedToAvailable(identifier);
 			onUserInput(err, response.data);
 		});
 	};
@@ -218,7 +223,7 @@ var DialogManagerClient = function (params) {
 	 * @private
 	 * @param {object} identifier window identifier of the dialog.
 	 */
-	this.moveDialogFromOpenedToAvailable = function (identifier) {
+	moveDialogFromOpenedToAvailable = (identifier: WindowIdentifier) => {
 		this.DialogStore.getValue("dialogs", (err, dialogs) => {
 			let openedDialogs = dialogs.opened;
 			let availableDialogs = dialogs.available;
@@ -235,7 +240,7 @@ var DialogManagerClient = function (params) {
 	 * @private
 	 * @param {object} identifier window identifier of the dialog.
 	 */
-	this.moveDialogFromAvailableToOpened = function (identifier) {
+	moveDialogFromAvailableToOpened = (identifier: WindowIdentifier) => {
 		this.DialogStore.getValue("dialogs", (err, dialogs) => {
 			let availableDialogs = dialogs.available;
 			let openedDialogs = dialogs.opened;
@@ -252,13 +257,13 @@ var DialogManagerClient = function (params) {
 	/**
 	 * Registers a window as a modal with the global dialog management store.
 	 */
-	this.registerModal = function () {
+	registerModal = () => {
 		System.getMonitorInfo((info) => {
 			let bounds = info.virtualScreen;
 			//let { top, left, right, bottom } = info.virtualScreen;
 			bounds.width = bounds.right - bounds.left;
 			bounds.height = bounds.bottom - bounds.top;
-			self.finsembleWindow.setBounds({ bounds });
+			this.finsembleWindow.setBounds({ bounds });
 		});
 		this.DialogStore.setValue({ field: "modalIdentifier", value: LauncherClient.myWindowIdentifier });
 	};
@@ -268,18 +273,18 @@ var DialogManagerClient = function (params) {
 	 * Shows a semi-transparent black modal behind the dialog.
 	 * @param {function} [cb]
 	 */
-	this.showModal = function (cb) {
-		self.DialogStore.getValue("modalIdentifier", async function (err, identifier) {
+	showModal = (cb?: Function) => {
+		this.DialogStore.getValue("modalIdentifier", async (err, identifier) => {
 			let { wrap: modal } = await FinsembleWindow.getInstance({ uuid: identifier.uuid, name: identifier.windowName });
 			modal.updateOptions({
 				options: {
 					opacity: 0.4
 				}
-			}, function () {
-				modal.show(function () {
-					modal.bringToFront(function () {
-						self.finsembleWindow.focus(function () {
-							self.finsembleWindow.bringToFront();
+			}, () => {
+				modal.show(() => {
+					modal.bringToFront(() => {
+						this.finsembleWindow.focus(() => {
+							this.finsembleWindow.bringToFront();
 							if (cb && typeof cb === "function") {
 								cb();
 							}
@@ -296,9 +301,8 @@ var DialogManagerClient = function (params) {
 	 * @param {object} options options to pass into the opened window.
 	 * @param {function} onUserInput Callback to be invoked when the user interacts with the dialog.
 	 */
-	this.open = function (type, options, onUserInput) {
+	open = (type: string, options: any, onUserInput: Function) => {
 		//show, spawnif there are no available dialogs of that type..
-		let self = this;
 		this.getAvailableDialog(type, (dialogIdentifier) => {
 			if (dialogIdentifier) {
 				//send open message
@@ -317,24 +321,24 @@ var DialogManagerClient = function (params) {
 							}
 						}
 					}
-				}, function (err, response) {
-					self.open(type, options, onUserInput);
+				}, (err, response) => {
+					this.open(type, options, onUserInput);
 				});
 			}
 		});
 	};
 
-	this.DialogStore = null;
-	this.isDialog = false;
-	this.isModal = false;
+	DialogStore = null;
+	isDialog = false;
+	isModal = false;
 	//used by dialogs, set in `registerWithStore`.
-	this.RESPONDER_CHANNEL = null;
-	this.openerMessage = null;
+	RESPONDER_CHANNEL = null;
+	openerMessage = null;
 	/**
 	 * Used by the window that is opening a dialog. This method sets up a query/responder that the opened dialog will invoke when the user has interacted with the dialog.
 	 * @param {function} callback
 	 */
-	this.registerDialogCallback = function (callback) {
+	registerDialogCallback = (callback) => {
 		this.routerClient.addResponder(this.RESPONDER_CHANNEL, (err, message) => {
 			this.openerMessage = message;
 			callback(err, message);
@@ -344,8 +348,8 @@ var DialogManagerClient = function (params) {
 	/**
 	 * Hides the modal.
 	 */
-	this.hideModal = function () {
-		self.DialogStore.getValue("modalIdentifier", async function (err, identifier) {
+	hideModal = () => {
+		this.DialogStore.getValue("modalIdentifier", async (err, identifier) => {
 			let { wrap: modal } = await FinsembleWindow.getInstance({ uuid: identifier.uuid, name: identifier.windowName });
 			modal.hide();
 		});
@@ -355,7 +359,7 @@ var DialogManagerClient = function (params) {
 	 * Sends data back to the window that opened the dialog.
 	 * @param {any} data
 	 */
-	this.respondToOpener = function (data) {
+	respondToOpener = (data: any) => {
 		Logger.system.info("DialogManagerClient:RespondToOpener:", data);
 		this.openerMessage.sendQueryResponse(null, data);
 		if (data.hideModalOnClose !== false) {
@@ -369,7 +373,7 @@ var DialogManagerClient = function (params) {
 	 * Registers the window as a dialog with the global store. If the component is incapable of being used as a dialog (this is set in the component's config), the callback is immediately invoked.
 	 * @param {function} callback
 	 */
-	this.registerWithStore = function (callback) {
+	registerWithStore = (callback: Function) => {
 		if (this.isDialog) {
 			let identifier = LauncherClient.myWindowIdentifier;
 			this.RESPONDER_CHANNEL = `Dialog.${identifier.windowName + identifier.uuid}.Show`;
@@ -383,7 +387,7 @@ var DialogManagerClient = function (params) {
 	 * Checks to see whether the window is a dialog.
 	 * @param {cb} cb
 	 */
-	this.checkIfWindowIsDialog = function (cb) {
+	checkIfWindowIsDialog = (cb?: Function) => {
 		let err = null;
 		try {
 			this.isDialog = WindowClient.options.customData.foreign.clients.dialogManager.isDialog;
@@ -400,21 +404,24 @@ var DialogManagerClient = function (params) {
 	 * @private
 	 * @param {function} callback
 	 */
-	this.createStore = function (callback) {
-		let self = this;
+	createStore = (callback: Function) => {
 		let defaults = {
 			dialogs: {
 				opened: {},
 				available: {}
 			}
 		};
-		StoreClient.createStore({ store: "DialogStore", values: defaults, global: true }, function (err, store) {
-			self.DialogStore = store;
+		StoreClient.createStore({ store: "DialogStore", values: defaults, global: true }, (err, store) => {
+			this.DialogStore = store;
 			callback();
 		});
 	};
 
-	this.getFinsembleWindow = function (cb) {
+	/**
+	 * @private
+	 * @memberof DialogManagerClient
+	 */
+	getFinsembleWindow = (cb: Function) => {
 		FinsembleWindow.getInstance({ name: this.finWindow.name, uuid: this.finWindow.uuid }, (err, response) => {
 			this.finsembleWindow = response;
 			cb();

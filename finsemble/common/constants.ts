@@ -27,7 +27,7 @@ export const SERVICE_STOP_CHANNEL = "Finsemble.Service.Stop";
 
 // These channels are for interrupting events
 export const EVENT_INTERRUPT_CHANNEL = "Finsemble.Event.Interrupt";
-export const 	INTERRUPTIBLE_EVENTS = ["close-requested", "closed", "close-complete", "_container-close-handlers"];
+export const INTERRUPTIBLE_EVENTS = ["close-requested", "closed", "close-complete", "_container-close-handlers"];
 export const WORKSPACE = {
 	STORAGE_TOPIC: "finsemble.workspace",
 	CACHE_STORAGE_TOPIC: "finsemble.workspace.cache",
@@ -55,6 +55,13 @@ export const WORKSPACE = {
 
 // These channels are to publish LifeCycle events on.
 // Currently unused but placeholder here for implementation, at least for Workspace.
-export const	APPLICATION_LIFECYCLE = {
+export const APPLICATION_LIFECYCLE = {
 
 }
+
+export const HEARTBEAT_TIMEOUT_CHANNEL = "Finsemble.WindowService.HeartbeatTimeout";
+
+export const DELIVERY_MECHANISM = {
+	PRELOAD: 'preload',
+	INJECTION: 'injection',
+};
