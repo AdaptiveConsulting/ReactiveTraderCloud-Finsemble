@@ -8,7 +8,7 @@ import { getStore, Actions as HeaderActions } from "../../stores/windowTitleBarS
 let windowTitleBarStore;
 
 
-import { UndockedIcon } from "../assets/UndockedIcon"
+import { UnDockedIcon } from "../assets/UndockedIcon"
 import { DockedIcon } from "../assets/DockedIcon"
 
 export default class DockingButton extends React.Component {
@@ -104,6 +104,7 @@ export default class DockingButton extends React.Component {
 		let iconClass = "ff-";
 		let wrapClasses = "fsbl-icon fsbl-icon-bordered docking-control";
 
+        const { shade } = this.props;
 		iconClass += this.state.dockingIcon === "ejector" ? "attached" : "detached";
 		let toolTip = this.state.dockingIcon === "ejector" ? "Detach Window" : "Attach Windows";
 
@@ -113,11 +114,10 @@ export default class DockingButton extends React.Component {
 
 		return (<div className={wrapClasses} id="fsbl-window-ejector" title={toolTip} data-hover={this.state.hoverState} onClick={this.onClick}>
             <FinsembleHoverDetector edge="top" hoverAction={this.hoverAction} />
-            <i className={iconClass}></i>
             {this.state.dockingIcon === "ejector" ? (
 					<DockedIcon />
 				) : (
-					UndockedIcon(shade)
+					<UnDockedIcon />
 	       )}
         </div>);
 	}

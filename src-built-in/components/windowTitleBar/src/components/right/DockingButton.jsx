@@ -7,6 +7,9 @@ import { FinsembleHoverDetector } from "@chartiq/finsemble-react-controls";
 import { getStore, Actions as HeaderActions } from "../../stores/windowTitleBarStore";
 let windowTitleBarStore;
 
+import { UndockedIcon } from "../assets/UndockedIcon"
+import { DockedIcon } from "../assets/DockedIcon"
+
 export default class DockingButton extends React.Component {
 	constructor(props) {
 		super(props);
