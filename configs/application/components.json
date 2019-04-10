@@ -93,12 +93,7 @@
                         "launchableByUser": false
                     },
                     "Window Manager": {
-                        "FSBLHeader": {
-                            "title": "EURJPY",
-                            "FSBLHeader": true,
-                            "persistWindowState": false,
-                            "showLinker": true
-                        },
+                        "FSBLHeader": true,
                         "title": "EURUSD",
                         "persistWindowState": false
                     },
@@ -135,7 +130,16 @@
                     },
                     "Window Manager": {
                         "title": "GBPUSD",
-                        "FSBLHeader": true,
+                        "FSBLHeader": {
+                            "component": "windowTitleBar",
+                            "bumpElements": {
+                                "fixed": "all",
+                                "absolute": "all",
+                                "bumpBy": "auto"
+                            },
+                            "bodyMarginTop": "auto",
+                            "forceHeaderHeight": false
+                        },
                         "persistWindowState": false,
                         "showLinker": true
                     },
