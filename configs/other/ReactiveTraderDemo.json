@@ -1,0 +1,2074 @@
+{
+	"workspaceTemplates": {
+		"ReactiveTraderDemo": {
+			"name": "ReactiveTraderDemo",
+			"groups": {
+				"36217793-2ecb-4b20-be3c-ece8a40f8651": {
+					"windowNames": [
+						"Blotter-42-8903-Finsemble",
+						"GBPUSD-89-9173-Finsemble",
+						"NZDUSD-22-2541-Finsemble",
+						"Analytics-56-8973-Finsemble",
+						"EURJPY-51-9468-Finsemble",
+						"GBPUSD Analytics-57-7886-Finsemble",
+						"EURCAD-1-6920-Finsemble",
+						"EURJPY Analytics-40-4248-Finsemble"
+					],
+					"isMovable": false,
+					"isAlwaysOnTop": false,
+					"topRightWindow": "Analytics-56-8973-Finsemble",
+					"isARectangle": true
+				},
+				"37272f01-eacb-4064-bbb8-aabc7a853bde": {
+					"windowNames": [
+						"Blotter-42-8903-Finsemble",
+						"GBPUSD-89-9173-Finsemble",
+						"NZDUSD-22-2541-Finsemble",
+						"Analytics-56-8973-Finsemble",
+						"EURJPY-51-9468-Finsemble",
+						"GBPUSD Analytics-57-7886-Finsemble",
+						"EURCAD-1-6920-Finsemble",
+						"EURJPY Analytics-40-4248-Finsemble"
+					],
+					"isMovable": true,
+					"isAlwaysOnTop": false,
+					"topRightWindow": "Analytics-56-8973-Finsemble",
+					"isARectangle": true
+				}
+			},
+			"windows": [
+				"Blotter-42-8903-Finsemble",
+				"Analytics-56-8973-Finsemble",
+				"GBPUSD-89-9173-Finsemble",
+				"EURJPY-51-9468-Finsemble",
+				"NZDUSD-22-2541-Finsemble",
+				"EURCAD-1-6920-Finsemble",
+				"GBPUSD Analytics-57-7886-Finsemble",
+				"EURJPY Analytics-40-4248-Finsemble"
+			],
+			"windowData": [
+				{
+					"accelerator": {
+						"devtools": true,
+						"zoom": false,
+						"reload": true,
+						"reloadIgnoringCache": true
+					},
+					"alphaMask": {
+						"blue": -1,
+						"green": -1,
+						"red": -1
+					},
+					"alwaysOnBottom": false,
+					"alwaysOnTop": false,
+					"api": {
+						"iframe": {
+							"crossOriginInjection": false,
+							"sameOriginInjection": true,
+							"enableDeprecatedSharedName": false
+						}
+					},
+					"applicationIcon": "",
+					"aspectRatio": 0,
+					"autoShow": true,
+					"backgroundThrottling": false,
+					"contextMenu": false,
+					"cornerRounding": {
+						"height": 0,
+						"width": 0
+					},
+					"defaultCentered": false,
+					"defaultHeight": 475,
+					"defaultLeft": 275,
+					"defaultTop": 110,
+					"defaultWidth": 1110,
+					"delay_connection": false,
+					"disableIabSecureLogging": false,
+					"draggable": false,
+					"exitOnClose": false,
+					"experimental": {
+						"api": {
+							"batching": {
+								"renderer": {
+									"enabled": false,
+									"maxSize": 1.7976931348623157e+308,
+									"ttl": 0
+								}
+							},
+							"breadcrumbs": false,
+							"iframe": {
+								"crossOriginInjection": false,
+								"sameOriginInjection": true,
+								"enableDeprecatedSharedName": false
+							}
+						},
+						"disableInitialReload": false,
+						"node": false,
+						"v2Api": true
+					},
+					"frame": false,
+					"frameConnect": "last",
+					"hideOnBlur": false,
+					"hideOnClose": false,
+					"hideWhileChildrenVisible": false,
+					"icon": "http://localhost:3375/assets/img/Finsemble_Taskbar_Icon.png",
+					"launchExternal": "",
+					"loadErrorMessage": "",
+					"maxHeight": -1,
+					"maxWidth": -1,
+					"maximizable": true,
+					"minHeight": 0,
+					"minWidth": 0,
+					"minimizable": true,
+					"name": "Blotter-42-8903-Finsemble",
+					"opacity": 1,
+					"plugins": false,
+					"resizable": true,
+					"resize": true,
+					"resizeRegion": {
+						"bottomRightCorner": 9,
+						"size": 5,
+						"sides": {
+							"top": true,
+							"right": true,
+							"bottom": true,
+							"left": true
+						}
+					},
+					"saveWindowState": false,
+					"shadow": false,
+					"showTaskbarIcon": false,
+					"smallWindow": false,
+					"spellCheck": false,
+					"state": "normal",
+					"taskbarIcon": "",
+					"taskbarIconGroup": "37272f01-eacb-4064-bbb8-aabc7a853bde",
+					"transparent": false,
+					"url": "https://web-dev.adaptivecluster.com/blotter",
+					"uuid": "Blotter-42-8903-Finsemble",
+					"waitForPageLoad": false,
+					"backgroundColor": "#151f28",
+					"webSecurity": true,
+					"show": true,
+					"skipTaskbar": false,
+					"title": "Blotter",
+					"height": 475,
+					"width": 1110,
+					"center": false,
+					"x": 535,
+					"y": 283,
+					"enableLargerThanScreen": true,
+					"enable-plugins": true,
+					"webPreferences": {
+						"api": {
+							"batching": {
+								"renderer": {
+									"enabled": false,
+									"maxSize": 1.7976931348623157e+308,
+									"ttl": 0
+								}
+							},
+							"breadcrumbs": false,
+							"iframe": {
+								"crossOriginInjection": false,
+								"sameOriginInjection": true,
+								"enableDeprecatedSharedName": false
+							}
+						},
+						"disableInitialReload": false,
+						"nodeIntegration": false,
+						"plugins": false,
+						"preload": "C:\\Users\\Pierre de Leastar\\AppData\\Local\\OpenFin\\runtime\\9.61.36.36\\OpenFin\\resources\\app.asar\\src\\renderer\\node-less.js",
+						"sandbox": true,
+						"spellCheck": false,
+						"backgroundThrottling": false
+					},
+					"customData": {
+						"component": {
+							"canMaximize": true,
+							"canMinimize": true,
+							"type": "Blotter"
+						},
+						"cssOverride": "",
+						"foreign": {
+							"components": {
+								"App Launcher": {
+									"launchableByUser": true
+								},
+								"Toolbar": {
+									"iconClass": "blotter"
+								},
+								"Window Manager": {
+									"FSBLHeader": true,
+									"persistWindowState": false,
+									"showLinker": false,
+									"title": "Blotter"
+								}
+							},
+							"services": {
+								"dockingService": {
+									"canGroup": true,
+									"isArrangable": true
+								},
+								"launcherService": {
+									"inject": false
+								}
+							}
+						},
+						"monitorDimensions": {
+							"bottom": 1040,
+							"height": 1040,
+							"left": 0,
+							"right": 1920,
+							"top": 0,
+							"width": 1920
+						},
+						"parentUUID": "defaultServiceAgent-21-1903-Finsemble",
+						"window": {
+							"autoShow": true,
+							"frame": false,
+							"height": 475,
+							"left": "center",
+							"resizable": true,
+							"top": "center",
+							"url": "https://web-dev.adaptivecluster.com/blotter",
+							"width": 850
+						}
+					},
+					"permissions": {
+						"Application": {},
+						"System": {
+							"clearCache": false,
+							"exit": false,
+							"launchExternalProcess": false,
+							"readRegistryValue": false
+						},
+						"Window": {
+							"executeJavaScript": false,
+							"webPreferences": {
+								"preload": false
+							}
+						}
+					},
+					"preloadScripts": [
+						{
+							"url": "http://localhost:3375/finsemble/FSBL.js",
+							"state": "succeeded"
+						},
+						{
+							"url": "http://localhost:3375/components/windowTitleBar/windowTitleBar.js",
+							"state": "succeeded"
+						},
+						{
+							"url": "http://localhost:3375/components/windowTitleBar/windowTitleBar.js"
+						}
+					],
+					"hasLoaded": false,
+					"windowIdentifier": {
+						"uuid": "Blotter-42-8903-Finsemble",
+						"name": "Blotter-42-8903-Finsemble",
+						"windowName": "Blotter-42-8903-Finsemble",
+						"windowType": "OpenFinWindow"
+					},
+					"callstack": "Log Stack: \n    at promiseResolver (<anonymous>:8206:53)\n    at new Promise (<anonymous>)\n    at FinsembleWindow.queryWindowService (<anonymous>:8224:16)\n    at FinsembleWindow.updateOptions (<anonymous>:8271:14)\n    at WindowClient.listenForHashChanges (<anonymous>:9215:25)\n    at WindowClient.addListeners (<anonymous>:10094:14)\n    at FinsembleWindow_1.FinsembleWindow.getInstance (<anonymous>:10531:22)",
+					"bounds": {
+						"top": 110,
+						"left": 275,
+						"width": 1110,
+						"height": 475,
+						"bottom": 585,
+						"right": 1385
+					},
+					"monitorDimensions": {
+						"top": 0,
+						"bottom": 1080,
+						"left": 0,
+						"right": 1920,
+						"width": 1920,
+						"height": 1080
+					},
+					"cachedLeft": 535,
+					"cachedTop": 283,
+					"cachedWidth": 850,
+					"cachedHeight": 475,
+					"top": 110,
+					"left": 275,
+					"bottom": 585,
+					"right": 1385
+				},
+				{
+					"accelerator": {
+						"devtools": true,
+						"zoom": false,
+						"reload": true,
+						"reloadIgnoringCache": true
+					},
+					"alphaMask": {
+						"blue": -1,
+						"green": -1,
+						"red": -1
+					},
+					"alwaysOnBottom": false,
+					"alwaysOnTop": false,
+					"api": {
+						"iframe": {
+							"crossOriginInjection": false,
+							"sameOriginInjection": true,
+							"enableDeprecatedSharedName": false
+						}
+					},
+					"applicationIcon": "",
+					"aspectRatio": 0,
+					"autoShow": true,
+					"backgroundThrottling": false,
+					"contextMenu": false,
+					"cornerRounding": {
+						"height": 0,
+						"width": 0
+					},
+					"defaultCentered": false,
+					"defaultHeight": 843,
+					"defaultLeft": 1385,
+					"defaultTop": 110,
+					"defaultWidth": 330,
+					"delay_connection": false,
+					"disableIabSecureLogging": false,
+					"draggable": false,
+					"exitOnClose": false,
+					"experimental": {
+						"api": {
+							"batching": {
+								"renderer": {
+									"enabled": false,
+									"maxSize": 1.7976931348623157e+308,
+									"ttl": 0
+								}
+							},
+							"breadcrumbs": false,
+							"iframe": {
+								"crossOriginInjection": false,
+								"sameOriginInjection": true,
+								"enableDeprecatedSharedName": false
+							}
+						},
+						"disableInitialReload": false,
+						"node": false,
+						"v2Api": true
+					},
+					"frame": false,
+					"frameConnect": "last",
+					"hideOnBlur": false,
+					"hideOnClose": false,
+					"hideWhileChildrenVisible": false,
+					"icon": "http://localhost:3375/assets/img/Finsemble_Taskbar_Icon.png",
+					"launchExternal": "",
+					"loadErrorMessage": "",
+					"maxHeight": -1,
+					"maxWidth": -1,
+					"maximizable": true,
+					"minHeight": 0,
+					"minWidth": 0,
+					"minimizable": true,
+					"name": "Analytics-56-8973-Finsemble",
+					"opacity": 1,
+					"plugins": false,
+					"resizable": true,
+					"resize": true,
+					"resizeRegion": {
+						"bottomRightCorner": 9,
+						"size": 5,
+						"sides": {
+							"top": true,
+							"right": true,
+							"bottom": true,
+							"left": true
+						}
+					},
+					"saveWindowState": false,
+					"shadow": false,
+					"showTaskbarIcon": false,
+					"smallWindow": false,
+					"spellCheck": false,
+					"state": "normal",
+					"taskbarIcon": "",
+					"taskbarIconGroup": "37272f01-eacb-4064-bbb8-aabc7a853bde",
+					"transparent": false,
+					"url": "https://web-dev.adaptivecluster.com/analytics",
+					"uuid": "Analytics-56-8973-Finsemble",
+					"waitForPageLoad": false,
+					"backgroundColor": "#151f28",
+					"webSecurity": true,
+					"show": true,
+					"skipTaskbar": false,
+					"title": "Analytics",
+					"height": 843,
+					"width": 330,
+					"center": false,
+					"x": 795,
+					"y": 85,
+					"enableLargerThanScreen": true,
+					"enable-plugins": true,
+					"webPreferences": {
+						"api": {
+							"batching": {
+								"renderer": {
+									"enabled": false,
+									"maxSize": 1.7976931348623157e+308,
+									"ttl": 0
+								}
+							},
+							"breadcrumbs": false,
+							"iframe": {
+								"crossOriginInjection": false,
+								"sameOriginInjection": true,
+								"enableDeprecatedSharedName": false
+							}
+						},
+						"disableInitialReload": false,
+						"nodeIntegration": false,
+						"plugins": false,
+						"preload": "C:\\Users\\Pierre de Leastar\\AppData\\Local\\OpenFin\\runtime\\9.61.36.36\\OpenFin\\resources\\app.asar\\src\\renderer\\node-less.js",
+						"sandbox": true,
+						"spellCheck": false,
+						"backgroundThrottling": false
+					},
+					"customData": {
+						"component": {
+							"canMaximize": true,
+							"canMinimize": true,
+							"type": "Analytics"
+						},
+						"cssOverride": "",
+						"foreign": {
+							"components": {
+								"App Launcher": {
+									"launchableByUser": true
+								},
+								"Toolbar": {
+									"iconClass": "ff-component"
+								},
+								"Window Manager": {
+									"FSBLHeader": true,
+									"persistWindowState": false,
+									"showLinker": false,
+									"title": "Analytics"
+								}
+							},
+							"services": {
+								"dockingService": {
+									"canGroup": true,
+									"isArrangable": true
+								},
+								"launcherService": {
+									"inject": false
+								}
+							}
+						},
+						"monitorDimensions": {
+							"bottom": 1040,
+							"height": 1040,
+							"left": 0,
+							"right": 1920,
+							"top": 0,
+							"width": 1920
+						},
+						"parentUUID": "defaultServiceAgent-21-1903-Finsemble",
+						"window": {
+							"autoShow": true,
+							"frame": true,
+							"height": 870,
+							"left": "center",
+							"resizable": true,
+							"top": "center",
+							"url": "https://web-dev.adaptivecluster.com/analytics",
+							"width": 330
+						}
+					},
+					"permissions": {
+						"Application": {},
+						"System": {
+							"clearCache": false,
+							"exit": false,
+							"launchExternalProcess": false,
+							"readRegistryValue": false
+						},
+						"Window": {
+							"executeJavaScript": false,
+							"webPreferences": {
+								"preload": false
+							}
+						}
+					},
+					"preloadScripts": [
+						{
+							"url": "http://localhost:3375/finsemble/FSBL.js",
+							"state": "succeeded"
+						},
+						{
+							"url": "http://localhost:3375/components/windowTitleBar/windowTitleBar.js",
+							"state": "succeeded"
+						},
+						{
+							"url": "http://localhost:3375/components/windowTitleBar/windowTitleBar.js"
+						}
+					],
+					"hasLoaded": false,
+					"windowIdentifier": {
+						"uuid": "Analytics-56-8973-Finsemble",
+						"name": "Analytics-56-8973-Finsemble",
+						"windowName": "Analytics-56-8973-Finsemble",
+						"windowType": "OpenFinWindow"
+					},
+					"callstack": "Log Stack: \n    at promiseResolver (<anonymous>:8206:53)\n    at new Promise (<anonymous>)\n    at FinsembleWindow.queryWindowService (<anonymous>:8224:16)\n    at FinsembleWindow.updateOptions (<anonymous>:8271:14)\n    at WindowClient.listenForHashChanges (<anonymous>:9215:25)\n    at WindowClient.addListeners (<anonymous>:10094:14)\n    at FinsembleWindow_1.FinsembleWindow.getInstance (<anonymous>:10531:22)",
+					"bounds": {
+						"top": 110,
+						"left": 1385,
+						"width": 330,
+						"height": 843,
+						"bottom": 953,
+						"right": 1715
+					},
+					"monitorDimensions": {
+						"top": 0,
+						"bottom": 1080,
+						"left": 0,
+						"right": 1920,
+						"width": 1920,
+						"height": 1080
+					},
+					"cachedLeft": 795,
+					"cachedTop": 85,
+					"cachedWidth": 330,
+					"cachedHeight": 870,
+					"top": 110,
+					"left": 1385,
+					"bottom": 953,
+					"right": 1715
+				},
+				{
+					"accelerator": {
+						"devtools": true,
+						"zoom": false,
+						"reload": true,
+						"reloadIgnoringCache": true
+					},
+					"alphaMask": {
+						"blue": -1,
+						"green": -1,
+						"red": -1
+					},
+					"alwaysOnBottom": false,
+					"alwaysOnTop": false,
+					"api": {
+						"iframe": {
+							"crossOriginInjection": false,
+							"sameOriginInjection": true,
+							"enableDeprecatedSharedName": false
+						}
+					},
+					"applicationIcon": "",
+					"aspectRatio": 0,
+					"autoShow": true,
+					"backgroundThrottling": false,
+					"contextMenu": false,
+					"cornerRounding": {
+						"height": 0,
+						"width": 0
+					},
+					"defaultCentered": false,
+					"defaultHeight": 184,
+					"defaultLeft": 1015,
+					"defaultTop": 585,
+					"defaultWidth": 370,
+					"delay_connection": false,
+					"disableIabSecureLogging": false,
+					"draggable": false,
+					"exitOnClose": false,
+					"experimental": {
+						"api": {
+							"batching": {
+								"renderer": {
+									"enabled": false,
+									"maxSize": 1.7976931348623157e+308,
+									"ttl": 0
+								}
+							},
+							"breadcrumbs": false,
+							"iframe": {
+								"crossOriginInjection": false,
+								"sameOriginInjection": true,
+								"enableDeprecatedSharedName": false
+							}
+						},
+						"disableInitialReload": false,
+						"node": false,
+						"v2Api": true
+					},
+					"frame": false,
+					"frameConnect": "last",
+					"hideOnBlur": false,
+					"hideOnClose": false,
+					"hideWhileChildrenVisible": false,
+					"icon": "http://localhost:3375/assets/img/Finsemble_Taskbar_Icon.png",
+					"launchExternal": "",
+					"loadErrorMessage": "",
+					"maxHeight": -1,
+					"maxWidth": -1,
+					"maximizable": true,
+					"minHeight": 0,
+					"minWidth": 0,
+					"minimizable": true,
+					"name": "GBPUSD-89-9173-Finsemble",
+					"opacity": 1,
+					"plugins": false,
+					"resizable": true,
+					"resize": true,
+					"resizeRegion": {
+						"bottomRightCorner": 9,
+						"size": 5,
+						"sides": {
+							"top": true,
+							"right": true,
+							"bottom": true,
+							"left": true
+						}
+					},
+					"saveWindowState": false,
+					"shadow": false,
+					"showTaskbarIcon": false,
+					"smallWindow": false,
+					"spellCheck": false,
+					"state": "normal",
+					"taskbarIcon": "",
+					"taskbarIconGroup": "37272f01-eacb-4064-bbb8-aabc7a853bde",
+					"transparent": false,
+					"url": "https://web-dev.adaptivecluster.com/spot/GBPUSD",
+					"uuid": "GBPUSD-89-9173-Finsemble",
+					"waitForPageLoad": false,
+					"backgroundColor": "#151f28",
+					"webSecurity": true,
+					"show": true,
+					"skipTaskbar": false,
+					"title": "GBPUSD",
+					"height": 184,
+					"width": 370,
+					"center": false,
+					"x": 775,
+					"y": 428,
+					"enableLargerThanScreen": true,
+					"enable-plugins": true,
+					"webPreferences": {
+						"api": {
+							"batching": {
+								"renderer": {
+									"enabled": false,
+									"maxSize": 1.7976931348623157e+308,
+									"ttl": 0
+								}
+							},
+							"breadcrumbs": false,
+							"iframe": {
+								"crossOriginInjection": false,
+								"sameOriginInjection": true,
+								"enableDeprecatedSharedName": false
+							}
+						},
+						"disableInitialReload": false,
+						"nodeIntegration": false,
+						"plugins": false,
+						"preload": "C:\\Users\\Pierre de Leastar\\AppData\\Local\\OpenFin\\runtime\\9.61.36.36\\OpenFin\\resources\\app.asar\\src\\renderer\\node-less.js",
+						"sandbox": true,
+						"spellCheck": false,
+						"backgroundThrottling": false
+					},
+					"customData": {
+						"component": {
+							"canMaximize": true,
+							"canMinimize": true,
+							"inject": [
+								"http://localhost:3375/components/mindcontrol/spotTileDrag.js",
+								"http://localhost:3375/components/mindcontrol/spotTilePublishLinker.js"
+							],
+							"type": "GBPUSD"
+						},
+						"cssOverride": "",
+						"foreign": {
+							"components": {
+								"App Launcher": {
+									"launchableByUser": true
+								},
+								"Toolbar": {
+									"iconClass": "GBPUSD"
+								},
+								"Window Manager": {
+									"FSBLHeader": {
+										"bodyMarginTop": "auto",
+										"bumpElements": {
+											"absolute": "all",
+											"bumpBy": "auto",
+											"fixed": "all"
+										},
+										"component": "windowTitleBar",
+										"forceHeaderHeight": false
+									},
+									"persistWindowState": false,
+									"showLinker": true,
+									"title": "GBPUSD"
+								}
+							},
+							"services": {
+								"dockingService": {
+									"canGroup": true,
+									"isArrangable": true
+								},
+								"launcherService": {
+									"inject": false
+								}
+							}
+						},
+						"monitorDimensions": {
+							"bottom": 1040,
+							"height": 1040,
+							"left": 0,
+							"right": 1920,
+							"top": 0,
+							"width": 1920
+						},
+						"parentUUID": "defaultServiceAgent-21-1903-Finsemble",
+						"window": {
+							"autoShow": true,
+							"frame": false,
+							"height": 184,
+							"left": "center",
+							"resizable": true,
+							"top": "center",
+							"url": "https://web-dev.adaptivecluster.com/spot/GBPUSD",
+							"width": 370
+						}
+					},
+					"permissions": {
+						"Application": {},
+						"System": {
+							"clearCache": false,
+							"exit": false,
+							"launchExternalProcess": false,
+							"readRegistryValue": false
+						},
+						"Window": {
+							"executeJavaScript": false,
+							"webPreferences": {
+								"preload": false
+							}
+						}
+					},
+					"preloadScripts": [
+						{
+							"url": "http://localhost:3375/finsemble/FSBL.js",
+							"state": "succeeded"
+						},
+						{
+							"url": "http://localhost:3375/components/windowTitleBar/windowTitleBar.js",
+							"state": "succeeded"
+						},
+						{
+							"url": "http://localhost:3375/components/windowTitleBar/windowTitleBar.js"
+						}
+					],
+					"hasLoaded": false,
+					"windowIdentifier": {
+						"uuid": "GBPUSD-89-9173-Finsemble",
+						"name": "GBPUSD-89-9173-Finsemble",
+						"windowName": "GBPUSD-89-9173-Finsemble",
+						"windowType": "OpenFinWindow"
+					},
+					"callstack": "Log Stack: \n    at promiseResolver (<anonymous>:8206:53)\n    at new Promise (<anonymous>)\n    at FinsembleWindow.queryWindowService (<anonymous>:8224:16)\n    at FinsembleWindow.updateOptions (<anonymous>:8271:14)\n    at WindowClient.listenForHashChanges (<anonymous>:9215:25)\n    at WindowClient.addListeners (<anonymous>:10094:14)\n    at FinsembleWindow_1.FinsembleWindow.getInstance (<anonymous>:10531:22)",
+					"bounds": {
+						"top": 585,
+						"left": 1015,
+						"width": 370,
+						"height": 184,
+						"bottom": 769,
+						"right": 1385
+					},
+					"monitorDimensions": {
+						"top": 0,
+						"bottom": 1080,
+						"left": 0,
+						"right": 1920,
+						"width": 1920,
+						"height": 1080
+					},
+					"cachedLeft": 775,
+					"cachedTop": 428,
+					"cachedWidth": 370,
+					"cachedHeight": 184,
+					"top": 585,
+					"left": 1015,
+					"bottom": 769,
+					"right": 1385
+				},
+				{
+					"accelerator": {
+						"devtools": true,
+						"zoom": false,
+						"reload": true,
+						"reloadIgnoringCache": true
+					},
+					"alphaMask": {
+						"blue": -1,
+						"green": -1,
+						"red": -1
+					},
+					"alwaysOnBottom": false,
+					"alwaysOnTop": false,
+					"api": {
+						"iframe": {
+							"crossOriginInjection": false,
+							"sameOriginInjection": true,
+							"enableDeprecatedSharedName": false
+						}
+					},
+					"applicationIcon": "",
+					"aspectRatio": 0,
+					"autoShow": true,
+					"backgroundThrottling": false,
+					"contextMenu": false,
+					"cornerRounding": {
+						"height": 0,
+						"width": 0
+					},
+					"defaultCentered": false,
+					"defaultHeight": 184,
+					"defaultLeft": 645,
+					"defaultTop": 585,
+					"defaultWidth": 370,
+					"delay_connection": false,
+					"disableIabSecureLogging": false,
+					"draggable": false,
+					"exitOnClose": false,
+					"experimental": {
+						"api": {
+							"batching": {
+								"renderer": {
+									"enabled": false,
+									"maxSize": 1.7976931348623157e+308,
+									"ttl": 0
+								}
+							},
+							"breadcrumbs": false,
+							"iframe": {
+								"crossOriginInjection": false,
+								"sameOriginInjection": true,
+								"enableDeprecatedSharedName": false
+							}
+						},
+						"disableInitialReload": false,
+						"node": false,
+						"v2Api": true
+					},
+					"frame": false,
+					"frameConnect": "last",
+					"hideOnBlur": false,
+					"hideOnClose": false,
+					"hideWhileChildrenVisible": false,
+					"icon": "http://localhost:3375/assets/img/Finsemble_Taskbar_Icon.png",
+					"launchExternal": "",
+					"loadErrorMessage": "",
+					"maxHeight": -1,
+					"maxWidth": -1,
+					"maximizable": true,
+					"minHeight": 0,
+					"minWidth": 0,
+					"minimizable": true,
+					"name": "EURJPY-51-9468-Finsemble",
+					"opacity": 1,
+					"plugins": false,
+					"resizable": true,
+					"resize": true,
+					"resizeRegion": {
+						"bottomRightCorner": 9,
+						"size": 5,
+						"sides": {
+							"top": true,
+							"right": true,
+							"bottom": true,
+							"left": true
+						}
+					},
+					"saveWindowState": false,
+					"shadow": false,
+					"showTaskbarIcon": false,
+					"smallWindow": false,
+					"spellCheck": false,
+					"state": "normal",
+					"taskbarIcon": "",
+					"taskbarIconGroup": "37272f01-eacb-4064-bbb8-aabc7a853bde",
+					"transparent": false,
+					"url": "https://web-dev.adaptivecluster.com/spot/EURJPY",
+					"uuid": "EURJPY-51-9468-Finsemble",
+					"waitForPageLoad": false,
+					"backgroundColor": "#151f28",
+					"webSecurity": true,
+					"show": true,
+					"skipTaskbar": false,
+					"title": "EURJPY",
+					"height": 184,
+					"width": 370,
+					"center": false,
+					"x": 775,
+					"y": 428,
+					"enableLargerThanScreen": true,
+					"enable-plugins": true,
+					"webPreferences": {
+						"api": {
+							"batching": {
+								"renderer": {
+									"enabled": false,
+									"maxSize": 1.7976931348623157e+308,
+									"ttl": 0
+								}
+							},
+							"breadcrumbs": false,
+							"iframe": {
+								"crossOriginInjection": false,
+								"sameOriginInjection": true,
+								"enableDeprecatedSharedName": false
+							}
+						},
+						"disableInitialReload": false,
+						"nodeIntegration": false,
+						"plugins": false,
+						"preload": "C:\\Users\\Pierre de Leastar\\AppData\\Local\\OpenFin\\runtime\\9.61.36.36\\OpenFin\\resources\\app.asar\\src\\renderer\\node-less.js",
+						"sandbox": true,
+						"spellCheck": false,
+						"backgroundThrottling": false
+					},
+					"customData": {
+						"component": {
+							"canMaximize": true,
+							"canMinimize": true,
+							"inject": [
+								"http://localhost:3375/components/mindcontrol/spotTileDrag.js",
+								"http://localhost:3375/components/mindcontrol/spotTilePublishLinker.js"
+							],
+							"type": "EURJPY"
+						},
+						"cssOverride": "",
+						"foreign": {
+							"components": {
+								"App Launcher": {
+									"launchableByUser": true
+								},
+								"Toolbar": {
+									"iconClass": "EURJPY"
+								},
+								"Window Manager": {
+									"FSBLHeader": true,
+									"persistWindowState": false,
+									"showLinker": true,
+									"title": "EURJPY"
+								}
+							},
+							"services": {
+								"dockingService": {
+									"canGroup": true,
+									"isArrangable": true
+								},
+								"launcherService": {
+									"inject": false
+								}
+							}
+						},
+						"monitorDimensions": {
+							"bottom": 1040,
+							"height": 1040,
+							"left": 0,
+							"right": 1920,
+							"top": 0,
+							"width": 1920
+						},
+						"parentUUID": "defaultServiceAgent-21-1903-Finsemble",
+						"window": {
+							"autoShow": true,
+							"frame": false,
+							"height": 184,
+							"left": "center",
+							"resizable": true,
+							"top": "center",
+							"url": "https://web-dev.adaptivecluster.com/spot/EURJPY",
+							"width": 370
+						}
+					},
+					"permissions": {
+						"Application": {},
+						"System": {
+							"clearCache": false,
+							"exit": false,
+							"launchExternalProcess": false,
+							"readRegistryValue": false
+						},
+						"Window": {
+							"executeJavaScript": false,
+							"webPreferences": {
+								"preload": false
+							}
+						}
+					},
+					"preloadScripts": [
+						{
+							"url": "http://localhost:3375/finsemble/FSBL.js",
+							"state": "succeeded"
+						},
+						{
+							"url": "http://localhost:3375/components/windowTitleBar/windowTitleBar.js",
+							"state": "succeeded"
+						},
+						{
+							"url": "http://localhost:3375/components/windowTitleBar/windowTitleBar.js"
+						}
+					],
+					"hasLoaded": false,
+					"windowIdentifier": {
+						"uuid": "EURJPY-51-9468-Finsemble",
+						"name": "EURJPY-51-9468-Finsemble",
+						"windowName": "EURJPY-51-9468-Finsemble",
+						"windowType": "OpenFinWindow"
+					},
+					"callstack": "Log Stack: \n    at promiseResolver (<anonymous>:8206:53)\n    at new Promise (<anonymous>)\n    at FinsembleWindow.queryWindowService (<anonymous>:8224:16)\n    at FinsembleWindow.updateOptions (<anonymous>:8271:14)\n    at WindowClient.listenForHashChanges (<anonymous>:9215:25)\n    at WindowClient.addListeners (<anonymous>:10094:14)\n    at FinsembleWindow_1.FinsembleWindow.getInstance (<anonymous>:10531:22)",
+					"bounds": {
+						"top": 585,
+						"left": 645,
+						"width": 370,
+						"height": 184,
+						"bottom": 769,
+						"right": 1015
+					},
+					"monitorDimensions": {
+						"top": 0,
+						"bottom": 1080,
+						"left": 0,
+						"right": 1920,
+						"width": 1920,
+						"height": 1080
+					},
+					"cachedLeft": 775,
+					"cachedTop": 428,
+					"cachedWidth": 370,
+					"cachedHeight": 184,
+					"top": 585,
+					"left": 645,
+					"bottom": 769,
+					"right": 1015
+				},
+				{
+					"accelerator": {
+						"devtools": true,
+						"zoom": false,
+						"reload": true,
+						"reloadIgnoringCache": true
+					},
+					"alphaMask": {
+						"blue": -1,
+						"green": -1,
+						"red": -1
+					},
+					"alwaysOnBottom": false,
+					"alwaysOnTop": false,
+					"api": {
+						"iframe": {
+							"crossOriginInjection": false,
+							"sameOriginInjection": true,
+							"enableDeprecatedSharedName": false
+						}
+					},
+					"applicationIcon": "",
+					"aspectRatio": 0,
+					"autoShow": true,
+					"backgroundThrottling": false,
+					"contextMenu": false,
+					"cornerRounding": {
+						"height": 0,
+						"width": 0
+					},
+					"defaultCentered": false,
+					"defaultHeight": 184,
+					"defaultLeft": 1015,
+					"defaultTop": 769,
+					"defaultWidth": 370,
+					"delay_connection": false,
+					"disableIabSecureLogging": false,
+					"draggable": false,
+					"exitOnClose": false,
+					"experimental": {
+						"api": {
+							"batching": {
+								"renderer": {
+									"enabled": false,
+									"maxSize": 1.7976931348623157e+308,
+									"ttl": 0
+								}
+							},
+							"breadcrumbs": false,
+							"iframe": {
+								"crossOriginInjection": false,
+								"sameOriginInjection": true,
+								"enableDeprecatedSharedName": false
+							}
+						},
+						"disableInitialReload": false,
+						"node": false,
+						"v2Api": true
+					},
+					"frame": false,
+					"frameConnect": "last",
+					"hideOnBlur": false,
+					"hideOnClose": false,
+					"hideWhileChildrenVisible": false,
+					"icon": "http://localhost:3375/assets/img/Finsemble_Taskbar_Icon.png",
+					"launchExternal": "",
+					"loadErrorMessage": "",
+					"maxHeight": -1,
+					"maxWidth": -1,
+					"maximizable": true,
+					"minHeight": 0,
+					"minWidth": 0,
+					"minimizable": true,
+					"name": "NZDUSD-22-2541-Finsemble",
+					"opacity": 1,
+					"plugins": false,
+					"resizable": true,
+					"resize": true,
+					"resizeRegion": {
+						"bottomRightCorner": 9,
+						"size": 5,
+						"sides": {
+							"top": true,
+							"right": true,
+							"bottom": true,
+							"left": true
+						}
+					},
+					"saveWindowState": false,
+					"shadow": false,
+					"showTaskbarIcon": false,
+					"smallWindow": false,
+					"spellCheck": false,
+					"state": "normal",
+					"taskbarIcon": "",
+					"taskbarIconGroup": "37272f01-eacb-4064-bbb8-aabc7a853bde",
+					"transparent": false,
+					"url": "https://web-dev.adaptivecluster.com/spot/NZDUSD",
+					"uuid": "NZDUSD-22-2541-Finsemble",
+					"waitForPageLoad": false,
+					"backgroundColor": "#151f28",
+					"webSecurity": true,
+					"show": true,
+					"skipTaskbar": false,
+					"title": "NZDUSD",
+					"height": 184,
+					"width": 370,
+					"center": false,
+					"x": 775,
+					"y": 428,
+					"enableLargerThanScreen": true,
+					"enable-plugins": true,
+					"webPreferences": {
+						"api": {
+							"batching": {
+								"renderer": {
+									"enabled": false,
+									"maxSize": 1.7976931348623157e+308,
+									"ttl": 0
+								}
+							},
+							"breadcrumbs": false,
+							"iframe": {
+								"crossOriginInjection": false,
+								"sameOriginInjection": true,
+								"enableDeprecatedSharedName": false
+							}
+						},
+						"disableInitialReload": false,
+						"nodeIntegration": false,
+						"plugins": false,
+						"preload": "C:\\Users\\Pierre de Leastar\\AppData\\Local\\OpenFin\\runtime\\9.61.36.36\\OpenFin\\resources\\app.asar\\src\\renderer\\node-less.js",
+						"sandbox": true,
+						"spellCheck": false,
+						"backgroundThrottling": false
+					},
+					"customData": {
+						"component": {
+							"canMaximize": true,
+							"canMinimize": true,
+							"inject": [
+								"http://localhost:3375/components/mindcontrol/spotTileDrag.js",
+								"http://localhost:3375/components/mindcontrol/spotTilePublishLinker.js"
+							],
+							"type": "NZDUSD"
+						},
+						"cssOverride": "",
+						"foreign": {
+							"components": {
+								"App Launcher": {
+									"launchableByUser": true
+								},
+								"Toolbar": {
+									"iconClass": "NZDUSD"
+								},
+								"Window Manager": {
+									"FSBLHeader": true,
+									"persistWindowState": false,
+									"showLinker": true,
+									"title": "NZDUSD"
+								}
+							},
+							"services": {
+								"dockingService": {
+									"canGroup": true,
+									"isArrangable": true
+								},
+								"launcherService": {
+									"inject": false
+								}
+							}
+						},
+						"monitorDimensions": {
+							"bottom": 1040,
+							"height": 1040,
+							"left": 0,
+							"right": 1920,
+							"top": 0,
+							"width": 1920
+						},
+						"parentUUID": "defaultServiceAgent-21-1903-Finsemble",
+						"window": {
+							"autoShow": true,
+							"frame": false,
+							"height": 184,
+							"left": "center",
+							"resizable": true,
+							"top": "center",
+							"url": "https://web-dev.adaptivecluster.com/spot/NZDUSD",
+							"width": 370
+						}
+					},
+					"permissions": {
+						"Application": {},
+						"System": {
+							"clearCache": false,
+							"exit": false,
+							"launchExternalProcess": false,
+							"readRegistryValue": false
+						},
+						"Window": {
+							"executeJavaScript": false,
+							"webPreferences": {
+								"preload": false
+							}
+						}
+					},
+					"preloadScripts": [
+						{
+							"url": "http://localhost:3375/finsemble/FSBL.js",
+							"state": "succeeded"
+						},
+						{
+							"url": "http://localhost:3375/components/windowTitleBar/windowTitleBar.js",
+							"state": "succeeded"
+						},
+						{
+							"url": "http://localhost:3375/components/windowTitleBar/windowTitleBar.js"
+						}
+					],
+					"hasLoaded": false,
+					"windowIdentifier": {
+						"uuid": "NZDUSD-22-2541-Finsemble",
+						"name": "NZDUSD-22-2541-Finsemble",
+						"windowName": "NZDUSD-22-2541-Finsemble",
+						"windowType": "OpenFinWindow"
+					},
+					"callstack": "Log Stack: \n    at promiseResolver (<anonymous>:8206:53)\n    at new Promise (<anonymous>)\n    at FinsembleWindow.queryWindowService (<anonymous>:8224:16)\n    at FinsembleWindow.updateOptions (<anonymous>:8271:14)\n    at WindowClient.listenForHashChanges (<anonymous>:9215:25)\n    at WindowClient.addListeners (<anonymous>:10094:14)\n    at FinsembleWindow_1.FinsembleWindow.getInstance (<anonymous>:10531:22)",
+					"bounds": {
+						"top": 769,
+						"left": 1015,
+						"width": 370,
+						"height": 184,
+						"bottom": 953,
+						"right": 1385
+					},
+					"monitorDimensions": {
+						"top": 0,
+						"bottom": 1080,
+						"left": 0,
+						"right": 1920,
+						"width": 1920,
+						"height": 1080
+					},
+					"cachedLeft": 775,
+					"cachedTop": 428,
+					"cachedWidth": 370,
+					"cachedHeight": 184,
+					"top": 769,
+					"left": 1015,
+					"bottom": 953,
+					"right": 1385
+				},
+				{
+					"accelerator": {
+						"devtools": true,
+						"zoom": false,
+						"reload": true,
+						"reloadIgnoringCache": true
+					},
+					"alphaMask": {
+						"blue": -1,
+						"green": -1,
+						"red": -1
+					},
+					"alwaysOnBottom": false,
+					"alwaysOnTop": false,
+					"api": {
+						"iframe": {
+							"crossOriginInjection": false,
+							"sameOriginInjection": true,
+							"enableDeprecatedSharedName": false
+						}
+					},
+					"applicationIcon": "",
+					"aspectRatio": 0,
+					"autoShow": true,
+					"backgroundThrottling": false,
+					"contextMenu": false,
+					"cornerRounding": {
+						"height": 0,
+						"width": 0
+					},
+					"defaultCentered": false,
+					"defaultHeight": 184,
+					"defaultLeft": 645,
+					"defaultTop": 769,
+					"defaultWidth": 370,
+					"delay_connection": false,
+					"disableIabSecureLogging": false,
+					"draggable": false,
+					"exitOnClose": false,
+					"experimental": {
+						"api": {
+							"batching": {
+								"renderer": {
+									"enabled": false,
+									"maxSize": 1.7976931348623157e+308,
+									"ttl": 0
+								}
+							},
+							"breadcrumbs": false,
+							"iframe": {
+								"crossOriginInjection": false,
+								"sameOriginInjection": true,
+								"enableDeprecatedSharedName": false
+							}
+						},
+						"disableInitialReload": false,
+						"node": false,
+						"v2Api": true
+					},
+					"frame": false,
+					"frameConnect": "last",
+					"hideOnBlur": false,
+					"hideOnClose": false,
+					"hideWhileChildrenVisible": false,
+					"icon": "http://localhost:3375/assets/img/Finsemble_Taskbar_Icon.png",
+					"launchExternal": "",
+					"loadErrorMessage": "",
+					"maxHeight": -1,
+					"maxWidth": -1,
+					"maximizable": true,
+					"minHeight": 0,
+					"minWidth": 0,
+					"minimizable": true,
+					"name": "EURCAD-1-6920-Finsemble",
+					"opacity": 1,
+					"plugins": false,
+					"resizable": true,
+					"resize": true,
+					"resizeRegion": {
+						"bottomRightCorner": 9,
+						"size": 5,
+						"sides": {
+							"top": true,
+							"right": true,
+							"bottom": true,
+							"left": true
+						}
+					},
+					"saveWindowState": false,
+					"shadow": false,
+					"showTaskbarIcon": false,
+					"smallWindow": false,
+					"spellCheck": false,
+					"state": "normal",
+					"taskbarIcon": "",
+					"taskbarIconGroup": "37272f01-eacb-4064-bbb8-aabc7a853bde",
+					"transparent": false,
+					"url": "https://web-dev.adaptivecluster.com/spot/EURCAD",
+					"uuid": "EURCAD-1-6920-Finsemble",
+					"waitForPageLoad": false,
+					"backgroundColor": "#151f28",
+					"webSecurity": true,
+					"show": true,
+					"skipTaskbar": false,
+					"title": "EURCAD",
+					"height": 184,
+					"width": 370,
+					"center": false,
+					"x": 775,
+					"y": 428,
+					"enableLargerThanScreen": true,
+					"enable-plugins": true,
+					"webPreferences": {
+						"api": {
+							"batching": {
+								"renderer": {
+									"enabled": false,
+									"maxSize": 1.7976931348623157e+308,
+									"ttl": 0
+								}
+							},
+							"breadcrumbs": false,
+							"iframe": {
+								"crossOriginInjection": false,
+								"sameOriginInjection": true,
+								"enableDeprecatedSharedName": false
+							}
+						},
+						"disableInitialReload": false,
+						"nodeIntegration": false,
+						"plugins": false,
+						"preload": "C:\\Users\\Pierre de Leastar\\AppData\\Local\\OpenFin\\runtime\\9.61.36.36\\OpenFin\\resources\\app.asar\\src\\renderer\\node-less.js",
+						"sandbox": true,
+						"spellCheck": false,
+						"backgroundThrottling": false
+					},
+					"customData": {
+						"component": {
+							"canMaximize": true,
+							"canMinimize": true,
+							"inject": [
+								"http://localhost:3375/components/mindcontrol/spotTileDrag.js",
+								"http://localhost:3375/components/mindcontrol/spotTilePublishLinker.js"
+							],
+							"type": "EURCAD"
+						},
+						"cssOverride": "",
+						"foreign": {
+							"components": {
+								"App Launcher": {
+									"launchableByUser": true
+								},
+								"Toolbar": {
+									"iconClass": "EURCAD"
+								},
+								"Window Manager": {
+									"FSBLHeader": true,
+									"persistWindowState": false,
+									"showLinker": true,
+									"title": "EURCAD"
+								}
+							},
+							"services": {
+								"dockingService": {
+									"canGroup": true,
+									"isArrangable": true
+								},
+								"launcherService": {
+									"inject": false
+								}
+							}
+						},
+						"monitorDimensions": {
+							"bottom": 1040,
+							"height": 1040,
+							"left": 0,
+							"right": 1920,
+							"top": 0,
+							"width": 1920
+						},
+						"parentUUID": "defaultServiceAgent-21-1903-Finsemble",
+						"window": {
+							"autoShow": true,
+							"frame": false,
+							"height": 184,
+							"left": "center",
+							"resizable": true,
+							"top": "center",
+							"url": "https://web-dev.adaptivecluster.com/spot/EURCAD",
+							"width": 370
+						}
+					},
+					"permissions": {
+						"Application": {},
+						"System": {
+							"clearCache": false,
+							"exit": false,
+							"launchExternalProcess": false,
+							"readRegistryValue": false
+						},
+						"Window": {
+							"executeJavaScript": false,
+							"webPreferences": {
+								"preload": false
+							}
+						}
+					},
+					"preloadScripts": [
+						{
+							"url": "http://localhost:3375/finsemble/FSBL.js",
+							"state": "succeeded"
+						},
+						{
+							"url": "http://localhost:3375/components/windowTitleBar/windowTitleBar.js",
+							"state": "succeeded"
+						},
+						{
+							"url": "http://localhost:3375/components/windowTitleBar/windowTitleBar.js"
+						}
+					],
+					"hasLoaded": false,
+					"windowIdentifier": {
+						"uuid": "EURCAD-1-6920-Finsemble",
+						"name": "EURCAD-1-6920-Finsemble",
+						"windowName": "EURCAD-1-6920-Finsemble",
+						"windowType": "OpenFinWindow"
+					},
+					"callstack": "Log Stack: \n    at promiseResolver (<anonymous>:8206:53)\n    at new Promise (<anonymous>)\n    at FinsembleWindow.queryWindowService (<anonymous>:8224:16)\n    at FinsembleWindow.updateOptions (<anonymous>:8271:14)\n    at WindowClient.listenForHashChanges (<anonymous>:9215:25)\n    at WindowClient.addListeners (<anonymous>:10094:14)\n    at FinsembleWindow_1.FinsembleWindow.getInstance (<anonymous>:10531:22)",
+					"bounds": {
+						"top": 769,
+						"left": 645,
+						"width": 370,
+						"height": 184,
+						"bottom": 953,
+						"right": 1015
+					},
+					"monitorDimensions": {
+						"top": 0,
+						"bottom": 1080,
+						"left": 0,
+						"right": 1920,
+						"width": 1920,
+						"height": 1080
+					},
+					"cachedLeft": 775,
+					"cachedTop": 428,
+					"cachedWidth": 370,
+					"cachedHeight": 184,
+					"top": 769,
+					"left": 645,
+					"bottom": 953,
+					"right": 1015
+				},
+				{
+					"accelerator": {
+						"devtools": true,
+						"zoom": false,
+						"reload": true,
+						"reloadIgnoringCache": true
+					},
+					"alphaMask": {
+						"blue": -1,
+						"green": -1,
+						"red": -1
+					},
+					"alwaysOnBottom": false,
+					"alwaysOnTop": false,
+					"api": {
+						"iframe": {
+							"crossOriginInjection": false,
+							"sameOriginInjection": true,
+							"enableDeprecatedSharedName": false
+						}
+					},
+					"applicationIcon": "",
+					"aspectRatio": 0,
+					"autoShow": true,
+					"backgroundThrottling": false,
+					"contextMenu": false,
+					"cornerRounding": {
+						"height": 0,
+						"width": 0
+					},
+					"defaultCentered": false,
+					"defaultHeight": 184,
+					"defaultLeft": 275,
+					"defaultTop": 585,
+					"defaultWidth": 370,
+					"delay_connection": false,
+					"disableIabSecureLogging": false,
+					"draggable": false,
+					"exitOnClose": false,
+					"experimental": {
+						"api": {
+							"batching": {
+								"renderer": {
+									"enabled": false,
+									"maxSize": 1.7976931348623157e+308,
+									"ttl": 0
+								}
+							},
+							"breadcrumbs": false,
+							"iframe": {
+								"crossOriginInjection": false,
+								"sameOriginInjection": true,
+								"enableDeprecatedSharedName": false
+							}
+						},
+						"disableInitialReload": false,
+						"node": false,
+						"v2Api": true
+					},
+					"frame": false,
+					"frameConnect": "last",
+					"hideOnBlur": false,
+					"hideOnClose": false,
+					"hideWhileChildrenVisible": false,
+					"icon": "http://localhost:3375/assets/img/Finsemble_Taskbar_Icon.png",
+					"launchExternal": "",
+					"loadErrorMessage": "",
+					"maxHeight": -1,
+					"maxWidth": -1,
+					"maximizable": true,
+					"minHeight": 0,
+					"minWidth": 0,
+					"minimizable": true,
+					"name": "GBPUSD Analytics-57-7886-Finsemble",
+					"opacity": 1,
+					"plugins": false,
+					"resizable": true,
+					"resize": true,
+					"resizeRegion": {
+						"bottomRightCorner": 9,
+						"size": 5,
+						"sides": {
+							"top": true,
+							"right": true,
+							"bottom": true,
+							"left": true
+						}
+					},
+					"saveWindowState": false,
+					"shadow": false,
+					"showTaskbarIcon": false,
+					"smallWindow": false,
+					"spellCheck": false,
+					"state": "normal",
+					"taskbarIcon": "",
+					"taskbarIconGroup": "37272f01-eacb-4064-bbb8-aabc7a853bde",
+					"transparent": false,
+					"url": "https://web-dev.adaptivecluster.com/spot/GBPUSD?tileView=Analytics",
+					"uuid": "GBPUSD Analytics-57-7886-Finsemble",
+					"waitForPageLoad": false,
+					"backgroundColor": "#151f28",
+					"webSecurity": true,
+					"show": true,
+					"skipTaskbar": false,
+					"title": "GBPUSD Analytics",
+					"height": 184,
+					"width": 370,
+					"center": false,
+					"x": 775,
+					"y": 428,
+					"enableLargerThanScreen": true,
+					"enable-plugins": true,
+					"webPreferences": {
+						"api": {
+							"batching": {
+								"renderer": {
+									"enabled": false,
+									"maxSize": 1.7976931348623157e+308,
+									"ttl": 0
+								}
+							},
+							"breadcrumbs": false,
+							"iframe": {
+								"crossOriginInjection": false,
+								"sameOriginInjection": true,
+								"enableDeprecatedSharedName": false
+							}
+						},
+						"disableInitialReload": false,
+						"nodeIntegration": false,
+						"plugins": false,
+						"preload": "C:\\Users\\Pierre de Leastar\\AppData\\Local\\OpenFin\\runtime\\9.61.36.36\\OpenFin\\resources\\app.asar\\src\\renderer\\node-less.js",
+						"sandbox": true,
+						"spellCheck": false,
+						"backgroundThrottling": false
+					},
+					"customData": {
+						"component": {
+							"canMaximize": true,
+							"canMinimize": true,
+							"inject": false,
+							"type": "GBPUSD Analytics"
+						},
+						"cssOverride": "",
+						"foreign": {
+							"components": {
+								"App Launcher": {
+									"launchableByUser": true
+								},
+								"Toolbar": {
+									"iconClass": "GBPUSD Analytics"
+								},
+								"Window Manager": {
+									"FSBLHeader": true,
+									"persistWindowState": false,
+									"showLinker": false,
+									"title": "GBPUSD Analytics"
+								}
+							},
+							"services": {
+								"dockingService": {
+									"canGroup": true,
+									"isArrangable": true
+								},
+								"launcherService": {
+									"inject": false
+								}
+							}
+						},
+						"monitorDimensions": {
+							"bottom": 1040,
+							"height": 1040,
+							"left": 0,
+							"right": 1920,
+							"top": 0,
+							"width": 1920
+						},
+						"parentUUID": "defaultServiceAgent-21-1903-Finsemble",
+						"window": {
+							"autoShow": true,
+							"frame": false,
+							"height": 184,
+							"left": "center",
+							"resizable": true,
+							"top": "center",
+							"url": "https://web-dev.adaptivecluster.com/spot/GBPUSD?tileView=Analytics",
+							"width": 370
+						}
+					},
+					"permissions": {
+						"Application": {},
+						"System": {
+							"clearCache": false,
+							"exit": false,
+							"launchExternalProcess": false,
+							"readRegistryValue": false
+						},
+						"Window": {
+							"executeJavaScript": false,
+							"webPreferences": {
+								"preload": false
+							}
+						}
+					},
+					"preloadScripts": [
+						{
+							"url": "http://localhost:3375/finsemble/FSBL.js",
+							"state": "succeeded"
+						},
+						{
+							"url": "http://localhost:3375/components/windowTitleBar/windowTitleBar.js",
+							"state": "succeeded"
+						},
+						{
+							"url": "http://localhost:3375/components/windowTitleBar/windowTitleBar.js"
+						}
+					],
+					"hasLoaded": false,
+					"windowIdentifier": {
+						"uuid": "GBPUSD Analytics-57-7886-Finsemble",
+						"name": "GBPUSD Analytics-57-7886-Finsemble",
+						"windowName": "GBPUSD Analytics-57-7886-Finsemble",
+						"windowType": "OpenFinWindow"
+					},
+					"callstack": "Log Stack: \n    at promiseResolver (<anonymous>:8206:53)\n    at new Promise (<anonymous>)\n    at FinsembleWindow.queryWindowService (<anonymous>:8224:16)\n    at FinsembleWindow.updateOptions (<anonymous>:8271:14)\n    at WindowClient.listenForHashChanges (<anonymous>:9215:25)\n    at WindowClient.addListeners (<anonymous>:10094:14)\n    at FinsembleWindow_1.FinsembleWindow.getInstance (<anonymous>:10531:22)",
+					"bounds": {
+						"top": 585,
+						"left": 275,
+						"width": 370,
+						"height": 184,
+						"bottom": 769,
+						"right": 645
+					},
+					"monitorDimensions": {
+						"top": 0,
+						"bottom": 1080,
+						"left": 0,
+						"right": 1920,
+						"width": 1920,
+						"height": 1080
+					},
+					"cachedLeft": 775,
+					"cachedTop": 428,
+					"cachedWidth": 370,
+					"cachedHeight": 184,
+					"top": 585,
+					"left": 275,
+					"bottom": 769,
+					"right": 645
+				},
+				{
+					"accelerator": {
+						"devtools": true,
+						"zoom": false,
+						"reload": true,
+						"reloadIgnoringCache": true
+					},
+					"alphaMask": {
+						"blue": -1,
+						"green": -1,
+						"red": -1
+					},
+					"alwaysOnBottom": false,
+					"alwaysOnTop": false,
+					"api": {
+						"iframe": {
+							"crossOriginInjection": false,
+							"sameOriginInjection": true,
+							"enableDeprecatedSharedName": false
+						}
+					},
+					"applicationIcon": "",
+					"aspectRatio": 0,
+					"autoShow": true,
+					"backgroundThrottling": false,
+					"contextMenu": false,
+					"cornerRounding": {
+						"height": 0,
+						"width": 0
+					},
+					"defaultCentered": false,
+					"defaultHeight": 184,
+					"defaultLeft": 275,
+					"defaultTop": 769,
+					"defaultWidth": 370,
+					"delay_connection": false,
+					"disableIabSecureLogging": false,
+					"draggable": false,
+					"exitOnClose": false,
+					"experimental": {
+						"api": {
+							"batching": {
+								"renderer": {
+									"enabled": false,
+									"maxSize": 1.7976931348623157e+308,
+									"ttl": 0
+								}
+							},
+							"breadcrumbs": false,
+							"iframe": {
+								"crossOriginInjection": false,
+								"sameOriginInjection": true,
+								"enableDeprecatedSharedName": false
+							}
+						},
+						"disableInitialReload": false,
+						"node": false,
+						"v2Api": true
+					},
+					"frame": false,
+					"frameConnect": "last",
+					"hideOnBlur": false,
+					"hideOnClose": false,
+					"hideWhileChildrenVisible": false,
+					"icon": "http://localhost:3375/assets/img/Finsemble_Taskbar_Icon.png",
+					"launchExternal": "",
+					"loadErrorMessage": "",
+					"maxHeight": -1,
+					"maxWidth": -1,
+					"maximizable": true,
+					"minHeight": 0,
+					"minWidth": 0,
+					"minimizable": true,
+					"name": "EURJPY Analytics-40-4248-Finsemble",
+					"opacity": 1,
+					"plugins": false,
+					"resizable": true,
+					"resize": true,
+					"resizeRegion": {
+						"bottomRightCorner": 9,
+						"size": 5,
+						"sides": {
+							"top": true,
+							"right": true,
+							"bottom": true,
+							"left": true
+						}
+					},
+					"saveWindowState": false,
+					"shadow": false,
+					"showTaskbarIcon": false,
+					"smallWindow": false,
+					"spellCheck": false,
+					"state": "normal",
+					"taskbarIcon": "",
+					"taskbarIconGroup": "37272f01-eacb-4064-bbb8-aabc7a853bde",
+					"transparent": false,
+					"url": "https://web-dev.adaptivecluster.com/spot/EURJPY?tileView=Analytics",
+					"uuid": "EURJPY Analytics-40-4248-Finsemble",
+					"waitForPageLoad": false,
+					"backgroundColor": "#151f28",
+					"webSecurity": true,
+					"show": true,
+					"skipTaskbar": false,
+					"title": "EURJPY Analytics",
+					"height": 184,
+					"width": 370,
+					"center": false,
+					"x": 775,
+					"y": 428,
+					"enableLargerThanScreen": true,
+					"enable-plugins": true,
+					"webPreferences": {
+						"api": {
+							"batching": {
+								"renderer": {
+									"enabled": false,
+									"maxSize": 1.7976931348623157e+308,
+									"ttl": 0
+								}
+							},
+							"breadcrumbs": false,
+							"iframe": {
+								"crossOriginInjection": false,
+								"sameOriginInjection": true,
+								"enableDeprecatedSharedName": false
+							}
+						},
+						"disableInitialReload": false,
+						"nodeIntegration": false,
+						"plugins": false,
+						"preload": "C:\\Users\\Pierre de Leastar\\AppData\\Local\\OpenFin\\runtime\\9.61.36.36\\OpenFin\\resources\\app.asar\\src\\renderer\\node-less.js",
+						"sandbox": true,
+						"spellCheck": false,
+						"backgroundThrottling": false
+					},
+					"customData": {
+						"component": {
+							"canMaximize": true,
+							"canMinimize": true,
+							"inject": false,
+							"type": "EURJPY Analytics"
+						},
+						"cssOverride": "",
+						"foreign": {
+							"components": {
+								"App Launcher": {
+									"launchableByUser": true
+								},
+								"Toolbar": {
+									"iconClass": "EURJPY Analytics"
+								},
+								"Window Manager": {
+									"FSBLHeader": true,
+									"persistWindowState": false,
+									"showLinker": false,
+									"title": "EURJPY Analytics"
+								}
+							},
+							"services": {
+								"dockingService": {
+									"canGroup": true,
+									"isArrangable": true
+								},
+								"launcherService": {
+									"inject": false
+								}
+							}
+						},
+						"monitorDimensions": {
+							"bottom": 1040,
+							"height": 1040,
+							"left": 0,
+							"right": 1920,
+							"top": 0,
+							"width": 1920
+						},
+						"parentUUID": "defaultServiceAgent-21-1903-Finsemble",
+						"window": {
+							"autoShow": true,
+							"frame": false,
+							"height": 184,
+							"left": "center",
+							"resizable": true,
+							"top": "center",
+							"url": "https://web-dev.adaptivecluster.com/spot/EURJPY?tileView=Analytics",
+							"width": 370
+						}
+					},
+					"permissions": {
+						"Application": {},
+						"System": {
+							"clearCache": false,
+							"exit": false,
+							"launchExternalProcess": false,
+							"readRegistryValue": false
+						},
+						"Window": {
+							"executeJavaScript": false,
+							"webPreferences": {
+								"preload": false
+							}
+						}
+					},
+					"preloadScripts": [
+						{
+							"url": "http://localhost:3375/finsemble/FSBL.js",
+							"state": "succeeded"
+						},
+						{
+							"url": "http://localhost:3375/components/windowTitleBar/windowTitleBar.js",
+							"state": "succeeded"
+						},
+						{
+							"url": "http://localhost:3375/components/windowTitleBar/windowTitleBar.js"
+						}
+					],
+					"hasLoaded": false,
+					"windowIdentifier": {
+						"uuid": "EURJPY Analytics-40-4248-Finsemble",
+						"name": "EURJPY Analytics-40-4248-Finsemble",
+						"windowName": "EURJPY Analytics-40-4248-Finsemble",
+						"windowType": "OpenFinWindow"
+					},
+					"callstack": "Log Stack: \n    at promiseResolver (<anonymous>:8206:53)\n    at new Promise (<anonymous>)\n    at FinsembleWindow.queryWindowService (<anonymous>:8224:16)\n    at FinsembleWindow.updateOptions (<anonymous>:8271:14)\n    at WindowClient.listenForHashChanges (<anonymous>:9215:25)\n    at WindowClient.addListeners (<anonymous>:10094:14)\n    at FinsembleWindow_1.FinsembleWindow.getInstance (<anonymous>:10531:22)",
+					"bounds": {
+						"top": 769,
+						"left": 275,
+						"width": 370,
+						"height": 184,
+						"bottom": 953,
+						"right": 645
+					},
+					"monitorDimensions": {
+						"top": 0,
+						"bottom": 1080,
+						"left": 0,
+						"right": 1920,
+						"width": 1920,
+						"height": 1080
+					},
+					"cachedLeft": 775,
+					"cachedTop": 428,
+					"cachedWidth": 370,
+					"cachedHeight": 184,
+					"top": 769,
+					"left": 275,
+					"bottom": 953,
+					"right": 645
+				}
+			],
+			"componentStates": {},
+			"workspaceDefinitionFlag": true
+		}
+	}
+}
