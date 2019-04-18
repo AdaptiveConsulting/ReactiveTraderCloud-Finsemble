@@ -21,6 +21,7 @@ const Globals =
 import { ICentralLogger } from "./ICentralLogger";
 import { LocalLogger } from "../clients/localLogger";
 let Logger: ICentralLogger = _Logger;
+//@todo proper types for router messages would be great.
 
 // Use global data for these objects in case multiple clients running in same window (a side effect of injection and perhaps other edge conditions).
 Globals.FSBLData = Globals.FSBLData || {};
@@ -308,7 +309,8 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 			forceWindowTransport: ConfigUtil.getDefault(finConfig, "finConfig.router.forceWindowTransport", {}),
 			sameDomainTransport: ConfigUtil.getDefault(finConfig, "finConfig.router.sameDomainTransport", "SharedWorker"),
 			crossDomainTransport: ConfigUtil.getDefault(finConfig, "finConfig.router.crossDomainTransport", isElectron ? "FinsembleTransport" : "OpenFinBus"),
-			transportSettings: ConfigUtil.getDefault(finConfig, "finConfig.router.transportSettings", {})
+			transportSettings: ConfigUtil.getDefault(finConfig, "finConfig.router.transportSettings", {}),
+			IAC: ConfigUtil.getDefault(finConfig, "finConfig.IAC", {})
 		};
 
 		function getClientTransport() {
@@ -849,13 +851,13 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 	 */
 	this.ready = (cb) => this.onReady(cb);
 
-		/**
-	 * Get router client name.
-	 *
-	 * @param {string} newClientName string identify the client
-	 * FSBL.Clients.RouterClient.setClientName("MyComponent");
-	 * @private
-	 */
+	/**
+ * Get router client name.
+ *
+ * @param {string} newClientName string identify the client
+ * FSBL.Clients.RouterClient.setClientName("MyComponent");
+ * @private
+ */
 	this.getClientName = function () {
 		Logger.system.debug("RouterClient.getClientName", clientName);
 		return clientName;
@@ -888,16 +890,16 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 	 * @example
 	 *
 	 * FSBL.Clients.RouterClient.addListener("SomeChannelName", function (error, response) {
-			if (error) {
-				Logger.system.log("ChannelA Error: " + JSON.stringify(error));
-			} else {
-				var data = response.data;
-				Logger.system.log("ChannelA Response: " + JSON.stringify(response));
-			}
+	 * 	if (error) {
+	 *			Logger.system.log("ChannelA Error: " + JSON.stringify(error));
+	 *		} else {
+	 *			var data = response.data;
+	 *			Logger.system.log("ChannelA Response: " + JSON.stringify(response));
+	 *		}
 	 * });
 	 *
 	 */
-	this.addListener = function (channel, eventHandler) {
+	this.addListener = function (channel: string, eventHandler: Function) {
 		Logger.system.info("RouterClient.addListener", "CHANNEL", channel);
 		Validate.args(channel, "string", eventHandler, "function");
 		var firstChannelClient = addListenerCallBack(mapListeners, channel, eventHandler);
@@ -920,7 +922,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 	 * FSBL.Clients.RouterClient.transmit("SomeChannelName", event);
 	 *
 	 */
-	this.transmit = function (toChannel, event, options = { suppressWarnings: false }) {
+	this.transmit = function (toChannel: string, event: any, options: { suppressWarnings: boolean } = { suppressWarnings: false }) {
 		if (!Logger.isLogMessage(toChannel)) { // logger messages
 			Logger.system.info("RouterClient.transmit", "TO CHANNEL", toChannel, "EVENT", event);
 		}
@@ -944,7 +946,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 	 * @param {string} channel unique channel name to remove listener from
 	 * @param {function} eventHandler function used for the event handler when the listener was added
 	 */
-	this.removeListener = function (channel, eventHandler) {
+	this.removeListener = function (channel: string, eventHandler: Function) {
 		Logger.system.info("RouterClient.removelistener", "CHANNEL", channel, "EVENT HANDLER", eventHandler);
 		Validate.args(channel, "string", eventHandler, "function");
 		var lastChannelListener = removeListenerCallBack(mapListeners, channel, eventHandler);
@@ -968,14 +970,14 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 	 *	if (error) {
 	 *		Logger.system.log('addResponder failed: ' + JSON.stringify(error));
 	 *	} else {
-			console.log("incoming data=" + queryMessage.data);
-			var response="Back at ya"; // Responses can be objects or strings
-	 *		queryMessage.sendQueryResponse(null, response); // A QUERY RESPONSE MUST BE SENT OR THE REMOTE SIDE WILL HANG
+	 *	console.log("incoming data=" + queryMessage.data);
+	 * 	var response="Back at ya"; // Responses can be objects or strings
+	 *	queryMessage.sendQueryResponse(null, response); // A QUERY RESPONSE MUST BE SENT OR THE REMOTE SIDE WILL HANG
 	 *	}
 	 * });
 	 *
 	 */
-	this.addResponder = function (channel, queryEventHandler) {
+	this.addResponder = function (channel: string, queryEventHandler: Function) {
 		Logger.system.info("RouterClient.addResponder", "CHANNEL", channel);
 		Validate.args(channel, "string", queryEventHandler, "function");
 		var status = addResponderCallBack(mapResponders, channel, queryEventHandler);
@@ -1018,7 +1020,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 	 *		var responseData = queryResponseMessage.data;
 	 *	}
 	 * }); */
-	this.query = function (responderChannel, queryEvent, params, responseEventHandler = Function.prototype) {
+	this.query = function (responderChannel: string, queryEvent: any, params: any, responseEventHandler: Function = Function.prototype) {
 		var newQueryID = `${clientID()}.${responderChannel}`;
 		var timestamp = window.performance.timing.navigationStart + window.performance.now();
 		var navstart = window.performance.timing.navigationStart;
@@ -1060,7 +1062,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 	 * FSBL.Clients.RouterClient.removeResponder("someChannelName");
 	 *
 	 */
-	this.removeResponder = function (responderChannel) {
+	this.removeResponder = function (responderChannel: string) {
 		Logger.system.info("RouterClient.removeResponder", "RESPONDER CHANNEL", responderChannel);
 		Validate.args(responderChannel, "string");
 		var status = removeResponderCallBack(mapResponders, responderChannel);
@@ -1122,7 +1124,11 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 	 * FSBL.Clients.RouterClient.addPubSubResponder(\/topicA*\/, { "State": "start" });
 	 *
 	 */
-	this.addPubSubResponder = function (topic, initialState, params, callback) {
+	this.addPubSubResponder = function (topic: string, initialState?: any, params?: {
+		subscribeCallback?: Function,
+		publishCallback?: Function,
+		unsubscribeCallback?: Function
+	}, callback?: Function) {
 		var error;
 		var response;
 		Logger.system.info("RouterClient.addPubSubResponder", "TOPIC", topic, "INITIAL STATE", initialState, "PARAMS", params);
@@ -1158,7 +1164,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 	 * FSBL.Clients.RouterClient.removePubSubResponder("topicABC");
 	 *
 	 */
-	this.removePubSubResponder = function (topic) {
+	this.removePubSubResponder = function (topic: string) {
 		Logger.system.info("RouterClient.removePubSubResponder", "TOPIC", topic);
 		Validate.args(topic, "any");
 		var status = removeResponderCallBack(mapPubSubResponders, topic);
@@ -1190,7 +1196,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 	 * });
 	 *
 	 */
-	this.subscribe = function (topic, notifyCallback) {
+	this.subscribe = function (topic: string, notifyCallback: Function) {
 		Logger.system.info("RouterClient.subscribe", "TOPIC", topic);
 		Validate.args(topic, "string", notifyCallback, "function");
 		var subscribeID = clientID();
@@ -1212,7 +1218,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 	 * FSBL.Clients.RouterClient.publish("topicABC", topicState);
 	 *
 	 */
-	this.publish = function (topic, event) {
+	this.publish = function (topic: string, event: any) {
 		Logger.system.info("RouterClient.publish", "TOPIC", topic, "EVENT", event);
 		Validate.args(topic, "string", event, "any");
 		sendToRouterService(new PublishMessage(topic, event));
@@ -1230,7 +1236,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 	 * FSBL.Clients.RouterClient.unsubscribe(subscribeId);
 	 *
 	 */
-	this.unsubscribe = function (subscribeIDStruct) {
+	this.unsubscribe = function (subscribeIDStruct: any) {
 		Logger.system.info("RouterClient.unsubscribe", "SUBSCRIBE ID", subscribeIDStruct);
 		Validate.args(subscribeIDStruct, "object") && (Validate as any).args2("subscribeIDStruct.subscribeID", subscribeIDStruct.subscribeID, "string");
 		var deletedSubscriber = removeSubscriberCallBack(mapSubscribersID, subscribeIDStruct.subscribeID);
@@ -1244,11 +1250,11 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 	/**
 	 * Test an incoming router message to see if it originated from the same origin (e.g. a trusted source...not cross-domain). Currently same origin is known only because a sharedWorker transport is used (by definition SharedWorkers do not work cross-domain).  This means any message coming in over the Inter-application Bus will not be trusted; however, by default all same-origin components and services connect to the router using a SharedWorker transport.
 	 * @param {object} incomingMessage an incoming router message (e.g. transmit, query, notification) to test to see if trusted.
-	 * 
+	 *
 	 * @example
 	 * FSBL.Clients.RouterClient.trustedMessage(incomingRouterMessage);
 	 */
-	this.trustedMessage = function (incomingMessage) {
+	this.trustedMessage = function (incomingMessage: any) {
 		var isTrusted = true; // temporarily make all trusted so no problems if changing router transport
 		Logger.system.debug("RouterClient.trustedMessage header", incomingMessage.header);
 		if (incomingMessage.header.originIncomingTransportInfo.transportID === "SharedWorker") {
@@ -1312,6 +1318,6 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 		constructor(clientName, transportName); // constructure new router client
 	}
 
-	
+
 	return Globals.FSBLData.RouterClients[clientName];
 };

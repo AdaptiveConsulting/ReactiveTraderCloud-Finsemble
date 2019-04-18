@@ -364,15 +364,18 @@ if ((fin.container === "browser" || window.top === window) && !Globals.FSBLAlrea
 						FSBL.initialize(deferredCallback);
 					});
 				} else {
-					//If authorization hasn't happened, only wait on the store and the launcher. This should only occur in authentication components.
-					FSBL.useClients(["ConfigClient", "LauncherClient", "DistributedStoreClient"]);
+					/**
+					 * In authentication components, the "authenticated" state will never occur.
+					 *
+					 * The following clients are currently unsafe to use before authentication:
+					 * DragAndDropClient, LinkerClient, WorkspaceClient, dialogManager
+					 */
+					FSBL.useClients(["ConfigClient", "LauncherClient", "DistributedStoreClient", "WindowClient", "AuthenticationClient", "hotkeyClient", "searchClient", "storageClient"
+					]);
 					FSBL.initialize(deferredCallback);
 				}
 				FSBL.Clients.RouterClient.unsubscribe(authorizationSubscriber);
 			});
-
-
-
 		});
 
 		// Capture error and log it; define here (as early as possible) to catch early errors

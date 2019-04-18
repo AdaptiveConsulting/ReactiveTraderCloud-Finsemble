@@ -15,7 +15,7 @@ export function clone(obj) {
 	try {
 		return JSON.parse(JSON.stringify(obj));
 	} catch (e) {
-		Logger.system.error("clone error", e);
+		console.error("clone error", e);
 		return e;
 	}
 };
@@ -47,7 +47,7 @@ export const mockLogger = new MockLogger();
 
 /**
  * Wraps a promsie in logs that fire immediately before and after the execution of the promise. Returns a new promise.
- * 
+ *
  * @param {*} logger A logging function that will log the message. E.g. `Logger.system.debug` or `console.log`.
  * @param {string} message A message to be logged. Suffixed with "start" and "end", before and after the promise, respectively.
  * @param {Promise} promise The promise to be wrapped.

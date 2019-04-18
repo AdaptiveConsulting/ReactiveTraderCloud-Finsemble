@@ -60,7 +60,8 @@
 		"alwaysOnTopIcon": false,
 		"showTabs": true,
 		"showNativeTabs": true,
-		"floatingTitlebarComponent": "Floating Titlebar"
+		"floatingTitlebarComponent": "Floating Titlebar",
+		"deliveryMechanism": "preload"
 	},
 	"betaFeatures": {
 		"assimilation": {
@@ -148,6 +149,7 @@
 		"$applicationRoot/configs/application/components.json",
 		"$applicationRoot/configs/application/workspaces.json",
 		"$applicationRoot/configs/application/workspaceTemplates.json",
-		"$applicationRoot/configs/application/services.json"
+		"$applicationRoot/configs/application/services.json",
+		"$applicationRoot/configs/other/ReactiveTraderDemo.json"
 	]
 }

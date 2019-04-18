@@ -305,6 +305,16 @@ export class WindowGroup {
 			}
 		}
 
+		// If we are trying to hyperfocus a stack make sure to also include the children
+		for (let windowName in this.windows) {
+			let win = this.getWindow(windowName);
+			let parent = win.getParent();
+			// If window is in a stack and the stack is in the windowList but this window is not, add it.
+			if (parent && windowList.includes(parent.name) && !windowList.includes(windowName)) {
+				windowList.push(windowName);
+			}
+		}
+
 		for (let windowName in this.windows) {
 			if (!windowList.includes(windowName)) {
 				this.windows[windowName].minimize();

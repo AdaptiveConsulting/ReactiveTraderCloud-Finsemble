@@ -51,7 +51,7 @@ export default function LauncherDefaults() {
 			foreign: {
 				services: {
 					dockingService: {
-						isArrangeable: false
+						isArrangable: false
 					},
 
 					launcherService: {
@@ -71,16 +71,18 @@ export default function LauncherDefaults() {
 			}
 		}
 	};
+	// A default manifest
 	this.componentDescriptor = {
 		"window": {
-			"url": "",
+			"url": "about:blank",
 			"frame": false,
 			"resizable": true,
 			"autoShow": true,
 			"top": "center",
 			"left": "center",
 			"width": 400,
-			"height": 432
+			"height": 432,
+			"addToWorkspace": true
 		},
 		"component": {
 			"inject": false,

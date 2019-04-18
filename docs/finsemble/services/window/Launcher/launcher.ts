@@ -25,14 +25,15 @@ import {
 import _difference from "lodash.difference";
 import merge = require("deepmerge");
 import { FinsembleWindow } from "../../../common/window/FinsembleWindow";
-
+import { WindowDescriptor } from "../Common/types";
 // For regression testing
 import "./_test";
 import { BaseWindow } from "../WindowAbstractions/BaseWindow";
 import { IRouterClient } from "../../../clients/IRouterClient";
-import { HEARTBEAT_TIMEOUT_CHANNEL } from "../../../common/constants";
-
+import { HEARTBEAT_TIMEOUT_CHANNEL, DELIVERY_MECHANISM } from "../../../common/constants";
+import SpawnUtils from "../Common/spawnUtils";
 const clone = require("lodash.cloneDeep");
+const lodashGet = require("lodash.get");
 
 /**
  * The internal representation of a Finsemble-controlled window.
@@ -90,66 +91,6 @@ declare var self: Launcher;
 
 const NAME_STORAGE_KEY = "finsemble.NameCountData";
 
-/**
- * Used to define the parameters for creating a Window.
- *
- * Daniel H. 1/2/19
- * I've done the bare minimum to get this to compile, but much
- * is missing from this.
- * @TODO Move to a seperate file and complete. */
-type WindowDescriptor = {
-	name?: string,
-	uuid?: string,
-	monitorInfo?: any,
-	defaultLeft?: number,
-	defaultTop?: number,
-	defaultWidth?: number,
-	defaultHeight?: number;
-	/** The name of the component in this window. E.g "Welcome Component", "StackedWindow", etc. */
-	componentType?: string;
-	customData?: {
-		monitorDimensions?: {};
-		window?: {
-			allowToSpawnOffScreen: boolean;
-		};
-		// Daniel H. 1/16/19 - This appears to be a duplicate of the top level manifest.
-		// @TODO - Pick one and remove the other.
-		manifest?: {};
-		spawnData?: {};
-		component?: {
-			type: string;
-			spawnOnAllMonitors: boolean;
-		};
-	};
-	claimMonitorSpace?: boolean;
-	url?: string;
-	// Daniel H. 1/16/19 - This appears to be a duplicate of the .customData.manifest.
-	// @TODO - Pick one and remove the other.
-	manifest?: {};
-	resizable?: boolean;
-	/** A unique string that sets a process affinity flag. This allows windows to grouped together under a single process (a.k.a. Application). This flag is only available when running on Electron via e2o. */
-	affinity?: string;
-	alwaysOnTop?: boolean;
-	showTaskbarIcon?: boolean;
-	// Daniel H. - 1/16/19 - This apears to be duplicate data with defaultLeft, etc.
-	// Same story for .bounds.left, etc.
-	// @TODO - Refactor to single source of truth. See other comments from same date in file.
-	left?: number;
-	top?: number;
-	right?: number;
-	bottom?: number;
-	width?: number;
-	height?: number;
-	bounds?: {
-		left: number;
-		top: number;
-		right: number;
-		bottom: number;
-		width: number;
-		height: number;
-	}
-}
-
 /** All the possible window types, including their aliases used in config. */
 type WindowTypes =
 	"OpenFinWindow" | "openfin"
@@ -163,42 +104,252 @@ type WindowTypes =
  * and `options`, `options` takes precedence.
  */
 export type SpawnParams = {
-	affinity?: string;
-	position?: string;
-	groupOnSpawn?: boolean;
-	dockOnSpawn?: boolean;
-	left?: number
-	right?: number;
-	top?: number;
-	bottom?: number;
-	alias?: string;
-	env?: any;
-	path?: string;
-	arguments?: any;
-	component?: any;
-	url?: string;
-	name?: string;
-	windowType?: WindowTypes;
-	native?: boolean;
-	spawnedByWorkspaceService?: boolean;
-	monitor?: any;
+	/**
+ * Defaults to false. Whether to add the new component to the workspace.
+ * Even when true, the window will still not be added to the workspace if addToWorkspace==false in components.json config for the component type.
+ */
 	addToWorkspace?: boolean;
+	/**
+	 * Used when windowType is "native" or "assimilation". Specifies the alias of a bundled asset.
+	 */
+	alias?: string;
+	/**
+	 * Set a process affinity flag. This allows windows to grouped together under a single process (a.k.a. Application). This flag is only available when running on Electron via e2o.
+	 */
+	affinity?: string;
+
+	/**
+	 * Used when windowType is "native" or "assimilation". Specifies the arguments to be sent to the application. This is used in conjunction with path.
+	 * Arguments should be separated by spaces: `--arg1 foo --arg2 bar` _except_ when `params.argumentsAsQueryString` is true, in which case set this parameter to be single string in URI format: `arg=1&arg=2`"
+	 */
+	arguments?: any;
+	/**
+	 * For native applications launched by URI: 1) the string is passed as the "arguments" parameter if appended as a query string; and 2) the automatically generated arguments described in "path" above are appended to the query string
+	 */
+	argumentsAsQueryString?: boolean;
+	/**
+	 * Whether the component can group with other windows.
+	 */
+	canGroup?: boolean;
+	/**
+	 *  For use with permanent toolbars.
+	 * The available space for other components will be reduced by the amount of space covered by the newly spawned component.
+	 * This will be reflected in the `unclaimedRect` member from API calls that return monitorInfo. Users will be prevented
+	 * from moving windows to a position that covers the claimed space. See `position: 'unclaimed'`.
+	 */
+	claimMonitorSpace?: boolean;
+	/**
+	 * Type of component to spawn.
+	 */
+	component?: any;
+	/**
+	 * If true, will automatically dock the window with the "relative" window (dock to the parent window unless specified in params.relativeWindow).
+	 * Note that you must also position the window in a valid position for docking, for example, by setting the "left" or "top" parameters to "adjacent".
+	 */
+	dockOnSpawn?: boolean;
+	/**
+	 * An array of parts of the monitor that the componetn can dock to. Valid values are `top` and `bottom`.
+	 */
+	dockable?: ["top", "bottom"] | ["bottom", "top"] | ["top"] | ["bottom"]
+	/**
+	 * Which part of the monitor that the component will dock to on spawn. Valid options are `top` and `bottom`. Only valid if combined with the `dockable` property.
+	 */
+	docked?: "top" | "bottom";
+	/**
+	 * Currently, components can only dock to the full width of the monitor. This parameter determines what height the component will be when docked to a monitor.
+	 */
+	dockedHeight?: number;
+	/**
+	 * Indicates that this window is ephemeral.
+	 * An ephemeral window is a dialog, menu or other window that is temporarily displayed but usually hidden.
+	 * Ephemeral windows automatically have the following settings assigned: resizable: false, showTaskbarIcon: false, alwaysOnTop: true.
+	 * *Note, use `options:{autoShow: false}` to prevent an ephemeral widow from showing automatically.*
+	 *
+	 */
+	ephemeral?: boolean;
+
+	/**
+	 * If true will attempt to make the window no have parts outside the monitor boundary.
+	 */
+	forceOntoMonitor?: boolean;
+	/**
+	 * Optional group name. Adds windows to a group (unrelated to docking or linking) that is used for window management functions. If the group does not exist it will be created.
+	 */
+	groupName?: string;
+	groupOnSpawn?: boolean;
+	/**
+	 * Which monitor to place the new window.
+	 * **"mine"** - Place the window on the same monitor as the calling window.
+	 * A numeric value of monitor (where primary is zero).
+	 * **"primary"**,**"next"** and **"previous"** indicate a specific monitor.
+	 * **"all"** - Put a copy of the component on all monitors
+	 *
+	 */
+	monitor?: number | "mine" | "primary" | "next" | "previous" | "all";
+	/**
+	 * Name to give the component. If not provided, a random one will be generated. Name will be made unique (if not already).
+	 */
+	name?: string;
+	/**
+	 * @deprecated Please use windowType instead. Optional native application to launch with Assimilation service. Overrides what is passed in "component".
+	 */
+	native?: boolean;
+	/**
+	 * Properties to merge with the default windowDescriptor.
+	 * Any value set here will be sent directly to the `OpenFin` window, and will override the effect of relevant parameters to spawn(). By default, all Finsemble windows are frameless.
+	 */
+	options?: any;
+	/**
+	 * Used when windowType is "native" or "assimilation". Specifies the path to the application. The path can be:
+	 * The name of an exe that is on the system path (i.e. notepad.exe).
+	 * The full path to an executable on the user's machine (i.e. C:\Program Files\app.exe)
+	 * A system installed uri (i.e. myuri://myapp).
+	 *
+	 * When windowType is "native" then additional arguments will be automatically appended to the path or the uri. These arguments can be captured by the native application
+	 * in order to tie it to Finsemble's window tracking. When building an application with finsemble.dll, this is handled automatically. Those arguments are:
+	 *
+	 * **uuid** - A generated UUID that uniquely identifies this window.
+	 *
+	 * **left** - The x coordinate of the new window
+	 *
+	 * **top** - The y coordinate of the new window
+	 *
+	 * **width** - The width of the new window
+	 *
+	 * **height** - The height of the new window
+	 *
+	 * **openfinVersion** - The OpenFin version that Finsemble runs (necessary for native windows to connection on the OpenFin IAB)
+	 *
+	 * **openfinSocketPort** - The OpenFin socket used for the Inter-application Bus (IAB) (necessary for Java windows that wish to use the OpenFin IAB)
+	 *
+	 * **finsembleWindowName** - The name of the window in the Finsemble config
+	 *
+	 * **componentType** - The component type in the Finsemble config
+	 *
+	 * A common troublesome problem is when a native application needs to be launched from an intermediary application (such as a launcher or batch script). That intermediary
+	 * application can pass these parameters which will allow the final application to connect back to Finsemble.
+	 */
+	path?: string;
+	/**
+	 * Defines a "viewport" for the spawn, with one of the following values:
+	 *
+	 * **"unclaimed"** (the default) Positioned based on the monitor space excluding space "claimed" by other components (such as toolbars).
+	 * For instance, `top:0` will place the new component directly below the toolbar.
+	 *
+	 * **"available"** Positioned according to the coordinates available on the monitor itself, less space claimed by the operating system (such as the windows toolbar).
+	 * For instance, `bottom:0` will place the new component with its bottom flush against the windows toolbar.
+	 *
+	 * **"monitor"** Positioned according to the absolute size of the monitor.
+	 * For instance, `top:0` will place the component overlapping the toolbar.
+	 *
+	 * **"relative"** Positioned relative to the relativeWindow.
+	 * For instance, `left:0;top:0` will join the top left corner of the new component with the top left corner of the relative window.
+	 *
+	 * **"virtual"** Positoned against coordinates on the virtual screen.
+	 * The virtual screen is the full viewing area of all monitors combined into a single theoretical monitor.
+	 */
+	position?: string;
+	/**
+	 * Sets environment variables for a spawned native application. Create a map (JSON) object of names to values. This is only available when running assimilation and with the config assimilation.useOpenFinSpawn=false.
+	 */
+	env?: any;
+	/**
+	 * The window to use when calculating any relative launches.
+	 * If not set then the window from which spawn() was called.
+	 */
+	relativeWindow?: WindowIdentifier;
+	/**
+	 * Optional url to launch. Overrides what is passed in "component".
+	 */
+	url?: string;
+	/**
+	 * Optional. Describes which type of component to spawn.
+	 *
+	 * **openfin** - A normal HTML window.
+	 *
+	 * **assimilation** - A window that is managed by the Finsemble assimilation process (usually a native window without source code access). Requires "path" to be specified, which may be the name of an executable on the system path, a system file path or system installed URI.
+	 *
+	 * **native** - A native window that has implemented finsemble.dll. Requires "path" to be specified. For more information(tutorial-RPCService.html).
+	 *
+	 * **application** - A standalone application. This launch a component in its own browser process (splintered, giving it dedicated CPU and memory).
+	 * This can also point to a standalone web application (such as from a third party).
+	 */
+	windowType?: WindowTypes;
+	/**
+	 * If true then the new window will act as a slave to the relativeWindow (or the launching window if relativeWindow is not specified).
+	 * Slave windows will automatically close when their parent windows close.
+	 */
+	slave?: boolean;
+	/***
+	 * @private
+	 */
+	spawnedByWorkspaceService?: boolean;
+	/**
+	 * Number of pixels to stagger (default when neither left, right, top or bottom are set).
+	 */
 	staggerPixels?: number;
+
+	/**
+	 * Where the spawn request is coming from.
+	 * @private
+	 */
 	launchingWindow?: any;
-	options?: {
-		name?: string;
-		url?: string;
-		preloadScripts?: any
-		customData?: {
-			component?: any;
-			previousURL?: string;
-			foreign?: {
-				clients?: any;
-			}
-		};
-		monitor?: any;
-	}
+	/**
+	 * Optional data to pass to the opening window.
+	 * If set, then the spawned window can use {@link WindowClient#getSpawnData} to retrieve the data.
+	 */
+	data?: any,
+	/**
+	 * A pixel value representing the distance from the left edge of the viewport as defined by "position".
+	 * A percentage value may also be used, representing the percentage distance from the left edge of the viewport relative to the viewport's width.
+	 *
+	 * **"adjacent"** will snap to the right edge of the spawning or relative window.
+	 *
+	 * **"center"** will center the window
+	 *
+	 * If neither left nor right are provided, then the default will be to stagger the window based on the last spawned window.
+	 * *Note - the staggering algorithm has a timing element that is optimized based on user testing.*
+	 *
+	 */
+	left?: number | string;
+	/**
+	* Same as left except releated to the right of the viewport.
+  */
+	right?: number | string;
+	/**
+	 * Same as left except related to the top of the viewport.
+	 */
+	top?: number | string;
+	/**
+	 * Same as left except related to the bottom of the viewport.
+	 */
+	bottom?: number | string;
+	/**
+	 *  A pixel or percentage value.
+	 */
+	width?: number | string;
+	/**
+	 *  A pixel or percentage value.
+	 */
+	height?: number | string;
+	/**
+	 * Minimum width window can be resized to.
+	 */
+	minWidth?: number;
+	/**
+	 * Minimum height window can be resized to.
+	 */
+	minHeight?: number;
+	/**
+	 * Maximum height window can be resized to.
+	 */
+	maxHeight?: number;
+	/**
+	 * Maximum width window can be resized to.
+	 */
+	maxWidth?: number;
 };
+
 
 var Components = {};
 var componentArray = [];
@@ -458,40 +609,23 @@ export class Launcher {
 		monitor.unclaimedRect = unclaimedRect;
 	}
 
-	addUserDefinedComponent(message, cb) {
+	/**
+	 * This allows us to add a component that isn't in our list. We use the default manifest config so that our configs are the same across the board.
+	 * We also allow these components to be included in workspaces.
+	 * @param {*} message
+	 * @param {*} cb
+	 */
+	addUserDefinedComponent(message, cb = Function.prototype) {
 		var name = message.data.name;
-
-		var config = {
-			window: {
-				url: message.data.url,
-				windowType: message.data.windowType
-			},
-			foreign: {
-				services: {
-					dockingService: {
-						isArrangeable: true
-					},
-					launcherService: {
-						inject: true
-					}
-				},
-				components: {
-					"App Launcher": {
-						launchableByUser: true
-					},
-					"Window Manager": {
-						persistWindowState: true
-					},
-					"Toolbar": {
-						iconURL: "https://plus.google.com/_/favicon?domain_url=" + message.data.url
-					}
-				}
-			},
-			component: {
-				type: name,
-				isUserDefined: true
-			}
-		};
+		let config = new LauncherDefaults().componentDescriptor;
+		//Add in our configs to the default config
+		config.window.url = message.data.url;
+		config.window.windowType = message.data.windowType;
+		// This allows us to have an icon in our menus and pins
+		config.foreign.components.Toolbar.iconURl = "https://plus.google.com/_/favicon?domain_url=" + message.data.url;
+		// Allows us to know how this component was created. Eventually, this should change when we add a source to our components
+		config.component.isUserDefined = true;
+		config.component.type = name;
 
 		var err = null;
 		if (Components[name]) {
@@ -1010,6 +1144,9 @@ export class Launcher {
 			}
 		}
 
+		// Make sure affinity gets passed down to the container
+		windowDescriptor.affinity = params.affinity ? params.affinity : config.window.affinity;
+
 		// Override all settings with any "options" from the config
 		if (config.window.options) {
 			windowDescriptor = merge(windowDescriptor, config.window.options);
@@ -1029,9 +1166,17 @@ export class Launcher {
 		if (params.options) {
 			windowDescriptor = merge(windowDescriptor, params.options);
 		}
+		// the execJSWhitelist will be an array of windows allowed to call executeJavascript on the resultant window.
+		// It will eventually include the windowService, and the Application or SplinterAgent that actually creates
+		// the window, and the window that initiated the request to spawn the window. The caller of `spawn` is not in the list.
+		if (!windowDescriptor.execJSWhitelist) windowDescriptor.execJSWhitelist = [];
+		windowDescriptor.execJSWhitelist.push(System.Window.getCurrent().name);
 
 		windowDescriptor.customData.manifest = this.rawManifest; // pass in custom data so router can use
 		Logger.system.debug("Launcher.compileWindowDescriptor", windowDescriptor);
+
+		windowDescriptor.securityPolicy = SpawnUtils.getSecurityPolicy(windowDescriptor, this.finsembleConfig);
+		windowDescriptor.permissions = SpawnUtils.getPermissions(windowDescriptor, this.finsembleConfig);
 		return windowDescriptor;
 	}
 
@@ -1405,7 +1550,7 @@ export class Launcher {
 
 		ConfigClient.addListener({ field: "finsemble.components" }, this.onComponentListChanged.bind(this));
 		ConfigClient.addListener({ field: "finsemble.cssOverridePath" }, onCSSOverridePathChanged);
-		let { data: config } = await ConfigClient.getValues(null);
+		let { data: config } = await ConfigClient.getValues(null) as { data: { finsemble: any } };
 		this.appConfig = config;
 		this.finsembleConfig = config.finsemble; // replace manifest version of finsemble with processed version
 		this.persistURL = ConfigUtil.getDefault(config.finsemble, "finsemble.servicesConfig.workspace.persistURL", false);
@@ -1435,6 +1580,9 @@ export class Launcher {
 	 * @param {*} cb
 	 */
 	async getMonitorInfo(params, cb) {
+		// default to the monitor of the window that called getMonitorInfo.
+		// Somehow this was not needed in openfin
+		params.monitor = params.monitor || "mine";
 		// Collect some asynchronous information we need to make our calculations. First all monitors.
 		function addMonitors() {
 			return new Promise(function (resolve) {
@@ -1771,6 +1919,65 @@ export class Launcher {
 
 	/**
 	 *
+	 * @param {*} response  - query responder response
+	 * @param {String} response.data.componentType - The component name
+	 * @param {Object} response.data.manifest - ""
+	 */
+	registerComponent(err, message) {
+		if (!message.data) {
+			return message.sendQueryResponse("no data passed in");
+		}
+		let params = message.data;
+		if (params.manifest && typeof params.manifest !== "object") {
+			params.manifest = new LauncherDefaults().componentDescriptor;
+		} else {
+			//fill in any information that we don't have on the manifest with our defaults.
+			//If the user failed to provide a URL, they get an unknown component.
+			let defaultConfig = this.getDefaultConfig(this.getUnknownComponentName());
+			if (defaultConfig) {
+				defaultConfig = JSON.parse(JSON.stringify(defaultConfig));
+				params.manifest = merge(defaultConfig, params.manifest);
+			}
+		}
+		if (!params.componentType || !params.manifest) {
+			//return error
+			return message.sendQueryResponse("missing required fields");
+		}
+		//validate manifest....@todo we need a way to do this
+		if (Components[params.componentType]) {
+			Logger.error("Launcher Servers:", params.componentType, "Already registered");
+			return message.sendQueryResponse(null, "Component already registered");
+		}
+		Components[params.componentType] = params.manifest;
+		this.update();
+		message.sendQueryResponse(null, "success");
+	}
+
+
+	/**
+	 *
+	 * @param {*} response
+	 * @param {String} response.data.componentType - The component name
+	 */
+	unRegisterComponent(err, message) {
+		if (!message.data) {
+			return message.sendQueryResponse("no data passed in");
+		}
+		let params = message.data;
+		if (!params.componentType) {
+			//return error
+			return message.sendQueryResponse("missing required fields");
+		}
+		if (Components[params.componentType]) {
+			delete Components[params.componentType];
+		}
+		this.update();
+		message.sendQueryResponse(null, "success");
+
+	}
+
+	/**
+	 *
 	 * @private
 	 */
 	async finishSpawn(defaultComponentConfig, windowDescriptor, params, objectReceivedOnSpawn) {
@@ -1823,6 +2030,7 @@ export class Launcher {
 		var activeWindowParams = {
 			name: windowDescriptor.name,
 			uuid: windowDescriptor.uuid,
+			// If they left canMinimize unconfigured, coerce undefined to be true, which is the default
 			canMinimize: canMinimize !== false,
 			canMaximize: canMaximize !== false,
 			windowIdentifier: result.windowIdentifier,
@@ -1831,7 +2039,7 @@ export class Launcher {
 			windowType: windowDescriptor.windowType
 		};
 
-		if (windowDescriptor.windowType == "FinsembleNativeWindow" || windowDescriptor.windowType == "StackedWindow") { // Since objectReceivedOnSpawn is the only thing that dospawn gets to send to finishSpawn, this is where everything that the wrap needs resides
+		if (windowDescriptor.windowType === "FinsembleNativeWindow" || windowDescriptor.windowType === "StackedWindow") { // Since objectReceivedOnSpawn is the only thing that dospawn gets to send to finishSpawn, this is where everything that the wrap needs resides
 			//@note objectReceivedOnSpawn used to be 'finWindow
 			//@todo figure out why the hell we need this information to wrap the thing...should just need the name??
 			activeWindowParams = merge(objectReceivedOnSpawn, activeWindowParams);
@@ -2187,7 +2395,7 @@ export class Launcher {
 				const promiseResolver = (resolve) => {
 					util.getAllMonitors(function (monitors) {
 						for (var i = 0; i < monitors.length; i++) {
-							if (monitors[i].position == params.monitor) {
+							if (monitors[i].position === params.monitor) {
 								return resolve(monitors[i]);
 							}
 						}
@@ -2207,7 +2415,7 @@ export class Launcher {
 								// Once we get the monitor, overwrite 'mine' with its position to avoid further calls
 								util.getAllMonitors(function (monitors) {
 									for (var i = 0; i < monitors.length; i++) {
-										if (monitors[i].name == monitor.name) {
+										if (monitors[i].name === monitor.name) {
 											params.monitor = monitors[i].position;
 											break;
 										}
@@ -2235,9 +2443,9 @@ export class Launcher {
 					monitorFinder = function () {
 						return Promise.resolve(params.monitor);
 					};
-				} else if (params.monitor == "primary" || Number.isInteger(params.monitor)) { // asked to spawn on specific monitor
+				} else if (params.monitor === "primary" || Number.isInteger(params.monitor)) { // asked to spawn on specific monitor
 					monitorFinder = specificMonitorFinder;
-				} else if (params.monitor == "mine") { // asked to spawn on same monitor as parent
+				} else if (params.monitor === "mine") { // asked to spawn on same monitor as parent
 					monitorFinder = relativeMonitorFinder;
 				}
 			}
@@ -2400,7 +2608,7 @@ export class Launcher {
 	* @param {object} params See LauncherClient
 	* @param {function} cb Callback
 	*/
-	async spawn(params: SpawnParams, cb: StandardCallBack) {
+	async spawn(params: SpawnParams, cb: StandardCallback) {
 		let errorString: any = null;
 		let descriptor: any = null;
 
@@ -2429,7 +2637,7 @@ export class Launcher {
 		Logger.perf.debug("Spawn", "start", component, params);
 
 		// if component is not a string then we are trying to spawn multiple components (this is still experimental and not yet used - it is planned so that group launches get easier via pins etc.)
-		if (component && !(typeof component == "string" || component instanceof String)) {
+		if (component && !(typeof component === "string" || component instanceof String)) {
 			this.spawnGroup(component, params, cb);
 			return;
 		}
@@ -2459,10 +2667,7 @@ export class Launcher {
 			}
 			if (!isAdhoc) {
 				// Use a config to drive what component is shown if we can't find one in our list
-				let unknownComponent = this.appConfig.finsemble.servicesConfig && this.appConfig.finsemble.servicesConfig.launcher &&
-					this.appConfig.finsemble.servicesConfig.launcher.hasOwnProperty("unknownComponent") ?
-					this.appConfig.finsemble.servicesConfig.launcher.unknownComponent :
-					null;
+				let unknownComponent = this.getUnknownComponentName();
 				if (unknownComponent) {
 					config = this.getDefaultConfig(unknownComponent);
 				}
@@ -2499,7 +2704,7 @@ export class Launcher {
 			}
 			for (let p in this.pendingWindows) {
 				let pendingWindow = this.pendingWindows[p];
-				if (pendingWindow.componentType == component) {
+				if (pendingWindow.componentType === component) {
 					return cb("A window for this singleton component is in the process of being spawned: " + p);
 				}
 			}
@@ -2584,26 +2789,21 @@ export class Launcher {
 				inject = [inject];
 			}
 			for (var i = 0; i < inject.length; i++) {
-				try {
-					var injectURL = new URL(inject[i]);
-					inject[i] = injectURL.href;
-				} catch (e) {
-					inject[i] = this.finsembleConfig.applicationRoot + "/components/mindcontrol/" + inject[i];
-				}
-				baseDescriptor.preloadScripts.push({ url: inject[i] });
+				baseDescriptor.preloadScripts.push({ url: this._generateURL(inject[i]) });
 			}
 		}
-		baseDescriptor.preload = baseDescriptor.preloadScripts;// For backwards  compatibility. prelod hasn't been used since OF 7
+
+		baseDescriptor.preload = baseDescriptor.preloadScripts;// For backwards  compatibility. preload hasn't been used since OF 7
 		// url overrides the default component url (and can also be used to simply spawn a url). Ignore if spawned by workspace otherwise it will overwrite the url from workspace. This is dealth with at a later point with a check for the persistURL config item.
 		if (params.url && !params.spawnedByWorkspaceService) {
 			baseDescriptor.url = params.url;
 		}
 
-		if (params.windowType == "openfin") params.windowType = "OpenFinWindow"; // Config friendly naming
-		if (params.windowType == "assimilation") params.windowType = "NativeWindow"; // Config friendly naming
-		if (params.windowType == "assimilated") params.windowType = "NativeWindow"; // Config friendly naming
-		if (params.windowType == "native") params.windowType = "FinsembleNativeWindow"; // Config friendly naming
-		if (params.windowType == "application") params.windowType = "OpenFinApplication"; // Config friendly naming
+		if (params.windowType === "openfin") params.windowType = "OpenFinWindow"; // Config friendly naming
+		if (params.windowType === "assimilation") params.windowType = "NativeWindow"; // Config friendly naming
+		if (params.windowType === "assimilated") params.windowType = "NativeWindow"; // Config friendly naming
+		if (params.windowType === "native") params.windowType = "FinsembleNativeWindow"; // Config friendly naming
+		if (params.windowType === "application") params.windowType = "OpenFinApplication"; // Config friendly naming
 		if (params.native) params.windowType = "NativeWindow"; //Backward Compatibility
 		if (baseDescriptor.type === "openfinApplication") params.windowType = "OpenFinApplication"; //Backward Compatibility
 		if (!params.windowType) params.windowType = "OpenFinWindow";
@@ -2621,7 +2821,25 @@ export class Launcher {
 		let newWindowDescriptor = await this.deriveBounds(params);
 		let windowDescriptor = self.compileWindowDescriptor(config, params, baseDescriptor, newWindowDescriptor);
 		windowDescriptor = this.adjustBoundsToBeOnMonitor(windowDescriptor);
-
+		// Preload the titlebar if component supports FSBLHeader and
+		// deliveryMechanism is set to "preload" under -
+		// Window Manager entry in configs/config.json
+		// Check for customData.window.compound
+		const isCompoundWindow = lodashGet(windowDescriptor, 'customData.window.compound', false);
+		// Check for customData.Window Manager.FSBLHeader
+		const componentSupportsHeader = !isCompoundWindow && lodashGet(
+			windowDescriptor, ['customData', 'foreign',
+				'components', 'Window Manager', 'FSBLHeader'], false);
+		// Get the delivery mechanism value from config
+		const deliveryMechanism = this.finsembleConfig['Window Manager'].deliveryMechanism;
+		// Make sure that component supports header and the delivery mechanism is set to "preload"
+		if (componentSupportsHeader && deliveryMechanism === DELIVERY_MECHANISM.PRELOAD) {
+			let url = this._generateURL(Components['windowTitleBar'].window.url);
+			// push into the preloadScripts array
+			windowDescriptor.preloadScripts.push({url: url});
+			// preload is a shallow copy of preloadScripts but when loaded from another workspace they can point to different addresses in memory
+			windowDescriptor.preload.push({url: url});
+		}
 		// TODO, [Terry] persistURL logic should be in the workspace-service, not in launcher service.
 		//[Ryan] the logic should sit in the workspace client( although I think we actually do it in the window client right now)
 		if (params.spawnedByWorkspaceService) {
@@ -2636,7 +2854,7 @@ export class Launcher {
 			// save window properties of pending windows that are used later (e.g. to check dupes or for singleton windows) (will be removed in finishSpawn)
 			this.pendingWindows[windowDescriptor.name] = {
 				uuid: windowDescriptor.uuid || System.Application.getCurrent().uuid,
-				componentType: baseDescriptor.componentType
+				componentType: baseDescriptor.componentType,
 			};
 			let spawnResult = await self.doSpawn(windowDescriptor);
 			let { err, data: objectReceivedOnSpawn } = spawnResult;
@@ -2660,6 +2878,24 @@ export class Launcher {
 
 		cb(errorString, descriptor);
 	}
+
+	/**
+	 * Takes a file path and converts it into preload URL, second argument makes it possible
+	 * to write test for this method in the future.
+	 * @param path The file path
+	 * @param applicationRoot Application root from finsemble config or specified one
+	 */
+	_generateURL(path: string, applicationRoot?: string): string {
+		const appRoot = applicationRoot || this.finsembleConfig.applicationRoot
+		let url;
+		try {
+			url = (new URL(path)).href;
+		} catch (e) {
+			url = `${appRoot}/components/mindcontrol/${path}`
+		}
+		return url;
+	}
+
 	getUnknownComponentName() {
 		return this.appConfig.finsemble.servicesConfig && this.appConfig.finsemble.servicesConfig.launcher &&
 			this.appConfig.finsemble.servicesConfig.launcher.hasOwnProperty("unknownComponent") ?
@@ -2745,7 +2981,7 @@ export class Launcher {
 	update() {
 		// @TODO, this should probably be pubsub (see startPubSubs below)
 		RouterClient.transmit("Launcher.update", {
-			componentList: Components
+			componentList: Components,
 		});
 	}
 }

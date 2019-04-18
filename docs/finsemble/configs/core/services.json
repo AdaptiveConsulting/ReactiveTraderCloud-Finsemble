@@ -2,36 +2,28 @@
 	"comment": "Core services loaded into the finsemble module",
 	"services": {
 		"startupLauncherService": {
-			"visible": false,
-			"showDevConsoleOnVisible": true,
-			"active": true,
+			"spawnAs": "window",
 			"name": "startupLauncherService",
 			"html": "$servicesRoot/startupLauncher/startupLauncher.html",
 			"file": "$servicesRoot/startupLauncher/startupLauncherService.js",
 			"category": "system"
 		},
 		"workspaceService": {
-			"visible": false,
-			"showDevConsoleOnVisible": true,
-			"active": true,
+			"spawnAs": "window",
 			"name": "workspaceService",
 			"html": "$servicesRoot/workspace/workspace.html",
 			"file": "$servicesRoot/workspace/workspaceService.js",
 			"category": "system"
 		},
 		"storageService": {
-			"visible": false,
-			"showDevConsoleOnVisible": true,
-			"active": true,
+			"spawnAs": "window",
 			"name": "storageService",
 			"html": "$servicesRoot/storage/storage.html",
 			"file": "$servicesRoot/storage/storageService.js",
 			"category": "system"
 		},
 		"linkerService": {
-			"visible": false,
-			"showDevConsoleOnVisible": true,
-			"active": true,
+			"spawnAs": "window",
 			"name": "linkerService",
 			"html": "$servicesRoot/linker/linker.html",
 			"file": "$servicesRoot/linker/linkerService.js",
@@ -72,18 +64,14 @@
 			"showWarningForLogStates": ["Info", "Debug", "Verbose"]
 		},
 		"searchService": {
-			"visible": false,
-			"showDevConsoleOnVisible": true,
-			"active": true,
+			"spawnAs": "window",
 			"name": "searchService",
 			"html": "$servicesRoot/search/search.html",
 			"file": "$servicesRoot/search/searchService.js",
 			"category": "system"
 		},
 		"windowService": {
-			"visible": false,
-			"showDevConsoleOnVisible": true,
-			"active": true,
+			"spawnAs": "window",
 			"name": "windowService",
 			"html": "$servicesRoot/window/windowService.html",
 			"file": "$servicesRoot/window/windowService.js",
@@ -119,20 +107,15 @@
 			"category": "system"
 		},
 		"authenticationService": {
-			"visible": false,
-			"showDevConsoleOnVisible": true,
-			"active": true,
+			"spawnAs": "window",
 			"name": "authenticationService",
 			"html": "$servicesRoot/authentication/authentication.html",
 			"file": "$servicesRoot/authentication/authenticationService.js",
 			"category": "system"
 		},
 		"assimilationService": {
-			"useWindow": true,
-			"showDevConsoleOnVisible": true,
+			"spawnAs": "window",
 			"name": "assimilationService",
-			"visible": false,
-			"active": true,
 			"html": "$servicesRoot/assimilation/assimilation.html",
 			"file": "$servicesRoot/assimilation/assimilationService.js",
 			"category": "system",
@@ -149,11 +132,10 @@
 			}
 		},
 		"RPCService": {
-			"useWindow": true,
-			"active": true,
+			"spawnAs": "window",
+			"active": false,
 			"name": "RPCService",
 			"file": "$servicesRoot/RPC/RPCService.js",
-			"visible": false,
 			"html": "$servicesRoot/RPC/RPC.html",
 			"component": {
 				"type": "service"
@@ -167,11 +149,9 @@
 				"preload": "$moduleRoot/FSBL.js"
 			}
 		},
-		"hotkeyService": {
-			"visible": false,
-			"showDevConsoleOnVisible": true,
-			"active": true,
-			"name": "hotkeyService",
+		"hotkeysService": {
+			"spawnAs": "window",
+			"name": "hotkeysService",
 			"html": "$servicesRoot/hotkeys/hotkeys.html",
 			"file": "$servicesRoot/hotkeys/hotkeysService.js",
 			"category": "system"

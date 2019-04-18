@@ -68,6 +68,7 @@ export class BaseWindow extends EventEmitter {
 	dockedPosition: number;
 	enableWindowsAeroSnap: boolean;
 	finishedMove: boolean;
+	isMaximizing: boolean;
 
 	constructor(params) {
 		super();
@@ -80,10 +81,10 @@ export class BaseWindow extends EventEmitter {
 		this.type = null;
 		this.windowType = null;
 		this.windowOptions = {};
-		this.enableWindowsAeroSnap = false;
 		this.bounds = {};
 		this.name;
 		this.windowOptions = {};
+		this.enableWindowsAeroSnap = false;
 		//because we were doing this[i]=params[i] in the constructor jscrambler was creating a reference to "this" above _super_, causing everything to break and it made me cry.
 		this.doConstruction(params);
 		this.TITLE_CHANGED_CHANNEL = "Finsemble." + this.name + ".titleChanged";
@@ -94,6 +95,8 @@ export class BaseWindow extends EventEmitter {
 		this.wrapStateChangeSubscription = RouterClient.subscribe("Finsemble.Component.State." + this.name, this.handleWrapStateChange);
 		this.eventManager = new WindowEventManager({ name: this.name });
 		this.finishedMove = true;
+		// Prevents duplicate calls to maximize from corrupting the window state for OpenfinWindow and stackedWindow implementations
+		this.isMaximizing = false;
 	}
 
 	public static WINDOWSTATE = constants.WINDOWSTATE;
@@ -126,7 +129,7 @@ export class BaseWindow extends EventEmitter {
 		this.finishedMove = false;
 	}
 
-	_stopMove() {
+ 	_stopMove() {
 		this.finishedMove = true;
 	}
 
@@ -1236,7 +1239,7 @@ export class BaseWindow extends EventEmitter {
 		this.windowState = state;
 	}
 
-	saveCompleteWindowState(state, cb = Function.prototype) {
+	saveCompleteWindowState(state, cb?) {
 		if (!state) return cb("No State Provided");
 		if (state.customData && state.customData.manifest) {
 			delete state.customData.manifest;

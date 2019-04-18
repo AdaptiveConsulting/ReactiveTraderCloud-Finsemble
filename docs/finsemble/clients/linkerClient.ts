@@ -3,7 +3,7 @@
 * All rights reserved.
 */
 import Validate from "../common/validate"; // Finsemble args validator
-import BaseClient from "./baseClient";
+import BaseClient, { _BaseClient } from "./baseClient";
 import WindowClient from "./windowClient";
 import LauncherClient from "./launcherClient";
 import DistributedStoreClient from "./distributedStoreClient";
@@ -15,6 +15,36 @@ var sysdebug = Logger.system.debug;
 import { parallel as asyncParallel } from "async";
 
 import deepEqual = require("lodash.isequal");
+
+function makeKey(windowIdentifier) {
+	return (windowIdentifier.windowName + "::" + windowIdentifier.uuid).replace(".", "_");
+};
+
+/**
+	* A convenience function to send data to a callback and also return it
+	* @private
+	* @example
+	* return asyncIt(cb, data)
+*/
+function asyncIt(data, cb?) {
+	if (cb) cb(null, data);
+	return data;
+};
+
+declare type linkerGroup = {
+	/**
+	 * name of the channel
+	 */
+	name: string,
+	/**
+	 * color. Required to use Finsemble's built-in Linker component.
+	 */
+	color?: string,
+	/**
+ * border color. Required to use Finsemble's built-in Linker component.
+ */
+	border?: string
+}
 
 /**
  *
@@ -62,80 +92,82 @@ import deepEqual = require("lodash.isequal");
 // @todo, take a documentation pass. Update Linker tutorial. Point to Linker Component docs. Default config.
 // @todo, move linker config from finsemble to finsemble-seed and finsemble-sales-demo
 
-var LinkerClient = function (params) {
-	Validate.args(params, "object=") && params && (Validate as any).args2("params.onReady", params.onReady, "function=");
-	BaseClient.call(this, params);
-	this.launcherClient = params.clients.launcherClient;
-	this.windowClient = params.clients.windowClient;
-	this.distributedStoreClient = params.clients.distributedStoreClient;
+class LinkerClient extends _BaseClient {
+	constructInstance: () => LinkerClient;
+	linkerStore;
+	launcherClient;
+	windowClient;
+	distributedStoreClient;
+	dontPersistYet: boolean;
 
-	this.stateChangeListeners = [];
+	constructor(params) {
+		super(params);
+		Validate.args(params, "object=") && params && (Validate as any).args2("params.onReady", params.onReady, "function=");
+		this.launcherClient = params.clients.launcherClient;
+		this.windowClient = params.clients.windowClient;
+		this.distributedStoreClient = params.clients.distributedStoreClient;
+	}
+
+	stateChangeListeners = [];
 
 	// Linker Data
-	this.allChannels = [];
-	this.channels = {};
-	this.clients = {};
+	allChannels = [];
+	channels = {};
+	clients = {};
 
-	var channelListenerList = []; // Used to keep track of each router listener that is enabled
-	var dataListenerList = {};
-	var self = this;
-
-	/**
-	 * @private
-	 */
-	this.makeKey = function (windowIdentifier) {
-		return (windowIdentifier.windowName + "::" + windowIdentifier.uuid).replace(".", "_");
-	};
+	channelListenerList = []; // Used to keep track of each router listener that is enabled
+	dataListenerList = {};
 
 	/**
-	 * A convenience function to send data to a callback and also return it
+	 * 1/24/19 this is Brad guessing. This function has never existed. This is the first commit where 'getChannel' is referenced...but not defined.
+	 *
+	 * https://github.com/ChartIQ/finsemble/blob/ad25aa219c5fac60c277bccf35dea43568da2a07/src/clients/linkerClient.js
+	 *
+	 * No idea how it ever worked.
 	 * @private
-	 * @example
-	 * return asyncIt(cb, data)
+	 *
 	 */
-	var asyncIt = function (data, cb) {
-		if (cb) cb(null, data);
-		return data;
-	};
+	getChannel(name: string) {
+		return this.allChannels.filter(channel => channel.name === name).length > 0;
+	}
+
+
 	/**
 	 * Create a new Linker channel. This channel will be available *globally*.
 	 * @param {object} params
-	 * @param {string} name - Name of the channel
-	 * @param {string} [color] - Required for use with Finsemble's built in Linker component
-	 * @param {string} [border] - Required for use with Finsemble's built in Linker component
-	 * @param {function} [cb] - Optional callback to retrieve returned results asynchyronously
+	 * @param cb - Optional. Callback to retrieve returned results asynchyronously
 	 * @return {Array.<string>} Returns an array of all available channels
 	 * @private
 	 * @since TBD deprecated createGroup
 	 * @example
 	 * LinkerClient.createChannel({name: "red", color: "#ff0000", border: "#ffffff"}, callback)
 	 */
-	this.createChannel = function (params, cb) {
+	createChannel(params: linkerGroup, cb: Function) {
 		sysinfo("LinkerClient.createChannel", "PARAMS", params);
 		Validate.args(params, "object");
 
 		if (!params.name) {
 			sysdebug("LinkerClient.createChannel: Name is required");
-			return asyncIt(self.allChannels, cb);
+			return asyncIt(this.allChannels, cb);
 		}
 
-		if (self.getChannel(params.name)) {
+		if (this.getChannel(params.name)) {
 			sysdebug("LinkerClient.createChannel: Channel " + params.name + " Already Exists");
-			return asyncIt(self.allChannels, cb);
+			return asyncIt(this.allChannels, cb);
 		}
 
-		self.allChannels.push(params);
-		self.allGroups = self.allChannels; // backward compatiblity
-		self.linkerStore.setValue({ field: "params", value: self.allChannels });
+		this.allChannels.push(params);
+		this.allGroups = this.allChannels; // backward compatiblity
+		this.linkerStore.setValue({ field: "params", value: this.allChannels });
 
-		return asyncIt(self.allChannels, cb);
+		return asyncIt(this.allChannels, cb);
 	};
 
 	/**
 	 * Remove a Linker channel. It will be removed globally. Any component that is currently assigned to this channel will be unassigned.
 	 *
 	 * @param {string} name - The name of the channel to remove
-	 * @param {function} [cb] - Optional callback to retrieve returned results asynchyronously
+	 * @param cb - Optional. Callback to retrieve returned results asynchyronously
 	 * @returns {Array.<string>} Returns an array of available channels
 	 * @since TBD deprecated deleteGroup
 	 * @private
@@ -144,15 +176,15 @@ var LinkerClient = function (params) {
 	 * LinkerClient.removeChannel("purple")
 	 *
 	 */
-	this.removeChannel = function (name, cb) {
+	removeChannel(name: string, cb: Function) {
 		sysinfo("LinkerClient.removeChannel", "NAME", name);
 		Validate.args(name, "string");
-		if (!self.getChannel(name)) {
+		if (!this.getChannel(name)) {
 			sysdebug("Channel " + name + "does not exist", null);
-			return asyncIt(self.allChannels, cb);
+			return asyncIt(this.allChannels, cb);
 		}
 
-		let channels = self.allChannels;
+		let channels = this.allChannels;
 		for (var i = 0; i < channels.length; i++) {
 			if (name === channels[i].name) {
 				channels.splice(i, 1);
@@ -160,10 +192,10 @@ var LinkerClient = function (params) {
 			}
 		}
 
-		self.linkerStore.setValue({ field: "channels", value: self.allChannels });
+		this.linkerStore.setValue({ field: "channels", value: this.allChannels });
 
 		// TODO: Verify that this even works
-		let clients = self.clients;
+		let clients = this.clients;
 		for (var c in clients) {
 			var client = clients[c];
 			for (var channel in client.channels) {
@@ -174,41 +206,41 @@ var LinkerClient = function (params) {
 			}
 		}
 
-		self.linkerStore.setValue({ field: "clients", value: self.clients });
+		this.linkerStore.setValue({ field: "clients", value: this.clients });
 
-		return asyncIt(self.allChannels, cb);
+		return asyncIt(this.allChannels, cb);
 	};
 
 	/**
 	 * Convenience function to update the client information in the store.
 	 * @private
 	 */
-	this.updateClientInStore = function (key) {
-		self.linkerStore.setValue({ field: "clients." + key, value: self.clients[key] });
+	updateClientInStore(key) {
+		this.linkerStore.setValue({ field: "clients." + key, value: this.clients[key] });
 	};
 	/**
 	 * Add a component to a Linker channel programatically. Components will begin receiving any new contexts published to this channel but will *not* receive the currently established context.
 	 *
-	 * @param {string| Array.<string>} channel - The name of the channel to link our component to, or an array of names.
-	 * @param {windowIdentifier} [windowIdentifier] -  Window Identifier for the component (optional). Current window if left null.
-	 * @param {function} [cb] - Optional callback to retrieve returned results asynchyronously
+	 * @param {string} channel - The name of the channel to link our component to, or an array of names.
+	 * @param windowIdentifier -  Optional. Window Identifier for the component. If null, it defaults to the current window.
+	 * @param cb - Optional. Callback to retrieve returned results asynchyronously.
 	 * @return {LinkerState} The new state: linked channels, all channels
 	 * @since 2.3 deprecated addToGroup
 	 * @example
 	 *
-	 * LinkerClient.linkToChannel("purple", null); // Link current window to channel "purple"
-	 * LinkerClient.linkToChannel("purple", windowIdentifier); // Link the requested window to channel "purple"
+	 * LinkerClient.linkToChannel("purple", null); // Link current window to channel "purple".
+	 * LinkerClient.linkToChannel("purple", windowIdentifier); // Link the requested window to channel "purple".
 	 *
 	 */
-	this.linkToChannel = function (channel, windowIdentifier, cb) {
+	linkToChannel(channel: string | string[], windowIdentifier: WindowIdentifier, cb?: Function) {
 		sysinfo("LinkerClient.linkToChannel", "CHANNEL", channel, "COMPONENT", windowIdentifier);
 		Validate.args(channel, "string", windowIdentifier);
 		if (!windowIdentifier) windowIdentifier = this.windowClient.getWindowIdentifier();
 
-		var key = self.makeKey(windowIdentifier);
+		var key = makeKey(windowIdentifier);
 
-		if (!self.clients[key]) {
-			self.clients[key] = {
+		if (!this.clients[key]) {
+			this.clients[key] = {
 				client: windowIdentifier,
 				channels: {}
 			};
@@ -216,23 +248,23 @@ var LinkerClient = function (params) {
 
 		if (Array.isArray(channel)) {
 			for (let i = 0; i < channel.length; i++) {
-				self.clients[key].channels[channel[i]] = true;
+				this.clients[key].channels[channel[i]] = true;
 			}
 		} else {
-			self.clients[key].channels[channel] = true;
+			this.clients[key].channels[channel] = true;
 		}
 
-		self.updateClientInStore(key);
+		this.updateClientInStore(key);
 
-		return asyncIt(self.getState(windowIdentifier), cb);
+		return asyncIt(this.getState(windowIdentifier), cb);
 	};
 
 	/**
 	 * Unlinks a component from a Linker channel.
 	 *
-	 * @param {string|Array.<string>} channel - Channel to remove, or an array of channels. If null, then all channels will be removed.
-	 * @param {windowIdentifier} [windowIdentifier] -  Window Identifier for the client (optional). Current window if left null.
-	 * @param {function} [cb] - Optional callback to retrieve returned results asynchyronously
+	 * @param {string} channel - Channel to remove, or an array of channels. If null, then all channels will be removed.
+	 * @param windowIdentifier -  Window Identifier for the client (optional). Current window if left null.
+	 * @param cb - Optional. Callback to retrieve returned results asynchyronously
 	 * @return {LinkerState} Returns the new state: linked channels, all channels
 	 * @since 2.3 deprecated removeFromGroup
 	 * @example
@@ -241,19 +273,14 @@ var LinkerClient = function (params) {
 	 * LinkerClient.unlinkFromChannel("purple", windowIdentifier) // Unlink the requested window form channel "purple"
 	 *
 	 */
-	this.unlinkFromChannel = function (channel, windowIdentifier, cb) {
+	unlinkFromChannel(channel: string | string[], windowIdentifier: WindowIdentifier, cb?: Function) {
 		sysinfo("LinkerClient.unlinkFromChannel", "CHANNEL", channel, "WINDOW IDENTIFIER", windowIdentifier);
 		Validate.args(channel, "string", windowIdentifier);
 		if (!windowIdentifier) windowIdentifier = this.windowClient.getWindowIdentifier();
 
-		var key = self.makeKey(windowIdentifier);
-		var componentEntry = self.clients[key];
+		var key = makeKey(windowIdentifier);
+		var componentEntry = this.clients[key];
 
-		if (!componentEntry || !componentEntry.channels[channel]) {
-			let component = self.linkerStorage.clients[key];
-			sysdebug("Component was not in specified channel " + channel, component, component.channels[channel]);
-			return asyncIt(self.getState(windowIdentifier), cb);
-		}
 		if (Array.isArray(channel)) {
 			// Delete an array of channels
 			for (let i = 0; i < channel.length; i++) {
@@ -265,62 +292,68 @@ var LinkerClient = function (params) {
 				delete componentEntry.channels[name];
 			}
 		} else {
+			//Cannot access componentEntry.channels[channel] if channel is an array.
+			if (!componentEntry || !componentEntry.channels[channel]) {
+				let component = this.clients[key];
+				sysdebug("Component was not in specified channel " + channel, component, component.channels[channel]);
+				return asyncIt(this.getState(windowIdentifier), cb);
+			}
 			// Delete a specific channel
 			delete componentEntry.channels[channel];
 		}
-		self.updateClientInStore(key);
+		this.updateClientInStore(key);
 
-		return asyncIt(self.getState(windowIdentifier), cb);
+		return asyncIt(this.getState(windowIdentifier), cb);
 	};
 
 	/**
 	 * Returns all available Linker channels
-	 * @param {function} [cb] - Optional callback to retrieve returned results asynchyronously
+	 * @param cb - Optional. Callback to retrieve returned results asynchyronously
 	 * @return {array} An array of all channels. Each array item is {name:channelName} plus any other optional fields such as color.
 	 * @since 2.3 deprecated getAllGroups
 	 * @example
 	 * LinkerClient.getAllChannels()
 	 */
-	this.getAllChannels = function (cb) {
+	getAllChannels(cb?: Function) {
 		sysinfo("LinkerClient.getAllChannels");
-		return asyncIt(self.allChannels, cb);
+		return asyncIt(this.allChannels, cb);
 	};
 
 	/**
 	 * Retrieve all channels linked to the requested component. Also returns all available channels.
-	 * @param {windowIdentifier} [windowIdentifier] Which component, or null for the current window.
-	 * @param {function} [cb] - Optional callback to retrieve returned results asynchyronously
+	 * @param windowIdentifier Which component, or null for the current window.
+	 * @param cb - Optional. Callback to retrieve returned results asynchyronously
 	 * @return {LinkerState} The current state: linked channels, all channels
 	 * @since 2.3 deprecated getGroups, no longer supports a callback
 	 * @example
 	 * var state=LinkerClient.getState(windowIdentifier)
 	 */
-	this.getState = function (windowIdentifier, cb) {
+	getState(windowIdentifier?: WindowIdentifier, cb?: StandardCallback) {
 		sysinfo("LinkerClient.getState", "WINDOW IDENTIFIER", windowIdentifier);
 		var state = {
 			channels: {},
-			allChannels: self.allChannels
+			allChannels: this.allChannels
 		};
 		if (!windowIdentifier) windowIdentifier = this.windowClient.getWindowIdentifier();
-		if (!Object.keys(self.clients).length) {
+		if (!Object.keys(this.clients).length) {
 			return asyncIt(state, cb);
 		}
-		var key = self.makeKey(windowIdentifier);
-		var componentEntry = self.clients[key];
+		var key = makeKey(windowIdentifier);
+		var componentEntry = this.clients[key];
 		if (!componentEntry) {
 			return asyncIt(state, cb);
 		}
 
 		// Create an array of channel descriptors, one for each linked channel
 		// Convert {"purple": true, "green":true} to [{"name":"purple"},{"name":"green"}]
-		state.channels = self.allChannels.filter(function (value) {
+		state.channels = this.allChannels.filter(function (value) {
 			return componentEntry.channels && componentEntry.channels[value.name] === true;
 		});
 
 		// Cleanup code in case of an oops. If we're accessing this component, it must be alive. Make sure the store reflects this.
 		if (!componentEntry.active) {
 			componentEntry.active = true;
-			self.linkerStore.setValue({ field: "clients." + key, value: componentEntry });
+			this.linkerStore.setValue({ field: "clients." + key, value: componentEntry });
 		}
 
 		return asyncIt(state, cb);
@@ -329,32 +362,36 @@ var LinkerClient = function (params) {
 	/**
 	* Remove all listeners for the specified dataType.
 	* @param {String}  dataType - The data type be subscribed to
-	* @param {function} [cb] - Optional callback to retrieve returned results asynchyronously (empty object)
+	* @param {function} cb - Optional. Callback to retrieve returned results asynchyronously (empty object)
 	*
 	* @example
 	* LinkerClient.unsubscribe("symbol");
 	*/
-	this.unsubscribe = function (dataType, cb) {
+	unsubscribe(dataType: string, cb?: StandardCallback) {
 		sysinfo("LinkerClient.unsubscribe", "DATA TYPE", dataType);
 		Validate.args(dataType, "string");
-		delete dataListenerList[dataType];
+		delete this.dataListenerList[dataType];
 		return asyncIt({}, cb);
 	};
 
 	/**
 	* Publish a piece of data. The data will be published to *all channels* that the component is linked to. Foreign components that are linked to those channels will receive the data if they have subscribed to this dataType. They can then use that data to synchronize their internal state. See {@link LinkerClient#subscribe}.
 	* @param {Object}  params
-	* @param {String}  params.dataType - The data type being sent
-	* @param {any}  params.data - the data ("context") being transmitted
-    * @param {Array.<string>} [params.channels] - Optionally specify which channels to publish this piece of data. This overrides the default which is to publish to all linked channels.
-	* @param {function} [cb] - Optional callback to retrieve returned results asynchyronously
+	* @param {String}  params.dataType - The data type being sent.
+	* @param {any}  params.data - The data ("context") being transmitted.
+    * @params.channels - Optional. Specifies which channels publish this piece of data. This overrides the default which is to publish to all linked channels.
+	* @param cb - Optional. Callback to retrieve returned results asynchyronously
 	* @example
 	* LinkerClient.publish({dataType:"symbol",data:"AAPL"})
 	*/
-	this.publish = function (params, cb) {
+	publish(params: {
+		dataType: string,
+		data: any,
+		channels?: string[]
+	}, cb: StandardCallback) {
 		sysinfo("LinkerClient.publish", "PARAMS", params);
 		Validate.args(params.dataType, "string", params.data, "any");
-		let channels = Object.keys(self.channels);
+		let channels = Object.keys(this.channels);
 		if (params.channels) channels = params.channels;
 		for (var i = 0; i < channels.length; i++) {
 			var channel = channels[i];
@@ -374,13 +411,13 @@ var LinkerClient = function (params) {
 		console.log("New symbol received from a remote component " + data);
 	  });
 	*/
-	this.subscribe = function (dataType, cb) {
+	subscribe(dataType: string, cb: StandardCallback) {
 		sysinfo("LinkerClient.subscribe", "DATA TYPE", dataType);
 		Validate.args(dataType, "string", cb, "function");
-		if (dataListenerList[dataType]) {
-			return dataListenerList[dataType].push(cb);
+		if (this.dataListenerList[dataType]) {
+			return this.dataListenerList[dataType].push(cb);
 		}
-		dataListenerList[dataType] = [cb];
+		this.dataListenerList[dataType] = [cb];
 	};
 
 	/**
@@ -388,22 +425,26 @@ var LinkerClient = function (params) {
 	 *
 	 * @param {object} params Optional
 	 * @param {Array.<string>} params.channels Restrict to these channels.
-	 * @param {Array.<string>} params.componentTypes Restrict to these componentTypes
-	 * @param {windowIdentifier} params.windowIdentifier Restrict to this component
-	 * @param {function} [cb] - Optional callback to retrieve returned results asynchyronously
-	 * @returns {array} An array of linked components, their windows, and their linked channels
+	 * @param {Array.<string>} params.componentTypes Restrict to these componentTypes.
+	 * @param {windowIdentifier} params.windowIdentifier Restrict to this component.
+	 * @param cb - Optional. Callback to retrieve returned results asynchyronously.
+	 * @returns {array} An array of linked components, their windows, and their linked channels.
 	 *
 	 * @since 1.5
 	 * @since 2.3 deprecated getLinkedWindows
-	 * @example Get all components linked to a given component
+	 * @example <caption>Get all components linked to a given component</caption>
 	 * LinkerClient.getLinkedComponents({windowIdentifier: wi});
 	 *
-	 * @example Get all components linked to channel "purple"
+	 * @example <caption>Get all components linked to channel "purple"</caption>
 	 * LinkerClient.getLinkedComponents({channels: ['purple']});
 	 * // Response format: [{windowName: 'Window Name', componentType: 'Component Type', uuid: 'uuid', channels: ['purple'] }, ..]
 	 *
 	 */
-	this.getLinkedComponents = function (params, cb) {
+	getLinkedComponents(params: {
+		channels?: string[],
+		componentTypes?: string[],
+		windowIdentifier?: WindowIdentifier
+	}, cb?: StandardCallback) {
 		sysinfo("LinkerClient.getLinkedComponents", "PARAMS", params);
 		var linkedWindows = [];
 
@@ -421,8 +462,8 @@ var LinkerClient = function (params) {
 
 		// If we have a client
 		if (params.windowIdentifier) {
-			var key = self.makeKey(params.windowIdentifier);
-			var myChannels = Object.keys(self.clients[key].channels);
+			var key = makeKey(params.windowIdentifier);
+			var myChannels = Object.keys(this.clients[key].channels);
 
 			if (!params.channels) {
 				// If no channels are specified, use the window identifier's channels
@@ -434,11 +475,11 @@ var LinkerClient = function (params) {
 		}
 
 		// if no channels, assume all channels
-		if (!params.channels) params.channels = self.getAllChannels().map(o => o.name);
+		if (!params.channels) params.channels = this.getAllChannels().map(o => o.name);
 
 		// Get all active
-		for (let c in self.clients) {
-			var component = self.clients[c];
+		for (let c in this.clients) {
+			var component = this.clients[c];
 			if (!component.channels) { // frame fix
 				component = component[Object.keys(component)[0]];
 			}
@@ -461,8 +502,8 @@ var LinkerClient = function (params) {
 
 	//Need to do this better. Get newest items so we don't create it every time
 	//This looks to see if there is a listener for a specific data type
-	function handleListeners(err, data) {
-		var listeners = dataListenerList[data.data.type];
+	handleListeners = (err, data) => {
+		var listeners = this.dataListenerList[data.data.type];
 		if (listeners && listeners.length > 0) {
 			for (var i = 0; i < listeners.length; i++) {
 				listeners[i](data.data.data, { data: data.data.data, header: data.header, originatedHere: data.originatedHere });
@@ -471,31 +512,31 @@ var LinkerClient = function (params) {
 	}
 
 	//add new listeners for channels when channels are updated
-	function updateListeners() {
+	updateListeners() {
 		// Remove listeners
-		for (let i = channelListenerList.length - 1; i >= 0; i--) {
-			let channel = channelListenerList[i];
-			let channels = Object.keys(self.channels);
-			if (!channels.filter(function (g) { return g == channel; }).length) {
-				self.routerClient.removeListener(channel, handleListeners);
-				channelListenerList.splice(i, 1);
+		for (let i = this.channelListenerList.length - 1; i >= 0; i--) {
+			let channel = this.channelListenerList[i];
+			let channels = Object.keys(this.channels);
+			if (!channels.filter((g) => { return g == channel; }).length) {
+				this.routerClient.removeListener(channel, this.handleListeners);
+				this.channelListenerList.splice(i, 1);
 			}
 		}
 
 		// Setup new listeners if needed
-		var channels = Object.keys(self.channels);
+		var channels = Object.keys(this.channels);
 		for (let i = 0; i < channels.length; i++) {
 			let channel = channels[i];
-			if (!channelListenerList.includes(channel)) {
-				self.routerClient.addListener(channel, handleListeners);
-				channelListenerList.push(channel);
+			if (!this.channelListenerList.includes(channel)) {
+				this.routerClient.addListener(channel, this.handleListeners);
+				this.channelListenerList.push(channel);
 			}
 		}
 
 		// Send state update to any registered external listeners
-		var state = self.getState();
-		for (let i = 0; i < self.stateChangeListeners.length; i++) {
-			self.stateChangeListeners[i](null, state);
+		var state = this.getState();
+		for (let i = 0; i < this.stateChangeListeners.length; i++) {
+			this.stateChangeListeners[i](null, state);
 		}
 	}
 
@@ -509,8 +550,8 @@ var LinkerClient = function (params) {
 	 * 	}
 	 * });
 	 */
-	this.onStateChange = function (cb) {
-		self.stateChangeListeners.push(cb);
+	onStateChange(cb: StandardCallback) {
+		this.stateChangeListeners.push(cb);
 	};
 
 	/**
@@ -518,7 +559,7 @@ var LinkerClient = function (params) {
 	 * @private
 	 * @param {object} state The state enabled for this Linker instance
 	 */
-	this.persistState = function (state) {
+	persistState(state) {
 		console.info("saving state", state);
 		this.windowClient.setComponentState({
 			field: "Finsemble_Linker",
@@ -530,68 +571,68 @@ var LinkerClient = function (params) {
 	/**
 	 * @private
 	 */
-	this.start = function (cb) {
+	start(cb) {
 		this.dontPersistYet = true;
 		sysdebug("LinkerClient Loading Channels");
-		var wi = self.windowClient.getWindowIdentifier();
-		var key = self.makeKey(wi);
+		var wi = this.windowClient.getWindowIdentifier();
+		var key = makeKey(wi);
 		// Connect to the global linker store. This is shared by all instances.
-		self.distributedStoreClient.getStore({ store: "Finsemble_Linker", global: true }, function (err, linkerStore) {
-			self.linkerStore = linkerStore;
+		this.distributedStoreClient.getStore({ store: "Finsemble_Linker", global: true }, (err, linkerStore) => {
+			this.linkerStore = linkerStore;
 			// Get all the available channels for Linkers
-			linkerStore.getValues(["channels"], function (err, values) {
+			linkerStore.getValues(["channels"], (err, values) => {
 				if (values && values["channels"]) {
-					self.allChannels = values["channels"];
-					self.allGroups = self.allChannels; // backward compatiblity
+					this.allChannels = values["channels"];
+					this.allGroups = this.allChannels; // backward compatiblity
 				}
 				// Now get the linker state (which channels are enabled) for this instance. The windowClient will have retrieved this from Storage.
 				// Use this to initialize our channel state.
-				self.windowClient.getComponentState({ field: "Finsemble_Linker" }, function (err, linkerData) {
-					self.channels = {};
-					self.clients[key] = {
+				this.windowClient.getComponentState({ field: "Finsemble_Linker" }, (err, linkerData) => {
+					this.channels = {};
+					this.clients[key] = {
 						client: wi,
 						active: true,
-						channels: {}
+						channels: {},
 					};
 					if (linkerData) {
-						self.channels = linkerData;
-						self.clients[key].channels = linkerData;
+						this.channels = linkerData;
+						this.clients[key].channels = linkerData;
 					}
 					// Feed back to the distributed store the state that we got out of storage.
-					self.updateClientInStore(key);
+					this.updateClientInStore(key);
 
 					// If we've just been spawned, then check to see if we were passed any overrides
-					var spawnData = self.windowClient.getSpawnData();
+					var spawnData = this.windowClient.getSpawnData();
 					if (spawnData && spawnData.linker) {
 						let existingLinks = spawnData.linker.channels;
 						if (spawnData.linker.groups) existingLinks = spawnData.linker.groups; // backward compatibility
-						self.linkToChannel(existingLinks, wi);
+						this.linkToChannel(existingLinks, wi);
 					} else {
-						updateListeners();
+						this.updateListeners();
 					}
 					cb();
 				});
 			});
 
-			linkerStore.addListener({ field: "clients." + key }, function (err, response) {
+			linkerStore.addListener({ field: "clients." + key }, (err, response) => {
 				sysdebug("My Channels Updated");
 				if (!response.value) return;
 				let responseChannels = response.value.channels || response.value.groups;
-				let areChannelsEqual = deepEqual(responseChannels, self.channels);
+				let areChannelsEqual = deepEqual(responseChannels, this.channels);
 				// If channels change, save, this prevents initial empty channels from saving.
 				if (responseChannels && !areChannelsEqual) {
-					self.persistState(responseChannels);
-					self.channels = responseChannels;
-					updateListeners();
+					this.persistState(responseChannels);
+					this.channels = responseChannels;
+					this.updateListeners();
 				}
 			});
 
-			linkerStore.addListener({}, function (err, response) {
+			linkerStore.addListener({}, (err, response) => {
 				var values = response.value.values;
-				self.allChannels = values.channels;
-				if (values.groups) self.allChannels = values.groups; // backward compatiblity
-				self.allGroups = self.allChannels; // backward compatiblity
-				self.clients = values.clients;
+				this.allChannels = values.channels;
+				if (values.groups) this.allChannels = values.groups; // backward compatiblity
+				this.allGroups = this.allChannels; // backward compatiblity
+				this.clients = values.clients;
 			});
 		});
 	};
@@ -599,12 +640,12 @@ var LinkerClient = function (params) {
 	/**
 	 * @private
 	 */
-	this.onClose = function () {
+	onClose = () => {
 		var wi = this.windowClient.getWindowIdentifier();
-		var key = self.makeKey(wi);
-		if (self.clients[key]) {
-			self.clients[key].active = false;
-			self.updateClientInStore(key);
+		var key = makeKey(wi);
+		if (this.clients[key]) {
+			this.clients[key].active = false;
+			this.updateClientInStore(key);
 		}
 	};
 
@@ -613,7 +654,7 @@ var LinkerClient = function (params) {
 	 * @param {string} channel
 	 * @private
 	 */
-	this.hyperFocus = function (channel) {
+	hyperFocus(channel) {
 		//var windowNames = this.getLinkedComponents({ channels: channel }).map(c => c.windowName);
 		this.launcherClient.hyperFocus({ windowList: this.getLinkedComponents({ channels: channel }) });
 	};
@@ -625,7 +666,7 @@ var LinkerClient = function (params) {
 	 * @param {params.restoreWindows} whether to restore windows that are minimized prior to calling bring to front.
 	 * @private
 	 */
-	this.bringAllToFront = function (params) {
+	bringAllToFront(params) {
 		let { channel, restoreWindows } = params;
 		//var windowNames = this.getLinkedComponents({ channels: channel }).map(c => c.windowName);
 		this.launcherClient.bringWindowsToFront({ restoreWindows: restoreWindows, windowList: this.getLinkedComponents({ channels: channel }) });
@@ -635,79 +676,103 @@ var LinkerClient = function (params) {
 	 * Start backward compatibility
 	 * @private
 	 */
-	this.groups = this.channels;
-	this.allGroups = this.allChannels;
+	groups = this.channels;
+	allGroups = this.allChannels;
 
-	this.createGroup = function (group, cb) {
+	createGroup(group: linkerGroup, cb) {
 		return this.createChannel(group, cb);
 	};
-	this.deleteGroup = function (groupName, cb) {
+
+	deleteGroup(groupName: string, cb) {
 		return this.removeChannel(groupName, cb);
 	};
-	this.addToGroup = function (groupName, client, cb) {
+
+	addToGroup(groupName: string, client: WindowIdentifier, cb?: StandardCallback) {
 		var state = this.linkToChannel(groupName, client);
 		if (cb) cb(null, state);
 		return state;
 	};
-	this.removeFromGroup = function (groupName, client, cb) {
+
+	removeFromGroup(groupName: string, client: WindowIdentifier, cb?: StandardCallback) {
 		var state = this.unlinkFromChannel(groupName, client);
 		if (cb) cb(null, state);
 		return state;
 	};
-	/*this.allGroups = {
-		map: function (cb) {
-			return self.getAllChannels().map(cb);
-		}
-	};*/
-	this.getAllGroups = function (cb) {
+
+	getAllGroups(cb: Function) {
 		var channels = this.getAllChannels();
 		if (cb) cb(channels);
 		return channels;
 	};
-	this.getGroups = function (client, cb) {
+	getGroups(client?: WindowIdentifier, cb?: Function) {
 		var state = this.getState(client);
 		state.groups = state.channels;
 		return asyncIt(state, cb);
 	};
-	this.unSubscribe = function (dataType) {
+
+	unSubscribe(dataType: string) {
 		this.unsubscribe(dataType);
 	};
-	this.getLinkedWindows = function (params, cb) {
+	/**
+	 * Retrieves an array of all components with links that match the given parameters. If no parameters are specified, all windows with established links will be returned.
+	 *
+	 * @param {object} params Optional
+	 * @param {Array.<string>} params.channels Restrict to these channels.
+	 * @param {Array.<string>} params.componentTypes Restrict to these componentTypes
+	 * @param {windowIdentifier} params.windowIdentifier Restrict to this component
+	 * @param cb - Optional. Callback to retrieve returned results asynchyronously
+	 * @returns {array} An array of linked components, their windows, and their linked channels
+	 *
+	 * @example <caption>Get all components linked to a given component</caption>
+	 * LinkerClient.getLinkedWindows({windowIdentifier: wi});
+	 *
+	 * @example <caption>Get all Windows linked to channel "purple"</caption>
+	 * LinkerClient.getLinkedComponents({channels: ['purple']});
+	 * // Response format: [{windowName: 'Window Name', componentType: 'Component Type', uuid: 'uuid', channels: ['purple'] }, ..]
+	 *
+	 */
+	getLinkedWindows(params: {
+		channels?: string[],
+		componentTypes?: string[],
+		windowIdentifier?: WindowIdentifier,
+		groups?: string[],
+		client?: any
+	}, cb?: StandardCallback) {
 		params.groups = params.channels;
 		params.windowIdentifier = params.client;
 		return this.getLinkedComponents(params, cb);
 	};
-	this.windowIdentifier = function (params, cb) {
+	windowIdentifier(params, cb) {
 		return asyncIt(this.windowClient.getWindowIdentifier(), cb);
 	};
 
-	this.onLinksUpdate = {
-		push: function (cb) {
-			self.stateChangeListeners.push(function (err, response) {
+	onLinksUpdate = {
+		push: (cb) => {
+			this.stateChangeListeners.push(function (err, response) {
 				if (response) {
 					response.groups = response.channels;
 				}
 				cb(err, { groups: response });
 			});
-		}
+		},
 	};
-	var linkerWindow = null;
-	var loading = false;
-	this.openLinkerWindow = function (cb) {
+	linkerWindow = null;
+	loading = false;
+	openLinkerWindow(cb) {
 		Validate.args(cb, "function");
-		if (loading) { return; } // If in process of loading then return. This prevents double clicks on the icon.
+		if (this.loading) { return; } // If in process of loading then return. This prevents double clicks on the icon.
 
-		function showLinkerWindowInner() {
-			self.routerClient.query("Finsemble.LinkerWindow.Show", {
-				groups: self.getGroups().groups,
-				windowIdentifier: self.windowClient.getWindowIdentifier(),
-				windowBounds: self.windowClient.getWindowBounds()
+		const showLinkerWindowInner = () => {
+			this.routerClient.query("Finsemble.LinkerWindow.Show", {
+				groups: this.getGroups().groups,
+				windowIdentifier: this.windowClient.getWindowIdentifier(),
+				windowBounds: this.windowClient.getWindowBounds(),
 			}, function () { });
 		}
-		if (linkerWindow) {
-			linkerWindow.isShowing(function (showing) {
+		if (this.linkerWindow) {
+			this.linkerWindow.isShowing((showing) => {
 				if (showing) {
-					linkerWindow.hide();
+					this.linkerWindow.hide();
 				} else {
 					showLinkerWindowInner();
 				}
@@ -716,6 +781,7 @@ var LinkerClient = function (params) {
 		}
 		showLinkerWindowInner();
 	};
+
 
 	/**
 	 * End backward compatibility
@@ -742,7 +808,7 @@ function constructInstance(params?) {
 		clients: params,
 		startupDependencies: {
 			services: ["linkerService"],
-			clients: ["windowClient", "distributedStoreClient"]
+			clients: ["windowClient", "distributedStoreClient"],
 		},
 		onReady: function (cb) {
 			sysdebug("Linker onReady");
@@ -751,19 +817,19 @@ function constructInstance(params?) {
 			setTimeout(function () {
 				asyncParallel([
 					(done) => { linkerClient.start(done); },
-					(done) => { params.launcherClient.onReady(done); }
+					(done) => { params.launcherClient.onReady(done); },
 				], cb);
 			}, 0);
 		},
-		name: "linkerClient"
+		name: 'linkerClient',
 	});
 }
 
 // Construct the global instance, and then create a member `constructInstance` that can be used to clone more instances.
-var linkerClient = constructInstance();
+const linkerClient = constructInstance();
 linkerClient.constructInstance = constructInstance;
 
-export default  linkerClient;
+export default linkerClient;
 
 /**
  * Callback that returns a list of channels in the responseMessage

@@ -30,14 +30,14 @@ export class CreateSplinterAndInject {
 	}
 
 	initialize(callback = Function.prototype) {
-		const initializePromiseResolver  = async (resolve) => {
+		const initializePromiseResolver = async (resolve) => {
 			await this.processConfig();
 			await this.createStores();
 			await this.createSplinterAgentPool();
 			resolve();
 			callback();
 		}
-		return new Promise(initializePromiseResolver );
+		return new Promise(initializePromiseResolver);
 	}
 
 	windowServiceChannelName(channelTopic) { return `WindowService-Request-${channelTopic}`; }
@@ -148,7 +148,7 @@ export class CreateSplinterAndInject {
 			var splinteringConfig = this.finsembleConfig.splinteringConfig;
 			let { versionObject } = await util.getOpenfinVersion();
 			//Due to a bug in chromium 53, we can't splinter _and_ spawn child windows (quickly) without crashing render processes. This was fixed somewhere between chromium 53 and 56, and the bug does not present in OF version 8.
-			this.ALLOW_SPLINTERING = (versionObject.major > 7 || fin.container == "Electron") && splinteringConfig.enabled;
+			this.ALLOW_SPLINTERING = versionObject.major > 7 && fin.container !== "Electron" && splinteringConfig.enabled;
 			resolve();
 		};
 		return new Promise(promiseResolver);
@@ -195,7 +195,6 @@ export class CreateSplinterAndInject {
 			// This forces OpenFin to recognize them as applications, and thus they will show up in process monitor.
 			// If we don't do this, then chromium creates them as new applications under the sheets but they don't show up in process monitor.
 			// A developer can set isolateCrossDomainComponents=false to override this behavior if for some reason they need to.
-			//@note [07-06-18] Brad: I THINK the reason this abomination of a negation exists is so that undefined or true will cause us to spawn cross domain windows as applications. At some point in the future we should try `isolateCrossDomain = isolateCrossDomainComponents !== false;`
 			var dontIsolateCrossDomain = (this.finsembleConfig.isolateCrossDomainComponents === false);
 			if (windowType === "OpenFinWindow" && !dontIsolateCrossDomain) {
 				//Push cross domain windows into their own process.
@@ -256,7 +255,7 @@ export class CreateSplinterAndInject {
 		return new Promise(promiseResolver);
 	}
 
-	spawnExternalWindow(windowDescriptor): Promise<{ err: any, data: any }> {
+  spawnExternalWindow(windowDescriptor): Promise<{ err: any, data: any }> {
 		const promiseResolver = (resolve) => {
 			function spawnedListener(err, response) {
 				RouterClient.removeListener(windowDescriptor.name + ".onSpawned", spawnedListener);
@@ -272,7 +271,7 @@ export class CreateSplinterAndInject {
 	}
 
 	// Spawns a java app.
-	spawnNativeWindow(windowDescriptor): Promise<{ err: any, data: any }> {
+  spawnNativeWindow(windowDescriptor): Promise<{ err: any, data: any }> {
 		const promiseResolver = (resolve) => {
 
 			function spawnedListener(err, response) {
@@ -283,17 +282,19 @@ export class CreateSplinterAndInject {
 			}
 
 			RouterClient.addListener(windowDescriptor.name + ".onSpawned", spawnedListener);
-			RouterClient.query("FinsembleNative.spawn", windowDescriptor, (err, cb) => {});
+			RouterClient.query("FinsembleNative.spawn", windowDescriptor, (err, cb) => { });
 		};
 		return new Promise(promiseResolver);
 
 	}
 
 	// Spawns an OpenFin window
-	spawnOpenFinWindow(windowDescriptor): Promise<{ err: any, data: any }> {
+  spawnOpenFinWindow(windowDescriptor): Promise<{ err: any, data: any }> {
 		// This will ensure that the window is actually opened before returning. Seemingly an OpenFin bug means we
 		// can't rely on new System.Window callback. We believe this exhibits for cross-domain windows.
 		const promiseResolver = (resolve) => {
+			windowDescriptor.taskbarIconGroup = windowDescriptor.external ? null : this.manifest.startup_app.uuid;
+			windowDescriptor.icon = windowDescriptor.external ? null : this.manifest.startup_app.applicationIcon;
 			windowDescriptor.uuid = windowDescriptor.uuid || System.Application.getCurrent().uuid;
 			let fw;
 			let spawnedListener = (err, response) => {
@@ -315,7 +316,7 @@ export class CreateSplinterAndInject {
 	}
 
 	// Spawns a new openfin application.
-	spawnOpenfinApplication(componentConfig): Promise<{ err: any, data: any }> {
+  spawnOpenfinApplication(componentConfig): Promise<{ err: any, data: any }> {
 		let descriptor = this.compileOpenfinApplicationDescriptor(componentConfig);
 		const self = this;
 
@@ -338,7 +339,7 @@ export class CreateSplinterAndInject {
 					/** Because we mess with the `this` of System.Application,
 					 * the compiler gets confused, so we have to cast to the right thing.
 					 */
-										(finApp as fin.OpenFinApplication).run();
+					(finApp as fin.OpenFinApplication).run();
 				}, function createAppError(err) {
 					Logger.system.error("Failed to create openfin Application", err);
 				});
@@ -346,7 +347,7 @@ export class CreateSplinterAndInject {
 		return new Promise(promiseResolver);
 	}
 
-	compileOpenfinApplicationDescriptor(componentConfig) {
+  compileOpenfinApplicationDescriptor(componentConfig) {
 		componentConfig.uuid = componentConfig.name;
 		let descriptor = componentConfig;
 		let parentUUID = System.Application.getCurrent().uuid;
@@ -365,33 +366,33 @@ export class CreateSplinterAndInject {
 	}
 
 	// Spawns a new StackedWindow (a virtual window holding "tabbed" windows)
-	spawnStackedWindow(componentConfig, cb = Function.prototype): Promise<{ err: any, data: any }> {
-		const promiseResolver = (resolve) => {
+  spawnStackedWindow(componentConfig, cb = Function.prototype): Promise<{ err: any, data: any }> {
+  const promiseResolver = (resolve) => {
 			//var stackedWindowIdentifer = { windowName: componentConfig.name, windowType: componentConfig.windowType, windowIdentifiers: componentConfig.windowIdentifiers || componentConfig.customData.spawnData.windowIdentifiers };
 			Logger.system.debug("CreateSplinterAndInject.spawnStackedWindow", componentConfig);
 
 			this.stackedWindowManager.createStackedWindow(componentConfig, (err, windowIdentifer) => {
 				if (err) {
 					Logger.system.warn("StackedWindowManagerAPI.createStackedWindow: failed", err);
-					return cb(err, null);
 					resolve({ err, data: null });
-				} else {
-					Logger.system.debug("StackedWindowManagerAPI.createStackedWindow successful", windowIdentifer);
-					cb(err, windowIdentifer);
-					resolve({ err, data: windowIdentifer });
-				}
+					return cb(err, null);
+				} 
+				Logger.system.debug("StackedWindowManagerAPI.createStackedWindow successful", windowIdentifer);
+				cb(err, windowIdentifer);
+				resolve({ err, data: windowIdentifer });
+				
 			});
 		};
-		return new Promise(promiseResolver);
-	}
+  return new Promise(promiseResolver);
+}
 
 	/**
 	 * The actual splinter method.
 	 * If a process is available and has room left for additional children, we request that the process fulfill the spawn request.
 	 * If there is no process available, we queue our spawn request. When the pool has created a new render process, we process the queue.
 	 */
-	splinter(windowDescriptor): Promise<{ err: any, data: any }> {
-		const promiseResolver = async (resolve) => {
+  splinter(windowDescriptor): Promise<{ err: any, data: any }> {
+    const promiseResolver = async (resolve) => {
 			windowDescriptor.taskbarIconGroup = windowDescriptor.external ? null : this.manifest.startup_app.uuid;
 			windowDescriptor.icon = windowDescriptor.external ? null : this.manifest.startup_app.applicationIcon;
 
@@ -417,7 +418,7 @@ export class CreateSplinterAndInject {
 				this.SplinterAgentPool.routeSpawnRequest(windowDescriptor); // sometimes fails here!!!!!!!!!!!!!!!
 			} else {
 				// Reassign manifest.finsemble to just a subset of its keys.
-				const { FinsembleUUID, applicationRoot, moduleRoot, router} = windowDescriptor.customData.manifest.finsemble;
+				const { FinsembleUUID, applicationRoot, moduleRoot, router } = windowDescriptor.customData.manifest.finsemble;
 				windowDescriptor.customData.manifest.finsemble = { FinsembleUUID, applicationRoot, moduleRoot, router };
 
 				/** This method is borrowed from SplinterAgentSlave. It does some checks then calls new System.Window,
@@ -429,13 +430,13 @@ export class CreateSplinterAndInject {
 			//resolve({ err: null, data: fw });
 		};
 
-		return new Promise(promiseResolver);
-	}
+    return new Promise(promiseResolver);
+  }
 
 	// This function is called when the LauncherService starts up. It pre-populates a single render process for each pool that's defined in the splinteringConfig.
 	createSplinterAgentPool() {
 		const promiseResolver = async (resolve) => {
-			/** If we're running in Electron, splintering is not efficient, and is replaced instead with affinities, so 
+			/** If we're running in Electron, splintering is not efficient, and is replaced instead with affinities, so
 			 * we short circuit splintering here.
 			 */
 			if (fin.container === "Electron") {
@@ -457,6 +458,7 @@ export class CreateSplinterAndInject {
 					windowStore: this.windowStore,
 					maxWindowsForDefaultAgent: finsembleConfig.splinteringConfig.maxWindowsForDefaultAgent,
 				};
+
 				this.SplinterAgentPool = new SplinterAgentPool(poolConfig, resolve);
 
 				// let onWindowRemoved = (descriptor) => {
@@ -479,21 +481,21 @@ export class CreateSplinterAndInject {
 				resolve();
 			}
 		}
-		return new Promise(promiseResolver);
-	}
+    return new Promise(promiseResolver);
+  }
 
-	doShutdown() {
-		const promiseResolver = (resolve) => {
+  doShutdown() {
+    const promiseResolver = (resolve) => {
 			asyncSeries([
 				(finish) => { this.shutdownSplinterAgentPool(finish); },
 				resolve,
 			]);
 		};
-		return new Promise(promiseResolver);
-	}
+    return new Promise(promiseResolver);
+  }
 
-	shutdownSplinterAgentPool(done) {
-		if (this.SplinterAgentPool) {
+  shutdownSplinterAgentPool(done) {
+    if (this.SplinterAgentPool) {
 			Logger.system.debug("shutdownSplinterAgentPoolFinished start SplinterAgentPool.shutdown");
 			this.SplinterAgentPool.shutdown(() => {
 				Logger.system.debug("shutdownSplinterAgentPoolnFinished SplinterAgentPool.shutdown");
@@ -503,13 +505,13 @@ export class CreateSplinterAndInject {
 			done();
 		}
 
-	}
+  }
 
 	// Injects mind control scripts.
-	injectMindControl(data, win) {
-		var config = data.customData;
+  injectMindControl(data, win) {
+    var config = data.customData;
 
-		if (config.component.inject) {
+    if (config.component.inject) {
 			var inject = data.customData.component.inject;
 			if (!Array.isArray(inject)) {
 				inject = [inject];
@@ -544,5 +546,5 @@ export class CreateSplinterAndInject {
 
 			}
 		}
-	}
+  }
 }

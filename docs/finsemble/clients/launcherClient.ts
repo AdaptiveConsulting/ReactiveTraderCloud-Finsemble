@@ -14,7 +14,12 @@ import { SpawnParams } from "../services/window/Launcher/launcher";
 /** The global `window` object. We cast it to a specific interface here to be
  * explicit about what Finsemble-related properties it may have. */
 const Globals = window as IGlobals;
-
+interface ShowWindowParams extends SpawnParams {
+	spawnIfNotFound?: boolean,
+	autoFocus?: boolean,
+	windowIdentifier?: WindowIdentifier,
+	relativeWindow?: WindowIdentifier
+}
 /**
  * An object that includes all the potential identifications for a window.
  * For instance, one can try and obtain a reference for a window if some of these values are known.
@@ -83,7 +88,7 @@ class LauncherClient extends BaseClient {
 	 * @param {Function} [cb] Callback returns an object map of components. Each component object
 	 * contains the default config for that component.
 	 */
-	getComponentList(cb = Function.prototype) {
+	getComponentList(cb: Function = Function.prototype) {
 		Validate.args(cb, "function=");
 		const promiseResolver = (resolve) => {
 			this.routerClient.query("Launcher.componentList", {}, function (err, response) {
@@ -101,7 +106,7 @@ class LauncherClient extends BaseClient {
 	 * @param {Function} [cb] Callback returns the default config (windowDescriptor) for the requested componentType.
 	 *
 	 */
-	getComponentDefaultConfig(componentType, cb = Function.prototype) {
+	getComponentDefaultConfig(componentType: string, cb: Function = Function.prototype) {
 		Validate.args(cb, "function=");
 		const promiseResolver = (resolve) => {
 			this.routerClient.query("Launcher.componentList", {}, function (err, response) {
@@ -142,7 +147,10 @@ class LauncherClient extends BaseClient {
 	 * @param  {number|string} [params.monitor] If passed then a specific monitor is identified. Valid values are the same as for {@link LauncherClient#spawn}.
 	 * @param  {Function} [cb]               Returns a monitorInfo object containing the monitorRect, availableRect and unclaimedRect.
 	 */
-	getMonitorInfo(params, cb = Function.prototype) {
+	getMonitorInfo(params: {
+		windowIdentifier?: WindowIdentifier,
+		monitor?: string
+	}, cb = Function.prototype) {
 		var self = this;
 		Validate.args(cb, "function=");
 
@@ -170,7 +178,7 @@ class LauncherClient extends BaseClient {
 	 *
 	 * @param  {Function} [cb]               Returns an array of monitorInfo objects.
 	 */
-	getMonitorInfoAll(cb = Function.prototype) {
+	getMonitorInfoAll(cb: Function = Function.prototype) {
 		Validate.args(cb, "function=");
 
 		const promiseResolver = (resolve, reject) => {
@@ -187,12 +195,55 @@ class LauncherClient extends BaseClient {
 	}
 
 	/**
+	 * Registers a component with the launcher service
+	 *
+	 * @param {object} params -
+	 * @param {String} params.componentType - componentType
+	 * @param {object} params.manifest - this should be a component manifest
+	 * @param  {Function} [cb]
+	 */
+	registerComponent(params,cb = Function.prototype) {
+
+		const promiseResolver = (resolve) => {
+			this.routerClient.query("LauncherService.registerComponent", params, function (err, response) {
+				if (cb) {
+					cb(err, response.data);
+				}
+				resolve({ err, data: response.data });
+			});
+		};
+		return new Promise(promiseResolver);
+	}
+
+	/**
+	 * Registers a component with the launcher service
+	 *
+	 * @param {object} params -
+	 * @param {String} params.componentType - componentType
+	 * @param  {Function} [cb]
+	 */
+	unRegisterComponent(params,cb = Function.prototype) {
+		if(!params.componentType) return cb("No componentType provided");
+		const promiseResolver = (resolve) => {
+			this.routerClient.query("LauncherService.unRegisterComponent", params, function (err, response) {
+				if (cb) {
+					cb(err, response.data);
+				}
+				resolve({ err, data: response.data });
+			});
+		};
+		return new Promise(promiseResolver);
+	}
+
+
+
+	/**
 	 * A convenience method for dealing with a common use-case, which is toggling the appearance and disappearance of a child window when a button is pressed, aka drop down menus. Simply call this method from the click handler for your element. Your child window will need to close itself on blur events.
 	 * @param {HTMLElement|selector} element The DOM element, or selector, clicked by the end user
 	 * @param {windowIdentifier} windowIdentifier Identifies the child window
 	 * @param {object} params Parameters to be passed to {@link LauncherClient#showWindow} if the child window is allowed to open
 	 */
-	toggleWindowOnClick(element, windowIdentifier, params) {
+	toggleWindowOnClick(element: HTMLElement | NodeSelector, windowIdentifier: WindowIdentifier, params: SpawnParams) {
 		var self = this;
 		var key = windowIdentifier.windowName + ":" + windowIdentifier.uuid;
 		if (!windowIdentifier.windowName) key = windowIdentifier.componentType;
@@ -226,6 +277,7 @@ class LauncherClient extends BaseClient {
 	 * @param {number | string} [params.top] Same as spawn() except that null or undefined means the window should not be moved from current vertical location.
 	 * @param {boolean} [params.spawnIfNotFound=false] If true, then spawns a new window if the requested one cannot be found.
 	 * *Note, only works if the windowIdentifier contains a componentType.*
+	 * @param {boolean} [params.autoFocus] If true, window will focus when first shown.
 	 * @param {boolean} [params.slave] Cannot be set for an existing window. Will only go into effect if the window is spawned.
 	 * (In other words, only use this in conjunction with spawnIfNotFound).
 	 * @param {Function} [cb] Callback to be invoked after function is completed. Callback contains an object with the following information:
@@ -233,7 +285,7 @@ class LauncherClient extends BaseClient {
 	 * **windowDescriptor** - The {@link WindowDescriptor} of the new window.
 	 * **finWindow** - An `OpenFin` window referencing the new window.
 	 */
-	showWindow(windowIdentifier, params, cb = Function.prototype) {
+	showWindow(windowIdentifier: WindowIdentifier, params: ShowWindowParams, cb = Function.prototype) {
 		Validate.args(windowIdentifier, "object", params, "object=", cb, "function=");
 		var self = this;
 		if (!params) { params = {}; }
@@ -274,147 +326,10 @@ class LauncherClient extends BaseClient {
 	 * For instance, to set a full size window use `left=0`,`top=0`,`right=0`,`bottom=0`.
 	 * This is functionally equivalent to: left=0,top=0,width="100%",height="100%"
 	 *
-	 * @param {String} component - Type of the component to launch. If null or undefined, then params.url will be used instead.
-	 *
-	 * @param {object} params
-	 * @param {number|string} [params.monitor="mine"] Which monitor to place the new window.
-	 * **"mine"** - Place the window on the same monitor as the calling window.
-	 * A numeric value of monitor (where primary is zero).
-	 * **"primary"**,**"next"** and **"previous"** indicate a specific monitor.
-	 * **"all"** - Put a copy of the component on all monitors
-	 *
-	 * @param {string} [params.position=unclaimed] Defines a "viewport" for the spawn, with one of the following values:
-	 *
-	 * **"unclaimed"** (the default) Positioned based on the monitor space excluding space "claimed" by other components (such as toolbars).
-	 * For instance, `top:0` will place the new component directly below the toolbar.
-	 *
-	 * **"available"** Positioned according to the coordinates available on the monitor itself, less space claimed by the operating system (such as the windows toolbar).
-	 * For instance, `bottom:0` will place the new component with its bottom flush against the windows toolbar.
-	 *
-	 * **"monitor"** Positioned according to the absolute size of the monitor.
-	 * For instance, `top:0` will place the component overlapping the toolbar.
-	 *
-	 * **"relative"** Positioned relative to the relativeWindow.
-	 * For instance, `left:0;top:0` will join the top left corner of the new component with the top left corner of the relative window.
-	 *
-	 * **"virtual"** Positoned against coordinates on the virtual screen.
-	 * The virtual screen is the full viewing area of all monitors combined into a single theoretical monitor.
-	 * @param {boolean} [params.dockOnSpawn=false] If true, will automatically dock the window with the "relative" window (dock to the parent window unless specified in params.relativeWindow).
-	 * Note that you must also position the window in a valid position for docking, for example, by setting the "left" or "top" parameters to "adjacent".
-	 * @param {number | string} [params.left] A pixel value representing the distance from the left edge of the viewport as defined by "position".
-	 * A percentage value may also be used, representing the percentage distance from the left edge of the viewport relative to the viewport's width.
-	 *
-	 * **"adjacent"** will snap to the right edge of the spawning or relative window.
-	 *
-	 * **"center"** will center the window
-	 *
-	 * If neither left nor right are provided, then the default will be to stagger the window based on the last spawned window.
-	 * *Note - the staggering algorithm has a timing element that is optimized based on user testing.*
-	 *
-	 * @param {number | string} [params.top] Same as left except related to the top of the viewport.
-	 * @param {number | string} [params.right] Same as left except releated to the right of the viewport.
-	 * @param {number | string} [params.bottom] Same as left except related to the bottom of the viewport.
-	 *
-	 * @param {number | string} [params.height] A pixel or percentage value.
-	 * @param {number | string} [params.width] A pixel value or percentage value.
-	 * @param {boolean} [params.forceOntoMonitor] If true will attempt to make the window no have parts outside the monitor boundary.
-	 *
-	 * @param {boolean} [params.ephemeral=false] Indicates that this window is ephemeral.
-	 * An ephemeral window is a dialog, menu or other window that is temporarily displayed but usually hidden.
-	 * Ephemeral windows automatically have the following settings assigned: resizable: false, showTaskbarIcon: false, alwaysOnTop: true.
-	 * *Note, use `options:{autoShow: false}` to prevent an ephemeral widow from showing automatically.*
-	 *
-	 * @param {number} [params.staggerPixels=100] Number of pixels to stagger (default when neither left, right, top or bottom are set).
-
-	 * @param {boolean} [params.claimMonitorSpace] For use with permanent toolbars.
-	 * The available space for other components will be reduced by the amount of space covered by the newly spawned component.
-	 * This will be reflected in the `unclaimedRect` member from API calls that return monitorInfo. Users will be prevented
-	 * from moving windows to a position that covers the claimed space. See `position: 'unclaimed'`.
-
-	 * @param {WindowIdentifier} [params.relativeWindow=current window] The window to use when calculating any relative launches.
-	 * If not set then the window from which spawn() was called.
-
-	 * @param {boolean} [params.slave] If true then the new window will act as a slave to the relativeWindow (or the launching window if relativeWindow is not specified).
-	 * Slave windows will automatically close when their parent windows close.
-
-	 * @param {string} [params.url] Optional url to launch. Overrides what is passed in "component".
-
-
-	 * @param {string} [params.native] @deprecated Please use windowType instead. Optional native application to launch with Assimilation service. Overrides what is passed in "component".
-
-	 * @param {string} [params.windowType=openfin] Optional. Describes which type of component to spawn.
-	 *
-	 * **openfin** - A normal HTML window.
-	 *
-	 * **assimilation** - A window that is managed by the Finsemble assimilation process (usually a native window without source code access). Requires "path" to be specified, which may be the name of an executable on the system path, a system file path or system installed URI.
-	 *
-	 * **native** - A native window that has implemented finsemble.dll. Requires "path" to be specified. [For more information](tutorial-RPCService.html).
-	 *
-	 * **application** - A standalone application. This launch a component in its own browser process (splintered, giving it dedicated CPU and memory).
-	 * This can also point to a standalone web application (such as from a third party).
-	 *
-	 * @param {string} [params.alias] Used when windowType is "native" or "assimilation". Specifies the alias of a bundled asset.
-	 *
-	 * @param {string} [params.path] Used when windowType is "native" or "assimilation". Specifies the path to the application. The path can be:
-	 * The name of an exe that is on the system path (i.e. notepad.exe).
-	 * The full path to an executable on the user's machine (i.e. C:\Program Files\app.exe)
-	 * A system installed uri (i.e. myuri://myapp).
-	 *
-	 * When windowType is "native" then additional arguments will be automatically appended to the path or the uri. These arguments can be captured by the native application
-	 * in order to tie it to Finsemble's window tracking. When building an application with finsemble.dll, this is handled automatically. Those arguments are:
-	 *
-	 * **uuid** - A generated UUID that uniquely identifies this window.
-	 *
-	 * **left** - The x coordinate of the new window
-	 *
-	 * **top** - The y coordinate of the new window
-	 *
-	 * **width** - The width of the new window
-	 *
-	 * **height** - The height of the new window
-	 *
-	 * **openfinVersion** - The OpenFin version that Finsemble runs (necessary for native windows to connection on the OpenFin IAB)
-	 *
-	 * **openfinSocketPort** - The OpenFin socket used for the Inter-application Bus (IAB) (necessary for Java windows that wish to use the OpenFin IAB)
-	 *
-	 * **finsembleWindowName** - The name of the window in the Finsemble config
-	 *
-	 * **componentType** - The component type in the Finsemble config
-	 *
-	 * A common troublesome problem is when a native application needs to be launched from an intermediary application (such as a launcher or batch script). That intermediary
-	 * application can pass these parameters which will allow the final application to connect back to Finsemble.
-	 *
-	 * @param {string} [params.arguments] Used when windowType is "native" or "assimilation". Specifies the arguments to be sent to the application. This is used in conjunction with path.
-	 * Arguments should be separated by spaces: `--arg1 foo --arg2 bar` _except_ when `params.argumentsAsQueryString` is true, in which case set this parameter to be single string in URI format: `arg=1&arg=2`"
-	 *
-	 * @param {boolean} [params.argumentsAsQueryString] For native applications launched by URI: 1) the string is passed as the "arguments" parameter if appended as a query string; and 2) the automatically generated arguments described in "path" above are appended to the query string
-	 *
-	 * @param {any} [params.env] Sets environment variables for a spawned native application. Create a map (JSON) object of names to values. This is only available when running assimilation and with the config assimilation.useOpenFinSpawn=false.
-	 *
-	 * @param {any} [params.env] Sets environment variables for a spawned native application. Create a map (JSON) object of names to values. This is only available when running assimilation and with the config assimilation.useOpenFinSpawn=false.
-	 *
-	 * @param {string} [params.name] Optional window name. If not provided, then a random name will be assigned to the newly created `OpenFin` window.
-
-	 * @param {string} [params.groupName] Optional group name. Adds windows to a group (unrelated to docking or linking) that is used for window management functions. If the group does not exist it will be created.
-
-	 * @param {any} [params.data] Optional data to pass to the opening window.
-	 * If set, then the spawned window can use {@link WindowClient#getSpawnData} to retrieve the data.
-
-	 * @param {WindowDescriptor} [params.options] Properties to merge with the default windowDescriptor.
-	 * Any value set here will be sent directly to the `OpenFin` window, and will override the effect of relevant parameters to spawn(). By default, all Finsemble windows are frameless.
-
-	 * @param {boolean} [params.addToWorkspace=false] Whether to add the new component to the workspace.
-	 * Even when true, the window will still not be added to the workspace if addToWorkspace==false in components.json config for the component type.
-
-	 * @param {Function=} cb Callback to be invoked after function is completed. Callback contains an object with the following information:
-	 * windowIdentifier - The {@WindowIdentifier} for the new component.
-	 * windowDescriptor - The {@WindowDescriptor} for the new window.
-	 * finWindow - An `OpenFin` window object that contains the spawned component.
-	 *
 	 * @since 2.4.1 Added params.windowType (deprecated params.native), params.path, params.alias, params.argumentsAsQueryString - These are all for launching native apps.
-	 *
+	 * @since 3.7.0 Added "affinity" parameter
 	 */
-	spawn(component, params: SpawnParams, cb = Function.prototype) {
+	spawn(component: string, params: SpawnParams, cb: Function = Function.prototype) {
 		var self = this;
 
 		Validate.args(component, "string", params, "object=", cb, "function=");
@@ -463,8 +378,11 @@ class LauncherClient extends BaseClient {
 	 * @return {RawWindowResult} An object containing windowDescriptor, finWindow, and browserWindow. Or null if window isn't found.
 	 * @deprecated Finsemble now uses a splintering agent which disconnects windows from the main launcher.
 	 * It becomes impossible to access raw windows. See LauncherClient.getActiveDescriptors() and Util.getFinWindow()
+	 * @private
 	 */
-	getRawWindow(params) {
+	getRawWindow(params: {
+		windowName: string
+	}) {
 		var launcher = window.opener;
 		if (launcher.name !== "launcherService") {
 			Logger.system.warn("LauncherClient.getNativeWindow: window not opened by Launcher Service");
@@ -475,7 +393,7 @@ class LauncherClient extends BaseClient {
 	/**
 	 * @private
 	 */
-	callSpawn(params: SpawnParams, cb = Function.prototype) {
+	callSpawn(params: SpawnParams, cb: Function = Function.prototype) {
 		var self = this;
 		Validate.args(cb, "function=");
 		Logger.perf.debug("CallSpawn", "start", "from spawn to callback", params);
@@ -511,7 +429,7 @@ class LauncherClient extends BaseClient {
 						let windows = [result.windowIdentifier.windowName, System.Window.getCurrent().name]; //TODO - replace with FinsembleWindow
 						self.routerClient.query("DockingService.groupWindows", {
 							windows: windows,
-							isMovable: true
+							isMovable: true,
 						}, function (error, response) {
 							Logger.perf.debug("CallSpawn", "stop");
 							invokeSpawnCallback(err, result);
@@ -540,7 +458,7 @@ class LauncherClient extends BaseClient {
 	 * @TODO this probably is unnecessary since a client can include util and a developer should be using this.getMonitorInfo which has full support for searching by component. Did Ryan need this?
 	 * @private
 	 */
-	getMonitor(windowIdentifier, cb = Function.prototype) {
+	getMonitor(windowIdentifier: WindowIdentifier, cb: Function = Function.prototype) {
 		Validate.args(cb, "function=");
 
 		const promiseResolver = (resolve) => {
@@ -560,7 +478,7 @@ class LauncherClient extends BaseClient {
 	 */
 	// @TODO, [Terry] calls to launcherClient.myWindowIdentifier or launcherClient.getMyWindowIdentifier()
 	// should be replaced with windowClient.getWindowIdentifier()
-	getMyWindowIdentifier(cb = Function.prototype) {
+	getMyWindowIdentifier(cb: Function = Function.prototype) {
 		Validate.args(cb, "function=");
 
 		const promiseResolver = (resolve) => {
@@ -581,7 +499,7 @@ class LauncherClient extends BaseClient {
 	* @param {function} cb Callback returns an array of windowDescriptors
 	*
 	*/
-	getActiveDescriptors(cb = Function.prototype) {
+	getActiveDescriptors(cb: Function = Function.prototype) {
 		Validate.args(cb, "function=");
 		const promiseResolver = (resolve) => {
 			this.routerClient.query("Launcher.getActiveDescriptors", {}, function (err, response) {
@@ -609,7 +527,7 @@ class LauncherClient extends BaseClient {
 			this.routerClient.query("Launcher.userDefinedComponentUpdate", {
 				type: "add",
 				name: params.name,
-				url: params.url
+				url: params.url,
 			}, function (err, response) {
 				cb(err, response.data);
 				resolve({ err, data: response.data });
@@ -628,7 +546,7 @@ class LauncherClient extends BaseClient {
 			this.routerClient.query("Launcher.userDefinedComponentUpdate", {
 				type: "remove",
 				name: params.name,
-				url: params.url
+				url: params.url,
 			}, function (err, response) {
 				cb(err, response.data);
 				resolve({ err, data: response.data });
@@ -651,7 +569,9 @@ class LauncherClient extends BaseClient {
 	 * })
 	 *
 	 */
-	getComponentsThatCanReceiveDataTypes(params, cb = Function.prototype) {
+	getComponentsThatCanReceiveDataTypes(params: {
+		dataTypes?: string[]
+	}, cb = Function.prototype) {
 		Validate.args(cb, "function=");
 		if (params.dataTypes && !Array.isArray(params.dataTypes)) { params.dataTypes = [params.dataTypes]; }
 		Validate.args(params.dataTypes, "array");
@@ -681,7 +601,11 @@ class LauncherClient extends BaseClient {
 	 *
 	 * @private
 	 */
-	bringWindowsToFront(params: any = {}, cb = Function.prototype) {
+	bringWindowsToFront(params: {
+		windowList?: string[] | WindowIdentifier[],
+		groupName?: string,
+		componentType?: string
+	} = {}, cb: Function = Function.prototype) {
 		Validate.args(cb, "function=");
 		if (params.windowList && !Array.isArray(params.windowList)) {
 			params.windowList = [params.windowList];
@@ -715,7 +639,11 @@ class LauncherClient extends BaseClient {
 	 *
 	 * @private
 	 */
-	hyperFocus(params, cb = Function.prototype) {
+	hyperFocus(params: {
+		windowList?: string[] | WindowIdentifier[],
+		groupName?: string,
+		componentType?: string
+	}, cb: Function = Function.prototype) {
 		Validate.args(cb, "function=");
 		if (params.windowList && !Array.isArray(params.windowList)) {
 			params.windowList = [params.windowList];
@@ -746,7 +674,11 @@ class LauncherClient extends BaseClient {
 	 * @since TBD
 	 * @private
 	 */
-	minimizeWindows(params, cb = Function.prototype) {
+	minimizeWindows(params: {
+		windowList?: string[] | WindowIdentifier[],
+		groupName?: string,
+		componentType?: string
+	}, cb: Function = Function.prototype) {
 		Validate.args(cb, "function=");
 		if (params.windowList && !Array.isArray(params.windowList)) {
 			params.windowList = [params.windowList];
@@ -773,7 +705,10 @@ class LauncherClient extends BaseClient {
 	 * @since TBD
 	 * @private
 	 */
-	createWindowGroup(params, cb = Function.prototype) {
+	createWindowGroup(params: {
+		windowList?: string[] | WindowIdentifier[],
+		groupName?: string
+	}, cb: Function = Function.prototype) {
 		Validate.args(cb, "function=");
 		if (params.windowList && !Array.isArray(params.windowList)) {
 			params.windowList = [params.windowList];
@@ -806,7 +741,10 @@ class LauncherClient extends BaseClient {
 	 * @since TBD
 	 * @private
 	 */
-	addWindowsToGroup(params, cb = Function.prototype) {
+	addWindowsToGroup(params: {
+		windowList?: string[] | WindowIdentifier[],
+		groupName?: string
+	}, cb = Function.prototype) {
 		Validate.args(cb, "function=");
 		const promiseResolver = (resolve) => {
 			if (!params.groupName || !params.windowList) {
@@ -838,7 +776,10 @@ class LauncherClient extends BaseClient {
 	 * @since TBD
 	 * @private
 	 */
-	removeWindowsFromGroup(params, cb = Function.prototype) {
+	removeWindowsFromGroup(params: {
+		windowList?: string[] | WindowIdentifier[],
+		groupName?: string
+	}, cb = Function.prototype) {
 		Validate.args(cb, "function=");
 		const promiseResolver = (resolve) => {
 			if (!params.groupName || !params.windowList) {
@@ -868,7 +809,9 @@ class LauncherClient extends BaseClient {
 	 * @since TBD
 	 * @private
 	 */
-	getGroupsForWindow(params, cb = Function.prototype) {
+	getGroupsForWindow(params: {
+		windowIdentifier: WindowIdentifier
+	}, cb: Function = Function.prototype) {
 		Validate.args(cb, "function=");
 		if (typeof params === "function") {
 			cb = params;
@@ -897,7 +840,10 @@ class LauncherClient extends BaseClient {
 	 * @param {Array.<string>} [params.groupNames] List of groupnames to add window to. Groups will be created if they do not exist.
 	 * @param {*} cb
 	 */
-	addToGroups(params, cb = Function.prototype) {
+	addToGroups(params: {
+		windowIdentifier?: WindowIdentifier,
+		groupNames?: string[]
+	}, cb: Function = Function.prototype) {
 		Validate.args(cb, "function=");
 		Validate.args(params.groupNames, "array");
 		if (!params.windowIdentifier) {
@@ -920,15 +866,24 @@ class LauncherClient extends BaseClient {
 	 * @param {String} params.name
 	 * @param {Function} cb
 	 * @memberof LauncherClient
+	 * @private
 	 */
-	_createWrap(params, cb) {
+	_createWrap(params: {
+		name: string
+	}, cb: Function) {
 		this.routerClient.query("LauncherService.createWrap", params, cb);
 	}
 
+	/**
+	 * @private
+	 *
+	 * @param {*} cb
+	 * @memberof LauncherClient
+	 */
 	start(cb) {
 		var self = this;
 		// Get Group Updates (only if we are not in a service)
-		if (typeof Globals.FSBL != "undefined") {
+		if (typeof Globals.FSBL !== "undefined") {
 			// Get Groups from Component State on Load
 			function subscribeToGroupUpdates() {
 				self.routerClient.subscribe("Finsemble.LauncherService.updateGroups." + self.windowName, function (err, response) {
@@ -938,11 +893,11 @@ class LauncherClient extends BaseClient {
 			}
 			// cannot add a windowClient dependency here so explicitedly wait for windowClient ready (ideally dependency manage could fully handle but maybe later)
 			Globals.FSBL.addEventListener("onReady", function () {
-				self.windowClient.onReady( () => {
+				self.windowClient.onReady(() => {
 					self.windowClient.getComponentState({ field: "finsemble:windowGroups" }, function (err, groups) {
 						if (!err && groups) {
 							return self.addToGroups({
-								groupNames: groups
+								groupNames: groups,
 							}, subscribeToGroupUpdates);
 						}
 						subscribeToGroupUpdates();
@@ -971,7 +926,7 @@ function constructInstance(params?) {
 	return new LauncherClient({
 		clients: params,
 		startupDependencies: {
-			services: ["windowService"]
+			services: ["windowService"],
 		},
 		onReady: function (cb) {
 			Logger.system.debug("launcherClient ready", window.name);
@@ -979,11 +934,11 @@ function constructInstance(params?) {
 
 			launcherClient.start(cb);
 		},
-		name: "launcherClient"
+		name: "launcherClient",
 	});
 }
 
 var launcherClient = constructInstance();
 launcherClient.constructInstance = constructInstance;
 
-export default  launcherClient;
+export default launcherClient;

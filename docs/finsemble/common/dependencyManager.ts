@@ -61,9 +61,9 @@ class StartupManager {
 	onlineClients: string[];
 	onlineServices: string[];
 	dependencies: object;
-	AuthorizationCompleted: Boolean;
+	AuthorizationCompleted: boolean;
 	startupTimers: object;
-	startupTimerFired: Boolean;
+	startupTimerFired: boolean;
 	servicesAreAllOnline: object = {};
 	clientsAreAllOnline: object = {};
 
@@ -430,8 +430,8 @@ class FSBLDependencyManager extends EventEmitter {
 		//Iterate through all services. If it was online but isn't anymore, set it offline. If it was offline but now is, set it online.
 		ServiceNames.forEach((serviceName: string) => {
 			let state: ServiceState = data[serviceName].state;
-			let wasOnline: Boolean = this.startup.onlineServices.includes(serviceName);
-			let isOnline: Boolean = state === "ready";
+			let wasOnline: boolean = this.startup.onlineServices.includes(serviceName);
+			let isOnline: boolean = state === "ready";
 
 			if (!wasOnline && isOnline) {
 				this.startup.setServiceOnline(serviceName);
