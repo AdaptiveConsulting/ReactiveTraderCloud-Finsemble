@@ -1,0 +1,7 @@
+{
+	"icon": "./assets/installer/icons/win/icon.ico",
+	"version": "1.0.0",
+	"outputDirectory": "./pkg",
+	"name": "ReactiveTrader",
+	"authors": "Adaptive Financial Consulting"
+}
