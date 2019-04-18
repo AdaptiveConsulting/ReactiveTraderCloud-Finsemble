@@ -66,11 +66,11 @@
         }
     ],
     "finsemble": {
-        "applicationRoot": "http://localhost:3375",
-        "moduleRoot": "http://localhost:3375/finsemble",
-        "servicesRoot": "http://localhost:3375/finsemble/services",
+        "applicationRoot": "https://adaptiveconsulting.github.io/rtc-finsemble",
+        "moduleRoot": "https://adaptiveconsulting.github.io/rtc-finsemble/finsemble",
+        "servicesRoot": "https://adaptiveconsulting.github.io/rtc-finsemble/finsemble/services",
         "componentRoot": "https://web-dev.adaptivecluster.com",
-        "notificationURL": "http://localhost:3375/components/notification/notification.html",
+        "notificationURL": "https://adaptiveconsulting.github.io/rtc-finsemble/components/notification/notification.html",
         "devServer": "http://127.0.0.1:3000",
         "importConfig": [
             "$applicationRoot/configs/application/config.json"
