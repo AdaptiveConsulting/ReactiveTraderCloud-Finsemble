@@ -21,15 +21,16 @@ import * as util from "../../common/util";
 // TODO @Sidd - this is just a bad idea: needs to be read from config, instead of from this file:
 import DefaultWorkspacesJson = require("../../../configs/other/defaultWorkspaces.json");
 import { clone } from "../../common/disentangledUtils";
-// TypeScript assigns values imported as JSON to be read only. Therfore, we need to clone the imported default workspaces.
-// @TODO - delete this when DefaultWorkspaces come from config.
-let DefaultWorkspaces = clone(DefaultWorkspacesJson);
+
 
 import ConfigClient from "../../clients/configClient";
 ConfigClient.initialize();
 import SearchClient from "../../clients/searchClient";
 SearchClient.initialize();
 import Logger from "../../clients/logger";
+// TypeScript assigns values imported as JSON to be read only. Therfore, we need to clone the imported default workspaces.
+// @TODO - delete this when DefaultWorkspaces come from config.
+let DefaultWorkspaces = clone(DefaultWorkspacesJson, Logger.system.error);
 import * as Fuse from "fuse.js";
 import { ConfigUtilInstance as ConfigUtil } from "../../common/configUtil";
 import UserNotification from "../../common/userNotification";

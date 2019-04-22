@@ -623,6 +623,8 @@ export class Launcher {
 		config.window.windowType = message.data.windowType;
 		// This allows us to have an icon in our menus and pins
 		config.foreign.components.Toolbar.iconURl = "https://plus.google.com/_/favicon?domain_url=" + message.data.url;
+		// Sets the titlebar name to the user defined app name
+		config.foreign.components["Window Manager"].title = name;
 		// Allows us to know how this component was created. Eventually, this should change when we add a source to our components
 		config.component.isUserDefined = true;
 		config.component.type = name;
@@ -891,8 +893,10 @@ export class Launcher {
 		if (!right && Number.isFinite(left)) { right = left + width; }
 		if (!bottom && Number.isFinite(top)) { bottom = top + height; }
 
+		const shouldWindowBeForcedIntoView = launcherParams.hasOwnProperty('forceOntoMonitor') ? Boolean(launcherParams.forceOntoMonitor) : true;
+
 		// Force to be on monitor
-		if (launcherParams.forceOntoMonitor) {
+		if (shouldWindowBeForcedIntoView) {
 			if (right > monitor.unclaimedRect.right) {
 				left = left - (right - monitor.unclaimedRect.right);
 				right = monitor.unclaimedRect.right;
@@ -941,7 +945,11 @@ export class Launcher {
 		if (typeof (launcherParams.claimMonitorSpace) !== "undefined") {
 			windowDescriptor.claimMonitorSpace = launcherParams.claimMonitorSpace;
 		}
-		windowDescriptor = this.adjustBoundsToBeOnMonitor(windowDescriptor);
+
+		if (shouldWindowBeForcedIntoView) {
+			windowDescriptor = this.adjustBoundsToBeOnMonitor(windowDescriptor);
+		}
+
 		this.lastOpenedMap[monitor.position] = {
 			x: windowDescriptor.defaultLeft,
 			y: windowDescriptor.defaultTop
@@ -2658,8 +2666,9 @@ export class Launcher {
 				// from nativeOverrides.js
 				isAdhoc = true;
 
-				// If a name is passed in, use that, otherwise use the URL.
-				component = params.name ? params.name : params.url;
+				//System will bomb if a component name has periods, the distributed store does
+				//some string splitting on periods because of internal identifiers. (e.g. [...].Finsemble.[...])
+				component = params.name ? params.name.replace(/\./g, "-") : params.url.replace(/\./g, "-");
 				config = {
 					window: {},
 					component: {}
@@ -2742,7 +2751,9 @@ export class Launcher {
 			baseDescriptor = merge(baseDescriptor, params.options);
 		}
 
-		if (params.options && params.options.name) params.name = params.options.name;
+		//System will bomb if a component name has periods, the distributed store does
+		//some string splitting on periods because of internal identifiers. (e.g. [...].Finsemble.[...])
+		if (params.options && params.options.name) params.name = params.options.name.replace(/\./g, "-");
 		let descriptorName;
 
 		if (params.addToWorkspace) {
@@ -2820,7 +2831,7 @@ export class Launcher {
 		}
 		let newWindowDescriptor = await this.deriveBounds(params);
 		let windowDescriptor = self.compileWindowDescriptor(config, params, baseDescriptor, newWindowDescriptor);
-		windowDescriptor = this.adjustBoundsToBeOnMonitor(windowDescriptor);
+
 		// Preload the titlebar if component supports FSBLHeader and
 		// deliveryMechanism is set to "preload" under -
 		// Window Manager entry in configs/config.json

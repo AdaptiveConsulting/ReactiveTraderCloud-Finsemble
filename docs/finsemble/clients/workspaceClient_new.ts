@@ -147,10 +147,10 @@ class WorkspaceClient extends _BaseClient {
 
 	/**
 	 * Removes a workspace.
-	 * 		NOTE: if special behavior, clarify what happens if the active workspace
+	 * @NOTE: if special behavior, clarify what happens if the active workspace
 	 * @param {object} params
 	 * @param {string} 	[params.name] Workspace Name
-	 * @param {finsembleCallbackWithError} [cb] Callback after workspace has been removed and 'Finsemble.WorkspaceService.update' is transmitted.
+	 * @param {finsembleCallbackWithError} cb Callback after workspace has been removed and 'Finsemble.WorkspaceService.update' is transmitted.
 	 */
 	remove(params, cb) {
 		const removePromiseResolver = (resolve, reject) => {
@@ -175,7 +175,7 @@ class WorkspaceClient extends _BaseClient {
 	 * @param {string} params.oldName Name of workspace to rename.
 	 * @param {string} params.newName What to rename the workspace to.
 	 * @param {boolean} [params.overwriteExisting=false] Whether to overwrite an existing workspace.
-	 * @param {finsembleCallbackWithError} [cb] Callback after the workspace has been renamed
+	 * @param {finsembleCallbackWithError} cb Callback after the workspace has been renamed
 	 */
 	rename(params, cb = Function.prototype) {
 		const renamePromiseResolver = (resolve, reject) => {
@@ -196,7 +196,7 @@ class WorkspaceClient extends _BaseClient {
 
 	/**
 	 * Saves the currently active workspace. It does not overwrite the saved instance of the workspace. It simply overwrites the <code>activeWorkspace</code> key in storage.
-	 * @param {finsembleCallbackWithError} [cb] Callback after the workspace has been saved
+	 * @param {finsembleCallbackWithError} cb Callback after the workspace has been saved
 	 */
 	save(cb = Function.prototype) {
 		const savePromiseResolver = (resolve, reject) => {
@@ -222,12 +222,12 @@ class WorkspaceClient extends _BaseClient {
 	 * @param {string} [params.force=false] Whether to overwrite a workspace already saved with the provided name.
 	 * @param {string} [params.renameDuplicate=false] Whether to automatically chose a modified workspace name if given name exists (e.g "myWorkpace" would become "myWorkspace(1)")
 
-	 * @param {finsembleCallbackWithError} [cb] Callback after the workspace has been saved
+	 * @param {finsembleCallbackWithError} cb Callback after the workspace has been saved
 	 */
 	saveAs(params, cb = Function.prototype) {
 		Validate.args(params, "object", cb, "function=") && (Validate.args2 as any)("params.name", params.name, "string");
 		const saveAsPromiseResolver = (resolve, reject) => {
-			
+
 			// Commented out to make compiler happy, must be uncommented to work.
 			// if (!params.force && this.workspaceExists(params.name)) {
 			// 	reject(new Error("WorkspaceAlreadySaved"));
@@ -254,7 +254,7 @@ class WorkspaceClient extends _BaseClient {
 	 * Switches to a workspace.
 	 * @param {object} params
 	 * @param {string} 	params.name Workspace Name
-	 * @param {finsembleCallbackWithError} [cb] Callback after the switch is complete
+	 * @param {finsembleCallbackWithError} cb Callback after the switch is complete
 	 */
 	switchTo(params, cb = Function.prototype) {
 		const switchToPromiseResolver = (resolve, reject) => {
@@ -322,7 +322,7 @@ class WorkspaceClient extends _BaseClient {
 	 * @param {Object} [params] optional params
 	 * @param {string} [params.templateName] name of template to use when creating workspace; if no template then empty workspace will be created
 	 * @param {boolean} [params.switchAfterCreation = true] Whether to switch to the new workspace after creating it.
-	 * @param {finsembleCallbackWithError} [cb] Callback after the operation is complete
+	 * @param {finsembleCallbackWithError} cb Callback after the operation is complete
 	 */
 	createNewWorkspace = function (workspaceName, params, cb = Function.prototype) {
 		const createNewWorkspacePromiseResolver = async (resolve, reject) => {
@@ -376,7 +376,7 @@ class WorkspaceClient extends _BaseClient {
 	 * @param {string} params.windowIdentifier window identifier of window being added
 	 * @param {WindowDescriptor} params.options the window descriptor for later spawning corresponding component (when workspace is reloaded)
 	 * @param {string} params.componentState the coomponent state for spawning corresponding component when workspace is reloaded
-	 * @param {finsembleCallbackWithError} [cb] Callback after window has been added
+	 * @param {finsembleCallbackWithError} cb Callback after window has been added
 	 */
 	addWindow(params, cb = Function.prototype) {
 	}
@@ -384,10 +384,10 @@ class WorkspaceClient extends _BaseClient {
 
 	/**
 	 * Removes window from active workspace.
-	 * 		NOTE: need to clarify usage and/or make more consistent.  Currently only invoked for non-OF windows, but ideally will handle same way for all windows.
+	 * @NOTE: need to clarify usage and/or make more consistent.  Currently only invoked for non-OF windows, but ideally will handle same way for all windows.
 	 * @param {object} params
 	 * @param {string} params.name Window name
-	 * @param {finsembleCallbackWithError} [cb] Callback after the window has been removed from the active workspace
+	 * @param {finsembleCallbackWithError} cb Callback after the window has been removed from the active workspace
 	 */
 	removeWindow(params, cb = Function.prototype) {
 	}
@@ -399,13 +399,13 @@ class WorkspaceClient extends _BaseClient {
 	/**
 	 * Save window options
 	 *
-	 * NOTE: Ideally the type of windowState would match the type of spawn's "params" argument.
+	 * @NOTE: Ideally the type of windowState would match the type of spawn's "params" argument.
 	 *
 	 * @param {object} params
 	 * @param {string} params.windowIdentifier the associated window for the component data
  	 * @param {WindowDescriptor} params.options the window descriptor to save in workspace for later spawning corresponding component (when workspace is reloaded)
 	 * @param {boolean} params.merge if true then merge the specified options as opposed to overwriting previous
-	 * @param {finsembleCallbackWithError} [cb] Callback after data saved
+	 * @param {finsembleCallbackWithError} cb Callback after data saved
 	 */
 	saveWindowOptions(params, callback) {
 	};
@@ -417,7 +417,7 @@ class WorkspaceClient extends _BaseClient {
 	 * @param {string} params.windowIdentifier the associated window for the component data
  	 * @param {string} params.componentState the coomponent state to store in workspace for spawning corresponding component when workspace is reloaded
 	 * @param {boolean} params.merge if true then merge the specified options as opposed to overwriting previous
-	 * @param {finsembleCallbackWithError} [cb] Callback after data saved
+	 * @param {finsembleCallbackWithError} cb Callback after data saved
 	 */
 	saveComponentState(params, callback) {
 	};
@@ -623,18 +623,18 @@ module.exports = workspaceClient;
  * @param {object} [data] contains requested data (if no error)
  */
 
-	/**
- * Definition of ActiveWorkspaceState notifications with example pubsub subscription.
- * Published each time the active workspace state changes (e.g. on initial load or while switching workspaces)
- *
- * @typedef ActiveWorkspaceStateNotification
- * @type {Object}
- * @property {ActiveWorkspaceState} currentState
- * @property {WorkspaceDescriptor} activeWorkspaceDescriptor
- * @example <caption>Sample subscription to receive ActiveWorkspaceState notifications.</caption>
- *
- * FSBL.Clients.WorkspaceClient.RouterClient.subscribe("Finsemble.Workspace.ActiveWorkspaceState", (err, activeWorkspaceStateNotification) => {});
- */
+/**
+* Definition of ActiveWorkspaceState notifications with example pubsub subscription.
+* Published each time the active workspace state changes (e.g. on initial load or while switching workspaces)
+*
+* @typedef ActiveWorkspaceStateNotification
+* @type {Object}
+* @property {ActiveWorkspaceState} currentState
+* @property {WorkspaceDescriptor} activeWorkspaceDescriptor
+* @example <caption>Sample subscription to receive ActiveWorkspaceState notifications.</caption>
+*
+* FSBL.Clients.WorkspaceClient.RouterClient.subscribe("Finsemble.Workspace.ActiveWorkspaceState", (err, activeWorkspaceStateNotification) => {});
+*/
 
 /**
  * Definition of ActiveWorkspaceDescriptor notifications with example pubsub subscription.

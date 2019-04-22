@@ -154,7 +154,7 @@ class WindowClient extends BaseClient {
 
 		/**
 		 * Minmizes window along with all windows docked to it.
-		 * @param {function} [cb] Optional callback
+		 * @param {function} cb Optional callback
 		 * @example
 		 * FSBL.Clients.WindowClient.minimizeWithDockedWindows();
 		 * @private
@@ -233,7 +233,7 @@ class WindowClient extends BaseClient {
 	 * @param {boolean} params.removeFromWorkspace Whether to remove the window from the workspace.
 	 * @param {boolean} params.closeWindow Whether to close the window. On shutdown this method is closed, but we let the launcher close the window.
 	 * Defaults are to remove the window from the workspace if the user presses the X button, but not if the window is closed via an app-level request (e.g., we need to switch workspaces, so all windows need to close).
-	 * @param {function} [cb] callback
+	 * @param {function} cb callback
 	 * @example
 	 * //Close window and remove from workspace (e.g., user closes the window).
 	 * FSBL.Clients.WindowClient.close(true);
@@ -451,7 +451,7 @@ class WindowClient extends BaseClient {
 
 	/**
 	 * Minmizes window.
-	 * @param {function} [cb] Optional callback
+	 * @param {function} cb Optional callback
 	 * @example
 	 * FSBL.Clients.WindowClient.minimize();
 	 */
@@ -473,7 +473,7 @@ class WindowClient extends BaseClient {
 
 	/**
 	 * Sets whether window is always on top.
-	 * @param {function} [cb] Optional callback
+	 * @param {function} cb Optional callback
 	 * @example
 	 * FSBL.Clients.WindowClient.setAlwaysOnTop(true);
 	 */
@@ -487,7 +487,7 @@ class WindowClient extends BaseClient {
 
 	/**
 	 * Restores window from a maximized state.
-	 * @param {function} [cb] Optional callback
+	 * @param {function} cb Optional callback
 	 * @example
 	 * FSBL.Clients.WindowClient.restore();
 	 */
@@ -532,7 +532,7 @@ class WindowClient extends BaseClient {
 
 	/**
 	 * Maximizes the window. Also takes into account the application toolbar.
-	 * @param {function} [cb] Optional callback
+	 * @param {function} cb Optional callback
 	 * @todo, when fixed components are a thing, make sure that maximize doesn't sit on top of them either.
 	 * @example
 	 * FSBL.Clients.WindowClient.maximize();
@@ -733,7 +733,7 @@ class WindowClient extends BaseClient {
 	 * @param {object} params
 	 * @param {string} [params.field] field
 	 * @param {Array.<string>} [params.fields] fields
-	 * @param {function} [cb] Callback
+	 * @param {function} cb Callback
 	 * @example <caption>The example below shows how we save our chart layout when it changes.</caption>
 	 * var s = stx.exportLayout(true);
 	 * //saving layout'
@@ -831,7 +831,7 @@ class WindowClient extends BaseClient {
 	 *
 	 * **NOTE:** If you are using the finsemble windowTitleBar component, you do not need to call this function.
 	 * @param {object} params Parameters
-	 * @param {function} [cb] callback
+	 * @param {function} cb callback
 	 *
 	 * @example
 	 * FSBL.Clients.WindowClient.registerWithDockingManager();
@@ -1204,7 +1204,7 @@ class WindowClient extends BaseClient {
 	/**
 	 * Adds listeners to handle hash changes and finWindow listeners.
 	 * @private
-	 * @param {function} [cb]
+	 * @param {function} cb
 	 */
 	addListeners(cb: Function = Function.prototype) {
 		var self = this;
@@ -1591,7 +1591,7 @@ class WindowClient extends BaseClient {
 	 * @param {number} [params.padding.width] How much padding around the DOM to add to the width of the window
 	 * @param {number} [params.maxHeight] Maximum height to make the window
 	 * @param {number} [params.maxWidth] Maximum width to make the window
-	 * @param {function} [cb] Optional callback when complete
+	 * @param {function} cb Optional callback when complete
 	 */
 	fitToDOM(params?: {
 		padding?: {

@@ -1420,7 +1420,7 @@ const ConfigUtilInstance = new ConfigUtil();
 /* harmony export (immutable) */ __webpack_exports__["ConfigUtilInstance"] = ConfigUtilInstance;
 
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\configUtil.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\configUtil.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\common\\configUtil.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\common\\configUtil.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
@@ -1495,8 +1495,9 @@ exports.DELIVERY_MECHANISM = {
 /***/ }),
 
 /***/ 12:
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
+"use strict";
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1518,9 +1519,39 @@ exports.DELIVERY_MECHANISM = {
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+
+
+var R = typeof Reflect === 'object' ? Reflect : null
+var ReflectApply = R && typeof R.apply === 'function'
+  ? R.apply
+  : function ReflectApply(target, receiver, args) {
+    return Function.prototype.apply.call(target, receiver, args);
+  }
+
+var ReflectOwnKeys
+if (R && typeof R.ownKeys === 'function') {
+  ReflectOwnKeys = R.ownKeys
+} else if (Object.getOwnPropertySymbols) {
+  ReflectOwnKeys = function ReflectOwnKeys(target) {
+    return Object.getOwnPropertyNames(target)
+      .concat(Object.getOwnPropertySymbols(target));
+  };
+} else {
+  ReflectOwnKeys = function ReflectOwnKeys(target) {
+    return Object.getOwnPropertyNames(target);
+  };
+}
+
+function ProcessEmitWarning(warning) {
+  if (console && console.warn) console.warn(warning);
+}
+
+var NumberIsNaN = Number.isNaN || function NumberIsNaN(value) {
+  return value !== value;
+}
+
 function EventEmitter() {
-  this._events = this._events || {};
-  this._maxListeners = this._maxListeners || undefined;
+  EventEmitter.init.call(this);
 }
 module.exports = EventEmitter;
 
@@ -1528,276 +1559,392 @@ module.exports = EventEmitter;
 EventEmitter.EventEmitter = EventEmitter;
 
 EventEmitter.prototype._events = undefined;
+EventEmitter.prototype._eventsCount = 0;
 EventEmitter.prototype._maxListeners = undefined;
 
 // By default EventEmitters will print a warning if more than 10 listeners are
 // added to it. This is a useful default which helps finding memory leaks.
-EventEmitter.defaultMaxListeners = 10;
+var defaultMaxListeners = 10;
+
+Object.defineProperty(EventEmitter, 'defaultMaxListeners', {
+  enumerable: true,
+  get: function() {
+    return defaultMaxListeners;
+  },
+  set: function(arg) {
+    if (typeof arg !== 'number' || arg < 0 || NumberIsNaN(arg)) {
+      throw new RangeError('The value of "defaultMaxListeners" is out of range. It must be a non-negative number. Received ' + arg + '.');
+    }
+    defaultMaxListeners = arg;
+  }
+});
+
+EventEmitter.init = function() {
+
+  if (this._events === undefined ||
+      this._events === Object.getPrototypeOf(this)._events) {
+    this._events = Object.create(null);
+    this._eventsCount = 0;
+  }
+
+  this._maxListeners = this._maxListeners || undefined;
+};
 
 // Obviously not all Emitters should be limited to 10. This function allows
 // that to be increased. Set to zero for unlimited.
-EventEmitter.prototype.setMaxListeners = function(n) {
-  if (!isNumber(n) || n < 0 || isNaN(n))
-    throw TypeError('n must be a positive number');
+EventEmitter.prototype.setMaxListeners = function setMaxListeners(n) {
+  if (typeof n !== 'number' || n < 0 || NumberIsNaN(n)) {
+    throw new RangeError('The value of "n" is out of range. It must be a non-negative number. Received ' + n + '.');
+  }
   this._maxListeners = n;
   return this;
 };
 
-EventEmitter.prototype.emit = function(type) {
-  var er, handler, len, args, i, listeners;
+function $getMaxListeners(that) {
+  if (that._maxListeners === undefined)
+    return EventEmitter.defaultMaxListeners;
+  return that._maxListeners;
+}
 
-  if (!this._events)
-    this._events = {};
+EventEmitter.prototype.getMaxListeners = function getMaxListeners() {
+  return $getMaxListeners(this);
+};
 
-  // If there is no 'error' event listener then throw.
-  if (type === 'error') {
-    if (!this._events.error ||
-        (isObject(this._events.error) && !this._events.error.length)) {
-      er = arguments[1];
-      if (er instanceof Error) {
-        throw er; // Unhandled 'error' event
-      } else {
-        // At least give some kind of context to the user
-        var err = new Error('Uncaught, unspecified "error" event. (' + er + ')');
-        err.context = er;
-        throw err;
-      }
-    }
-  }
+EventEmitter.prototype.emit = function emit(type) {
+  var args = [];
+  for (var i = 1; i < arguments.length; i++) args.push(arguments[i]);
+  var doError = (type === 'error');
 
-  handler = this._events[type];
-
-  if (isUndefined(handler))
+  var events = this._events;
+  if (events !== undefined)
+    doError = (doError && events.error === undefined);
+  else if (!doError)
     return false;
 
-  if (isFunction(handler)) {
-    switch (arguments.length) {
-      // fast cases
-      case 1:
-        handler.call(this);
-        break;
-      case 2:
-        handler.call(this, arguments[1]);
-        break;
-      case 3:
-        handler.call(this, arguments[1], arguments[2]);
-        break;
-      // slower
-      default:
-        args = Array.prototype.slice.call(arguments, 1);
-        handler.apply(this, args);
+  // If there is no 'error' event listener then throw.
+  if (doError) {
+    var er;
+    if (args.length > 0)
+      er = args[0];
+    if (er instanceof Error) {
+      // Note: The comments on the `throw` lines are intentional, they show
+      // up in Node's output if this results in an unhandled exception.
+      throw er; // Unhandled 'error' event
     }
-  } else if (isObject(handler)) {
-    args = Array.prototype.slice.call(arguments, 1);
-    listeners = handler.slice();
-    len = listeners.length;
-    for (i = 0; i < len; i++)
-      listeners[i].apply(this, args);
+    // At least give some kind of context to the user
+    var err = new Error('Unhandled error.' + (er ? ' (' + er.message + ')' : ''));
+    err.context = er;
+    throw err; // Unhandled 'error' event
+  }
+
+  var handler = events[type];
+
+  if (handler === undefined)
+    return false;
+
+  if (typeof handler === 'function') {
+    ReflectApply(handler, this, args);
+  } else {
+    var len = handler.length;
+    var listeners = arrayClone(handler, len);
+    for (var i = 0; i < len; ++i)
+      ReflectApply(listeners[i], this, args);
   }
 
   return true;
 };
 
-EventEmitter.prototype.addListener = function(type, listener) {
+function _addListener(target, type, listener, prepend) {
   var m;
+  var events;
+  var existing;
 
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
+  if (typeof listener !== 'function') {
+    throw new TypeError('The "listener" argument must be of type Function. Received type ' + typeof listener);
+  }
 
-  if (!this._events)
-    this._events = {};
+  events = target._events;
+  if (events === undefined) {
+    events = target._events = Object.create(null);
+    target._eventsCount = 0;
+  } else {
+    // To avoid recursion in the case that type === "newListener"! Before
+    // adding it to the listeners, first emit "newListener".
+    if (events.newListener !== undefined) {
+      target.emit('newListener', type,
+                  listener.listener ? listener.listener : listener);
 
-  // To avoid recursion in the case that type === "newListener"! Before
-  // adding it to the listeners, first emit "newListener".
-  if (this._events.newListener)
-    this.emit('newListener', type,
-              isFunction(listener.listener) ?
-              listener.listener : listener);
+      // Re-assign `events` because a newListener handler could have caused the
+      // this._events to be assigned to a new object
+      events = target._events;
+    }
+    existing = events[type];
+  }
 
-  if (!this._events[type])
+  if (existing === undefined) {
     // Optimize the case of one listener. Don't need the extra array object.
-    this._events[type] = listener;
-  else if (isObject(this._events[type]))
-    // If we've already got an array, just append.
-    this._events[type].push(listener);
-  else
-    // Adding the second element, need to change to array.
-    this._events[type] = [this._events[type], listener];
-
-  // Check for listener leak
-  if (isObject(this._events[type]) && !this._events[type].warned) {
-    if (!isUndefined(this._maxListeners)) {
-      m = this._maxListeners;
+    existing = events[type] = listener;
+    ++target._eventsCount;
+  } else {
+    if (typeof existing === 'function') {
+      // Adding the second element, need to change to array.
+      existing = events[type] =
+        prepend ? [listener, existing] : [existing, listener];
+      // If we've already got an array, just append.
+    } else if (prepend) {
+      existing.unshift(listener);
     } else {
-      m = EventEmitter.defaultMaxListeners;
+      existing.push(listener);
     }
 
-    if (m && m > 0 && this._events[type].length > m) {
-      this._events[type].warned = true;
-      console.error('(node) warning: possible EventEmitter memory ' +
-                    'leak detected. %d listeners added. ' +
-                    'Use emitter.setMaxListeners() to increase limit.',
-                    this._events[type].length);
-      if (typeof console.trace === 'function') {
-        // not supported in IE 10
-        console.trace();
-      }
+    // Check for listener leak
+    m = $getMaxListeners(target);
+    if (m > 0 && existing.length > m && !existing.warned) {
+      existing.warned = true;
+      // No error code for this since it is a Warning
+      // eslint-disable-next-line no-restricted-syntax
+      var w = new Error('Possible EventEmitter memory leak detected. ' +
+                          existing.length + ' ' + String(type) + ' listeners ' +
+                          'added. Use emitter.setMaxListeners() to ' +
+                          'increase limit');
+      w.name = 'MaxListenersExceededWarning';
+      w.emitter = target;
+      w.type = type;
+      w.count = existing.length;
+      ProcessEmitWarning(w);
     }
   }
 
-  return this;
+  return target;
+}
+
+EventEmitter.prototype.addListener = function addListener(type, listener) {
+  return _addListener(this, type, listener, false);
 };
 
 EventEmitter.prototype.on = EventEmitter.prototype.addListener;
 
-EventEmitter.prototype.once = function(type, listener) {
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
+EventEmitter.prototype.prependListener =
+    function prependListener(type, listener) {
+      return _addListener(this, type, listener, true);
+    };
 
-  var fired = false;
-
-  function g() {
-    this.removeListener(type, g);
-
-    if (!fired) {
-      fired = true;
-      listener.apply(this, arguments);
-    }
+function onceWrapper() {
+  var args = [];
+  for (var i = 0; i < arguments.length; i++) args.push(arguments[i]);
+  if (!this.fired) {
+    this.target.removeListener(this.type, this.wrapFn);
+    this.fired = true;
+    ReflectApply(this.listener, this.target, args);
   }
+}
 
-  g.listener = listener;
-  this.on(type, g);
+function _onceWrap(target, type, listener) {
+  var state = { fired: false, wrapFn: undefined, target: target, type: type, listener: listener };
+  var wrapped = onceWrapper.bind(state);
+  wrapped.listener = listener;
+  state.wrapFn = wrapped;
+  return wrapped;
+}
 
+EventEmitter.prototype.once = function once(type, listener) {
+  if (typeof listener !== 'function') {
+    throw new TypeError('The "listener" argument must be of type Function. Received type ' + typeof listener);
+  }
+  this.on(type, _onceWrap(this, type, listener));
   return this;
 };
 
-// emits a 'removeListener' event iff the listener was removed
-EventEmitter.prototype.removeListener = function(type, listener) {
-  var list, position, length, i;
-
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  if (!this._events || !this._events[type])
-    return this;
-
-  list = this._events[type];
-  length = list.length;
-  position = -1;
-
-  if (list === listener ||
-      (isFunction(list.listener) && list.listener === listener)) {
-    delete this._events[type];
-    if (this._events.removeListener)
-      this.emit('removeListener', type, listener);
-
-  } else if (isObject(list)) {
-    for (i = length; i-- > 0;) {
-      if (list[i] === listener ||
-          (list[i].listener && list[i].listener === listener)) {
-        position = i;
-        break;
+EventEmitter.prototype.prependOnceListener =
+    function prependOnceListener(type, listener) {
+      if (typeof listener !== 'function') {
+        throw new TypeError('The "listener" argument must be of type Function. Received type ' + typeof listener);
       }
-    }
-
-    if (position < 0)
+      this.prependListener(type, _onceWrap(this, type, listener));
       return this;
+    };
 
-    if (list.length === 1) {
-      list.length = 0;
-      delete this._events[type];
-    } else {
-      list.splice(position, 1);
-    }
+// Emits a 'removeListener' event if and only if the listener was removed.
+EventEmitter.prototype.removeListener =
+    function removeListener(type, listener) {
+      var list, events, position, i, originalListener;
 
-    if (this._events.removeListener)
-      this.emit('removeListener', type, listener);
-  }
+      if (typeof listener !== 'function') {
+        throw new TypeError('The "listener" argument must be of type Function. Received type ' + typeof listener);
+      }
 
-  return this;
+      events = this._events;
+      if (events === undefined)
+        return this;
+
+      list = events[type];
+      if (list === undefined)
+        return this;
+
+      if (list === listener || list.listener === listener) {
+        if (--this._eventsCount === 0)
+          this._events = Object.create(null);
+        else {
+          delete events[type];
+          if (events.removeListener)
+            this.emit('removeListener', type, list.listener || listener);
+        }
+      } else if (typeof list !== 'function') {
+        position = -1;
+
+        for (i = list.length - 1; i >= 0; i--) {
+          if (list[i] === listener || list[i].listener === listener) {
+            originalListener = list[i].listener;
+            position = i;
+            break;
+          }
+        }
+
+        if (position < 0)
+          return this;
+
+        if (position === 0)
+          list.shift();
+        else {
+          spliceOne(list, position);
+        }
+
+        if (list.length === 1)
+          events[type] = list[0];
+
+        if (events.removeListener !== undefined)
+          this.emit('removeListener', type, originalListener || listener);
+      }
+
+      return this;
+    };
+
+EventEmitter.prototype.off = EventEmitter.prototype.removeListener;
+
+EventEmitter.prototype.removeAllListeners =
+    function removeAllListeners(type) {
+      var listeners, events, i;
+
+      events = this._events;
+      if (events === undefined)
+        return this;
+
+      // not listening for removeListener, no need to emit
+      if (events.removeListener === undefined) {
+        if (arguments.length === 0) {
+          this._events = Object.create(null);
+          this._eventsCount = 0;
+        } else if (events[type] !== undefined) {
+          if (--this._eventsCount === 0)
+            this._events = Object.create(null);
+          else
+            delete events[type];
+        }
+        return this;
+      }
+
+      // emit removeListener for all listeners on all events
+      if (arguments.length === 0) {
+        var keys = Object.keys(events);
+        var key;
+        for (i = 0; i < keys.length; ++i) {
+          key = keys[i];
+          if (key === 'removeListener') continue;
+          this.removeAllListeners(key);
+        }
+        this.removeAllListeners('removeListener');
+        this._events = Object.create(null);
+        this._eventsCount = 0;
+        return this;
+      }
+
+      listeners = events[type];
+
+      if (typeof listeners === 'function') {
+        this.removeListener(type, listeners);
+      } else if (listeners !== undefined) {
+        // LIFO order
+        for (i = listeners.length - 1; i >= 0; i--) {
+          this.removeListener(type, listeners[i]);
+        }
+      }
+
+      return this;
+    };
+
+function _listeners(target, type, unwrap) {
+  var events = target._events;
+
+  if (events === undefined)
+    return [];
+
+  var evlistener = events[type];
+  if (evlistener === undefined)
+    return [];
+
+  if (typeof evlistener === 'function')
+    return unwrap ? [evlistener.listener || evlistener] : [evlistener];
+
+  return unwrap ?
+    unwrapListeners(evlistener) : arrayClone(evlistener, evlistener.length);
+}
+
+EventEmitter.prototype.listeners = function listeners(type) {
+  return _listeners(this, type, true);
 };
 
-EventEmitter.prototype.removeAllListeners = function(type) {
-  var key, listeners;
-
-  if (!this._events)
-    return this;
-
-  // not listening for removeListener, no need to emit
-  if (!this._events.removeListener) {
-    if (arguments.length === 0)
-      this._events = {};
-    else if (this._events[type])
-      delete this._events[type];
-    return this;
-  }
-
-  // emit removeListener for all listeners on all events
-  if (arguments.length === 0) {
-    for (key in this._events) {
-      if (key === 'removeListener') continue;
-      this.removeAllListeners(key);
-    }
-    this.removeAllListeners('removeListener');
-    this._events = {};
-    return this;
-  }
-
-  listeners = this._events[type];
-
-  if (isFunction(listeners)) {
-    this.removeListener(type, listeners);
-  } else if (listeners) {
-    // LIFO order
-    while (listeners.length)
-      this.removeListener(type, listeners[listeners.length - 1]);
-  }
-  delete this._events[type];
-
-  return this;
-};
-
-EventEmitter.prototype.listeners = function(type) {
-  var ret;
-  if (!this._events || !this._events[type])
-    ret = [];
-  else if (isFunction(this._events[type]))
-    ret = [this._events[type]];
-  else
-    ret = this._events[type].slice();
-  return ret;
-};
-
-EventEmitter.prototype.listenerCount = function(type) {
-  if (this._events) {
-    var evlistener = this._events[type];
-
-    if (isFunction(evlistener))
-      return 1;
-    else if (evlistener)
-      return evlistener.length;
-  }
-  return 0;
+EventEmitter.prototype.rawListeners = function rawListeners(type) {
+  return _listeners(this, type, false);
 };
 
 EventEmitter.listenerCount = function(emitter, type) {
-  return emitter.listenerCount(type);
+  if (typeof emitter.listenerCount === 'function') {
+    return emitter.listenerCount(type);
+  } else {
+    return listenerCount.call(emitter, type);
+  }
 };
 
-function isFunction(arg) {
-  return typeof arg === 'function';
+EventEmitter.prototype.listenerCount = listenerCount;
+function listenerCount(type) {
+  var events = this._events;
+
+  if (events !== undefined) {
+    var evlistener = events[type];
+
+    if (typeof evlistener === 'function') {
+      return 1;
+    } else if (evlistener !== undefined) {
+      return evlistener.length;
+    }
+  }
+
+  return 0;
 }
 
-function isNumber(arg) {
-  return typeof arg === 'number';
+EventEmitter.prototype.eventNames = function eventNames() {
+  return this._eventsCount > 0 ? ReflectOwnKeys(this._events) : [];
+};
+
+function arrayClone(arr, n) {
+  var copy = new Array(n);
+  for (var i = 0; i < n; ++i)
+    copy[i] = arr[i];
+  return copy;
 }
 
-function isObject(arg) {
-  return typeof arg === 'object' && arg !== null;
+function spliceOne(list, index) {
+  for (; index + 1 < list.length; index++)
+    list[index] = list[index + 1];
+  list.pop();
 }
 
-function isUndefined(arg) {
-  return arg === void 0;
+function unwrapListeners(arr) {
+  var ret = new Array(arr.length);
+  for (var i = 0; i < ret.length; ++i) {
+    ret[i] = arr[i].listener || arr[i];
+  }
+  return ret;
 }
 
 
@@ -2402,7 +2549,7 @@ class ConfigClient extends baseClient_1._BaseClient {
      * Get multiple values from the config.
     * @param {Object[] | String[]} fields - An array of field objects. If there are no fields proviced, the complete configuration manifest are returned.
      * @param {String} fields[].field - The name of the field
-     * @param {Function} [cb] -  Will return the value if found.
+     * @param {Function} cb -  Will return the value if found.
      * @returns {Object} - returns an object of with the fields as keys.If no callback is given and the value is local, this will run synchronous
      * @example
      * FSBL.Clients.ConfigClient.getValues([{field:'field1'},{field2:'field2'}],function(err,values){});
@@ -2436,7 +2583,7 @@ class ConfigClient extends baseClient_1._BaseClient {
      * @param {Object} params - Params object
      * @param {String} params.field - The name of the field where data will be stored
      * @param {any} params.value - Value to be stored
-     * @param {function} [cb] optional callback
+     * @param {function} cb optional callback
      * @returns {null}
      *
      * @example
@@ -2457,7 +2604,7 @@ class ConfigClient extends baseClient_1._BaseClient {
      * @param {Object} fields - An Array of field objects
      * @param {String} fields.field - The name of the field
      * @param {any} fields.value - Field value
-     * @param {function} [cb] optional callback
+     * @param {function} cb optional callback
      * @returns {null}
      *
      * @example
@@ -2479,7 +2626,7 @@ class ConfigClient extends baseClient_1._BaseClient {
      * Remove a value from the config.
      * @param {Object | String} params - Either an object or string
      * @param {String} param.field - The name of the field
-     * @param {Function} [cb] -  returns an error if there is one
+     * @param {Function} cb -  returns an error if there is one
      * @example
      * FSBL.Clients.ConfigClient.removeValue({field:'field1'},function(err,bool){});
      */
@@ -2499,7 +2646,7 @@ class ConfigClient extends baseClient_1._BaseClient {
     /**
      * Removes multiple values from the config.
      * @param {Array.<Object>} params - An Array of field objects
-     * @param {Function} [cb] -  returns an error if there is one.
+     * @param {Function} cb -  returns an error if there is one.
      * @example
      * FSBL.Clients.ConfigClient.removeValue({field:'field1'},function(err,bool){});
      */
@@ -2550,7 +2697,7 @@ class ConfigClient extends baseClient_1._BaseClient {
     * @param {String} params[].field - The data field to listen for.
     * @param {String} params[].listener - the function to call when a listener is triggered. If this is empty, fn is used.
     * @param {function} fn -  the function to call when a listener is triggered
-    * @param {function} [cb]
+    * @param {function} cb
     * @todo make the typing proper.
     * @example
     * var myFunction = function(err,data){}
@@ -2608,7 +2755,7 @@ class ConfigClient extends baseClient_1._BaseClient {
      * @param {Object} params - Params object
      * @param {String} [params.field] - The data field
      * @param {function} [fn] -  the function to remove from the listeners
-     * @param {function} [cb] -  returns true if it was succesfull in removing the listener.
+     * @param {function} cb -  returns true if it was succesfull in removing the listener.
      *
      * @example
      * var myFunction = function(err,data){}
@@ -2643,7 +2790,7 @@ class ConfigClient extends baseClient_1._BaseClient {
      * @param {String} params.field - The data field to listen for. If this is empty it listen to all changes of the store.
      * @param {function} params.listener - The listener function
      * @param {function} [fn] -  the function to remove from the listeners
-     * @param {function} [cb] -  returns true if it was succesfull in removing the listener.
+     * @param {function} cb -  returns true if it was succesfull in removing the listener.
      *
      * @example
      * var myFunction = function(err,data){ }
@@ -2755,7 +2902,7 @@ class ConfigClient extends baseClient_1._BaseClient {
      * @param {object} params.newConfig provides the configuration properties to add into the existing configuration under manifest.finsemble. This config must match the Finsembe config requirements as described in [Understanding Finsemble's Configuration]{@tutorial Configuration}. It can include importConfig references to dynamically fetch additional configuration files.
      * @param {boolean} params.overwrite if true then overwrite any preexisting config with new config (can only set to true when running from same origin, not cross-domain); if false then newConfig must not match properties of existing config, including service and component configuration.
      * @param {boolean} params.replace true specifies any component or service definitions in the new config will place all existing non-system component and service configuration
-     * @param {function} [cb] callback to be invoked upon task completion.
+     * @param {function} cb callback to be invoked upon task completion.
      * @example
      * // Examples using processAndSet()
      * FSBL.Clients.ConfigClient.processAndSet({ newConfig: { myNewConfigField: 12345 }, overwrite: false});
@@ -3118,7 +3265,7 @@ var UserNotification = function () {
 
 /* harmony default export */ __webpack_exports__["default"] = (new UserNotification());
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\userNotification.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\userNotification.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\common\\userNotification.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\common\\userNotification.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
@@ -3157,7 +3304,7 @@ module.exports = bytesToUuid;
 /***/ 183:
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(89);
+module.exports = __webpack_require__(90);
 
 
 /***/ }),
@@ -4126,7 +4273,7 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 }
 /* harmony default export */ __webpack_exports__["a"] = (Monitors);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\monitorsAndScaling.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\monitorsAndScaling.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\common\\monitorsAndScaling.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\common\\monitorsAndScaling.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
@@ -4686,7 +4833,7 @@ RouterTransport.addTransport("FinsembleTransport", RouterTransportImplementation
 
 /* harmony default export */ __webpack_exports__["default"] = (RouterTransport);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\routerTransport.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\routerTransport.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\common\\routerTransport.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\common\\routerTransport.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
@@ -6076,7 +6223,7 @@ var SystemSettings = function () {
 
 /* harmony default export */ __webpack_exports__["a"] = (new SystemSettings());
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\systemSettings.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\systemSettings.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\common\\systemSettings.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\common\\systemSettings.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
@@ -6307,7 +6454,7 @@ class StorageClient extends baseClient_1._BaseClient {
      * Define the username for storage (i.e., each user has unique storage)
      * @param {Object} params - Params object
      * @param {String} params.user -  user name
-     * @param {function} [cb] -  callback to be called on success
+     * @param {function} cb -  callback to be called on success
      *
      * @example
      * StorageClient.setUser({ user: "JohnDeere"});
@@ -6328,7 +6475,7 @@ class StorageClient extends baseClient_1._BaseClient {
      * @param {Object} params - Params object
      * @param {String} params.topic -  if specificed then data store is set only for topic
      * @param {string} params.dataStore -  identifies the data store (e.g. "localStorage", "redis")
-     * @param {function} [cb] -  callback to be called on success
+     * @param {function} cb -  callback to be called on success
      *
      * @example
      * StorageClient.setStore({topic:"finsemble", dataStore:"redis"})
@@ -6351,7 +6498,7 @@ class StorageClient extends baseClient_1._BaseClient {
      * @param {String} params.topic -  storage topic for key being stored
      * @param {String} params.key -  The key to be stored
      * @param {any} params.value -  The value to be stored
-     * @param {function} [cb] -  callback to be called on success
+     * @param {function} cb -  callback to be called on success
      *
      * @example
      * StorageClient.save({topic:"finsemble", key:"testKey", value:"testValue"})
@@ -6380,7 +6527,7 @@ class StorageClient extends baseClient_1._BaseClient {
      * Get a value from storage.
      * @param {Object} params - Params object
      * @param {String} params.key -  The key to get from storage
-     * @param {function} [cb] -  callback to be called on success
+     * @param {function} cb -  callback to be called on success
      *
      * @example
      * StorageClient.get({topic:"finsemble", key:"testKey"}, function(err, data){
@@ -6410,7 +6557,7 @@ class StorageClient extends baseClient_1._BaseClient {
      * @param {Object} params - Params object
      * @param {String} params.topic -  topic for the keys to return
      * @param {String=} params.keyPrefix -  filter all keys that don't start with this prefix
-     * @param {function} [cb] -  callback to be called on success
+     * @param {function} cb -  callback to be called on success
      *
      * @example
      * StorageClient.keys({topic:"finsemble", keyPrefix:"test"}, function(err, data){
@@ -6432,7 +6579,7 @@ class StorageClient extends baseClient_1._BaseClient {
     /**
      * Get a multiple values from storage based on regex.(coming soon)
      * @param {Object} params - Params object
-     * @param {function} [cb] -  callback to be called on success
+     * @param {function} cb -  callback to be called on success
      * @private
      * @todo make this work.
      * @example
@@ -7073,7 +7220,7 @@ function removeChildMapping(mapping, field) {
 	return removals;
 }
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\storeUtils.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\storeUtils.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\common\\storeUtils.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\common\\storeUtils.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
@@ -7432,7 +7579,7 @@ var Validate = function () {
 
 /* harmony default export */ __webpack_exports__["default"] = (new Validate());
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\validate.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\validate.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\common\\validate.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\common\\validate.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
@@ -8413,387 +8560,7 @@ function openSharedData(params, cb) {
 	});
 };
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\util.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\util.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
-
-/***/ }),
-
-/***/ 89:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__baseService__ = __webpack_require__(29);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__baseService___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__baseService__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common_storeUtils__ = __webpack_require__(33);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_storageClient__ = __webpack_require__(28);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_storageClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_storageClient__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__clients_configClient__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__clients_configClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__clients_configClient__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_logger__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_async__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_async___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_async__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_dependencyManager__ = __webpack_require__(13);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_dependencyManager___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6__common_dependencyManager__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_deepmerge__ = __webpack_require__(47);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_deepmerge___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_deepmerge__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance__);
-
-
-
-
-
-
-
-
-__WEBPACK_IMPORTED_MODULE_3__clients_configClient___default.a.initialize();
-__WEBPACK_IMPORTED_MODULE_2__clients_storageClient___default.a.initialize();
-/** Daniel 12/21/2018
- * Previously, we relied on the BaseService's reference to the RouterClient
- * in this module, accessing `this.RouterClient` from within the StoreService.
- * Somehow this is broken with the new import syntax (literally, `this` is undefined
- * when you try to access `this.RouterClient`), so it's necessary to import the
- * RouterClient separately.
- * @TODO - Refactor StoreService to class that extends BaseService, and this issue
- * will go away.
-*/
-
-
-///We use global if no store is set
-function StoreService() {
-	var self = this;
-	let persistingStores = {};
-	var stores = {
-		finsemble: {
-			permissions: {},
-			values: {}
-		}
-	};
-	// Each store will be index here with an flattened object attached that hold the location of each object and it's parent.
-	var mappings = {};
-	window.mappings = mappings;
-	this.stores = stores;
-	window.stores = stores;
-	this.setValue = function (params) {
-		if (!params.field) {
-			return __WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.error("no field provided", params);
-		}
-		if (!params.hasOwnProperty("value")) {
-			return __WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.error("no value provided", params);
-		}
-
-		var topic = "valueChanged";
-
-		if (!stores[params.store]) {
-			stores[params.store] = { permissions: {}, values: {}, name: params.store };
-		}
-
-		var storeObject = stores[params.store];
-
-		if (!storeObject.values[params.field]) {
-			topic = "valueAdded";
-		}
-		var removals = __WEBPACK_IMPORTED_MODULE_1__common_storeUtils__["checkForObjectChange"](storeObject.values, params.field, mappings[params.store]);
-		// Update the values in the store
-		__WEBPACK_IMPORTED_MODULE_1__common_storeUtils__["setPath"](storeObject.values, params.field, params.value);
-
-		__WEBPACK_IMPORTED_MODULE_1__common_storeUtils__["mapField"](storeObject.values, params.field, mappings[params.store]); //remap
-		if (removals) {
-			publishRemovals(storeObject, removals);
-		}
-		if (storeObject.persist) __WEBPACK_IMPORTED_MODULE_2__clients_storageClient___default.a.save({ topic: "finsemble", key: "distributedStore-" + storeObject.name, value: storeObject });
-		publishObjectUpdates(storeObject, params.field, topic, mappings[params.store]);
-	};
-
-	// Publishes our updates to an object. This will crawl the tree backwards and send out notifications. `parent.child`-- If you changed the child value, anything listening on the parent channel will also ge the message.
-	function publishObjectUpdates(store, startfield, topic, mappings) {
-		//always publish the
-		__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.publish("storeService" + store.store, { topic: "storeChanged", store: store.name, storeData: store });
-		var currentMapping = mappings;
-
-		// Loop thorugh the mapping for each item's parent.
-		while (startfield) {
-			publishFieldUpdate(store, startfield, topic, __WEBPACK_IMPORTED_MODULE_1__common_storeUtils__["byString"](store.values, startfield));
-			startfield = currentMapping[startfield];
-		}
-	}
-	// Send out the actual notifcation
-	function publishFieldUpdate(store, field, topic, value) {
-		//Sends the message for each field
-		__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.publish("storeService" + store.name + "." + field, { topic: topic, field: field, value: value, store: store.name });
-	}
-
-	//Send out our notification to anything listening on these channels. If you remove an object we need to make sure anything that was listening on that channel gets informed.
-	function publishRemovals(store, removals) {
-		for (var i = 0; i < removals.length; i++) {
-			__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.publish("storeService" + store.name + "." + removals[i], { topic: "removal", field: removals[i], value: __WEBPACK_IMPORTED_MODULE_1__common_storeUtils__["byString"](store.values, removals[i]), store: store.name });
-		}
-	}
-
-	// This will create a global store
-	this.createStore = function (store, cb = Function.prototype) {
-		if (!store.store) {
-			return cb("no store provided:" + store);
-		}
-		if (!stores[store.store]) {
-			mappings[store.store] = {};
-
-			stores[store.store] = {
-				store: store.store,
-				name: store.store,
-				persist: store.persist,
-				global: true,
-				//permissions: permissions,
-				values: store.values ? store.values : {}
-			};
-			__WEBPACK_IMPORTED_MODULE_1__common_storeUtils__["initObject"](stores[store.store].values, null, mappings[store.store]);
-			if (store.persist) {
-				// save the store into storage
-				persistingStores[store.store] = store.store;
-				// This is just a reference to persisting stores;
-				__WEBPACK_IMPORTED_MODULE_2__clients_storageClient___default.a.save({ topic: "finsemble", key: "distributedStores", value: persistingStores });
-				// save the store. Having a seperate record here makes saves much smaller.
-				__WEBPACK_IMPORTED_MODULE_2__clients_storageClient___default.a.save({ topic: "finsemble", key: "distributedStore-" + store.store, value: stores[store.store] });
-			}
-		}
-		__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.publish("storeService" + store, { topic: "storeCreated", store: stores[store.store] });
-		return cb(null, stores[store.store]);
-	};
-	//Retrieves a store and passes it to the requestor.
-	this.getStore = function (params, cb) {
-		if (!params.store) {
-			return cb("no store provided");
-		}
-		if (!stores[params.store]) {
-			return cb("store not found: " + params.store);
-		}
-		return cb(null, stores[params.store]);
-	};
-	//remove a store
-	this.removeStore = function (params, cb) {
-		if (params.store && stores[params.store]) {
-			if (stores[params.store].persist) {
-				delete persistingStores[params.store]; // delete the store from our local list
-				// remove the store from our list
-				__WEBPACK_IMPORTED_MODULE_2__clients_storageClient___default.a.save({ topic: "finsemble", key: "distributedStores", value: persistingStores });
-				// remove the store
-				__WEBPACK_IMPORTED_MODULE_2__clients_storageClient___default.a.remove({ topic: "finsemble", key: "distributedStore-" + params.store });
-			}
-
-			delete stores[params.store];
-			__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.publish("storeService" + params.store, { topic: "storeDeleted", store: params.store });
-			return cb(null, true);
-		}
-		return cb(null, false);
-	};
-	//Get a value out of the store
-	this.getValue = function (params, cb) {
-		var store = "finsemble";
-		if (!params.field) {
-			return cb("no field provided");
-		}
-
-		if (params.store) {
-			store = params.store;
-		}
-		if (!stores[store]) {
-			return cb("store:" + store + " does not exist." + JSON.stringify(stores));
-		}
-		var fieldValue = __WEBPACK_IMPORTED_MODULE_1__common_storeUtils__["byString"](stores[store].values, params.field);
-		return cb(null, fieldValue);
-	};
-	//Get multiple values froma store
-	this.getValues = function (params, cb) {
-		var store = "finsemble";
-		if (params.store) {
-			store = params.store;
-		}
-		var storeObject = stores[store];
-		if (!storeObject) {
-			return cb("store:" + store + " does not exist." + JSON.stringify);
-		}
-		if (!params.fields) {
-			return cb(null, storeObject.values);
-		}
-
-		var values = {};
-		for (var i = 0; i < params.fields.length; i++) {
-			var item = params.fields[i];
-			var field = typeof item === "string" ? item : item.field;
-			var fieldValue = __WEBPACK_IMPORTED_MODULE_1__common_storeUtils__["byString"](storeObject.values, field);
-			values[field] = fieldValue;
-		}
-		return cb(null, values);
-	};
-	/**
-  *
-  * @param {*} params
-  * @param {String} params.field - allows you to do a merge at a lower level in the values object
-  * @param {Object} params.values - the values to merge into the store values
-  * @param {*} cb
-  */
-	this.mergeValues = function (params, cb = Function.prototype) {
-		// for now, this only works on load. Not sure how we want to handle publishing each level with a deep merge.
-		if (!params.hasOwnProperty("values")) {
-			__WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.error("no values provided", params);
-			return cb();
-		}
-
-		if (!stores[params.store]) {
-			stores[params.store] = { permissions: {}, values: {}, name: params.store };
-		}
-
-		var storeObject = stores[params.store];
-
-		if (params.field) {
-			storeObject.values[params.field] = __WEBPACK_IMPORTED_MODULE_7_deepmerge___default()(storeObject.values[params.field], params.values);
-		} else {
-			storeObject.values = __WEBPACK_IMPORTED_MODULE_7_deepmerge___default()(storeObject.values, params.values);
-		}
-
-		if (storeObject.persist) __WEBPACK_IMPORTED_MODULE_2__clients_storageClient___default.a.save({ topic: "finsemble", key: "distributedStore-" + storeObject.name, value: storeObject });
-		//publish out a store change
-		this.RouterClient.publish("storeService" + storeObject.name, { topic: "storeChanged", store: storeObject.name, storeData: storeObject });
-		return cb();
-	};
-
-	this.load = function (cb) {
-		__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.addPubSubResponder(/storeService*/, {});
-		__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.addResponder("storeService.getValue", function (err, message) {
-			if (err) {
-				return __WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.error(err);
-			}
-			return self.getValue(message.data, function (err, data) {
-				message.sendQueryResponse(err, data);
-			});
-		});
-		__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.addResponder("storeService.getValues", function (err, message) {
-			if (err) {
-				return __WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.error(err);
-			}
-			return self.getValues(message.data, function (err, data) {
-				message.sendQueryResponse(err, data);
-			});
-		});
-		__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.addResponder("storeService.createStore", function (err, message) {
-			if (err) {
-				return __WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.error(err);
-			}
-			return self.createStore(message.data, function (err, data) {
-				message.sendQueryResponse(err, data);
-			});
-		});
-		__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.addResponder("storeService.setValue", function (err, message) {
-			self.setValue(message.data);
-			message.sendQueryResponse(err, message.data);
-		});
-		__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.addResponder("storeService.getStore", function (err, message) {
-			return self.getStore(message.data, function (err, data) {
-				message.sendQueryResponse(err, data);
-			});
-		});
-		__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.addResponder("storeService.removeStore", function (err, message) {
-			return self.removeStore(message.data, function (err, data) {
-				message.sendQueryResponse(err, data);
-			});
-		});
-		__WEBPACK_IMPORTED_MODULE_6__common_dependencyManager___default.a.onAuthorizationCompleted(() => {
-			this.loadPersistingStores();
-		});
-		cb();
-	};
-	/**
-  * This loads stores from storage on start. It then checks configs for any new/edits to stores.
-  */
-	this.loadPersistingStores = () => {
-		let tasks = [done => {
-			// we load all of our stores first
-
-			__WEBPACK_IMPORTED_MODULE_2__clients_storageClient___default.a.get({ topic: "finsemble", key: "distributedStores" }, (err, data) => {
-				if (err) return done(err);
-				if (!data) return done();
-
-				let storeKeys = Object.keys(data);
-				__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_5_async__["map"])(storeKeys, (store, storeDone) => {
-					__WEBPACK_IMPORTED_MODULE_2__clients_storageClient___default.a.get({ topic: "finsemble", key: "distributedStore-" + store }, (err, data) => {
-						if (err) return storeDone(err);
-						if (!data) {
-							__WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.error("DISTRIBUTEDSTORESERVICE", "no store found:", store);
-							return storeDone("no store found");
-						}
-						this.createStore(data, storeDone);
-					});
-				}, err => {
-					done(err);
-				});
-			});
-		}, done => {
-			// load stores from the config
-			__WEBPACK_IMPORTED_MODULE_3__clients_configClient___default.a.getValue({ field: "finsemble.servicesConfig.distributedStore" }, (err, data) => {
-				if (err) return done(err);
-				if (!data) {
-					// the config isn't setup
-					__WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.log("DISTRIBUTEDSTORESERVICE", "servicesConfig.distributedStore does not exist");
-					return done();
-				}
-				__WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.log("DISTRIBUTEDSTORESERVICE", "serivceconfig", data);
-				// no initial stores
-				if (!data.initialStores || !data.initialStores.length) {
-					__WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.log("DISTRIBUTEDSTORESERVICE", "No initialStores found");
-					return done();
-				}
-				__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_5_async__["map"])(data.initialStores, (store, storeDone) => {
-					if (stores[store.name]) {
-						__WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.log("DISTRIBUTEDSTORESERVICE", "loading foundation for", store);
-						// if we don't have a foundation config just move on.
-						if (!store.foundation) return storeDone();
-						return this.mergeValues({ store: store.name, values: store.foundation }, storeDone);
-					}
-					__WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.log("DISTRIBUTEDSTORESERVICE", "creating a new store", store);
-					this.createStore({
-						persist: true,
-						global: true,
-						store: store.name,
-						values: store.default
-					}, () => {
-						if (!store.foundation) return storeDone();
-						return this.mergeValues({ store: store.name, values: store.foundation }, storeDone);
-					});
-				}, err => {
-					done(err);
-				});
-			});
-		}];
-
-		__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_5_async__["series"])(tasks, err => {
-			if (err) {
-				return __WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.error("Data Store perstist store load Error:", err);
-			}
-			__WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.log("Data store loaded from all persistent stores");
-		});
-	};
-}
-
-StoreService.prototype = new __WEBPACK_IMPORTED_MODULE_0__baseService__["BaseService"]({
-	name: "dataStoreService",
-	shutdownDependencies: {
-		services: ["windowService"]
-	}
-});
-var serviceInstance = new StoreService();
-__WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.start();
-serviceInstance.onBaseServiceReady(function (callback) {
-	serviceInstance.load(callback);
-});
-
-serviceInstance.start();
-window.RouterClient = __WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a;
-window.StoreService = serviceInstance;
-/* harmony default export */ __webpack_exports__["default"] = (serviceInstance);
-
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\services\\dataStore\\dataStoreService.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\services\\dataStore\\dataStoreService.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\common\\util.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\common\\util.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
@@ -14412,6 +14179,386 @@ Object.defineProperty(exports, '__esModule', { value: true });
 })));
 
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(24).setImmediate, __webpack_require__(1), __webpack_require__(5), __webpack_require__(16)(module)))
+
+/***/ }),
+
+/***/ 90:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__baseService__ = __webpack_require__(29);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__baseService___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__baseService__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common_storeUtils__ = __webpack_require__(33);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_storageClient__ = __webpack_require__(28);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_storageClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_storageClient__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__clients_configClient__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__clients_configClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__clients_configClient__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_logger__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__clients_logger__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_async__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_async___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_async__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_dependencyManager__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_dependencyManager___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6__common_dependencyManager__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_deepmerge__ = __webpack_require__(47);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_deepmerge___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_deepmerge__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance__);
+
+
+
+
+
+
+
+
+__WEBPACK_IMPORTED_MODULE_3__clients_configClient___default.a.initialize();
+__WEBPACK_IMPORTED_MODULE_2__clients_storageClient___default.a.initialize();
+/** Daniel 12/21/2018
+ * Previously, we relied on the BaseService's reference to the RouterClient
+ * in this module, accessing `this.RouterClient` from within the StoreService.
+ * Somehow this is broken with the new import syntax (literally, `this` is undefined
+ * when you try to access `this.RouterClient`), so it's necessary to import the
+ * RouterClient separately.
+ * @TODO - Refactor StoreService to class that extends BaseService, and this issue
+ * will go away.
+*/
+
+
+///We use global if no store is set
+function StoreService() {
+	var self = this;
+	let persistingStores = {};
+	var stores = {
+		finsemble: {
+			permissions: {},
+			values: {}
+		}
+	};
+	// Each store will be index here with an flattened object attached that hold the location of each object and it's parent.
+	var mappings = {};
+	window.mappings = mappings;
+	this.stores = stores;
+	window.stores = stores;
+	this.setValue = function (params) {
+		if (!params.field) {
+			return __WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.error("no field provided", params);
+		}
+		if (!params.hasOwnProperty("value")) {
+			return __WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.error("no value provided", params);
+		}
+
+		var topic = "valueChanged";
+
+		if (!stores[params.store]) {
+			stores[params.store] = { permissions: {}, values: {}, name: params.store };
+		}
+
+		var storeObject = stores[params.store];
+
+		if (!storeObject.values[params.field]) {
+			topic = "valueAdded";
+		}
+		var removals = __WEBPACK_IMPORTED_MODULE_1__common_storeUtils__["checkForObjectChange"](storeObject.values, params.field, mappings[params.store]);
+		// Update the values in the store
+		__WEBPACK_IMPORTED_MODULE_1__common_storeUtils__["setPath"](storeObject.values, params.field, params.value);
+
+		__WEBPACK_IMPORTED_MODULE_1__common_storeUtils__["mapField"](storeObject.values, params.field, mappings[params.store]); //remap
+		if (removals) {
+			publishRemovals(storeObject, removals);
+		}
+		if (storeObject.persist) __WEBPACK_IMPORTED_MODULE_2__clients_storageClient___default.a.save({ topic: "finsemble", key: "distributedStore-" + storeObject.name, value: storeObject });
+		publishObjectUpdates(storeObject, params.field, topic, mappings[params.store]);
+	};
+
+	// Publishes our updates to an object. This will crawl the tree backwards and send out notifications. `parent.child`-- If you changed the child value, anything listening on the parent channel will also ge the message.
+	function publishObjectUpdates(store, startfield, topic, mappings) {
+		//always publish the
+		__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.publish("storeService" + store.store, { topic: "storeChanged", store: store.name, storeData: store });
+		var currentMapping = mappings;
+
+		// Loop thorugh the mapping for each item's parent.
+		while (startfield) {
+			publishFieldUpdate(store, startfield, topic, __WEBPACK_IMPORTED_MODULE_1__common_storeUtils__["byString"](store.values, startfield));
+			startfield = currentMapping[startfield];
+		}
+	}
+	// Send out the actual notifcation
+	function publishFieldUpdate(store, field, topic, value) {
+		//Sends the message for each field
+		__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.publish("storeService" + store.name + "." + field, { topic: topic, field: field, value: value, store: store.name });
+	}
+
+	//Send out our notification to anything listening on these channels. If you remove an object we need to make sure anything that was listening on that channel gets informed.
+	function publishRemovals(store, removals) {
+		for (var i = 0; i < removals.length; i++) {
+			__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.publish("storeService" + store.name + "." + removals[i], { topic: "removal", field: removals[i], value: __WEBPACK_IMPORTED_MODULE_1__common_storeUtils__["byString"](store.values, removals[i]), store: store.name });
+		}
+	}
+
+	// This will create a global store
+	this.createStore = function (store, cb = Function.prototype) {
+		if (!store.store) {
+			return cb("no store provided:" + store);
+		}
+		if (!stores[store.store]) {
+			mappings[store.store] = {};
+
+			stores[store.store] = {
+				store: store.store,
+				name: store.store,
+				persist: store.persist,
+				global: true,
+				//permissions: permissions,
+				values: store.values ? store.values : {}
+			};
+			__WEBPACK_IMPORTED_MODULE_1__common_storeUtils__["initObject"](stores[store.store].values, null, mappings[store.store]);
+			if (store.persist) {
+				// save the store into storage
+				persistingStores[store.store] = store.store;
+				// This is just a reference to persisting stores;
+				__WEBPACK_IMPORTED_MODULE_2__clients_storageClient___default.a.save({ topic: "finsemble", key: "distributedStores", value: persistingStores });
+				// save the store. Having a seperate record here makes saves much smaller.
+				__WEBPACK_IMPORTED_MODULE_2__clients_storageClient___default.a.save({ topic: "finsemble", key: "distributedStore-" + store.store, value: stores[store.store] });
+			}
+		}
+		__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.publish("storeService" + store, { topic: "storeCreated", store: stores[store.store] });
+		return cb(null, stores[store.store]);
+	};
+	//Retrieves a store and passes it to the requestor.
+	this.getStore = function (params, cb) {
+		if (!params.store) {
+			return cb("no store provided");
+		}
+		if (!stores[params.store]) {
+			return cb("store not found: " + params.store);
+		}
+		return cb(null, stores[params.store]);
+	};
+	//remove a store
+	this.removeStore = function (params, cb) {
+		if (params.store && stores[params.store]) {
+			if (stores[params.store].persist) {
+				delete persistingStores[params.store]; // delete the store from our local list
+				// remove the store from our list
+				__WEBPACK_IMPORTED_MODULE_2__clients_storageClient___default.a.save({ topic: "finsemble", key: "distributedStores", value: persistingStores });
+				// remove the store
+				__WEBPACK_IMPORTED_MODULE_2__clients_storageClient___default.a.remove({ topic: "finsemble", key: "distributedStore-" + params.store });
+			}
+
+			delete stores[params.store];
+			__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.publish("storeService" + params.store, { topic: "storeDeleted", store: params.store });
+			return cb(null, true);
+		}
+		return cb(null, false);
+	};
+	//Get a value out of the store
+	this.getValue = function (params, cb) {
+		var store = "finsemble";
+		if (!params.field) {
+			return cb("no field provided");
+		}
+
+		if (params.store) {
+			store = params.store;
+		}
+		if (!stores[store]) {
+			return cb("store:" + store + " does not exist." + JSON.stringify(stores));
+		}
+		var fieldValue = __WEBPACK_IMPORTED_MODULE_1__common_storeUtils__["byString"](stores[store].values, params.field);
+		return cb(null, fieldValue);
+	};
+	//Get multiple values froma store
+	this.getValues = function (params, cb) {
+		var store = "finsemble";
+		if (params.store) {
+			store = params.store;
+		}
+		var storeObject = stores[store];
+		if (!storeObject) {
+			return cb("store:" + store + " does not exist." + JSON.stringify);
+		}
+		if (!params.fields) {
+			return cb(null, storeObject.values);
+		}
+
+		var values = {};
+		for (var i = 0; i < params.fields.length; i++) {
+			var item = params.fields[i];
+			var field = typeof item === "string" ? item : item.field;
+			var fieldValue = __WEBPACK_IMPORTED_MODULE_1__common_storeUtils__["byString"](storeObject.values, field);
+			values[field] = fieldValue;
+		}
+		return cb(null, values);
+	};
+	/**
+  *
+  * @param {*} params
+  * @param {String} params.field - allows you to do a merge at a lower level in the values object
+  * @param {Object} params.values - the values to merge into the store values
+  * @param {*} cb
+  */
+	this.mergeValues = function (params, cb = Function.prototype) {
+		// for now, this only works on load. Not sure how we want to handle publishing each level with a deep merge.
+		if (!params.hasOwnProperty("values")) {
+			__WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.error("no values provided", params);
+			return cb();
+		}
+
+		if (!stores[params.store]) {
+			stores[params.store] = { permissions: {}, values: {}, name: params.store };
+		}
+
+		var storeObject = stores[params.store];
+
+		if (params.field) {
+			storeObject.values[params.field] = __WEBPACK_IMPORTED_MODULE_7_deepmerge___default()(storeObject.values[params.field], params.values);
+		} else {
+			storeObject.values = __WEBPACK_IMPORTED_MODULE_7_deepmerge___default()(storeObject.values, params.values);
+		}
+
+		if (storeObject.persist) __WEBPACK_IMPORTED_MODULE_2__clients_storageClient___default.a.save({ topic: "finsemble", key: "distributedStore-" + storeObject.name, value: storeObject });
+		//publish out a store change
+		this.RouterClient.publish("storeService" + storeObject.name, { topic: "storeChanged", store: storeObject.name, storeData: storeObject });
+		return cb();
+	};
+
+	this.load = function (cb) {
+		__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.addPubSubResponder(/storeService*/, {});
+		__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.addResponder("storeService.getValue", function (err, message) {
+			if (err) {
+				return __WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.error(err);
+			}
+			return self.getValue(message.data, function (err, data) {
+				message.sendQueryResponse(err, data);
+			});
+		});
+		__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.addResponder("storeService.getValues", function (err, message) {
+			if (err) {
+				return __WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.error(err);
+			}
+			return self.getValues(message.data, function (err, data) {
+				message.sendQueryResponse(err, data);
+			});
+		});
+		__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.addResponder("storeService.createStore", function (err, message) {
+			if (err) {
+				return __WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.error(err);
+			}
+			return self.createStore(message.data, function (err, data) {
+				message.sendQueryResponse(err, data);
+			});
+		});
+		__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.addResponder("storeService.setValue", function (err, message) {
+			self.setValue(message.data);
+			message.sendQueryResponse(err, message.data);
+		});
+		__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.addResponder("storeService.getStore", function (err, message) {
+			return self.getStore(message.data, function (err, data) {
+				message.sendQueryResponse(err, data);
+			});
+		});
+		__WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a.addResponder("storeService.removeStore", function (err, message) {
+			return self.removeStore(message.data, function (err, data) {
+				message.sendQueryResponse(err, data);
+			});
+		});
+		__WEBPACK_IMPORTED_MODULE_6__common_dependencyManager___default.a.onAuthorizationCompleted(() => {
+			this.loadPersistingStores();
+		});
+		cb();
+	};
+	/**
+  * This loads stores from storage on start. It then checks configs for any new/edits to stores.
+  */
+	this.loadPersistingStores = () => {
+		let tasks = [done => {
+			// we load all of our stores first
+
+			__WEBPACK_IMPORTED_MODULE_2__clients_storageClient___default.a.get({ topic: "finsemble", key: "distributedStores" }, (err, data) => {
+				if (err) return done(err);
+				if (!data) return done();
+
+				let storeKeys = Object.keys(data);
+				__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_5_async__["map"])(storeKeys, (store, storeDone) => {
+					__WEBPACK_IMPORTED_MODULE_2__clients_storageClient___default.a.get({ topic: "finsemble", key: "distributedStore-" + store }, (err, data) => {
+						if (err) return storeDone(err);
+						if (!data) {
+							__WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.error("DISTRIBUTEDSTORESERVICE", "no store found:", store);
+							return storeDone("no store found");
+						}
+						this.createStore(data, storeDone);
+					});
+				}, err => {
+					done(err);
+				});
+			});
+		}, done => {
+			// load stores from the config
+			__WEBPACK_IMPORTED_MODULE_3__clients_configClient___default.a.getValue({ field: "finsemble.servicesConfig.distributedStore" }, (err, data) => {
+				if (err) return done(err);
+				if (!data) {
+					// the config isn't setup
+					__WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.log("DISTRIBUTEDSTORESERVICE", "servicesConfig.distributedStore does not exist");
+					return done();
+				}
+				__WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.log("DISTRIBUTEDSTORESERVICE", "serivceconfig", data);
+				// no initial stores
+				if (!data.initialStores || !data.initialStores.length) {
+					__WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.log("DISTRIBUTEDSTORESERVICE", "No initialStores found");
+					return done();
+				}
+				__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_5_async__["map"])(data.initialStores, (store, storeDone) => {
+					if (stores[store.name]) {
+						__WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.log("DISTRIBUTEDSTORESERVICE", "loading foundation for", store);
+						// if we don't have a foundation config just move on.
+						if (!store.foundation) return storeDone();
+						return this.mergeValues({ store: store.name, values: store.foundation }, storeDone);
+					}
+					__WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.log("DISTRIBUTEDSTORESERVICE", "creating a new store", store);
+					this.createStore({
+						persist: true,
+						global: true,
+						store: store.name,
+						values: store.default
+					}, () => {
+						if (!store.foundation) return storeDone();
+						return this.mergeValues({ store: store.name, values: store.foundation }, storeDone);
+					});
+				}, err => {
+					done(err);
+				});
+			});
+		}];
+
+		__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_5_async__["series"])(tasks, err => {
+			if (err) {
+				return __WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.error("Data Store perstist store load Error:", err);
+			}
+			__WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.log("Data store loaded from all persistent stores");
+		});
+	};
+}
+
+StoreService.prototype = new __WEBPACK_IMPORTED_MODULE_0__baseService__["BaseService"]({
+	name: "dataStoreService",
+	shutdownDependencies: {
+		services: ["windowService"]
+	}
+});
+var serviceInstance = new StoreService();
+__WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.start();
+serviceInstance.onBaseServiceReady(function (callback) {
+	serviceInstance.load(callback);
+});
+
+serviceInstance.start();
+window.RouterClient = __WEBPACK_IMPORTED_MODULE_8__clients_routerClientInstance___default.a;
+window.StoreService = serviceInstance;
+/* harmony default export */ __webpack_exports__["default"] = (serviceInstance);
+
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\services\\dataStore\\dataStoreService.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\services\\dataStore\\dataStoreService.js"); } } })();
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ })
 

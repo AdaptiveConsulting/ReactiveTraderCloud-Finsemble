@@ -82,7 +82,7 @@ class StoreModel extends _BaseClient {
 	 * @param {Object} params - Params object
 	 * @param {String} params.field - The name of the field where data will be stored
 	 * @param {String} params.value - Value to be stored
-	 * @param {function} [cb] callback
+	 * @param {function} cb callback
 	 * @returns {null}
 	 *
 	 * @example
@@ -140,7 +140,7 @@ class StoreModel extends _BaseClient {
 	 * @param {Object[]} fields - An Array of field objects
 	 * @param {String} fields.field - The name of the field
 	 * @param {any} fields.value - Field value
-	 * @param {function} [cb] callback
+	 * @param {function} cb callback
 	 * @example
 	 * store.setValues([{field:'field1',value:"new value"}]);
 	 */
@@ -165,7 +165,7 @@ class StoreModel extends _BaseClient {
 	 * Get a value from the store. If global is not set, we'll check local first then we'll check global.
 	 * @param {string|object} params - Params object. This can also be a string
 	 * @param {String} params.field - The field where the value is stored.
-	 * @param {Function} [cb] -  Will return the value if found.
+	 * @param {Function} cb -  Will return the value if found.
 	 * @returns {any} - The value of the field. If no callback is given and the value is local, this will run synchronous
 	 * @example
 	store.getValue({field:'field1'},function(err,value){});
@@ -191,7 +191,7 @@ class StoreModel extends _BaseClient {
 	/**
 	 * Get multiple values from the store.
 	 * @param {Array.<object>|Array.<String>} fields - An Array of field objects. If there are no fields proviced, all values in the store are returned.
-	 * @param {Function} [cb] -  Will return the value if found.
+	 * @param {Function} cb -  Will return the value if found.
 	 * @returns {Object} - returns an object of with the fields as keys.If no callback is given and the value is local, this will run synchronous
 	 * @example
 	 * store.getValues([{field:'field1'},{field:'field2'}],function(err,values){});
@@ -256,7 +256,7 @@ class StoreModel extends _BaseClient {
 	 * Remove a value from the store.
 	* @param {Object | String} params - Either an object or string
 	 * @param {String} param.field - The name of the field
-	 * @param {Function} [cb] -  returns an error if there is one
+	 * @param {Function} cb -  returns an error if there is one
 	 * @example
 	 * store.removeValue({field:'field1'},function(err,bool){});
 	 */
@@ -277,7 +277,7 @@ class StoreModel extends _BaseClient {
 	 * Removes multiple values from the store.
 	 * @param {Object[] | String[]} params - An Array of field objects
 	 * @param {String} param[].field - The name of the field
-	 * @param {Function} [cb] -  returns an error if there is one.
+	 * @param {Function} cb -  returns an error if there is one.
 	 * @example
 	 * store.removeValue({field:'field1'},function(err,bool){});
 	 */
@@ -290,7 +290,7 @@ class StoreModel extends _BaseClient {
 
 	/**
 	 * Destroys the store.
-	 * @param {Function} [cb] -  Will return the value if found.
+	 * @param {Function} cb -  Will return the value if found.
 	 * @example
 	 * store.destroy();
 	 */
@@ -323,7 +323,7 @@ class StoreModel extends _BaseClient {
 	* @param {Object} params - Params object
 	* @param {String} params.field - The data field to listen for. If this is empty it listen to all changes of the store.
 	* @param {Function} fn -  the function to call when a listener is triggered
-	* @param {Function} [cb] - callback
+	* @param {Function} cb - callback
 	* @example
 	*var myFunction = function(err,data){
 	}
@@ -356,7 +356,7 @@ class StoreModel extends _BaseClient {
 	* @param {String} params.field - The data field to listen for.
 	* @param {String} [params.listener] - the function to call when a listener is triggered. If this is empty, fn is used.
 	* @param {function} [fn] -  the function to call when a listener is triggered
-	* @param {function} [cb] callback
+	* @param {function} cb callback
 	* @example
 	*var myFunction = function(err,data){
 
@@ -406,7 +406,7 @@ class StoreModel extends _BaseClient {
 	 * @param {Object} params - Params object
 	 * @param {String} params.field - The data field
 	 * @param {function} [fn] -  the function to remove from the listeners
-	 * @param {function} [cb] -  returns true if it was succesfull in removing the listener.
+	 * @param {function} cb -  returns true if it was succesfull in removing the listener.
 	 *
 	 * @example
 	 * var myFunction = function(err,data){
@@ -442,7 +442,7 @@ class StoreModel extends _BaseClient {
 	 * @param {String} params.field - The data field to listen for. If this is empty it listen to all changes of the store.
 	 * @param {String} params.listener - The listener function
 	 * @param {function} [fn] -  the function to remove from the listeners
-	 * @param {function} [cb] -  returns true if it was succesfull in removing the listener.
+	 * @param {function} cb -  returns true if it was succesfull in removing the listener.
 	 *
 	 * @example
 	 * var myFunction = function(err,data){

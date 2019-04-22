@@ -85,7 +85,7 @@ class LauncherClient extends BaseClient {
 	/**
 	 * Get a list of registered components (those that were entered into *components.json*).
 	 *
-	 * @param {Function} [cb] Callback returns an object map of components. Each component object
+	 * @param {Function} cb Callback returns an object map of components. Each component object
 	 * contains the default config for that component.
 	 */
 	getComponentList(cb: Function = Function.prototype) {
@@ -103,7 +103,7 @@ class LauncherClient extends BaseClient {
 	 * Get the component config (i.e. from components.json) for a specific component.
 	 *
 	 * @param {String} componentType The type of the component.
-	 * @param {Function} [cb] Callback returns the default config (windowDescriptor) for the requested componentType.
+	 * @param {Function} cb Callback returns the default config (windowDescriptor) for the requested componentType.
 	 *
 	 */
 	getComponentDefaultConfig(componentType: string, cb: Function = Function.prototype) {
@@ -145,12 +145,12 @@ class LauncherClient extends BaseClient {
 	 * @param  {object} [params]               Parameters
 	 * @param  {WindowIdentifier} [params.windowIdentifier] The windowIdentifier to get the monitorInfo. If undefined, then the current window.
 	 * @param  {number|string} [params.monitor] If passed then a specific monitor is identified. Valid values are the same as for {@link LauncherClient#spawn}.
-	 * @param  {Function} [cb]               Returns a monitorInfo object containing the monitorRect, availableRect and unclaimedRect.
+	 * @param  {Function} cb Returns a monitorInfo object containing the monitorRect, availableRect and unclaimedRect.
 	 */
 	getMonitorInfo(params: {
 		windowIdentifier?: WindowIdentifier,
 		monitor?: string
-	}, cb = Function.prototype) {
+	}, cb: Function = Function.prototype) {
 		var self = this;
 		Validate.args(cb, "function=");
 
@@ -176,7 +176,7 @@ class LauncherClient extends BaseClient {
 	 *
 	 *
 	 *
-	 * @param  {Function} [cb]               Returns an array of monitorInfo objects.
+	 * @param  {Function} cb Returns an array of monitorInfo objects.
 	 */
 	getMonitorInfoAll(cb: Function = Function.prototype) {
 		Validate.args(cb, "function=");
@@ -200,9 +200,12 @@ class LauncherClient extends BaseClient {
 	 * @param {object} params -
 	 * @param {String} params.componentType - componentType
 	 * @param {object} params.manifest - this should be a component manifest
-	 * @param  {Function} [cb]
+	 * @param  {Function} cb
 	 */
-	registerComponent(params,cb = Function.prototype) {
+	registerComponent(params: {
+		componentType: string,
+		manifest: any
+	}, cb: Function = Function.prototype) {
 
 		const promiseResolver = (resolve) => {
 			this.routerClient.query("LauncherService.registerComponent", params, function (err, response) {
@@ -220,10 +223,12 @@ class LauncherClient extends BaseClient {
 	 *
 	 * @param {object} params -
 	 * @param {String} params.componentType - componentType
-	 * @param  {Function} [cb]
+	 * @param  {Function} cb
 	 */
-	unRegisterComponent(params,cb = Function.prototype) {
-		if(!params.componentType) return cb("No componentType provided");
+	unRegisterComponent(params: {
+		componentType: string
+	}, cb: Function = Function.prototype) {
+		if (!params.componentType) return cb("No componentType provided");
 		const promiseResolver = (resolve) => {
 			this.routerClient.query("LauncherService.unRegisterComponent", params, function (err, response) {
 				if (cb) {
@@ -280,12 +285,12 @@ class LauncherClient extends BaseClient {
 	 * @param {boolean} [params.autoFocus] If true, window will focus when first shown.
 	 * @param {boolean} [params.slave] Cannot be set for an existing window. Will only go into effect if the window is spawned.
 	 * (In other words, only use this in conjunction with spawnIfNotFound).
-	 * @param {Function} [cb] Callback to be invoked after function is completed. Callback contains an object with the following information:
+	 * @param {Function} cb Callback to be invoked after function is completed. Callback contains an object with the following information:
 	 * **windowIdentifier** - The {@link WindowIdentifier} for the new window.
 	 * **windowDescriptor** - The {@link WindowDescriptor} of the new window.
 	 * **finWindow** - An `OpenFin` window referencing the new window.
 	 */
-	showWindow(windowIdentifier: WindowIdentifier, params: ShowWindowParams, cb = Function.prototype) {
+	showWindow(windowIdentifier: WindowIdentifier, params: ShowWindowParams, cb: Function = Function.prototype) {
 		Validate.args(windowIdentifier, "object", params, "object=", cb, "function=");
 		var self = this;
 		if (!params) { params = {}; }
@@ -328,6 +333,7 @@ class LauncherClient extends BaseClient {
 	 *
 	 * @since 2.4.1 Added params.windowType (deprecated params.native), params.path, params.alias, params.argumentsAsQueryString - These are all for launching native apps.
 	 * @since 3.7.0 Added "affinity" parameter
+	 * @param {function} cb Function invoked after the window is created
 	 */
 	spawn(component: string, params: SpawnParams, cb: Function = Function.prototype) {
 		var self = this;
@@ -426,7 +432,10 @@ class LauncherClient extends BaseClient {
 					//Ignore the initial "uninitialized" state message delivered by subscribe (a second message will contain the actual data)
 					if (response && Object.keys(response.data).length === 0) return;
 					if (params.position === "relative" && (params.groupOnSpawn || params.dockOnSpawn)) {
-						let windows = [result.windowIdentifier.windowName, System.Window.getCurrent().name]; //TODO - replace with FinsembleWindow
+						//If 'params.relativeWindow' is supplied we need to dock to it, otherwise get the parent window (System.Window.getCurrent())
+						const windowToGroup = params.relativeWindow ? params.relativeWindow.windowName : System.Window.getCurrent().name;
+
+						const windows = [result.windowIdentifier.windowName, windowToGroup]; //TODO - replace with FinsembleWindow
 						self.routerClient.query("DockingService.groupWindows", {
 							windows: windows,
 							isMovable: true,
@@ -571,7 +580,7 @@ class LauncherClient extends BaseClient {
 	 */
 	getComponentsThatCanReceiveDataTypes(params: {
 		dataTypes?: string[]
-	}, cb = Function.prototype) {
+	}, cb: Function = Function.prototype) {
 		Validate.args(cb, "function=");
 		if (params.dataTypes && !Array.isArray(params.dataTypes)) { params.dataTypes = [params.dataTypes]; }
 		Validate.args(params.dataTypes, "array");
@@ -700,7 +709,7 @@ class LauncherClient extends BaseClient {
 	 * @param {*} params
 	 * @param {string} [params.groupName] The name of the window group to create
 	 * @param {Array.<string | Object>} [params.windowList] An array of window names or window identifiers to add to the group. Optional.
-	 * @param {function} [cb] callback to be called upon group creation
+	 * @param {function} cb callback to be called upon group creation
 	 *
 	 * @since TBD
 	 * @private
@@ -736,7 +745,7 @@ class LauncherClient extends BaseClient {
 	 * @param {*} params
 	 * @param {string} [params.groupName] The name of the window group
 	 * @param {Array.<string | Object>} [params.windowList] An array of window names or window identifiers to add to the group.
-	 * @param {function} [cb] callback to be called upon group creation
+	 * @param {function} cb callback to be called upon group creation
 	 *
 	 * @since TBD
 	 * @private
@@ -771,7 +780,7 @@ class LauncherClient extends BaseClient {
 	 * @param {*} params
 	 * @param {string} [params.groupName] The name of the window group
 	 * @param {Array.<string | Object>} [params.windowList] An array of window names or window identifiers to remove from the group.
-	 * @param {function} [cb] callback to be called upon group creation
+	 * @param {function} cb callback to be called upon group creation
 	 *
 	 * @since TBD
 	 * @private
@@ -779,7 +788,7 @@ class LauncherClient extends BaseClient {
 	removeWindowsFromGroup(params: {
 		windowList?: string[] | WindowIdentifier[],
 		groupName?: string
-	}, cb = Function.prototype) {
+	}, cb: Function = Function.prototype) {
 		Validate.args(cb, "function=");
 		const promiseResolver = (resolve) => {
 			if (!params.groupName || !params.windowList) {
@@ -804,7 +813,7 @@ class LauncherClient extends BaseClient {
 	 * Get Window Groups that a window belongs to. If no windowIdentifier is specified, gets  the groups of the current window.
 	 * @param {*} params
 	 * @param {WindowIdentifier} [params.windowIdentifier] Optional. If not specified uses current window
-	 * @param {*} [cb] callback with a list of groups
+	 * @param {*} cb callback with a list of groups
 	 *
 	 * @since TBD
 	 * @private

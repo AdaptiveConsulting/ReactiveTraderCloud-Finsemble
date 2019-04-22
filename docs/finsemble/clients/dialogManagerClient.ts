@@ -62,7 +62,7 @@ class DialogManagerClient extends _BaseClient {
 	 * @param {number | string} [params.y="center"] - Same as {@link LauncherClient#spawn} except defaults to "center".
 	 * @param {object} inputParams Object or any data type needed by your dialog.
 	 * @param {function} dialogResponseCallback called when response received back from dialog window (typically on dialog completion). `responseParameters` is defined by the dialog.
-	 * @param {function} [cb] Returns response from {@link LauncherClient#spawn}
+	 * @param {function} cb Returns response from {@link LauncherClient#spawn}
 	 *
 	 * @example
 	 * FSBL.Clients.DialogManager.spawnDialog(
@@ -271,7 +271,7 @@ class DialogManagerClient extends _BaseClient {
 
 	/**
 	 * Shows a semi-transparent black modal behind the dialog.
-	 * @param {function} [cb]
+	 * @param {function} cb
 	 */
 	showModal = (cb?: Function) => {
 		this.DialogStore.getValue("modalIdentifier", async (err, identifier) => {

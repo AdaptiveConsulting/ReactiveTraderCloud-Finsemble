@@ -285,6 +285,7 @@ export class FinsembleWindow {
 	/**
 	 * Async wrap. Given a name/windowName, it will query the launcher for information required to wrap the window. Then it will return an object that can be operated on. Also this creates a cache of all wrapped windows for performance. Our clients wrap the same window often and this was causing excessive messaging to the store and degrading performance.
 	 * @param {*} params Need only name in most cases. For service and other cases where the window is not part of what the launcher considers active windows, name and uuid are required
+	 * @param {boolean} params.waitForReady If true, will async await for Finsemble to return ready before continuing to build the instance to return
 	 * @param {*} cb
 	 */
 	static wrap = FinsembleWindow.getInstance;
@@ -418,6 +419,14 @@ export class FinsembleWindow {
 		return new Promise(promiseResolver);
 	};
 
+	/**
+	 * Creates a Finsemble WindowWrap
+	 * @param {*} params
+	 * @param {string} params.name The name of the window
+	 * @param {*} [params.retrievedIdentifier] Retrieved window identifier
+	 * @param {*} [params.windowIdentifier] The window identifier
+	 * @param {boolean} [param.setWindowType] If true, will set the window type
+	 */
 	static _createWrap(params): any {
 		function promiseResolver(resolve, reject) {
 			let identifier = params.retrievedIdentifier || params.windowIdentifier;

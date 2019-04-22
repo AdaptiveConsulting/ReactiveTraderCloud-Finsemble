@@ -4,18 +4,27 @@ export function guuid() {
 	return uuidv1(); // return global uuid
 }
 
-export function clone(obj) {
-	//This has been tested a good amount. Previous to this commit we were using a mix of deepmerge and JSON.parse(JSON.stringify()).
-	//Trying lodash.deepclone made my tests take 2-3s.
-	//JSON.parse everywhere made them take ~ 1s.
-	//Using JSON.parse on arrays and deep merge on objects makes them take 7-900ms.
+
+/**
+ * Home baked clone method that was the most performant one that was tried back in 2017.
+ * This has been tested a good amount. Previous to this commit we were using a mix of deepmerge and JSON.parse(JSON.stringify()).
+ * Trying lodash.deepclone made my tests take 2-3s.
+ * JSON.parse everywhere made them take ~ 1s.
+ * Using JSON.parse on arrays and deep merge on objects makes them take 7-900ms.
+ *
+ * @export
+ * @param {*} obj Thing to clone
+ * @param {*} [errorCb = console.error] Callback to handle any errors.
+ * @returns
+ */
+export function clone(obj, errorCb = console.error) {
 	if (Array.isArray(obj)) {
 		return obj.slice();
 	}
 	try {
 		return JSON.parse(JSON.stringify(obj));
 	} catch (e) {
-		console.error("clone error", e);
+		errorCb(e);
 		return e;
 	}
 };

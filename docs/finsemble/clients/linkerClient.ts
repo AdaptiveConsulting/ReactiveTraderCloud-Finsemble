@@ -417,7 +417,7 @@ class LinkerClient extends _BaseClient {
 		if (this.dataListenerList[dataType]) {
 			return this.dataListenerList[dataType].push(cb);
 		}
-		this.dataListenerList[dataType] = [cb];
+		this.dataListenerList[dataType] = cb;
 	};
 
 	/**
@@ -731,13 +731,16 @@ class LinkerClient extends _BaseClient {
 	 * // Response format: [{windowName: 'Window Name', componentType: 'Component Type', uuid: 'uuid', channels: ['purple'] }, ..]
 	 *
 	 */
-	getLinkedWindows(params: {
+	getLinkedWindows(params?: {
 		channels?: string[],
 		componentTypes?: string[],
 		windowIdentifier?: WindowIdentifier,
 		groups?: string[],
 		client?: any
 	}, cb?: StandardCallback) {
+		if (!params) {
+			params = {};
+		}
 		params.groups = params.channels;
 		params.windowIdentifier = params.client;
 		return this.getLinkedComponents(params, cb);

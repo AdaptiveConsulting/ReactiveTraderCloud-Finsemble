@@ -224,7 +224,7 @@ class HotkeyClient extends BaseClient {
 	 * This function uses browser key capture, so it will work when assimilation is not running
 	 * @param {Array} [keyArr] Array of strings representing hotkey key combination. We're not very picky about exactly what strings you use - for example "control", "ctrl" and "CTRL" all work for the control key.
 	 * @param {function} [handler] Function to be executed when the hotkey combination is pressed. It is recommended that you define a variable to represent the handler function, as the same function must be passed in order to remove the hotkey.
-	 * @param {function} [cb] Callback to be called after local hotkey is added.
+	 * @param {function} cb Callback to be called after local hotkey is added.
 	 * @todo Have addLocalHotkey automatically use this when assimilation is not running. Will eventually replace addLocalHotkey.
 	 * @private
 	 * @example
@@ -273,7 +273,7 @@ class HotkeyClient extends BaseClient {
 	 *Adds a global hotkey, firing regardless of what window is in focus. If you execute this function more than once for the same key combination, both hotkeys will coexist, and would need to be remove separately.
 	 * @param {Array.<string>} keyArr Array of strings representing hotkey key combination. We're not very picky about exactly what strings you use - for example "control", "ctrl" and "CTRL" all work for the control key.
 	 * @param {function} handler Function to be executed when the hotkey combination is pressed. It is recommended that you define a variable to represent the handler function, as the same function must be passed in order to remove the hotkey.
-	 * @param {function} [cb] Callback to be called after local hotkey is added.
+	 * @param {function} cb Callback to be called after local hotkey is added.
 	 * @example
 	 * var myFunction = function () {...}
 	 * FSBL.Clients.HotkeyClient.addGlobalHotkey(["ctrl","shift","s"],myFunction,cb)

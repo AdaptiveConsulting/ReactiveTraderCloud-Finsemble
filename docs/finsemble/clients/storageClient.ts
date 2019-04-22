@@ -23,7 +23,7 @@ class StorageClient extends _BaseClient {
 	 * Define the username for storage (i.e., each user has unique storage)
 	 * @param {Object} params - Params object
 	 * @param {String} params.user -  user name
-	 * @param {function} [cb] -  callback to be called on success
+	 * @param {function} cb -  callback to be called on success
 	 *
 	 * @example
 	 * StorageClient.setUser({ user: "JohnDeere"});
@@ -44,7 +44,7 @@ class StorageClient extends _BaseClient {
 	 * @param {Object} params - Params object
 	 * @param {String} params.topic -  if specificed then data store is set only for topic
 	 * @param {string} params.dataStore -  identifies the data store (e.g. "localStorage", "redis")
-	 * @param {function} [cb] -  callback to be called on success
+	 * @param {function} cb -  callback to be called on success
 	 *
 	 * @example
 	 * StorageClient.setStore({topic:"finsemble", dataStore:"redis"})
@@ -67,7 +67,7 @@ class StorageClient extends _BaseClient {
 	 * @param {String} params.topic -  storage topic for key being stored
 	 * @param {String} params.key -  The key to be stored
 	 * @param {any} params.value -  The value to be stored
-	 * @param {function} [cb] -  callback to be called on success
+	 * @param {function} cb -  callback to be called on success
 	 *
 	 * @example
 	 * StorageClient.save({topic:"finsemble", key:"testKey", value:"testValue"})
@@ -96,7 +96,7 @@ class StorageClient extends _BaseClient {
 	 * Get a value from storage.
 	 * @param {Object} params - Params object
 	 * @param {String} params.key -  The key to get from storage
-	 * @param {function} [cb] -  callback to be called on success
+	 * @param {function} cb -  callback to be called on success
 	 *
 	 * @example
 	 * StorageClient.get({topic:"finsemble", key:"testKey"}, function(err, data){
@@ -125,7 +125,7 @@ class StorageClient extends _BaseClient {
 	 * @param {Object} params - Params object
 	 * @param {String} params.topic -  topic for the keys to return
 	 * @param {String=} params.keyPrefix -  filter all keys that don't start with this prefix
-	 * @param {function} [cb] -  callback to be called on success
+	 * @param {function} cb -  callback to be called on success
 	 *
 	 * @example
 	 * StorageClient.keys({topic:"finsemble", keyPrefix:"test"}, function(err, data){
@@ -146,7 +146,7 @@ class StorageClient extends _BaseClient {
 	/**
 	 * Get a multiple values from storage based on regex.(coming soon)
 	 * @param {Object} params - Params object
-	 * @param {function} [cb] -  callback to be called on success
+	 * @param {function} cb -  callback to be called on success
 	 * @private
 	 * @todo make this work.
 	 * @example

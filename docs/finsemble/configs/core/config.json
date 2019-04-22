@@ -1,8 +1,8 @@
 {
 	"comment": "Top-level core configuration -- the `hidden` config file that is always automatically loaded. A reference for the configuration tree can be found at https://documentation.chartiq.com/finsemble/tutorial-ConfigReference.html",
 	"system": {
-		"FSBLVersion": "3.8.0",
-		"gitHash": "b126f67e5d32ff96950ccbc6d04c96cc5c3955b8",
+		"FSBLVersion": "3.8.1",
+		"gitHash": "f62583c226e4913b1836782c4b5f2f63c9ccf69f",
 		"finsembleLibraryPath": "$moduleRoot/FSBL.js",
 		"premiumRoot": "$moduleRoot",
 		"systemTrayIcon": "$moduleRoot/assets/img/Finsemble_Taskbar_Icon.png",
@@ -18,7 +18,7 @@
 		],
 		"requiredServicesConfig": {
 			"routerService": {
-				"spawnAs": "window",
+				"spawnAs": "process",
 				"name": "routerService",
 				"html": "$servicesRoot/router/router.html",
 				"file": "$servicesRoot/router/routerService.js"

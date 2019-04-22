@@ -100,12 +100,17 @@ export default {	/**
 						// if the component doesn't specify whether they want access, fall back to whatever the system says should happen.
 						assignedPermission = defaultPermission;
 					}
-
 					approvedPermissions[namespace][permissionName] = assignedPermission;
 				}
 			}
 		}
-
+		// The Window Service should not have a permission set to disable the ability to close windows.
+		// If it does remove that permission, and log an error.
+		const closeDisallowed = approvedPermissions.Window["close"] === false;
+		if (descriptor.name === "windowService" && closeDisallowed) {
+			Logger.system.error("Window Service cannot be restricted from closing windows, disabling restriction.")
+			approvedPermissions.Window["close"] = true;
+		}
 		return approvedPermissions;
 	}
 }
