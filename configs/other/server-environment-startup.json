@@ -10,7 +10,7 @@
     "production": {
         "serverPort": 443,
         "serverConfig": "https://adaptiveconsulting.github.io/rtc-finsemble/configs/openfin/manifest-prod.json",
-        "clientRoute": "http://localhost:3375/",
+        "clientRoute": "https://adaptiveconsulting.github.io/rtc-finsemble/",
         "container": "electron",
         "electronDebug": true,
         "breakpointOnStart": false
