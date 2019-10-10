@@ -1,70 +1,28 @@
 {
 	"comment": "Top-level application config for development, adding on top of the core config",
-	"servicesConfig": {
-		"distributedStore": {
-			"initialStores": [
-				{
-					"name": "Finsemble-AppLauncher-Store",
-					"foundation": {
-						"appFolders": {
-							"list": [
-								"My Apps",
-								"Favorites"
-							],
-							"folders": {
-								"My Apps": {
-									"icon": "ff-component",
-									"type": "folder",
-									"disableUserRemove": true,
-									"apps": {
-										"1": {
-											"name": "Welcome Component",
-											"appID": "welcome-comp"
-										},
-										"2": {
-											"name": "Getting Started Tutorial",
-											"appID": "2"
-										},
-										"3": {
-											"name": "Process Monitor",
-											"appID": "pm"
-										},
-										"4": {
-											"name": "Notepad",
-											"appID": "note"
-										}
-									}
-								},
-								"Favorites": {
-									"icon": "ff-favorite",
-									"type": "folder",
-									"disableUserRemove": true,
-									"apps": {}
-								}
-							}
-						},
-						"appDefinitions": {}
-					},
-					"default": {
-						"activeLauncherTags": [],
-						"filterText": "",
-						"filterTags": [],
-						"activeFolder": "My Apps",
-						"sortBy": "Alphabetical"
-					}
-				}
-			]
+	"defaultStorage": "IndexedDBAdapter",
+	"storage": {
+		"topicToDataStoreAdapters": {
+			"finsemble": "IndexedDBAdapter",
+			"finsemble.workspace": "IndexedDBAdapter",
+			"finsemble.workspace.cache": "IndexedDBAdapter"
 		},
+		"dataStoreAdapters": {
+			"LocalStorageAdapter": "$applicationRoot/adapters/localStorageAdapter.js",
+			"IndexedDBAdapter": "$applicationRoot/adapters/indexedDBAdapter.js"
+		}
+	},
+	"servicesConfig": {
 		"launcher": {
 			"staggerPixels": 40,
-			"unknownComponent": "nonConfiguredComponent"
+			"unknownComponent":"nonConfiguredComponent"
 		},
 		"assimilation": {
-			"useOpenFinSpawn": false,
+			"useOpenFinSpawn": true,
 			"enabled": true,
 			"blacklist": [],
 			"whitelist": [],
-			"onlySpawned": true,
+			"onlySpawned": false,
 			"throttle": 10,
 			"focusDelay": 30,
 			"eventIgnore": 50
@@ -76,9 +34,6 @@
 			"MINIMUM_WIDTH": 175,
 			"defaultHeight": 39,
 			"defaultWidth": 600,
-			"requireRectangularityForGroupResize": true,
-			"undockDisbandsEntireGroup": false,
-			"fillHolesOnUndock": true,
 			"tabbing": {
 				"enabled": true
 			},
@@ -92,18 +47,6 @@
 				"shift",
 				"L"
 			]
-		},
-		"storage": {
-			"defaultStorage": "IndexedDBAdapter",
-			"topicToDataStoreAdapters": {
-				"finsemble": "IndexedDBAdapter",
-				"finsemble.workspace": "IndexedDBAdapter",
-				"finsemble.workspace.cache": "IndexedDBAdapter"
-			},
-			"dataStoreAdapters": {
-				"LocalStorageAdapter": "$applicationRoot/adapters/localStorageAdapter.js",
-				"IndexedDBAdapter": "$applicationRoot/adapters/indexedDBAdapter.js"
-			}
 		}
 	},
 	"preferences": {
@@ -120,7 +63,14 @@
 		"floatingTitlebarComponent": "Floating Titlebar",
 		"deliveryMechanism": "preload"
 	},
-	"betaFeatures": {},
+	"betaFeatures": {
+		"assimilation": {
+			"enabled": true,
+			"blacklist": [],
+			"whitelist": [],
+			"onlySpawned": false
+		}
+	},
 	"splinteringConfig": {
 		"comment": "A SplinterAgent is just an openfin application that is capable of spawning specific components/services. If you try to spawn a component/service that one of these agents does not cover, it will be spawned by the defaultAgent. You can also specify maxWindowsPerAgent if you would like to limit your agents to some ceiling. This is useful when you have a particularly heavy component.",
 		"enabled": true,
@@ -145,7 +95,8 @@
 					"dialogModal",
 					"UserPreferences",
 					"App Catalog",
-					"searchMenu"
+					"searchMenu",
+					"windowTitleBar"
 				]
 			},
 			{
@@ -157,11 +108,40 @@
 					"storageService",
 					"searchService"
 				]
+			},
+			{
+				"agentLabel": "dockingService",
+				"services": [
+					"dockingService"
+				]
+			},
+			{
+				"agentLabel": "coreComponents",
+				"services": [
+					"Blotter", 
+					"Analytics"
+				]
+			},
+			{
+				"agentLabel": "spotTilesGroup1",
+				"services": [
+					"EURUSD", 
+					"GBPUSD",
+					"EURJPY",
+					"NZDUSD"
+				]
+			},
+			{
+				"agentLabel": "spotTilesGroup2",
+				"services": [
+					"EURCAD",
+					"GBPJPY",
+					"AUDUSD",
+					"USDJPY"
+				]
 			}
 		]
 	},
-	"//appDirectoryEndpoint": "If you'd like to test the server locally, point 'appDirectoryEndpoint' to http://localhost:3030/v1/ and make sure to run the AppD project.",
-	"appDirectoryEndpoint": "https://fpe.finsemble.com/v1/",
 	"globalHotkeys": {},
 	"//": "importConfig contains components that are necessary to start Finsemble. All other components are loaded dynamically. See server/auth/test.json",
 	"importConfig": [
@@ -170,6 +150,6 @@
 		"$applicationRoot/configs/application/workspaces.json",
 		"$applicationRoot/configs/application/workspaceTemplates.json",
 		"$applicationRoot/configs/application/services.json",
-		"$applicationRoot/configs/application/securityPolicies.json"
+		"$applicationRoot/configs/other/ReactiveTraderDemo.json"
 	]
 }
