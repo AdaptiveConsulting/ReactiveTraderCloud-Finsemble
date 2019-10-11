@@ -135,7 +135,7 @@ html.desktop-active .fsbl-tab-region-drag-area {
     color: var(--titleBar-inactive-font-color);
     font-size: var(--titleBar-icon-font-size);
     width: 18px;
-    padding: 0px 6px;
+    padding: 0px 9px;
     height: calc(100% + 5px);
     margin-top: -5px;
     display: flex;
@@ -251,7 +251,7 @@ html.desktop-active .fsbl-linker[hover=true] {
 }
 
 .ff-minimize {
-    padding-bottom: 3px;
+    padding-bottom: 0px;
 }
 
 .ff-linker:before {

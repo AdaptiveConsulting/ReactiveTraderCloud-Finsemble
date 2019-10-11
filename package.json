@@ -10,6 +10,7 @@
         "dev-fresh": "gulp dev:fresh --gulpfile=./gulpfile.js",
         "dev:fresh": "gulp dev:fresh --gulpfile=./gulpfile.js",
         "dev:nolaunch": "gulp dev:noLaunch --gulpfile=./gulpfile.js",
+        "deploy": "gulp deploy --gulpfile=./gulpfile.js",
         "build:prod": "gulp build:prod --gulpfile=./gulpfile.js",
         "nobuild:dev": "gulp nobuild:dev --gulpfile=./gulpfile.js",
         "makeInstaller:prod": "set NODE_ENV=production&&gulp makeInstaller --gulpfile=./gulpfile.js",

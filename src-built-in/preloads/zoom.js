@@ -203,7 +203,6 @@ const getZoomLevelHandler = (err, zoomLevel) => {
 		window.fsblZoomLevel = zoomLevel;
 		setZoom(window.fsblZoomLevel);
 	}
-
 	window.settingInitialZoom = false;
 };
 

@@ -51,7 +51,7 @@
 }
 
 .finsemble-toolbar-button {
-    padding: 5px 6px;
+    padding: 5px 6px; 
     border: 1px solid var(--toolbar-background-color);
     display: inline-flex;
 }
@@ -235,4 +235,5 @@ img.pinned-icon {
     padding-right:5px;
     padding-top: 6px;
     -webkit-app-region: drag;
+    background-color: black;
 }

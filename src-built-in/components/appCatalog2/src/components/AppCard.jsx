@@ -50,7 +50,11 @@ class AppCard extends Component {
 		}
 	}
 	/**
+<<<<<<< HEAD
 	 * Toggles the highlight state of the check mark for installing an app
+=======
+	 * Toggles the hightlight state of the checkmark for installing an app
+>>>>>>> 1e234a5d59875eefa965a9daea00c4ac272c9ef7
 	 */
 	toggleHighlight() {
 		this.setState({
@@ -66,7 +70,11 @@ class AppCard extends Component {
 		});
 	}
 	/**
+<<<<<<< HEAD
 	 * Shows the check mark for adding/removing an app
+=======
+	 * Shows the checkmark for adding/removing an app
+>>>>>>> 1e234a5d59875eefa965a9daea00c4ac272c9ef7
 	 */
 	showCheck() {
 		this.setState({
@@ -74,7 +82,11 @@ class AppCard extends Component {
 		});
 	}
 	/**
+<<<<<<< HEAD
 	 * Hides the check mark for adding/removing an app
+=======
+	 * Higes the checkmark for adding/removing an app
+>>>>>>> 1e234a5d59875eefa965a9daea00c4ac272c9ef7
 	 */
 	hideCheck() {
 		//Don't hide if installed. Stay green and showing

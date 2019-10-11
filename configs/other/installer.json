@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
 	"//icon": "Path to an icon to be used for your executable. This is relative to the root of the finsemble-seed",
 	"icon": "./assets/installer/icons/win/icon.ico",
 	"version": "1.0.0",
@@ -8,3 +9,11 @@
 	"name": "xyz",
 	"authors": "ChartIQ"
 }
+=======
+	"icon": "./assets/installer/icons/win/icon.ico",
+	"version": "1.0.0",
+	"outputDirectory": "./pkg",
+	"name": "ReactiveTrader",
+	"authors": "Adaptive Financial Consulting"
+}
+>>>>>>> 1e234a5d59875eefa965a9daea00c4ac272c9ef7

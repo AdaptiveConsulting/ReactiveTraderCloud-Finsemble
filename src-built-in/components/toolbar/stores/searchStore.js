@@ -259,11 +259,11 @@ var Actions = {
 	}
 };
 function searchTest(params, cb) {
-	//console.log("params", params)
+//console.log("params", params)
 	fetch('/search?text=' + params.text).then(function (response) {
 		return response.json();
 	}).then(function (json) {
-		//console.log("json", cb);
+	//console.log("json", cb);
 		return cb(null, json);
 
 	});
@@ -279,7 +279,7 @@ function createStore(done) {
 		activeSearchBar: null,
 		menuIdentifier: null
 	};
-	//console.log("CreateStore", "Finsemble-SearchStore-" + finWindow.name)
+//console.log("CreateStore", "Finsemble-SearchStore-" + finWindow.name)
 	FSBL.Clients.DistributedStoreClient.createStore({ store: "Finsemble-SearchStore-" + finWindow.name, values: defaultData, global: true }, function (err, store) {
 		if (err) { FSBL.Clients.Logger.error(`DistributedStoreClient.createStore failed for store Finsemble-SearchStore-${finWindow.name}, error:`, err); }
 		menuStore = store;

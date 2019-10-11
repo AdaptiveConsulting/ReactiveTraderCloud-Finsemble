@@ -1,7 +1,6 @@
 .settings/
 .project
 node_modules
-dist/
 .vscode
 .idea
 .DS_Store
@@ -15,7 +14,8 @@ crash_service.exe
 debug.log
 -
 built
-finsemble/
+dist/**
+finsemble/**
 .webpack-file-cache
 .babel_cache
 build/webpack/vendor-manifest.json

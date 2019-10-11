@@ -38,7 +38,6 @@ export default class Toolbar extends React.Component {
 		//Use the previous state to toggle the checkbox, Floating is always checked
 		let previousState = this.state.toolbarType;
 		let toolbarType;
-
 		if (previousState === "Fixed") {
 			FSBL.Clients.ConfigClient.setPreference({ field: "finsemble.components.Toolbar.window.dockable", value: ["top", "bottom"] });
 			FSBL.Clients.ConfigClient.setPreference({ field: "finsemble.components.Toolbar.window.options.resizable", value: true });

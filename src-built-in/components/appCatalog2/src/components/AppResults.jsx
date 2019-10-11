@@ -73,7 +73,6 @@ const AppResults = props => {
 	};
 
 	if (cardsForShowcase.length === 0) return (<EmptyResults />);
-
 	let cardRows = getCardRows();
 
 	return (
@@ -91,7 +90,6 @@ const AppResults = props => {
 			</table>
 		</div>
 	);
-
 };
 
 export default AppResults;

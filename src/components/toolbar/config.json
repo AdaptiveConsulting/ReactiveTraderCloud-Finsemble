@@ -1,0 +1,73 @@
+[
+    {
+        "align": "left",
+        "iconClasses": "finsemble-toolbar-brand-logo",
+        "icon": "../../assets/img/adaptive-logo.png",
+        "menuType": "File Menu"
+    },
+    {
+        "align": "left",
+        "type": "seperator"
+    },
+    {
+        "align": "left",
+        "type": "reactComponent",
+        "reactComponent": "Search"
+    },
+    {
+        "align": "left",
+        "type": "seperator"
+    },
+    {
+        "align": "left",
+        "label": "Workspaces",
+        "menuType": "Workspace Management Menu",
+        "reactComponent": "WorkspaceMenuOpener",
+        "type": "reactComponent"
+    },
+    {
+        "align": "left",
+        "type": "seperator"
+    },
+    {
+        "comment": "Change align to add AlwaysOnTop capability",
+        "align": "none",
+        "type": "reactComponent",
+        "reactComponent": "AlwaysOnTop"
+    },
+    {
+        "align": "right",
+        "type": "reactComponent",
+        "reactComponent": "AutoArrange"
+    },
+    {
+        "align": "right",
+        "type": "reactComponent",
+        "reactComponent": "MinimizeAll"
+    },
+    {
+        "align": "right",
+        "type": "reactComponent",
+        "reactComponent": "BringToFront"
+    },
+    {
+        "align": "left",
+        "label": "Apps",
+        "id": "app-launcher",
+        "menuType": "App Launcher"
+    },
+    {
+        "align": "left",
+        "type": "seperator"
+    },
+    {
+        "align": "right",
+        "type": "seperator"
+    },
+    {
+        "align": "right",
+        "iconClasses": "finsemble-toolbar-brand-logo",
+        "icon": "../../assets/img/Finsemble_Taskbar_Icon.png",
+        "menuType": "File Menu"
+    }
+]
