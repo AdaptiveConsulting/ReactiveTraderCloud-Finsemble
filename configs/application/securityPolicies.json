@@ -7,12 +7,7 @@
 			"System": {
 				"clearCache": false,
 				"exit": false,
-<<<<<<< HEAD
 				"launchExternalProcess": false
-=======
-				"launchExternalProcess": false,
-				"readRegistryValue": false
->>>>>>> 1e234a5d59875eefa965a9daea00c4ac272c9ef7
 			},
 			"Window": {
 				"executeJavaScript": false,
@@ -26,8 +21,4 @@
 		"crossDomain": "untrusted",
 		"sameDomain": "trusted"
 	}
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 1e234a5d59875eefa965a9daea00c4ac272c9ef7
