@@ -4,10 +4,7 @@
 		"App Launcher": {
 			"window": {
 				"url": "$applicationRoot/components/appLauncher/appLauncher.html",
-<<<<<<< HEAD
 				"affinity": "systemComponents",
-=======
->>>>>>> 1e234a5d59875eefa965a9daea00c4ac272c9ef7
 				"top": 0,
 				"left": 0,
 				"width": 310,
@@ -649,10 +646,7 @@
 		"Floating Titlebar": {
 			"window": {
 				"url": "$applicationRoot/components/floatingTitlebar/floatingTitlebar.html",
-<<<<<<< HEAD
 				"affinity": "systemComponents",
-=======
->>>>>>> 1e234a5d59875eefa965a9daea00c4ac272c9ef7
 				"frame": false,
 				"top": "center",
 				"left": "center",
@@ -697,10 +691,7 @@
 		"Process Monitor": {
 			"window": {
 				"url": "$applicationRoot/components/processMonitor/processMonitor.html",
-<<<<<<< HEAD
 				"affinity": "workspaceComponents",
-=======
->>>>>>> 1e234a5d59875eefa965a9daea00c4ac272c9ef7
 				"width": 600,
 				"height": 700
 			},
@@ -728,10 +719,7 @@
 		"App Catalog": {
 			"window": {
 				"url": "$applicationRoot/components/appCatalog/appCatalog.html",
-<<<<<<< HEAD
 				"affinity": "systemComponents",
-=======
->>>>>>> 1e234a5d59875eefa965a9daea00c4ac272c9ef7
 				"frame": false,
 				"top": "center",
 				"left": "center",
@@ -771,10 +759,7 @@
 		"App Catalog2": {
 			"window": {
 				"url": "$applicationRoot/components/appCatalog2/appCatalog.html",
-<<<<<<< HEAD
 				"affinity": "systemComponents",
-=======
->>>>>>> 1e234a5d59875eefa965a9daea00c4ac272c9ef7
 				"width": 600,
 				"height": 700,
 				"options": {

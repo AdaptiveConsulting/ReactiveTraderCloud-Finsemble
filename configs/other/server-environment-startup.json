@@ -5,7 +5,6 @@
         "//serverConfig": "Url for your application's manifest.",
         "serverConfig": "http://localhost:3375/configs/openfin/manifest-local.json",
         "clientRoute": "http://localhost:3375/",
-<<<<<<< HEAD
         "//container": "Which adapter to use. The finsemble-electron-adapter Adapter or Openfin. Valid values are electron and openfin. Default: electron .",
         "container": "electron",
         "//electronDebug": "Whether to start the finsemble-electron-adapter in debug mode. Default: true.",
@@ -24,18 +23,6 @@
         "//electronDebug": "Whether to start the finsemble-electron-adapter in debug mode. Default: true.",
         "electronDebug": true,
         "//breakpointOnStart": "Whether to pause finsemble-electron-adapter when it starts. Default: false.",
-=======
-        "container": "electron",
-        "electronDebug": true,
-        "breakpointOnStart": false
-    },
-    "production": {
-        "serverPort": 443,
-        "serverConfig": "https://adaptiveconsulting.github.io/rtc-finsemble/configs/openfin/manifest-prod.json",
-        "clientRoute": "https://adaptiveconsulting.github.io/rtc-finsemble/",
-        "container": "electron",
-        "electronDebug": true,
->>>>>>> 1e234a5d59875eefa965a9daea00c4ac272c9ef7
         "breakpointOnStart": false
     }
 }

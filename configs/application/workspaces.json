@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
 	"workspaces": [
 		{
 			"version": "1.0.0",
@@ -15,7 +14,4 @@
 			]
 		}
 	]
-=======
-    "workspaces": []
->>>>>>> 1e234a5d59875eefa965a9daea00c4ac272c9ef7
 }
