@@ -80,7 +80,7 @@ class StartupManager {
 		this.bindCorrectContext();
 	}
 	/**
-	 * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required depenencies are ready.
+	 * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required dependencies are ready.
 	 *
 	 * @param {FinsembleDependency} dependencies
 	 * @param {any} callback
@@ -321,7 +321,7 @@ class ShutdownManager {
 	}
 
 	/**
-	 * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required depenencies are ready.
+	 * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required dependencies are ready.
 	 *
 	 * @param {FinsembleDependency} dependencies
 	 * @param {any} callback
@@ -382,7 +382,7 @@ class ShutdownManager {
 
 }
 /**
- * This is a class that handles FSBL client/service dependnecy management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
+ * This is a class that handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
  * @shouldBePublished false
  * @private
  * @class FSBLDependencyManager
@@ -452,7 +452,7 @@ class FSBLDependencyManager extends EventEmitter {
 			this.onServiceStateChange(event.data);
 		});
 
-		// TODO: The pubsub responder doesnt seem to work here. IT works for the above when not closing.
+		// TODO: The pubsub responder doesn't seem to work here. IT works for the above when not closing.
 		this.RouterClient.addListener(SERVICE_CLOSED_CHANNEL, (err, event) => {
 			let services = {};
 			services[event.data.name] = {
@@ -490,7 +490,7 @@ class FSBLDependencyManager extends EventEmitter {
 
 }
 /**
- * This is a class that handles FSBL client/service dependnecy management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
+ * This is a class that handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
  * @shouldBePublished false
  * @private
  * @class FSBLDependencyManager

@@ -30,7 +30,7 @@ export class ObjectPool {
 	remove(name) {
 		Logger.system.debug(`${this.poolName} pool.remove for ${name}`);
 		if (!this.objects.hasOwnProperty(name)) {
-			Logger.system.warn(`${this.poolName} pool.remove operating on non-existant value for ${name}`);
+			Logger.system.warn(`${this.poolName} pool.remove operating on non-existent value for ${name}`);
 		}
 
 		delete this.objects[name];
@@ -39,7 +39,7 @@ export class ObjectPool {
 	add(name, obj) {
 		Logger.system.debug(`${this.poolName} pool.add for ${name}`);
 		if (this.objects.hasOwnProperty(name)) {
-			Logger.system.warn(`${this.poolName} pool.add overwritting existing value for ${name}`);
+			Logger.system.warn(`${this.poolName} pool.add overwriting existing value for ${name}`);
 		}
 
 		this.objects[name] = obj;

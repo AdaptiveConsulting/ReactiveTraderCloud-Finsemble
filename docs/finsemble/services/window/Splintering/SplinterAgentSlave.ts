@@ -7,7 +7,7 @@ import RouterClient from "../../../clients/routerClientInstance";
 import Logger from "../../../clients/logger";
 
 Logger.start();
-Logger.system.debug("SpltinerAgentSlave loaded.");
+Logger.system.debug("SplinterAgentSlave loaded.");
 import { System } from "../../../common/system";
 
 function onSetTitle(err, message) {
@@ -19,7 +19,7 @@ function onRouterReady() {
 		Logger.unregisterClient({ deleteFromPersistence: true });
 		finWindow.close(true);
 	});
-	Logger.system.debug("SpltinerAgentSlave ready.");
+	Logger.system.debug("SplinterAgentSlave ready.");
 	RouterClient.addListener(`${thisApp.uuid}.spawn`, onSpawnRequest);
 	RouterClient.addListener(`${thisApp.uuid}.setTitle`, onSetTitle);
 	finWindow.getOptions((opts) => {
@@ -71,6 +71,6 @@ export function onSpawnRequest(err, message: { data: { windowDescriptor: any } }
 /*
 	This file is imported into windowService createSplinterAndInject. Without this shielding, we get spurious onspawned transmits from onRouterReady.
 	Those cause errors to show up in the Central Logger from the listener in the SplinterAgentPool.
-	We should only transmit anything here in the actual SplinteragentSlave window.
+	We should only transmit anything here in the actual SplinterAgentSlave window.
 */
 if (finWindow.name === thisApp.window.name) RouterClient.onReady(onRouterReady);

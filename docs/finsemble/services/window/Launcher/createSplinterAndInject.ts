@@ -187,6 +187,13 @@ export class CreateSplinterAndInject {
 			if (windowType == "FinsembleNativeWindow") {
 				windowType = "NativeWindow";
 				windowDescriptor.isWPF = true;
+
+				// If running on Electron, Finsemble aware applications will need the IAC server address.
+				const iacConfig = this.finsembleConfig.IAC;
+				if (iacConfig) {
+					// If IAC config exists, pass it on to the window descriptor
+					windowDescriptor.IAC = iacConfig;
+				}
 			}
 
 			windowDescriptor.uuid = windowDescriptor.uuid || util.guuid(); // Temp fix for stackedWindow (whole section needs rework)
@@ -255,7 +262,7 @@ export class CreateSplinterAndInject {
 		return new Promise(promiseResolver);
 	}
 
-  spawnExternalWindow(windowDescriptor): Promise<{ err: any, data: any }> {
+	spawnExternalWindow(windowDescriptor): Promise<{ err: any, data: any }> {
 		const promiseResolver = (resolve) => {
 			function spawnedListener(err, response) {
 				RouterClient.removeListener(windowDescriptor.name + ".onSpawned", spawnedListener);
@@ -265,13 +272,13 @@ export class CreateSplinterAndInject {
 				resolve({ err: null, data: fw });
 			}
 			RouterClient.addListener(windowDescriptor.name + ".onSpawned", spawnedListener);
-			RouterClient.query("Assimilation.spawnNative", windowDescriptor, function () { });
+			RouterClient.query("Assimilation.spawnNative", windowDescriptor, function() { });
 		}
 		return new Promise(promiseResolver);
 	}
 
 	// Spawns a java app.
-  spawnNativeWindow(windowDescriptor): Promise<{ err: any, data: any }> {
+	spawnNativeWindow(windowDescriptor): Promise<{ err: any, data: any }> {
 		const promiseResolver = (resolve) => {
 
 			function spawnedListener(err, response) {
@@ -289,7 +296,7 @@ export class CreateSplinterAndInject {
 	}
 
 	// Spawns an OpenFin window
-  spawnOpenFinWindow(windowDescriptor): Promise<{ err: any, data: any }> {
+	spawnOpenFinWindow(windowDescriptor): Promise<{ err: any, data: any }> {
 		// This will ensure that the window is actually opened before returning. Seemingly an OpenFin bug means we
 		// can't rely on new System.Window callback. We believe this exhibits for cross-domain windows.
 		const promiseResolver = (resolve) => {
@@ -316,7 +323,7 @@ export class CreateSplinterAndInject {
 	}
 
 	// Spawns a new openfin application.
-  spawnOpenfinApplication(componentConfig): Promise<{ err: any, data: any }> {
+	spawnOpenfinApplication(componentConfig): Promise<{ err: any, data: any }> {
 		let descriptor = this.compileOpenfinApplicationDescriptor(componentConfig);
 		const self = this;
 
@@ -347,8 +354,21 @@ export class CreateSplinterAndInject {
 		return new Promise(promiseResolver);
 	}
 
-  compileOpenfinApplicationDescriptor(componentConfig) {
+	compileOpenfinApplicationDescriptor(componentConfig) {
 		componentConfig.uuid = componentConfig.name;
+		// If a window is specified to have windowType 'application' or 'OpenfinApplication', it should be in an isolated
+		// process. This means that it cannot have an affinity. If this line is removed, FEA thinks that the window is both
+		// an application _and_ grouped with other windows in the same affinity. This causes all manner of strange bugs.
+		// For example, if three components that are both windowType 'application', and in an affinity are spawned, and
+		// one is closed, all 3 will be closed. Because each one _is_ the application...even though they're technically
+		// _part_ of the application.
+		// FEA has the same check in case someone circumvents the launcher API. But here, we delete affinity if it
+		// exists to prevent these bugs from manifesting.
+		if (componentConfig.affinity) {
+			Logger.system.warn("Configuration Warning: Affinity will be ignored. Component was created with type 'application'.")
+			delete componentConfig.affinity
+		}
+
 		let descriptor = componentConfig;
 		let parentUUID = System.Application.getCurrent().uuid;
 		if (!descriptor.customData) descriptor.customData = {};
@@ -366,8 +386,8 @@ export class CreateSplinterAndInject {
 	}
 
 	// Spawns a new StackedWindow (a virtual window holding "tabbed" windows)
-  spawnStackedWindow(componentConfig, cb = Function.prototype): Promise<{ err: any, data: any }> {
-  const promiseResolver = (resolve) => {
+	spawnStackedWindow(componentConfig, cb = Function.prototype): Promise<{ err: any, data: any }> {
+		const promiseResolver = (resolve) => {
 			//var stackedWindowIdentifer = { windowName: componentConfig.name, windowType: componentConfig.windowType, windowIdentifiers: componentConfig.windowIdentifiers || componentConfig.customData.spawnData.windowIdentifiers };
 			Logger.system.debug("CreateSplinterAndInject.spawnStackedWindow", componentConfig);
 
@@ -376,23 +396,23 @@ export class CreateSplinterAndInject {
 					Logger.system.warn("StackedWindowManagerAPI.createStackedWindow: failed", err);
 					resolve({ err, data: null });
 					return cb(err, null);
-				} 
+				}
 				Logger.system.debug("StackedWindowManagerAPI.createStackedWindow successful", windowIdentifer);
 				cb(err, windowIdentifer);
 				resolve({ err, data: windowIdentifer });
-				
+
 			});
 		};
-  return new Promise(promiseResolver);
-}
+		return new Promise(promiseResolver);
+	}
 
 	/**
 	 * The actual splinter method.
 	 * If a process is available and has room left for additional children, we request that the process fulfill the spawn request.
 	 * If there is no process available, we queue our spawn request. When the pool has created a new render process, we process the queue.
 	 */
-  splinter(windowDescriptor): Promise<{ err: any, data: any }> {
-    const promiseResolver = async (resolve) => {
+	splinter(windowDescriptor): Promise<{ err: any, data: any }> {
+		const promiseResolver = async (resolve) => {
 			windowDescriptor.taskbarIconGroup = windowDescriptor.external ? null : this.manifest.startup_app.uuid;
 			windowDescriptor.icon = windowDescriptor.external ? null : this.manifest.startup_app.applicationIcon;
 
@@ -430,8 +450,8 @@ export class CreateSplinterAndInject {
 			//resolve({ err: null, data: fw });
 		};
 
-    return new Promise(promiseResolver);
-  }
+		return new Promise(promiseResolver);
+	}
 
 	// This function is called when the LauncherService starts up. It pre-populates a single render process for each pool that's defined in the splinteringConfig.
 	createSplinterAgentPool() {
@@ -440,7 +460,7 @@ export class CreateSplinterAndInject {
 			 * we short circuit splintering here.
 			 */
 			if (fin.container === "Electron") {
-				Logger.system.debug("CreateSplinterAndInject: Detected Electron environmnet. Short-circuiting splintering.")
+				Logger.system.debug("CreateSplinterAndInject: Detected Electron environment. Short-circuiting splintering.")
 				resolve();
 				return;
 			}
@@ -481,37 +501,37 @@ export class CreateSplinterAndInject {
 				resolve();
 			}
 		}
-    return new Promise(promiseResolver);
-  }
+		return new Promise(promiseResolver);
+	}
 
-  doShutdown() {
-    const promiseResolver = (resolve) => {
+	doShutdown() {
+		const promiseResolver = (resolve) => {
 			asyncSeries([
 				(finish) => { this.shutdownSplinterAgentPool(finish); },
 				resolve,
 			]);
 		};
-    return new Promise(promiseResolver);
-  }
+		return new Promise(promiseResolver);
+	}
 
-  shutdownSplinterAgentPool(done) {
-    if (this.SplinterAgentPool) {
+	shutdownSplinterAgentPool(done) {
+		if (this.SplinterAgentPool) {
 			Logger.system.debug("shutdownSplinterAgentPoolFinished start SplinterAgentPool.shutdown");
 			this.SplinterAgentPool.shutdown(() => {
-				Logger.system.debug("shutdownSplinterAgentPoolnFinished SplinterAgentPool.shutdown");
+				Logger.system.debug("shutdownSplinterAgentPoolFinished SplinterAgentPool.shutdown");
 				done();
 			});
 		} else {
 			done();
 		}
 
-  }
+	}
 
 	// Injects mind control scripts.
-  injectMindControl(data, win) {
-    var config = data.customData;
+	injectMindControl(data, win) {
+		var config = data.customData;
 
-    if (config.component.inject) {
+		if (config.component.inject) {
 			var inject = data.customData.component.inject;
 			if (!Array.isArray(inject)) {
 				inject = [inject];
@@ -546,5 +566,5 @@ export class CreateSplinterAndInject {
 
 			}
 		}
-  }
+	}
 }

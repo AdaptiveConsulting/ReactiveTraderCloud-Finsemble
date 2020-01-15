@@ -60,7 +60,7 @@ var okayToOpenMenu = {};
  *
  * @introduction
  * <h2>Launcher Client</h2>
- * The Launcher Client handles spawning windows. It also maintains the list of spawnable components.
+ * The Launcher Client handles spawning windows. It also maintains the list of components which can be spawned.
  *
  *
  *
@@ -153,6 +153,7 @@ class LauncherClient extends BaseClient {
 	}, cb: Function = Function.prototype) {
 		var self = this;
 		Validate.args(cb, "function=");
+		Logger.system.debug(`MONITOR: launcherClient.getMonitorInfo`);
 
 		const promiseResolver = (resolve) => {
 			util.getMyWindowIdentifier(function (myWindowIdentifier) {
@@ -163,6 +164,7 @@ class LauncherClient extends BaseClient {
 					if (cb) {
 						cb(err, response.data);
 					}
+					Logger.system.log(`MONITOR: launcherClient.getMonitorInfo query response data`, response.data);
 					resolve({ err, data: response.data });
 				});
 			});
@@ -275,8 +277,8 @@ class LauncherClient extends BaseClient {
 	/**
 	 * Displays a window and relocates/resizes it according to the values contained in params.
 	 *
-	 * @param  {WindowIdentifier}   windowIdentifier A windowIdentifier.
-	 * @param  {object}   params           Parameters. These are the same as {@link LauncherClient#spawn} with the folowing exceptions:
+	 * @param {WindowIdentifier} windowIdentifier A windowIdentifier. This is an object containing windowName and componentType. If windowName is not given, Finsemble will try to find it by componentType.
+	 * @param {object} params Parameters. These are the same as {@link LauncherClient#spawn} with the following exceptions:
 	 * @param {any} [params.monitor] Same as spawn() except that null or undefined means the window should not be moved to a different monitor.
 	 * @param {number | string} [params.left] Same as spawn() except that null or undefined means the window should not be moved from current horizontal location.
 	 * @param {number | string} [params.top] Same as spawn() except that null or undefined means the window should not be moved from current vertical location.
@@ -289,6 +291,8 @@ class LauncherClient extends BaseClient {
 	 * **windowIdentifier** - The {@link WindowIdentifier} for the new window.
 	 * **windowDescriptor** - The {@link WindowDescriptor} of the new window.
 	 * **finWindow** - An `OpenFin` window referencing the new window.
+	 * @example
+	 * LauncherClient.showWindow({windowName: "Welcome Component-86-3416-Finsemble", componentType: "Welcome Component"}, {spawnIfNotFound: true});
 	 */
 	showWindow(windowIdentifier: WindowIdentifier, params: ShowWindowParams, cb: Function = Function.prototype) {
 		Validate.args(windowIdentifier, "object", params, "object=", cb, "function=");
@@ -348,6 +352,7 @@ class LauncherClient extends BaseClient {
 		if (!params.options.customData) {
 			params.options.customData = {};
 		}
+
 		if (!params.staggerPixels && params.staggerPixels !== 0) {
 			params.staggerPixels = 50;
 		}
@@ -566,7 +571,7 @@ class LauncherClient extends BaseClient {
 	}
 
 	/**
-	 * Gets components that can receive specfic data types. Returns an object containing a of ComponentTypes mapped to a list of dataTypes they can receive. This is based on the "advertiseReceivers" property in a component's config.
+	 * Gets components that can receive specific data types. Returns an object containing a of ComponentTypes mapped to a list of dataTypes they can receive. This is based on the "advertiseReceivers" property in a component's config.
 	 * @param params
 	 * @param {Array.<string>} [params.dataTypes] An array of data types. Looks for components that can receive those data types
 	 *
@@ -628,7 +633,7 @@ class LauncherClient extends BaseClient {
 
 		//Changed to query to allow for async bring to front and to do something when all windows have been brought to front
 		this.routerClient.query("LauncherService.bringWindowsToFront", params, (err, response) => {
-			cb();
+			cb(err, response);
 		});
 		return Promise.resolve();
 	}
@@ -846,7 +851,7 @@ class LauncherClient extends BaseClient {
 	 * @private
 	 * @param {*} params
 	 * @param {WindowIdentifier} [params.windowIdentifier] Optional. Current window is assumed if not specified.
-	 * @param {Array.<string>} [params.groupNames] List of groupnames to add window to. Groups will be created if they do not exist.
+	 * @param {Array.<string>} [params.groupNames] List of group names to add window to. Groups will be created if they do not exist.
 	 * @param {*} cb
 	 */
 	addToGroups(params: {
@@ -900,7 +905,7 @@ class LauncherClient extends BaseClient {
 					self.windowClient.setComponentState({ field: "finsemble:windowGroups", value: response.data });
 				});
 			}
-			// cannot add a windowClient dependency here so explicitedly wait for windowClient ready (ideally dependency manage could fully handle but maybe later)
+			// cannot add a windowClient dependency here so explicitly wait for windowClient ready (ideally dependency manage could fully handle but maybe later)
 			Globals.FSBL.addEventListener("onReady", function () {
 				self.windowClient.onReady(() => {
 					self.windowClient.getComponentState({ field: "finsemble:windowGroups" }, function (err, groups) {

@@ -80,7 +80,7 @@ class ConfigClient extends BaseClient {
 
 			this.routerClient.query("configService.getValue", { field: (params as valueParam).field },
 				function (err, response) {
-					if (err) { return cb(err); }
+					if (err) { reject(err); return cb(err); }
 					resolve({ err, data: response.data });
 					return cb(err, response.data);
 				});
@@ -91,7 +91,7 @@ class ConfigClient extends BaseClient {
 
 	/**
 	 * Get multiple values from the config.
-	* @param {Object[] | String[]} fields - An array of field objects. If there are no fields proviced, the complete configuration manifest are returned.
+	* @param {Object[] | String[]} fields - An array of field objects. If there are no fields provided, the complete configuration manifest are returned.
 	 * @param {String} fields[].field - The name of the field
 	 * @param {Function} cb -  Will return the value if found.
 	 * @returns {Object} - returns an object of with the fields as keys.If no callback is given and the value is local, this will run synchronous
@@ -313,7 +313,7 @@ class ConfigClient extends BaseClient {
 	 * @param {Object} params - Params object
 	 * @param {String} [params.field] - The data field
 	 * @param {function} [fn] -  the function to remove from the listeners
-	 * @param {function} cb -  returns true if it was succesfull in removing the listener.
+	 * @param {function} [cb] -  returns true if it was successful in removing the listener.
 	 *
 	 * @example
 	 * var myFunction = function(err,data){}
@@ -348,7 +348,7 @@ class ConfigClient extends BaseClient {
 	 * @param {String} params.field - The data field to listen for. If this is empty it listen to all changes of the store.
 	 * @param {function} params.listener - The listener function
 	 * @param {function} [fn] -  the function to remove from the listeners
-	 * @param {function} cb -  returns true if it was succesfull in removing the listener.
+	 * @param {function} [cb] -  returns true if it was successful in removing the listener.
 	 *
 	 * @example
 	 * var myFunction = function(err,data){ }
@@ -436,7 +436,7 @@ class ConfigClient extends BaseClient {
 	 * If no configReference parameter is passed in (i.e. only the callback parameter is specified), then the complete manifest object is returned
 	 * (including manifest.finsemble).
 	 *
-	 * @param {object=} params field property indentifies specific config to return
+	 * @param {object=} params field property identifies specific config to return
 	 * @param {function} callback callback function(error, data) to get the configuration data
 	 * @private
 	 * @example
@@ -510,7 +510,7 @@ class ConfigClient extends BaseClient {
 	 * Special Note: Anytime config is set using this API, the dataStore underlying configuration 'Finsemble-Configuration-Store' will also be updated. To get these dataStore events a listener can be set as shown in the example below. However, any config modifications made directly though the DataStore will not result in corresponding PubSub notifications.
 	 *
 	 * @param {object} params
-	 * @param {object} params.newConfig provides the configuration properties to add into the existing configuration under manifest.finsemble. This config must match the Finsembe config requirements as described in [Understanding Finsemble's Configuration]{@tutorial Configuration}. It can include importConfig references to dynamically fetch additional configuration files.
+	 * @param {object} params.newConfig provides the configuration properties to add into the existing configuration under manifest.finsemble. This config must match the Finsemble config requirements as described in [Understanding Finsemble's Configuration]{@tutorial Configuration}. It can include importConfig references to dynamically fetch additional configuration files.
 	 * @param {boolean} params.overwrite if true then overwrite any preexisting config with new config (can only set to true when running from same origin, not cross-domain); if false then newConfig must not match properties of existing config, including service and component configuration.
 	 * @param {boolean} params.replace true specifies any component or service definitions in the new config will place all existing non-system component and service configuration
 	 * @param {function} cb callback to be invoked upon task completion.

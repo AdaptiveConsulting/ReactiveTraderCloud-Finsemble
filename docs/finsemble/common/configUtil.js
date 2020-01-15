@@ -38,7 +38,7 @@ var ConfigUtil = function () {
 					var variableReference = tokens[i].substring(1); // string off the leading $
 					var variableResolution = finsembleConfig[variableReference]; // the variable value is another config property, which already must be set
 					var newValue = configString.replace(tokens[i], variableResolution); // replace the variable reference with new value
-					Logger.system.info("forceObjectsToLogger", "ConfigUtil.resolveConfigVariables:resolveString configString", tokens[i], variableReference, variableResolution, "oldvalue=", configString, "value=", newValue);
+					Logger.system.info("forceObjectsToLogger", "ConfigUtil.resolveConfigVariables:resolveString configString", tokens[i], variableReference, variableResolution, "old value=", configString, "value=", newValue);
 					needsAnotherPass = true; // <<-- here is the only place needsAnotherPass is set, since still resolving variables
 					configString = newValue;
 				}
@@ -88,7 +88,7 @@ var ConfigUtil = function () {
 		}
 	};
 
-	// This does mimimal processing of the manifest, just enough to support getting the router up, which is only expanding variables (e.g. moduleRoot) in the raw manifest
+	// This does minimal processing of the manifest, just enough to support getting the router up, which is only expanding variables (e.g. moduleRoot) in the raw manifest
 	this.getExpandedRawManifest = function (callback, errorCB) {
 		Logger.system.debug("ConfigUtil.getExpandedRawManifest starting");
 
@@ -97,7 +97,7 @@ var ConfigUtil = function () {
 
 			application.getManifest(function (manifest) { // get raw openfin manifest
 				Logger.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getExpandedRawManifest: manifest retrieved. Pre-variable resolution", manifest);
-				self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables first time so can fild config config location
+				self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables first time so can find config location
 				Logger.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getExpandedRawManifest:Complete. post-variable resolution", manifest);
 				callback(manifest);
 			}, function (err) {
@@ -138,9 +138,9 @@ var ConfigUtil = function () {
 		});
 	};
 
-	// This does a "first stage" processing of the manifest, providing enought config to start finsemble.
-	// Pull in the initial manifest, which includes gettig the "hiddlen" core config file along with its import definitions, and expand all variables.
-	// However, the full config processing, incluing actually doing the imports, is only done in the Config Service.
+	// This does a "first stage" processing of the manifest, providing enough config to start finsemble.
+	// Pull in the initial manifest, which includes getting the "hidden" core config file along with its import definitions, and expand all variables.
+	// However, the full config processing, including actually doing the imports, is only done in the Config Service.
 	this.getInitialManifest = function (callback) {
 
 		System.ready(function () { // make sure openfin is ready
@@ -153,13 +153,13 @@ var ConfigUtil = function () {
 					if (!error) {
 						Object.keys(newFinsembleConfigObject).forEach(function (key) {
 							if (key === "importConfig") {
-								// add any importConfig items from the core to the existing importConifg
+								// add any importConfig items from the core to the existing importConfig
 								manifest.finsemble.importConfig = manifest.finsemble.importConfig || [];
 								for (let i = 0; i < newFinsembleConfigObject.importConfig.length; i++) {
 									manifest.finsemble.importConfig.unshift(newFinsembleConfigObject.importConfig[i]);
 								}
 							} else if (key === "importThirdPartyConfig") {
-								// add any importThirdPartyConfig items from the core to the existing importConifg
+								// add any importThirdPartyConfig items from the core to the existing importConfig
 								manifest.finsemble.importThirdPartyConfig = manifest.finsemble.importThirdPartyConfig || [];
 								for (let i = 0; i < newFinsembleConfigObject.importThirdPartyConfig.length; i++) {
 									manifest.finsemble.importThirdPartyConfig.unshift(newFinsembleConfigObject.importThirdPartyConfig[i]);
@@ -179,7 +179,7 @@ var ConfigUtil = function () {
 		});
 	};
 
-	// output JSON objecvt to file
+	// output JSON object to file
 	this.promptAndSaveJSONToLocalFile = function (filename, jsonObject) {
 		Logger.system.debug("saveJSONToLocalFile", filename, jsonObject);
 
@@ -236,7 +236,7 @@ var ConfigUtil = function () {
 		};
 	};
 
-	// convenience constants for definiting verification object. See example usage in ServiceManager or ConfigService.
+	// convenience constants for defining verification object. See example usage in ServiceManager or ConfigService.
 	// Required means startup will break without it, so error.
 	// Optional means startup will not break without it; however, it is documented and expected as part of the config that should always be there.  So warning message only.
 	// Deprecated mean startup will no break but old config format is used and should be updated.
@@ -312,7 +312,7 @@ var ConfigUtil = function () {
 	/**
 	 * Verifies config is correct and logs messages as needed. Recursively walks configObject and configVerifyObject.
 	 *
-	 * @param {object} fullPathName path name of config being verfied (e.g. "manifest", "manifest.finsemble"); used for error messages
+	 * @param {object} fullPathName path name of config being verified (e.g. "manifest", "manifest.finsemble"); used for error messages
 	 * @param {object} configObject the configuration object to verify (typically the manifest object or manifest.finsemble object)
 	 * @param {object} configVerifyObject object to drive the verification; data driven.
 	 *
@@ -339,7 +339,7 @@ var ConfigUtil = function () {
 	 *
 	 * @returns If correct, return true (with no log messages generated); return false otherwise. For optional or DEPRECATED generate warning if not defined, but no error unless if wrong type.
 	 *
-	 * @example See ConfigService for example usuage.
+	 * @example See ConfigService for example usage.
 	 *
 	 * @private
 	 */
@@ -386,7 +386,7 @@ var ConfigUtil = function () {
 	 *
 	 *		defaultAdaptor = ConfigUtil.getDefault(manifest, "manifest.finsemble.defaultStorage", "LocalStorageAdapter");
 	 *		sameDomainTransport = ConfigUtil.getDefault(finConfig, "finConfig.router.sameDomainTransport", "SharedWorker");
-	 *		var serverAddress = getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress", "wss://localhost.chartiq.com:3376");
+	 *		var serverAddress = getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress", "ws://127.0.0.1:3376");
 	 *
 	 */
 	this.getDefault = function (base, path, defaultValue) {

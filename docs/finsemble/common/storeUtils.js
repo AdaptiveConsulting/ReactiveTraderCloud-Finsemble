@@ -26,7 +26,7 @@ export const setPath = (object, path, value) => path
 	.split(".")
 	.reduce((o, p) => o[p] = path.split(".").pop() === p ? value : o[p] || {}, object);
 
-// This handles the intial mapping for us. It will crawl through all child objects and map those too. Parent is the current location within the object(`parent.child`). Null is top level. The mapping is all flattened
+// This handles the initial mapping for us. It will crawl through all child objects and map those too. Parent is the current location within the object(`parent.child`). Null is top level. The mapping is all flattened
 export function initObject(object, parent, mapping) {
 	var mapLocation;
 
@@ -49,7 +49,7 @@ export function initObject(object, parent, mapping) {
 		}
 	}
 }
-// Will map out a field in an object. So we don't have to loop through the whole thing everytime we have a change.
+// Will map out a field in an object. So we don't have to loop through the whole thing every time we have a change.
 export function mapField(object, s, mapping) {
 	if (mapping[s]) { return; }// If we're already mapped move on.
 	s = s.replace(/\[(\w+)\]/g, ".$1"); // convert indexes to properties
@@ -68,19 +68,19 @@ export function mapField(object, s, mapping) {
 	}
 
 	var newObject = byString(object, currentLocation);
-	if (newObject === "undefined") { return; }// If the location doesnt exist exit.
+	if (newObject === "undefined") { return; }// If the location doesn't exist exit.
 	if (typeof newObject === "object") {
 		for (var key in newObject) {
 			mapField(object, currentLocation + "." + key, mapping);// If we need to ke
 		}
-	}	
+	}
 }
 // To see if we're replacing an existing field/object with an object/field that would make some of the mapping obsolete.
 export function checkForObjectChange(object, field, mapping) {
 	var objectReplacing = byString(object, field);
 	if (objectReplacing === null) { return false; }
 	if (typeof objectReplacing === "object") {
-		// we're replacing an object which requires use to remapp at this level.
+		// we're replacing an object which requires use to remap at this level.
 		return removeChildMapping(mapping, field);
 
 	}

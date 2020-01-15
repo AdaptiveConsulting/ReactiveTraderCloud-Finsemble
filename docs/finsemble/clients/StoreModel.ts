@@ -118,11 +118,11 @@ class StoreModel extends _BaseClient {
 	/**
 	 * Handles changes to the store. Will publish from the field that was changed and back.
 	 */
-	private publishObjectUpdates(startfield, mappings) {
+	private publishObjectUpdates(startField, mappings) {
 		const currentMapping = mappings;
-		while (startfield) {
-			this.triggerListeners(this.name + "." + startfield, storeUtils.byString(this.values, startfield));
-			startfield = currentMapping[startfield];
+		while (startField) {
+			this.triggerListeners(this.name + "." + startField, storeUtils.byString(this.values, startField));
+			startField = currentMapping[startField];
 		}
 	}
 
@@ -190,8 +190,8 @@ class StoreModel extends _BaseClient {
 
 	/**
 	 * Get multiple values from the store.
-	 * @param {Array.<object>|Array.<String>} fields - An Array of field objects. If there are no fields proviced, all values in the store are returned.
-	 * @param {Function} cb -  Will return the value if found.
+	 * @param {Array.<object>|Array.<String>} fields - An Array of field objects. If there are no fields provided, all values in the store are returned.
+	 * @param {Function} [cb] -  Will return the value if found.
 	 * @returns {Object} - returns an object of with the fields as keys.If no callback is given and the value is local, this will run synchronous
 	 * @example
 	 * store.getValues([{field:'field1'},{field:'field2'}],function(err,values){});
@@ -406,7 +406,7 @@ class StoreModel extends _BaseClient {
 	 * @param {Object} params - Params object
 	 * @param {String} params.field - The data field
 	 * @param {function} [fn] -  the function to remove from the listeners
-	 * @param {function} cb -  returns true if it was succesfull in removing the listener.
+	 * @param {function} [cb] -  returns true if it was successful in removing the listener.
 	 *
 	 * @example
 	 * var myFunction = function(err,data){
@@ -442,7 +442,7 @@ class StoreModel extends _BaseClient {
 	 * @param {String} params.field - The data field to listen for. If this is empty it listen to all changes of the store.
 	 * @param {String} params.listener - The listener function
 	 * @param {function} [fn] -  the function to remove from the listeners
-	 * @param {function} cb -  returns true if it was succesfull in removing the listener.
+	 * @param {function} [cb] -  returns true if it was successful in removing the listener.
 	 *
 	 * @example
 	 * var myFunction = function(err,data){
@@ -496,7 +496,7 @@ class StoreModel extends _BaseClient {
 	};
 
 	/**
-	 * Hanles all changes coming in from the service.
+	 * Handles all changes coming in from the service.
 	 */
 	private handleChanges = (err, response) => {// we use this to format our responses
 		if (err) { Logger.system.error("DistributedStoreClient", err); }

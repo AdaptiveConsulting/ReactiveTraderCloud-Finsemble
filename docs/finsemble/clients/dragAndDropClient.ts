@@ -44,7 +44,7 @@ type emitter = {
  * <h2>Drag and Drop Client</h2>
  *
  * The Drag and Drop Client acts as an API to share data between components via a user action i.e., drag and drop.
- * As an example, consider a user wanting to share a chart inside a chat&mdash;they can do so using the Drag and Drop service.
+ * As an example, consider a user wanting to share a chart inside a chat - they can do so using the Drag and Drop service.
  *
  *
  * A component that shares data needs to publish the data types it can share by calling setEmitters.
@@ -378,7 +378,7 @@ class DragAndDropClient extends BaseClient {
 	 * @param {any} data
 	 *
 	 * @example
-	 * element.addEventListener('dragstart', fuction(event) {
+	 * element.addEventListener('dragstart', function(event) {
 	 * 		var data = {
 	 * 			'rsrchx.report': {
 	 *				url: event.target.href,
@@ -481,7 +481,7 @@ class DragAndDropClient extends BaseClient {
 		let values = {};
 		var self = this;
 
-		//TODO aync functions and test this stuff
+		//TODO async functions and test this stuff
 		asyncEach(params.data, function (index, cb) {
 			let item = self.emitters[index];
 			if (item.data && typeof item.data === "function") {

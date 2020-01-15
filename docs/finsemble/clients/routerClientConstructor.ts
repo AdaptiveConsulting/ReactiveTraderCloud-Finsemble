@@ -15,8 +15,9 @@ var queue = []; // should never be used, but message sent before router ready wi
 /** The global `window` object. We cast it to a specific interface here to be
  * explicit about what Finsemble-related properties it may have. */
 import { IGlobals } from "../common/Globals";
-const Globals =
-	window as IGlobals;
+const Globals = typeof window !== "undefined"
+	? window as IGlobals
+	: process as any as IGlobals;
 
 import { ICentralLogger } from "./ICentralLogger";
 import { LocalLogger } from "../clients/localLogger";
@@ -42,9 +43,9 @@ Globals.FSBLData.RouterClients = Globals.FSBLData.RouterClients || {};
  * @hideconstructor
  * @publishedName RouterClient
  * @param {string} clientName router base client name for human readable messages (window name is concatenated to baseClientName)
- * @param {string=} transportName router transport name, currently either "SharedWorker" or "OpenFinBus" (usually this is autoconfigured internally but can be selected for testing or special configurations)
+ * @param {string=} transportName router transport name, currently either "SharedWorker" or "OpenFinBus" (usually this is auto-configured internally but can be selected for testing or special configurations)
  */
-// uncomment for optimization.
+// un-comment for optimization.
 // console.time("FinMainStartup");
 export var RouterClientConstructor = function (params: { clientName: string, transportName?: string }) {
 	Validate.args(params, "object") && Validate.args2("params.clientName", params.clientName, "string", "params.transportName", params.transportName, "string=");
@@ -75,7 +76,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 	var self = this;
 	this.startupTime = 0;
 	/////////////////////////////////////////////////////////////////////
-	// Private Message Contructors for Communicating with RouterService
+	// Private Message Constructors for Communicating with RouterService
 	/////////////////////////////////////////////////////////////////////
 
 	function InitialHandshakeMessage() {
@@ -261,9 +262,9 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 		System.ready(function () { // wait for openfin to be ready
 			var finWindow = System.Window.getCurrent();
 			Logger.system.debug(`WINDOW LIFECYCLE:STARTUP: fin.main invoked in ${finWindow.name}`);
-			window.console.debug(`WINDOW LIFECYCLE:STARTUP: fin.main invoked in ${finWindow.name}`);
+			console.debug(`WINDOW LIFECYCLE:STARTUP: fin.main invoked in ${finWindow.name}`);
 			self.startupTime = performance.now();
-			// uncomment for optimization.
+			// un-comment for optimization.
 			// console.timeEnd("FinMainStartup");
 			if (callbackCounter++ === 0) { // this check should  not be needed; patch for OpenFin bug which invokes callback twice
 				// catch "window closing" event so can cleanup
@@ -308,7 +309,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 			routerDomainRoot: finConfig.moduleRoot,
 			forceWindowTransport: ConfigUtil.getDefault(finConfig, "finConfig.router.forceWindowTransport", {}),
 			sameDomainTransport: ConfigUtil.getDefault(finConfig, "finConfig.router.sameDomainTransport", "SharedWorker"),
-			crossDomainTransport: ConfigUtil.getDefault(finConfig, "finConfig.router.crossDomainTransport", isElectron ? "FinsembleTransport" : "OpenFinBus"),
+			crossDomainTransport: ConfigUtil.getDefault(finConfig, "finConfig.router.crossDomainTransport", "OpenFinBus"),
 			transportSettings: ConfigUtil.getDefault(finConfig, "finConfig.router.transportSettings", {}),
 			IAC: ConfigUtil.getDefault(finConfig, "finConfig.IAC", {})
 		};
@@ -320,7 +321,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 				transport = RouterTransport.getRecommendedTransport(routerParams, incomingMessageHandler, clientName, "RouterService")
 					.then(transportReady)
 					.catch(errHandler);
-			} else { // tranport specified...typically only for regression testing
+			} else { // transport specified...typically only for regression testing
 				transport = RouterTransport.getTransport(routerParams, transportName, incomingMessageHandler, clientName, "RouterService")
 					.then(transportReady)
 					.catch(errHandler);
@@ -333,7 +334,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 			transport = transportObj;
 			handshakeHandler = finished; // set function to receive handshake response
 			sendHandshake();
-			myTimer = setInterval(sendHandshake, 200); // start time to retry if response not recieved back from router service
+			myTimer = setInterval(sendHandshake, 200); // start time to retry if response not received back from router service
 		}
 
 		function handshakeFailedHandler() {
@@ -345,7 +346,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 				getClientTransport();
 
 			} else {
-				let failureMessage = `Router ${transport.identifier()} failure for window ${window.name} after multiple retries.`;
+				let failureMessage = `A cross domain transport has failed to connect. Cross domain components may not work. Please contact your administrator.`;
 				Logger.system.error(failureMessage, routerParams);
 				let notificationURL = ConfigUtil.getDefault(finConfig, "finConfig.notificationURL", finConfig.moduleRoot + "/components/system/notification/notification.html");
 				UserNotification.alert("dev", "ONCE-SINCE-STARTUP", "FSBL-Internal-Transport-Failure", failureMessage, { url: notificationURL });
@@ -399,9 +400,10 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 
 	// invoke client callbacks in the input array (that are attached to a specific channel and listener type)
 	function invokeListenerCallbacks(map, message) {
-		var originalClientCallbackArray = map[message.header.channel] || {};
+		var originalClientCallbackArray = map[message.header.channel] || [];
 		var clientCallbackArray = [];
-		if (clientCallbackArray === undefined) {
+		if (!Array.isArray(originalClientCallbackArray) ||
+			(originalClientCallbackArray.length === 0)) {
 			Logger.system.warn("RouterClient: no listener for incoming transmit on channel " + message.header.channel + " from " + message.header.origin, message);
 		} else {
 			message.originatedHere = originatedHere;// add local function to test origin
@@ -589,7 +591,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 			}
 		}
 		if (!removed) {
-			Logger.system.warn("RouterClient: tried to remove non-existant listener on " + topic + " from " + JSON.stringify(subscribeID));
+			Logger.system.warn("RouterClient: tried to remove non-existent listener on " + topic + " from " + JSON.stringify(subscribeID));
 		}
 	}
 
@@ -598,7 +600,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 		removeFromPubSubListOfSubscribers(pubsubListOfSubscribers, this.header.topic, this.header.subscribeID);
 	}
 
-	// for incoming unsubscribe: invoke unsubscribe callback for pubsub servier
+	// for incoming unsubscribe: invoke unsubscribe callback for pubsub server
 	function invokeUnsubscribePubSubCallback(unsubscribeMessage) {
 		var callbacks = mapPubSubResponders[unsubscribeMessage.header.topic];
 
@@ -641,7 +643,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 		}
 	}
 
-	// for incoming Publish: invoke publish callback for pubsub servier
+	// for incoming Publish: invoke publish callback for pubsub server
 	function invokePublishPubSubCallback(publishMessage) {
 		var callbacks = mapPubSubResponders[publishMessage.header.topic];
 
@@ -661,7 +663,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 			if (callbacks.publishCallback) {
 				Logger.system.info("RouterClient: incoming PubSub publish callback invoked", "TOPIC", publishMessage.header.topic, "PUBLISH MESSAGE", publishMessage);
 				callbacks.publishCallback(null, publishMessage); // invoke the callback (no error)
-			} else { // since no pubish callback defined, use default functionality
+			} else { // since no publish callback defined, use default functionality
 				Logger.system.info("RouterClient: incoming PubSub publish", "TOPIC", publishMessage.header.topic, "PUBLISH MESSAGE", publishMessage);
 				publishMessage.sendNotifyToAllSubscribers(null, publishMessage.data); // must call from publish message (like a callback) so 'this' is properly set
 			}
@@ -827,7 +829,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 				Logger.system.debug("calibrationCalculation Intermediate Values", "lastRRT", rtt, "lastOffset", offset, "fastestOffset", offsetForFastest, "fastestRRT", fastestRRT);
 			}
 			timeOffset /= (TARGET_HANDSHAKE_COUNT - 1);
-			Logger.system.debug("RouterClient calibrationCalculation", "Average Offset", timeOffset, "Choosen FastestOffset", offsetForFastest, finalHandshakeMessage);
+			Logger.system.debug("RouterClient calibrationCalculation", "Average Offset", timeOffset, "Chosen FastestOffset", offsetForFastest, finalHandshakeMessage);
 			callback(offsetForFastest); // use the offset with the shortest RTT since it is often the most accurate
 		}
 
@@ -836,13 +838,13 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 			if (handshakeCounter > TARGET_HANDSHAKE_COUNT) {
 				calibrationCalculation(message); // enough handshake data gather, so do the calibration
 			} else {
-				message.clientBaseTime.push(window.performance.timing.navigationStart + window.performance.now());
+				message.clientBaseTime.push(Globals.performance.timing.navigationStart + Globals.performance.now());
 				sendToRouterService(new TimeCalibrationHandshakeMessage(message.clientBaseTime, message.serviceBaseTime));
 			}
 		}
 
 		timeCalibrationHandler = timeCalibrationHandlerFunction; // used in routeIncomingMessage to route handshake response back to handler
-		timeCalibrationHandler(new TimeCalibrationHandshakeMessage([], [])); // invoke first time to start exchanging handshakes; will be invoked each time handshake message received back from FouterService
+		timeCalibrationHandler(new TimeCalibrationHandshakeMessage([], [])); // invoke first time to start exchanging handshakes; will be invoked each time handshake message received back from RouterService
 	};
 
 	/**
@@ -883,7 +885,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 	/**
 	 * Add listener for incoming transmit events on specified channel. Each of the incoming events will trigger the specified event handler. The number of listeners is not limited (either local to this Finsemble window or in a separate Finsemble window).
 	 *
-	 * See [transmit]{@link RouterClientConstructor#transmit} for sending a cooresponding event message to listener. See [removeListener]{@link RouterClientConstructor#removeListener} to remove the listener.
+	 * See [transmit]{@link RouterClientConstructor#transmit} for sending a corresponding event message to listener. See [removeListener]{@link RouterClientConstructor#removeListener} to remove the listener.
 	 *
 	 * @param {string} channel any unique string to identify the channel (must match correspond transmit channel name)
 	 * @param {function} eventHandler function (see example below)
@@ -935,8 +937,8 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 	quite unexpected if the user isn't prepared. A better API would be to pass in some unique ID, or have a unique ID automatically generated,
 	that could then be passed to this function, e.g:
 
-	RouterClient.addlistener('some-channel', 'my-unique-listener-id', () => { });
-	RouterClient.removeListener('some-channel', 'my-unique-listeenr-id');*/
+	RouterClient.addListener('some-channel', 'my-unique-listener-id', () => { });
+	RouterClient.removeListener('some-channel', 'my-unique-listener-id');*/
 
 	/**
 	 * Remove event listener from specified channel for the specific event handler (only listeners created locally can be removed).
@@ -947,7 +949,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 	 * @param {function} eventHandler function used for the event handler when the listener was added
 	 */
 	this.removeListener = function (channel: string, eventHandler: Function) {
-		Logger.system.info("RouterClient.removelistener", "CHANNEL", channel, "EVENT HANDLER", eventHandler);
+		Logger.system.info("RouterClient.removeListener", "CHANNEL", channel, "EVENT HANDLER", eventHandler);
 		Validate.args(channel, "string", eventHandler, "function");
 		var lastChannelListener = removeListenerCallBack(mapListeners, channel, eventHandler);
 		if (lastChannelListener) {
@@ -962,7 +964,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 	 *
 	 * See [query]{@link RouterClientConstructor#query} for sending a corresponding query-event message to this responder.
 	 *
-	 * @param {string} channel any unique string to identify the channel (must match correspond query channel name); only one responder allower per channel
+	 * @param {string} channel any unique string to identify the channel (must match correspond query channel name); only one responder allowed per channel
 	 * @param {function} queryEventHandler function to handle the incoming query (see example below); note incoming queryMessage contains function to send response
 	 * @example
 	 *
@@ -1024,9 +1026,9 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 		var newQueryID = `${clientID()}.${responderChannel}`;
 		var timestamp = window.performance.timing.navigationStart + window.performance.now();
 		var navstart = window.performance.timing.navigationStart;
-		var timenow = window.performance.now(); // these timer values used for logging diagnostices
+		var timenow = window.performance.now(); // these timer values used for logging diagnostics
 
-		Logger.system.info("RouterClient.query", "RESPONDER CHANNEL", responderChannel, "QUERY EVENT", queryEvent, "PARAMS", params, "QUERYID", newQueryID, { timestamp, navstart, timenow });
+		Logger.system.info("RouterClient.query", "RESPONDER CHANNEL", responderChannel, "QUERY EVENT", queryEvent, "PARAMS", params, "QUERY ID", newQueryID, { timestamp, navstart, timenow });
 		if (arguments.length === 3) {
 			responseEventHandler = params;
 			params = { timeout: 20000 };
@@ -1039,7 +1041,17 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 			//Allows us to await on queries, cleaning up code quite a bit.
 			const modifiedHandler = (err, response) => {
 				resolve({ err, response });
-				responseEventHandler(err, response);
+				if (typeof responseEventHandler === "function") {
+					responseEventHandler(err, response);
+				} else {
+					Logger.system.warn(
+						"No response event handler passed to RouterClient.query",
+						"RESPONDER CHANNEL", responderChannel,
+						"QUERY EVENT", queryEvent,
+						"PARAMS", params,
+						"QUERY ID", newQueryID,
+						{ timestamp, navstart, timenow })
+				}
 			};
 
 			addQueryResponseCallBack(mapQueryResponses, newQueryID, modifiedHandler);
@@ -1072,7 +1084,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 	};
 
 	/**
-	 * Add a PubSub responder for specified topic. All subscribes and publishes to the topic will comes to responder (whether from local window or another window). Only one PubSub responder allowed per topic value in Finsemble application; however, the topic value may be a regular-expression representing a set of related topics, in which case the PubSub responder will responder to all matching topics. When a regEx topic is used, the same default functionality is provides for each matching topic -- the difference is only one PubSub responder is needed to cover a set of related topics, plus the same callback handers can be used (if provided).
+	 * Add a PubSub responder for specified topic. All subscribes and publishes to the topic will comes to responder (whether from local window or another window). Only one PubSub responder allowed per topic value in Finsemble application; however, the topic value may be a regular-expression representing a set of related topics, in which case the PubSub responder will responder to all matching topics. When a regEx topic is used, the same default functionality is provides for each matching topic -- the difference is only one PubSub responder is needed to cover a set of related topics, plus the same callback handlers can be used (if provided).
 	 *
 	 * All the callback function are optional because each PubSub responder comes with build-in default functionality (described below).
 	 *
@@ -1178,7 +1190,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 	};
 
 	/**
-	 * Subscribe to a PubSub Responder. Each responder topic can have many subscribers (local in this window or remote in other windows). Each subscriber immediately (but asyncronouly) receives back current state in a notify; new notifys are receive for each publish sent to the same topic.
+	 * Subscribe to a PubSub Responder. Each responder topic can have many subscribers (local in this window or remote in other windows). Each subscriber immediately (but asynchronously) receives back current state in a notify; new notifications are receive for each publish sent to the same topic.
 	 *
 	 * See [addPubSubResponder]{@link RouterClientConstructor#addPubSubResponder} for corresponding add of a SubPub responder to handle the subscribe. See [publish]{@link RouterClientConstructor#publish} for corresponding publish to notify the subscriber.
 	 *
@@ -1263,7 +1275,7 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 		return isTrusted;
 	};
 	/*
-	 * @TODO: consider adding disconnectAllListerns(), disconnectAllResponders(), disconnectAllSubscribers()
+	 * @TODO: consider adding disconnectAllListeners(), disconnectAllResponders(), disconnectAllSubscribers()
 	*/
 
 	/**
@@ -1300,22 +1312,22 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 		}
 	};
 
-	//Prevent the loggerService window's routerClient from logging to itself. Instead, log locally for it. It's unlikely that we need to get the loggerService's routermessages. If we do, just uncomment this.
+	//Prevent the loggerService window's routerClient from logging to itself. Instead, log locally for it. It's unlikely that we need to get the loggerService's router messages. If we do, just un-comment this.
 	if (System.Window.getCurrent().name === "loggerService") {
 		Logger = new LocalLogger();
 	}
 
-	clientName = baseClientName + "." + window.name;
+	clientName = baseClientName + "." + Globals.name;
 
 	/** @TODO - Move this to factory function, something like getRouterClient. */
 	if (clientName in Globals.FSBLData.RouterClients) { // if previously constructed then return that existing client
 		Logger.system.debug(`"RouterClient Check: reusing existing client for ${clientName}`);
-		console.debug(`"RouterClient Check: reusing existing client for ${clientName}`, window);
+		console.debug(`"RouterClient Check: reusing existing client for ${clientName}`, Globals);
 	} else {
 		Logger.system.debug(`"RouterClient Check: constructing new client for ${clientName}`);
-		console.debug(`"RouterClient Check: constructing new client for ${clientName}`, window);
+		console.debug(`"RouterClient Check: constructing new client for ${clientName}`, Globals);
 		Globals.FSBLData.RouterClients[clientName] = this;
-		constructor(clientName, transportName); // constructure new router client
+		constructor(clientName, transportName); // constructor new router client
 	}
 
 

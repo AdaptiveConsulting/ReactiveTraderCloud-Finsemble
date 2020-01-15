@@ -8,8 +8,6 @@ export const Monitors = new _Monitors(Function.prototype, Function.prototype, { 
 import Logger from "../clients/logger";
 import uuidv1 from "uuid/v1";
 
-var allMonitors = [];
-
 /*if (typeof fin !== "undefined") { //For Docking Tests -> removing this because Monitors are now handled bu the Monitors object. Docking tests will fail.
 	System.ready(() => {
 		System.addEventListener("monitor-info-changed", function () {
@@ -23,7 +21,7 @@ var allMonitors = [];
  * Gets the openfin version in object form.
  */
 export function getOpenfinVersion(cb = Function.prototype) {
-	return new Promise(function (resolve /*, reject*/ ) {
+	return new Promise(function (resolve /*, reject*/) {
 		System.getVersion((ver) => {
 			let verArr = ver.split(".").map(Number);
 			let versionObject = {
@@ -52,7 +50,7 @@ export function getOpenfinVersion(cb = Function.prototype) {
 export function castToPromise(f) {
 	return function () {
 		return new Promise((resolve, reject) => {
-			//Calls f, checks to see if the returned object has a `then` method. if not, it will resolve the result from the intiial function.
+			//Calls f, checks to see if the returned object has a `then` method. if not, it will resolve the result from the initial function.
 			const result = f.apply(null, Array.from(arguments));
 			try {
 				return result.then(resolve, reject);
@@ -87,8 +85,8 @@ export function crossDomain(url) {
 
 	var isSameProtocol = (window.location.protocol === parser.protocol);
 
-	var wport = (window.location.port === undefined) ? window.location.port : 80;
-	var pport = (parser.port === undefined) ? parser.port : 80;
+	var wport = (window.location.port !== undefined) ? window.location.port : 80;
+	var pport = (parser.port !== undefined) ? parser.port : 80;
 	var isSamePort = (wport === pport);
 
 	var isCrossDomain = !(isSameHost && isSamePort && isSameProtocol);
@@ -180,7 +178,7 @@ export function getMonitorFromWindow(windowDescriptor, cb) {
  * Returns a finWindow or null if not found
  * @param  {WindowIdentifier}   windowIdentifier A window identifier
  * @param  {Function} cb               Optional callback containing finWindow or null if not found (or use Promise)
- * @return {Promise}                    Promise that resulves to a finWindow or rejects if not found
+ * @return {Promise}                    Promise that resolves to a finWindow or rejects if not found
  */
 export function getFinWindow(windowIdentifier, cb) {
 	return new Promise(function (resolve, reject) {
@@ -208,7 +206,7 @@ export function getFinWindow(windowIdentifier, cb) {
 					resolve(remoteWindow);
 				}, function () {
 					if (cb) { cb(null); }
-					reject("Window " + windowIdentifier.windowName + " not found." + `UUID: ${windowIdentifier.uuid}`);
+					reject(`Window ${windowIdentifier.windowName} not found. UUID: ${windowIdentifier.uuid}`);
 					console.debug("util.getFinWindow: Window " + windowIdentifier.windowName + " not found");
 					return;
 				});
@@ -342,7 +340,7 @@ export function getWhichMonitor(params, cb) {
  * @returns {Promise} A promise that resolves to a monitorInfo
  */
 export function getMonitorFromCommand(commandMonitor, windowIdentifier, cb) {
-	return new Promise(function (resolve /*, reject*/ ) {
+	return new Promise(function (resolve /*, reject*/) {
 		getMonitor(windowIdentifier, function (monitorInfo) {
 			Monitors.getAllMonitors(function (monitors) {
 				let params = {
@@ -381,7 +379,7 @@ export function windowOnMonitor(windowDescriptor, monitorDimensions) {
  * @returns {Promise} A promise that resolves to a monitor descriptor
  */
 export function getMonitorByDescriptor(windowDescriptor, cb) {
-	return new Promise(function (resolve /*, reject*/ ) {
+	return new Promise(function (resolve /*, reject*/) {
 		getMonitorFromWindow(windowDescriptor, function (monitor) {
 			if (cb) { cb(monitor); }
 			resolve(monitor);
@@ -438,7 +436,7 @@ export function getMyWindowIdentifier(cb) {
 	});
 };
 /**
- *	@returns {string} Transforms an array of strings into a camelcased string.
+ *	@returns {string} Transforms an array of strings into a camel cased string.
  * @memberof Utils
  */
 export function camelCase() {
@@ -474,14 +472,6 @@ export function clone(from, to) {
 
 	return to;
 }
-
-export function getUniqueName(baseName) {
-	if (!baseName) {
-		baseName = "RouterClient";
-	}
-	var uuid = baseName + "-" + Math.floor(Math.random() * 100) + "-" + Math.floor(Math.random() * 10000);
-	return uuid;
-};
 
 export function guuid() {
 	return uuidv1(); // return global uuid
@@ -561,7 +551,7 @@ export function openSharedData(params, cb) {
 			if (linkerChannels.length) { //if linked
 				var linkedWindows = linkerClient.getLinkedComponents({ componentTypes: componentsToOpen, windowIdentifier: linkerClient.windowIdentifier() });
 				// TODO: deal with the case if not all componentTypes that need to be opened are linked
-				if (linkedWindows.length || params.publishOnly) { // If pubishOnly is true then just publish, not spawn
+				if (linkedWindows.length || params.publishOnly) { // If publishOnly is true then just publish, not spawn
 					linkerClient.publish({
 						dataType: "Finsemble.DragAndDropClient",
 						data: params.data
@@ -599,5 +589,110 @@ export function openSharedData(params, cb) {
 			if (cb) cb(errors.length ? errors : null, null);
 		}
 	});
+};
 
+/**
+ * Calculate the new bounds of a window if moved onto the monitor by pulling the monitor along the line
+ * between the top-left of the window and the center of the monitor
+ * @param {*} monitor a monitor
+ * @param {*} bounds current window bounds
+ */
+export function getNewBoundsWhenMovedToMonitor(monitor, bounds) {
+
+	// Depending if the monitor has claimed space, determine rectangle
+	let monitorRect = monitor.unclaimedRect || monitor.availableRect || monitor.monitorRect;
+
+	// Placeholder for new bounds
+	let newBounds = Object.create(bounds);
+
+	// adjust vertical offset from monitor by moving top down or bottom up
+	if (bounds.top < monitorRect.top) {
+		newBounds.top = monitorRect.top;
+	} else if (bounds.top > monitorRect.bottom - bounds.height) {
+		newBounds.top = monitorRect.bottom - bounds.height;
+	}
+
+	// Adjust horizontal offset from monitor by moving left-edge rightward or right-edge leftward
+	if (bounds.left < monitorRect.left) {
+		newBounds.left = monitorRect.left;
+	} else if (bounds.left > monitorRect.right - bounds.width) {
+		newBounds.left = monitorRect.right - bounds.width;
+	}
+
+	// Recalculate bottom / right, based on movement of top / left, maintaining width / height
+	newBounds.bottom = newBounds.top + newBounds.height;
+	newBounds.right = newBounds.left + newBounds.width;
+
+	// Truncate portions off monitor in case we are downsizing from a maximized window
+	if (newBounds.right > monitorRect.right) newBounds.right = monitorRect.right;
+	if (newBounds.top < monitorRect.top) newBounds.top = monitorRect.top;
+	if (newBounds.left < monitorRect.left) newBounds.left = monitorRect.left;
+	if (newBounds.bottom > monitorRect.bottom) newBounds.bottom = monitorRect.bottom;
+
+	// Recalculate width, height in case of truncation to ensure the window fits on the new monitor
+	newBounds.height = newBounds.bottom - newBounds.top;
+	newBounds.width = newBounds.right - newBounds.left;
+
+	// Calculate distance the window moved
+	let distanceMoved = Math.sqrt((bounds.left - newBounds.left) ** 2 + (bounds.top - newBounds.top) ** 2);
+
+	return {
+		newBounds: newBounds,
+		distanceMoved: distanceMoved,
+		monitor: monitor
+	};
+};
+
+/**
+ * Takes a window's bounds and makes sure it's on a monitor. If the window isn't on a monitor, we determine the closest monitor
+ * based on the distance from the top-left corner of the window to the center of the monitor, and then pull the monitor along that line
+ * until the window is on the edge of the monitor
+ * @param {*} currentBounds
+ * @returns the new bounds for the window. which are different from currentBounds only if the window needs to be relocated
+ */
+export function adjustBoundsToBeOnMonitor(bounds) {
+	let newBounds = Object.create(bounds);
+
+
+	// Determine if on a monitor, and if not, pull top-left corner directly toward center of monitor until it completely onscreen
+	let isOnAMonitor = this.Monitors.allMonitors.some((monitor) => {
+
+		/*
+		 * 8/26/19 Joe: This used to only use the monitorRect (the entirety of monitor's dimensions)
+		 * Switched it to use the unclaimedRect. If window is inside of claimed space, then its
+		 * in unusable space anyway.
+		 * Included whole rect as a fallback
+		 */
+		let monitorRect = monitor.unclaimedRect || monitor.monitorRect;
+
+		// Check to see tf it's to the right of the left side of the monitor,
+		// to the left of the right side, etc.basically is it within the monitor's bounds.
+		let isOnMonitor = bounds.left >= monitorRect.left && bounds.left <= monitorRect.right
+			&& bounds.right >= monitorRect.left && bounds.right <= monitorRect.right
+			&& bounds.top >= monitorRect.top && bounds.top <= monitorRect.bottom
+			&& bounds.bottom >= monitorRect.top && bounds.bottom <= monitorRect.bottom;
+
+		return isOnMonitor;
+
+	});
+
+	if (!isOnAMonitor) {
+
+		// calculate if the window is on any monitor, and the distance between the top left and the center of the window
+		let monitorAdjustments = this.Monitors.allMonitors.map((monitor) => this.getNewBoundsWhenMovedToMonitor(monitor, bounds));
+
+		// Get the closest monitor, the one with minimum distanceMoved
+		let monitorAdjustmentClosest = monitorAdjustments.sort((md1, md2) => md1.distanceMoved - md2.distanceMoved)[0];
+
+		// notify the movement
+		Logger.system.info("Launcher.adjustWindowDescriptorBoundsToBeOnMonitor: not on monitor.  bounds", bounds, "monitor name", monitorAdjustmentClosest.monitor.name, "newBounds", monitorAdjustmentClosest.newBounds);
+
+		// assign bounds
+		newBounds = monitorAdjustmentClosest.newBounds;
+	} else {
+		Logger.system.info("Launcher.adjustWindowDescriptorBoundsToBeOnMonitor: on monitor.");
+		newBounds = bounds;
+	}
+
+	return newBounds;
 };

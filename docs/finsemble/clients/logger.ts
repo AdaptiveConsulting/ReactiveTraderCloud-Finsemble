@@ -11,7 +11,7 @@ var DEFAULT_LOG_SETTING = { Error: true, Warn: true, Info: true, Log: true, Debu
 var CONSOLE_DEFAULT_LOG_SETTING = { Error: true, Warn: true, Info: true, Log: true, Debug: true }; // if true then goes to console and captured for logger
 const MAX_LOG_MESSAGE_SIZE = 50000;
 const OVER_LOG_SIZE_LIMIT_MESSAGE = `Log argument greater than ${MAX_LOG_MESSAGE_SIZE / 1000}KB. Check local Console to see output of the object.`;
-const MAX_QUEUE_SIZE = 5 * 1000; // maximum logger queue size; plenty of space although shouldn't need much since continuely sending to logger if working correctly;
+const MAX_QUEUE_SIZE = 5 * 1000; // maximum logger queue size; plenty of space although shouldn't need much since continuously sending to logger if working correctly;
 
 import throttle = require("lodash.throttle");
 import { System } from "../common/system";
@@ -22,10 +22,10 @@ import { LocalLogger } from "./localLogger";
  *
  * <h2>Logger Client</h2>
  *
- * The Logger Client supports very efficent and configurable run-time logging to the <a href=tutorial-CentralLogger.html>Central Logger</a>.
+ * The Logger Client supports very efficient and configurable run-time logging to the <a href=tutorial-CentralLogger.html>Central Logger</a>.
  * Logging has a small performance overhead, so developers can liberally instrument their code with log messages for debugging and diagnostics.
  * By default, only error and warning messages are captured by the Logger, with the other message types (e.g., log, info, debug) disabled.
- * Which message types are enabled or disabled is fully controlled from the <a href=tutorial-CentralLogger.html>Central Logger</a>&mdash;this means developers can fully instrument their code once and dynamically enable and disable logging later, as needed, for debugging or field support.
+ * Which message types are enabled or disabled is fully controlled from the <a href=tutorial-CentralLogger.html>Central Logger</a> - this means developers can fully instrument their code once and dynamically enable and disable logging later, as needed, for debugging or field support.
  *
  * The Finsemble team uses the Central Logger to <a href=tutorial-Troubleshooting.html>capture log message for field support</a>.
  * Finsemble customers, building their own Finsemble applications, have the option to do the same.
@@ -35,7 +35,7 @@ import { LocalLogger } from "./localLogger";
  * Using the Logger is similar to using the browser's console for logging (e.g., `console.error` or `console.log`), although the Logger Client is accessed through the FSBL object as shown in the examples below.
  *
  *```javascript
- * 			FSBL.Clients.Logger.error("an error message", anErrorOject);
+ * 			FSBL.Clients.Logger.error("an error message", anErrorObject);
  * 			FSBL.Clients.Logger.warn("a warning message", object1, object2, object3);
  * 			FSBL.Clients.Logger.log("logging message");
  * 			FSBL.Clients.Logger.info("logging message");
@@ -157,7 +157,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 		updateQueueBasedOnState(calibrateTimeFlag);
 	}
 
-	// logger entry point to return callstack that can be included in a log message
+	// logger entry point to return call stack that can be included in a log message
 	this.callStack = function () {
 		return traceString();
 	};
@@ -182,11 +182,11 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 	}
 
 	// save original console functions since going to wrap/redefine each
-	var orignalConsoleError = console.error;
-	var orignalConsoleWarn = console.warn;
-	var orignalConsoleInfo = console.info;
-	var orignalConsoleLog = console.log;
-	var orignalConsoleDebug = console.debug;
+	var originalConsoleError = console.error;
+	var originalConsoleWarn = console.warn;
+	var originalConsoleInfo = console.info;
+	var originalConsoleLog = console.log;
+	var originalConsoleDebug = console.debug;
 
 	function getRoughSizeOfObject(object) {
 		var objectList = [];
@@ -243,7 +243,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 				let bytes = getRoughSizeOfObject(object);
 				if (bytes > MAX_LOG_MESSAGE_SIZE) {
 					// @todo, Terry, instead of *not* sending the message at all, we should send the first X bytes of the message.
-					outputToConsole(orignalConsoleInfo, ["Message too large to send to the logger.", args]);
+					outputToConsole(originalConsoleInfo, ["Message too large to send to the logger.", args]);
 					return OVER_LOG_SIZE_LIMIT_MESSAGE;
 				}
 			}
@@ -269,7 +269,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 		} else {
 			if (++filteredMessagesCounter <= 5) {
 				let filterMsg = `"Filtered Logger Message (${filteredMessagesCounter} of first 5 shown)`;
-				outputToConsole(orignalConsoleInfo, [filterMsg, message]); // put out a few filtered messages then stop so won't clutter console
+				outputToConsole(originalConsoleInfo, [filterMsg, message]); // put out a few filtered messages then stop so won't clutter console
 			}
 		}
 
@@ -325,7 +325,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 		}
 
 		args.unshift("dev error (" + window.performance.now() + "):");
-		outputToConsole(orignalConsoleError, args);
+		outputToConsole(originalConsoleError, args);
 	};
 
 	/**
@@ -346,7 +346,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 			}
 			if (currentLogState.dev.Warn && currentLogState.dev.LocalOnly) {
 				args.unshift("dev warn (" + window.performance.now() + "):");
-				outputToConsole(orignalConsoleWarn, args);
+				outputToConsole(originalConsoleWarn, args);
 			}
 		}
 	};
@@ -371,7 +371,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 			}
 			if (currentLogState.dev.Info && currentLogState.dev.LocalOnly) {
 				args.unshift("dev info (" + window.performance.now() + "):");
-				outputToConsole(orignalConsoleInfo, args);
+				outputToConsole(originalConsoleInfo, args);
 			}
 		}
 	};
@@ -396,7 +396,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 			}
 			if (currentLogState.dev.Log && currentLogState.dev.LocalOnly) {
 				args.unshift("dev log (" + window.performance.now() + "):");
-				outputToConsole(orignalConsoleLog, args);
+				outputToConsole(originalConsoleLog, args);
 			}
 		}
 	};
@@ -421,7 +421,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 			}
 			if (currentLogState.dev.Debug && currentLogState.dev.LocalOnly) {
 				args.unshift("dev debug (" + window.performance.now() + "):");
-				outputToConsole(orignalConsoleDebug, args);
+				outputToConsole(originalConsoleDebug, args);
 			}
 		}
 	};
@@ -446,7 +446,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 			}
 			if (currentLogState.dev.Verbose && currentLogState.dev.LocalOnly) {
 				args.unshift("dev verbose (" + window.performance.now() + "):");
-				outputToConsole(orignalConsoleDebug, args);
+				outputToConsole(originalConsoleDebug, args);
 			}
 		}
 	};
@@ -466,7 +466,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 		}
 
 		args.unshift("system error (" + window.performance.now() + "):");
-		outputToConsole(orignalConsoleError, args);
+		outputToConsole(originalConsoleError, args);
 	};
 
 	this.system.warn = function () {
@@ -478,7 +478,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 			}
 			if (currentLogState.system.Warn && currentLogState.system.LocalOnly) {
 				args.unshift("system warn (" + window.performance.now() + "):");
-				outputToConsole(orignalConsoleWarn, args);
+				outputToConsole(originalConsoleWarn, args);
 			}
 		}
 	};
@@ -494,7 +494,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 			}
 			if (currentLogState.system.Info && currentLogState.system.LocalOnly) {
 				args.unshift("system info (" + window.performance.now() + "):");
-				outputToConsole(orignalConsoleInfo, args);
+				outputToConsole(originalConsoleInfo, args);
 			}
 		}
 	};
@@ -510,7 +510,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 			}
 			if (currentLogState.system.Log && currentLogState.system.LocalOnly) {
 				args.unshift("system log (" + window.performance.now() + "):");
-				outputToConsole(orignalConsoleLog, args);
+				outputToConsole(originalConsoleLog, args);
 			}
 		}
 	};
@@ -526,7 +526,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 			}
 			if (currentLogState.system.Debug && currentLogState.system.LocalOnly) {
 				args.unshift("system debug (" + window.performance.now() + "):");
-				outputToConsole(orignalConsoleDebug, args);
+				outputToConsole(originalConsoleDebug, args);
 			}
 		}
 	};
@@ -543,7 +543,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 			if (currentLogState.system.Verbose && currentLogState.system.LocalOnly) {
 				var args = Array.prototype.slice.call(arguments); // make a real array so can manipulate
 				args.unshift("system log (" + window.performance.now() + "):");
-				outputToConsole(orignalConsoleDebug, args);
+				outputToConsole(originalConsoleDebug, args);
 			}
 		}
 	};
@@ -558,7 +558,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 		}
 
 		args.unshift("perf error (" + window.performance.now() + "):");
-		outputToConsole(orignalConsoleError, args);
+		outputToConsole(originalConsoleError, args);
 	};
 
 	this.perf.warn = function () {
@@ -570,7 +570,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 			}
 			if (currentLogState.perf.Warn && currentLogState.perf.LocalOnly) {
 				args.unshift("perf warn (" + window.performance.now() + "):");
-				outputToConsole(orignalConsoleWarn, args);
+				outputToConsole(originalConsoleWarn, args);
 			}
 		}
 	};
@@ -586,7 +586,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 			}
 			if (currentLogState.perf.Info && currentLogState.perf.LocalOnly) {
 				args.unshift("perf info (" + window.performance.now() + "):");
-				outputToConsole(orignalConsoleInfo, args);
+				outputToConsole(originalConsoleInfo, args);
 			}
 		}
 	};
@@ -602,7 +602,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 			}
 			if (currentLogState.perf.Log && currentLogState.perf.LocalOnly) {
 				args.unshift("perf log (" + window.performance.now() + "):");
-				outputToConsole(orignalConsoleLog, args);
+				outputToConsole(originalConsoleLog, args);
 			}
 		}
 	};
@@ -618,7 +618,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 			}
 			if (currentLogState.perf.Debug && currentLogState.perf.LocalOnly) {
 				args.unshift("perf debug (" + window.performance.now() + "):");
-				outputToConsole(orignalConsoleDebug, args);
+				outputToConsole(originalConsoleDebug, args);
 			}
 		}
 	};
@@ -634,7 +634,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 			}
 			if (currentLogState.perf.Verbose && currentLogState.perf.LocalOnly) {
 				args.unshift("perf verbose (" + window.performance.now() + "):");
-				outputToConsole(orignalConsoleDebug, args);
+				outputToConsole(originalConsoleDebug, args);
 			}
 		}
 	};
@@ -709,7 +709,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 		this.startupTime = performance.now();
 		var self = this;
 		if (!self.RouterClient) {
-			console.log("No instance of the RouterClient found for this instance of the Logger. Dynamically requireing it.");
+			console.log("No instance of the RouterClient found for this instance of the Logger. Dynamically requiring it.");
 			self.RouterClient = require("./routerClientInstance").default;
 		}
 		let onlineSubscription, allActiveSubscription;
@@ -718,7 +718,7 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 			self.status = "online";
 			loggerConsole.system.debug("Logger onReady", loggerClientName);
 			// timer calibration must be done so the messages will be correctly sorted in the central logger;
-			// this is necessary because there is timer driff between windows --- this appears to be a Chromium
+			// this is necessary because there is timer drift between windows --- this appears to be a Chromium
 			// bug we have to work around it.  The timeOffset value adjusts the time using the routerService's
 			// time as a central reference point.
 			self.RouterClient.calibrateTimeWithRouterService(function (timeOffset) {
@@ -751,9 +751,9 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 };
 
 /** When running unit tests, we don't want to use the real Logger.
- * `fin` is an easy indicator of our environment.
+ * `window` is an easy indicator of our environment.
  * @TODO - refactor to some sort of global like FSBL.environment. */
-export const Logger = typeof fin !== "undefined" ?
+export const Logger = typeof window !== "undefined" ?
 	new LoggerConstructor()
 	: new LocalLogger();
 

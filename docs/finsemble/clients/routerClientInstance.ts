@@ -16,9 +16,11 @@
  * @namespace routerClientInstance
  * @shouldBePublished false
  */
-import {RouterClientConstructor} from "./routerClientConstructor";
-import { Logger } from "./logger";
+
 import { IRouterClient } from "./IRouterClient";
+
+import { RouterClientConstructor } from "./routerClientConstructor";
+import { Logger } from "./logger";
 let RCConstructor = RouterClientConstructor as any;
 /** The logger needs a router client, and the router client needs a logger.
  * To get around this fundamental circular dependency, we pass a reference
@@ -28,9 +30,10 @@ let RCConstructor = RouterClientConstructor as any;
  */
 
 /** An instance of the IRouterClient interface, (that is, the Router Client).
- * All other clients are built on top of the RouterClient; its API is the 
+ * All other clients are built on top of the RouterClient; its API is the
  * primary form of communication between the various components of Finsemble.
  */
 let RouterClientInstance: IRouterClient = new RCConstructor ({ clientName: "RouterClient" });
 Logger.setRouterClient(RouterClientInstance);
+
 export default RouterClientInstance;

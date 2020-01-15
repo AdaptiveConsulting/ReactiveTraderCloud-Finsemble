@@ -3,7 +3,7 @@
 There are three ways to handle resource management with Openfin.
  1. You can group everything into one "Application" with N child-windows. This was the approach we took initially.
  	* Pros of this approach:
-        * You don't have to worry about the startup penalty involved with starting up a new openfin application. On good machines, it's a negligible cost. On bad machines, it's noticable.
+        * You don't have to worry about the startup penalty involved with starting up a new openfin application. On good machines, it's a negligible cost. On bad machines, it's noticeable.
     * Cons of this approach:
         * Everything is inside of one render process. This means that every time a window fires off a JS function, it goes on to the same event loop. If you have a badly behaving component, it can lock up your entire application. If you have a resource-intensive component or service, it can also slow down performance.
         * It makes debugging difficult. Using the profiler is a useless exercise, as all of the javascript for every window is included in the same profile.

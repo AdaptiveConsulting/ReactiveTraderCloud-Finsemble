@@ -25,7 +25,7 @@ export type BaseClientParams = {
 /**
  * @introduction
  * <h2>Base Client</h2>
- * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependecies are met, either client or service, the client's `onReady` method is fired.
+ * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependencies are met, either client or service, the client's `onReady` method is fired.
  *
  * We're currently halfway through migrating our clients from extending a normal function prototype to an ES6 class.
  * "_BaseClient" represents the new class, while "BaseClient" is the original function. When the migration is complete,
@@ -66,7 +66,7 @@ export class _BaseClient {
 	startupDependencies: { services?: any[], clients?: any[] } = { services: [], clients: [] };
 	/** Reference to the RouterClient. */
 	routerClient;
-	/** Gets the current openfin window - stays here for backward compatiblity. */
+	/** Gets the current openfin window - stays here for backward compatibility. */
 	finWindow: {
 		name: string,
 		uuid: string,
@@ -174,7 +174,7 @@ export class _BaseClient {
 /**
  * @introduction
  * <h2>Base Client</h2>
- * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependecies are met, either client or service, the client's `onReady` method is fired.
+ * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependencies are met, either client or service, the client's `onReady` method is fired.
  * @constructor
  * @param {Object} params
  * @param {Function} params.onReady - A function to be called after the client has initialized.
@@ -225,7 +225,7 @@ var BaseClient = function (params) {
 	this.routerClient = RouterClient;
 
 	/**
-	 * Gets the current openfin window - stays here for backward compatiblity
+	 * Gets the current openfin window - stays here for backward compatibility
 	 * @type {object}
 	 */
 	this.finWindow = null;
@@ -237,7 +237,7 @@ var BaseClient = function (params) {
 	this.finsembleWindow = null;
 
 	/**
-	 * Gets the cusrrent window name
+	 * Gets the current window name
 	 *  @type {string}
 	 */
 	this.windowName = "";//The current window

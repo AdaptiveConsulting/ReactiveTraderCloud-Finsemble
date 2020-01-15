@@ -14,7 +14,7 @@ import { FinsembleWindow } from "../common/window/FinsembleWindow";
 import Logger from "./logger";
 import { System } from "../common/system";
 import { SpawnParams } from "../services/window/Launcher/launcher";
-
+import { getUniqueName } from "../common/disentangledUtils";
 WindowClient.initialize();
 LauncherClient.initialize();
 StoreClient.initialize();
@@ -86,7 +86,7 @@ class DialogManagerClient extends _BaseClient {
 
 	spawnDialog(params: SpawnParams, inputParams, dialogResponseCallback, cb?: StandardCallback) {
 		Validate.args(params, "object", inputParams, "object", dialogResponseCallback, "function");
-		let responseChannel = Utils.getUniqueName("DialogChannel");
+		let responseChannel = getUniqueName("DialogChannel");
 
 		params.data = { inputParams, responseChannel: responseChannel };
 
@@ -236,7 +236,7 @@ class DialogManagerClient extends _BaseClient {
 		});
 	};
 	/**
-	 * State management - just moves an avaiable dialog out of the "available" pool.
+	 * State management - just moves an available dialog out of the "available" pool.
 	 * @private
 	 * @param {object} identifier window identifier of the dialog.
 	 */
@@ -275,6 +275,12 @@ class DialogManagerClient extends _BaseClient {
 	 */
 	showModal = (cb?: Function) => {
 		this.DialogStore.getValue("modalIdentifier", async (err, identifier) => {
+			// If null is passed back, this likely means the window is not ready yet.
+			// We only need to proceed if the window exists and identifier is not null
+			if (identifier === undefined || identifier === null) {
+				return;
+			}
+
 			let { wrap: modal } = await FinsembleWindow.getInstance({ uuid: identifier.uuid, name: identifier.windowName });
 			modal.updateOptions({
 				options: {
@@ -302,7 +308,7 @@ class DialogManagerClient extends _BaseClient {
 	 * @param {function} onUserInput Callback to be invoked when the user interacts with the dialog.
 	 */
 	open = (type: string, options: any, onUserInput: Function) => {
-		//show, spawnif there are no available dialogs of that type..
+		//show, spawn if there are no available dialogs of that type..
 		this.getAvailableDialog(type, (dialogIdentifier) => {
 			if (dialogIdentifier) {
 				//send open message
@@ -350,6 +356,11 @@ class DialogManagerClient extends _BaseClient {
 	 */
 	hideModal = () => {
 		this.DialogStore.getValue("modalIdentifier", async (err, identifier) => {
+			// If null is passed back, this likely means the window is not ready yet.
+			// We only need to proceed if the window exists and identifier is not null
+			if (identifier === undefined || identifier === null) {
+				return;
+			}
 			let { wrap: modal } = await FinsembleWindow.getInstance({ uuid: identifier.uuid, name: identifier.windowName });
 			modal.hide();
 		});
@@ -445,7 +456,7 @@ var dialogManagerClient = new DialogManagerClient({
 				(done) => { WindowClient.onReady(done); },
 			], cb);
 	},
-	//THis name doesn't have Client in it because it isn't referenced as dialogmanagerClient....
+	//This name doesn't have Client in it because it isn't referenced as dialogmanagerClient....
 	name: "dialogManager"
 });
 

@@ -1,4 +1,4 @@
-// passthrough to openfin. In the future we can make this the passthrough to any container.
+// pass through to openfin. In the future we can make this the pass through to any container.
 declare var fin;
 declare var chrome;
 
@@ -11,8 +11,8 @@ const Globals =
 	 * exists; otherwise, in node, `process` is the global context.
 	 */
 	typeof window !== "undefined" ?
-	window as IGlobals
-	: process as IGlobals;
+		window as IGlobals
+		: process as any as IGlobals;
 
 class SystemWindow {
 	constructor(params, cb, errCb?) {
@@ -73,7 +73,7 @@ export class System {
 		});
 	}
 
-	// static get makes this behave like a static variable. so calling system.ready is eqivalent to fin.desktop.main.
+	// static get makes this behave like a static variable. so calling system.ready is equivalent to fin.desktop.main.
 	static get ready() {
 		return fin.desktop.main;
 	}
@@ -139,10 +139,9 @@ export class System {
 		const promiseResolver = (resolve) => {
 			let t;
 			let timeoutCleared = false;
-			
 			let terminateAndResolve = () => {
 				if (timeoutCleared) return;
-				console.log("Attempting to terminate", app.uuid);			
+				console.log("Attempting to terminate", app.uuid);
 				app.terminate(() => {
 					cb();
 					resolve();
@@ -153,7 +152,7 @@ export class System {
 					// If closing fails, force close
 					console.log("force closing ", app.uuid);
 					app.terminate();
-				});				
+				});
 			}
 
 			//Hanging apps can be unresponsive to close and terminate calls for a period of time, keep trying until they're closed

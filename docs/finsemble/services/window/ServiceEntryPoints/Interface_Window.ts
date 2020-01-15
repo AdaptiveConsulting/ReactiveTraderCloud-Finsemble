@@ -20,7 +20,7 @@ interface BoxBounds {
 	bottom?: number;
 }
 
-//futureproofing. May want to add specific info to different 'boxes' (e.g., group, windows);
+//future proofing. May want to add specific info to different 'boxes' (e.g., group, windows);
 export interface WindowBounds extends BoxBounds { }
 export interface GroupBounds extends BoxBounds { }
 
@@ -40,7 +40,7 @@ export type WindowsGroupParams = {}
 export type WindowServiceParams = { name: string; }
 
 // The Interface_Window namespace is purely a logical organization of the public APIs supported by the Window Service.
-// Each of these interfaces in Interface_Window will have a client-side implimentation and a service-side implementation.
+// Each of these interfaces in Interface_Window will have a client-side implementation and a service-side implementation.
 export namespace Interface_Window {
 
 	export interface BasePrivateWindow extends BasePrivateWindowInterface { }
@@ -64,7 +64,7 @@ export namespace Interface_Window {
 	 * Disable tabbing region within a components window. This disables the RegionMapper for the component, which in affect turns off tabbing on the component.
 		*
 		 * @param {TabbingParams} params parameter object
-	 * @param {WindowIdentifier} params.componentWindow specifics the component window on which the tabbing region will be disabbled
+	 * @param {WindowIdentifier} params.componentWindow specifics the component window on which the tabbing region will be disabled
 	 * @memberof Tabbing
 	 */
 		disableRegion(params: TabbingParams): Promise<any>;
@@ -83,7 +83,7 @@ export namespace Interface_Window {
 		 * Reorders the internal list of tabs -- the internal list is used by setActiveTab and should match the tabbing UI
 	 	 *
 	 	 * @param {TabbingParams} params parameter object
-		 * @param {WindowIdentifier} params.componentWindow specifics the component window for which the corresponding tablist will be reorder
+		 * @param {WindowIdentifier} params.componentWindow specifics the component window for which the corresponding tab list will be reorder
 		 * @param {Array} params.tabList an order list/array of window names (one for each tab specifying the new order)
 		 * @memberof Tabbing
 		 */
@@ -94,7 +94,7 @@ export namespace Interface_Window {
 	 	 *
 		 * where the tabbing store contains one object with the following properties
 		 *				{
-		 *					tablist: an order list/array of window names (one for each tab)
+		 *					tab list: an order list/array of window names (one for each tab)
 		 *					visibleTab: index into tabs list of the currently visible tab
 		 *					_private (internal data for diagnostic purposes)
 		 *				}
@@ -113,8 +113,8 @@ export namespace Interface_Window {
 		 * Starts mouse tracking within the RegionMapper, in affect activating Tabbing and Tiling. Depending on the mouse location, either the DesktopRegionHandler, TilingRegionHandler, or TabbingRegionHandler will be called once time interval (e.g. 1 millisecond) until stopTracking is invoked.
 		 *
 	 	 * @param {Params} params - Optional parameter object
-		 * @param {any} params.type - identiers a region type (e.g. tabbing, tiling, desktop)
-		 * @param {any} params.identifier - identiers a region (e.g. window name, group name, monitor name)
+		 * @param {any} params.type - identifiers a region type (e.g. tabbing, tiling, desktop)
+		 * @param {any} params.identifier - identifiers a region (e.g. window name, group name, monitor name)
 		 * @memberof RegionTracking
 		 */
 		enableRegion(params: Params): Promise<any>;

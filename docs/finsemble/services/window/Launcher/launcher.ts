@@ -3,6 +3,7 @@
 * All rights reserved.
 */
 import * as util from "../../../common/util";
+import { isNumber } from '../../../common/disentangledUtils';
 import { System } from "../../../common/system";
 import Logger from "../../../clients/logger";
 
@@ -14,7 +15,7 @@ import DistributedStoreClient from "../../../clients/distributedStoreClient";
 import { LauncherGroup as LauncherWindowGroup } from "./launcherGroup";
 import { FinsembleWindowInternal } from "../WindowAbstractions/FinsembleWindowInternal";
 import { CreateSplinterAndInject } from "./createSplinterAndInject";
-import LauncherDefaults from "./LauncherDefaults";
+import LauncherDefaults, { UNKNOWN_DEFAULT_CONFIG } from "./LauncherDefaults";
 import {
 	forEach as asyncForEach,
 	parallel as asyncParallel,
@@ -23,6 +24,7 @@ import {
 	some as asyncSome,
 } from "async";
 import _difference from "lodash.difference";
+import { get, set } from "lodash";
 import merge = require("deepmerge");
 import { FinsembleWindow } from "../../../common/window/FinsembleWindow";
 import { WindowDescriptor } from "../Common/types";
@@ -30,7 +32,9 @@ import { WindowDescriptor } from "../Common/types";
 import "./_test";
 import { BaseWindow } from "../WindowAbstractions/BaseWindow";
 import { IRouterClient } from "../../../clients/IRouterClient";
-import { HEARTBEAT_TIMEOUT_CHANNEL, DELIVERY_MECHANISM } from "../../../common/constants";
+import { HEARTBEAT_TIMEOUT_CHANNEL, LAUNCHER_SERVICE, DELIVERY_MECHANISM } from "../../../common/constants";
+import { getRandomWindowName } from "../../../common/disentangledUtils";
+import { FinsembleWindowData } from "../../../common/FinsembleWindowData";
 import SpawnUtils from "../Common/spawnUtils";
 const clone = require("lodash.cloneDeep");
 const lodashGet = require("lodash.get");
@@ -43,7 +47,7 @@ const lodashGet = require("lodash.get");
  * for this file. We really need to figure out which of these interfaces
  * is appropriate and pick that one, rather than this disjointed union.
  *
- * @TODO - Lift into seperate interface file and refactor correctly.
+ * @TODO - Lift into separate interface file and refactor correctly.
  */
 type FSBLWindow = BaseWindow & FinsembleWindow & {
 	windowDescriptor: WindowDescriptor;
@@ -148,7 +152,7 @@ export type SpawnParams = {
 	 */
 	dockOnSpawn?: boolean;
 	/**
-	 * An array of parts of the monitor that the componetn can dock to. Valid values are `top` and `bottom`.
+	 * An array of parts of the monitor that the component can dock to. Valid values are `top` and `bottom`.
 	 */
 	dockable?: ["top", "bottom"] | ["bottom", "top"] | ["top"] | ["bottom"]
 	/**
@@ -245,7 +249,7 @@ export type SpawnParams = {
 	 * **"relative"** Positioned relative to the relativeWindow.
 	 * For instance, `left:0;top:0` will join the top left corner of the new component with the top left corner of the relative window.
 	 *
-	 * **"virtual"** Positoned against coordinates on the virtual screen.
+	 * **"virtual"** Positioned against coordinates on the virtual screen.
 	 * The virtual screen is the full viewing area of all monitors combined into a single theoretical monitor.
 	 */
 	position?: string;
@@ -275,6 +279,12 @@ export type SpawnParams = {
 	 * This can also point to a standalone web application (such as from a third party).
 	 */
 	windowType?: WindowTypes;
+	/**
+	 * Built and passed internally. This is not a public api parameter, and cannot be
+	 * supplied by a user
+	 * @private
+	 */
+	windowIdentifier?: WindowIdentifier;
 	/**
 	 * If true then the new window will act as a slave to the relativeWindow (or the launching window if relativeWindow is not specified).
 	 * Slave windows will automatically close when their parent windows close.
@@ -313,7 +323,7 @@ export type SpawnParams = {
 	 */
 	left?: number | string;
 	/**
-	* Same as left except releated to the right of the viewport.
+	* Same as left except related to the right of the viewport.
   */
 	right?: number | string;
 	/**
@@ -403,7 +413,7 @@ export class Launcher {
 		this.persistURL = false;
 		//When we're shutting down, we ignore spawn requests. This gets set to true.
 		this.shuttingDown = false;
-		//Local copy of monitors, this will prevent us from having to fetch them everytime
+		//Local copy of monitors, this will prevent us from having to fetch them every time
 		this.monitors = null;
 
 		/**
@@ -445,15 +455,16 @@ export class Launcher {
 		Logger.system.debug("Launcher.initialize");
 
 		this.heartbeat();
+		// When we wake from sleep, our heartbeats might be stale. Reset them.
+		System.addEventListener("session-changed", this.resetHeartbeats);
 		util.Monitors.on("monitors-changed", this.doMonitorAdjustments.bind(this));
 
 		await this.createSplinterAndInject.initialize();
 
 		asyncSeries([
 			this.getConfig.bind(this),
-			this.loadComponents,//req config
+			this.loadComponents.bind(this),//req config
 			this.getRawManifest,
-			this.addPredefinedComponents.bind(this)
 		],
 			() => {
 				Logger.system.debug("Launcher ready");
@@ -481,13 +492,13 @@ export class Launcher {
 			asyncSeries([
 				self.shutdownComponents.bind(this),
 				smallTimeout,
-				//'resolve' will resolve the shutdownList, which then calls shutdownComplete in the baseService.
-				resolve,
 			], (err) => {
 				if (err) {
 					Logger.system.error("shutdown error", err);
 				}
 				allDone();
+				//'resolve' will resolve the shutdownList, which then calls shutdownComplete in the baseService.
+				resolve();
 			});
 		};
 		return new Promise(promiseResolver);
@@ -558,7 +569,7 @@ export class Launcher {
 	 * @private
 	 * @param {Function} cb
 	 */
-	addPredefinedComponents(cb = Function.prototype) {
+	addPredefinedComponents() {
 		Logger.system.info("Launcher.AddPredefinedComponents");
 		Components["StackedWindow"] = {
 			window: {
@@ -585,14 +596,13 @@ export class Launcher {
 			}
 		};
 		this.update();
-		cb(null);
 	}
 
 	addUnclaimedRectToMonitor(monitor) {
 		if (!monitor) { return; }
 		// Get the claims on space
 		var claimsOffset = self.getClaimsOffset(monitor);
-		// Now we'll assemble an unclaimedRect in the same format as OF's availableRect
+		// Now we'll assemble an unclaimedRect in the same format as OpenFin's availableRect
 		let availableRect = monitor.availableRect;
 		let unclaimedRect = {
 			top: availableRect.top + claimsOffset.top,
@@ -667,6 +677,9 @@ export class Launcher {
 		}
 
 		if (!monitor) monitor = foundMonitor;
+
+		//If this is an ephemeral component don't update the lastOpenedMap
+		let shouldUpdateLastOpened = !launcherParams.ephemeral
 
 		// Set monitorDimensions since other services reference this.
 		// @TODO, get rid of this [Terry] Probably not a good idea, since monitor dimensions can change dynamically
@@ -947,77 +960,40 @@ export class Launcher {
 		}
 
 		if (shouldWindowBeForcedIntoView) {
-			windowDescriptor = this.adjustBoundsToBeOnMonitor(windowDescriptor);
+			windowDescriptor = this.adjustWindowDescriptorBoundsToBeOnMonitor(windowDescriptor);
 		}
 
-		this.lastOpenedMap[monitor.position] = {
-			x: windowDescriptor.defaultLeft,
-			y: windowDescriptor.defaultTop
-		};
+		// If a leftCommand/rightCommand/topCommand/bottomCommand
+		// or position other than 'virtual' is supplied then don't update the lastOpenedMap.
+		// This can also be skipped if shouldUpdateLastOpened is already false
+		// (like when the opening window is a menu)
+		// NOTE: position virtual is an acceptable value to update the lastOpenedMap since its just the entire virtual usable space
+		if (shouldUpdateLastOpened && (topCommand || bottomCommand || leftCommand || rightCommand) && (!position || position !== "virtual")) {
+			shouldUpdateLastOpened = false;
+		}
+
+		//If the launching window is a menu we don't want to update this map, otherwise the next window will stagger will just open on top of the last window (since the menu's location won't change in most cases)
+		if (shouldUpdateLastOpened) {
+			this.lastOpenedMap[monitor.position] = {
+				x: windowDescriptor.defaultLeft,
+				y: windowDescriptor.defaultTop,
+				then: lastOpened.then ? lastOpened.then : undefined
+			}; //NOTE: 4/5/19 lastOpened.then was not being added to the lastOpenedMap, so the stagger timer was likely broken
+		}
+
 		return Promise.resolve(windowDescriptor);
 	}
 
-	/**
-	 * Calculate the new bounds of a window if moved onto the monitor by pulling the monitor along the line
-	 * between the top-left of the window and the center of the monitor
-	 * @param {*} monitor a monitor
-	 * @param {*} bounds current window bounds
-	 */
-	getNewBoundsWhenMovedToMonitor(monitor, bounds) {
-
-		// Depending if the monitor has claimed space, determine rectangle
-		let monitorRect = monitor.unclaimedRect || monitor.availableRect || monitor.monitorRect;
-
-		// Placeholder for new bounds
-		let newBounds = Object.create(bounds);
-
-		// adjust vertical offset from monitor by moving top down or bottom up
-		if (bounds.top < monitorRect.top) {
-			newBounds.top = monitorRect.top;
-		} else if (bounds.top > monitorRect.bottom - bounds.height) {
-			newBounds.top = monitorRect.bottom - bounds.height;
-		}
-
-		// Adjust horizontal offset from monitor by moving left-edge rightward or right-edge leftward
-		if (bounds.left < monitorRect.left) {
-			newBounds.left = monitorRect.left;
-		} else if (bounds.left > monitorRect.right - bounds.width) {
-			newBounds.left = monitorRect.right - bounds.width;
-		}
-
-		// Recalculate bottom / right, based on movement of top / left, maintaining width / height
-		newBounds.bottom = newBounds.top + newBounds.height;
-		newBounds.right = newBounds.left + newBounds.width;
-
-		// Truncate portions off monitor in case we are downsizing from a maximized window
-		if (newBounds.right > monitorRect.right) newBounds.right = monitorRect.right;
-		if (newBounds.top < monitorRect.top) newBounds.top = monitorRect.top;
-		if (newBounds.left < monitorRect.left) newBounds.left = monitorRect.left;
-		if (newBounds.bottom > monitorRect.bottom) newBounds.bottom = monitorRect.bottom;
-
-		// Recalculate width, height in case of truncation to ensure the window fits on the new monitor
-		newBounds.height = newBounds.bottom - newBounds.top;
-		newBounds.width = newBounds.right - newBounds.left;
-
-		// Calculate distance the window moved
-		let distanceMoved = Math.sqrt((bounds.left - newBounds.left) ** 2 + (bounds.top - newBounds.top) ** 2);
-
-		return {
-			newBounds: newBounds,
-			distanceMoved: distanceMoved,
-			monitor: monitor
-		};
-	}
 
 	/**
-	 * Takes the window's bounds and makes sure it's on a monitor. If the window isn't on a monitor, we determine the closest monitor
+	 * Takes the window descriptor's bounds and makes sure it's on a monitor. If the window isn't on a monitor, we determine the closest monitor
 	 * based on the distance from the top-left corner of the window to the center of the monitor, and then pull the monitor along that line
 	 * until the window is on the edge of the monitor
 	 * @param {*} windowDescriptor Window descriptor, e.g. from a saved workspace
 	 * @param {*} previousWindowBounds not used, unfortunately
 	 * @returns windowDescriptor updated window descriptor
 	 */
-	adjustBoundsToBeOnMonitor(windowDescriptor: WindowDescriptor): WindowDescriptor {
+	adjustWindowDescriptorBoundsToBeOnMonitor(windowDescriptor: WindowDescriptor): WindowDescriptor {
 		if (windowDescriptor && windowDescriptor.customData && windowDescriptor.customData.window) {
 			if (windowDescriptor.customData.window.allowToSpawnOffScreen) {
 				return windowDescriptor;
@@ -1056,67 +1032,33 @@ export class Launcher {
 		bounds.right = bounds.left + bounds.width;
 		bounds.bottom = bounds.top + bounds.height;
 
-		//@note, will be used later.
-		let boundsWereAdjusted = false;
 		if (windowDescriptor.customData && windowDescriptor.customData.monitorDimensions) {
-
-			// Determine if on a monitor, and if not, pull top-left corner directly toward center of monitor until it completely onscreen
-			let isOnAMonitor = util.Monitors.allMonitors.some((monitor) => {
-
-				// use entire monitor rather than relying on unclaimed space
-				let monitorRect = monitor.monitorRect;
-
-				// Check to see tf it's to the right of the left side of the monitor,
-				// to the left of the right side, etc.basically is it within the monitor's bounds.
-				let isOnMonitor = bounds.left >= monitorRect.left && bounds.left <= monitorRect.right
-					&& bounds.right >= monitorRect.left && bounds.right <= monitorRect.right
-					&& bounds.top >= monitorRect.top && bounds.top <= monitorRect.bottom
-					&& bounds.bottom >= monitorRect.top && bounds.bottom <= monitorRect.bottom;
-
-				return isOnMonitor;
-
-			});
-
-			if (!isOnAMonitor) {
-
-				// calculate if the window is on any monitor, and the distance between the top left and the center of the window
-				let monitorAdjustments = util.Monitors.allMonitors.map((monitor) => this.getNewBoundsWhenMovedToMonitor(monitor, bounds));
-
-				// Get the closest monitor, the one with minimum distanceMoved
-				let monitorAdjustmentClosest = monitorAdjustments.sort((md1, md2) => md1.distanceMoved - md2.distanceMoved)[0];
-
-				// notify the movement
-				Logger.system.info("Launcher.adjustBoundsToBeOnMonitor", windowDescriptor.name, bounds, monitorAdjustmentClosest.monitor.name, monitorAdjustmentClosest.newBounds);
-
-				// assign bounds
-				bounds = monitorAdjustmentClosest.newBounds;
-				boundsWereAdjusted = true;
-			}
+			let newBounds = util.adjustBoundsToBeOnMonitor(bounds);
 
 			// update windowDescriptor
-			windowDescriptor.defaultLeft = bounds.left;
-			windowDescriptor.defaultTop = bounds.top;
-			windowDescriptor.left = bounds.left;
-			windowDescriptor.top = bounds.top;
-			windowDescriptor.height = bounds.height;
-			windowDescriptor.width = bounds.width;
-			windowDescriptor.right = bounds.left + bounds.width;
-			windowDescriptor.bottom = bounds.top + bounds.height;
+			windowDescriptor.defaultLeft = newBounds.left;
+			windowDescriptor.defaultTop = newBounds.top;
+			windowDescriptor.left = newBounds.left;
+			windowDescriptor.top = newBounds.top;
+			windowDescriptor.height = newBounds.height;
+			windowDescriptor.width = newBounds.width;
+			windowDescriptor.right = newBounds.left + newBounds.width;
+			windowDescriptor.bottom = newBounds.top + newBounds.height;
 
 			/**
 			 * Daniel H. - 1/16/19
 			 * Needed in the case that  the windowDescriptor belongs to a StackedWindow.
-			 * See coments above.
+			 * See comments above.
 			 *
 			 * @TODO - Refactor this away.
 			*/
 			if (windowDescriptor.bounds) {
-				windowDescriptor.bounds.left = bounds.left;
-				windowDescriptor.bounds.top = bounds.top;
-				windowDescriptor.bounds.height = bounds.height;
-				windowDescriptor.bounds.width = bounds.width;
-				windowDescriptor.bounds.right = bounds.left + bounds.width;
-				windowDescriptor.bounds.bottom = bounds.top + bounds.height;
+				windowDescriptor.bounds.left = newBounds.left;
+				windowDescriptor.bounds.top = newBounds.top;
+				windowDescriptor.bounds.height = newBounds.height;
+				windowDescriptor.bounds.width = newBounds.width;
+				windowDescriptor.bounds.right = newBounds.left + newBounds.width;
+				windowDescriptor.bounds.bottom = newBounds.top + newBounds.height;
 			}
 		}
 
@@ -1173,6 +1115,28 @@ export class Launcher {
 		// Final override of any "options" that were passed in as an argument
 		if (params.options) {
 			windowDescriptor = merge(windowDescriptor, params.options);
+			// If the component is unknown, we must make sure it has the proper URL for the
+			// unknown component. If the component is native, the url is removed by the merge from
+			// params.options (params.options.window does not have a url...).
+			// We delete the windowType on both objects so that WPF/Native applications
+			// are spawned as unknown HTML5 applications. Otherwise, the spawn requests
+			// go off into the ether and prevent workspaces from loading properly.
+			if (config.component && config.component.isUnknownComponent) {
+				windowDescriptor.url = config.window.url;
+				delete windowDescriptor.windowType;
+				delete windowDescriptor.customData.window.windowType;
+				// Assimilated windows set this boolean. If this is true, all the work above (deleting windowType)
+				// does not matter, and we will try to spawn something that isn't
+				// the unknown component.
+				delete windowDescriptor.customData.window.native;
+			}
+		}
+		// Bounds correction in case of OS display re-arrangements
+		const allowToSpawnOffScreen = lodashGet(
+			windowDescriptor,
+			'customData.window.allowToSpawnOffScreen')
+		if (!allowToSpawnOffScreen && params.forceOntoMonitor !== false) {
+			windowDescriptor = this.adjustWindowDescriptorBoundsToBeOnMonitor(windowDescriptor)
 		}
 		// the execJSWhitelist will be an array of windows allowed to call executeJavascript on the resultant window.
 		// It will eventually include the windowService, and the Application or SplinterAgent that actually creates
@@ -1208,7 +1172,7 @@ export class Launcher {
 	createWindowGroup(err, message) {
 		Logger.system.debug("Creating Group", message);
 		if (!message.data.groupName) {
-			return message.sendQueryResponse("No Groupname Specified");
+			return message.sendQueryResponse("No Group name Specified");
 		}
 		// Build Window List from window names/identifiers
 		var actualWindowList = self.getWindowsFromNamesOrIdentifiers(message.data.windowList, true);
@@ -1225,7 +1189,7 @@ export class Launcher {
 	deleteWindowGroup(err, message) {
 		Logger.system.debug("Deleting Group", message.data.groupName);
 		if (!message.data.groupName) {
-			return message.sendQueryResponse("No Groupname Specified");
+			return message.sendQueryResponse("No Group name Specified");
 		}
 		let groupName = message.data.groupName;
 		if (self.windowGroups[groupName]) {
@@ -1286,7 +1250,8 @@ export class Launcher {
 					// which monitor to start up....for one the Workspace service doesn't have a bounds after wrapper cleanup.  Short-term solution is
 					// on error then set monitor[0] as the previousMonitor.
 					params.previousWindow._getBounds((err, bounds) => {
-						if (!err) {
+						// bounds are undefined for Windowless WPF Components 
+						if (!err && bounds !== undefined) {
 							params.previousWindowBounds = bounds;
 							util.Monitors.getMonitorFromScaledXY(bounds.left, bounds.top, (monitor) => {
 								params.previousMonitor = monitor;
@@ -1325,6 +1290,15 @@ export class Launcher {
 			launcherParams = await addAllMonitors(launcherParams);
 			launcherParams = await addPreviousMonitor(launcherParams);
 			let monitor = await getWhichMonitor(launcherParams);
+
+			// If launcherParams supplied ephemeral no need to check, otherwise this request
+			// may have come from 'showWindow' and need to get the components properties
+			// from launcher. An 'ephemeral' window is most likely a menu and should
+			// not update the lastOpenedMap
+			if (!launcherParams.hasOwnProperty('ephemeral') && launcherParams.windowIdentifier && launcherParams.windowIdentifier.componentType) {
+				launcherParams.ephemeral = Components[launcherParams.windowIdentifier.componentType].window.ephemeral;
+			}
+
 			let bounds = await this.calculateBounds(monitor, windowDescriptor, launcherParams);
 			resolve(bounds);
 		};
@@ -1347,7 +1321,8 @@ export class Launcher {
 	 * simply call showWindow() with their original params in order to give them a chance to resettle.
 	 */
 
-	doMonitorAdjustments(monitors) {
+	doMonitorAdjustments(changeData) {
+		const monitors = changeData.monitors;
 		// Event fires multiple times for monitor changes - so stop things from happening too many times.
 		if (window.doingMonitorAdjustments) return;
 		window.doingMonitorAdjustments = true;
@@ -1402,15 +1377,15 @@ export class Launcher {
 		return descriptors;
 	}
 	/**
-		 * Gets offsets to monitor dimensions basedon any space permanently
-		 * claimed by othe components such as toolbars.
+		 * Gets offsets to monitor dimensions based on any space permanently
+		 * claimed by other components such as toolbars.
 		 * @param  {object} myMonitor The monitor
 		 * @return {object}         An object containing offsets for top, bottom, left & right
 		 */
 	getClaimsOffset(myMonitor) {
 		var claimAdjusted = clone(myMonitor); // error when using util.clone
 		var availableRect = claimAdjusted.availableRect;
-		var monitorRect = myMonitor.monitorRect || myMonitor.availableRect; // TODO: Sidd - a customer on Win 7 had monitorRect undefined causing showWindow to fail on the non-floating toolbar. Fix that by falling back to avaialbleRect.
+		var monitorRect = myMonitor.monitorRect || myMonitor.availableRect; // TODO: Sidd - a customer on Win 7 had monitorRect undefined causing showWindow to fail on the non-floating toolbar. Fix that by falling back to availableRect.
 		var allActiveWindows = activeWindows.getWindows();
 		for (var name in allActiveWindows) {
 			var activeWindow = allActiveWindows[name];
@@ -1418,7 +1393,7 @@ export class Launcher {
 			if (!windowDescriptor || !windowDescriptor.claimMonitorSpace) { continue; }
 
 			// Got a window with claim. Is it on my monitor?
-			// @TODO, technically defaultLeft and defaulTop might have changed since when we first
+			// @TODO, technically defaultLeft and defaultTop might have changed since when we first
 			// created the toolbar, say for instance if we designed toolbars that you could drag to
 			// different edges of the monitor, so we should change this code to retrieve these values
 			// asynchronously using getWindowDescriptor()
@@ -1527,7 +1502,7 @@ export class Launcher {
 	}
 
 	onComponentListChanged(err, componentConfig) {
-		Logger.system.debug("Launcher getconfig finsemble.components", componentConfig);
+		Logger.system.debug("Launcher getConfig finsemble.components", componentConfig);
 		this.finsembleConfig.components = componentConfig.value;
 		Components = componentConfig.value;
 
@@ -1641,12 +1616,6 @@ export class Launcher {
 		});
 	}
 
-	// get a unique random name
-	getRandomName(name) {
-		var newName = util.getUniqueName(name) + "-" + this.appConfig.startup_app.uuid;
-		return newName;
-	}
-
 	/**
 	 * Gets the manifest that's stashed on the window's customData.
 	 * @param {*} cb
@@ -1668,7 +1637,7 @@ export class Launcher {
 			.getOptions(getOptionsSuccess, getOptionsError);
 	}
 
-	// get a new name based on sequentail counter for base name (repeatable on restart)
+	// get a new name based on sequential counter for base name (repeatable on restart)
 	getSequentialName(name) {
 		var keyData = localStorage.getItem(NAME_STORAGE_KEY);
 		var storageData = {};
@@ -1791,20 +1760,28 @@ export class Launcher {
 					const notRespondingState = date - activeWindow.lastHeartbeat > notResponding && !activeWindow.notRespondingSent;
 					const nowRespondingState = date - activeWindow.lastHeartbeat <= notResponding && (activeWindow.errorSent || activeWindow.warningSent || activeWindow.notRespondingSent);
 
+					/**
+					 * Windows will appear crashed upon wake from sleep. If we get a signal that a window has crashed,
+					 * we wait 50ms for any wake events to fire and check the status again.
+					 */
 					if (crashedState === true) {
-						activeWindow.errorSent = true;
-						handleTransmit(name, "crashed");
-						Logger.system.error("Crashed Window", name);
+						setTimeout(() => {
+							if ((Date.now() - activeWindow.lastHeartbeat) > crashed && !activeWindow.errorSent) {
+								activeWindow.errorSent = true;
+								handleTransmit(name, "crashed");
+								Logger.system.error("Heartbeat Status: Crashed Window", name);
+							}
+						}, 50);
 					} else if (possiblyCrashedState === true) {
 						activeWindow.warningSent = true;
 						handleTransmit(name, "possiblyCrashed");
-						Logger.system.warn("Possibly Crashed Window", name);
+						Logger.system.warn("Heartbeat Status: Possibly Crashed Window", name);
 					} else if (notRespondingState === true) {
 						activeWindow.notRespondingSent = true;
 						handleTransmit(name, "notResponding");
-						Logger.system.warn("Unresponsive Window", name);
+						Logger.system.warn("Heartbeat Status: Unresponsive Window", name);
 					} else if (nowRespondingState === true) {
-						Logger.system.info("Window has returned to a responsive state", name);
+						Logger.system.info("Heartbeat Status: Window has returned to a responsive state", name);
 						handleTransmit(name, "nowResponding");
 
 						//set all state variables to false now that the window is responding
@@ -1826,6 +1803,13 @@ export class Launcher {
 		}
 	}
 
+	// Reset all window heartbeats
+	resetHeartbeats() {
+		for (let name of activeWindows.getWindowNames()) {
+			let activeWindow = activeWindows.getWindow(name);
+			activeWindow.lastHeartbeat = Date.now();
+		}
+	}
 
 	/**
 	 * Hyperfocuses a list, group, componentType or all windows
@@ -1921,6 +1905,7 @@ export class Launcher {
 			componentArray.push(config);
 			Components[componentType] = config;
 		});
+		this.addPredefinedComponents();
 		cb(null, Components);
 		return Components;
 	}
@@ -2012,11 +1997,7 @@ export class Launcher {
 			windowDescriptor: windowDescriptor
 		};
 
-		// Add to the workspace *if* the caller wants it added (for instance from the app launcher)
-		// but *also* if the defaultComponentConfig for the component allows it to be added to workspaces (defaults to true)
-		if (params.addToWorkspace && defaultComponentConfig.window.addToWorkspace !== false) {
-			WorkspaceClient.addWindow({ name: result.windowIdentifier.windowName });
-		}
+
 
 		//Deprecated value: this.windowOptions.customData.component.canMinimize. New value: this.windowOptions.customData.foreign.services.windowService.allowMinimize
 		let service = windowDescriptor.customData.foreign.services && windowDescriptor.customData.foreign.services.windowService !== undefined ? "windowService" : "dockingService";
@@ -2038,7 +2019,7 @@ export class Launcher {
 		var activeWindowParams = {
 			name: windowDescriptor.name,
 			uuid: windowDescriptor.uuid,
-			// If they left canMinimize unconfigured, coerce undefined to be true, which is the default
+			// If they left canMinimize un-configured, coerce undefined to be true, which is the default
 			canMinimize: canMinimize !== false,
 			canMaximize: canMaximize !== false,
 			windowIdentifier: result.windowIdentifier,
@@ -2047,7 +2028,7 @@ export class Launcher {
 			windowType: windowDescriptor.windowType
 		};
 
-		if (windowDescriptor.windowType === "FinsembleNativeWindow" || windowDescriptor.windowType === "StackedWindow") { // Since objectReceivedOnSpawn is the only thing that dospawn gets to send to finishSpawn, this is where everything that the wrap needs resides
+		if (windowDescriptor.windowType === "FinsembleNativeWindow" || windowDescriptor.windowType === "StackedWindow") { // Since objectReceivedOnSpawn is the only thing that doSpawn gets to send to finishSpawn, this is where everything that the wrap needs resides
 			//@note objectReceivedOnSpawn used to be 'finWindow
 			//@todo figure out why the hell we need this information to wrap the thing...should just need the name??
 			activeWindowParams = merge(objectReceivedOnSpawn, activeWindowParams);
@@ -2057,7 +2038,7 @@ export class Launcher {
 		let { wrap: activeWindow } = await FinsembleWindowInternal.getInstance(activeWindowParams);
 		activeWindow.wrapReady();
 		activeWindow.addEventListener("closed", self.remove);
-		activeWindow.windowDescriptor = windowDescriptor; // background note: the windowDescriptor was on the public instance, but not the private, so adding it here.  Required elsewhere (e.g. getActiveDescritors)
+		activeWindow.windowDescriptor = windowDescriptor; // background note: the windowDescriptor was on the public instance, but not the private, so adding it here.  Required elsewhere (e.g. getActiveDescriptors)
 		activeWindows.addWindow(activeWindow);
 
 		delete this.pendingWindows[windowDescriptor.name]; // active now so no long pending...can remove
@@ -2085,7 +2066,7 @@ export class Launcher {
 
 	/**
 	 * Makes a slave window which will automatically close when the master closes.
-	 * @param  {finwindow} slave  An OpenFin window
+	 * @param  {finWindow} slave  An OpenFin window
 	 * @param  {LauncherClient~windowIdentifier} master The window identifier of the master
 	 */
 	makeSlave(slave, master) {
@@ -2271,13 +2252,15 @@ export class Launcher {
 		activeWindows.removeWindows([windowName], () => {
 			Logger.system.debug("launcher.remove wrappers for window", windowName);
 			//MyWrapManager.remove({ identifier: { windowName: windowName } }, () => {
-			//This is to prevent workspaces/stackmanager from catching this event and removing the window. Might be better for the launcher to send out a note to everyone who cares "Hey guys, I'm shutting down, go ahead and remove any listeners that you don't want to accidentally fire when these windows start closing". This is the expedient fix. That would probably be better, but require more architectural changes and testing.
+			//This is to prevent workspaces/stackManager from catching this event and removing the window. Might be better for the launcher to send out a note to everyone who cares "Hey guys, I'm shutting down, go ahead and remove any listeners that you don't want to accidentally fire when these windows start closing". This is the expedient fix. That would probably be better, but require more architectural changes and testing.
 			if (self.shuttingDown) {
 				Logger.system.log("Component removed.", windowName, "Not transmitting the windowClosed event because the application is shutting down");
 				return;
 			}
 			//Given the context above, we use the router to transmit out an event instead of relying on openfin window events. The WorkspaceService is currently the only thing listening for this message, so it can know when to load the next workspace.
-			RouterClient.transmit("LauncherService.WindowClosed", { uuid: activeWindow.uuid, name: windowName });
+			// DH 2/27/2019 - This could easily be swapped out for a call to WorkspaceClient.removeWindow().
+			// We should ensure no paying clients are listening for this transmission and just remove it.
+			RouterClient.transmit(LAUNCHER_SERVICE.WINDOW_CLOSED, { uuid: activeWindow.uuid, name: windowName });
 			//});
 		});
 	}
@@ -2323,7 +2306,7 @@ export class Launcher {
 	}
 
 	/**
-	 * Whenver windows are added/removed from groups, send updates to existing windows with their group memberships.
+	 * Whenever windows are added/removed from groups, send updates to existing windows with their group memberships.
 	 * @param {} windowList
 	 */
 	sendUpdatesToWindows(windowList) {
@@ -2379,7 +2362,7 @@ export class Launcher {
 	 */
 	async showWindow(windowIdentifier, params, cb) {
 		Logger.system.info("Launcher.ShowWindow.showAt Start", windowIdentifier, params);
-		// do we have a windowname?
+		// do we have a windowName?
 		let activeWindow;
 		if (windowIdentifier.windowName) {
 			activeWindow = activeWindows.getWindow(windowIdentifier.windowName);
@@ -2390,6 +2373,11 @@ export class Launcher {
 		if (activeWindow) { //window was found
 			let { data: bounds } = await activeWindow._getBounds();
 			windowIdentifier = activeWindow.windowIdentifier;
+			// The next 3 lines are needed because the windowIdentifier coming in from the client API is not guaranteed to have all of the information that we need in order to identify the window.
+			// All that's needed to retrieve a window is a name. We need to know the componentType to derive default configs for this component.
+			windowIdentifier = activeWindow.windowIdentifier;
+			windowIdentifier.componentType = activeWindow.componentType;
+			params.windowIdentifier = windowIdentifier;
 			//By default, return the first monitor. This method will be overwritten if the call requires a specific monitor.
 			let monitorFinder = () => {
 				const promiseResolver = (resolve) => {
@@ -2464,7 +2452,7 @@ export class Launcher {
 
 			var viewport = monitor ? monitor.unclaimedRect : null;
 
-			self.addUnclaimedRectToMonitor(monitor);
+			// self.addUnclaimedRectToMonitor(monitor);
 			if (!params.monitor && params.monitor !== 0) {
 				params.monitor = monitor.position;
 			} else {
@@ -2514,12 +2502,12 @@ export class Launcher {
 
 			// If neither left nor right are set then maintain it's left position
 			if (!params.left && params.left !== 0 && !params.right && params.right !== 0 && params.top !== "adjacent" && params.bottom !== "adjacent") {
-				params.left = bounds.left - (viewport ? viewport.left : 0);
+				params.left = bounds.left;
 			}
 
 			// If neither top nor right are set then maintain it's top position
 			if (!params.top && params.top !== 0 && !params.bottom && params.bottom !== 0 && params.left !== "adjacent" && params.right !== "adjacent") {
-				params.top = bounds.top - (viewport ? viewport.top : 0) - viewport.top;
+				params.top = bounds.top;
 			}
 
 			// Since we've already calculated the absolute position, we need to make sure deriveBounds respects those coordinates
@@ -2539,13 +2527,19 @@ export class Launcher {
 				activeWindow._show({},
 					function () {
 						Logger.system.info("Launcher.ShowWindow.showAt finished", activeWindow.name);
+						/*
+						 * 7/8/19 Joe - Previously this was assigning newWindowDescriptor defaults.
+						 * With all of the logic above to ensure params has every type of bounds,
+						 * it seems params should be checked first and only fall back to defaults
+						 * if any are missing (which doesn't seem like it would ever be the case)
+						 */
 						let dockingDescriptor = {
-							left: newWindowDescriptor.defaultLeft,
-							top: newWindowDescriptor.defaultTop,
-							right: newWindowDescriptor.defaultLeft + newWindowDescriptor.defaultWidth,
-							bottom: newWindowDescriptor.defaultTop + newWindowDescriptor.defaultHeight,
-							width: newWindowDescriptor.defaultWidth,
-							height: newWindowDescriptor.defaultHeight,
+							left: params.left || newWindowDescriptor.defaultLeft,
+							top: params.top || newWindowDescriptor.defaultTop,
+							right: params.right || (newWindowDescriptor.defaultLeft + newWindowDescriptor.defaultWidth),
+							bottom: params.bottom || (newWindowDescriptor.defaultTop + newWindowDescriptor.defaultHeight),
+							width: params.width || newWindowDescriptor.defaultWidth,
+							height: params.height || newWindowDescriptor.defaultHeight,
 							name: activeWindow.name,
 							changeType: 1
 						};
@@ -2564,14 +2558,24 @@ export class Launcher {
 					});
 			}
 
+			//Evaluates a given params property. Returns true if the window to show is ephemeral/the given parameter is a string, or the value is missing, otherwise returns false
+			const paramMissingOrString = (prop) => {
+				const param = params[prop];
+				if (params.ephemeral || isNumber(param) === false || typeof param === "string") {
+					return true;
+				}
+				return false;
+			}
+
 			let newWindowDescriptor = await self.deriveBounds(params);
+			//If the window is not ephemeral or the bounds contained in params aren't strings, use the passed values. Otherwise use the values calculated from 'deriveBounds'
 			let newBounds = {
-				left: newWindowDescriptor.defaultLeft,
-				right: newWindowDescriptor.defaultLeft + newWindowDescriptor.defaultWidth,
-				bottom: newWindowDescriptor.defaultTop + newWindowDescriptor.defaultHeight,
-				top: newWindowDescriptor.defaultTop,
-				width: newWindowDescriptor.defaultWidth,
-				height: newWindowDescriptor.defaultHeight
+				left: paramMissingOrString("left") ? newWindowDescriptor.defaultLeft : params.left,
+				top: paramMissingOrString("top") ? newWindowDescriptor.defaultTop : params.top,
+				right: paramMissingOrString("right") ? (newWindowDescriptor.defaultLeft + newWindowDescriptor.defaultWidth) : params.right,
+				bottom: paramMissingOrString("bottom") ? (newWindowDescriptor.defaultTop + newWindowDescriptor.defaultHeight) : params.bottom,
+				width: paramMissingOrString("width") ? newWindowDescriptor.defaultWidth : params.width,
+				height: paramMissingOrString("height") ? newWindowDescriptor.defaultHeight : params.height
 			};
 			activeWindow._setBounds({ bounds: newBounds }, showIt);
 
@@ -2612,6 +2616,24 @@ export class Launcher {
 	}
 
 	/**
+	 * Removes disallowed parameters before we pass data into compileWindowDescriptor.
+	 * @param params SpawnParams
+	 */
+	_removeDisallowedSpawnParams(params: SpawnParams) {
+		// Delete securityPolicy and permissions properties
+		// User may try to pass them to override our security settings
+		if (params.options) {
+			delete params.options.securityPolicy;
+			delete params.options.permissions;
+		}
+
+		// params is of type spawnParams. SecurityPolicy is not a supported parameter, so we don't want to put it into the type definition and have it documented.
+		// the (as any) cast is here so that typescript can build.
+		delete (params as any).securityPolicy;
+		delete (params as any).permissions;
+		return params;
+	}
+	/**
 	* Launches a component.
 	* @param {object} params See LauncherClient
 	* @param {function} cb Callback
@@ -2651,20 +2673,19 @@ export class Launcher {
 		}
 		// @todo Terry, cleanup, the following code is not robust. It should be rewritten to ensure that config is set by
 		// default, and then overridden by params.options.customData. I think that when this is restructured
-		// to the point that we no longer need the isAdhoc flag then we'll know it's robust.
-		let isAdhoc = false;
+		// to the point that we no longer need the isAd-hoc flag then we'll know it's robust.
 		var config = this.getDefaultConfig(component);
-		//@todo adhoc components should use preferences to save themselves, and then this block of code would be unnecessary.
+
+
+
+		//@todo ad-hoc components should use preferences to save themselves, and then this block of code would be unnecessary.
 		Logger.system.debug("Launcher.spawn 2", component, params);
 		if (!config) {
-			if (params.options && params.options.customData &&
-				params.options.customData.component && params.options.customData.component.isUserDefined) {// If our component is an adhoc component set the flag.
-				isAdhoc = true;
+			if (get(params, "options.customData.component.isUserDefined")) {
 				config = params.options.customData;
 			} else if (params.url) {
-				// No config, but has as URL. Treat as an adhoc component. This path is hit when using using window.open
+				// No config, but has as URL. Treat as an ad-hoc component. This path is hit when using using window.open
 				// from nativeOverrides.js
-				isAdhoc = true;
 
 				//System will bomb if a component name has periods, the distributed store does
 				//some string splitting on periods because of internal identifiers. (e.g. [...].Finsemble.[...])
@@ -2673,32 +2694,20 @@ export class Launcher {
 					window: {},
 					component: {}
 				};
-			}
-			if (!isAdhoc) {
+			} else {
 				// Use a config to drive what component is shown if we can't find one in our list
-				let unknownComponent = this.getUnknownComponentName();
-				if (unknownComponent) {
-					config = this.getDefaultConfig(unknownComponent);
+				const unknownComponentName = this.getUnknownComponentName() || "404";
+				const unknownConfig = this.getDefaultConfig(unknownComponentName) || UNKNOWN_DEFAULT_CONFIG;
+				config = {
+					window: unknownConfig.window,
+					component: {
+						type: component,
+						isUnknownComponent: true,
+					},
 				}
-				if (!config) {// If we still don't have a config, use our default. This will at least keep the system running.
-					unknownComponent = "404";
-					config = new LauncherDefaults().componentDescriptor;
-					config.window.url = "about:blank";// We should change this to something else. Our biggest issue is that we can't guarantee a component will exist.
-				}
-				if (!params.options) params.options = { customData: {} };// Make sure we have this in there so we can pass info on to our component
-				if (!params.options.customData) config.customData = {};// If our object doesn't have custom data, add it
-
-				params.options.customData.previousURL = params.options && params.options.url ? params.options.url : "";// Make sure we have a url to pass in
-
-				// Create errorString before replacing with the unknownComponent.
-				errorString = `LauncherService:spawn(): Can't find component ${component}`;
-
-				//Just update the options to be safe.
-				component = unknownComponent;
-
-				params.options ? params.options.url = config.window.url : null;// we need to change what component is being hit and keep the options passed in.
-				params.component = component;
-				Logger.error(errorString, "Component List", Components);
+				component = params.name;
+				set(params, "options, url", get(config.window, "url"));
+				Logger.system.warn(`No config found for component "${component}". The URL for this component will be set to the unknown component URL. When the config is restored, the URL will be reset.`)
 			}
 		}
 
@@ -2726,8 +2735,27 @@ export class Launcher {
 			bottom: params.bottom
 		};
 
+
+		params = this._removeDisallowedSpawnParams(params);
 		// window config from json is the default. params argument overrides.
 		params = merge(config.window, params);
+
+		//System will bomb if a component name has periods, the distributed store does
+		//some string splitting on periods because of internal identifiers. (e.g. [...].Finsemble.[...])
+		if (params.options && params.options.name) params.name = params.options.name.replace(/\./g, "-");
+		let descriptorName;
+
+		if (params.addToWorkspace) {
+			descriptorName = params.name ? params.name : getRandomWindowName(component, this.appConfig.startup_app.uuid);
+		} else {
+			descriptorName = params.name ? params.name : this.getSequentialName(component);
+		}
+
+		// Add to the workspace *if* the caller wants it added (for instance from the app launcher)
+		// but *also* if the defaultComponentConfig for the component allows it to be added to workspaces (defaults to true)
+		if (params.addToWorkspace && config.window.addToWorkspace !== false) {
+			WorkspaceClient.addWindow({ ...params, name: descriptorName } as FinsembleWindowData);
+		}
 
 		if (requestedPositioning.left || requestedPositioning.right || requestedPositioning.top || requestedPositioning.bottom) {
 			params.left = requestedPositioning.left;
@@ -2751,18 +2779,6 @@ export class Launcher {
 			baseDescriptor = merge(baseDescriptor, params.options);
 		}
 
-		//System will bomb if a component name has periods, the distributed store does
-		//some string splitting on periods because of internal identifiers. (e.g. [...].Finsemble.[...])
-		if (params.options && params.options.name) params.name = params.options.name.replace(/\./g, "-");
-		let descriptorName;
-
-		if (params.addToWorkspace) {
-			descriptorName = params.name ? params.name : this.getRandomName(component);
-		} else {
-			descriptorName = params.name ? params.name : this.getSequentialName(component);
-		}
-
-
 		baseDescriptor.name = descriptorName;
 		//Logger.system.debug("ComponentName", baseDescriptor.name);
 		baseDescriptor.componentType = component; //@TODO, remove?
@@ -2778,7 +2794,7 @@ export class Launcher {
 			if (this.pendingWindows[baseDescriptor.name] && !activeWindows.getWindow(baseDescriptor.name)) {
 				//console.warn("Failed To Launch " + baseDescriptor.name + " " + retryAttempt);
 				if (retryAttempt > 2) {
-					// This is where failed windows used to be force closed and a respawn attempted but on some systems windows take a long time to load and force closing them or retyring spawning was causing problems. For now, just warn if things are taking too long.
+					// This is where failed windows used to be force closed and a respawn attempted but on some systems windows take a long time to load and force closing them or retrying spawning was causing problems. For now, just warn if things are taking too long.
 					// Attempting to wrap the window while loading here was also taking a really long time. Just letting things take their course seems to eventually work.
 					console.warn("Window Taking Really Long to Load:", baseDescriptor.name);
 					clearInterval(interval);
@@ -2794,18 +2810,15 @@ export class Launcher {
 			baseDescriptor.preloadScripts = [];
 		}
 
-		if (config.component.preload) {
-			let inject = config.component.preload;
-			if (!Array.isArray(inject)) {
-				inject = [inject];
-			}
-			for (var i = 0; i < inject.length; i++) {
-				baseDescriptor.preloadScripts.push({ url: this._generateURL(inject[i]) });
-			}
+		const preload = config.component.preload;
+		if (preload) {
+			const inject = (Array.isArray(preload) ? preload : [preload])
+				.map(x => ({ url: this._generateURL(x) }));
+			baseDescriptor.preloadScripts = Array.from(new Set([...inject, ...baseDescriptor.preloadScripts]));
 		}
 
 		baseDescriptor.preload = baseDescriptor.preloadScripts;// For backwards  compatibility. preload hasn't been used since OF 7
-		// url overrides the default component url (and can also be used to simply spawn a url). Ignore if spawned by workspace otherwise it will overwrite the url from workspace. This is dealth with at a later point with a check for the persistURL config item.
+		// url overrides the default component url (and can also be used to simply spawn a url). Ignore if spawned by workspace otherwise it will overwrite the url from workspace. This is dealt with at a later point with a check for the persistURL config item.
 		if (params.url && !params.spawnedByWorkspaceService) {
 			baseDescriptor.url = params.url;
 		}
@@ -2847,15 +2860,27 @@ export class Launcher {
 		if (componentSupportsHeader && deliveryMechanism === DELIVERY_MECHANISM.PRELOAD) {
 			let url = this._generateURL(Components['windowTitleBar'].window.url);
 			// push into the preloadScripts array
-			windowDescriptor.preloadScripts.push({url: url});
+			if (windowDescriptor.preloadScripts.findIndex(obj => obj.url === url) === -1) {
+				windowDescriptor.preloadScripts.push({ url: url });
+			}
+
 			// preload is a shallow copy of preloadScripts but when loaded from another workspace they can point to different addresses in memory
-			windowDescriptor.preload.push({url: url});
+			if (windowDescriptor.preload.findIndex(obj => obj.url === url) === -1) {
+				windowDescriptor.preload.push({ url: url });
+			}
 		}
 		// TODO, [Terry] persistURL logic should be in the workspace-service, not in launcher service.
 		//[Ryan] the logic should sit in the workspace client( although I think we actually do it in the window client right now)
 		if (params.spawnedByWorkspaceService) {
 			let persistURL = ConfigUtil.getDefault(config.foreign, "foreign.services.workspace.persistURL", this.persistURL);
-			if (!persistURL && config.window) {//revert the url to what is passed in from components.
+			/** DH 3/11/2019
+			 * We store the fact that a component had its URL swapped with the unknown component URL
+			 * on the windowDescriptor itself. Therefore, if that prop is true, we need to swap the
+			 * current URL with the one found in config. This logic will likely need to remain here
+			 * (where we have access to the component's config), regardless of where the persistURL
+			 * logic lands.*/
+			const isUnknownComponent = get(params, "options.customData.component.isUnknownComponent");
+			if ((isUnknownComponent || !persistURL) && config.window) {//revert the url to what is passed in from components.
 				windowDescriptor.url = config.window.url;
 			}
 		}

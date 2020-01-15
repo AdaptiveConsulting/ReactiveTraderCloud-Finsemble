@@ -1,5 +1,5 @@
 
-// Typescipt Interface
+// Typescript Interface
 
 declare type WindowType = "OpenFinWindow" | "ExternalWindow" | "NativeWindow" | "StackedWindow";
 

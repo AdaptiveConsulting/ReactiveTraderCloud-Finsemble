@@ -38,7 +38,7 @@ export class WindowCreateEntry {
 		// entry points for public window functions
 
 		// NOTE: createWindow is now internal to launcher (i.e. spawn invokes createWindow directly)
-		// NOTE: after more window-service cleanup this file will likely be rolled into another, but for now keeping as is to reduce confusion as we evole
+		// NOTE: after more window-service cleanup this file will likely be rolled into another, but for now keeping as is to reduce confusion as we evolve
 
 		RouterClient.addResponder(this.windowServiceChannelName("getWindowIdentifier"), this.getWindowIdentifier);
 		RouterClient.addResponder(this.windowServiceChannelName("injectTitleBar"), this.injectTitleBar);

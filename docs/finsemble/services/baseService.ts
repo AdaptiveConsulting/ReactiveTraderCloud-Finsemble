@@ -30,10 +30,10 @@ const defaultBaseServiceParams: ServiceConstructorParams = {
 /*
  * @introduction
  * <h2>Base Service</h2>
- * Creates an instance of the Base Service which all service must inherit. Services are spawned from your *service.json* file and managed by a helper thread&mdash;the **Service Manager**.
+ * Creates an instance of the Base Service which all service must inherit. Services are spawned from your *service.json* file and managed by a helper thread - the **Service Manager**.
  * Services communicate their status and receive status of other service through the Service Manager.
- * Services have an intial handshake with the Service Manager on load, and then either go online or wait for dependant services to come online.
- * Service intialization is completly asynchronous, which allows all services to load at the same time, as long as their dependencies have been met.
+ * Services have an initial handshake with the Service Manager on load, and then either go online or wait for dependant services to come online.
+ * Service initialization is completely asynchronous, which allows all services to load at the same time, as long as their dependencies have been met.
  * @constructor
 */
 export class BaseService {
@@ -62,7 +62,7 @@ export class BaseService {
 		this.shutdownDependencies = params.shutdownDependencies;
 		this.Logger = Logger;
 		this.RouterClient = RouterClient;
-		//This will be set to true after the debugServiceDelay is met. Defaults to 0, but devs can up it if they need to jump in and add breakpoints and are on a bad computer.
+		//This will be set to true after the debugServiceDelay is met. Defaults to 0, but developers can up it if they need to jump in and add breakpoints and are on a bad computer.
 		this.waitedLongEnough = false;
 		//this.parentUuid = System.Application.getCurrent().uuid;
 		this.onBaseServiceReadyCB = null;
@@ -82,7 +82,7 @@ export class BaseService {
 	}
 
 	/**
-	* Waits for the dependencies. At the end of this function, it will trigger the child service's initialze function (or onBaseServiceReady).
+	* Waits for the dependencies. At the end of this function, it will trigger the child service's initialize function (or onBaseServiceReady).
 	* @note This used to be BaseService.start
 	* @private
 	*/
@@ -197,7 +197,7 @@ export class BaseService {
 
 	onBaseServiceReady(func) { // used by the inheriting service to know where baseService init is complete
 		if (this.status === "initializing") {
-			//onBaseServiceReady is backwards-compatability stuff.
+			//onBaseServiceReady is backwards-compatibility stuff.
 			this.onBaseServiceReadyCB = () => {
 				func(this.setOnline);
 			};

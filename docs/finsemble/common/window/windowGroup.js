@@ -16,7 +16,7 @@ export class WindowGroup {
 	 * @param {object} params Params
 	 * @param {string} params.name name of the group
 	 * @param {object} params.windows array of windows in the group
-	 * @param {object} dependencies Depdenency object that provides a Logger.
+	 * @param {object} dependencies Dependency object that provides a Logger.
 	 * @param {Logger} dependencies.Logger
 	 */
 	constructor(params, dependencies) {
@@ -165,10 +165,21 @@ export class WindowGroup {
 			if (self.interruptRestore) return done("restore interrupted");
 			let win = self.windows[windowName];
 			if (win.restore) {
-				if (win.windowState != CONSTANTS.WINDOWSTATE.NORMAL) self.windows[windowName].restore({}, done);
-				else done();
+				// if win.win exists, we're in a dockableGroup of dockalbeWindows
+				let windowState = win.win ? win.win.windowState : win.windowState;
+				if (windowState != CONSTANTS.WINDOWSTATE.NORMAL) {
+					// The dockableWindow only takes a single parameter...a callback.
+					if (win.win) {
+						win.restore(done);
+					} else {
+						// All other window wraps accept 2 params for restore.
+						win.restore({}, done);
+					}
+				} else {
+					done();
+				}
 			} else {
-				Logger.system.error(windowName + " does not implment restore");
+				Logger.system.error(windowName + " does not implement restore");
 				done();
 			}
 		}
@@ -189,14 +200,14 @@ export class WindowGroup {
 			if (win.restore) {
 				self.windows[windowName].restore({}, done);
 			} else {
-				Logger.system.error(windowName + " does not implment restore");
+				Logger.system.error(windowName + " does not implement restore");
 				done();
 			}
 		}
 		asyncForEach(windowList, restoreWindow, cb);
 	}
 
-	// Bring all windoes to top. Also sets the state of the group to always on top and new windows added to the group inherit the state of thw window
+	// Bring all windows to top. Also sets the state of the group to always on top and new windows added to the group inherit the state of thw window
 	allAlwaysOnTop(alwaysOnTop) {
 		this.isAlwaysOnTop = alwaysOnTop;
 		this.alwaysOnTop({ windowList: Object.keys(this.windows), restoreWindows: true, alwaysOnTop: alwaysOnTop });
@@ -232,7 +243,7 @@ export class WindowGroup {
 	/**
 	 * Brings a group of windows to the front (BTF). In other words, puts those windows on top of any other windows so that they can be seen
 	 * @param {object} params
-	 * @param {bool=true} params.restoreWindows If true then windows will attempt to be restored (unminimized) before being brought to front
+	 * @param {bool=true} params.restoreWindows If true then windows will attempt to be restored (un-minimized) before being brought to front
 	 * @param {array} params.windowList The list of windows to BTF. Defaults to the windows that are in this window group. This can be a list of window names, or a list of actual window instances.
 	 * @param {string} params.componentType Optionally provide a componentType to BTF only those windows of that type in the list of windows.
 	 */
@@ -264,7 +275,7 @@ export class WindowGroup {
 
 		function doBTF() {
 			// TODO, [terry] this chunk of code is repeated three times in windowGroup.js. It should be abstracted away
-			// TODO, [sidd] this code now uses async, previously was not using using the callback properly. Make all group functions do this
+			// TODO, [Sidd] this code now uses async, previously was not using using the callback properly. Make all group functions do this
 
 			asyncEach(windowList, (w, callback) => {
 				let win;
@@ -305,7 +316,7 @@ export class WindowGroup {
 			}
 		}
 
-		// If we are trying to hyperfocus a stack make sure to also include the children
+		// If we are trying to hyper focus a stack make sure to also include the children
 		for (let windowName in this.windows) {
 			let win = this.getWindow(windowName);
 			let parent = win.getParent();

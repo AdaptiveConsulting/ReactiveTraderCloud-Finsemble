@@ -48,9 +48,9 @@ import { System } from "../common/system";
  *
  * 			source is either the source's client name or "RouterService" (when the RouterService is the source)
  *
- * 			destination is either the destination's client name or "RouterService" (when the RouterService is the desgination)
+ * 			destination is either the destination's client name or "RouterService" (when the RouterService is the designation)
  *
- * 			callback(this) returns the constructor.  Normally a constructor is not asyncronous, but support in case the constructed transport requires async initialization.
+ * 			callback(this) returns the constructor.  Normally a constructor is not asynchronous, but support in case the constructed transport requires async initialization.
  *
  * The transport constructor must implement two functions.
  * 		1) send(transport, routerMessage) -- transport object contains destination transport info; routerMessage is the message to send
@@ -78,16 +78,16 @@ var RouterTransport = {
 	},
 
 	/**
-	 * Gets array of active transports.  What is active depends both on config and what is supported by the environment. Typically, if OF IAB is defined then the IAB transport is added to active list.  Likewise, if SharedWorker defined, then SharedWork transport added to the active list.  Special transports that don't have backwards compatability (e.g. FinsembleTransport) are only added if specified in the config.
+	 * Gets array of active transports.  What is active depends both on config and what is supported by the environment. Typically, if OF IAB is defined then the IAB transport is added to active list.  Likewise, if SharedWorker defined, then SharedWork transport added to the active list.  Special transports that don't have backwards compatibility (e.g. FinsembleTransport) are only added if specified in the config.
 	 *
-	 * @param {string} params transport paramters
+	 * @param {string} params transport parameters
 	 *
 	 * @returns array of active transport names
 	 */
 	getActiveTransports: function (params) {
 		var transportNames = [];
 
-		// convenience funciton to add transport to active list only if it's not already in the list
+		// convenience function to add transport to active list only if it's not already in the list
 		function addToActive(transportName) {
 			if (transportNames.indexOf(transportName) === -1) { // if not already in the list, then add it
 				transportNames.push(transportName);
@@ -103,10 +103,10 @@ var RouterTransport = {
 		// if shared worker available, then add shared-worker transport to active list
 		if (SharedWorker) addToActive("SharedWorker");
 
-		// add whatever the sameDomainTrasnport is to the active list
+		// add whatever the sameDomainTransport is to the active list
 		addToActive(params.sameDomainTransport);
 
-		// add whatever the crossDomainTrasnport is to the active list
+		// add whatever the crossDomainTransport is to the active list
 		addToActive(params.crossDomainTransport);
 
 		Logger.system.log("getActiveTransports", transportNames);
@@ -114,7 +114,7 @@ var RouterTransport = {
 	},
 
 	/**
-	 * Get default transport for event router&mdash;this is the most reliable transport across all contexts.
+	 * Get default transport for event router - this is the most reliable transport across all contexts.
 	 *
  	 * @param {object} params parameters for transport
 	 * @param {any} incomingMessageHandler
@@ -146,8 +146,8 @@ var RouterTransport = {
 
 			var isSameProtocol = (window.location.protocol === parser.protocol);
 
-			var wport = (window.location.port === undefined) ? window.location.port : 80;
-			var pport = (parser.port === undefined) ? parser.port : 80;
+			var wport = (window.location.port !== undefined) ? window.location.port : 80;
+			var pport = (parser.port !== undefined) ? parser.port : 80;
 			var isSamePort = (wport === pport);
 
 			var isCrossDomain = !(isSameHost && isSamePort && isSameProtocol);
@@ -213,7 +213,7 @@ var RouterTransportImplementation = {}; // a convenience namespace for router-tr
  * 		send(routerMessage) -- transports the event
  * 		identifier() -- returns transport name/identifier
  *
- * @param {object} params various parms to support transports
+ * @param {object} params various params to support transports
  * @param {any} parentMessageHandler callback for incoming event
  * @param {any} source either the client name or "RouterService"
  * @param {any} destination either the client name or "RouterService" (unused in SharedWorker)
@@ -341,7 +341,7 @@ RouterTransportImplementation.OpenFinTransport = function (params, parentMessage
  * 		send(event) -- transports the event
  * 		identifier() -- returns transport name/identifier
  *
- * @param {object} params various parms to support transports
+ * @param {object} params various params to support transports
  * @param {any} parentMessageHandler callback for incoming event
  * @param {any} source either the client name or "RouterService"
  * @param {any} destination either the client name or "RouterService" (unused in FinsembleTransport)
@@ -349,7 +349,7 @@ RouterTransportImplementation.OpenFinTransport = function (params, parentMessage
 RouterTransportImplementation.FinsembleTransport = function (params, parentMessageHandler, source, destination, callback) {
 	/** @TODO - split into two separate vars for clarity. */
 	var serverAddress = ConfigUtils.getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress",
-		ConfigUtils.getDefault(params, "params.IAC.serverAddress","wss://localhost.chartiq.com:3376")
+		ConfigUtils.getDefault(params, "params.IAC.serverAddress","ws://127.0.0.1:3376")
 	);
 	const SOCKET_SERVER_ADDRESS = serverAddress + "/router"; // "router" is the socket namespace used on server
 
@@ -377,13 +377,13 @@ RouterTransportImplementation.FinsembleTransport = function (params, parentMessa
 		let dest;
 		let message;
 
-		// decide how to route the message based on whether client or routerservice is sending
+		// decide how to route the message based on whether client or routerService is sending
 		if (arguments.length === 1) { // clients use just one parameter, so send client message to RouterService
 			dest = "ROUTER_SERVICE";
 			routerMessage = arguments[0];
 			message = { clientMessage: routerMessage };  // no client property needed to route on server since always going to router service
 
-		} else { // router service uses both parameters, so send router-service mssage to a client
+		} else { // router service uses both parameters, so send router-service message to a client
 			dest = "ROUTER_CLIENT";
 			routerMessage = arguments[1];
 			message = { client: transport.client, clientMessage: routerMessage }; // client property used to router on server
@@ -442,7 +442,7 @@ RouterTransportImplementation.FinsembleTransport = function (params, parentMessa
  * 		send(event) -- transports the event
  * 		identifier() -- returns transport name/identifier
  *
- * @param {object} params various parms to support transports
+ * @param {object} params various params to support transports
  * @param {any} parentMessageHandler callback for incoming event
  * @param {any} source either the client name or "RouterService"
  * @param {any} destination either the client name or "RouterService" (unused in FinsembleCloudTransport)
@@ -474,13 +474,13 @@ RouterTransportImplementation.FinsembleCloudTransport = function (params, parent
 		var dest;
 		var newMessage;
 
-		// decide how to route the message based on whether client or routerservice is sending
+		// decide how to route the message based on whether client or routerService is sending
 		if (arguments.length === 1) { // clients use just one parameter, so send client message to RouterService
 			dest = "ROUTER_SERVICE";
 			routerMessage = arguments[0];
 			newMessage = { FinsembleUUID, clientMessage: routerMessage };  // no client property needed to route on server since always going to router service
 
-		} else { // router service uses both parameters, so send router-service mssage to a client
+		} else { // router service uses both parameters, so send router-service message to a client
 			dest = "ROUTER_CLIENT";
 			routerMessage = arguments[1];
 			newMessage = { FinsembleUUID, client: transport.client, clientMessage: routerMessage }; // client property used to router on server
@@ -518,7 +518,7 @@ RouterTransportImplementation.FinsembleCloudTransport = function (params, parent
 		Logger.system.log("FinsembleCloudTransport Connected to Server", FinsembleUUID);
 		console.log("FinsembleCloudTransport Connected to Server");
 		if (source === "RouterService") {
-			// if this transport is for router service, use hardcoded socket address ("ROUTER_SERVICE_IN") along with FinsembleUUID
+			// if this transport is for router service, use hard coded socket address ("ROUTER_SERVICE_IN") along with FinsembleUUID
 			Logger.system.debug("Setting Up Socket Connection", "ROUTER_SERVICE_IN" + FinsembleUUID);
 			console.log("Setting Up Socket Connection", "ROUTER_SERVICE_IN" + FinsembleUUID);
 			routerServerSocket.on("ROUTER_SERVICE_IN" + FinsembleUUID, function (data) {

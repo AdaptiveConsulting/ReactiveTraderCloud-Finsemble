@@ -11,7 +11,7 @@ import { EventEmitter } from "events";
  * Outside of the windowService, events can be listened for by simply calling:
  * finsembleWindow.addListener(event, handler);
  *
- * finembleWindow.addListener will call finsembleWindow.WindowEventManager.listenForRemoteEvent();
+ * finsembleWindow.addListener will call finsembleWindow.WindowEventManager.listenForRemoteEvent();
  *
  * The private window implementations will use the proxyEventsForWindow method in order to distribute events to remote wraps.
  *
@@ -186,7 +186,7 @@ export class WindowEventManager extends EventEmitter implements WindowEventManag
 				throw new Error(err);
 			}
 
-			//todo need to accomodate wrap-state-changed events in here...maybe?
+			//todo need to accommodate wrap-state-changed events in here...maybe?
 			let data: WindowEvent | BoundsChangeEvent = { eventName, name: this.windowName };
 
 			if (eventName.includes("bounds") || eventName.includes("parent")) {

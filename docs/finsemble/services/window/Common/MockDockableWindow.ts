@@ -11,7 +11,7 @@ export class MockDockableWindow {
 	height: number;
 
 	constructor(params) {
-		if (!params || !params.name) throw new Error("No params passed to MockDocakbleWindow.");
+		if (!params || !params.name) throw new Error("No params passed to MockDockableWindow.");
 		this.name = params.name;
 		this.left = params.left;
 		this.top = params.top;

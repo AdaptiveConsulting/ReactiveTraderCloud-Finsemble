@@ -1,12 +1,16 @@
 /** Represents the FSBL properties stored on the global Window object,
  * giving access to them in type-safe manner.
- * 
+ *
  * Usage:
  * var x = (window as IFSBLizedGlobalWindow).FSBL;
 */
 export interface IGlobals {
 	/**
-	 * @TODO - Full Docuementation
+	 * The Chromium window's name.
+	 */
+	name: string;
+	/**
+	 * @TODO - Full Documentation
 	 */
 	StackedWindowManager?: any;
 	/** A singleton instance of the DistributedStoreClient.
@@ -14,15 +18,15 @@ export interface IGlobals {
 	 */
 	distributedStoreClient?: any;
 	/**
-	 * @TODO - Full Docuementation
+	 * @TODO - Full Documentation
 	 */
 	_FSBLCache?: any;
 	/**
-	 * @TODO - Full Docuementation
+	 * @TODO - Full Documentation
 	 */
 	FSBL?: any;
 	/**
-	 * @TODO - Full Docuementation
+	 * @TODO - Full Documentation
 	 */
 	FSBLData?: {
 		clientIDCounter?: number,
@@ -33,19 +37,19 @@ export interface IGlobals {
 	 * */
 	FinsembleUUID?: string;
 	/**
-	 * @TODO - Full Docuementation
+	 * @TODO - Full Documentation
 	 */
 	finsembleWindow?: any;
 	/**
-	 * @TODO - Full Docuementation
+	 * @TODO - Full Documentation
 	 */
 	FSBLIsSetOnline?: boolean;
 	/**
-	 * @TODO - Full Docuementation
+	 * @TODO - Full Documentation
 	 */
 	FSBLAlreadyPreloaded?: boolean;
 	/**
-	 * @TODO - Full Docuementation
+	 * @TODO - Full Documentation
 	 */
 	Keystroke?: any;
 	/**
@@ -53,4 +57,8 @@ export interface IGlobals {
 	 * @see ServiceManager
 	 */
 	ServiceManager?: any;
+	/**
+	 * A pointer to Chromium's performance API.
+	 */
+	performance: any;
 }

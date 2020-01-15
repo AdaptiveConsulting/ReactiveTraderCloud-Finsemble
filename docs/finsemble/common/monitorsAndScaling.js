@@ -1,4 +1,5 @@
 import { EventEmitter } from "events";
+const deepEqual = require("lodash.isequal");
 /** Singleton of the System class shared among all instances of Monitors
  * @TODO Refactor to instance member of class.
  */
@@ -17,6 +18,9 @@ class Monitors extends EventEmitter {
 		} else {
 			throw new Error("Monitors class requires dependency injection. Ensure that System is being passed in.");
 		}
+
+		this.cachedMonitorInfo = null;
+
 		this.bindAllFunctions();
 		this.refreshMonitors(readyCB);
 
@@ -27,7 +31,11 @@ class Monitors extends EventEmitter {
 		//This is to handle 'wake events'. This is technically only going to handle unlock events (user locks screen or logs out then logs back in)
 		//Technically, if the user has disabled 'lock on sleep', then this will not fire, but openfin does not have an event for waking/sleeping
 		System.addEventListener("session-changed", (params) => {
-			if (params.reason === "unlock") {
+			// FEA returns undefined, openfin returns reason
+			if (!params ||
+				(typeof (params) === "object" &&
+					params.hasOwnProperty("reason") &&
+					(params.reason === "unlock" || params.reason === "remote-connect" || params.reason === "unknown"))) {
 				this.refreshMonitors(changeCB);
 			}
 		});
@@ -59,20 +67,53 @@ class Monitors extends EventEmitter {
 		return ((scaledRect.right - scaledRect.left) / (dipRect.right - dipRect.left));
 	}
 
+	/**
+	 * Determines if two monitor configurations are different by performing a deep equal
+	 * @param {object} monitorInfo1 Object containing information about a set of monitors
+	 * @param {object} monitorInfo2 Object containing information about a set of monitors
+	 * @return {boolean} True if the monitors are different, false if they are the same
+	 */
+	monitorInfoIsChanged(monitorInfo1, monitorInfo2) {
+		if (monitorInfo1 === null || monitorInfo2 === null || !deepEqual(monitorInfo1, monitorInfo2)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Retrieves monitor info from the system and sends an event that docking responds to.
+	 * If the number of monitors or id of all monitors hasn't changed, its assumed this
+	 * is a scaling/resolution change. The internal state will still be updated and the
+	 * returned result will include a 'monitorsChanged' boolean to indicate wether it
+	 * has changed or not
+	 *
+	 * @param {Function} cb
+	 */
 	refreshMonitors(cb = Function.prototype) {
+		let monitorsChanged = true;
+
 		System.getMonitorInfo((monitorInfo) => {
+			if (!this.monitorInfoIsChanged(this.cachedMonitorInfo, monitorInfo)) {
+				console.info("Skipped refreshMonitors because monitors do not change.");
+				monitorsChanged = false;
+			}
 			//console.log("getAllMonitors");
 			this.allMonitors = [];
 			var primaryMonitor = monitorInfo.primaryMonitor;
 			this.primaryMonitor = primaryMonitor;
 			primaryMonitor.whichMonitor = "primary";
-			primaryMonitor.deviceScaleFactor = this.calculateMonitorScale(primaryMonitor.monitor.dipRect, primaryMonitor.monitor.scaledRect);
 
+			if (fin.container !== "Electron") {
+				primaryMonitor.deviceScaleFactor = this.calculateMonitorScale(primaryMonitor.monitor.dipRect, primaryMonitor.monitor.scaledRect);
+			}
 			primaryMonitor.position = 0;
 			this.allMonitors.push(primaryMonitor);
 			for (let i = 0; i < monitorInfo.nonPrimaryMonitors.length; i++) {
 				let monitor = monitorInfo.nonPrimaryMonitors[i];
-				monitor.deviceScaleFactor = this.calculateMonitorScale(monitor.monitor.dipRect, monitor.monitor.scaledRect);
+				if (fin.container !== "Electron") {
+					monitor.deviceScaleFactor = this.calculateMonitorScale(monitor.monitor.dipRect, monitor.monitor.scaledRect);
+				}
 				monitor.whichMonitor = i;
 				monitor.position = i + 1;
 				this.allMonitors.push(monitor);
@@ -81,9 +122,13 @@ class Monitors extends EventEmitter {
 				let monitor = this.allMonitors[i];
 				this.rationalizeMonitor(monitor);
 			}
+			this.cachedMonitorInfo = monitorInfo;
 			cb(this.allMonitors);
 			this.ready = true;
-			this.emit("monitors-changed", this.allMonitors);
+			this.emit("monitors-changed", {
+				monitors: this.allMonitors,
+				monitorsChanged
+			});
 		});
 	}
 

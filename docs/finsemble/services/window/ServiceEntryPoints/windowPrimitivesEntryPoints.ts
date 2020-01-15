@@ -13,6 +13,9 @@ import { FinsembleWindowInternal } from "../WindowAbstractions/FinsembleWindowIn
 import * as Constants from "../../../common/constants";
 import { MockDockableWindow } from "../Common/MockDockableWindow";
 import { WindowPoolSingleton } from "../Common/Pools/PoolSingletons";
+import WorkspaceClient from "../../../clients/workspaceClient";
+import { REMOTE_FOCUS } from "../../../common/constants";
+import { BaseWindow } from "../WindowAbstractions/BaseWindow";
 
 export class WindowPrimitives {
 	dockingMain: any;
@@ -72,12 +75,14 @@ export class WindowPrimitives {
 		RouterClient.addResponder(this.windowServiceChannelName("isShowing"), this.isShowingHandler);
 		RouterClient.addResponder(this.windowServiceChannelName("animate"), this.animateHandler);
 		RouterClient.addResponder(this.windowServiceChannelName("setComponentState"), this.setComponentStateHandler);
+		RouterClient.addResponder(this.windowServiceChannelName("removeComponentState"), this.removeComponentStateHandler);
 		RouterClient.addResponder(this.windowServiceChannelName("setWindowState"), this.setWindowStateHandler);
 		RouterClient.addResponder(this.windowServiceChannelName("saveCompleteWindowState"), this.saveCompleteWindowStateHandler);
 		RouterClient.addResponder(this.windowServiceChannelName("getWindowState"), this.getWindowStateHandler);
 		RouterClient.addResponder(this.windowServiceChannelName("getComponentState"), this.getComponentStateHandler);
 		RouterClient.addResponder(this.windowServiceChannelName("setParent"), this.setParentHandler);
 		RouterClient.addResponder("DockingService.getMonitorForWindow", this.getMonitorForWindowHandler);
+		RouterClient.addListener(REMOTE_FOCUS, this.handleRemoteFocus);
 	}
 
 	// housekeeping function used in each of the public window-wrapper handlers below
@@ -134,6 +139,35 @@ export class WindowPrimitives {
 		}
 	}
 
+	/** DH 6/15/2019
+	 * Because the OS and container keep their own
+	 * seperate records of which window has focus,
+	 * it's possible for the two to get out of sync.
+	 * To prevent that, we send messages from Assimilation
+	 * and Finsemble-DLL on every OS focus event and handle
+	 * them here. For every focus event coming from a window not
+	 * managed by Finsemble's container, we manually blur
+	 * whatever window had focus previously.
+	 * 
+	 * If we can figure out a different way to synchronize
+	 * focus between container and OS, we can remove this ad hoc
+	 * and manual handling here.
+	 */
+	handleRemoteFocus(queryError, queryMessage) {
+		const name = queryMessage.data.name;
+
+		// DH 6/15/2019 - These types aren't right, but the best way to
+		// fix would be to type the ObjectPools, which would require significant
+		// refactoring. 
+		const windows: any[] = Object.values(WindowPoolSingleton.getAll());
+	
+			const focused: BaseWindow = windows
+				.find((x: { focused: boolean }) => x.focused) as BaseWindow;
+			if (focused && focused.name !== name) {
+				focused.eventManager.trigger("blurred");
+			}
+	}
+
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The following functions handler the public "wrapper" requests
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -160,7 +194,17 @@ export class WindowPrimitives {
 		let wrap = WindowPoolSingleton.get(windowIdentifier.name);
 
 		if (wrap) {
+			// @todo callback is not the handler here, it's sendQueryResponse
+			// when we add an event listener, there are two parameters: event name, and handler to be invoked when the event is thrown.
+			// When we're removing listeners here, we're saying 'remove the listener for this event, the handler was 'callback'.
+			// That's not true. In this case, callback is queryMessage.sendResponse.
+			// The function below will never invoke the callback, it will simply search amongst the event handlers for 
+			// event 'whatever event' for a handler that === callback. It will never find that, 
+			// because we never added a listener with that handler.
+			// - Brad
+			// @todo make remove eventListener actually do something
 			wrap._removeEventListener(queryMessage.data, callback);
+			callback(null);
 		} else {
 			callback(`unidentified window name: ${windowIdentifier.name}`, null);
 		}
@@ -498,6 +542,19 @@ export class WindowPrimitives {
 		}
 	}
 
+	async removeComponentStateHandler(queryError, queryMessage) {
+		const { windowIdentifier } = this.publicWindowHandlerPreface("removeComponentState", queryError, queryMessage);
+		const callback = queryMessage.sendQueryResponse;
+
+		const wrap = WindowPoolSingleton.get(windowIdentifier.name);
+
+		if (wrap) {
+			wrap.removeComponentState(queryMessage.data, callback);
+		} else {
+			callback(`unidentified window name: ${windowIdentifier.name}`, null);
+		}
+	}
+
 	async setWindowStateHandler(queryError, queryMessage) {
 		let { windowIdentifier } = this.publicWindowHandlerPreface("setWindowState", queryError, queryMessage);
 		let callback = queryMessage.sendQueryResponse;
@@ -613,7 +670,7 @@ export class WindowPrimitives {
 					promiseResolved = true;
 					resolvePromise();
 					clearTimeout(gotResponses);
-				} 
+				}
 			};
 
 			let p = new Promise(function (resolve, reject) {
@@ -644,6 +701,8 @@ export class WindowPrimitives {
 			Logger.system.debug("WRAP CLOSE. starting in wrap", windowIdentifier.name);
 
 			let wrapState = "closing";
+			// we update wrapState over the router, but it's not always happening fast enough to prevent new listeners from being set up
+			wrap.wrapState = wrapState;
 
 			Logger.system.debug("COMPONENT LIFECYCLE: STATE CHANGE: ", windowIdentifier.name, wrapState);
 			RouterClient.publish("Finsemble.Component.State." + windowIdentifier.name, { state: wrapState });
@@ -663,11 +722,15 @@ export class WindowPrimitives {
 			// This is an event for the wraps to delete themselves
 			Logger.system.debug("WRAP CLOSE. Triggered close for", windowIdentifier.name);
 			await delayInterrupters("closed", () => {
-				wrap.eventManager.trigger("closed");
+				wrap.eventManager.trigger("closed", queryMessage.data);
 			});
 			Logger.system.debug("WRAP CLOSE. All closed events fired", windowIdentifier.name);
 
 			// Actually close the window
+			if (queryMessage.data.removeFromWorkspace) {
+				await WorkspaceClient.removeWindow({ name: wrap.name });
+			}
+
 			wrap._close(queryMessage.data, async () => {
 				Logger.system.debug("WRAP CLOSE. Removing wrap.", windowIdentifier.name);
 				wrap.handleWrapRemoveRequest();

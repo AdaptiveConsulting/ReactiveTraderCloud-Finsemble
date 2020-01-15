@@ -13,10 +13,10 @@
  *
  * <h2>Logger Client</h2>
  *
- * The Logger Client supports very efficent and configurable run-time logging to the <a href=tutorial-CentralLogger.html>Central Logger</a>.
+ * The Logger Client supports very efficient and configurable run-time logging to the <a href=tutorial-CentralLogger.html>Central Logger</a>.
  * Logging has a small performance overhead, so developers can liberally instrument their code with log messages for debugging and diagnostics.
  * By default, only error and warning messages are captured by the Logger, with the other message types (e.g., log, info, debug) disabled.
- * Which message types are enabled or disabled is fully controlled from the <a href=tutorial-CentralLogger.html>Central Logger</a>&mdash;this means developers can fully instrument their code once and dynamically enable and disable logging later, as needed, for debugging or field support.
+ * Which message types are enabled or disabled is fully controlled from the <a href=tutorial-CentralLogger.html>Central Logger</a> - this means developers can fully instrument their code once and dynamically enable and disable logging later, as needed, for debugging or field support.
  *
  * The Finsemble team uses the Central Logger to <a href=tutorial-Troubleshooting.html>capture log message for field support</a>.
  * Finsemble customers, building their own Finsemble applications, have the option to do the same.
@@ -26,7 +26,7 @@
  * Using the Logger is similar to using the browser's console for logging (e.g., `console.error` or `console.log`), although the Logger Client is accessed through the FSBL object as shown in the examples below.
  *
  *```javascript
- * 			FSBL.Clients.Logger.error("an error message", anErrorOject);
+ * 			FSBL.Clients.Logger.error("an error message", anErrorObject);
  * 			FSBL.Clients.Logger.warn("a warning message", object1, object2, object3);
  * 			FSBL.Clients.Logger.log("logging message");
  * 			FSBL.Clients.Logger.info("logging message");

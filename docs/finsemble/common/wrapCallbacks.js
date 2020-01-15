@@ -24,7 +24,7 @@ function wrapCallbacks(parentObject, params) { // variable number of parameters
 	var slowTimeout = params.slowTimeout || 1000;
 
 	/**
-	 * Returns an array of a function's argument names from the function's signiture
+	 * Returns an array of a function's argument names from the function's signature
 	 * @param {object} func the function
 	 * @returns {Array.<string>} the array of parameter names (i.e. strings)
 	 * @private
@@ -48,7 +48,7 @@ function wrapCallbacks(parentObject, params) { // variable number of parameters
 	function getSignatureOverrides() {
 		var overrides = {};
 
-		// list of hardcoded overrides to address misc problems
+		// list of hard coded overrides to address misc problems
 		overrides["launchExternalProcess"] = ["options", "callback", "errorCallbackName"];
 
 		return overrides;
@@ -129,7 +129,7 @@ function wrapCallbacks(parentObject, params) { // variable number of parameters
 		var isWrapped = false;
 		if (callbackIndex > -1 && args.length >= callbackIndex && typeof args[callbackIndex] === "function") { // confirm the callback parameter passed in
 			let originalCB = args[callbackIndex]; // save original CB to use within replacement CB
-			// this is the wrap callback function that clears timers then calls the orignal callback
+			// this is the wrap callback function that clears timers then calls the original callback
 			let successReplacementCB = function wrapCallback() {
 				Logger.system.verbose(`In Wrap Callback ${functionName}`);
 				removeTimeouts(timers);

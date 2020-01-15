@@ -63,7 +63,7 @@ export default {	/**
 
 		approvedPermissions = merge(approvedPermissions, requestedPermissions);
 
-		// finsembleConfig.securitypolicies will always exist. Defaults are exported from finsemble core.
+		// finsembleConfig.securityPolicies will always exist. Defaults are exported from finsemble core.
 		const securityPolicy = finsembleConfig.securityPolicies[descriptor.securityPolicy];
 
 		// This should always be defined in the normal course of the program executing. Prior to calling getPermissions,
@@ -92,7 +92,7 @@ export default {	/**
 						// If the component wants to have access to something that the security policy says
 						// that it can't, we deny access.
 						// Component permissions can only be _more_ restrictive, not less.
-						// @NOTE: Only did === false for clarity. Makese the chunk below much more clear.
+						// @NOTE: Only did === false for clarity. Makes the chunk below much more clear.
 						if (defaultPermission === false) {
 							assignedPermission = false;
 						}

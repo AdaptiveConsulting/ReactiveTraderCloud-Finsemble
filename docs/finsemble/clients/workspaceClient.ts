@@ -8,62 +8,11 @@ import * as Util from "../common/util";
 import Validate from "../common/validate";
 import Logger from "./logger";
 import { WORKSPACE } from "../common/constants";
-
-function escapeRegExp(str) {
-	return str.replace(/[-[\]/{}()*+?.\\^$|]/g, "\\$&");
-}
-
-// validates legal workspace definition
-function validWorkspaceDefinition(workspaceJSON) {
-	var result = false;
-	if (typeof workspaceJSON === "object") {
-		var workspaceName = Object.keys(workspaceJSON)[0];
-		if (workspaceName && workspaceJSON[workspaceName].workspaceDefinitionFlag) {
-			result = true;
-		} else {
-			Logger.system.error("workspaceClient.workspaceClient.convertWorkspaceDefinitionToTemplate: not legal workspace JSON", workspaceJSON);
-		}
-	} else {
-		Logger.system.error("workspaceClient.workspaceClient.convertWorkspaceDefinitionToTemplate: input is not a legal object", workspaceJSON);
-	}
-	return result;
-}
-
-// constructor for new template given a workspace definition to derive it from
-function WorkspaceTemplate(templateName, workspaceJSON) {
-	var newTemplate = workspaceJSON;
-	var workspaceName = Object.keys(workspaceJSON)[0];
-	newTemplate = Util.clone(workspaceJSON);
-	newTemplate[templateName] = newTemplate[workspaceName];
-	newTemplate[templateName].templateDefinitionFlag = true;
-	newTemplate[templateName].name = templateName; // name is also carried in object for use in service
-	if (templateName !== workspaceName) { // if using same name then can't delete data associated with name
-		delete newTemplate[workspaceName];
-	}
-	delete newTemplate[templateName].workspaceDefinitionFlag;
-	return newTemplate;
-}
-
-//Constructor for a new workspace definition. Given a name, it returns an empty workspace. Given some JSON, it'll merge the windows property with the new workspace.
-function WorkspaceDefinition(workspaceName, workspaceJSON) {
-	var newWorkspace = {
-		[workspaceName]: {
-			workspaceDefinitionFlag: true,
-			windows: [],
-			name: workspaceName
-		}
-	};
-	if (workspaceJSON) {
-		let workspaceName = Object.keys(workspaceJSON)[0];
-		let clonedWorkspace = Util.clone(workspaceJSON);
-		if (clonedWorkspace[workspaceName] && clonedWorkspace[workspaceName].windows) {
-			clonedWorkspace[workspaceName].windows = clonedWorkspace[workspaceName].windows;
-		}
-
-	}
-	return newWorkspace;
-}
-
+import { Workspace } from "../common/workspace";
+import { ActiveWorkspace } from "../common/workspace";
+import { FinsembleWindowData } from "../common/FinsembleWindowData";
+import { RouterResponse } from "./IRouterClient";
+import { StateType, CompleteWindowState } from "../common/windowStorageManager";
 
 /**
  * @introduction
@@ -76,25 +25,21 @@ function WorkspaceDefinition(workspaceName, workspaceJSON) {
  * @summary You don't need to ever invoke the constructor. This is done for you when WindowClient is added to the FSBL object.
  */
 class WorkspaceClient extends _BaseClient {
-	workspaces: any;
-	activeWorkspace: any;
+	/**
+		* List of all workspaces within the application.
+		* @type {Array.<Object>}
+		*/
+	workspaces: Workspace[] = [];
+	/**
+		* Reference to the activeWorkspace object
+		* @type {object}
+		*/
+	activeWorkspace: ActiveWorkspace;
 	workspaceIsDirty: boolean;
 
 	constructor(params) {
 		super(params);
 		Validate.args(params, "object=") && params && (Validate.args2 as any)("params.onReady", params.onReady, "function=");
-
-		/**
-		* List of all workspaces within the application.
-		* @type {Array.<Object>}
-		*/
-		this.workspaces = [];
-
-		/**
-		* Reference to the activeWorkspace object
-		* @type {object}
-		*/
-		this.activeWorkspace = {};
 	}
 
 	// Helper function to handle response from service
@@ -153,9 +98,7 @@ class WorkspaceClient extends _BaseClient {
 	 * @param {string} params.name Window name
 	 * @param {function} cb Callback
 	 */
-	addWindow(params: {
-		name: string
-	}, cb = Function.prototype) {
+	addWindow(params: FinsembleWindowData, cb = Function.prototype) {
 		Validate.args(params, "object", cb, "function=") && params && (Validate.args2 as any)("params.name", params.name, "string");
 		this.routerClient.query("WorkspaceService.addWindow", params, (err, response) => {
 			Logger.system.log(`WORKSPACE LIFECYCLE: Window added:WorkspaceClient.addWindow: Name (${params.name})`);
@@ -200,7 +143,7 @@ class WorkspaceClient extends _BaseClient {
 	 * @param {function} cb Callback
 	 * @example
 	 * FSBL.Clients.WorkspaceClient.autoArrange(function(err, response){
-	 * 		//do something after the autoarrange, maybe make all of the windows flash or notify the user that their monitor is now tidy.
+	 * 		//do something after the auto-arrange, maybe make all of the windows flash or notify the user that their monitor is now tidy.
 	 * });
 	 */
 	autoArrange(params: {
@@ -276,16 +219,17 @@ class WorkspaceClient extends _BaseClient {
 	 * 	});
 	 * });
 	 */
-	getActiveWorkspace(cb) {
-		Validate.args(cb, "function");
+	async getActiveWorkspace(cb?: StandardCallback): Promise<{ data: Workspace }> {
 		Logger.system.debug("WorkspaceClient.getActiveWorkspace");
-		const getActiveWorkspacePromiseResolver = (resolve, reject) => {
-			let err = null;
-			if (!this.activeWorkspace) err = "No Active Workspace is Set";
-			let response = { data: this.activeWorkspace };
-			this._serviceResponseHandler(err, response, resolve, reject, cb);
+		const result = (await this.routerClient.query(WORKSPACE.API_CHANNELS.GET_ACTIVE_WORKSPACE, {})).response;
+		this.activeWorkspace = result.data;
+		if (result.data.err) {
+			if (cb) cb(result.data.err);
+			throw new Error(result.data.err);
 		}
-		return new Promise(getActiveWorkspacePromiseResolver);
+
+		if (cb) cb(null, result);
+		return result;
 	}
 
 	/**
@@ -300,8 +244,8 @@ class WorkspaceClient extends _BaseClient {
 	 * 	});
 	 * });
 	 */
-	getWorkspaces(cb) {
-		Validate.args(cb, "function");
+	getWorkspaces(cb?) {
+		Validate.args(cb, "function=");
 		Logger.system.debug("WorkspaceClient.getWorkspaces");
 		const getWorkspacesPromiseResolver = (resolve, reject) => {
 			this.routerClient.query(WORKSPACE.API_CHANNELS.GET_WORKSPACES, {}, (err, response) => {
@@ -339,7 +283,7 @@ class WorkspaceClient extends _BaseClient {
 	 * @param {Object} 	params.workspace Workspace
 	 * @param {string} 	params.name Workspace Name
 	 * @param {function} cb Callback to fire after 'Finsemble.WorkspaceService.update' is transmitted.
-	 * @example <caption>This function removes 'My Workspace' from the main menu and the default storage tied to the applicaton.</caption>
+	 * @example <caption>This function removes 'My Workspace' from the main menu and the default storage tied to the application.</caption>
 	 * FSBL.Clients.WorkspaceClient.remove({
 	 * 	name: 'My Workspace'
 	 * }, function(err, response) {
@@ -441,7 +385,7 @@ class WorkspaceClient extends _BaseClient {
 	};
 
 	/**
-	 * Saves the currently active workspace. It does not overwrite the saved instance of the workspace. It simply overwrites the <code>activeWorkspace</code> key in storage.
+	 * Saves the currently saved workspace. Changes to the <code>activeWorkspace</code> are made on every change automatically.
 	 * @param {function} cb Callback
 	 * @example <caption>This function persists the currently active workspace.</caption>
 	 * FSBL.Clients.WorkspaceClient.save(function(err, response){
@@ -515,23 +459,42 @@ class WorkspaceClient extends _BaseClient {
 	 * 	//Do something.
 	 * });
 	 */
-	switchTo(params: {
+	async switchTo(params: {
 		name: string,
-		templateName?: string
-	}, cb = Function.prototype) {
-		//Logger.system.log("APPLICATION LIFECYLE:Loading Workspace:WorkspaceClient.switchTo:" + params.name); This should be in the service.
+	}, cb = Function.prototype): Promise<{ data: Workspace }> {
 		Validate.args(params, "object", cb, "function") && (Validate.args2 as any)("params.name", params.name, "string");
-		Logger.system.debug("WorkspaceClient.switchTo");
-		const switchToPromiseResolver = (resolve, reject) => {
-			this.routerClient.query(WORKSPACE.API_CHANNELS.SWITCH_TO, params, (err, response) => {
-				if (response && response.data) {
-					this.activeWorkspace = response.data;
-				}
-				this._serviceResponseHandler(err, response, resolve, reject, cb);
-			});
+		Logger.system.debug("WorkspaceClient.switchTo", params);
+		const result = await this.routerClient.query(WORKSPACE.API_CHANNELS.SWITCH_TO, params);
+		if (result.err) {
+			cb(result.err, null);
+			throw new Error(result.err);
 		}
-		return new Promise(switchToPromiseResolver);
-		// TODO the previous version of this logged a bunch of lifecycle events. Those should be logged from the service instead.
+		cb(result);
+		return result;
+	}
+
+	/**
+	 * @private
+	 * ALPHA - Subject to breaking change in coming minor releases.
+	 * Sets the stored state of a given window in the active workspace. `state` may include
+	 * keys for `windowData`, `componentState`, or both; the state of each key will be completely
+	 * overwritten by the provided state. If the update results in dirtying change, the active
+	 * workspace will be marked dirty (or, if autosave is on, persisted directly to storage).
+	 */
+	async _setWindowState(params: { windowName: string, state: Partial<CompleteWindowState> }): Promise<RouterResponse<boolean>> {
+		Logger.system.debug("WorkspaceClient.setWindowData", params);
+		return this.routerClient.query(WORKSPACE.API_CHANNELS.SET_WINDOW_STATE, params);
+	}
+
+	/**
+	 * @private
+	 * ALPHA - Subject to breaking change in coming minor releases.
+	 * Retrieves the given window from storage, retrieving the requested state variables
+	 * (`"componentState"` and/or `"windowData"`).
+	 */
+	async _getWindowState(params: { windowName: string, stateVars: StateType[] }): Promise<RouterResponse<Partial<CompleteWindowState>>> {
+		Logger.system.debug("WorkspaceClient.getWindowData", params);
+		return this.routerClient.query(WORKSPACE.API_CHANNELS.GET_WINDOW_STATE, params);
 	}
 
 	/**
@@ -546,69 +509,21 @@ class WorkspaceClient extends _BaseClient {
 		Validate.args(cb, "function");
 		Logger.system.debug("WorkspaceClient.isWorkspaceDirty");
 		const isWorkspaceDirtyPromiseResolver = (resolve, reject) => {
-			this._serviceResponseHandler(null, this.activeWorkspace.isDirty, resolve, reject, cb);
+			this._serviceResponseHandler(null, { data: this.activeWorkspace.isDirty }, resolve, reject, cb);
 		}
 		return new Promise(isWorkspaceDirtyPromiseResolver);
 	}
 
-
 	/**
-	 * If more than one copy of the workspaceName has been saved, this function returns the next number in the sequence. See the example section for more. This is an internal helper.
-	 * @private
-	 * @param {string} workspaceName
-	 * @example
-	 * workspaceList = "apple banna ketchup"
-	 * getWorkspaceName("mayo") returns "mayo".
+	 * Creates a new workspace, returning a promise for the final name of
+	 * the new workspace as a string. After creation, if "switchAfterCreation" is true,
+	 * the new workspace becomes the active workspace.
 	 *
-	 * workspaceList = "apple banna ketchup ketchup (1)"
-	 * getWorkspaceName("ketchup") returns "ketchup (2)".
+	 * If the requested name already exists, a new workspace will be created
+	 * with the form "[name] (1)" (or "[name] (2)", etc.)
 	 *
-	 * workspaceList = "apple banna ketchup ketchup (1) ketchup (2) ketchup (7)";
-	 * getWorkspaceName("ketchup") returns "ketchup (8)".
-	 *
-	 */
-	getWorkspaceName(workspaceName: string) {
-		var workspaces = FSBL.Clients.WorkspaceClient.workspaces;
-		let workspaceNames = workspaces.map((workspace) => workspace.name);
-		let escapedName = escapeRegExp(workspaceName);
-		//match "name" or "name (143)" or "name (2)"
-
-		//Number of modifiers already on the name.
-		let existingModifiers = workspaceName.match(/\(\d+\)/g);
-		let numModifiers = existingModifiers === null ? "{1}" : `{${existingModifiers.length++}}`;
-		let matchString = `\\b(${escapedName})(\\s\\(\\d+\\)${numModifiers})?\\,`;
-		let regex = new RegExp(matchString, "g");
-		let matches = workspaceNames.sort().join(",").match(regex);
-
-		if (matches && matches.length) {
-			let lastMatch = matches.pop();
-			//Find the last modifier at the end (NUMBER), and get rid of parens.
-			let highestModifier = lastMatch.match(/\(\d+\)\,/g);
-			// console.log(existingModifiers ? existingModifiers.length : 0, modifier ? modifier.length : 0);
-			//If we're trying to create something stupid like "workspace (1) (1)", and workspace (1) (1) already exists, they'll spit out workspace (1) (1) (2).
-			if (existingModifiers && existingModifiers.length != highestModifier.length) {
-				workspaceName = lastMatch.replace(",", "") + " (1)";
-			} else {
-				if (highestModifier && highestModifier.length) {
-					highestModifier = highestModifier[highestModifier.length - 1];
-					highestModifier = highestModifier.replace(/\D/g, "");
-					highestModifier = parseInt(highestModifier);
-					highestModifier++;
-					workspaceName = lastMatch.replace(/\(\d+\)\,/g, `(${highestModifier})`);
-				} else {
-					highestModifier = 1;
-					workspaceName += " (" + highestModifier + ")";
-				}
-			}
-		}
-		return workspaceName;
-	}
-
-	/**
-	 * Creates a new workspace. After creation the new workspace becomes the active workspace.
 	 * @param {String} workspaceName Name for new workspace.
 	 * @param {Object} params Optional params
-	 * @param {string} params.templateName Name of template to use when creating workspace; if no template then empty workspace will be created.
 	 * @param {boolean} params.switchAfterCreation Whether to switch to the new workspace after creating it.
 	 * @param {Function} cb cb(err,response) With response, set to new workspace object if no error.
 	 * @example <caption>This function creates the workspace 'My Workspace'.</caption>
@@ -618,42 +533,25 @@ class WorkspaceClient extends _BaseClient {
 	 *		}
 	 * });
 	 */
-	createWorkspace(workspaceName, params: {
-		templateName?: string,
+	async createWorkspace(workspaceName, params: {
 		switchAfterCreation?: boolean
-	}, cb: Function = Function.prototype) {
-		if (arguments.length === 2) { // if no params then second argument must be the cb
-			if (typeof params === "function") {
-				cb = params;
-			}
-			params = {};
-		}
+	}, cb = (err, result: { workspaceName: string }) => { }): Promise<{ workspaceName: string }> {
+		Logger.system.log(`WorkspaceClient: Creating Workspace Request for name "${workspaceName}"`)
+		const finalName: string = (await this.routerClient.query(
+			WORKSPACE.API_CHANNELS.NEW_WORKSPACE,
+			{ workspaceName })).response.data;
 
-		var templateName = null;
-		if (params && params.templateName) {
-			templateName = params.templateName;
-		}
-		Validate.args(workspaceName, "string", params, "object=", cb, "function=");
-
-		Logger.system.log(`APPLICATION LIFECYCLE:Create New Workspace:Workspacelient.createNewWorkspace: Name (${workspaceName})`);
-
-		//makse sure we don't duplicate an existing workspace.
-		workspaceName = this.getWorkspaceName(workspaceName);
-		//Default behavior is to switch after creating workspace.
 		if (params.switchAfterCreation !== false) {
-			Logger.system.log(`APPLICATION LIFECYCLE:Create New Workspace:Workspacelient.createNewWorkspace: Name (${workspaceName})`);
-			this.switchTo({ name: workspaceName, templateName }, cb);
-		} else {
-			let workspace = WorkspaceDefinition(workspaceName, null);
-			this.addWorkspaceDefinition({
-				workspaceJSONDefinition: workspace
-			}, cb);
+			await this.switchTo({ name: finalName });
 		}
+		const result = { workspaceName: finalName }
+		cb(null, result);
+		return result;
 	}
 	/**
 	 * @private
 	 */
-	createNewWorkspace = this.createWorkspace; //Backward Compatiblity
+	createNewWorkspace = this.createWorkspace; //Backward Compatibility
 
 	/**
 	 * Gets a workspace definition in JSON form.
@@ -686,149 +584,33 @@ class WorkspaceClient extends _BaseClient {
 	 * @param {function=} cb cb(err) where the operation was successful if !err; otherwise, err carries diagnostics
 	 *
 	 */
-	import(params: {
-		workspaceJSONDefinition: any
-	}, cb) {
+	async import(params: {
+		workspaceJSONDefinition: Record<string, Workspace | string>,
+		force: boolean,
+	}, cb?): Promise<Record<string, string>> {
 		Validate.args(params, "object", cb, "function=") && (Validate.args2 as any)("params.workspaceJSONDefinition", params.workspaceJSONDefinition, "object");
 		Logger.system.debug("WorkspaceClient.import", params);
-		const importPromiseResolver = (resolve, reject) => {
-			// TODO: all this logic should be in the service.
-			let workspaceDefinition = params.workspaceJSONDefinition;
-			let workspaceName = Object.keys(workspaceDefinition)[0];
-
-			// if workspace already exists, make a new name and replace with that name
-			let viableWorkspaceName = this.getWorkspaceName(workspaceName);
-			if (workspaceName !== viableWorkspaceName) {
-				workspaceDefinition[viableWorkspaceName] = workspaceDefinition[workspaceName];
-				delete workspaceDefinition[workspaceName];
-				workspaceDefinition[viableWorkspaceName].name = viableWorkspaceName;
-			}
-
-			this.routerClient.query(WORKSPACE.API_CHANNELS.IMPORT, { workspaceJSONDefinition: workspaceDefinition }, (err, response) => {
-				this._serviceResponseHandler(err, response, resolve, reject, cb);
-			});
+		const result: Record<string, string> = (await this.routerClient.query(WORKSPACE.API_CHANNELS.IMPORT, params)).response.data;
+		if (result.err) {
+			cb(result.err);
+			throw new Error(result.err)
 		}
-		return new Promise(importPromiseResolver);
+		if (cb) cb(null, result)
+		return result;
 	}
-	addWorkspaceDefinition = this.import; //Backward Compatiblity
+	addWorkspaceDefinition = this.import; //Backward Compatibility
 
 	/**
-	 * Convert a workspace JSON definition to a template JSON definition
-	 * @param {object} params
- 	 * @param {string} params.newTemplateName template name for the new converted definition
-	 * @param {object} params.workspaceDefinition a workspace JSON definition return from getWorkspaceDefinition()
-	 * @returns the new template definition. If null then an error occurred because workspaceDefinition wasn't a legal JSON definition for a workspace
-	 */
-	convertWorkspaceDefinitionToTemplate(params: {
-		newTemplateName: string,
-		workspaceDefinition: any
-	}) {
-		Logger.system.info("WorkspaceClient.convertWorkspaceDefinitionToTemplate", params);
-		Validate.args(params, "object") && (Validate.args2 as any)("params.newTemplateName", params.newTemplateName, "string",
-			"params.workspaceDefinition", params.workspaceDefinition, "object");
-		var templateJSON = null;
-		if (validWorkspaceDefinition(params.workspaceDefinition)) {
-			templateJSON = WorkspaceTemplate(params.newTemplateName, params.workspaceDefinition);
-		}
-		return templateJSON;
-	};
-
-	/**
-	 * Get a template definition in JSON format.
+	 * Saves one mor more template defintions in a selected file. Note the
+	 * end user is prompted to identify file location during this save
+	 * operation. The file can optionally be imported during config
+	 * initialization (see importConfig) although this requires administration
+	 * support on the configuration/server side. The file can also be read
+	 * using readWorkspaceTemplateFromConfigFile();
 	 *
 	 * @param {object} params
-	 * @param {string} params.templateName name of template
-	 * @param {function} cb
-	 * @private
-	 */
-	exportTemplate(params: {
-		templateName: string
-	}, cb) {
-		Validate.args(params, "object", cb, "function") && (Validate.args2 as any)("params.newTemplateName", params.templateName, "string");
-		Logger.system.debug("WorkspaceClient.exportTemplate", params);
-		const exportTemplatePromiseResolver = (resolve, reject) => {
-			this.routerClient.query(WORKSPACE.API_CHANNELS.EXPORT_TEMPLATE, { templateName: params.templateName }, (err, response) => {
-				let exportFormat = {
-					[params.templateName]: response.data
-				};
-				this._serviceResponseHandler(err, { data: exportFormat }, resolve, reject, cb);
-			});
-		}
-		return new Promise(exportTemplatePromiseResolver);
-	}
-	getWorkspaceTemplateDefinition = this.exportTemplate; //Backward Compatibility
-
-	/**
-	 * Adds a template definition.  This adds to the template choices available when creating a new workspace.  The definition will persistent until removed with removeWorkspaceTemplateDefinition().
-	 *
-	 * @param {object} params
-	 * @param {object} params.workspaceTemplateDefinition JSON template definition typically from getWorkspaceTemplateDefinition() or convertWorkspaceDefinitionToTemplate()
-	 * @param {boolean} params.force if true an existing template with the same name will be overwritten
-	 * @param {function} cb
-	 * @private
-	 */
-	importTemplate(params: {
-		workspaceTemplateDefinition: any,
-		force: boolean
-	}, cb) {
-		Validate.args(params, "object", cb, "function=") && (Validate.args2 as any)("params.workspaceTemplateJSONDefinition", params.workspaceTemplateDefinition, "object");
-		Logger.system.debug("WorkspaceClient.importTemplate", params);
-		const savePromiseResolver = (resolve, reject) => {
-			let workspaceTemplateDefinition = params.workspaceTemplateDefinition;
-			let error, result;
-
-			Logger.system.debug("workspaceClient.addWorkspaceTemplateDefinition workspaceTemplateDefinition", workspaceTemplateDefinition);
-			if ("workspaceTemplates" in workspaceTemplateDefinition) { // if JSON object has wrapper used for config then remove it
-				let workspaceTemplates = workspaceTemplateDefinition.workspaceTemplates;
-				workspaceTemplateDefinition = workspaceTemplates;
-				Logger.system.debug("workspaceClient.addWorkspaceTemplateDefinition modified workspaceTemplateDefinition", workspaceTemplateDefinition);
-			}
-
-			if (typeof workspaceTemplateDefinition === "object") {
-				var templateName = Object.keys(workspaceTemplateDefinition)[0];
-				Logger.system.debug("workspaceClient.addWorkspaceTemplateDefinition templateName", templateName);
-				if (templateName && workspaceTemplateDefinition[templateName].templateDefinitionFlag) {
-					this.routerClient.query(WORKSPACE.API_CHANNELS.IMPORT_TEMPLATE, { workspaceTemplateDefinition, params }, (err, response) => {
-						this._serviceResponseHandler(err, response, resolve, reject, cb);
-					});
-				} else {
-					this._serviceResponseHandler("workspaceClient.addWorkspaceTemplateDefinition: illegal template JSON", null, resolve, reject, cb);
-				}
-			} else {
-				this._serviceResponseHandler("workspaceClient.addWorkspaceTemplateDefinition: input is not a legal object", null, resolve, reject, cb);
-			}
-		}
-		return new Promise(savePromiseResolver);
-	}
-	addWorkspaceTemplateDefinition = this.importTemplate; //Backward Compatibility
-
-	/**
-	 * Removes template definition (keep in mind if the template is defined in config then it will automatically be recreated on each startup)
-	 *
-	 * @param {object} params
-	 * @param {string} params.workspaceTemplateName
-	 * @param {function} cb callback(err) is invoked on completion. If !err then the operation was successful; otherwise, err carries diagnostics
-	 * @private
-	 */
-	removeTemplate(params: {
-		workspaceTemplateName: string
-	}, cb) {
-		Validate.args(params, "object", cb, "function=") && (Validate.args2 as any)("params.workspaceTemplateName", params.workspaceTemplateName, "string");
-		Logger.system.debug("WorkspaceClient.removeTemplate");
-		const removeTemplatePromiseResolver = (resolve, reject) => {
-			this.routerClient.query(WORKSPACE.API_CHANNELS.REMOVE_TEMPLATE, { workspaceTemplateName: params.workspaceTemplateName }, (err, response) => {
-				this._serviceResponseHandler(err, response, resolve, reject, cb);
-			});
-		}
-		return new Promise(removeTemplatePromiseResolver);
-	}
-	removeWorkspaceTemplateDefinition = this.removeTemplate; // Backward Compatibilty
-
-	/**
-	 * Saves one mor more template defintions in a selected file. Note the end user is prompted to identify file location during this save operation.  The file can optionally be imported during config initialization (see importConfig) although this requires administration support on the configuration/server side. The file can also be read using readWorkspaceTemplateFromConfigFile();
-	 *
-	 * @param {object} params
-	 * @param {object} params.workspaceTemplateDefinition legal template definition returned by either getWorkspaceTemplateDefinition() or convertWorkspaceDefinitionToTemplate()
+	 * @param {object} params.workspaceTemplateDefinition legal template definition returned by either
+	 * getWorkspaceTemplateDefinition() or convertWorkspaceDefinitionToTemplate()
 	 * @private
 	 */
 	exportToFile(params: {
@@ -853,53 +635,25 @@ class WorkspaceClient extends _BaseClient {
 	saveWorkspaceTemplateToConfigFile = this.exportToFile;
 
 	/**
-	 * Gets all workspace template definitions from workspace service.
-	 *
-	 * @param {function} cb callback(templateDefinitions) where templateDefinitions is an object containing all known template definitions; each property in templateDefinitions is a template
-     * @private
- 	 */
-	getTemplates(cb) {
-		Validate.args(cb, "function");
-		Logger.system.debug("WorkspaceClient.getTemplates");
-		const getTemplatesPromiseResolver = (resolve, reject) => {
-			this.routerClient.query(WORKSPACE.API_CHANNELS.GET_TEMPLATES, {}, (err, response) => {
-				let templateDefinitions = {};
-				if (!err) {
-					templateDefinitions = response.data;
-				}
-				this._serviceResponseHandler(err, response, resolve, reject, cb);
-			});
-		}
-		return new Promise(getTemplatesPromiseResolver);
-	};
-
-	/**
 	 * Initializes listeners and sets default data on the WorkspaceClient object.
 	 * @private
 	 */
-	start(cb) {
+	async start(cb) {
 		/**
 		 * Initializes the workspace's state.
 		 */
 
 		this.routerClient.subscribe("Finsemble.WorkspaceService.update", (err, response) => {
 			Logger.system.debug("workspaceClient init subscribe response", err, response);
-			if (response.data && response.data.activeWorkspace) {
-				this.workspaceIsDirty = response.data.activeWorkspace.isDirty;
-				this.workspaces = response.data.workspaces;
-				this.activeWorkspace = response.data.activeWorkspace;
+			if (err) {
+				Logger.system.error(err);
+				return;
 			}
-
-			this.getActiveWorkspace((err, response) => {
-				this.activeWorkspace = response;
-				this.getWorkspaces((err, response2) => {
-					this.workspaces = response2;
-					if (cb) {
-						cb();
-					}
-				});
-			});
-
+			this.activeWorkspace = response.data.activeWorkspace;
+			this.workspaces = response.data.workspaces;
+			if (cb) {
+				cb();
+			}
 		});
 	}
 }

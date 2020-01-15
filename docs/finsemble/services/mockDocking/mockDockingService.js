@@ -63,12 +63,11 @@
 /******/ 	__webpack_require__.p = "http://localhost:3375/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 191);
+/******/ 	return __webpack_require__(__webpack_require__.s = 189);
 /******/ })
 /************************************************************************/
-/******/ ({
-
-/***/ 0:
+/******/ ([
+/* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -85,19 +84,19 @@ var DEFAULT_LOG_SETTING = { Error: true, Warn: true, Info: true, Log: true, Debu
 var CONSOLE_DEFAULT_LOG_SETTING = { Error: true, Warn: true, Info: true, Log: true, Debug: true }; // if true then goes to console and captured for logger
 const MAX_LOG_MESSAGE_SIZE = 50000;
 const OVER_LOG_SIZE_LIMIT_MESSAGE = `Log argument greater than ${MAX_LOG_MESSAGE_SIZE / 1000}KB. Check local Console to see output of the object.`;
-const MAX_QUEUE_SIZE = 5 * 1000; // maximum logger queue size; plenty of space although shouldn't need much since continuely sending to logger if working correctly;
-const throttle = __webpack_require__(20);
+const MAX_QUEUE_SIZE = 5 * 1000; // maximum logger queue size; plenty of space although shouldn't need much since continuously sending to logger if working correctly;
+const throttle = __webpack_require__(22);
 const system_1 = __webpack_require__(3);
-const localLogger_1 = __webpack_require__(15);
+const localLogger_1 = __webpack_require__(16);
 /**
  * @introduction
  *
  * <h2>Logger Client</h2>
  *
- * The Logger Client supports very efficent and configurable run-time logging to the <a href=tutorial-CentralLogger.html>Central Logger</a>.
+ * The Logger Client supports very efficient and configurable run-time logging to the <a href=tutorial-CentralLogger.html>Central Logger</a>.
  * Logging has a small performance overhead, so developers can liberally instrument their code with log messages for debugging and diagnostics.
  * By default, only error and warning messages are captured by the Logger, with the other message types (e.g., log, info, debug) disabled.
- * Which message types are enabled or disabled is fully controlled from the <a href=tutorial-CentralLogger.html>Central Logger</a>&mdash;this means developers can fully instrument their code once and dynamically enable and disable logging later, as needed, for debugging or field support.
+ * Which message types are enabled or disabled is fully controlled from the <a href=tutorial-CentralLogger.html>Central Logger</a> - this means developers can fully instrument their code once and dynamically enable and disable logging later, as needed, for debugging or field support.
  *
  * The Finsemble team uses the Central Logger to <a href=tutorial-Troubleshooting.html>capture log message for field support</a>.
  * Finsemble customers, building their own Finsemble applications, have the option to do the same.
@@ -107,7 +106,7 @@ const localLogger_1 = __webpack_require__(15);
  * Using the Logger is similar to using the browser's console for logging (e.g., `console.error` or `console.log`), although the Logger Client is accessed through the FSBL object as shown in the examples below.
  *
  *```javascript
- * 			FSBL.Clients.Logger.error("an error message", anErrorOject);
+ * 			FSBL.Clients.Logger.error("an error message", anErrorObject);
  * 			FSBL.Clients.Logger.warn("a warning message", object1, object2, object3);
  * 			FSBL.Clients.Logger.log("logging message");
  * 			FSBL.Clients.Logger.info("logging message");
@@ -222,7 +221,7 @@ exports.LoggerConstructor = function (dependencies) {
             currentLogState = state;
         updateQueueBasedOnState(calibrateTimeFlag);
     }
-    // logger entry point to return callstack that can be included in a log message
+    // logger entry point to return call stack that can be included in a log message
     this.callStack = function () {
         return traceString();
     };
@@ -248,11 +247,11 @@ exports.LoggerConstructor = function (dependencies) {
         return final;
     }
     // save original console functions since going to wrap/redefine each
-    var orignalConsoleError = console.error;
-    var orignalConsoleWarn = console.warn;
-    var orignalConsoleInfo = console.info;
-    var orignalConsoleLog = console.log;
-    var orignalConsoleDebug = console.debug;
+    var originalConsoleError = console.error;
+    var originalConsoleWarn = console.warn;
+    var originalConsoleInfo = console.info;
+    var originalConsoleLog = console.log;
+    var originalConsoleDebug = console.debug;
     function getRoughSizeOfObject(object) {
         var objectList = [];
         var stack = [object];
@@ -301,7 +300,7 @@ exports.LoggerConstructor = function (dependencies) {
                 let bytes = getRoughSizeOfObject(object);
                 if (bytes > MAX_LOG_MESSAGE_SIZE) {
                     // @todo, Terry, instead of *not* sending the message at all, we should send the first X bytes of the message.
-                    outputToConsole(orignalConsoleInfo, ["Message too large to send to the logger.", args]);
+                    outputToConsole(originalConsoleInfo, ["Message too large to send to the logger.", args]);
                     return OVER_LOG_SIZE_LIMIT_MESSAGE;
                 }
             }
@@ -327,7 +326,7 @@ exports.LoggerConstructor = function (dependencies) {
         else {
             if (++filteredMessagesCounter <= 5) {
                 let filterMsg = `"Filtered Logger Message (${filteredMessagesCounter} of first 5 shown)`;
-                outputToConsole(orignalConsoleInfo, [filterMsg, message]); // put out a few filtered messages then stop so won't clutter console
+                outputToConsole(originalConsoleInfo, [filterMsg, message]); // put out a few filtered messages then stop so won't clutter console
             }
         }
         if (isRegistered) {
@@ -379,7 +378,7 @@ exports.LoggerConstructor = function (dependencies) {
             formatAndQueueMessage("dev", "Error", args);
         }
         args.unshift("dev error (" + window.performance.now() + "):");
-        outputToConsole(orignalConsoleError, args);
+        outputToConsole(originalConsoleError, args);
     };
     /**
      * Log a dev warning message.
@@ -399,7 +398,7 @@ exports.LoggerConstructor = function (dependencies) {
             }
             if (currentLogState.dev.Warn && currentLogState.dev.LocalOnly) {
                 args.unshift("dev warn (" + window.performance.now() + "):");
-                outputToConsole(orignalConsoleWarn, args);
+                outputToConsole(originalConsoleWarn, args);
             }
         }
     };
@@ -423,7 +422,7 @@ exports.LoggerConstructor = function (dependencies) {
             }
             if (currentLogState.dev.Info && currentLogState.dev.LocalOnly) {
                 args.unshift("dev info (" + window.performance.now() + "):");
-                outputToConsole(orignalConsoleInfo, args);
+                outputToConsole(originalConsoleInfo, args);
             }
         }
     };
@@ -447,7 +446,7 @@ exports.LoggerConstructor = function (dependencies) {
             }
             if (currentLogState.dev.Log && currentLogState.dev.LocalOnly) {
                 args.unshift("dev log (" + window.performance.now() + "):");
-                outputToConsole(orignalConsoleLog, args);
+                outputToConsole(originalConsoleLog, args);
             }
         }
     };
@@ -471,7 +470,7 @@ exports.LoggerConstructor = function (dependencies) {
             }
             if (currentLogState.dev.Debug && currentLogState.dev.LocalOnly) {
                 args.unshift("dev debug (" + window.performance.now() + "):");
-                outputToConsole(orignalConsoleDebug, args);
+                outputToConsole(originalConsoleDebug, args);
             }
         }
     };
@@ -495,7 +494,7 @@ exports.LoggerConstructor = function (dependencies) {
             }
             if (currentLogState.dev.Verbose && currentLogState.dev.LocalOnly) {
                 args.unshift("dev verbose (" + window.performance.now() + "):");
-                outputToConsole(orignalConsoleDebug, args);
+                outputToConsole(originalConsoleDebug, args);
             }
         }
     };
@@ -511,7 +510,7 @@ exports.LoggerConstructor = function (dependencies) {
             formatAndQueueMessage("system", "Error", args);
         }
         args.unshift("system error (" + window.performance.now() + "):");
-        outputToConsole(orignalConsoleError, args);
+        outputToConsole(originalConsoleError, args);
     };
     this.system.warn = function () {
         if (currentLogState.system.Warn) {
@@ -522,7 +521,7 @@ exports.LoggerConstructor = function (dependencies) {
             }
             if (currentLogState.system.Warn && currentLogState.system.LocalOnly) {
                 args.unshift("system warn (" + window.performance.now() + "):");
-                outputToConsole(orignalConsoleWarn, args);
+                outputToConsole(originalConsoleWarn, args);
             }
         }
     };
@@ -537,7 +536,7 @@ exports.LoggerConstructor = function (dependencies) {
             }
             if (currentLogState.system.Info && currentLogState.system.LocalOnly) {
                 args.unshift("system info (" + window.performance.now() + "):");
-                outputToConsole(orignalConsoleInfo, args);
+                outputToConsole(originalConsoleInfo, args);
             }
         }
     };
@@ -552,7 +551,7 @@ exports.LoggerConstructor = function (dependencies) {
             }
             if (currentLogState.system.Log && currentLogState.system.LocalOnly) {
                 args.unshift("system log (" + window.performance.now() + "):");
-                outputToConsole(orignalConsoleLog, args);
+                outputToConsole(originalConsoleLog, args);
             }
         }
     };
@@ -567,7 +566,7 @@ exports.LoggerConstructor = function (dependencies) {
             }
             if (currentLogState.system.Debug && currentLogState.system.LocalOnly) {
                 args.unshift("system debug (" + window.performance.now() + "):");
-                outputToConsole(orignalConsoleDebug, args);
+                outputToConsole(originalConsoleDebug, args);
             }
         }
     };
@@ -583,7 +582,7 @@ exports.LoggerConstructor = function (dependencies) {
             if (currentLogState.system.Verbose && currentLogState.system.LocalOnly) {
                 var args = Array.prototype.slice.call(arguments); // make a real array so can manipulate
                 args.unshift("system log (" + window.performance.now() + "):");
-                outputToConsole(orignalConsoleDebug, args);
+                outputToConsole(originalConsoleDebug, args);
             }
         }
     };
@@ -596,7 +595,7 @@ exports.LoggerConstructor = function (dependencies) {
             formatAndQueueMessage("perf", "Error", args);
         }
         args.unshift("perf error (" + window.performance.now() + "):");
-        outputToConsole(orignalConsoleError, args);
+        outputToConsole(originalConsoleError, args);
     };
     this.perf.warn = function () {
         if (currentLogState.perf.Warn) {
@@ -607,7 +606,7 @@ exports.LoggerConstructor = function (dependencies) {
             }
             if (currentLogState.perf.Warn && currentLogState.perf.LocalOnly) {
                 args.unshift("perf warn (" + window.performance.now() + "):");
-                outputToConsole(orignalConsoleWarn, args);
+                outputToConsole(originalConsoleWarn, args);
             }
         }
     };
@@ -622,7 +621,7 @@ exports.LoggerConstructor = function (dependencies) {
             }
             if (currentLogState.perf.Info && currentLogState.perf.LocalOnly) {
                 args.unshift("perf info (" + window.performance.now() + "):");
-                outputToConsole(orignalConsoleInfo, args);
+                outputToConsole(originalConsoleInfo, args);
             }
         }
     };
@@ -637,7 +636,7 @@ exports.LoggerConstructor = function (dependencies) {
             }
             if (currentLogState.perf.Log && currentLogState.perf.LocalOnly) {
                 args.unshift("perf log (" + window.performance.now() + "):");
-                outputToConsole(orignalConsoleLog, args);
+                outputToConsole(originalConsoleLog, args);
             }
         }
     };
@@ -652,7 +651,7 @@ exports.LoggerConstructor = function (dependencies) {
             }
             if (currentLogState.perf.Debug && currentLogState.perf.LocalOnly) {
                 args.unshift("perf debug (" + window.performance.now() + "):");
-                outputToConsole(orignalConsoleDebug, args);
+                outputToConsole(originalConsoleDebug, args);
             }
         }
     };
@@ -667,7 +666,7 @@ exports.LoggerConstructor = function (dependencies) {
             }
             if (currentLogState.perf.Verbose && currentLogState.perf.LocalOnly) {
                 args.unshift("perf verbose (" + window.performance.now() + "):");
-                outputToConsole(orignalConsoleDebug, args);
+                outputToConsole(originalConsoleDebug, args);
             }
         }
     };
@@ -737,8 +736,8 @@ exports.LoggerConstructor = function (dependencies) {
         this.startupTime = performance.now();
         var self = this;
         if (!self.RouterClient) {
-            console.log("No instance of the RouterClient found for this instance of the Logger. Dynamically requireing it.");
-            self.RouterClient = __webpack_require__(4).default;
+            console.log("No instance of the RouterClient found for this instance of the Logger. Dynamically requiring it.");
+            self.RouterClient = __webpack_require__(5).default;
         }
         let onlineSubscription, allActiveSubscription;
         //Wait for the service before coming online. can't use the dependency manager, because it uses the router, which uses the logger.
@@ -746,7 +745,7 @@ exports.LoggerConstructor = function (dependencies) {
             self.status = "online";
             loggerConsole.system.debug("Logger onReady", loggerClientName);
             // timer calibration must be done so the messages will be correctly sorted in the central logger;
-            // this is necessary because there is timer driff between windows --- this appears to be a Chromium
+            // this is necessary because there is timer drift between windows --- this appears to be a Chromium
             // bug we have to work around it.  The timeOffset value adjusts the time using the routerService's
             // time as a central reference point.
             self.RouterClient.calibrateTimeWithRouterService(function (timeOffset) {
@@ -778,17 +777,16 @@ exports.LoggerConstructor = function (dependencies) {
     };
 };
 /** When running unit tests, we don't want to use the real Logger.
- * `fin` is an easy indicator of our environment.
+ * `window` is an easy indicator of our environment.
  * @TODO - refactor to some sort of global like FSBL.environment. */
-exports.Logger = typeof fin !== "undefined" ?
+exports.Logger = typeof window !== "undefined" ?
     new exports.LoggerConstructor()
     : new localLogger_1.LocalLogger();
 exports.default = exports.Logger;
 
 
 /***/ }),
-
-/***/ 1:
+/* 1 */
 /***/ (function(module, exports) {
 
 // shim for using process in browser
@@ -978,8 +976,6797 @@ process.umask = function() { return 0; };
 
 
 /***/ }),
+/* 2 */
+/***/ (function(module, exports) {
 
-/***/ 10:
+module.exports = function(originalModule) {
+	if(!originalModule.webpackPolyfill) {
+		var module = Object.create(originalModule);
+		// module.parent = undefined by default
+		if(!module.children) module.children = [];
+		Object.defineProperty(module, "loaded", {
+			enumerable: true,
+			get: function() {
+				return module.l;
+			}
+		});
+		Object.defineProperty(module, "id", {
+			enumerable: true,
+			get: function() {
+				return module.i;
+			}
+		});
+		Object.defineProperty(module, "exports", {
+			enumerable: true,
+		});
+		module.webpackPolyfill = 1;
+	}
+	return module;
+};
+
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process) {
+Object.defineProperty(exports, "__esModule", { value: true });
+/** The global `window` object. We cast it to a specific interface here to be
+ * explicit about what Finsemble-related properties it may have.*/
+const Globals = 
+/** In our testing environments (i.e, mocha running in node.js),
+ * `window` is not defined. Therefore, we have to check that `window`
+ * exists; otherwise, in node, `process` is the global context.
+ */
+typeof window !== "undefined" ?
+    window
+    : process;
+class SystemWindow {
+    constructor(params, cb, errCb) {
+        return new fin.desktop.Window(params, cb);
+    }
+    static get getCurrent() {
+        return fin.desktop.Window.getCurrent;
+    }
+    static get wrap() {
+        return fin.desktop.Window.wrap;
+    }
+}
+class Application {
+    constructor(params, cb, errCb) {
+        return new fin.desktop.Application(params, cb);
+    }
+    static get getCurrent() {
+        return fin.desktop.Application.getCurrent;
+    }
+    static get wrap() {
+        return fin.desktop.Application.wrap;
+    }
+}
+class SystemNotification {
+    constructor(params) {
+        new fin.desktop.Notification(params);
+    }
+}
+class System {
+    static get Application() {
+        return Application;
+    }
+    static get Window() {
+        return SystemWindow;
+    }
+    static get Notification() {
+        return SystemNotification;
+    }
+    static getMousePosition(cb) {
+        fin.desktop.System.getMousePosition((mousePosition) => {
+            if (mousePosition.left || mousePosition.left === 0)
+                mousePosition.x = mousePosition.left;
+            if (mousePosition.top || mousePosition.top === 0)
+                mousePosition.y = mousePosition.top;
+            cb(null, mousePosition);
+        }, (err) => { cb(err, null); });
+    }
+    static getMonitorInfo(cb) {
+        fin.desktop.System.getMonitorInfo((info) => {
+            cb(info);
+        });
+    }
+    // static get makes this behave like a static variable. so calling system.ready is equivalent to fin.desktop.main.
+    static get ready() {
+        return fin.desktop.main;
+    }
+    static get getHostSpecs() {
+        return fin.desktop.System.getHostSpecs;
+    }
+    static get launchExternalProcess() {
+        return fin.desktop.System.launchExternalProcess;
+    }
+    static get terminateExternalProcess() {
+        return fin.desktop.System.terminateExternalProcess;
+    }
+    static get getAllApplications() {
+        return fin.desktop.System.getAllApplications;
+    }
+    static get exit() {
+        return fin.desktop.System.exit;
+    }
+    static get clearCache() {
+        return fin.desktop.System.clearCache;
+    }
+    static get showDeveloperTools() {
+        return fin.desktop.System.showDeveloperTools;
+    }
+    static get getRuntimeInfo() {
+        return fin.desktop.System.getRuntimeInfo || chrome.desktop.getDetails;
+    }
+    static get addEventListener() {
+        /* events we use so far in Finsemble: monitor-info-changed, session-changed */
+        return fin.desktop.System.addEventListener;
+    }
+    static get getVersion() {
+        return fin.desktop.System.getVersion;
+    }
+    static get openUrlWithBrowser() {
+        return fin.desktop.System.openUrlWithBrowser;
+    }
+    static get getAllWindows() {
+        return fin.desktop.System.getAllWindows;
+    }
+    static FinsembleReady(cb) {
+        if (Globals.FSBL && Globals.FSBL.addEventListener) {
+            return Globals.FSBL.addEventListener("onready", cb);
+        }
+        return window.addEventListener("FSBLready", cb);
+    }
+    // This is not overriding or pointing to Openfin. This is the pattern used to close applications.
+    static closeApplication(app, cb = Function.prototype) {
+        const promiseResolver = (resolve) => {
+            let t;
+            let timeoutCleared = false;
+            let terminateAndResolve = () => {
+                if (timeoutCleared)
+                    return;
+                console.log("Attempting to terminate", app.uuid);
+                app.terminate(() => {
+                    cb();
+                    resolve();
+                }, () => {
+                    if (timeoutCleared)
+                        return;
+                    timeoutCleared = true;
+                    clearInterval(t);
+                    // If closing fails, force close
+                    console.log("force closing ", app.uuid);
+                    app.terminate();
+                });
+            };
+            //Hanging apps can be unresponsive to close and terminate calls for a period of time, keep trying until they're closed
+            t = setInterval(terminateAndResolve, 2000);
+            console.log("closing ", app.uuid);
+            //OpenFin windows will wait to callback until close is successful, so no need to keep trying to close on a success callback.
+            app.close(false, () => {
+                console.log("app.close: successfully closed", app.uuid);
+                timeoutCleared = true;
+                clearInterval(t);
+                cb();
+                resolve();
+            }, terminateAndResolve);
+        };
+        return new Promise(promiseResolver);
+    }
+}
+exports.System = System;
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || Function("return this")() || (1,eval)("this");
+} catch(e) {
+	// This works if the window reference is available
+	if(typeof window === "object")
+		g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+Object.defineProperty(exports, "__esModule", { value: true });
+const routerClientConstructor_1 = __webpack_require__(27);
+const logger_1 = __webpack_require__(0);
+let RCConstructor = routerClientConstructor_1.RouterClientConstructor;
+/** The logger needs a router client, and the router client needs a logger.
+ * To get around this fundamental circular dependency, we pass a reference
+ * of the RouterClient to the Logger. Only after this is called will the
+ * RouterClient and Logger be ready. If RouterClient is NOT required before
+ * the Logger, then this file will be dynamically required at Logger.start().
+ */
+/** An instance of the IRouterClient interface, (that is, the Router Client).
+ * All other clients are built on top of the RouterClient; its API is the
+ * primary form of communication between the various components of Finsemble.
+ */
+let RouterClientInstance = new RCConstructor({ clientName: "RouterClient" });
+logger_1.Logger.setRouterClient(RouterClientInstance);
+exports.default = RouterClientInstance;
+
+
+/***/ }),
+/* 6 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__systemSettings__ = __webpack_require__(29);
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+
+
+/**
+ * @introduction
+ * <h2>Finsemble Validate Functions</h2>
+ *
+ */
+
+/**
+ * Constructor for Finsemble argument validator.
+ *
+ * Validation logic is ONLY RAN when SystemSettings diagnostics level is set to debug (i.e. 4 or above)
+ * A failed validation will generate a warning message, but nothing more; however application logic can check the validation results.
+ *
+ * @param {string} console Finsemble console object used to display messages and check diagnostic level
+ * @constructor
+ * @shouldBePublished false
+ */
+var Validate = function () {
+
+	function warningMsg(paramDescript, thisArg, thisArgType) {
+
+		function getErrorObject() {
+			try {
+				throw Error("");
+			} catch (err) {
+				return err;
+			}
+		}
+
+		var err = getErrorObject();
+
+		var caller_line1 = err.stack.split("\n")[5];
+		var index1 = caller_line1.indexOf("at ");
+		var msgPart1 = caller_line1.slice(index1 + 2, caller_line1.length);
+
+		var caller_line2 = err.stack.split("\n")[6];
+		var index2 = caller_line2.indexOf("at ");
+		var msgPart2 = caller_line2.slice(index2 + 2, caller_line2.length);
+
+		console.warn("parameter validation failed: parameter " + paramDescript + " is of type '" + typeof thisArg + "' but should be of type '" + thisArgType + "' in" + msgPart1 + " called by" + msgPart2);
+	}
+
+	/**
+  * Confirm parameters are valid. A variable number of parameter pairs are supported.
+  * @param {any} param1 is arg to validate
+  * @param {string} paramType1 is required type for parameter (if '=' suffix then parameter is optional). "any" represents any type (but not "undefined").
+  * @param {any=} param2 is next arg to validate
+  * @param {string=} paramType2 os required type for next arg
+  * @return {boolean} returns turn if parameter list is valid; otherwise, false.
+  *
+  * @example
+  *
+  * var validate = new Validate(console);
+  * validate.args(name, "string", age, "number")
+  *
+  * validate.args(topic, "string", initialState, "object="); // with optional paramter (represented by "=")
+  *
+  * validate.args(topic, "string", initialState, "any"); // with "any" type
+  *
+  * validate.args(subscribeIDStruct, "object") && validate.args(subscribeIDStruct.subscribeID, "string"); // only do second validate if first test successful
+  *
+  * validate.args(subscribeIDStruct, "object", subscribeIDStruct.subscribeID, "string"); // only check second parm if first validated successful
+  *
+  * validate.args(topic, "any", initialState, "object=", params, "object="); // depending on logic, can break into separate validations
+  * params = params || {};
+  * validate.args(params.subscribeCallback, "function=", params.publishCallback, "function=", params.unsubscribeCallback, "function=");
+  */
+	this.args = function (param1, paramType1, param2, paramType2 /*.....optional more paramter pairs....*/) {
+		var returnCode = true;
+		if (__WEBPACK_IMPORTED_MODULE_0__systemSettings__["a" /* default */].validationEnabled()) {
+			var parmCount = arguments.length;
+			if ((parmCount + 1) % 2 !== 0) {
+				// parameters must come in pairs (i.e. even number)
+				for (var i = 0; i < parmCount; i = i + 2) {
+					var optionalArg = false;
+					var thisArg = arguments[i];
+					var thisArgType = arguments[i + 1];
+					if (thisArgType.slice(-1) === "=") {
+						// if last char is "=" then optional argument
+						thisArgType = thisArgType.slice(0, -1);
+						optionalArg = true;
+					}
+					if (typeof thisArg !== thisArgType) {
+						// confirms basic case -- the required type
+						if (!optionalArg || typeof thisArg !== "undefined") {
+							// but optional params can be undefined
+							if (typeof thisArg === "undefined" || thisArgType !== "any") {
+								// but "any" type doesn't have to match but can't be undefined
+								var parameterPosition = i / 2 + 1;
+								warningMsg(parameterPosition, thisArg, thisArgType);
+								returnCode = false;
+								break;
+							}
+						}
+					}
+				}
+			} else {
+				console.warn("validate.args requires even number of parameters: " + JSON.stringify(arguments));
+			}
+		}
+		return returnCode; // always return turn when validation is disable due debug label turned off
+	};
+
+	/**
+  * Confirm parameters are valid. args2() has the same functionality as args() except a third "parameter description" is passed in for each argument verified
+  * Typically this for passing in a properties name for better diagnostic messages when verifying object properties.
+  * A variable number of parameter "triples"" are supported.
+  *
+  * @param {string} paramName1 is descriptive name of param1 (for diagnostic message)
+  * @param {any} param1 is arg to validate
+  * @param {string} paramType1 is required type for parameter (if '=' suffix then parameter is optional). "any" represents any type (but not "undefined").
+  * @param {string} paramName2 is descriptive name of param1 (for diagnostic message)
+  * @param {any} param2 is arg to validate
+  * @param {string} paramType2 is required type for parameter (if '=' suffix then parameter is optional). "any" represents any type (but not "undefined").
+  * @return {boolean} returns turn if parameter list is valid; otherwise, false.
+  *
+  * @example
+  *
+  * var validate = new Utils.Validate(console);
+  * validate.args2("record.name", record.name, "string", "record.age", age, "number")
+  *
+  * // common case using args() and args2() together
+  * validate.args(topic, "any", initialState, "object=", params, "object=") &&
+  *   validate.args2("params.subscribeCallback", params.subscribeCallback, "function=", "params.publishCallback", params.publishCallback, "function=") &&
+  *   validate.args2("params.unsubscribeCallback", params.unsubscribeCallback, "function=");
+  */
+	this.args2 = function (paramName1, param1, paramType1, paramName2, param2, paramType2 /*.....optional, more paramter sets of three....*/) {
+
+		var returnCode = true;
+		if (__WEBPACK_IMPORTED_MODULE_0__systemSettings__["a" /* default */].validationEnabled()) {
+			var parmCount = arguments.length;
+			if ((parmCount + 1) % 3 !== 0) {
+				// parameters must come in sets of three
+				for (var i = 0; i < parmCount; i = i + 3) {
+					var optionalArg = false;
+					var thisArgName = arguments[i];
+					var thisArg = arguments[i + 1];
+					var thisArgType = arguments[i + 2];
+					if (thisArgType.slice(-1) === "=") {
+						// if last char is "=" then optional argument
+						thisArgType = thisArgType.slice(0, -1);
+						optionalArg = true;
+					}
+					if (typeof thisArg !== thisArgType) {
+						// confirms basic case -- the required type
+						if (!optionalArg || typeof thisArg !== "undefined") {
+							// but optional params can be undefined
+							if (typeof thisArg === "undefined" || thisArgType !== "any") {
+								// but "any" type doesn't have to match but can't be undefined
+								warningMsg(thisArgName, thisArg, thisArgType);
+								returnCode = false;
+								break;
+							}
+						}
+					}
+				}
+			} else {
+				console.warn("validate.args requires even number of parameters: " + JSON.stringify(arguments));
+			}
+		}
+		return returnCode; // always return turn when validation is disable due debug label turned off
+	};
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (new Validate());
+
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\validate.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\validate.js"); } } })();
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+const routerClientInstance_1 = __webpack_require__(5);
+const validate_1 = __webpack_require__(6); // Finsemble args validator
+const logger_1 = __webpack_require__(0);
+const system_1 = __webpack_require__(3);
+const dependencyManager_1 = __webpack_require__(14);
+/**
+ * @introduction
+ * <h2>Base Client</h2>
+ * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependencies are met, either client or service, the client's `onReady` method is fired.
+ *
+ * We're currently halfway through migrating our clients from extending a normal function prototype to an ES6 class.
+ * "_BaseClient" represents the new class, while "BaseClient" is the original function. When the migration is complete,
+ * we will remove the old function and rename "_BaseClient" to "BaseClient".
+ * @constructor
+ * @param {Object} params
+ * @param {Function} params.onReady - A function to be called after the client has initialized.
+ * @param {String} params.name - The name of the client
+ * @shouldBePublished false
+    @example
+    import { _BaseClient as BaseClient } from "./baseClient";
+    var NewClient = function (params) {
+        BaseClient.call(this, params);
+        var self = this;
+
+        return this;
+    };
+
+    var clientInstance = new NewClient({
+        onReady: function (cb) {
+            Logger.system.log("NewClient Online");
+            cb();
+        },
+        name:"NewClient"
+    });
+    clientInstance.requiredServices = [REPLACE_THIS_ARRAY_WITH_DEPENENCIES];
+    clientInstance.initialize();
+    module.exports = clientInstance;
+    @private
+ */
+class _BaseClient {
+    constructor(params) {
+        /** The current status of this service. */
+        this.status = "offline";
+        this.startupTime = 0;
+        this.initialized = false;
+        this.startupDependencies = { services: [], clients: [] };
+        /** Gets the current window. */
+        this.finsembleWindow = null;
+        /** Gets the current window name. */
+        this.windowName = "";
+        /** Queue of functions to process once the client goes online. */
+        this.clientReadyQueue = [];
+        /**
+         * @private
+         *
+         */
+        this.processClientReadyQueue = () => {
+            for (let cb of this.clientReadyQueue) {
+                cb();
+            }
+            this.clientReadyQueue = [];
+        };
+        /**
+         * @private
+         *
+         */
+        this.onReady = (cb) => {
+            this.clientReadyQueue.push(cb);
+            if (this.status === "online") {
+                this.processClientReadyQueue();
+            }
+        };
+        /** Check to see if the client can come online. We check this against the required services and clients */
+        /**
+     * @private
+     *
+     */
+        this.setClientOnline = () => {
+            this.status = "online";
+            const onReadyMessage = `STARTUP:CLIENT ONLINE:${this.finWindow.name}:${this.name}`;
+            this.startupTime = window.performance.now() - this.startupTime;
+            const readyCB = () => {
+                this.logger.system.debug(onReadyMessage);
+                this.processClientReadyQueue();
+                dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(this.name);
+            };
+            if (this._onReady) {
+                this._onReady(readyCB);
+            }
+            else {
+                readyCB();
+            }
+        };
+        /**
+         * @private
+         *
+         */
+        this.initialize = (cb = Function.prototype) => {
+            if (this.initialized)
+                return;
+            this.initialized = true;
+            this.startupTime = performance.now();
+            this.routerClient.onReady(() => {
+                // TODO, [terry] allow the finsembleWindow to be passed in, so we can support proxying windowClient in RPC
+                this.finWindow = system_1.System.Window.getCurrent();
+                this.windowName = this.finWindow.name;
+                this.logger.system.debug("Baseclient Init Router Ready", this.name);
+                dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor(this.startupDependencies, () => {
+                    cb();
+                    this.setClientOnline();
+                });
+            });
+        };
+        /**
+         * @private
+         *
+         */
+        this.onClose = (cb) => {
+            if (cb)
+                cb();
+        };
+        this.name = params.name;
+        this._onReady = params.onReady;
+        this.startupDependencies = params.startupDependencies || {
+            services: [],
+            clients: []
+        };
+        // @TODO - Refactor this to use DI.
+        this.logger = logger_1.default;
+        /**
+         * Reference to the RouterClient
+         */
+        this.routerClient = routerClientInstance_1.default;
+    }
+}
+exports._BaseClient = _BaseClient;
+/**
+ * @introduction
+ * <h2>Base Client</h2>
+ * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependencies are met, either client or service, the client's `onReady` method is fired.
+ * @constructor
+ * @param {Object} params
+ * @param {Function} params.onReady - A function to be called after the client has initialized.
+ * @param {String} params.name - The name of the client
+ * @shouldBePublished false
+    @example
+    import { _BaseClient as BaseClient } from "./baseClient";
+    var NewClient = function (params) {
+        BaseClient.call(this, params);
+        var self = this;
+
+        return this;
+    };
+
+    var clientInstance = new NewClient({
+        onReady: function (cb) {
+            Logger.system.log("NewClient Online");
+            cb();
+        },
+        name:"NewClient"
+    });
+    clientInstance.requiredServices = [REPLACE_THIS_ARRAY_WITH_DEPENENCIES];
+    clientInstance.initialize();
+    module.exports = clientInstance;
+    @private
+ */
+var BaseClient = function (params) {
+    validate_1.default.args(params, "object=");
+    var self = this;
+    var status = "offline";
+    var onReady;
+    this.startupTime = 0;
+    if (params) {
+        if (params.onReady) {
+            onReady = params.onReady;
+        }
+        this.name = params.name;
+    }
+    this.initialized = false;
+    this.startupDependencies = params.startupDependencies || {
+        services: [],
+        clients: []
+    };
+    /**
+     * Reference to the RouterClient
+     *  @type {Object}
+     */
+    this.routerClient = routerClientInstance_1.default;
+    /**
+     * Gets the current openfin window - stays here for backward compatibility
+     * @type {object}
+     */
+    this.finWindow = null;
+    /**
+     * Gets the current window
+     * @type {object}
+     */
+    this.finsembleWindow = null;
+    /**
+     * Gets the current window name
+     *  @type {string}
+     */
+    this.windowName = ""; //The current window
+    /**
+     * Services the are required to be online before the service can come online
+     *  @type {Array.<Object>}
+     */
+    this.requiredServices = [];
+    /**
+     * Clients the are required to be online before the service can come online
+     *  @type {Array.<Object>}
+     */
+    this.requiredClients = [];
+    /**
+     * Queue of functions to process once the client goes online.
+     * @private
+     */
+    this.clientReadyQueue = [];
+    /**
+     * Iterates through the clientReadyQueue, invoking each call to `.ready`.
+     */
+    this.processClientReadyQueue = function () {
+        for (var i = 0; i < this.clientReadyQueue.length; i++) {
+            let callback = this.clientReadyQueue[i];
+            if (typeof callback === "function") {
+                callback();
+            }
+        }
+        this.clientReadyQueue = [];
+    };
+    /**
+     * Method for adding callbacks to each client.
+     */
+    this.onReady = function (cb) {
+        this.clientReadyQueue.push(cb);
+        if (status === "online") {
+            this.processClientReadyQueue();
+        }
+    };
+    //Check to see if the client can come online. We check this against the required services and clients
+    this.setClientOnline = function () {
+        var self = this;
+        status = "online";
+        let onReadyMessage = `STARTUP:CLIENT ONLINE:${self.finWindow.name}:${self.name}`;
+        self.startupTime = performance.now() - self.startupTime;
+        if (onReady) {
+            onReady(function () {
+                logger_1.default.system.debug(onReadyMessage);
+                self.processClientReadyQueue();
+                dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(self.name);
+            });
+        }
+        else {
+            logger_1.default.system.debug(onReadyMessage);
+            self.processClientReadyQueue();
+            dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(self.name);
+        }
+    };
+    /**
+    * Starts the process of checking services and any other function required before the client can come online
+    */
+    this.initialize = function (cb = Function.prototype) {
+        if (self.initialized) {
+            return;
+        }
+        self.initialized = true;
+        self.setClientOnline = self.setClientOnline.bind(self);
+        self.startupTime = performance.now();
+        self.routerClient.onReady(function () {
+            // TODO, [terry] allow the finsembleWindow to be passed in, so we can support proxying windowClient in RPC
+            self.finWindow = system_1.System.Window.getCurrent();
+            self.windowName = self.finWindow.name;
+            logger_1.default.system.debug("Baseclient Init Router Ready", self.name);
+            dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor({
+                services: self.startupDependencies.services || [],
+                clients: self.startupDependencies.clients || []
+            }, () => {
+                cb();
+                self.setClientOnline();
+            });
+        });
+    };
+    this.onClose = function () { };
+};
+exports.default = BaseClient;
+
+
+/***/ }),
+/* 8 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony export (immutable) */ __webpack_exports__["getOpenfinVersion"] = getOpenfinVersion;
+/* harmony export (immutable) */ __webpack_exports__["castToPromise"] = castToPromise;
+/* harmony export (immutable) */ __webpack_exports__["isPercentage"] = isPercentage;
+/* harmony export (immutable) */ __webpack_exports__["crossDomain"] = crossDomain;
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getAllMonitors", function() { return getAllMonitors; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getMonitorFromOpenFinXY", function() { return getMonitorFromOpenFinXY; });
+/* harmony export (immutable) */ __webpack_exports__["getMonitorFromWindow"] = getMonitorFromWindow;
+/* harmony export (immutable) */ __webpack_exports__["getFinWindow"] = getFinWindow;
+/* harmony export (immutable) */ __webpack_exports__["getWindowDescriptor"] = getWindowDescriptor;
+/* harmony export (immutable) */ __webpack_exports__["findMonitor"] = findMonitor;
+/* harmony export (immutable) */ __webpack_exports__["getWhichMonitor"] = getWhichMonitor;
+/* harmony export (immutable) */ __webpack_exports__["getMonitorFromCommand"] = getMonitorFromCommand;
+/* harmony export (immutable) */ __webpack_exports__["windowOnMonitor"] = windowOnMonitor;
+/* harmony export (immutable) */ __webpack_exports__["getMonitorByDescriptor"] = getMonitorByDescriptor;
+/* harmony export (immutable) */ __webpack_exports__["getMonitor"] = getMonitor;
+/* harmony export (immutable) */ __webpack_exports__["getMyWindowIdentifier"] = getMyWindowIdentifier;
+/* harmony export (immutable) */ __webpack_exports__["camelCase"] = camelCase;
+/* harmony export (immutable) */ __webpack_exports__["clone"] = clone;
+/* harmony export (immutable) */ __webpack_exports__["guuid"] = guuid;
+/* harmony export (immutable) */ __webpack_exports__["injectJS"] = injectJS;
+/* harmony export (immutable) */ __webpack_exports__["openSharedData"] = openSharedData;
+/* harmony export (immutable) */ __webpack_exports__["getNewBoundsWhenMovedToMonitor"] = getNewBoundsWhenMovedToMonitor;
+/* harmony export (immutable) */ __webpack_exports__["adjustBoundsToBeOnMonitor"] = adjustBoundsToBeOnMonitor;
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__system__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__ = __webpack_require__(25);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_logger__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_uuid_v1__);
+/*!
+ * Copyright 2017 by ChartIQ, Inc.
+ * All rights reserved.
+ */
+
+
+const Monitors = new __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__["a" /* default */](Function.prototype, Function.prototype, { System: __WEBPACK_IMPORTED_MODULE_0__system__["System"] });
+/* harmony export (immutable) */ __webpack_exports__["Monitors"] = Monitors;
+
+
+
+
+/*if (typeof fin !== "undefined") { //For Docking Tests -> removing this because Monitors are now handled bu the Monitors object. Docking tests will fail.
+	System.ready(() => {
+		System.addEventListener("monitor-info-changed", function () {
+			allMonitors = [];
+			getAllMonitors();
+		});
+	});
+}*/
+
+/**
+ * Gets the openfin version in object form.
+ */
+function getOpenfinVersion(cb = Function.prototype) {
+	return new Promise(function (resolve /*, reject*/) {
+		__WEBPACK_IMPORTED_MODULE_0__system__["System"].getVersion(ver => {
+			let verArr = ver.split(".").map(Number);
+			let versionObject = {
+				major: verArr[0],
+				chromium: verArr[1],
+				minor: verArr[2],
+				patch: verArr[3]
+			};
+			cb(versionObject);
+			resolve({ versionObject });
+		});
+	});
+};
+/**
+	 * Given a function _that returns a value_, this method will return a thenable object.
+	 * **NOTE** This will not work if your function doesn't return something.
+	 *  <example>
+	 *		function myFunc(){
+				console.log('I promise that this is not a promise.');
+			 }
+		let myPromise = util.castToPromise(myFunc);
+		myPromise().then(doSomethingElse);
+		</example>
+
+	 */
+function castToPromise(f) {
+	return function () {
+		return new Promise((resolve, reject) => {
+			//Calls f, checks to see if the returned object has a `then` method. if not, it will resolve the result from the initial function.
+			const result = f.apply(null, Array.from(arguments));
+			try {
+				return result.then(resolve, reject);
+			} catch (e) {
+				if (e instanceof TypeError) {
+					resolve(result);
+				} else {
+					reject(e);
+				}
+			}
+		});
+	};
+};
+
+/**
+ * @introduction
+ * <h2>Finsemble Utility Functions</h2>
+ */
+
+function isPercentage(val) {
+	if (typeof val !== "string") {
+		return false;
+	}
+	return val.indexOf("%") !== -1;
+};
+
+function crossDomain(url) {
+	var parser = document.createElement("a");
+	parser.href = url;
+
+	var isSameHost = window.location.hostname === parser.hostname;
+
+	var isSameProtocol = window.location.protocol === parser.protocol;
+
+	var wport = window.location.port !== undefined ? window.location.port : 80;
+	var pport = parser.port !== undefined ? parser.port : 80;
+	var isSamePort = wport === pport;
+
+	var isCrossDomain = !(isSameHost && isSamePort && isSameProtocol);
+	__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.debug("Launcher crossDomain=" + isCrossDomain + " (" + isSameHost + ":" + isSameProtocol + ":" + isSamePort + ")");
+	return isCrossDomain;
+};
+
+/**
+ * Gets an array of monitor descriptors. Essentially rationalizing the results of OpenFin getMonitorInfo.
+ * into a single array with additional information added.
+ *
+ * whichMonitor is set to the secondary monitor number, or "primary" if the primary monitor.
+ * position is set to a zero index, where primary is the zero position, and each non-primary increments thereafter.
+ *
+ * Additionally, width and height are calculated and filled in for availableRect and monitorRect.
+ *
+ * @param {callback-array} cb Returns a list of monitor descriptors (optional or use promise)
+ */
+var getAllMonitors = Monitors.getAllMonitors;
+
+/**
+ * Retrieves a monitor descriptor given an absolute X Y on the OpenFin virtual screen
+ * @param  {number} x The x position
+ * @param  {number} y The y position
+ * @param {callback-object}  cb Returns the monitor information from OpenFin.
+ * "isPrimary" is set to true if it's the primary monitor.
+ * null is returned if the x,y coordinates are beyond the bounds of the virtual screen.
+ */
+var getMonitorFromOpenFinXY = Monitors.getMonitorFromScaledXY;
+
+/**
+ * Retrieves a monitor descriptor for a window. If the window straddles two monitors
+ * then the monitor from the top left is provided and "straddling" flag is set to true.
+ *
+ * @param  {WindowDescriptor}   windowDescriptor A windowDescriptor
+ * @param  {Function} cb               Returns a monitor descriptor (optional or use promise)
+ * @returns {Promise} A promise that resolves to a monitor descriptor
+ */
+function getMonitorFromWindow(windowDescriptor, cb) {
+	var x = Number.isFinite(windowDescriptor.x) ? windowDescriptor.x : windowDescriptor.defaultLeft;
+	var y = Number.isFinite(windowDescriptor.y) ? windowDescriptor.y : windowDescriptor.defaultTop;
+	var x2 = x + windowDescriptor.defaultWidth;
+	var y2 = y + windowDescriptor.defaultHeight;
+	return new Promise(function (resolve, reject) {
+
+		// get monitor of top-left
+		Monitors.getMonitorFromScaledXY(x, y, function (monitor) {
+			if (!monitor) {
+				__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.debug("getMonitorFromWindow - top-left is off screen, trying bottom right");
+				// get monitor of bottom-right
+				Monitors.getMonitorFromScaledXY(x2, y2, function (monitor) {
+					if (!monitor) {
+						__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.debug("getMonitorFromWindow - bottom-right is off screen, getting primary");
+						// get primary monitor - add message to the monitor saying that this window isn't really on a monitor
+						Monitors.getAllMonitors(function (monitors) {
+							if (monitors[0]) {
+								if (cb) {
+									cb(monitors[0]);
+								}
+								resolve(monitors[0]);
+							} else {
+								reject(new Error("Cannot find monitor for window."));
+								if (cb) {
+									cb(null);
+								}
+							}
+						});
+						return;
+					}
+					monitor = clone(monitor);
+					var monitorRect = monitor.monitorRect;
+					if (monitorRect.left < x || monitorRect.right < y) {
+						monitor.straddling = true;
+					}
+					if (cb) {
+						cb(monitor);
+					}
+					resolve(monitor);
+				});
+				return;
+			}
+			monitor = clone(monitor);
+			var monitorRect = monitor.monitorRect;
+			if (monitorRect.right > x2 || monitorRect.bottom > y2) {
+				monitor.straddling = true;
+			}
+			if (cb) {
+				cb(monitor);
+			}
+			resolve(monitor);
+		});
+	});
+};
+
+/**
+ * Returns a finWindow or null if not found
+ * @param  {WindowIdentifier}   windowIdentifier A window identifier
+ * @param  {Function} cb               Optional callback containing finWindow or null if not found (or use Promise)
+ * @return {Promise}                    Promise that resolves to a finWindow or rejects if not found
+ */
+function getFinWindow(windowIdentifier, cb) {
+	return new Promise(function (resolve, reject) {
+		// Default to current window
+		var myWindow = __WEBPACK_IMPORTED_MODULE_0__system__["System"].Window.getCurrent();
+
+		// Get OpenFin options (windowDescriptor) for current window
+		// we need this info even if we're going to reference a different window
+		myWindow.getOptions(function (options) {
+			// If windowName is provided, then find that window
+			if (windowIdentifier && windowIdentifier.windowName) {
+				// If we didn't get a uuid from the caller, then assume
+				// it's the same window as current window
+				if (!windowIdentifier.uuid) {
+					windowIdentifier.uuid = options.uuid;
+				}
+				/**
+     * Try to wrap the window; if it exists, getInfo will get in
+     *  to the success function. If not, it'll go into the error callback.
+     */
+				let remoteWindow = __WEBPACK_IMPORTED_MODULE_0__system__["System"].Window.wrap(windowIdentifier.uuid, windowIdentifier.windowName);
+				remoteWindow.getInfo(() => {
+					if (cb) {
+						cb(remoteWindow);
+					}
+
+					resolve(remoteWindow);
+				}, function () {
+					if (cb) {
+						cb(null);
+					}
+					reject(`Window ${windowIdentifier.windowName} not found. UUID: ${windowIdentifier.uuid}`);
+					console.debug("util.getFinWindow: Window " + windowIdentifier.windowName + " not found");
+					return;
+				});
+			} else if (windowIdentifier && windowIdentifier.componentType) {
+				if (typeof LauncherService !== "undefined") {
+					let remoteWindow = LauncherService.componentFinder(windowIdentifier);
+					if (remoteWindow) {
+						resolve(remoteWindow);
+						if (cb) {
+							cb(remoteWindow);
+						}
+					} else {
+						reject("util.getFinWindow: Component " + windowIdentifier.componentType + " not found.");
+						if (cb) {
+							cb(null);
+						}
+					}
+				} else {
+					//@TODO, get this through a remote call to Launcher service
+					reject("getFinWindow by componentType is currently only operable within LaunchService");
+					if (cb) {
+						cb(null);
+					}
+				}
+			} else {
+				// return windowDescriptor for current window
+				if (cb) {
+					cb(myWindow);
+				}
+				resolve(myWindow);
+			}
+		});
+	});
+};
+
+/**
+ * Retrieves a windowDescriptor given a windowIdentifier
+ * @param {WindowIdentifier} [windowIdentifier] The window to locate. If empty then the current window is returned.
+ * @param {function} cb Function to retrieve result (optional or use Promise)
+ * @return {Promise} A promise that resolves to a WindowDescriptor
+ */
+function getWindowDescriptor(windowIdentifier, cb) {
+	return new Promise(function (resolve, reject) {
+		getFinWindow(windowIdentifier).then(function (finWindow) {
+			finWindow.getOptions(function (options) {
+				if (cb) {
+					cb(options);
+				}
+				resolve(options);
+			});
+		}).catch(function (errorMessage) {
+			console.warn(errorMessage);
+			if (cb) {
+				cb(null);
+			}
+			reject(errorMessage);
+		});
+	});
+};
+
+function findMonitor(monitors, field, value) {
+	for (var i = 0; i < monitors.length; i++) {
+		var monitor = monitors[i];
+		if (monitor[field] === value) {
+			return monitor;
+		}
+	}
+	return null;
+};
+/**
+ * @param {number} commandMonitor
+ * @param {Array.<Object>} monitors
+ * @param {number} launchingMonitorPosition
+ * commandMonitor, monitors, launchingMonitorPosition
+ */
+function getWhichMonitor(params, cb) {
+	//First release of this method took 3 params.
+	if (arguments.length > 2) {
+		params = {
+			commandMonitor: arguments[0],
+			monitors: arguments[1],
+			launchingMonitorPosition: arguments[2]
+		};
+		cb = null;
+	}
+	var monitor;
+	var { commandMonitor, monitors, launchingMonitorPosition } = params;
+	var isANumber = commandMonitor && commandMonitor !== "" || commandMonitor === 0;
+	if (commandMonitor === "primary") {
+		monitor = findMonitor(monitors, "whichMonitor", "primary");
+	} else if (commandMonitor === "next") {
+		let position = launchingMonitorPosition + 1;
+		if (position >= monitors.length) {
+			position = 0;
+		}
+		monitor = monitors[position];
+	} else if (commandMonitor === "previous") {
+		let position = launchingMonitorPosition - 1;
+		if (position < 0) {
+			position = monitors.length - 1;
+		}
+		monitor = monitors[position];
+	} else if (commandMonitor === "mine") {
+		var waiting = true;
+		//assuming this is always used in the launcher
+		var w = activeWindows.getWindow(params.windowIdentifier.windowName);
+		w._getBounds((err, bounds) => {
+			if (!err) {
+				Monitors.getMonitorFromScaledXY(bounds.left, bounds.top, monitor => {
+					cb(monitor);
+				});
+			} else {
+				monitor = monitors[0];
+				cb(monitor);
+			}
+		});
+	} else if (isANumber) {
+		if (commandMonitor >= monitors.length) {
+			commandMonitor = monitors.length - 1;
+		}
+		monitor = monitors.filter(monitor => monitor.position === commandMonitor)[0];
+	} else if (launchingMonitorPosition) {
+		monitor = monitors[launchingMonitorPosition];
+	}
+
+	if (!monitor) {
+		// primary if no monitor found
+		monitor = monitors[0];
+	}
+
+	if (!waiting) {
+		if (cb) {
+			cb(monitor);
+		} else {
+			//maintaining backwards compatibility
+			return monitor;
+		}
+	}
+};
+
+/**
+ * Gets a monitorInfo based on a command. A command is the typical "monitor" param
+ * @param  {string} commandMonitor   Monitor command. See {@link LauncherClient#spawn}
+ * @param  {object} windowIdentifier The windowIdentifier of the calling function. Necessary to support "next","previous" an default.
+ * @param {function} [cb] Optional callback
+ * @returns {Promise} A promise that resolves to a monitorInfo
+ */
+function getMonitorFromCommand(commandMonitor, windowIdentifier, cb) {
+	return new Promise(function (resolve /*, reject*/) {
+		getMonitor(windowIdentifier, function (monitorInfo) {
+			Monitors.getAllMonitors(function (monitors) {
+				let params = {
+					commandMonitor: commandMonitor,
+					monitors: monitors,
+					launchingMonitorPosition: monitorInfo.position
+				};
+				getWhichMonitor(params, function (finalMonitorInfo) {
+					if (cb) {
+						cb(finalMonitorInfo);
+					}
+					resolve(finalMonitorInfo);
+				});
+			});
+		});
+	});
+};
+
+/**
+ * @private
+ * @param {WindowDescriptor} windowDescriptor
+ * @param {monitorDimensions} monitorDimensions
+ * @returns {boolean} Whether window is on the current monitor.
+ */
+function windowOnMonitor(windowDescriptor, monitorDimensions) {
+	//if right or left edge is within the window's bounds.
+	if (windowDescriptor.left >= monitorDimensions.left && windowDescriptor.left < monitorDimensions.right || windowDescriptor.right <= monitorDimensions.right && windowDescriptor.right > monitorDimensions.left) {
+		return true;
+	}
+	return false;
+};
+/**
+ * Convenience function to get the monitor for the current window
+ * @param {WindowDescriptor} [windowIdentifier] The window to find the monitor for. Current window if empty.
+ * @param  {Function} cb Returns a monitor descriptor (optional or use Promise)
+ * @returns {Promise} A promise that resolves to a monitor descriptor
+ */
+function getMonitorByDescriptor(windowDescriptor, cb) {
+	return new Promise(function (resolve /*, reject*/) {
+		getMonitorFromWindow(windowDescriptor, function (monitor) {
+			if (cb) {
+				cb(monitor);
+			}
+			resolve(monitor);
+		});
+	});
+};
+/**
+ * Convenience function to get the monitor for the current window
+ * @param {WindowIdentifier} [windowIdentifier] The window to find the monitor for. Current window if empty.
+ * @param  {Function} cb Returns a monitor descriptor (optional or use Promise)
+ * @returns {Promise} A promise that resolves to a monitor descriptor
+ */
+function getMonitor(windowIdentifier, cb) {
+	return new Promise(function (resolve, reject) {
+		getWindowDescriptor(windowIdentifier, function (windowDescriptor) {
+			if (!windowDescriptor) {
+				reject("util.getMonitor: Can't locate windowDescriptor.");
+			} else {
+				getMonitorFromWindow(windowDescriptor, function (monitor) {
+					if (cb) {
+						cb(monitor);
+					}
+					resolve(monitor);
+				});
+			}
+		});
+	});
+};
+/**
+ * Returns a windowIdentifier for the current window
+ * @param {Function} cb Callback function returns windowIdentifier for this window (optional or use Promise)
+ * @returns {Promise} A promise that resolves to a windowIdentifier
+ */
+// @TODO, [Terry] this should be eliminated in favor of calls to windowClient.getWindowIdentifier()
+function getMyWindowIdentifier(cb) {
+	var finWindow = __WEBPACK_IMPORTED_MODULE_0__system__["System"].Window.getCurrent();
+	return new Promise(function (resolve) {
+		finWindow.getOptions(windowDescriptor => {
+			var componentType = null;
+
+			// Figure out the component type from what was originally stored when we launched the window
+			// options.customData is where our stuff is found
+			var customData = windowDescriptor.customData;
+			if (customData && customData.component) {
+				componentType = customData.component.type;
+			}
+			var windowIdentifier = {
+				windowName: finWindow.name,
+				uuid: finWindow.uuid,
+				componentType: componentType
+			};
+
+			if (cb) {
+				cb(windowIdentifier);
+			}
+			resolve(windowIdentifier);
+		});
+	});
+};
+/**
+ *	@returns {string} Transforms an array of strings into a camel cased string.
+ * @memberof Utils
+ */
+function camelCase() {
+	var str = "";
+	for (var i = 0; i < arguments.length; i++) {
+		str += " " + arguments[i];
+	}
+	return str.replace(/\s(.)/g, function ($1) {
+		return $1.toUpperCase();
+	}).replace(/\s/g, "").replace(/^(.)/, function ($1) {
+		return $1.toLowerCase();
+	});
+};
+
+/**
+ * Convenience method for cloning an object.
+ * @param  {any} from The thing you want to copy
+ * @param {any=} to Where you want your copy to end up.
+ * @return {any} to Where you want your copy gwe end up.
+ */
+function clone(from, to) {
+	if (from === null || typeof from !== "object") {
+		return from;
+	}
+	// if (from.constructor != Object && from.constructor != Array) return from;
+	if (from.constructor == Date || from.constructor == RegExp || from.constructor == Function || from.constructor == String || from.constructor == Number || from.constructor == Boolean) {
+		return new from.constructor(from);
+	}
+
+	to = to || new from.constructor();
+
+	for (var n in from) {
+		to[n] = typeof to[n] === "undefined" ? clone(from[n], null) : to[n];
+	}
+
+	return to;
+}
+
+function guuid() {
+	return __WEBPACK_IMPORTED_MODULE_3_uuid_v1___default()(); // return global uuid
+};
+
+function injectJS(path, cb) {
+	//Inject a script tag with the path given. Once the script is loaded, it executes the callback.
+	var script = document.createElement("script");
+	script.onload = cb;
+	script.type = "text/javascript";
+	script.async = true;
+	script.src = path;
+	var head = document.getElementsByTagName("head")[0];
+	var firstScript = head.getElementsByTagName("script")[0];
+	head.insertBefore(script, firstScript);
+};
+
+/** Daniel H. 1/14/2019
+ * @TODO - This method is only used in the DragAndDrop client, and it introduces a sneaky circular dependency between
+ * this module and the launcherClient. It should be refactored out of this module. This can't be done until v4.0.0, as
+ * it would be a breaking change to our API.
+ */
+/**
+ * This will either open a component with the shared data or publish the shared data using the linker client if the window is linked.
+ * @experimental
+ *
+ * @param {object} params
+ * @param {object} [params.data]
+ * @param {boolean} [params.publishOnly] if the component is linked, this will only publish the data, not force open a window if it does not exist. If the component is not linked, this is ignored.
+ * @param {function} [params.multipleOpenerHandler] Optional. This function is called with on object that contains a map of componentTypes to the data types they can open. It must return a list of components to be opened. If no handler is provided, the first found component will be chosen. It is possible that the component opened may not handle all the data provided.
+ * @param {function} cb callback invoked with action taken.
+ *
+ * @since 1.5: multipleOpenerHandler and callback added
+ *
+ */
+function openSharedData(params, cb) {
+	var launcherClient = FSBL.Clients.LauncherClient;
+	var linkerClient = FSBL.Clients.LinkerClient;
+	//If no handler is specified to deal with multiple components, use the first found
+	if (!params.multipleOpenerHandler) params.multipleOpenerHandler = function (componentsMappedToData) {
+		// find the component that can open the most amount of data
+		var maxDataTypesOpened = 0;
+		var componentToOpen;
+		for (var componentType of Object.keys(componentsMappedToData)) {
+			if (componentsMappedToData[componentType].length > maxDataTypesOpened) {
+				componentToOpen = componentType;
+				maxDataTypesOpened = componentsMappedToData[componentType].length;
+			}
+		}
+		return [componentToOpen];
+	};
+
+	var errors = [];
+	var componentsMappedToData = {};
+
+	// Loop through the data
+	launcherClient.getComponentsThatCanReceiveDataTypes({ dataTypes: Object.keys(params.data) }, function (err, dataTypeComponentMap) {
+		for (var dataType of Object.keys(dataTypeComponentMap)) {
+			if (!dataTypeComponentMap[dataType].componentTypes.length) {
+				var error = "No Components Available to Handle the type: " + dataType;
+				errors.push(error);
+				__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.error(error);
+			} else {
+				for (var component of dataTypeComponentMap[dataType].componentTypes) {
+					if (!componentsMappedToData[component]) {
+						componentsMappedToData[component] = [dataType];
+					} else componentsMappedToData[component].push(dataType);
+				}
+			}
+		}
+
+		// What if multiple components need to be opened?
+		var componentsToOpen = Object.keys(componentsMappedToData);
+		if (componentsToOpen.length) {
+			if (componentsToOpen.length > 1) {
+				componentsToOpen = params.multipleOpenerHandler(componentsMappedToData);
+			}
+			var linkerChannels = Object.keys(linkerClient.channels);
+			if (linkerChannels.length) {
+				//if linked
+				var linkedWindows = linkerClient.getLinkedComponents({ componentTypes: componentsToOpen, windowIdentifier: linkerClient.windowIdentifier() });
+				// TODO: deal with the case if not all componentTypes that need to be opened are linked
+				if (linkedWindows.length || params.publishOnly) {
+					// If publishOnly is true then just publish, not spawn
+					linkerClient.publish({
+						dataType: "Finsemble.DragAndDropClient",
+						data: params.data
+					});
+					if (cb) cb(errors.length ? errors : null, "Data published");
+				} else {
+					// spawn
+					for (let component of componentsToOpen) {
+						launcherClient.spawn(component, {
+							data: {
+								sharedData: params.data,
+								linker: {
+									channels: linkerChannels
+								}
+							},
+							addToWorkspace: true
+						});
+					}
+					if (cb) cb(errors.length ? errors : null, "Linked Window(s) spawned with data");
+				}
+			} else {
+				if (!params.publishOnly) {
+					for (let component of componentsToOpen) {
+						launcherClient.spawn(component, {
+							data: {
+								sharedData: params.data
+							},
+							addToWorkspace: true
+						});
+					}
+					if (cb) cb(errors.length ? errors : null, "New Window(s) spawned with data");
+				}
+			}
+		} else {
+			if (cb) cb(errors.length ? errors : null, null);
+		}
+	});
+};
+
+/**
+ * Calculate the new bounds of a window if moved onto the monitor by pulling the monitor along the line
+ * between the top-left of the window and the center of the monitor
+ * @param {*} monitor a monitor
+ * @param {*} bounds current window bounds
+ */
+function getNewBoundsWhenMovedToMonitor(monitor, bounds) {
+
+	// Depending if the monitor has claimed space, determine rectangle
+	let monitorRect = monitor.unclaimedRect || monitor.availableRect || monitor.monitorRect;
+
+	// Placeholder for new bounds
+	let newBounds = Object.create(bounds);
+
+	// adjust vertical offset from monitor by moving top down or bottom up
+	if (bounds.top < monitorRect.top) {
+		newBounds.top = monitorRect.top;
+	} else if (bounds.top > monitorRect.bottom - bounds.height) {
+		newBounds.top = monitorRect.bottom - bounds.height;
+	}
+
+	// Adjust horizontal offset from monitor by moving left-edge rightward or right-edge leftward
+	if (bounds.left < monitorRect.left) {
+		newBounds.left = monitorRect.left;
+	} else if (bounds.left > monitorRect.right - bounds.width) {
+		newBounds.left = monitorRect.right - bounds.width;
+	}
+
+	// Recalculate bottom / right, based on movement of top / left, maintaining width / height
+	newBounds.bottom = newBounds.top + newBounds.height;
+	newBounds.right = newBounds.left + newBounds.width;
+
+	// Truncate portions off monitor in case we are downsizing from a maximized window
+	if (newBounds.right > monitorRect.right) newBounds.right = monitorRect.right;
+	if (newBounds.top < monitorRect.top) newBounds.top = monitorRect.top;
+	if (newBounds.left < monitorRect.left) newBounds.left = monitorRect.left;
+	if (newBounds.bottom > monitorRect.bottom) newBounds.bottom = monitorRect.bottom;
+
+	// Recalculate width, height in case of truncation to ensure the window fits on the new monitor
+	newBounds.height = newBounds.bottom - newBounds.top;
+	newBounds.width = newBounds.right - newBounds.left;
+
+	// Calculate distance the window moved
+	let distanceMoved = Math.sqrt(Math.pow(bounds.left - newBounds.left, 2) + Math.pow(bounds.top - newBounds.top, 2));
+
+	return {
+		newBounds: newBounds,
+		distanceMoved: distanceMoved,
+		monitor: monitor
+	};
+};
+
+/**
+ * Takes a window's bounds and makes sure it's on a monitor. If the window isn't on a monitor, we determine the closest monitor
+ * based on the distance from the top-left corner of the window to the center of the monitor, and then pull the monitor along that line
+ * until the window is on the edge of the monitor
+ * @param {*} currentBounds
+ * @returns the new bounds for the window. which are different from currentBounds only if the window needs to be relocated
+ */
+function adjustBoundsToBeOnMonitor(bounds) {
+	let newBounds = Object.create(bounds);
+
+	// Determine if on a monitor, and if not, pull top-left corner directly toward center of monitor until it completely onscreen
+	let isOnAMonitor = this.Monitors.allMonitors.some(monitor => {
+
+		/*
+   * 8/26/19 Joe: This used to only use the monitorRect (the entirety of monitor's dimensions)
+   * Switched it to use the unclaimedRect. If window is inside of claimed space, then its
+   * in unusable space anyway.
+   * Included whole rect as a fallback
+   */
+		let monitorRect = monitor.unclaimedRect || monitor.monitorRect;
+
+		// Check to see tf it's to the right of the left side of the monitor,
+		// to the left of the right side, etc.basically is it within the monitor's bounds.
+		let isOnMonitor = bounds.left >= monitorRect.left && bounds.left <= monitorRect.right && bounds.right >= monitorRect.left && bounds.right <= monitorRect.right && bounds.top >= monitorRect.top && bounds.top <= monitorRect.bottom && bounds.bottom >= monitorRect.top && bounds.bottom <= monitorRect.bottom;
+
+		return isOnMonitor;
+	});
+
+	if (!isOnAMonitor) {
+
+		// calculate if the window is on any monitor, and the distance between the top left and the center of the window
+		let monitorAdjustments = this.Monitors.allMonitors.map(monitor => this.getNewBoundsWhenMovedToMonitor(monitor, bounds));
+
+		// Get the closest monitor, the one with minimum distanceMoved
+		let monitorAdjustmentClosest = monitorAdjustments.sort((md1, md2) => md1.distanceMoved - md2.distanceMoved)[0];
+
+		// notify the movement
+		__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.info("Launcher.adjustWindowDescriptorBoundsToBeOnMonitor: not on monitor.  bounds", bounds, "monitor name", monitorAdjustmentClosest.monitor.name, "newBounds", monitorAdjustmentClosest.newBounds);
+
+		// assign bounds
+		newBounds = monitorAdjustmentClosest.newBounds;
+	} else {
+		__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.info("Launcher.adjustWindowDescriptorBoundsToBeOnMonitor: on monitor.");
+		newBounds = bounds;
+	}
+
+	return newBounds;
+};
+
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\util.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\util.js"); } } })();
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global, module, setImmediate, process) {(function (global, factory) {
+     true ? factory(exports) :
+    typeof define === 'function' && define.amd ? define(['exports'], factory) :
+    (factory((global.async = global.async || {})));
+}(this, (function (exports) { 'use strict';
+
+/**
+ * A faster alternative to `Function#apply`, this function invokes `func`
+ * with the `this` binding of `thisArg` and the arguments of `args`.
+ *
+ * @private
+ * @param {Function} func The function to invoke.
+ * @param {*} thisArg The `this` binding of `func`.
+ * @param {Array} args The arguments to invoke `func` with.
+ * @returns {*} Returns the result of `func`.
+ */
+function apply(func, thisArg, args) {
+  switch (args.length) {
+    case 0: return func.call(thisArg);
+    case 1: return func.call(thisArg, args[0]);
+    case 2: return func.call(thisArg, args[0], args[1]);
+    case 3: return func.call(thisArg, args[0], args[1], args[2]);
+  }
+  return func.apply(thisArg, args);
+}
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeMax = Math.max;
+
+/**
+ * A specialized version of `baseRest` which transforms the rest array.
+ *
+ * @private
+ * @param {Function} func The function to apply a rest parameter to.
+ * @param {number} [start=func.length-1] The start position of the rest parameter.
+ * @param {Function} transform The rest array transform.
+ * @returns {Function} Returns the new function.
+ */
+function overRest$1(func, start, transform) {
+  start = nativeMax(start === undefined ? (func.length - 1) : start, 0);
+  return function() {
+    var args = arguments,
+        index = -1,
+        length = nativeMax(args.length - start, 0),
+        array = Array(length);
+
+    while (++index < length) {
+      array[index] = args[start + index];
+    }
+    index = -1;
+    var otherArgs = Array(start + 1);
+    while (++index < start) {
+      otherArgs[index] = args[index];
+    }
+    otherArgs[start] = transform(array);
+    return apply(func, this, otherArgs);
+  };
+}
+
+/**
+ * This method returns the first argument it receives.
+ *
+ * @static
+ * @since 0.1.0
+ * @memberOf _
+ * @category Util
+ * @param {*} value Any value.
+ * @returns {*} Returns `value`.
+ * @example
+ *
+ * var object = { 'a': 1 };
+ *
+ * console.log(_.identity(object) === object);
+ * // => true
+ */
+function identity(value) {
+  return value;
+}
+
+// Lodash rest function without function.toString()
+// remappings
+function rest(func, start) {
+    return overRest$1(func, start, identity);
+}
+
+var initialParams = function (fn) {
+    return rest(function (args /*..., callback*/) {
+        var callback = args.pop();
+        fn.call(this, args, callback);
+    });
+};
+
+function applyEach$1(eachfn) {
+    return rest(function (fns, args) {
+        var go = initialParams(function (args, callback) {
+            var that = this;
+            return eachfn(fns, function (fn, cb) {
+                fn.apply(that, args.concat(cb));
+            }, callback);
+        });
+        if (args.length) {
+            return go.apply(this, args);
+        } else {
+            return go;
+        }
+    });
+}
+
+/** Detect free variable `global` from Node.js. */
+var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
+
+/** Detect free variable `self`. */
+var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+
+/** Used as a reference to the global object. */
+var root = freeGlobal || freeSelf || Function('return this')();
+
+/** Built-in value references. */
+var Symbol$1 = root.Symbol;
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Used to resolve the
+ * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var nativeObjectToString = objectProto.toString;
+
+/** Built-in value references. */
+var symToStringTag$1 = Symbol$1 ? Symbol$1.toStringTag : undefined;
+
+/**
+ * A specialized version of `baseGetTag` which ignores `Symbol.toStringTag` values.
+ *
+ * @private
+ * @param {*} value The value to query.
+ * @returns {string} Returns the raw `toStringTag`.
+ */
+function getRawTag(value) {
+  var isOwn = hasOwnProperty.call(value, symToStringTag$1),
+      tag = value[symToStringTag$1];
+
+  try {
+    value[symToStringTag$1] = undefined;
+    var unmasked = true;
+  } catch (e) {}
+
+  var result = nativeObjectToString.call(value);
+  if (unmasked) {
+    if (isOwn) {
+      value[symToStringTag$1] = tag;
+    } else {
+      delete value[symToStringTag$1];
+    }
+  }
+  return result;
+}
+
+/** Used for built-in method references. */
+var objectProto$1 = Object.prototype;
+
+/**
+ * Used to resolve the
+ * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var nativeObjectToString$1 = objectProto$1.toString;
+
+/**
+ * Converts `value` to a string using `Object.prototype.toString`.
+ *
+ * @private
+ * @param {*} value The value to convert.
+ * @returns {string} Returns the converted string.
+ */
+function objectToString(value) {
+  return nativeObjectToString$1.call(value);
+}
+
+/** `Object#toString` result references. */
+var nullTag = '[object Null]';
+var undefinedTag = '[object Undefined]';
+
+/** Built-in value references. */
+var symToStringTag = Symbol$1 ? Symbol$1.toStringTag : undefined;
+
+/**
+ * The base implementation of `getTag` without fallbacks for buggy environments.
+ *
+ * @private
+ * @param {*} value The value to query.
+ * @returns {string} Returns the `toStringTag`.
+ */
+function baseGetTag(value) {
+  if (value == null) {
+    return value === undefined ? undefinedTag : nullTag;
+  }
+  return (symToStringTag && symToStringTag in Object(value))
+    ? getRawTag(value)
+    : objectToString(value);
+}
+
+/**
+ * Checks if `value` is the
+ * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+ * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+ * @example
+ *
+ * _.isObject({});
+ * // => true
+ *
+ * _.isObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isObject(_.noop);
+ * // => true
+ *
+ * _.isObject(null);
+ * // => false
+ */
+function isObject(value) {
+  var type = typeof value;
+  return value != null && (type == 'object' || type == 'function');
+}
+
+/** `Object#toString` result references. */
+var asyncTag = '[object AsyncFunction]';
+var funcTag = '[object Function]';
+var genTag = '[object GeneratorFunction]';
+var proxyTag = '[object Proxy]';
+
+/**
+ * Checks if `value` is classified as a `Function` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a function, else `false`.
+ * @example
+ *
+ * _.isFunction(_);
+ * // => true
+ *
+ * _.isFunction(/abc/);
+ * // => false
+ */
+function isFunction(value) {
+  if (!isObject(value)) {
+    return false;
+  }
+  // The use of `Object#toString` avoids issues with the `typeof` operator
+  // in Safari 9 which returns 'object' for typed arrays and other constructors.
+  var tag = baseGetTag(value);
+  return tag == funcTag || tag == genTag || tag == asyncTag || tag == proxyTag;
+}
+
+/** Used as references for various `Number` constants. */
+var MAX_SAFE_INTEGER = 9007199254740991;
+
+/**
+ * Checks if `value` is a valid array-like length.
+ *
+ * **Note:** This method is loosely based on
+ * [`ToLength`](http://ecma-international.org/ecma-262/7.0/#sec-tolength).
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
+ * @example
+ *
+ * _.isLength(3);
+ * // => true
+ *
+ * _.isLength(Number.MIN_VALUE);
+ * // => false
+ *
+ * _.isLength(Infinity);
+ * // => false
+ *
+ * _.isLength('3');
+ * // => false
+ */
+function isLength(value) {
+  return typeof value == 'number' &&
+    value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
+}
+
+/**
+ * Checks if `value` is array-like. A value is considered array-like if it's
+ * not a function and has a `value.length` that's an integer greater than or
+ * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
+ * @example
+ *
+ * _.isArrayLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isArrayLike(document.body.children);
+ * // => true
+ *
+ * _.isArrayLike('abc');
+ * // => true
+ *
+ * _.isArrayLike(_.noop);
+ * // => false
+ */
+function isArrayLike(value) {
+  return value != null && isLength(value.length) && !isFunction(value);
+}
+
+// A temporary value used to identify if the loop should be broken.
+// See #1064, #1293
+var breakLoop = {};
+
+/**
+ * This method returns `undefined`.
+ *
+ * @static
+ * @memberOf _
+ * @since 2.3.0
+ * @category Util
+ * @example
+ *
+ * _.times(2, _.noop);
+ * // => [undefined, undefined]
+ */
+function noop() {
+  // No operation performed.
+}
+
+function once(fn) {
+    return function () {
+        if (fn === null) return;
+        var callFn = fn;
+        fn = null;
+        callFn.apply(this, arguments);
+    };
+}
+
+var iteratorSymbol = typeof Symbol === 'function' && Symbol.iterator;
+
+var getIterator = function (coll) {
+    return iteratorSymbol && coll[iteratorSymbol] && coll[iteratorSymbol]();
+};
+
+/**
+ * The base implementation of `_.times` without support for iteratee shorthands
+ * or max array length checks.
+ *
+ * @private
+ * @param {number} n The number of times to invoke `iteratee`.
+ * @param {Function} iteratee The function invoked per iteration.
+ * @returns {Array} Returns the array of results.
+ */
+function baseTimes(n, iteratee) {
+  var index = -1,
+      result = Array(n);
+
+  while (++index < n) {
+    result[index] = iteratee(index);
+  }
+  return result;
+}
+
+/**
+ * Checks if `value` is object-like. A value is object-like if it's not `null`
+ * and has a `typeof` result of "object".
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+ * @example
+ *
+ * _.isObjectLike({});
+ * // => true
+ *
+ * _.isObjectLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isObjectLike(_.noop);
+ * // => false
+ *
+ * _.isObjectLike(null);
+ * // => false
+ */
+function isObjectLike(value) {
+  return value != null && typeof value == 'object';
+}
+
+/** `Object#toString` result references. */
+var argsTag = '[object Arguments]';
+
+/**
+ * The base implementation of `_.isArguments`.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an `arguments` object,
+ */
+function baseIsArguments(value) {
+  return isObjectLike(value) && baseGetTag(value) == argsTag;
+}
+
+/** Used for built-in method references. */
+var objectProto$3 = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty$2 = objectProto$3.hasOwnProperty;
+
+/** Built-in value references. */
+var propertyIsEnumerable = objectProto$3.propertyIsEnumerable;
+
+/**
+ * Checks if `value` is likely an `arguments` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an `arguments` object,
+ *  else `false`.
+ * @example
+ *
+ * _.isArguments(function() { return arguments; }());
+ * // => true
+ *
+ * _.isArguments([1, 2, 3]);
+ * // => false
+ */
+var isArguments = baseIsArguments(function() { return arguments; }()) ? baseIsArguments : function(value) {
+  return isObjectLike(value) && hasOwnProperty$2.call(value, 'callee') &&
+    !propertyIsEnumerable.call(value, 'callee');
+};
+
+/**
+ * Checks if `value` is classified as an `Array` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an array, else `false`.
+ * @example
+ *
+ * _.isArray([1, 2, 3]);
+ * // => true
+ *
+ * _.isArray(document.body.children);
+ * // => false
+ *
+ * _.isArray('abc');
+ * // => false
+ *
+ * _.isArray(_.noop);
+ * // => false
+ */
+var isArray = Array.isArray;
+
+/**
+ * This method returns `false`.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.13.0
+ * @category Util
+ * @returns {boolean} Returns `false`.
+ * @example
+ *
+ * _.times(2, _.stubFalse);
+ * // => [false, false]
+ */
+function stubFalse() {
+  return false;
+}
+
+/** Detect free variable `exports`. */
+var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
+
+/** Detect free variable `module`. */
+var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
+
+/** Detect the popular CommonJS extension `module.exports`. */
+var moduleExports = freeModule && freeModule.exports === freeExports;
+
+/** Built-in value references. */
+var Buffer = moduleExports ? root.Buffer : undefined;
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeIsBuffer = Buffer ? Buffer.isBuffer : undefined;
+
+/**
+ * Checks if `value` is a buffer.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.3.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a buffer, else `false`.
+ * @example
+ *
+ * _.isBuffer(new Buffer(2));
+ * // => true
+ *
+ * _.isBuffer(new Uint8Array(2));
+ * // => false
+ */
+var isBuffer = nativeIsBuffer || stubFalse;
+
+/** Used as references for various `Number` constants. */
+var MAX_SAFE_INTEGER$1 = 9007199254740991;
+
+/** Used to detect unsigned integer values. */
+var reIsUint = /^(?:0|[1-9]\d*)$/;
+
+/**
+ * Checks if `value` is a valid array-like index.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @param {number} [length=MAX_SAFE_INTEGER] The upper bounds of a valid index.
+ * @returns {boolean} Returns `true` if `value` is a valid index, else `false`.
+ */
+function isIndex(value, length) {
+  length = length == null ? MAX_SAFE_INTEGER$1 : length;
+  return !!length &&
+    (typeof value == 'number' || reIsUint.test(value)) &&
+    (value > -1 && value % 1 == 0 && value < length);
+}
+
+/** `Object#toString` result references. */
+var argsTag$1 = '[object Arguments]';
+var arrayTag = '[object Array]';
+var boolTag = '[object Boolean]';
+var dateTag = '[object Date]';
+var errorTag = '[object Error]';
+var funcTag$1 = '[object Function]';
+var mapTag = '[object Map]';
+var numberTag = '[object Number]';
+var objectTag = '[object Object]';
+var regexpTag = '[object RegExp]';
+var setTag = '[object Set]';
+var stringTag = '[object String]';
+var weakMapTag = '[object WeakMap]';
+
+var arrayBufferTag = '[object ArrayBuffer]';
+var dataViewTag = '[object DataView]';
+var float32Tag = '[object Float32Array]';
+var float64Tag = '[object Float64Array]';
+var int8Tag = '[object Int8Array]';
+var int16Tag = '[object Int16Array]';
+var int32Tag = '[object Int32Array]';
+var uint8Tag = '[object Uint8Array]';
+var uint8ClampedTag = '[object Uint8ClampedArray]';
+var uint16Tag = '[object Uint16Array]';
+var uint32Tag = '[object Uint32Array]';
+
+/** Used to identify `toStringTag` values of typed arrays. */
+var typedArrayTags = {};
+typedArrayTags[float32Tag] = typedArrayTags[float64Tag] =
+typedArrayTags[int8Tag] = typedArrayTags[int16Tag] =
+typedArrayTags[int32Tag] = typedArrayTags[uint8Tag] =
+typedArrayTags[uint8ClampedTag] = typedArrayTags[uint16Tag] =
+typedArrayTags[uint32Tag] = true;
+typedArrayTags[argsTag$1] = typedArrayTags[arrayTag] =
+typedArrayTags[arrayBufferTag] = typedArrayTags[boolTag] =
+typedArrayTags[dataViewTag] = typedArrayTags[dateTag] =
+typedArrayTags[errorTag] = typedArrayTags[funcTag$1] =
+typedArrayTags[mapTag] = typedArrayTags[numberTag] =
+typedArrayTags[objectTag] = typedArrayTags[regexpTag] =
+typedArrayTags[setTag] = typedArrayTags[stringTag] =
+typedArrayTags[weakMapTag] = false;
+
+/**
+ * The base implementation of `_.isTypedArray` without Node.js optimizations.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a typed array, else `false`.
+ */
+function baseIsTypedArray(value) {
+  return isObjectLike(value) &&
+    isLength(value.length) && !!typedArrayTags[baseGetTag(value)];
+}
+
+/**
+ * The base implementation of `_.unary` without support for storing metadata.
+ *
+ * @private
+ * @param {Function} func The function to cap arguments for.
+ * @returns {Function} Returns the new capped function.
+ */
+function baseUnary(func) {
+  return function(value) {
+    return func(value);
+  };
+}
+
+/** Detect free variable `exports`. */
+var freeExports$1 = typeof exports == 'object' && exports && !exports.nodeType && exports;
+
+/** Detect free variable `module`. */
+var freeModule$1 = freeExports$1 && typeof module == 'object' && module && !module.nodeType && module;
+
+/** Detect the popular CommonJS extension `module.exports`. */
+var moduleExports$1 = freeModule$1 && freeModule$1.exports === freeExports$1;
+
+/** Detect free variable `process` from Node.js. */
+var freeProcess = moduleExports$1 && freeGlobal.process;
+
+/** Used to access faster Node.js helpers. */
+var nodeUtil = (function() {
+  try {
+    return freeProcess && freeProcess.binding && freeProcess.binding('util');
+  } catch (e) {}
+}());
+
+/* Node.js helper references. */
+var nodeIsTypedArray = nodeUtil && nodeUtil.isTypedArray;
+
+/**
+ * Checks if `value` is classified as a typed array.
+ *
+ * @static
+ * @memberOf _
+ * @since 3.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a typed array, else `false`.
+ * @example
+ *
+ * _.isTypedArray(new Uint8Array);
+ * // => true
+ *
+ * _.isTypedArray([]);
+ * // => false
+ */
+var isTypedArray = nodeIsTypedArray ? baseUnary(nodeIsTypedArray) : baseIsTypedArray;
+
+/** Used for built-in method references. */
+var objectProto$2 = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty$1 = objectProto$2.hasOwnProperty;
+
+/**
+ * Creates an array of the enumerable property names of the array-like `value`.
+ *
+ * @private
+ * @param {*} value The value to query.
+ * @param {boolean} inherited Specify returning inherited property names.
+ * @returns {Array} Returns the array of property names.
+ */
+function arrayLikeKeys(value, inherited) {
+  var isArr = isArray(value),
+      isArg = !isArr && isArguments(value),
+      isBuff = !isArr && !isArg && isBuffer(value),
+      isType = !isArr && !isArg && !isBuff && isTypedArray(value),
+      skipIndexes = isArr || isArg || isBuff || isType,
+      result = skipIndexes ? baseTimes(value.length, String) : [],
+      length = result.length;
+
+  for (var key in value) {
+    if ((inherited || hasOwnProperty$1.call(value, key)) &&
+        !(skipIndexes && (
+           // Safari 9 has enumerable `arguments.length` in strict mode.
+           key == 'length' ||
+           // Node.js 0.10 has enumerable non-index properties on buffers.
+           (isBuff && (key == 'offset' || key == 'parent')) ||
+           // PhantomJS 2 has enumerable non-index properties on typed arrays.
+           (isType && (key == 'buffer' || key == 'byteLength' || key == 'byteOffset')) ||
+           // Skip index properties.
+           isIndex(key, length)
+        ))) {
+      result.push(key);
+    }
+  }
+  return result;
+}
+
+/** Used for built-in method references. */
+var objectProto$5 = Object.prototype;
+
+/**
+ * Checks if `value` is likely a prototype object.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a prototype, else `false`.
+ */
+function isPrototype(value) {
+  var Ctor = value && value.constructor,
+      proto = (typeof Ctor == 'function' && Ctor.prototype) || objectProto$5;
+
+  return value === proto;
+}
+
+/**
+ * Creates a unary function that invokes `func` with its argument transformed.
+ *
+ * @private
+ * @param {Function} func The function to wrap.
+ * @param {Function} transform The argument transform.
+ * @returns {Function} Returns the new function.
+ */
+function overArg(func, transform) {
+  return function(arg) {
+    return func(transform(arg));
+  };
+}
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeKeys = overArg(Object.keys, Object);
+
+/** Used for built-in method references. */
+var objectProto$4 = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty$3 = objectProto$4.hasOwnProperty;
+
+/**
+ * The base implementation of `_.keys` which doesn't treat sparse arrays as dense.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of property names.
+ */
+function baseKeys(object) {
+  if (!isPrototype(object)) {
+    return nativeKeys(object);
+  }
+  var result = [];
+  for (var key in Object(object)) {
+    if (hasOwnProperty$3.call(object, key) && key != 'constructor') {
+      result.push(key);
+    }
+  }
+  return result;
+}
+
+/**
+ * Creates an array of the own enumerable property names of `object`.
+ *
+ * **Note:** Non-object values are coerced to objects. See the
+ * [ES spec](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
+ * for more details.
+ *
+ * @static
+ * @since 0.1.0
+ * @memberOf _
+ * @category Object
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of property names.
+ * @example
+ *
+ * function Foo() {
+ *   this.a = 1;
+ *   this.b = 2;
+ * }
+ *
+ * Foo.prototype.c = 3;
+ *
+ * _.keys(new Foo);
+ * // => ['a', 'b'] (iteration order is not guaranteed)
+ *
+ * _.keys('hi');
+ * // => ['0', '1']
+ */
+function keys(object) {
+  return isArrayLike(object) ? arrayLikeKeys(object) : baseKeys(object);
+}
+
+function createArrayIterator(coll) {
+    var i = -1;
+    var len = coll.length;
+    return function next() {
+        return ++i < len ? { value: coll[i], key: i } : null;
+    };
+}
+
+function createES2015Iterator(iterator) {
+    var i = -1;
+    return function next() {
+        var item = iterator.next();
+        if (item.done) return null;
+        i++;
+        return { value: item.value, key: i };
+    };
+}
+
+function createObjectIterator(obj) {
+    var okeys = keys(obj);
+    var i = -1;
+    var len = okeys.length;
+    return function next() {
+        var key = okeys[++i];
+        return i < len ? { value: obj[key], key: key } : null;
+    };
+}
+
+function iterator(coll) {
+    if (isArrayLike(coll)) {
+        return createArrayIterator(coll);
+    }
+
+    var iterator = getIterator(coll);
+    return iterator ? createES2015Iterator(iterator) : createObjectIterator(coll);
+}
+
+function onlyOnce(fn) {
+    return function () {
+        if (fn === null) throw new Error("Callback was already called.");
+        var callFn = fn;
+        fn = null;
+        callFn.apply(this, arguments);
+    };
+}
+
+function _eachOfLimit(limit) {
+    return function (obj, iteratee, callback) {
+        callback = once(callback || noop);
+        if (limit <= 0 || !obj) {
+            return callback(null);
+        }
+        var nextElem = iterator(obj);
+        var done = false;
+        var running = 0;
+
+        function iterateeCallback(err, value) {
+            running -= 1;
+            if (err) {
+                done = true;
+                callback(err);
+            } else if (value === breakLoop || done && running <= 0) {
+                done = true;
+                return callback(null);
+            } else {
+                replenish();
+            }
+        }
+
+        function replenish() {
+            while (running < limit && !done) {
+                var elem = nextElem();
+                if (elem === null) {
+                    done = true;
+                    if (running <= 0) {
+                        callback(null);
+                    }
+                    return;
+                }
+                running += 1;
+                iteratee(elem.value, elem.key, onlyOnce(iterateeCallback));
+            }
+        }
+
+        replenish();
+    };
+}
+
+/**
+ * The same as [`eachOf`]{@link module:Collections.eachOf} but runs a maximum of `limit` async operations at a
+ * time.
+ *
+ * @name eachOfLimit
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.eachOf]{@link module:Collections.eachOf}
+ * @alias forEachOfLimit
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {number} limit - The maximum number of async operations at a time.
+ * @param {Function} iteratee - A function to apply to each
+ * item in `coll`. The `key` is the item's key, or index in the case of an
+ * array. The iteratee is passed a `callback(err)` which must be called once it
+ * has completed. If no error has occurred, the callback should be run without
+ * arguments or with an explicit `null` argument. Invoked with
+ * (item, key, callback).
+ * @param {Function} [callback] - A callback which is called when all
+ * `iteratee` functions have finished, or an error occurs. Invoked with (err).
+ */
+function eachOfLimit(coll, limit, iteratee, callback) {
+  _eachOfLimit(limit)(coll, iteratee, callback);
+}
+
+function doLimit(fn, limit) {
+    return function (iterable, iteratee, callback) {
+        return fn(iterable, limit, iteratee, callback);
+    };
+}
+
+// eachOf implementation optimized for array-likes
+function eachOfArrayLike(coll, iteratee, callback) {
+    callback = once(callback || noop);
+    var index = 0,
+        completed = 0,
+        length = coll.length;
+    if (length === 0) {
+        callback(null);
+    }
+
+    function iteratorCallback(err, value) {
+        if (err) {
+            callback(err);
+        } else if (++completed === length || value === breakLoop) {
+            callback(null);
+        }
+    }
+
+    for (; index < length; index++) {
+        iteratee(coll[index], index, onlyOnce(iteratorCallback));
+    }
+}
+
+// a generic version of eachOf which can handle array, object, and iterator cases.
+var eachOfGeneric = doLimit(eachOfLimit, Infinity);
+
+/**
+ * Like [`each`]{@link module:Collections.each}, except that it passes the key (or index) as the second argument
+ * to the iteratee.
+ *
+ * @name eachOf
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @alias forEachOf
+ * @category Collection
+ * @see [async.each]{@link module:Collections.each}
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {Function} iteratee - A function to apply to each
+ * item in `coll`. The `key` is the item's key, or index in the case of an
+ * array. The iteratee is passed a `callback(err)` which must be called once it
+ * has completed. If no error has occurred, the callback should be run without
+ * arguments or with an explicit `null` argument. Invoked with
+ * (item, key, callback).
+ * @param {Function} [callback] - A callback which is called when all
+ * `iteratee` functions have finished, or an error occurs. Invoked with (err).
+ * @example
+ *
+ * var obj = {dev: "/dev.json", test: "/test.json", prod: "/prod.json"};
+ * var configs = {};
+ *
+ * async.forEachOf(obj, function (value, key, callback) {
+ *     fs.readFile(__dirname + value, "utf8", function (err, data) {
+ *         if (err) return callback(err);
+ *         try {
+ *             configs[key] = JSON.parse(data);
+ *         } catch (e) {
+ *             return callback(e);
+ *         }
+ *         callback();
+ *     });
+ * }, function (err) {
+ *     if (err) console.error(err.message);
+ *     // configs is now a map of JSON data
+ *     doSomethingWith(configs);
+ * });
+ */
+var eachOf = function (coll, iteratee, callback) {
+    var eachOfImplementation = isArrayLike(coll) ? eachOfArrayLike : eachOfGeneric;
+    eachOfImplementation(coll, iteratee, callback);
+};
+
+function doParallel(fn) {
+    return function (obj, iteratee, callback) {
+        return fn(eachOf, obj, iteratee, callback);
+    };
+}
+
+function _asyncMap(eachfn, arr, iteratee, callback) {
+    callback = callback || noop;
+    arr = arr || [];
+    var results = [];
+    var counter = 0;
+
+    eachfn(arr, function (value, _, callback) {
+        var index = counter++;
+        iteratee(value, function (err, v) {
+            results[index] = v;
+            callback(err);
+        });
+    }, function (err) {
+        callback(err, results);
+    });
+}
+
+/**
+ * Produces a new collection of values by mapping each value in `coll` through
+ * the `iteratee` function. The `iteratee` is called with an item from `coll`
+ * and a callback for when it has finished processing. Each of these callback
+ * takes 2 arguments: an `error`, and the transformed item from `coll`. If
+ * `iteratee` passes an error to its callback, the main `callback` (for the
+ * `map` function) is immediately called with the error.
+ *
+ * Note, that since this function applies the `iteratee` to each item in
+ * parallel, there is no guarantee that the `iteratee` functions will complete
+ * in order. However, the results array will be in the same order as the
+ * original `coll`.
+ *
+ * If `map` is passed an Object, the results will be an Array.  The results
+ * will roughly be in the order of the original Objects' keys (but this can
+ * vary across JavaScript engines)
+ *
+ * @name map
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {Function} iteratee - A function to apply to each item in `coll`.
+ * The iteratee is passed a `callback(err, transformed)` which must be called
+ * once it has completed with an error (which can be `null`) and a
+ * transformed item. Invoked with (item, callback).
+ * @param {Function} [callback] - A callback which is called when all `iteratee`
+ * functions have finished, or an error occurs. Results is an Array of the
+ * transformed items from the `coll`. Invoked with (err, results).
+ * @example
+ *
+ * async.map(['file1','file2','file3'], fs.stat, function(err, results) {
+ *     // results is now an array of stats for each file
+ * });
+ */
+var map = doParallel(_asyncMap);
+
+/**
+ * Applies the provided arguments to each function in the array, calling
+ * `callback` after all functions have completed. If you only provide the first
+ * argument, `fns`, then it will return a function which lets you pass in the
+ * arguments as if it were a single function call. If more arguments are
+ * provided, `callback` is required while `args` is still optional.
+ *
+ * @name applyEach
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @category Control Flow
+ * @param {Array|Iterable|Object} fns - A collection of asynchronous functions
+ * to all call with the same arguments
+ * @param {...*} [args] - any number of separate arguments to pass to the
+ * function.
+ * @param {Function} [callback] - the final argument should be the callback,
+ * called when all functions have completed processing.
+ * @returns {Function} - If only the first argument, `fns`, is provided, it will
+ * return a function which lets you pass in the arguments as if it were a single
+ * function call. The signature is `(..args, callback)`. If invoked with any
+ * arguments, `callback` is required.
+ * @example
+ *
+ * async.applyEach([enableSearch, updateSchema], 'bucket', callback);
+ *
+ * // partial application example:
+ * async.each(
+ *     buckets,
+ *     async.applyEach([enableSearch, updateSchema]),
+ *     callback
+ * );
+ */
+var applyEach = applyEach$1(map);
+
+function doParallelLimit(fn) {
+    return function (obj, limit, iteratee, callback) {
+        return fn(_eachOfLimit(limit), obj, iteratee, callback);
+    };
+}
+
+/**
+ * The same as [`map`]{@link module:Collections.map} but runs a maximum of `limit` async operations at a time.
+ *
+ * @name mapLimit
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.map]{@link module:Collections.map}
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {number} limit - The maximum number of async operations at a time.
+ * @param {Function} iteratee - A function to apply to each item in `coll`.
+ * The iteratee is passed a `callback(err, transformed)` which must be called
+ * once it has completed with an error (which can be `null`) and a transformed
+ * item. Invoked with (item, callback).
+ * @param {Function} [callback] - A callback which is called when all `iteratee`
+ * functions have finished, or an error occurs. Results is an array of the
+ * transformed items from the `coll`. Invoked with (err, results).
+ */
+var mapLimit = doParallelLimit(_asyncMap);
+
+/**
+ * The same as [`map`]{@link module:Collections.map} but runs only a single async operation at a time.
+ *
+ * @name mapSeries
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.map]{@link module:Collections.map}
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {Function} iteratee - A function to apply to each item in `coll`.
+ * The iteratee is passed a `callback(err, transformed)` which must be called
+ * once it has completed with an error (which can be `null`) and a
+ * transformed item. Invoked with (item, callback).
+ * @param {Function} [callback] - A callback which is called when all `iteratee`
+ * functions have finished, or an error occurs. Results is an array of the
+ * transformed items from the `coll`. Invoked with (err, results).
+ */
+var mapSeries = doLimit(mapLimit, 1);
+
+/**
+ * The same as [`applyEach`]{@link module:ControlFlow.applyEach} but runs only a single async operation at a time.
+ *
+ * @name applyEachSeries
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @see [async.applyEach]{@link module:ControlFlow.applyEach}
+ * @category Control Flow
+ * @param {Array|Iterable|Object} fns - A collection of asynchronous functions to all
+ * call with the same arguments
+ * @param {...*} [args] - any number of separate arguments to pass to the
+ * function.
+ * @param {Function} [callback] - the final argument should be the callback,
+ * called when all functions have completed processing.
+ * @returns {Function} - If only the first argument is provided, it will return
+ * a function which lets you pass in the arguments as if it were a single
+ * function call.
+ */
+var applyEachSeries = applyEach$1(mapSeries);
+
+/**
+ * Creates a continuation function with some arguments already applied.
+ *
+ * Useful as a shorthand when combined with other control flow functions. Any
+ * arguments passed to the returned function are added to the arguments
+ * originally passed to apply.
+ *
+ * @name apply
+ * @static
+ * @memberOf module:Utils
+ * @method
+ * @category Util
+ * @param {Function} function - The function you want to eventually apply all
+ * arguments to. Invokes with (arguments...).
+ * @param {...*} arguments... - Any number of arguments to automatically apply
+ * when the continuation is called.
+ * @example
+ *
+ * // using apply
+ * async.parallel([
+ *     async.apply(fs.writeFile, 'testfile1', 'test1'),
+ *     async.apply(fs.writeFile, 'testfile2', 'test2')
+ * ]);
+ *
+ *
+ * // the same process without using apply
+ * async.parallel([
+ *     function(callback) {
+ *         fs.writeFile('testfile1', 'test1', callback);
+ *     },
+ *     function(callback) {
+ *         fs.writeFile('testfile2', 'test2', callback);
+ *     }
+ * ]);
+ *
+ * // It's possible to pass any number of additional arguments when calling the
+ * // continuation:
+ *
+ * node> var fn = async.apply(sys.puts, 'one');
+ * node> fn('two', 'three');
+ * one
+ * two
+ * three
+ */
+var apply$2 = rest(function (fn, args) {
+    return rest(function (callArgs) {
+        return fn.apply(null, args.concat(callArgs));
+    });
+});
+
+/**
+ * Take a sync function and make it async, passing its return value to a
+ * callback. This is useful for plugging sync functions into a waterfall,
+ * series, or other async functions. Any arguments passed to the generated
+ * function will be passed to the wrapped function (except for the final
+ * callback argument). Errors thrown will be passed to the callback.
+ *
+ * If the function passed to `asyncify` returns a Promise, that promises's
+ * resolved/rejected state will be used to call the callback, rather than simply
+ * the synchronous return value.
+ *
+ * This also means you can asyncify ES2016 `async` functions.
+ *
+ * @name asyncify
+ * @static
+ * @memberOf module:Utils
+ * @method
+ * @alias wrapSync
+ * @category Util
+ * @param {Function} func - The synchronous function to convert to an
+ * asynchronous function.
+ * @returns {Function} An asynchronous wrapper of the `func`. To be invoked with
+ * (callback).
+ * @example
+ *
+ * // passing a regular synchronous function
+ * async.waterfall([
+ *     async.apply(fs.readFile, filename, "utf8"),
+ *     async.asyncify(JSON.parse),
+ *     function (data, next) {
+ *         // data is the result of parsing the text.
+ *         // If there was a parsing error, it would have been caught.
+ *     }
+ * ], callback);
+ *
+ * // passing a function returning a promise
+ * async.waterfall([
+ *     async.apply(fs.readFile, filename, "utf8"),
+ *     async.asyncify(function (contents) {
+ *         return db.model.create(contents);
+ *     }),
+ *     function (model, next) {
+ *         // `model` is the instantiated model object.
+ *         // If there was an error, this function would be skipped.
+ *     }
+ * ], callback);
+ *
+ * // es6 example
+ * var q = async.queue(async.asyncify(async function(file) {
+ *     var intermediateStep = await processFile(file);
+ *     return await somePromise(intermediateStep)
+ * }));
+ *
+ * q.push(files);
+ */
+function asyncify(func) {
+    return initialParams(function (args, callback) {
+        var result;
+        try {
+            result = func.apply(this, args);
+        } catch (e) {
+            return callback(e);
+        }
+        // if result is Promise object
+        if (isObject(result) && typeof result.then === 'function') {
+            result.then(function (value) {
+                callback(null, value);
+            }, function (err) {
+                callback(err.message ? err : new Error(err));
+            });
+        } else {
+            callback(null, result);
+        }
+    });
+}
+
+/**
+ * A specialized version of `_.forEach` for arrays without support for
+ * iteratee shorthands.
+ *
+ * @private
+ * @param {Array} [array] The array to iterate over.
+ * @param {Function} iteratee The function invoked per iteration.
+ * @returns {Array} Returns `array`.
+ */
+function arrayEach(array, iteratee) {
+  var index = -1,
+      length = array == null ? 0 : array.length;
+
+  while (++index < length) {
+    if (iteratee(array[index], index, array) === false) {
+      break;
+    }
+  }
+  return array;
+}
+
+/**
+ * Creates a base function for methods like `_.forIn` and `_.forOwn`.
+ *
+ * @private
+ * @param {boolean} [fromRight] Specify iterating from right to left.
+ * @returns {Function} Returns the new base function.
+ */
+function createBaseFor(fromRight) {
+  return function(object, iteratee, keysFunc) {
+    var index = -1,
+        iterable = Object(object),
+        props = keysFunc(object),
+        length = props.length;
+
+    while (length--) {
+      var key = props[fromRight ? length : ++index];
+      if (iteratee(iterable[key], key, iterable) === false) {
+        break;
+      }
+    }
+    return object;
+  };
+}
+
+/**
+ * The base implementation of `baseForOwn` which iterates over `object`
+ * properties returned by `keysFunc` and invokes `iteratee` for each property.
+ * Iteratee functions may exit iteration early by explicitly returning `false`.
+ *
+ * @private
+ * @param {Object} object The object to iterate over.
+ * @param {Function} iteratee The function invoked per iteration.
+ * @param {Function} keysFunc The function to get the keys of `object`.
+ * @returns {Object} Returns `object`.
+ */
+var baseFor = createBaseFor();
+
+/**
+ * The base implementation of `_.forOwn` without support for iteratee shorthands.
+ *
+ * @private
+ * @param {Object} object The object to iterate over.
+ * @param {Function} iteratee The function invoked per iteration.
+ * @returns {Object} Returns `object`.
+ */
+function baseForOwn(object, iteratee) {
+  return object && baseFor(object, iteratee, keys);
+}
+
+/**
+ * The base implementation of `_.findIndex` and `_.findLastIndex` without
+ * support for iteratee shorthands.
+ *
+ * @private
+ * @param {Array} array The array to inspect.
+ * @param {Function} predicate The function invoked per iteration.
+ * @param {number} fromIndex The index to search from.
+ * @param {boolean} [fromRight] Specify iterating from right to left.
+ * @returns {number} Returns the index of the matched value, else `-1`.
+ */
+function baseFindIndex(array, predicate, fromIndex, fromRight) {
+  var length = array.length,
+      index = fromIndex + (fromRight ? 1 : -1);
+
+  while ((fromRight ? index-- : ++index < length)) {
+    if (predicate(array[index], index, array)) {
+      return index;
+    }
+  }
+  return -1;
+}
+
+/**
+ * The base implementation of `_.isNaN` without support for number objects.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is `NaN`, else `false`.
+ */
+function baseIsNaN(value) {
+  return value !== value;
+}
+
+/**
+ * A specialized version of `_.indexOf` which performs strict equality
+ * comparisons of values, i.e. `===`.
+ *
+ * @private
+ * @param {Array} array The array to inspect.
+ * @param {*} value The value to search for.
+ * @param {number} fromIndex The index to search from.
+ * @returns {number} Returns the index of the matched value, else `-1`.
+ */
+function strictIndexOf(array, value, fromIndex) {
+  var index = fromIndex - 1,
+      length = array.length;
+
+  while (++index < length) {
+    if (array[index] === value) {
+      return index;
+    }
+  }
+  return -1;
+}
+
+/**
+ * The base implementation of `_.indexOf` without `fromIndex` bounds checks.
+ *
+ * @private
+ * @param {Array} array The array to inspect.
+ * @param {*} value The value to search for.
+ * @param {number} fromIndex The index to search from.
+ * @returns {number} Returns the index of the matched value, else `-1`.
+ */
+function baseIndexOf(array, value, fromIndex) {
+  return value === value
+    ? strictIndexOf(array, value, fromIndex)
+    : baseFindIndex(array, baseIsNaN, fromIndex);
+}
+
+/**
+ * Determines the best order for running the functions in `tasks`, based on
+ * their requirements. Each function can optionally depend on other functions
+ * being completed first, and each function is run as soon as its requirements
+ * are satisfied.
+ *
+ * If any of the functions pass an error to their callback, the `auto` sequence
+ * will stop. Further tasks will not execute (so any other functions depending
+ * on it will not run), and the main `callback` is immediately called with the
+ * error.
+ *
+ * Functions also receive an object containing the results of functions which
+ * have completed so far as the first argument, if they have dependencies. If a
+ * task function has no dependencies, it will only be passed a callback.
+ *
+ * @name auto
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @category Control Flow
+ * @param {Object} tasks - An object. Each of its properties is either a
+ * function or an array of requirements, with the function itself the last item
+ * in the array. The object's key of a property serves as the name of the task
+ * defined by that property, i.e. can be used when specifying requirements for
+ * other tasks. The function receives one or two arguments:
+ * * a `results` object, containing the results of the previously executed
+ *   functions, only passed if the task has any dependencies,
+ * * a `callback(err, result)` function, which must be called when finished,
+ *   passing an `error` (which can be `null`) and the result of the function's
+ *   execution.
+ * @param {number} [concurrency=Infinity] - An optional `integer` for
+ * determining the maximum number of tasks that can be run in parallel. By
+ * default, as many as possible.
+ * @param {Function} [callback] - An optional callback which is called when all
+ * the tasks have been completed. It receives the `err` argument if any `tasks`
+ * pass an error to their callback. Results are always returned; however, if an
+ * error occurs, no further `tasks` will be performed, and the results object
+ * will only contain partial results. Invoked with (err, results).
+ * @returns undefined
+ * @example
+ *
+ * async.auto({
+ *     // this function will just be passed a callback
+ *     readData: async.apply(fs.readFile, 'data.txt', 'utf-8'),
+ *     showData: ['readData', function(results, cb) {
+ *         // results.readData is the file's contents
+ *         // ...
+ *     }]
+ * }, callback);
+ *
+ * async.auto({
+ *     get_data: function(callback) {
+ *         console.log('in get_data');
+ *         // async code to get some data
+ *         callback(null, 'data', 'converted to array');
+ *     },
+ *     make_folder: function(callback) {
+ *         console.log('in make_folder');
+ *         // async code to create a directory to store a file in
+ *         // this is run at the same time as getting the data
+ *         callback(null, 'folder');
+ *     },
+ *     write_file: ['get_data', 'make_folder', function(results, callback) {
+ *         console.log('in write_file', JSON.stringify(results));
+ *         // once there is some data and the directory exists,
+ *         // write the data to a file in the directory
+ *         callback(null, 'filename');
+ *     }],
+ *     email_link: ['write_file', function(results, callback) {
+ *         console.log('in email_link', JSON.stringify(results));
+ *         // once the file is written let's email a link to it...
+ *         // results.write_file contains the filename returned by write_file.
+ *         callback(null, {'file':results.write_file, 'email':'user@example.com'});
+ *     }]
+ * }, function(err, results) {
+ *     console.log('err = ', err);
+ *     console.log('results = ', results);
+ * });
+ */
+var auto = function (tasks, concurrency, callback) {
+    if (typeof concurrency === 'function') {
+        // concurrency is optional, shift the args.
+        callback = concurrency;
+        concurrency = null;
+    }
+    callback = once(callback || noop);
+    var keys$$1 = keys(tasks);
+    var numTasks = keys$$1.length;
+    if (!numTasks) {
+        return callback(null);
+    }
+    if (!concurrency) {
+        concurrency = numTasks;
+    }
+
+    var results = {};
+    var runningTasks = 0;
+    var hasError = false;
+
+    var listeners = Object.create(null);
+
+    var readyTasks = [];
+
+    // for cycle detection:
+    var readyToCheck = []; // tasks that have been identified as reachable
+    // without the possibility of returning to an ancestor task
+    var uncheckedDependencies = {};
+
+    baseForOwn(tasks, function (task, key) {
+        if (!isArray(task)) {
+            // no dependencies
+            enqueueTask(key, [task]);
+            readyToCheck.push(key);
+            return;
+        }
+
+        var dependencies = task.slice(0, task.length - 1);
+        var remainingDependencies = dependencies.length;
+        if (remainingDependencies === 0) {
+            enqueueTask(key, task);
+            readyToCheck.push(key);
+            return;
+        }
+        uncheckedDependencies[key] = remainingDependencies;
+
+        arrayEach(dependencies, function (dependencyName) {
+            if (!tasks[dependencyName]) {
+                throw new Error('async.auto task `' + key + '` has a non-existent dependency `' + dependencyName + '` in ' + dependencies.join(', '));
+            }
+            addListener(dependencyName, function () {
+                remainingDependencies--;
+                if (remainingDependencies === 0) {
+                    enqueueTask(key, task);
+                }
+            });
+        });
+    });
+
+    checkForDeadlocks();
+    processQueue();
+
+    function enqueueTask(key, task) {
+        readyTasks.push(function () {
+            runTask(key, task);
+        });
+    }
+
+    function processQueue() {
+        if (readyTasks.length === 0 && runningTasks === 0) {
+            return callback(null, results);
+        }
+        while (readyTasks.length && runningTasks < concurrency) {
+            var run = readyTasks.shift();
+            run();
+        }
+    }
+
+    function addListener(taskName, fn) {
+        var taskListeners = listeners[taskName];
+        if (!taskListeners) {
+            taskListeners = listeners[taskName] = [];
+        }
+
+        taskListeners.push(fn);
+    }
+
+    function taskComplete(taskName) {
+        var taskListeners = listeners[taskName] || [];
+        arrayEach(taskListeners, function (fn) {
+            fn();
+        });
+        processQueue();
+    }
+
+    function runTask(key, task) {
+        if (hasError) return;
+
+        var taskCallback = onlyOnce(rest(function (err, args) {
+            runningTasks--;
+            if (args.length <= 1) {
+                args = args[0];
+            }
+            if (err) {
+                var safeResults = {};
+                baseForOwn(results, function (val, rkey) {
+                    safeResults[rkey] = val;
+                });
+                safeResults[key] = args;
+                hasError = true;
+                listeners = Object.create(null);
+
+                callback(err, safeResults);
+            } else {
+                results[key] = args;
+                taskComplete(key);
+            }
+        }));
+
+        runningTasks++;
+        var taskFn = task[task.length - 1];
+        if (task.length > 1) {
+            taskFn(results, taskCallback);
+        } else {
+            taskFn(taskCallback);
+        }
+    }
+
+    function checkForDeadlocks() {
+        // Kahn's algorithm
+        // https://en.wikipedia.org/wiki/Topological_sorting#Kahn.27s_algorithm
+        // http://connalle.blogspot.com/2013/10/topological-sortingkahn-algorithm.html
+        var currentTask;
+        var counter = 0;
+        while (readyToCheck.length) {
+            currentTask = readyToCheck.pop();
+            counter++;
+            arrayEach(getDependents(currentTask), function (dependent) {
+                if (--uncheckedDependencies[dependent] === 0) {
+                    readyToCheck.push(dependent);
+                }
+            });
+        }
+
+        if (counter !== numTasks) {
+            throw new Error('async.auto cannot execute tasks due to a recursive dependency');
+        }
+    }
+
+    function getDependents(taskName) {
+        var result = [];
+        baseForOwn(tasks, function (task, key) {
+            if (isArray(task) && baseIndexOf(task, taskName, 0) >= 0) {
+                result.push(key);
+            }
+        });
+        return result;
+    }
+};
+
+/**
+ * A specialized version of `_.map` for arrays without support for iteratee
+ * shorthands.
+ *
+ * @private
+ * @param {Array} [array] The array to iterate over.
+ * @param {Function} iteratee The function invoked per iteration.
+ * @returns {Array} Returns the new mapped array.
+ */
+function arrayMap(array, iteratee) {
+  var index = -1,
+      length = array == null ? 0 : array.length,
+      result = Array(length);
+
+  while (++index < length) {
+    result[index] = iteratee(array[index], index, array);
+  }
+  return result;
+}
+
+/** `Object#toString` result references. */
+var symbolTag = '[object Symbol]';
+
+/**
+ * Checks if `value` is classified as a `Symbol` primitive or object.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+ * @example
+ *
+ * _.isSymbol(Symbol.iterator);
+ * // => true
+ *
+ * _.isSymbol('abc');
+ * // => false
+ */
+function isSymbol(value) {
+  return typeof value == 'symbol' ||
+    (isObjectLike(value) && baseGetTag(value) == symbolTag);
+}
+
+/** Used as references for various `Number` constants. */
+var INFINITY = 1 / 0;
+
+/** Used to convert symbols to primitives and strings. */
+var symbolProto = Symbol$1 ? Symbol$1.prototype : undefined;
+var symbolToString = symbolProto ? symbolProto.toString : undefined;
+
+/**
+ * The base implementation of `_.toString` which doesn't convert nullish
+ * values to empty strings.
+ *
+ * @private
+ * @param {*} value The value to process.
+ * @returns {string} Returns the string.
+ */
+function baseToString(value) {
+  // Exit early for strings to avoid a performance hit in some environments.
+  if (typeof value == 'string') {
+    return value;
+  }
+  if (isArray(value)) {
+    // Recursively convert values (susceptible to call stack limits).
+    return arrayMap(value, baseToString) + '';
+  }
+  if (isSymbol(value)) {
+    return symbolToString ? symbolToString.call(value) : '';
+  }
+  var result = (value + '');
+  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+}
+
+/**
+ * The base implementation of `_.slice` without an iteratee call guard.
+ *
+ * @private
+ * @param {Array} array The array to slice.
+ * @param {number} [start=0] The start position.
+ * @param {number} [end=array.length] The end position.
+ * @returns {Array} Returns the slice of `array`.
+ */
+function baseSlice(array, start, end) {
+  var index = -1,
+      length = array.length;
+
+  if (start < 0) {
+    start = -start > length ? 0 : (length + start);
+  }
+  end = end > length ? length : end;
+  if (end < 0) {
+    end += length;
+  }
+  length = start > end ? 0 : ((end - start) >>> 0);
+  start >>>= 0;
+
+  var result = Array(length);
+  while (++index < length) {
+    result[index] = array[index + start];
+  }
+  return result;
+}
+
+/**
+ * Casts `array` to a slice if it's needed.
+ *
+ * @private
+ * @param {Array} array The array to inspect.
+ * @param {number} start The start position.
+ * @param {number} [end=array.length] The end position.
+ * @returns {Array} Returns the cast slice.
+ */
+function castSlice(array, start, end) {
+  var length = array.length;
+  end = end === undefined ? length : end;
+  return (!start && end >= length) ? array : baseSlice(array, start, end);
+}
+
+/**
+ * Used by `_.trim` and `_.trimEnd` to get the index of the last string symbol
+ * that is not found in the character symbols.
+ *
+ * @private
+ * @param {Array} strSymbols The string symbols to inspect.
+ * @param {Array} chrSymbols The character symbols to find.
+ * @returns {number} Returns the index of the last unmatched string symbol.
+ */
+function charsEndIndex(strSymbols, chrSymbols) {
+  var index = strSymbols.length;
+
+  while (index-- && baseIndexOf(chrSymbols, strSymbols[index], 0) > -1) {}
+  return index;
+}
+
+/**
+ * Used by `_.trim` and `_.trimStart` to get the index of the first string symbol
+ * that is not found in the character symbols.
+ *
+ * @private
+ * @param {Array} strSymbols The string symbols to inspect.
+ * @param {Array} chrSymbols The character symbols to find.
+ * @returns {number} Returns the index of the first unmatched string symbol.
+ */
+function charsStartIndex(strSymbols, chrSymbols) {
+  var index = -1,
+      length = strSymbols.length;
+
+  while (++index < length && baseIndexOf(chrSymbols, strSymbols[index], 0) > -1) {}
+  return index;
+}
+
+/**
+ * Converts an ASCII `string` to an array.
+ *
+ * @private
+ * @param {string} string The string to convert.
+ * @returns {Array} Returns the converted array.
+ */
+function asciiToArray(string) {
+  return string.split('');
+}
+
+/** Used to compose unicode character classes. */
+var rsAstralRange = '\\ud800-\\udfff';
+var rsComboMarksRange = '\\u0300-\\u036f';
+var reComboHalfMarksRange = '\\ufe20-\\ufe2f';
+var rsComboSymbolsRange = '\\u20d0-\\u20ff';
+var rsComboRange = rsComboMarksRange + reComboHalfMarksRange + rsComboSymbolsRange;
+var rsVarRange = '\\ufe0e\\ufe0f';
+
+/** Used to compose unicode capture groups. */
+var rsZWJ = '\\u200d';
+
+/** Used to detect strings with [zero-width joiners or code points from the astral planes](http://eev.ee/blog/2015/09/12/dark-corners-of-unicode/). */
+var reHasUnicode = RegExp('[' + rsZWJ + rsAstralRange  + rsComboRange + rsVarRange + ']');
+
+/**
+ * Checks if `string` contains Unicode symbols.
+ *
+ * @private
+ * @param {string} string The string to inspect.
+ * @returns {boolean} Returns `true` if a symbol is found, else `false`.
+ */
+function hasUnicode(string) {
+  return reHasUnicode.test(string);
+}
+
+/** Used to compose unicode character classes. */
+var rsAstralRange$1 = '\\ud800-\\udfff';
+var rsComboMarksRange$1 = '\\u0300-\\u036f';
+var reComboHalfMarksRange$1 = '\\ufe20-\\ufe2f';
+var rsComboSymbolsRange$1 = '\\u20d0-\\u20ff';
+var rsComboRange$1 = rsComboMarksRange$1 + reComboHalfMarksRange$1 + rsComboSymbolsRange$1;
+var rsVarRange$1 = '\\ufe0e\\ufe0f';
+
+/** Used to compose unicode capture groups. */
+var rsAstral = '[' + rsAstralRange$1 + ']';
+var rsCombo = '[' + rsComboRange$1 + ']';
+var rsFitz = '\\ud83c[\\udffb-\\udfff]';
+var rsModifier = '(?:' + rsCombo + '|' + rsFitz + ')';
+var rsNonAstral = '[^' + rsAstralRange$1 + ']';
+var rsRegional = '(?:\\ud83c[\\udde6-\\uddff]){2}';
+var rsSurrPair = '[\\ud800-\\udbff][\\udc00-\\udfff]';
+var rsZWJ$1 = '\\u200d';
+
+/** Used to compose unicode regexes. */
+var reOptMod = rsModifier + '?';
+var rsOptVar = '[' + rsVarRange$1 + ']?';
+var rsOptJoin = '(?:' + rsZWJ$1 + '(?:' + [rsNonAstral, rsRegional, rsSurrPair].join('|') + ')' + rsOptVar + reOptMod + ')*';
+var rsSeq = rsOptVar + reOptMod + rsOptJoin;
+var rsSymbol = '(?:' + [rsNonAstral + rsCombo + '?', rsCombo, rsRegional, rsSurrPair, rsAstral].join('|') + ')';
+
+/** Used to match [string symbols](https://mathiasbynens.be/notes/javascript-unicode). */
+var reUnicode = RegExp(rsFitz + '(?=' + rsFitz + ')|' + rsSymbol + rsSeq, 'g');
+
+/**
+ * Converts a Unicode `string` to an array.
+ *
+ * @private
+ * @param {string} string The string to convert.
+ * @returns {Array} Returns the converted array.
+ */
+function unicodeToArray(string) {
+  return string.match(reUnicode) || [];
+}
+
+/**
+ * Converts `string` to an array.
+ *
+ * @private
+ * @param {string} string The string to convert.
+ * @returns {Array} Returns the converted array.
+ */
+function stringToArray(string) {
+  return hasUnicode(string)
+    ? unicodeToArray(string)
+    : asciiToArray(string);
+}
+
+/**
+ * Converts `value` to a string. An empty string is returned for `null`
+ * and `undefined` values. The sign of `-0` is preserved.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to convert.
+ * @returns {string} Returns the converted string.
+ * @example
+ *
+ * _.toString(null);
+ * // => ''
+ *
+ * _.toString(-0);
+ * // => '-0'
+ *
+ * _.toString([1, 2, 3]);
+ * // => '1,2,3'
+ */
+function toString(value) {
+  return value == null ? '' : baseToString(value);
+}
+
+/** Used to match leading and trailing whitespace. */
+var reTrim = /^\s+|\s+$/g;
+
+/**
+ * Removes leading and trailing whitespace or specified characters from `string`.
+ *
+ * @static
+ * @memberOf _
+ * @since 3.0.0
+ * @category String
+ * @param {string} [string=''] The string to trim.
+ * @param {string} [chars=whitespace] The characters to trim.
+ * @param- {Object} [guard] Enables use as an iteratee for methods like `_.map`.
+ * @returns {string} Returns the trimmed string.
+ * @example
+ *
+ * _.trim('  abc  ');
+ * // => 'abc'
+ *
+ * _.trim('-_-abc-_-', '_-');
+ * // => 'abc'
+ *
+ * _.map(['  foo  ', '  bar  '], _.trim);
+ * // => ['foo', 'bar']
+ */
+function trim(string, chars, guard) {
+  string = toString(string);
+  if (string && (guard || chars === undefined)) {
+    return string.replace(reTrim, '');
+  }
+  if (!string || !(chars = baseToString(chars))) {
+    return string;
+  }
+  var strSymbols = stringToArray(string),
+      chrSymbols = stringToArray(chars),
+      start = charsStartIndex(strSymbols, chrSymbols),
+      end = charsEndIndex(strSymbols, chrSymbols) + 1;
+
+  return castSlice(strSymbols, start, end).join('');
+}
+
+var FN_ARGS = /^(function)?\s*[^\(]*\(\s*([^\)]*)\)/m;
+var FN_ARG_SPLIT = /,/;
+var FN_ARG = /(=.+)?(\s*)$/;
+var STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
+
+function parseParams(func) {
+    func = func.toString().replace(STRIP_COMMENTS, '');
+    func = func.match(FN_ARGS)[2].replace(' ', '');
+    func = func ? func.split(FN_ARG_SPLIT) : [];
+    func = func.map(function (arg) {
+        return trim(arg.replace(FN_ARG, ''));
+    });
+    return func;
+}
+
+/**
+ * A dependency-injected version of the [async.auto]{@link module:ControlFlow.auto} function. Dependent
+ * tasks are specified as parameters to the function, after the usual callback
+ * parameter, with the parameter names matching the names of the tasks it
+ * depends on. This can provide even more readable task graphs which can be
+ * easier to maintain.
+ *
+ * If a final callback is specified, the task results are similarly injected,
+ * specified as named parameters after the initial error parameter.
+ *
+ * The autoInject function is purely syntactic sugar and its semantics are
+ * otherwise equivalent to [async.auto]{@link module:ControlFlow.auto}.
+ *
+ * @name autoInject
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @see [async.auto]{@link module:ControlFlow.auto}
+ * @category Control Flow
+ * @param {Object} tasks - An object, each of whose properties is a function of
+ * the form 'func([dependencies...], callback). The object's key of a property
+ * serves as the name of the task defined by that property, i.e. can be used
+ * when specifying requirements for other tasks.
+ * * The `callback` parameter is a `callback(err, result)` which must be called
+ *   when finished, passing an `error` (which can be `null`) and the result of
+ *   the function's execution. The remaining parameters name other tasks on
+ *   which the task is dependent, and the results from those tasks are the
+ *   arguments of those parameters.
+ * @param {Function} [callback] - An optional callback which is called when all
+ * the tasks have been completed. It receives the `err` argument if any `tasks`
+ * pass an error to their callback, and a `results` object with any completed
+ * task results, similar to `auto`.
+ * @example
+ *
+ * //  The example from `auto` can be rewritten as follows:
+ * async.autoInject({
+ *     get_data: function(callback) {
+ *         // async code to get some data
+ *         callback(null, 'data', 'converted to array');
+ *     },
+ *     make_folder: function(callback) {
+ *         // async code to create a directory to store a file in
+ *         // this is run at the same time as getting the data
+ *         callback(null, 'folder');
+ *     },
+ *     write_file: function(get_data, make_folder, callback) {
+ *         // once there is some data and the directory exists,
+ *         // write the data to a file in the directory
+ *         callback(null, 'filename');
+ *     },
+ *     email_link: function(write_file, callback) {
+ *         // once the file is written let's email a link to it...
+ *         // write_file contains the filename returned by write_file.
+ *         callback(null, {'file':write_file, 'email':'user@example.com'});
+ *     }
+ * }, function(err, results) {
+ *     console.log('err = ', err);
+ *     console.log('email_link = ', results.email_link);
+ * });
+ *
+ * // If you are using a JS minifier that mangles parameter names, `autoInject`
+ * // will not work with plain functions, since the parameter names will be
+ * // collapsed to a single letter identifier.  To work around this, you can
+ * // explicitly specify the names of the parameters your task function needs
+ * // in an array, similar to Angular.js dependency injection.
+ *
+ * // This still has an advantage over plain `auto`, since the results a task
+ * // depends on are still spread into arguments.
+ * async.autoInject({
+ *     //...
+ *     write_file: ['get_data', 'make_folder', function(get_data, make_folder, callback) {
+ *         callback(null, 'filename');
+ *     }],
+ *     email_link: ['write_file', function(write_file, callback) {
+ *         callback(null, {'file':write_file, 'email':'user@example.com'});
+ *     }]
+ *     //...
+ * }, function(err, results) {
+ *     console.log('err = ', err);
+ *     console.log('email_link = ', results.email_link);
+ * });
+ */
+function autoInject(tasks, callback) {
+    var newTasks = {};
+
+    baseForOwn(tasks, function (taskFn, key) {
+        var params;
+
+        if (isArray(taskFn)) {
+            params = taskFn.slice(0, -1);
+            taskFn = taskFn[taskFn.length - 1];
+
+            newTasks[key] = params.concat(params.length > 0 ? newTask : taskFn);
+        } else if (taskFn.length === 1) {
+            // no dependencies, use the function as-is
+            newTasks[key] = taskFn;
+        } else {
+            params = parseParams(taskFn);
+            if (taskFn.length === 0 && params.length === 0) {
+                throw new Error("autoInject task functions require explicit parameters.");
+            }
+
+            params.pop();
+
+            newTasks[key] = params.concat(newTask);
+        }
+
+        function newTask(results, taskCb) {
+            var newArgs = arrayMap(params, function (name) {
+                return results[name];
+            });
+            newArgs.push(taskCb);
+            taskFn.apply(null, newArgs);
+        }
+    });
+
+    auto(newTasks, callback);
+}
+
+var hasSetImmediate = typeof setImmediate === 'function' && setImmediate;
+var hasNextTick = typeof process === 'object' && typeof process.nextTick === 'function';
+
+function fallback(fn) {
+    setTimeout(fn, 0);
+}
+
+function wrap(defer) {
+    return rest(function (fn, args) {
+        defer(function () {
+            fn.apply(null, args);
+        });
+    });
+}
+
+var _defer;
+
+if (hasSetImmediate) {
+    _defer = setImmediate;
+} else if (hasNextTick) {
+    _defer = process.nextTick;
+} else {
+    _defer = fallback;
+}
+
+var setImmediate$1 = wrap(_defer);
+
+// Simple doubly linked list (https://en.wikipedia.org/wiki/Doubly_linked_list) implementation
+// used for queues. This implementation assumes that the node provided by the user can be modified
+// to adjust the next and last properties. We implement only the minimal functionality
+// for queue support.
+function DLL() {
+    this.head = this.tail = null;
+    this.length = 0;
+}
+
+function setInitial(dll, node) {
+    dll.length = 1;
+    dll.head = dll.tail = node;
+}
+
+DLL.prototype.removeLink = function (node) {
+    if (node.prev) node.prev.next = node.next;else this.head = node.next;
+    if (node.next) node.next.prev = node.prev;else this.tail = node.prev;
+
+    node.prev = node.next = null;
+    this.length -= 1;
+    return node;
+};
+
+DLL.prototype.empty = DLL;
+
+DLL.prototype.insertAfter = function (node, newNode) {
+    newNode.prev = node;
+    newNode.next = node.next;
+    if (node.next) node.next.prev = newNode;else this.tail = newNode;
+    node.next = newNode;
+    this.length += 1;
+};
+
+DLL.prototype.insertBefore = function (node, newNode) {
+    newNode.prev = node.prev;
+    newNode.next = node;
+    if (node.prev) node.prev.next = newNode;else this.head = newNode;
+    node.prev = newNode;
+    this.length += 1;
+};
+
+DLL.prototype.unshift = function (node) {
+    if (this.head) this.insertBefore(this.head, node);else setInitial(this, node);
+};
+
+DLL.prototype.push = function (node) {
+    if (this.tail) this.insertAfter(this.tail, node);else setInitial(this, node);
+};
+
+DLL.prototype.shift = function () {
+    return this.head && this.removeLink(this.head);
+};
+
+DLL.prototype.pop = function () {
+    return this.tail && this.removeLink(this.tail);
+};
+
+function queue(worker, concurrency, payload) {
+    if (concurrency == null) {
+        concurrency = 1;
+    } else if (concurrency === 0) {
+        throw new Error('Concurrency must not be zero');
+    }
+
+    function _insert(data, insertAtFront, callback) {
+        if (callback != null && typeof callback !== 'function') {
+            throw new Error('task callback must be a function');
+        }
+        q.started = true;
+        if (!isArray(data)) {
+            data = [data];
+        }
+        if (data.length === 0 && q.idle()) {
+            // call drain immediately if there are no tasks
+            return setImmediate$1(function () {
+                q.drain();
+            });
+        }
+
+        for (var i = 0, l = data.length; i < l; i++) {
+            var item = {
+                data: data[i],
+                callback: callback || noop
+            };
+
+            if (insertAtFront) {
+                q._tasks.unshift(item);
+            } else {
+                q._tasks.push(item);
+            }
+        }
+        setImmediate$1(q.process);
+    }
+
+    function _next(tasks) {
+        return rest(function (args) {
+            workers -= 1;
+
+            for (var i = 0, l = tasks.length; i < l; i++) {
+                var task = tasks[i];
+                var index = baseIndexOf(workersList, task, 0);
+                if (index >= 0) {
+                    workersList.splice(index);
+                }
+
+                task.callback.apply(task, args);
+
+                if (args[0] != null) {
+                    q.error(args[0], task.data);
+                }
+            }
+
+            if (workers <= q.concurrency - q.buffer) {
+                q.unsaturated();
+            }
+
+            if (q.idle()) {
+                q.drain();
+            }
+            q.process();
+        });
+    }
+
+    var workers = 0;
+    var workersList = [];
+    var isProcessing = false;
+    var q = {
+        _tasks: new DLL(),
+        concurrency: concurrency,
+        payload: payload,
+        saturated: noop,
+        unsaturated: noop,
+        buffer: concurrency / 4,
+        empty: noop,
+        drain: noop,
+        error: noop,
+        started: false,
+        paused: false,
+        push: function (data, callback) {
+            _insert(data, false, callback);
+        },
+        kill: function () {
+            q.drain = noop;
+            q._tasks.empty();
+        },
+        unshift: function (data, callback) {
+            _insert(data, true, callback);
+        },
+        process: function () {
+            // Avoid trying to start too many processing operations. This can occur
+            // when callbacks resolve synchronously (#1267).
+            if (isProcessing) {
+                return;
+            }
+            isProcessing = true;
+            while (!q.paused && workers < q.concurrency && q._tasks.length) {
+                var tasks = [],
+                    data = [];
+                var l = q._tasks.length;
+                if (q.payload) l = Math.min(l, q.payload);
+                for (var i = 0; i < l; i++) {
+                    var node = q._tasks.shift();
+                    tasks.push(node);
+                    data.push(node.data);
+                }
+
+                if (q._tasks.length === 0) {
+                    q.empty();
+                }
+                workers += 1;
+                workersList.push(tasks[0]);
+
+                if (workers === q.concurrency) {
+                    q.saturated();
+                }
+
+                var cb = onlyOnce(_next(tasks));
+                worker(data, cb);
+            }
+            isProcessing = false;
+        },
+        length: function () {
+            return q._tasks.length;
+        },
+        running: function () {
+            return workers;
+        },
+        workersList: function () {
+            return workersList;
+        },
+        idle: function () {
+            return q._tasks.length + workers === 0;
+        },
+        pause: function () {
+            q.paused = true;
+        },
+        resume: function () {
+            if (q.paused === false) {
+                return;
+            }
+            q.paused = false;
+            setImmediate$1(q.process);
+        }
+    };
+    return q;
+}
+
+/**
+ * A cargo of tasks for the worker function to complete. Cargo inherits all of
+ * the same methods and event callbacks as [`queue`]{@link module:ControlFlow.queue}.
+ * @typedef {Object} CargoObject
+ * @memberOf module:ControlFlow
+ * @property {Function} length - A function returning the number of items
+ * waiting to be processed. Invoke like `cargo.length()`.
+ * @property {number} payload - An `integer` for determining how many tasks
+ * should be process per round. This property can be changed after a `cargo` is
+ * created to alter the payload on-the-fly.
+ * @property {Function} push - Adds `task` to the `queue`. The callback is
+ * called once the `worker` has finished processing the task. Instead of a
+ * single task, an array of `tasks` can be submitted. The respective callback is
+ * used for every task in the list. Invoke like `cargo.push(task, [callback])`.
+ * @property {Function} saturated - A callback that is called when the
+ * `queue.length()` hits the concurrency and further tasks will be queued.
+ * @property {Function} empty - A callback that is called when the last item
+ * from the `queue` is given to a `worker`.
+ * @property {Function} drain - A callback that is called when the last item
+ * from the `queue` has returned from the `worker`.
+ * @property {Function} idle - a function returning false if there are items
+ * waiting or being processed, or true if not. Invoke like `cargo.idle()`.
+ * @property {Function} pause - a function that pauses the processing of tasks
+ * until `resume()` is called. Invoke like `cargo.pause()`.
+ * @property {Function} resume - a function that resumes the processing of
+ * queued tasks when the queue is paused. Invoke like `cargo.resume()`.
+ * @property {Function} kill - a function that removes the `drain` callback and
+ * empties remaining tasks from the queue forcing it to go idle. Invoke like `cargo.kill()`.
+ */
+
+/**
+ * Creates a `cargo` object with the specified payload. Tasks added to the
+ * cargo will be processed altogether (up to the `payload` limit). If the
+ * `worker` is in progress, the task is queued until it becomes available. Once
+ * the `worker` has completed some tasks, each callback of those tasks is
+ * called. Check out [these](https://camo.githubusercontent.com/6bbd36f4cf5b35a0f11a96dcd2e97711ffc2fb37/68747470733a2f2f662e636c6f75642e6769746875622e636f6d2f6173736574732f313637363837312f36383130382f62626330636662302d356632392d313165322d393734662d3333393763363464633835382e676966) [animations](https://camo.githubusercontent.com/f4810e00e1c5f5f8addbe3e9f49064fd5d102699/68747470733a2f2f662e636c6f75642e6769746875622e636f6d2f6173736574732f313637363837312f36383130312f38346339323036362d356632392d313165322d383134662d3964336430323431336266642e676966)
+ * for how `cargo` and `queue` work.
+ *
+ * While [`queue`]{@link module:ControlFlow.queue} passes only one task to one of a group of workers
+ * at a time, cargo passes an array of tasks to a single worker, repeating
+ * when the worker is finished.
+ *
+ * @name cargo
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @see [async.queue]{@link module:ControlFlow.queue}
+ * @category Control Flow
+ * @param {Function} worker - An asynchronous function for processing an array
+ * of queued tasks, which must call its `callback(err)` argument when finished,
+ * with an optional `err` argument. Invoked with `(tasks, callback)`.
+ * @param {number} [payload=Infinity] - An optional `integer` for determining
+ * how many tasks should be processed per round; if omitted, the default is
+ * unlimited.
+ * @returns {module:ControlFlow.CargoObject} A cargo object to manage the tasks. Callbacks can
+ * attached as certain properties to listen for specific events during the
+ * lifecycle of the cargo and inner queue.
+ * @example
+ *
+ * // create a cargo object with payload 2
+ * var cargo = async.cargo(function(tasks, callback) {
+ *     for (var i=0; i<tasks.length; i++) {
+ *         console.log('hello ' + tasks[i].name);
+ *     }
+ *     callback();
+ * }, 2);
+ *
+ * // add some items
+ * cargo.push({name: 'foo'}, function(err) {
+ *     console.log('finished processing foo');
+ * });
+ * cargo.push({name: 'bar'}, function(err) {
+ *     console.log('finished processing bar');
+ * });
+ * cargo.push({name: 'baz'}, function(err) {
+ *     console.log('finished processing baz');
+ * });
+ */
+function cargo(worker, payload) {
+  return queue(worker, 1, payload);
+}
+
+/**
+ * The same as [`eachOf`]{@link module:Collections.eachOf} but runs only a single async operation at a time.
+ *
+ * @name eachOfSeries
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.eachOf]{@link module:Collections.eachOf}
+ * @alias forEachOfSeries
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {Function} iteratee - A function to apply to each item in `coll`. The
+ * `key` is the item's key, or index in the case of an array. The iteratee is
+ * passed a `callback(err)` which must be called once it has completed. If no
+ * error has occurred, the callback should be run without arguments or with an
+ * explicit `null` argument. Invoked with (item, key, callback).
+ * @param {Function} [callback] - A callback which is called when all `iteratee`
+ * functions have finished, or an error occurs. Invoked with (err).
+ */
+var eachOfSeries = doLimit(eachOfLimit, 1);
+
+/**
+ * Reduces `coll` into a single value using an async `iteratee` to return each
+ * successive step. `memo` is the initial state of the reduction. This function
+ * only operates in series.
+ *
+ * For performance reasons, it may make sense to split a call to this function
+ * into a parallel map, and then use the normal `Array.prototype.reduce` on the
+ * results. This function is for situations where each step in the reduction
+ * needs to be async; if you can get the data before reducing it, then it's
+ * probably a good idea to do so.
+ *
+ * @name reduce
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @alias inject
+ * @alias foldl
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {*} memo - The initial state of the reduction.
+ * @param {Function} iteratee - A function applied to each item in the
+ * array to produce the next step in the reduction. The `iteratee` is passed a
+ * `callback(err, reduction)` which accepts an optional error as its first
+ * argument, and the state of the reduction as the second. If an error is
+ * passed to the callback, the reduction is stopped and the main `callback` is
+ * immediately called with the error. Invoked with (memo, item, callback).
+ * @param {Function} [callback] - A callback which is called after all the
+ * `iteratee` functions have finished. Result is the reduced value. Invoked with
+ * (err, result).
+ * @example
+ *
+ * async.reduce([1,2,3], 0, function(memo, item, callback) {
+ *     // pointless async:
+ *     process.nextTick(function() {
+ *         callback(null, memo + item)
+ *     });
+ * }, function(err, result) {
+ *     // result is now equal to the last value of memo, which is 6
+ * });
+ */
+function reduce(coll, memo, iteratee, callback) {
+    callback = once(callback || noop);
+    eachOfSeries(coll, function (x, i, callback) {
+        iteratee(memo, x, function (err, v) {
+            memo = v;
+            callback(err);
+        });
+    }, function (err) {
+        callback(err, memo);
+    });
+}
+
+/**
+ * Version of the compose function that is more natural to read. Each function
+ * consumes the return value of the previous function. It is the equivalent of
+ * [compose]{@link module:ControlFlow.compose} with the arguments reversed.
+ *
+ * Each function is executed with the `this` binding of the composed function.
+ *
+ * @name seq
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @see [async.compose]{@link module:ControlFlow.compose}
+ * @category Control Flow
+ * @param {...Function} functions - the asynchronous functions to compose
+ * @returns {Function} a function that composes the `functions` in order
+ * @example
+ *
+ * // Requires lodash (or underscore), express3 and dresende's orm2.
+ * // Part of an app, that fetches cats of the logged user.
+ * // This example uses `seq` function to avoid overnesting and error
+ * // handling clutter.
+ * app.get('/cats', function(request, response) {
+ *     var User = request.models.User;
+ *     async.seq(
+ *         _.bind(User.get, User),  // 'User.get' has signature (id, callback(err, data))
+ *         function(user, fn) {
+ *             user.getCats(fn);      // 'getCats' has signature (callback(err, data))
+ *         }
+ *     )(req.session.user_id, function (err, cats) {
+ *         if (err) {
+ *             console.error(err);
+ *             response.json({ status: 'error', message: err.message });
+ *         } else {
+ *             response.json({ status: 'ok', message: 'Cats found', data: cats });
+ *         }
+ *     });
+ * });
+ */
+var seq$1 = rest(function seq(functions) {
+    return rest(function (args) {
+        var that = this;
+
+        var cb = args[args.length - 1];
+        if (typeof cb == 'function') {
+            args.pop();
+        } else {
+            cb = noop;
+        }
+
+        reduce(functions, args, function (newargs, fn, cb) {
+            fn.apply(that, newargs.concat(rest(function (err, nextargs) {
+                cb(err, nextargs);
+            })));
+        }, function (err, results) {
+            cb.apply(that, [err].concat(results));
+        });
+    });
+});
+
+/**
+ * Creates a function which is a composition of the passed asynchronous
+ * functions. Each function consumes the return value of the function that
+ * follows. Composing functions `f()`, `g()`, and `h()` would produce the result
+ * of `f(g(h()))`, only this version uses callbacks to obtain the return values.
+ *
+ * Each function is executed with the `this` binding of the composed function.
+ *
+ * @name compose
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @category Control Flow
+ * @param {...Function} functions - the asynchronous functions to compose
+ * @returns {Function} an asynchronous function that is the composed
+ * asynchronous `functions`
+ * @example
+ *
+ * function add1(n, callback) {
+ *     setTimeout(function () {
+ *         callback(null, n + 1);
+ *     }, 10);
+ * }
+ *
+ * function mul3(n, callback) {
+ *     setTimeout(function () {
+ *         callback(null, n * 3);
+ *     }, 10);
+ * }
+ *
+ * var add1mul3 = async.compose(mul3, add1);
+ * add1mul3(4, function (err, result) {
+ *     // result now equals 15
+ * });
+ */
+var compose = rest(function (args) {
+  return seq$1.apply(null, args.reverse());
+});
+
+function concat$1(eachfn, arr, fn, callback) {
+    var result = [];
+    eachfn(arr, function (x, index, cb) {
+        fn(x, function (err, y) {
+            result = result.concat(y || []);
+            cb(err);
+        });
+    }, function (err) {
+        callback(err, result);
+    });
+}
+
+/**
+ * Applies `iteratee` to each item in `coll`, concatenating the results. Returns
+ * the concatenated list. The `iteratee`s are called in parallel, and the
+ * results are concatenated as they return. There is no guarantee that the
+ * results array will be returned in the original order of `coll` passed to the
+ * `iteratee` function.
+ *
+ * @name concat
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {Function} iteratee - A function to apply to each item in `coll`.
+ * The iteratee is passed a `callback(err, results)` which must be called once
+ * it has completed with an error (which can be `null`) and an array of results.
+ * Invoked with (item, callback).
+ * @param {Function} [callback(err)] - A callback which is called after all the
+ * `iteratee` functions have finished, or an error occurs. Results is an array
+ * containing the concatenated results of the `iteratee` function. Invoked with
+ * (err, results).
+ * @example
+ *
+ * async.concat(['dir1','dir2','dir3'], fs.readdir, function(err, files) {
+ *     // files is now a list of filenames that exist in the 3 directories
+ * });
+ */
+var concat = doParallel(concat$1);
+
+function doSeries(fn) {
+    return function (obj, iteratee, callback) {
+        return fn(eachOfSeries, obj, iteratee, callback);
+    };
+}
+
+/**
+ * The same as [`concat`]{@link module:Collections.concat} but runs only a single async operation at a time.
+ *
+ * @name concatSeries
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.concat]{@link module:Collections.concat}
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {Function} iteratee - A function to apply to each item in `coll`.
+ * The iteratee is passed a `callback(err, results)` which must be called once
+ * it has completed with an error (which can be `null`) and an array of results.
+ * Invoked with (item, callback).
+ * @param {Function} [callback(err)] - A callback which is called after all the
+ * `iteratee` functions have finished, or an error occurs. Results is an array
+ * containing the concatenated results of the `iteratee` function. Invoked with
+ * (err, results).
+ */
+var concatSeries = doSeries(concat$1);
+
+/**
+ * Returns a function that when called, calls-back with the values provided.
+ * Useful as the first function in a [`waterfall`]{@link module:ControlFlow.waterfall}, or for plugging values in to
+ * [`auto`]{@link module:ControlFlow.auto}.
+ *
+ * @name constant
+ * @static
+ * @memberOf module:Utils
+ * @method
+ * @category Util
+ * @param {...*} arguments... - Any number of arguments to automatically invoke
+ * callback with.
+ * @returns {Function} Returns a function that when invoked, automatically
+ * invokes the callback with the previous given arguments.
+ * @example
+ *
+ * async.waterfall([
+ *     async.constant(42),
+ *     function (value, next) {
+ *         // value === 42
+ *     },
+ *     //...
+ * ], callback);
+ *
+ * async.waterfall([
+ *     async.constant(filename, "utf8"),
+ *     fs.readFile,
+ *     function (fileData, next) {
+ *         //...
+ *     }
+ *     //...
+ * ], callback);
+ *
+ * async.auto({
+ *     hostname: async.constant("https://server.net/"),
+ *     port: findFreePort,
+ *     launchServer: ["hostname", "port", function (options, cb) {
+ *         startServer(options, cb);
+ *     }],
+ *     //...
+ * }, callback);
+ */
+var constant = rest(function (values) {
+    var args = [null].concat(values);
+    return initialParams(function (ignoredArgs, callback) {
+        return callback.apply(this, args);
+    });
+});
+
+function _createTester(check, getResult) {
+    return function (eachfn, arr, iteratee, cb) {
+        cb = cb || noop;
+        var testPassed = false;
+        var testResult;
+        eachfn(arr, function (value, _, callback) {
+            iteratee(value, function (err, result) {
+                if (err) {
+                    callback(err);
+                } else if (check(result) && !testResult) {
+                    testPassed = true;
+                    testResult = getResult(true, value);
+                    callback(null, breakLoop);
+                } else {
+                    callback();
+                }
+            });
+        }, function (err) {
+            if (err) {
+                cb(err);
+            } else {
+                cb(null, testPassed ? testResult : getResult(false));
+            }
+        });
+    };
+}
+
+function _findGetResult(v, x) {
+    return x;
+}
+
+/**
+ * Returns the first value in `coll` that passes an async truth test. The
+ * `iteratee` is applied in parallel, meaning the first iteratee to return
+ * `true` will fire the detect `callback` with that result. That means the
+ * result might not be the first item in the original `coll` (in terms of order)
+ * that passes the test.
+
+ * If order within the original `coll` is important, then look at
+ * [`detectSeries`]{@link module:Collections.detectSeries}.
+ *
+ * @name detect
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @alias find
+ * @category Collections
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {Function} iteratee - A truth test to apply to each item in `coll`.
+ * The iteratee is passed a `callback(err, truthValue)` which must be called
+ * with a boolean argument once it has completed. Invoked with (item, callback).
+ * @param {Function} [callback] - A callback which is called as soon as any
+ * iteratee returns `true`, or after all the `iteratee` functions have finished.
+ * Result will be the first item in the array that passes the truth test
+ * (iteratee) or the value `undefined` if none passed. Invoked with
+ * (err, result).
+ * @example
+ *
+ * async.detect(['file1','file2','file3'], function(filePath, callback) {
+ *     fs.access(filePath, function(err) {
+ *         callback(null, !err)
+ *     });
+ * }, function(err, result) {
+ *     // result now equals the first file in the list that exists
+ * });
+ */
+var detect = doParallel(_createTester(identity, _findGetResult));
+
+/**
+ * The same as [`detect`]{@link module:Collections.detect} but runs a maximum of `limit` async operations at a
+ * time.
+ *
+ * @name detectLimit
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.detect]{@link module:Collections.detect}
+ * @alias findLimit
+ * @category Collections
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {number} limit - The maximum number of async operations at a time.
+ * @param {Function} iteratee - A truth test to apply to each item in `coll`.
+ * The iteratee is passed a `callback(err, truthValue)` which must be called
+ * with a boolean argument once it has completed. Invoked with (item, callback).
+ * @param {Function} [callback] - A callback which is called as soon as any
+ * iteratee returns `true`, or after all the `iteratee` functions have finished.
+ * Result will be the first item in the array that passes the truth test
+ * (iteratee) or the value `undefined` if none passed. Invoked with
+ * (err, result).
+ */
+var detectLimit = doParallelLimit(_createTester(identity, _findGetResult));
+
+/**
+ * The same as [`detect`]{@link module:Collections.detect} but runs only a single async operation at a time.
+ *
+ * @name detectSeries
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.detect]{@link module:Collections.detect}
+ * @alias findSeries
+ * @category Collections
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {Function} iteratee - A truth test to apply to each item in `coll`.
+ * The iteratee is passed a `callback(err, truthValue)` which must be called
+ * with a boolean argument once it has completed. Invoked with (item, callback).
+ * @param {Function} [callback] - A callback which is called as soon as any
+ * iteratee returns `true`, or after all the `iteratee` functions have finished.
+ * Result will be the first item in the array that passes the truth test
+ * (iteratee) or the value `undefined` if none passed. Invoked with
+ * (err, result).
+ */
+var detectSeries = doLimit(detectLimit, 1);
+
+function consoleFunc(name) {
+    return rest(function (fn, args) {
+        fn.apply(null, args.concat(rest(function (err, args) {
+            if (typeof console === 'object') {
+                if (err) {
+                    if (console.error) {
+                        console.error(err);
+                    }
+                } else if (console[name]) {
+                    arrayEach(args, function (x) {
+                        console[name](x);
+                    });
+                }
+            }
+        })));
+    });
+}
+
+/**
+ * Logs the result of an `async` function to the `console` using `console.dir`
+ * to display the properties of the resulting object. Only works in Node.js or
+ * in browsers that support `console.dir` and `console.error` (such as FF and
+ * Chrome). If multiple arguments are returned from the async function,
+ * `console.dir` is called on each argument in order.
+ *
+ * @name dir
+ * @static
+ * @memberOf module:Utils
+ * @method
+ * @category Util
+ * @param {Function} function - The function you want to eventually apply all
+ * arguments to.
+ * @param {...*} arguments... - Any number of arguments to apply to the function.
+ * @example
+ *
+ * // in a module
+ * var hello = function(name, callback) {
+ *     setTimeout(function() {
+ *         callback(null, {hello: name});
+ *     }, 1000);
+ * };
+ *
+ * // in the node repl
+ * node> async.dir(hello, 'world');
+ * {hello: 'world'}
+ */
+var dir = consoleFunc('dir');
+
+/**
+ * The post-check version of [`during`]{@link module:ControlFlow.during}. To reflect the difference in
+ * the order of operations, the arguments `test` and `fn` are switched.
+ *
+ * Also a version of [`doWhilst`]{@link module:ControlFlow.doWhilst} with asynchronous `test` function.
+ * @name doDuring
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @see [async.during]{@link module:ControlFlow.during}
+ * @category Control Flow
+ * @param {Function} fn - A function which is called each time `test` passes.
+ * The function is passed a `callback(err)`, which must be called once it has
+ * completed with an optional `err` argument. Invoked with (callback).
+ * @param {Function} test - asynchronous truth test to perform before each
+ * execution of `fn`. Invoked with (...args, callback), where `...args` are the
+ * non-error args from the previous callback of `fn`.
+ * @param {Function} [callback] - A callback which is called after the test
+ * function has failed and repeated execution of `fn` has stopped. `callback`
+ * will be passed an error if one occured, otherwise `null`.
+ */
+function doDuring(fn, test, callback) {
+    callback = onlyOnce(callback || noop);
+
+    var next = rest(function (err, args) {
+        if (err) return callback(err);
+        args.push(check);
+        test.apply(this, args);
+    });
+
+    function check(err, truth) {
+        if (err) return callback(err);
+        if (!truth) return callback(null);
+        fn(next);
+    }
+
+    check(null, true);
+}
+
+/**
+ * The post-check version of [`whilst`]{@link module:ControlFlow.whilst}. To reflect the difference in
+ * the order of operations, the arguments `test` and `iteratee` are switched.
+ *
+ * `doWhilst` is to `whilst` as `do while` is to `while` in plain JavaScript.
+ *
+ * @name doWhilst
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @see [async.whilst]{@link module:ControlFlow.whilst}
+ * @category Control Flow
+ * @param {Function} iteratee - A function which is called each time `test`
+ * passes. The function is passed a `callback(err)`, which must be called once
+ * it has completed with an optional `err` argument. Invoked with (callback).
+ * @param {Function} test - synchronous truth test to perform after each
+ * execution of `iteratee`. Invoked with the non-error callback results of 
+ * `iteratee`.
+ * @param {Function} [callback] - A callback which is called after the test
+ * function has failed and repeated execution of `iteratee` has stopped.
+ * `callback` will be passed an error and any arguments passed to the final
+ * `iteratee`'s callback. Invoked with (err, [results]);
+ */
+function doWhilst(iteratee, test, callback) {
+    callback = onlyOnce(callback || noop);
+    var next = rest(function (err, args) {
+        if (err) return callback(err);
+        if (test.apply(this, args)) return iteratee(next);
+        callback.apply(null, [null].concat(args));
+    });
+    iteratee(next);
+}
+
+/**
+ * Like ['doWhilst']{@link module:ControlFlow.doWhilst}, except the `test` is inverted. Note the
+ * argument ordering differs from `until`.
+ *
+ * @name doUntil
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @see [async.doWhilst]{@link module:ControlFlow.doWhilst}
+ * @category Control Flow
+ * @param {Function} fn - A function which is called each time `test` fails.
+ * The function is passed a `callback(err)`, which must be called once it has
+ * completed with an optional `err` argument. Invoked with (callback).
+ * @param {Function} test - synchronous truth test to perform after each
+ * execution of `fn`. Invoked with the non-error callback results of `fn`.
+ * @param {Function} [callback] - A callback which is called after the test
+ * function has passed and repeated execution of `fn` has stopped. `callback`
+ * will be passed an error and any arguments passed to the final `fn`'s
+ * callback. Invoked with (err, [results]);
+ */
+function doUntil(fn, test, callback) {
+    doWhilst(fn, function () {
+        return !test.apply(this, arguments);
+    }, callback);
+}
+
+/**
+ * Like [`whilst`]{@link module:ControlFlow.whilst}, except the `test` is an asynchronous function that
+ * is passed a callback in the form of `function (err, truth)`. If error is
+ * passed to `test` or `fn`, the main callback is immediately called with the
+ * value of the error.
+ *
+ * @name during
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @see [async.whilst]{@link module:ControlFlow.whilst}
+ * @category Control Flow
+ * @param {Function} test - asynchronous truth test to perform before each
+ * execution of `fn`. Invoked with (callback).
+ * @param {Function} fn - A function which is called each time `test` passes.
+ * The function is passed a `callback(err)`, which must be called once it has
+ * completed with an optional `err` argument. Invoked with (callback).
+ * @param {Function} [callback] - A callback which is called after the test
+ * function has failed and repeated execution of `fn` has stopped. `callback`
+ * will be passed an error, if one occured, otherwise `null`.
+ * @example
+ *
+ * var count = 0;
+ *
+ * async.during(
+ *     function (callback) {
+ *         return callback(null, count < 5);
+ *     },
+ *     function (callback) {
+ *         count++;
+ *         setTimeout(callback, 1000);
+ *     },
+ *     function (err) {
+ *         // 5 seconds have passed
+ *     }
+ * );
+ */
+function during(test, fn, callback) {
+    callback = onlyOnce(callback || noop);
+
+    function next(err) {
+        if (err) return callback(err);
+        test(check);
+    }
+
+    function check(err, truth) {
+        if (err) return callback(err);
+        if (!truth) return callback(null);
+        fn(next);
+    }
+
+    test(check);
+}
+
+function _withoutIndex(iteratee) {
+    return function (value, index, callback) {
+        return iteratee(value, callback);
+    };
+}
+
+/**
+ * Applies the function `iteratee` to each item in `coll`, in parallel.
+ * The `iteratee` is called with an item from the list, and a callback for when
+ * it has finished. If the `iteratee` passes an error to its `callback`, the
+ * main `callback` (for the `each` function) is immediately called with the
+ * error.
+ *
+ * Note, that since this function applies `iteratee` to each item in parallel,
+ * there is no guarantee that the iteratee functions will complete in order.
+ *
+ * @name each
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @alias forEach
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {Function} iteratee - A function to apply to each item
+ * in `coll`. The iteratee is passed a `callback(err)` which must be called once
+ * it has completed. If no error has occurred, the `callback` should be run
+ * without arguments or with an explicit `null` argument. The array index is not
+ * passed to the iteratee. Invoked with (item, callback). If you need the index,
+ * use `eachOf`.
+ * @param {Function} [callback] - A callback which is called when all
+ * `iteratee` functions have finished, or an error occurs. Invoked with (err).
+ * @example
+ *
+ * // assuming openFiles is an array of file names and saveFile is a function
+ * // to save the modified contents of that file:
+ *
+ * async.each(openFiles, saveFile, function(err){
+ *   // if any of the saves produced an error, err would equal that error
+ * });
+ *
+ * // assuming openFiles is an array of file names
+ * async.each(openFiles, function(file, callback) {
+ *
+ *     // Perform operation on file here.
+ *     console.log('Processing file ' + file);
+ *
+ *     if( file.length > 32 ) {
+ *       console.log('This file name is too long');
+ *       callback('File name too long');
+ *     } else {
+ *       // Do work to process file here
+ *       console.log('File processed');
+ *       callback();
+ *     }
+ * }, function(err) {
+ *     // if any of the file processing produced an error, err would equal that error
+ *     if( err ) {
+ *       // One of the iterations produced an error.
+ *       // All processing will now stop.
+ *       console.log('A file failed to process');
+ *     } else {
+ *       console.log('All files have been processed successfully');
+ *     }
+ * });
+ */
+function eachLimit(coll, iteratee, callback) {
+  eachOf(coll, _withoutIndex(iteratee), callback);
+}
+
+/**
+ * The same as [`each`]{@link module:Collections.each} but runs a maximum of `limit` async operations at a time.
+ *
+ * @name eachLimit
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.each]{@link module:Collections.each}
+ * @alias forEachLimit
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {number} limit - The maximum number of async operations at a time.
+ * @param {Function} iteratee - A function to apply to each item in `coll`. The
+ * iteratee is passed a `callback(err)` which must be called once it has
+ * completed. If no error has occurred, the `callback` should be run without
+ * arguments or with an explicit `null` argument. The array index is not passed
+ * to the iteratee. Invoked with (item, callback). If you need the index, use
+ * `eachOfLimit`.
+ * @param {Function} [callback] - A callback which is called when all
+ * `iteratee` functions have finished, or an error occurs. Invoked with (err).
+ */
+function eachLimit$1(coll, limit, iteratee, callback) {
+  _eachOfLimit(limit)(coll, _withoutIndex(iteratee), callback);
+}
+
+/**
+ * The same as [`each`]{@link module:Collections.each} but runs only a single async operation at a time.
+ *
+ * @name eachSeries
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.each]{@link module:Collections.each}
+ * @alias forEachSeries
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {Function} iteratee - A function to apply to each
+ * item in `coll`. The iteratee is passed a `callback(err)` which must be called
+ * once it has completed. If no error has occurred, the `callback` should be run
+ * without arguments or with an explicit `null` argument. The array index is
+ * not passed to the iteratee. Invoked with (item, callback). If you need the
+ * index, use `eachOfSeries`.
+ * @param {Function} [callback] - A callback which is called when all
+ * `iteratee` functions have finished, or an error occurs. Invoked with (err).
+ */
+var eachSeries = doLimit(eachLimit$1, 1);
+
+/**
+ * Wrap an async function and ensure it calls its callback on a later tick of
+ * the event loop.  If the function already calls its callback on a next tick,
+ * no extra deferral is added. This is useful for preventing stack overflows
+ * (`RangeError: Maximum call stack size exceeded`) and generally keeping
+ * [Zalgo](http://blog.izs.me/post/59142742143/designing-apis-for-asynchrony)
+ * contained.
+ *
+ * @name ensureAsync
+ * @static
+ * @memberOf module:Utils
+ * @method
+ * @category Util
+ * @param {Function} fn - an async function, one that expects a node-style
+ * callback as its last argument.
+ * @returns {Function} Returns a wrapped function with the exact same call
+ * signature as the function passed in.
+ * @example
+ *
+ * function sometimesAsync(arg, callback) {
+ *     if (cache[arg]) {
+ *         return callback(null, cache[arg]); // this would be synchronous!!
+ *     } else {
+ *         doSomeIO(arg, callback); // this IO would be asynchronous
+ *     }
+ * }
+ *
+ * // this has a risk of stack overflows if many results are cached in a row
+ * async.mapSeries(args, sometimesAsync, done);
+ *
+ * // this will defer sometimesAsync's callback if necessary,
+ * // preventing stack overflows
+ * async.mapSeries(args, async.ensureAsync(sometimesAsync), done);
+ */
+function ensureAsync(fn) {
+    return initialParams(function (args, callback) {
+        var sync = true;
+        args.push(function () {
+            var innerArgs = arguments;
+            if (sync) {
+                setImmediate$1(function () {
+                    callback.apply(null, innerArgs);
+                });
+            } else {
+                callback.apply(null, innerArgs);
+            }
+        });
+        fn.apply(this, args);
+        sync = false;
+    });
+}
+
+function notId(v) {
+    return !v;
+}
+
+/**
+ * Returns `true` if every element in `coll` satisfies an async test. If any
+ * iteratee call returns `false`, the main `callback` is immediately called.
+ *
+ * @name every
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @alias all
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {Function} iteratee - A truth test to apply to each item in the
+ * collection in parallel. The iteratee is passed a `callback(err, truthValue)`
+ * which must be called with a  boolean argument once it has completed. Invoked
+ * with (item, callback).
+ * @param {Function} [callback] - A callback which is called after all the
+ * `iteratee` functions have finished. Result will be either `true` or `false`
+ * depending on the values of the async tests. Invoked with (err, result).
+ * @example
+ *
+ * async.every(['file1','file2','file3'], function(filePath, callback) {
+ *     fs.access(filePath, function(err) {
+ *         callback(null, !err)
+ *     });
+ * }, function(err, result) {
+ *     // if result is true then every file exists
+ * });
+ */
+var every = doParallel(_createTester(notId, notId));
+
+/**
+ * The same as [`every`]{@link module:Collections.every} but runs a maximum of `limit` async operations at a time.
+ *
+ * @name everyLimit
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.every]{@link module:Collections.every}
+ * @alias allLimit
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {number} limit - The maximum number of async operations at a time.
+ * @param {Function} iteratee - A truth test to apply to each item in the
+ * collection in parallel. The iteratee is passed a `callback(err, truthValue)`
+ * which must be called with a  boolean argument once it has completed. Invoked
+ * with (item, callback).
+ * @param {Function} [callback] - A callback which is called after all the
+ * `iteratee` functions have finished. Result will be either `true` or `false`
+ * depending on the values of the async tests. Invoked with (err, result).
+ */
+var everyLimit = doParallelLimit(_createTester(notId, notId));
+
+/**
+ * The same as [`every`]{@link module:Collections.every} but runs only a single async operation at a time.
+ *
+ * @name everySeries
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.every]{@link module:Collections.every}
+ * @alias allSeries
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {Function} iteratee - A truth test to apply to each item in the
+ * collection in parallel. The iteratee is passed a `callback(err, truthValue)`
+ * which must be called with a  boolean argument once it has completed. Invoked
+ * with (item, callback).
+ * @param {Function} [callback] - A callback which is called after all the
+ * `iteratee` functions have finished. Result will be either `true` or `false`
+ * depending on the values of the async tests. Invoked with (err, result).
+ */
+var everySeries = doLimit(everyLimit, 1);
+
+/**
+ * The base implementation of `_.property` without support for deep paths.
+ *
+ * @private
+ * @param {string} key The key of the property to get.
+ * @returns {Function} Returns the new accessor function.
+ */
+function baseProperty(key) {
+  return function(object) {
+    return object == null ? undefined : object[key];
+  };
+}
+
+function filterArray(eachfn, arr, iteratee, callback) {
+    var truthValues = new Array(arr.length);
+    eachfn(arr, function (x, index, callback) {
+        iteratee(x, function (err, v) {
+            truthValues[index] = !!v;
+            callback(err);
+        });
+    }, function (err) {
+        if (err) return callback(err);
+        var results = [];
+        for (var i = 0; i < arr.length; i++) {
+            if (truthValues[i]) results.push(arr[i]);
+        }
+        callback(null, results);
+    });
+}
+
+function filterGeneric(eachfn, coll, iteratee, callback) {
+    var results = [];
+    eachfn(coll, function (x, index, callback) {
+        iteratee(x, function (err, v) {
+            if (err) {
+                callback(err);
+            } else {
+                if (v) {
+                    results.push({ index: index, value: x });
+                }
+                callback();
+            }
+        });
+    }, function (err) {
+        if (err) {
+            callback(err);
+        } else {
+            callback(null, arrayMap(results.sort(function (a, b) {
+                return a.index - b.index;
+            }), baseProperty('value')));
+        }
+    });
+}
+
+function _filter(eachfn, coll, iteratee, callback) {
+    var filter = isArrayLike(coll) ? filterArray : filterGeneric;
+    filter(eachfn, coll, iteratee, callback || noop);
+}
+
+/**
+ * Returns a new array of all the values in `coll` which pass an async truth
+ * test. This operation is performed in parallel, but the results array will be
+ * in the same order as the original.
+ *
+ * @name filter
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @alias select
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {Function} iteratee - A truth test to apply to each item in `coll`.
+ * The `iteratee` is passed a `callback(err, truthValue)`, which must be called
+ * with a boolean argument once it has completed. Invoked with (item, callback).
+ * @param {Function} [callback] - A callback which is called after all the
+ * `iteratee` functions have finished. Invoked with (err, results).
+ * @example
+ *
+ * async.filter(['file1','file2','file3'], function(filePath, callback) {
+ *     fs.access(filePath, function(err) {
+ *         callback(null, !err)
+ *     });
+ * }, function(err, results) {
+ *     // results now equals an array of the existing files
+ * });
+ */
+var filter = doParallel(_filter);
+
+/**
+ * The same as [`filter`]{@link module:Collections.filter} but runs a maximum of `limit` async operations at a
+ * time.
+ *
+ * @name filterLimit
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.filter]{@link module:Collections.filter}
+ * @alias selectLimit
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {number} limit - The maximum number of async operations at a time.
+ * @param {Function} iteratee - A truth test to apply to each item in `coll`.
+ * The `iteratee` is passed a `callback(err, truthValue)`, which must be called
+ * with a boolean argument once it has completed. Invoked with (item, callback).
+ * @param {Function} [callback] - A callback which is called after all the
+ * `iteratee` functions have finished. Invoked with (err, results).
+ */
+var filterLimit = doParallelLimit(_filter);
+
+/**
+ * The same as [`filter`]{@link module:Collections.filter} but runs only a single async operation at a time.
+ *
+ * @name filterSeries
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.filter]{@link module:Collections.filter}
+ * @alias selectSeries
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {Function} iteratee - A truth test to apply to each item in `coll`.
+ * The `iteratee` is passed a `callback(err, truthValue)`, which must be called
+ * with a boolean argument once it has completed. Invoked with (item, callback).
+ * @param {Function} [callback] - A callback which is called after all the
+ * `iteratee` functions have finished. Invoked with (err, results)
+ */
+var filterSeries = doLimit(filterLimit, 1);
+
+/**
+ * Calls the asynchronous function `fn` with a callback parameter that allows it
+ * to call itself again, in series, indefinitely.
+
+ * If an error is passed to the
+ * callback then `errback` is called with the error, and execution stops,
+ * otherwise it will never be called.
+ *
+ * @name forever
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @category Control Flow
+ * @param {Function} fn - a function to call repeatedly. Invoked with (next).
+ * @param {Function} [errback] - when `fn` passes an error to it's callback,
+ * this function will be called, and execution stops. Invoked with (err).
+ * @example
+ *
+ * async.forever(
+ *     function(next) {
+ *         // next is suitable for passing to things that need a callback(err [, whatever]);
+ *         // it will result in this function being called again.
+ *     },
+ *     function(err) {
+ *         // if next is called with a value in its first parameter, it will appear
+ *         // in here as 'err', and execution will stop.
+ *     }
+ * );
+ */
+function forever(fn, errback) {
+    var done = onlyOnce(errback || noop);
+    var task = ensureAsync(fn);
+
+    function next(err) {
+        if (err) return done(err);
+        task(next);
+    }
+    next();
+}
+
+/**
+ * Logs the result of an `async` function to the `console`. Only works in
+ * Node.js or in browsers that support `console.log` and `console.error` (such
+ * as FF and Chrome). If multiple arguments are returned from the async
+ * function, `console.log` is called on each argument in order.
+ *
+ * @name log
+ * @static
+ * @memberOf module:Utils
+ * @method
+ * @category Util
+ * @param {Function} function - The function you want to eventually apply all
+ * arguments to.
+ * @param {...*} arguments... - Any number of arguments to apply to the function.
+ * @example
+ *
+ * // in a module
+ * var hello = function(name, callback) {
+ *     setTimeout(function() {
+ *         callback(null, 'hello ' + name);
+ *     }, 1000);
+ * };
+ *
+ * // in the node repl
+ * node> async.log(hello, 'world');
+ * 'hello world'
+ */
+var log = consoleFunc('log');
+
+/**
+ * The same as [`mapValues`]{@link module:Collections.mapValues} but runs a maximum of `limit` async operations at a
+ * time.
+ *
+ * @name mapValuesLimit
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.mapValues]{@link module:Collections.mapValues}
+ * @category Collection
+ * @param {Object} obj - A collection to iterate over.
+ * @param {number} limit - The maximum number of async operations at a time.
+ * @param {Function} iteratee - A function to apply to each value in `obj`.
+ * The iteratee is passed a `callback(err, transformed)` which must be called
+ * once it has completed with an error (which can be `null`) and a
+ * transformed value. Invoked with (value, key, callback).
+ * @param {Function} [callback] - A callback which is called when all `iteratee`
+ * functions have finished, or an error occurs. `result` is a new object consisting
+ * of each key from `obj`, with each transformed value on the right-hand side.
+ * Invoked with (err, result).
+ */
+function mapValuesLimit(obj, limit, iteratee, callback) {
+    callback = once(callback || noop);
+    var newObj = {};
+    eachOfLimit(obj, limit, function (val, key, next) {
+        iteratee(val, key, function (err, result) {
+            if (err) return next(err);
+            newObj[key] = result;
+            next();
+        });
+    }, function (err) {
+        callback(err, newObj);
+    });
+}
+
+/**
+ * A relative of [`map`]{@link module:Collections.map}, designed for use with objects.
+ *
+ * Produces a new Object by mapping each value of `obj` through the `iteratee`
+ * function. The `iteratee` is called each `value` and `key` from `obj` and a
+ * callback for when it has finished processing. Each of these callbacks takes
+ * two arguments: an `error`, and the transformed item from `obj`. If `iteratee`
+ * passes an error to its callback, the main `callback` (for the `mapValues`
+ * function) is immediately called with the error.
+ *
+ * Note, the order of the keys in the result is not guaranteed.  The keys will
+ * be roughly in the order they complete, (but this is very engine-specific)
+ *
+ * @name mapValues
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @category Collection
+ * @param {Object} obj - A collection to iterate over.
+ * @param {Function} iteratee - A function to apply to each value and key in
+ * `coll`. The iteratee is passed a `callback(err, transformed)` which must be
+ * called once it has completed with an error (which can be `null`) and a
+ * transformed value. Invoked with (value, key, callback).
+ * @param {Function} [callback] - A callback which is called when all `iteratee`
+ * functions have finished, or an error occurs. `result` is a new object consisting
+ * of each key from `obj`, with each transformed value on the right-hand side.
+ * Invoked with (err, result).
+ * @example
+ *
+ * async.mapValues({
+ *     f1: 'file1',
+ *     f2: 'file2',
+ *     f3: 'file3'
+ * }, function (file, key, callback) {
+ *   fs.stat(file, callback);
+ * }, function(err, result) {
+ *     // result is now a map of stats for each file, e.g.
+ *     // {
+ *     //     f1: [stats for file1],
+ *     //     f2: [stats for file2],
+ *     //     f3: [stats for file3]
+ *     // }
+ * });
+ */
+
+var mapValues = doLimit(mapValuesLimit, Infinity);
+
+/**
+ * The same as [`mapValues`]{@link module:Collections.mapValues} but runs only a single async operation at a time.
+ *
+ * @name mapValuesSeries
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.mapValues]{@link module:Collections.mapValues}
+ * @category Collection
+ * @param {Object} obj - A collection to iterate over.
+ * @param {Function} iteratee - A function to apply to each value in `obj`.
+ * The iteratee is passed a `callback(err, transformed)` which must be called
+ * once it has completed with an error (which can be `null`) and a
+ * transformed value. Invoked with (value, key, callback).
+ * @param {Function} [callback] - A callback which is called when all `iteratee`
+ * functions have finished, or an error occurs. `result` is a new object consisting
+ * of each key from `obj`, with each transformed value on the right-hand side.
+ * Invoked with (err, result).
+ */
+var mapValuesSeries = doLimit(mapValuesLimit, 1);
+
+function has(obj, key) {
+    return key in obj;
+}
+
+/**
+ * Caches the results of an `async` function. When creating a hash to store
+ * function results against, the callback is omitted from the hash and an
+ * optional hash function can be used.
+ *
+ * If no hash function is specified, the first argument is used as a hash key,
+ * which may work reasonably if it is a string or a data type that converts to a
+ * distinct string. Note that objects and arrays will not behave reasonably.
+ * Neither will cases where the other arguments are significant. In such cases,
+ * specify your own hash function.
+ *
+ * The cache of results is exposed as the `memo` property of the function
+ * returned by `memoize`.
+ *
+ * @name memoize
+ * @static
+ * @memberOf module:Utils
+ * @method
+ * @category Util
+ * @param {Function} fn - The function to proxy and cache results from.
+ * @param {Function} hasher - An optional function for generating a custom hash
+ * for storing results. It has all the arguments applied to it apart from the
+ * callback, and must be synchronous.
+ * @returns {Function} a memoized version of `fn`
+ * @example
+ *
+ * var slow_fn = function(name, callback) {
+ *     // do something
+ *     callback(null, result);
+ * };
+ * var fn = async.memoize(slow_fn);
+ *
+ * // fn can now be used as if it were slow_fn
+ * fn('some name', function() {
+ *     // callback
+ * });
+ */
+function memoize(fn, hasher) {
+    var memo = Object.create(null);
+    var queues = Object.create(null);
+    hasher = hasher || identity;
+    var memoized = initialParams(function memoized(args, callback) {
+        var key = hasher.apply(null, args);
+        if (has(memo, key)) {
+            setImmediate$1(function () {
+                callback.apply(null, memo[key]);
+            });
+        } else if (has(queues, key)) {
+            queues[key].push(callback);
+        } else {
+            queues[key] = [callback];
+            fn.apply(null, args.concat(rest(function (args) {
+                memo[key] = args;
+                var q = queues[key];
+                delete queues[key];
+                for (var i = 0, l = q.length; i < l; i++) {
+                    q[i].apply(null, args);
+                }
+            })));
+        }
+    });
+    memoized.memo = memo;
+    memoized.unmemoized = fn;
+    return memoized;
+}
+
+/**
+ * Calls `callback` on a later loop around the event loop. In Node.js this just
+ * calls `setImmediate`.  In the browser it will use `setImmediate` if
+ * available, otherwise `setTimeout(callback, 0)`, which means other higher
+ * priority events may precede the execution of `callback`.
+ *
+ * This is used internally for browser-compatibility purposes.
+ *
+ * @name nextTick
+ * @static
+ * @memberOf module:Utils
+ * @method
+ * @alias setImmediate
+ * @category Util
+ * @param {Function} callback - The function to call on a later loop around
+ * the event loop. Invoked with (args...).
+ * @param {...*} args... - any number of additional arguments to pass to the
+ * callback on the next tick.
+ * @example
+ *
+ * var call_order = [];
+ * async.nextTick(function() {
+ *     call_order.push('two');
+ *     // call_order now equals ['one','two']
+ * });
+ * call_order.push('one');
+ *
+ * async.setImmediate(function (a, b, c) {
+ *     // a, b, and c equal 1, 2, and 3
+ * }, 1, 2, 3);
+ */
+var _defer$1;
+
+if (hasNextTick) {
+    _defer$1 = process.nextTick;
+} else if (hasSetImmediate) {
+    _defer$1 = setImmediate;
+} else {
+    _defer$1 = fallback;
+}
+
+var nextTick = wrap(_defer$1);
+
+function _parallel(eachfn, tasks, callback) {
+    callback = callback || noop;
+    var results = isArrayLike(tasks) ? [] : {};
+
+    eachfn(tasks, function (task, key, callback) {
+        task(rest(function (err, args) {
+            if (args.length <= 1) {
+                args = args[0];
+            }
+            results[key] = args;
+            callback(err);
+        }));
+    }, function (err) {
+        callback(err, results);
+    });
+}
+
+/**
+ * Run the `tasks` collection of functions in parallel, without waiting until
+ * the previous function has completed. If any of the functions pass an error to
+ * its callback, the main `callback` is immediately called with the value of the
+ * error. Once the `tasks` have completed, the results are passed to the final
+ * `callback` as an array.
+ *
+ * **Note:** `parallel` is about kicking-off I/O tasks in parallel, not about
+ * parallel execution of code.  If your tasks do not use any timers or perform
+ * any I/O, they will actually be executed in series.  Any synchronous setup
+ * sections for each task will happen one after the other.  JavaScript remains
+ * single-threaded.
+ *
+ * It is also possible to use an object instead of an array. Each property will
+ * be run as a function and the results will be passed to the final `callback`
+ * as an object instead of an array. This can be a more readable way of handling
+ * results from {@link async.parallel}.
+ *
+ * @name parallel
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @category Control Flow
+ * @param {Array|Iterable|Object} tasks - A collection containing functions to run.
+ * Each function is passed a `callback(err, result)` which it must call on
+ * completion with an error `err` (which can be `null`) and an optional `result`
+ * value.
+ * @param {Function} [callback] - An optional callback to run once all the
+ * functions have completed successfully. This function gets a results array
+ * (or object) containing all the result arguments passed to the task callbacks.
+ * Invoked with (err, results).
+ * @example
+ * async.parallel([
+ *     function(callback) {
+ *         setTimeout(function() {
+ *             callback(null, 'one');
+ *         }, 200);
+ *     },
+ *     function(callback) {
+ *         setTimeout(function() {
+ *             callback(null, 'two');
+ *         }, 100);
+ *     }
+ * ],
+ * // optional callback
+ * function(err, results) {
+ *     // the results array will equal ['one','two'] even though
+ *     // the second function had a shorter timeout.
+ * });
+ *
+ * // an example using an object instead of an array
+ * async.parallel({
+ *     one: function(callback) {
+ *         setTimeout(function() {
+ *             callback(null, 1);
+ *         }, 200);
+ *     },
+ *     two: function(callback) {
+ *         setTimeout(function() {
+ *             callback(null, 2);
+ *         }, 100);
+ *     }
+ * }, function(err, results) {
+ *     // results is now equals to: {one: 1, two: 2}
+ * });
+ */
+function parallelLimit(tasks, callback) {
+  _parallel(eachOf, tasks, callback);
+}
+
+/**
+ * The same as [`parallel`]{@link module:ControlFlow.parallel} but runs a maximum of `limit` async operations at a
+ * time.
+ *
+ * @name parallelLimit
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @see [async.parallel]{@link module:ControlFlow.parallel}
+ * @category Control Flow
+ * @param {Array|Collection} tasks - A collection containing functions to run.
+ * Each function is passed a `callback(err, result)` which it must call on
+ * completion with an error `err` (which can be `null`) and an optional `result`
+ * value.
+ * @param {number} limit - The maximum number of async operations at a time.
+ * @param {Function} [callback] - An optional callback to run once all the
+ * functions have completed successfully. This function gets a results array
+ * (or object) containing all the result arguments passed to the task callbacks.
+ * Invoked with (err, results).
+ */
+function parallelLimit$1(tasks, limit, callback) {
+  _parallel(_eachOfLimit(limit), tasks, callback);
+}
+
+/**
+ * A queue of tasks for the worker function to complete.
+ * @typedef {Object} QueueObject
+ * @memberOf module:ControlFlow
+ * @property {Function} length - a function returning the number of items
+ * waiting to be processed. Invoke with `queue.length()`.
+ * @property {boolean} started - a boolean indicating whether or not any
+ * items have been pushed and processed by the queue.
+ * @property {Function} running - a function returning the number of items
+ * currently being processed. Invoke with `queue.running()`.
+ * @property {Function} workersList - a function returning the array of items
+ * currently being processed. Invoke with `queue.workersList()`.
+ * @property {Function} idle - a function returning false if there are items
+ * waiting or being processed, or true if not. Invoke with `queue.idle()`.
+ * @property {number} concurrency - an integer for determining how many `worker`
+ * functions should be run in parallel. This property can be changed after a
+ * `queue` is created to alter the concurrency on-the-fly.
+ * @property {Function} push - add a new task to the `queue`. Calls `callback`
+ * once the `worker` has finished processing the task. Instead of a single task,
+ * a `tasks` array can be submitted. The respective callback is used for every
+ * task in the list. Invoke with `queue.push(task, [callback])`,
+ * @property {Function} unshift - add a new task to the front of the `queue`.
+ * Invoke with `queue.unshift(task, [callback])`.
+ * @property {Function} saturated - a callback that is called when the number of
+ * running workers hits the `concurrency` limit, and further tasks will be
+ * queued.
+ * @property {Function} unsaturated - a callback that is called when the number
+ * of running workers is less than the `concurrency` & `buffer` limits, and
+ * further tasks will not be queued.
+ * @property {number} buffer - A minimum threshold buffer in order to say that
+ * the `queue` is `unsaturated`.
+ * @property {Function} empty - a callback that is called when the last item
+ * from the `queue` is given to a `worker`.
+ * @property {Function} drain - a callback that is called when the last item
+ * from the `queue` has returned from the `worker`.
+ * @property {Function} error - a callback that is called when a task errors.
+ * Has the signature `function(error, task)`.
+ * @property {boolean} paused - a boolean for determining whether the queue is
+ * in a paused state.
+ * @property {Function} pause - a function that pauses the processing of tasks
+ * until `resume()` is called. Invoke with `queue.pause()`.
+ * @property {Function} resume - a function that resumes the processing of
+ * queued tasks when the queue is paused. Invoke with `queue.resume()`.
+ * @property {Function} kill - a function that removes the `drain` callback and
+ * empties remaining tasks from the queue forcing it to go idle. Invoke with `queue.kill()`.
+ */
+
+/**
+ * Creates a `queue` object with the specified `concurrency`. Tasks added to the
+ * `queue` are processed in parallel (up to the `concurrency` limit). If all
+ * `worker`s are in progress, the task is queued until one becomes available.
+ * Once a `worker` completes a `task`, that `task`'s callback is called.
+ *
+ * @name queue
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @category Control Flow
+ * @param {Function} worker - An asynchronous function for processing a queued
+ * task, which must call its `callback(err)` argument when finished, with an
+ * optional `error` as an argument.  If you want to handle errors from an
+ * individual task, pass a callback to `q.push()`. Invoked with
+ * (task, callback).
+ * @param {number} [concurrency=1] - An `integer` for determining how many
+ * `worker` functions should be run in parallel.  If omitted, the concurrency
+ * defaults to `1`.  If the concurrency is `0`, an error is thrown.
+ * @returns {module:ControlFlow.QueueObject} A queue object to manage the tasks. Callbacks can
+ * attached as certain properties to listen for specific events during the
+ * lifecycle of the queue.
+ * @example
+ *
+ * // create a queue object with concurrency 2
+ * var q = async.queue(function(task, callback) {
+ *     console.log('hello ' + task.name);
+ *     callback();
+ * }, 2);
+ *
+ * // assign a callback
+ * q.drain = function() {
+ *     console.log('all items have been processed');
+ * };
+ *
+ * // add some items to the queue
+ * q.push({name: 'foo'}, function(err) {
+ *     console.log('finished processing foo');
+ * });
+ * q.push({name: 'bar'}, function (err) {
+ *     console.log('finished processing bar');
+ * });
+ *
+ * // add some items to the queue (batch-wise)
+ * q.push([{name: 'baz'},{name: 'bay'},{name: 'bax'}], function(err) {
+ *     console.log('finished processing item');
+ * });
+ *
+ * // add some items to the front of the queue
+ * q.unshift({name: 'bar'}, function (err) {
+ *     console.log('finished processing bar');
+ * });
+ */
+var queue$1 = function (worker, concurrency) {
+  return queue(function (items, cb) {
+    worker(items[0], cb);
+  }, concurrency, 1);
+};
+
+/**
+ * The same as [async.queue]{@link module:ControlFlow.queue} only tasks are assigned a priority and
+ * completed in ascending priority order.
+ *
+ * @name priorityQueue
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @see [async.queue]{@link module:ControlFlow.queue}
+ * @category Control Flow
+ * @param {Function} worker - An asynchronous function for processing a queued
+ * task, which must call its `callback(err)` argument when finished, with an
+ * optional `error` as an argument.  If you want to handle errors from an
+ * individual task, pass a callback to `q.push()`. Invoked with
+ * (task, callback).
+ * @param {number} concurrency - An `integer` for determining how many `worker`
+ * functions should be run in parallel.  If omitted, the concurrency defaults to
+ * `1`.  If the concurrency is `0`, an error is thrown.
+ * @returns {module:ControlFlow.QueueObject} A priorityQueue object to manage the tasks. There are two
+ * differences between `queue` and `priorityQueue` objects:
+ * * `push(task, priority, [callback])` - `priority` should be a number. If an
+ *   array of `tasks` is given, all tasks will be assigned the same priority.
+ * * The `unshift` method was removed.
+ */
+var priorityQueue = function (worker, concurrency) {
+    // Start with a normal queue
+    var q = queue$1(worker, concurrency);
+
+    // Override push to accept second parameter representing priority
+    q.push = function (data, priority, callback) {
+        if (callback == null) callback = noop;
+        if (typeof callback !== 'function') {
+            throw new Error('task callback must be a function');
+        }
+        q.started = true;
+        if (!isArray(data)) {
+            data = [data];
+        }
+        if (data.length === 0) {
+            // call drain immediately if there are no tasks
+            return setImmediate$1(function () {
+                q.drain();
+            });
+        }
+
+        priority = priority || 0;
+        var nextNode = q._tasks.head;
+        while (nextNode && priority >= nextNode.priority) {
+            nextNode = nextNode.next;
+        }
+
+        for (var i = 0, l = data.length; i < l; i++) {
+            var item = {
+                data: data[i],
+                priority: priority,
+                callback: callback
+            };
+
+            if (nextNode) {
+                q._tasks.insertBefore(nextNode, item);
+            } else {
+                q._tasks.push(item);
+            }
+        }
+        setImmediate$1(q.process);
+    };
+
+    // Remove unshift function
+    delete q.unshift;
+
+    return q;
+};
+
+/**
+ * Runs the `tasks` array of functions in parallel, without waiting until the
+ * previous function has completed. Once any of the `tasks` complete or pass an
+ * error to its callback, the main `callback` is immediately called. It's
+ * equivalent to `Promise.race()`.
+ *
+ * @name race
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @category Control Flow
+ * @param {Array} tasks - An array containing functions to run. Each function
+ * is passed a `callback(err, result)` which it must call on completion with an
+ * error `err` (which can be `null`) and an optional `result` value.
+ * @param {Function} callback - A callback to run once any of the functions have
+ * completed. This function gets an error or result from the first function that
+ * completed. Invoked with (err, result).
+ * @returns undefined
+ * @example
+ *
+ * async.race([
+ *     function(callback) {
+ *         setTimeout(function() {
+ *             callback(null, 'one');
+ *         }, 200);
+ *     },
+ *     function(callback) {
+ *         setTimeout(function() {
+ *             callback(null, 'two');
+ *         }, 100);
+ *     }
+ * ],
+ * // main callback
+ * function(err, result) {
+ *     // the result will be equal to 'two' as it finishes earlier
+ * });
+ */
+function race(tasks, callback) {
+    callback = once(callback || noop);
+    if (!isArray(tasks)) return callback(new TypeError('First argument to race must be an array of functions'));
+    if (!tasks.length) return callback();
+    for (var i = 0, l = tasks.length; i < l; i++) {
+        tasks[i](callback);
+    }
+}
+
+var slice = Array.prototype.slice;
+
+/**
+ * Same as [`reduce`]{@link module:Collections.reduce}, only operates on `array` in reverse order.
+ *
+ * @name reduceRight
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.reduce]{@link module:Collections.reduce}
+ * @alias foldr
+ * @category Collection
+ * @param {Array} array - A collection to iterate over.
+ * @param {*} memo - The initial state of the reduction.
+ * @param {Function} iteratee - A function applied to each item in the
+ * array to produce the next step in the reduction. The `iteratee` is passed a
+ * `callback(err, reduction)` which accepts an optional error as its first
+ * argument, and the state of the reduction as the second. If an error is
+ * passed to the callback, the reduction is stopped and the main `callback` is
+ * immediately called with the error. Invoked with (memo, item, callback).
+ * @param {Function} [callback] - A callback which is called after all the
+ * `iteratee` functions have finished. Result is the reduced value. Invoked with
+ * (err, result).
+ */
+function reduceRight(array, memo, iteratee, callback) {
+  var reversed = slice.call(array).reverse();
+  reduce(reversed, memo, iteratee, callback);
+}
+
+/**
+ * Wraps the function in another function that always returns data even when it
+ * errors.
+ *
+ * The object returned has either the property `error` or `value`.
+ *
+ * @name reflect
+ * @static
+ * @memberOf module:Utils
+ * @method
+ * @category Util
+ * @param {Function} fn - The function you want to wrap
+ * @returns {Function} - A function that always passes null to it's callback as
+ * the error. The second argument to the callback will be an `object` with
+ * either an `error` or a `value` property.
+ * @example
+ *
+ * async.parallel([
+ *     async.reflect(function(callback) {
+ *         // do some stuff ...
+ *         callback(null, 'one');
+ *     }),
+ *     async.reflect(function(callback) {
+ *         // do some more stuff but error ...
+ *         callback('bad stuff happened');
+ *     }),
+ *     async.reflect(function(callback) {
+ *         // do some more stuff ...
+ *         callback(null, 'two');
+ *     })
+ * ],
+ * // optional callback
+ * function(err, results) {
+ *     // values
+ *     // results[0].value = 'one'
+ *     // results[1].error = 'bad stuff happened'
+ *     // results[2].value = 'two'
+ * });
+ */
+function reflect(fn) {
+    return initialParams(function reflectOn(args, reflectCallback) {
+        args.push(rest(function callback(err, cbArgs) {
+            if (err) {
+                reflectCallback(null, {
+                    error: err
+                });
+            } else {
+                var value = null;
+                if (cbArgs.length === 1) {
+                    value = cbArgs[0];
+                } else if (cbArgs.length > 1) {
+                    value = cbArgs;
+                }
+                reflectCallback(null, {
+                    value: value
+                });
+            }
+        }));
+
+        return fn.apply(this, args);
+    });
+}
+
+function reject$1(eachfn, arr, iteratee, callback) {
+    _filter(eachfn, arr, function (value, cb) {
+        iteratee(value, function (err, v) {
+            cb(err, !v);
+        });
+    }, callback);
+}
+
+/**
+ * The opposite of [`filter`]{@link module:Collections.filter}. Removes values that pass an `async` truth test.
+ *
+ * @name reject
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.filter]{@link module:Collections.filter}
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {Function} iteratee - A truth test to apply to each item in `coll`.
+ * The `iteratee` is passed a `callback(err, truthValue)`, which must be called
+ * with a boolean argument once it has completed. Invoked with (item, callback).
+ * @param {Function} [callback] - A callback which is called after all the
+ * `iteratee` functions have finished. Invoked with (err, results).
+ * @example
+ *
+ * async.reject(['file1','file2','file3'], function(filePath, callback) {
+ *     fs.access(filePath, function(err) {
+ *         callback(null, !err)
+ *     });
+ * }, function(err, results) {
+ *     // results now equals an array of missing files
+ *     createFiles(results);
+ * });
+ */
+var reject = doParallel(reject$1);
+
+/**
+ * A helper function that wraps an array or an object of functions with reflect.
+ *
+ * @name reflectAll
+ * @static
+ * @memberOf module:Utils
+ * @method
+ * @see [async.reflect]{@link module:Utils.reflect}
+ * @category Util
+ * @param {Array} tasks - The array of functions to wrap in `async.reflect`.
+ * @returns {Array} Returns an array of functions, each function wrapped in
+ * `async.reflect`
+ * @example
+ *
+ * let tasks = [
+ *     function(callback) {
+ *         setTimeout(function() {
+ *             callback(null, 'one');
+ *         }, 200);
+ *     },
+ *     function(callback) {
+ *         // do some more stuff but error ...
+ *         callback(new Error('bad stuff happened'));
+ *     },
+ *     function(callback) {
+ *         setTimeout(function() {
+ *             callback(null, 'two');
+ *         }, 100);
+ *     }
+ * ];
+ *
+ * async.parallel(async.reflectAll(tasks),
+ * // optional callback
+ * function(err, results) {
+ *     // values
+ *     // results[0].value = 'one'
+ *     // results[1].error = Error('bad stuff happened')
+ *     // results[2].value = 'two'
+ * });
+ *
+ * // an example using an object instead of an array
+ * let tasks = {
+ *     one: function(callback) {
+ *         setTimeout(function() {
+ *             callback(null, 'one');
+ *         }, 200);
+ *     },
+ *     two: function(callback) {
+ *         callback('two');
+ *     },
+ *     three: function(callback) {
+ *         setTimeout(function() {
+ *             callback(null, 'three');
+ *         }, 100);
+ *     }
+ * };
+ *
+ * async.parallel(async.reflectAll(tasks),
+ * // optional callback
+ * function(err, results) {
+ *     // values
+ *     // results.one.value = 'one'
+ *     // results.two.error = 'two'
+ *     // results.three.value = 'three'
+ * });
+ */
+function reflectAll(tasks) {
+    var results;
+    if (isArray(tasks)) {
+        results = arrayMap(tasks, reflect);
+    } else {
+        results = {};
+        baseForOwn(tasks, function (task, key) {
+            results[key] = reflect.call(this, task);
+        });
+    }
+    return results;
+}
+
+/**
+ * The same as [`reject`]{@link module:Collections.reject} but runs a maximum of `limit` async operations at a
+ * time.
+ *
+ * @name rejectLimit
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.reject]{@link module:Collections.reject}
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {number} limit - The maximum number of async operations at a time.
+ * @param {Function} iteratee - A truth test to apply to each item in `coll`.
+ * The `iteratee` is passed a `callback(err, truthValue)`, which must be called
+ * with a boolean argument once it has completed. Invoked with (item, callback).
+ * @param {Function} [callback] - A callback which is called after all the
+ * `iteratee` functions have finished. Invoked with (err, results).
+ */
+var rejectLimit = doParallelLimit(reject$1);
+
+/**
+ * The same as [`reject`]{@link module:Collections.reject} but runs only a single async operation at a time.
+ *
+ * @name rejectSeries
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.reject]{@link module:Collections.reject}
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {Function} iteratee - A truth test to apply to each item in `coll`.
+ * The `iteratee` is passed a `callback(err, truthValue)`, which must be called
+ * with a boolean argument once it has completed. Invoked with (item, callback).
+ * @param {Function} [callback] - A callback which is called after all the
+ * `iteratee` functions have finished. Invoked with (err, results).
+ */
+var rejectSeries = doLimit(rejectLimit, 1);
+
+/**
+ * Creates a function that returns `value`.
+ *
+ * @static
+ * @memberOf _
+ * @since 2.4.0
+ * @category Util
+ * @param {*} value The value to return from the new function.
+ * @returns {Function} Returns the new constant function.
+ * @example
+ *
+ * var objects = _.times(2, _.constant({ 'a': 1 }));
+ *
+ * console.log(objects);
+ * // => [{ 'a': 1 }, { 'a': 1 }]
+ *
+ * console.log(objects[0] === objects[1]);
+ * // => true
+ */
+function constant$1(value) {
+  return function() {
+    return value;
+  };
+}
+
+/**
+ * Attempts to get a successful response from `task` no more than `times` times
+ * before returning an error. If the task is successful, the `callback` will be
+ * passed the result of the successful task. If all attempts fail, the callback
+ * will be passed the error and result (if any) of the final attempt.
+ *
+ * @name retry
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @category Control Flow
+ * @param {Object|number} [opts = {times: 5, interval: 0}| 5] - Can be either an
+ * object with `times` and `interval` or a number.
+ * * `times` - The number of attempts to make before giving up.  The default
+ *   is `5`.
+ * * `interval` - The time to wait between retries, in milliseconds.  The
+ *   default is `0`. The interval may also be specified as a function of the
+ *   retry count (see example).
+ * * `errorFilter` - An optional synchronous function that is invoked on
+ *   erroneous result. If it returns `true` the retry attempts will continue;
+ *   if the function returns `false` the retry flow is aborted with the current
+ *   attempt's error and result being returned to the final callback.
+ *   Invoked with (err).
+ * * If `opts` is a number, the number specifies the number of times to retry,
+ *   with the default interval of `0`.
+ * @param {Function} task - A function which receives two arguments: (1) a
+ * `callback(err, result)` which must be called when finished, passing `err`
+ * (which can be `null`) and the `result` of the function's execution, and (2)
+ * a `results` object, containing the results of the previously executed
+ * functions (if nested inside another control flow). Invoked with
+ * (callback, results).
+ * @param {Function} [callback] - An optional callback which is called when the
+ * task has succeeded, or after the final failed attempt. It receives the `err`
+ * and `result` arguments of the last attempt at completing the `task`. Invoked
+ * with (err, results).
+ * @example
+ *
+ * // The `retry` function can be used as a stand-alone control flow by passing
+ * // a callback, as shown below:
+ *
+ * // try calling apiMethod 3 times
+ * async.retry(3, apiMethod, function(err, result) {
+ *     // do something with the result
+ * });
+ *
+ * // try calling apiMethod 3 times, waiting 200 ms between each retry
+ * async.retry({times: 3, interval: 200}, apiMethod, function(err, result) {
+ *     // do something with the result
+ * });
+ *
+ * // try calling apiMethod 10 times with exponential backoff
+ * // (i.e. intervals of 100, 200, 400, 800, 1600, ... milliseconds)
+ * async.retry({
+ *   times: 10,
+ *   interval: function(retryCount) {
+ *     return 50 * Math.pow(2, retryCount);
+ *   }
+ * }, apiMethod, function(err, result) {
+ *     // do something with the result
+ * });
+ *
+ * // try calling apiMethod the default 5 times no delay between each retry
+ * async.retry(apiMethod, function(err, result) {
+ *     // do something with the result
+ * });
+ *
+ * // try calling apiMethod only when error condition satisfies, all other
+ * // errors will abort the retry control flow and return to final callback
+ * async.retry({
+ *   errorFilter: function(err) {
+ *     return err.message === 'Temporary error'; // only retry on a specific error
+ *   }
+ * }, apiMethod, function(err, result) {
+ *     // do something with the result
+ * });
+ *
+ * // It can also be embedded within other control flow functions to retry
+ * // individual methods that are not as reliable, like this:
+ * async.auto({
+ *     users: api.getUsers.bind(api),
+ *     payments: async.retry(3, api.getPayments.bind(api))
+ * }, function(err, results) {
+ *     // do something with the results
+ * });
+ *
+ */
+function retry(opts, task, callback) {
+    var DEFAULT_TIMES = 5;
+    var DEFAULT_INTERVAL = 0;
+
+    var options = {
+        times: DEFAULT_TIMES,
+        intervalFunc: constant$1(DEFAULT_INTERVAL)
+    };
+
+    function parseTimes(acc, t) {
+        if (typeof t === 'object') {
+            acc.times = +t.times || DEFAULT_TIMES;
+
+            acc.intervalFunc = typeof t.interval === 'function' ? t.interval : constant$1(+t.interval || DEFAULT_INTERVAL);
+
+            acc.errorFilter = t.errorFilter;
+        } else if (typeof t === 'number' || typeof t === 'string') {
+            acc.times = +t || DEFAULT_TIMES;
+        } else {
+            throw new Error("Invalid arguments for async.retry");
+        }
+    }
+
+    if (arguments.length < 3 && typeof opts === 'function') {
+        callback = task || noop;
+        task = opts;
+    } else {
+        parseTimes(options, opts);
+        callback = callback || noop;
+    }
+
+    if (typeof task !== 'function') {
+        throw new Error("Invalid arguments for async.retry");
+    }
+
+    var attempt = 1;
+    function retryAttempt() {
+        task(function (err) {
+            if (err && attempt++ < options.times && (typeof options.errorFilter != 'function' || options.errorFilter(err))) {
+                setTimeout(retryAttempt, options.intervalFunc(attempt));
+            } else {
+                callback.apply(null, arguments);
+            }
+        });
+    }
+
+    retryAttempt();
+}
+
+/**
+ * A close relative of [`retry`]{@link module:ControlFlow.retry}.  This method wraps a task and makes it
+ * retryable, rather than immediately calling it with retries.
+ *
+ * @name retryable
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @see [async.retry]{@link module:ControlFlow.retry}
+ * @category Control Flow
+ * @param {Object|number} [opts = {times: 5, interval: 0}| 5] - optional
+ * options, exactly the same as from `retry`
+ * @param {Function} task - the asynchronous function to wrap
+ * @returns {Functions} The wrapped function, which when invoked, will retry on
+ * an error, based on the parameters specified in `opts`.
+ * @example
+ *
+ * async.auto({
+ *     dep1: async.retryable(3, getFromFlakyService),
+ *     process: ["dep1", async.retryable(3, function (results, cb) {
+ *         maybeProcessData(results.dep1, cb);
+ *     })]
+ * }, callback);
+ */
+var retryable = function (opts, task) {
+    if (!task) {
+        task = opts;
+        opts = null;
+    }
+    return initialParams(function (args, callback) {
+        function taskFn(cb) {
+            task.apply(null, args.concat(cb));
+        }
+
+        if (opts) retry(opts, taskFn, callback);else retry(taskFn, callback);
+    });
+};
+
+/**
+ * Run the functions in the `tasks` collection in series, each one running once
+ * the previous function has completed. If any functions in the series pass an
+ * error to its callback, no more functions are run, and `callback` is
+ * immediately called with the value of the error. Otherwise, `callback`
+ * receives an array of results when `tasks` have completed.
+ *
+ * It is also possible to use an object instead of an array. Each property will
+ * be run as a function, and the results will be passed to the final `callback`
+ * as an object instead of an array. This can be a more readable way of handling
+ *  results from {@link async.series}.
+ *
+ * **Note** that while many implementations preserve the order of object
+ * properties, the [ECMAScript Language Specification](http://www.ecma-international.org/ecma-262/5.1/#sec-8.6)
+ * explicitly states that
+ *
+ * > The mechanics and order of enumerating the properties is not specified.
+ *
+ * So if you rely on the order in which your series of functions are executed,
+ * and want this to work on all platforms, consider using an array.
+ *
+ * @name series
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @category Control Flow
+ * @param {Array|Iterable|Object} tasks - A collection containing functions to run, each
+ * function is passed a `callback(err, result)` it must call on completion with
+ * an error `err` (which can be `null`) and an optional `result` value.
+ * @param {Function} [callback] - An optional callback to run once all the
+ * functions have completed. This function gets a results array (or object)
+ * containing all the result arguments passed to the `task` callbacks. Invoked
+ * with (err, result).
+ * @example
+ * async.series([
+ *     function(callback) {
+ *         // do some stuff ...
+ *         callback(null, 'one');
+ *     },
+ *     function(callback) {
+ *         // do some more stuff ...
+ *         callback(null, 'two');
+ *     }
+ * ],
+ * // optional callback
+ * function(err, results) {
+ *     // results is now equal to ['one', 'two']
+ * });
+ *
+ * async.series({
+ *     one: function(callback) {
+ *         setTimeout(function() {
+ *             callback(null, 1);
+ *         }, 200);
+ *     },
+ *     two: function(callback){
+ *         setTimeout(function() {
+ *             callback(null, 2);
+ *         }, 100);
+ *     }
+ * }, function(err, results) {
+ *     // results is now equal to: {one: 1, two: 2}
+ * });
+ */
+function series(tasks, callback) {
+  _parallel(eachOfSeries, tasks, callback);
+}
+
+/**
+ * Returns `true` if at least one element in the `coll` satisfies an async test.
+ * If any iteratee call returns `true`, the main `callback` is immediately
+ * called.
+ *
+ * @name some
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @alias any
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {Function} iteratee - A truth test to apply to each item in the array
+ * in parallel. The iteratee is passed a `callback(err, truthValue)` which must
+ * be called with a boolean argument once it has completed. Invoked with
+ * (item, callback).
+ * @param {Function} [callback] - A callback which is called as soon as any
+ * iteratee returns `true`, or after all the iteratee functions have finished.
+ * Result will be either `true` or `false` depending on the values of the async
+ * tests. Invoked with (err, result).
+ * @example
+ *
+ * async.some(['file1','file2','file3'], function(filePath, callback) {
+ *     fs.access(filePath, function(err) {
+ *         callback(null, !err)
+ *     });
+ * }, function(err, result) {
+ *     // if result is true then at least one of the files exists
+ * });
+ */
+var some = doParallel(_createTester(Boolean, identity));
+
+/**
+ * The same as [`some`]{@link module:Collections.some} but runs a maximum of `limit` async operations at a time.
+ *
+ * @name someLimit
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.some]{@link module:Collections.some}
+ * @alias anyLimit
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {number} limit - The maximum number of async operations at a time.
+ * @param {Function} iteratee - A truth test to apply to each item in the array
+ * in parallel. The iteratee is passed a `callback(err, truthValue)` which must
+ * be called with a boolean argument once it has completed. Invoked with
+ * (item, callback).
+ * @param {Function} [callback] - A callback which is called as soon as any
+ * iteratee returns `true`, or after all the iteratee functions have finished.
+ * Result will be either `true` or `false` depending on the values of the async
+ * tests. Invoked with (err, result).
+ */
+var someLimit = doParallelLimit(_createTester(Boolean, identity));
+
+/**
+ * The same as [`some`]{@link module:Collections.some} but runs only a single async operation at a time.
+ *
+ * @name someSeries
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.some]{@link module:Collections.some}
+ * @alias anySeries
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {Function} iteratee - A truth test to apply to each item in the array
+ * in parallel. The iteratee is passed a `callback(err, truthValue)` which must
+ * be called with a boolean argument once it has completed. Invoked with
+ * (item, callback).
+ * @param {Function} [callback] - A callback which is called as soon as any
+ * iteratee returns `true`, or after all the iteratee functions have finished.
+ * Result will be either `true` or `false` depending on the values of the async
+ * tests. Invoked with (err, result).
+ */
+var someSeries = doLimit(someLimit, 1);
+
+/**
+ * Sorts a list by the results of running each `coll` value through an async
+ * `iteratee`.
+ *
+ * @name sortBy
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {Function} iteratee - A function to apply to each item in `coll`.
+ * The iteratee is passed a `callback(err, sortValue)` which must be called once
+ * it has completed with an error (which can be `null`) and a value to use as
+ * the sort criteria. Invoked with (item, callback).
+ * @param {Function} callback - A callback which is called after all the
+ * `iteratee` functions have finished, or an error occurs. Results is the items
+ * from the original `coll` sorted by the values returned by the `iteratee`
+ * calls. Invoked with (err, results).
+ * @example
+ *
+ * async.sortBy(['file1','file2','file3'], function(file, callback) {
+ *     fs.stat(file, function(err, stats) {
+ *         callback(err, stats.mtime);
+ *     });
+ * }, function(err, results) {
+ *     // results is now the original array of files sorted by
+ *     // modified date
+ * });
+ *
+ * // By modifying the callback parameter the
+ * // sorting order can be influenced:
+ *
+ * // ascending order
+ * async.sortBy([1,9,3,5], function(x, callback) {
+ *     callback(null, x);
+ * }, function(err,result) {
+ *     // result callback
+ * });
+ *
+ * // descending order
+ * async.sortBy([1,9,3,5], function(x, callback) {
+ *     callback(null, x*-1);    //<- x*-1 instead of x, turns the order around
+ * }, function(err,result) {
+ *     // result callback
+ * });
+ */
+function sortBy(coll, iteratee, callback) {
+    map(coll, function (x, callback) {
+        iteratee(x, function (err, criteria) {
+            if (err) return callback(err);
+            callback(null, { value: x, criteria: criteria });
+        });
+    }, function (err, results) {
+        if (err) return callback(err);
+        callback(null, arrayMap(results.sort(comparator), baseProperty('value')));
+    });
+
+    function comparator(left, right) {
+        var a = left.criteria,
+            b = right.criteria;
+        return a < b ? -1 : a > b ? 1 : 0;
+    }
+}
+
+/**
+ * Sets a time limit on an asynchronous function. If the function does not call
+ * its callback within the specified milliseconds, it will be called with a
+ * timeout error. The code property for the error object will be `'ETIMEDOUT'`.
+ *
+ * @name timeout
+ * @static
+ * @memberOf module:Utils
+ * @method
+ * @category Util
+ * @param {Function} asyncFn - The asynchronous function you want to set the
+ * time limit.
+ * @param {number} milliseconds - The specified time limit.
+ * @param {*} [info] - Any variable you want attached (`string`, `object`, etc)
+ * to timeout Error for more information..
+ * @returns {Function} Returns a wrapped function that can be used with any of
+ * the control flow functions. Invoke this function with the same
+ * parameters as you would `asyncFunc`.
+ * @example
+ *
+ * function myFunction(foo, callback) {
+ *     doAsyncTask(foo, function(err, data) {
+ *         // handle errors
+ *         if (err) return callback(err);
+ *
+ *         // do some stuff ...
+ *
+ *         // return processed data
+ *         return callback(null, data);
+ *     });
+ * }
+ *
+ * var wrapped = async.timeout(myFunction, 1000);
+ *
+ * // call `wrapped` as you would `myFunction`
+ * wrapped({ bar: 'bar' }, function(err, data) {
+ *     // if `myFunction` takes < 1000 ms to execute, `err`
+ *     // and `data` will have their expected values
+ *
+ *     // else `err` will be an Error with the code 'ETIMEDOUT'
+ * });
+ */
+function timeout(asyncFn, milliseconds, info) {
+    var originalCallback, timer;
+    var timedOut = false;
+
+    function injectedCallback() {
+        if (!timedOut) {
+            originalCallback.apply(null, arguments);
+            clearTimeout(timer);
+        }
+    }
+
+    function timeoutCallback() {
+        var name = asyncFn.name || 'anonymous';
+        var error = new Error('Callback function "' + name + '" timed out.');
+        error.code = 'ETIMEDOUT';
+        if (info) {
+            error.info = info;
+        }
+        timedOut = true;
+        originalCallback(error);
+    }
+
+    return initialParams(function (args, origCallback) {
+        originalCallback = origCallback;
+        // setup timer and call original function
+        timer = setTimeout(timeoutCallback, milliseconds);
+        asyncFn.apply(null, args.concat(injectedCallback));
+    });
+}
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeCeil = Math.ceil;
+var nativeMax$1 = Math.max;
+
+/**
+ * The base implementation of `_.range` and `_.rangeRight` which doesn't
+ * coerce arguments.
+ *
+ * @private
+ * @param {number} start The start of the range.
+ * @param {number} end The end of the range.
+ * @param {number} step The value to increment or decrement by.
+ * @param {boolean} [fromRight] Specify iterating from right to left.
+ * @returns {Array} Returns the range of numbers.
+ */
+function baseRange(start, end, step, fromRight) {
+  var index = -1,
+      length = nativeMax$1(nativeCeil((end - start) / (step || 1)), 0),
+      result = Array(length);
+
+  while (length--) {
+    result[fromRight ? length : ++index] = start;
+    start += step;
+  }
+  return result;
+}
+
+/**
+ * The same as [times]{@link module:ControlFlow.times} but runs a maximum of `limit` async operations at a
+ * time.
+ *
+ * @name timesLimit
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @see [async.times]{@link module:ControlFlow.times}
+ * @category Control Flow
+ * @param {number} count - The number of times to run the function.
+ * @param {number} limit - The maximum number of async operations at a time.
+ * @param {Function} iteratee - The function to call `n` times. Invoked with the
+ * iteration index and a callback (n, next).
+ * @param {Function} callback - see [async.map]{@link module:Collections.map}.
+ */
+function timeLimit(count, limit, iteratee, callback) {
+  mapLimit(baseRange(0, count, 1), limit, iteratee, callback);
+}
+
+/**
+ * Calls the `iteratee` function `n` times, and accumulates results in the same
+ * manner you would use with [map]{@link module:Collections.map}.
+ *
+ * @name times
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @see [async.map]{@link module:Collections.map}
+ * @category Control Flow
+ * @param {number} n - The number of times to run the function.
+ * @param {Function} iteratee - The function to call `n` times. Invoked with the
+ * iteration index and a callback (n, next).
+ * @param {Function} callback - see {@link module:Collections.map}.
+ * @example
+ *
+ * // Pretend this is some complicated async factory
+ * var createUser = function(id, callback) {
+ *     callback(null, {
+ *         id: 'user' + id
+ *     });
+ * };
+ *
+ * // generate 5 users
+ * async.times(5, function(n, next) {
+ *     createUser(n, function(err, user) {
+ *         next(err, user);
+ *     });
+ * }, function(err, users) {
+ *     // we should now have 5 users
+ * });
+ */
+var times = doLimit(timeLimit, Infinity);
+
+/**
+ * The same as [times]{@link module:ControlFlow.times} but runs only a single async operation at a time.
+ *
+ * @name timesSeries
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @see [async.times]{@link module:ControlFlow.times}
+ * @category Control Flow
+ * @param {number} n - The number of times to run the function.
+ * @param {Function} iteratee - The function to call `n` times. Invoked with the
+ * iteration index and a callback (n, next).
+ * @param {Function} callback - see {@link module:Collections.map}.
+ */
+var timesSeries = doLimit(timeLimit, 1);
+
+/**
+ * A relative of `reduce`.  Takes an Object or Array, and iterates over each
+ * element in series, each step potentially mutating an `accumulator` value.
+ * The type of the accumulator defaults to the type of collection passed in.
+ *
+ * @name transform
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {*} [accumulator] - The initial state of the transform.  If omitted,
+ * it will default to an empty Object or Array, depending on the type of `coll`
+ * @param {Function} iteratee - A function applied to each item in the
+ * collection that potentially modifies the accumulator. The `iteratee` is
+ * passed a `callback(err)` which accepts an optional error as its first
+ * argument. If an error is passed to the callback, the transform is stopped
+ * and the main `callback` is immediately called with the error.
+ * Invoked with (accumulator, item, key, callback).
+ * @param {Function} [callback] - A callback which is called after all the
+ * `iteratee` functions have finished. Result is the transformed accumulator.
+ * Invoked with (err, result).
+ * @example
+ *
+ * async.transform([1,2,3], function(acc, item, index, callback) {
+ *     // pointless async:
+ *     process.nextTick(function() {
+ *         acc.push(item * 2)
+ *         callback(null)
+ *     });
+ * }, function(err, result) {
+ *     // result is now equal to [2, 4, 6]
+ * });
+ *
+ * @example
+ *
+ * async.transform({a: 1, b: 2, c: 3}, function (obj, val, key, callback) {
+ *     setImmediate(function () {
+ *         obj[key] = val * 2;
+ *         callback();
+ *     })
+ * }, function (err, result) {
+ *     // result is equal to {a: 2, b: 4, c: 6}
+ * })
+ */
+function transform(coll, accumulator, iteratee, callback) {
+    if (arguments.length === 3) {
+        callback = iteratee;
+        iteratee = accumulator;
+        accumulator = isArray(coll) ? [] : {};
+    }
+    callback = once(callback || noop);
+
+    eachOf(coll, function (v, k, cb) {
+        iteratee(accumulator, v, k, cb);
+    }, function (err) {
+        callback(err, accumulator);
+    });
+}
+
+/**
+ * Undoes a [memoize]{@link module:Utils.memoize}d function, reverting it to the original,
+ * unmemoized form. Handy for testing.
+ *
+ * @name unmemoize
+ * @static
+ * @memberOf module:Utils
+ * @method
+ * @see [async.memoize]{@link module:Utils.memoize}
+ * @category Util
+ * @param {Function} fn - the memoized function
+ * @returns {Function} a function that calls the original unmemoized function
+ */
+function unmemoize(fn) {
+    return function () {
+        return (fn.unmemoized || fn).apply(null, arguments);
+    };
+}
+
+/**
+ * Repeatedly call `iteratee`, while `test` returns `true`. Calls `callback` when
+ * stopped, or an error occurs.
+ *
+ * @name whilst
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @category Control Flow
+ * @param {Function} test - synchronous truth test to perform before each
+ * execution of `iteratee`. Invoked with ().
+ * @param {Function} iteratee - A function which is called each time `test` passes.
+ * The function is passed a `callback(err)`, which must be called once it has
+ * completed with an optional `err` argument. Invoked with (callback).
+ * @param {Function} [callback] - A callback which is called after the test
+ * function has failed and repeated execution of `iteratee` has stopped. `callback`
+ * will be passed an error and any arguments passed to the final `iteratee`'s
+ * callback. Invoked with (err, [results]);
+ * @returns undefined
+ * @example
+ *
+ * var count = 0;
+ * async.whilst(
+ *     function() { return count < 5; },
+ *     function(callback) {
+ *         count++;
+ *         setTimeout(function() {
+ *             callback(null, count);
+ *         }, 1000);
+ *     },
+ *     function (err, n) {
+ *         // 5 seconds have passed, n = 5
+ *     }
+ * );
+ */
+function whilst(test, iteratee, callback) {
+    callback = onlyOnce(callback || noop);
+    if (!test()) return callback(null);
+    var next = rest(function (err, args) {
+        if (err) return callback(err);
+        if (test()) return iteratee(next);
+        callback.apply(null, [null].concat(args));
+    });
+    iteratee(next);
+}
+
+/**
+ * Repeatedly call `fn` until `test` returns `true`. Calls `callback` when
+ * stopped, or an error occurs. `callback` will be passed an error and any
+ * arguments passed to the final `fn`'s callback.
+ *
+ * The inverse of [whilst]{@link module:ControlFlow.whilst}.
+ *
+ * @name until
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @see [async.whilst]{@link module:ControlFlow.whilst}
+ * @category Control Flow
+ * @param {Function} test - synchronous truth test to perform before each
+ * execution of `fn`. Invoked with ().
+ * @param {Function} fn - A function which is called each time `test` fails.
+ * The function is passed a `callback(err)`, which must be called once it has
+ * completed with an optional `err` argument. Invoked with (callback).
+ * @param {Function} [callback] - A callback which is called after the test
+ * function has passed and repeated execution of `fn` has stopped. `callback`
+ * will be passed an error and any arguments passed to the final `fn`'s
+ * callback. Invoked with (err, [results]);
+ */
+function until(test, fn, callback) {
+    whilst(function () {
+        return !test.apply(this, arguments);
+    }, fn, callback);
+}
+
+/**
+ * Runs the `tasks` array of functions in series, each passing their results to
+ * the next in the array. However, if any of the `tasks` pass an error to their
+ * own callback, the next function is not executed, and the main `callback` is
+ * immediately called with the error.
+ *
+ * @name waterfall
+ * @static
+ * @memberOf module:ControlFlow
+ * @method
+ * @category Control Flow
+ * @param {Array} tasks - An array of functions to run, each function is passed
+ * a `callback(err, result1, result2, ...)` it must call on completion. The
+ * first argument is an error (which can be `null`) and any further arguments
+ * will be passed as arguments in order to the next task.
+ * @param {Function} [callback] - An optional callback to run once all the
+ * functions have completed. This will be passed the results of the last task's
+ * callback. Invoked with (err, [results]).
+ * @returns undefined
+ * @example
+ *
+ * async.waterfall([
+ *     function(callback) {
+ *         callback(null, 'one', 'two');
+ *     },
+ *     function(arg1, arg2, callback) {
+ *         // arg1 now equals 'one' and arg2 now equals 'two'
+ *         callback(null, 'three');
+ *     },
+ *     function(arg1, callback) {
+ *         // arg1 now equals 'three'
+ *         callback(null, 'done');
+ *     }
+ * ], function (err, result) {
+ *     // result now equals 'done'
+ * });
+ *
+ * // Or, with named functions:
+ * async.waterfall([
+ *     myFirstFunction,
+ *     mySecondFunction,
+ *     myLastFunction,
+ * ], function (err, result) {
+ *     // result now equals 'done'
+ * });
+ * function myFirstFunction(callback) {
+ *     callback(null, 'one', 'two');
+ * }
+ * function mySecondFunction(arg1, arg2, callback) {
+ *     // arg1 now equals 'one' and arg2 now equals 'two'
+ *     callback(null, 'three');
+ * }
+ * function myLastFunction(arg1, callback) {
+ *     // arg1 now equals 'three'
+ *     callback(null, 'done');
+ * }
+ */
+var waterfall = function (tasks, callback) {
+    callback = once(callback || noop);
+    if (!isArray(tasks)) return callback(new Error('First argument to waterfall must be an array of functions'));
+    if (!tasks.length) return callback();
+    var taskIndex = 0;
+
+    function nextTask(args) {
+        if (taskIndex === tasks.length) {
+            return callback.apply(null, [null].concat(args));
+        }
+
+        var taskCallback = onlyOnce(rest(function (err, args) {
+            if (err) {
+                return callback.apply(null, [err].concat(args));
+            }
+            nextTask(args);
+        }));
+
+        args.push(taskCallback);
+
+        var task = tasks[taskIndex++];
+        task.apply(null, args);
+    }
+
+    nextTask([]);
+};
+
+/**
+ * Async is a utility module which provides straight-forward, powerful functions
+ * for working with asynchronous JavaScript. Although originally designed for
+ * use with [Node.js](http://nodejs.org) and installable via
+ * `npm install --save async`, it can also be used directly in the browser.
+ * @module async
+ */
+
+/**
+ * A collection of `async` functions for manipulating collections, such as
+ * arrays and objects.
+ * @module Collections
+ */
+
+/**
+ * A collection of `async` functions for controlling the flow through a script.
+ * @module ControlFlow
+ */
+
+/**
+ * A collection of `async` utility functions.
+ * @module Utils
+ */
+var index = {
+  applyEach: applyEach,
+  applyEachSeries: applyEachSeries,
+  apply: apply$2,
+  asyncify: asyncify,
+  auto: auto,
+  autoInject: autoInject,
+  cargo: cargo,
+  compose: compose,
+  concat: concat,
+  concatSeries: concatSeries,
+  constant: constant,
+  detect: detect,
+  detectLimit: detectLimit,
+  detectSeries: detectSeries,
+  dir: dir,
+  doDuring: doDuring,
+  doUntil: doUntil,
+  doWhilst: doWhilst,
+  during: during,
+  each: eachLimit,
+  eachLimit: eachLimit$1,
+  eachOf: eachOf,
+  eachOfLimit: eachOfLimit,
+  eachOfSeries: eachOfSeries,
+  eachSeries: eachSeries,
+  ensureAsync: ensureAsync,
+  every: every,
+  everyLimit: everyLimit,
+  everySeries: everySeries,
+  filter: filter,
+  filterLimit: filterLimit,
+  filterSeries: filterSeries,
+  forever: forever,
+  log: log,
+  map: map,
+  mapLimit: mapLimit,
+  mapSeries: mapSeries,
+  mapValues: mapValues,
+  mapValuesLimit: mapValuesLimit,
+  mapValuesSeries: mapValuesSeries,
+  memoize: memoize,
+  nextTick: nextTick,
+  parallel: parallelLimit,
+  parallelLimit: parallelLimit$1,
+  priorityQueue: priorityQueue,
+  queue: queue$1,
+  race: race,
+  reduce: reduce,
+  reduceRight: reduceRight,
+  reflect: reflect,
+  reflectAll: reflectAll,
+  reject: reject,
+  rejectLimit: rejectLimit,
+  rejectSeries: rejectSeries,
+  retry: retry,
+  retryable: retryable,
+  seq: seq$1,
+  series: series,
+  setImmediate: setImmediate$1,
+  some: some,
+  someLimit: someLimit,
+  someSeries: someSeries,
+  sortBy: sortBy,
+  timeout: timeout,
+  times: times,
+  timesLimit: timeLimit,
+  timesSeries: timesSeries,
+  transform: transform,
+  unmemoize: unmemoize,
+  until: until,
+  waterfall: waterfall,
+  whilst: whilst,
+
+  // aliases
+  all: every,
+  any: some,
+  forEach: eachLimit,
+  forEachSeries: eachSeries,
+  forEachLimit: eachLimit$1,
+  forEachOf: eachOf,
+  forEachOfSeries: eachOfSeries,
+  forEachOfLimit: eachOfLimit,
+  inject: reduce,
+  foldl: reduce,
+  foldr: reduceRight,
+  select: filter,
+  selectLimit: filterLimit,
+  selectSeries: filterSeries,
+  wrapSync: asyncify
+};
+
+exports['default'] = index;
+exports.applyEach = applyEach;
+exports.applyEachSeries = applyEachSeries;
+exports.apply = apply$2;
+exports.asyncify = asyncify;
+exports.auto = auto;
+exports.autoInject = autoInject;
+exports.cargo = cargo;
+exports.compose = compose;
+exports.concat = concat;
+exports.concatSeries = concatSeries;
+exports.constant = constant;
+exports.detect = detect;
+exports.detectLimit = detectLimit;
+exports.detectSeries = detectSeries;
+exports.dir = dir;
+exports.doDuring = doDuring;
+exports.doUntil = doUntil;
+exports.doWhilst = doWhilst;
+exports.during = during;
+exports.each = eachLimit;
+exports.eachLimit = eachLimit$1;
+exports.eachOf = eachOf;
+exports.eachOfLimit = eachOfLimit;
+exports.eachOfSeries = eachOfSeries;
+exports.eachSeries = eachSeries;
+exports.ensureAsync = ensureAsync;
+exports.every = every;
+exports.everyLimit = everyLimit;
+exports.everySeries = everySeries;
+exports.filter = filter;
+exports.filterLimit = filterLimit;
+exports.filterSeries = filterSeries;
+exports.forever = forever;
+exports.log = log;
+exports.map = map;
+exports.mapLimit = mapLimit;
+exports.mapSeries = mapSeries;
+exports.mapValues = mapValues;
+exports.mapValuesLimit = mapValuesLimit;
+exports.mapValuesSeries = mapValuesSeries;
+exports.memoize = memoize;
+exports.nextTick = nextTick;
+exports.parallel = parallelLimit;
+exports.parallelLimit = parallelLimit$1;
+exports.priorityQueue = priorityQueue;
+exports.queue = queue$1;
+exports.race = race;
+exports.reduce = reduce;
+exports.reduceRight = reduceRight;
+exports.reflect = reflect;
+exports.reflectAll = reflectAll;
+exports.reject = reject;
+exports.rejectLimit = rejectLimit;
+exports.rejectSeries = rejectSeries;
+exports.retry = retry;
+exports.retryable = retryable;
+exports.seq = seq$1;
+exports.series = series;
+exports.setImmediate = setImmediate$1;
+exports.some = some;
+exports.someLimit = someLimit;
+exports.someSeries = someSeries;
+exports.sortBy = sortBy;
+exports.timeout = timeout;
+exports.times = times;
+exports.timesLimit = timeLimit;
+exports.timesSeries = timesSeries;
+exports.transform = transform;
+exports.unmemoize = unmemoize;
+exports.until = until;
+exports.waterfall = waterfall;
+exports.whilst = whilst;
+exports.all = every;
+exports.allLimit = everyLimit;
+exports.allSeries = everySeries;
+exports.any = some;
+exports.anyLimit = someLimit;
+exports.anySeries = someSeries;
+exports.find = detect;
+exports.findLimit = detectLimit;
+exports.findSeries = detectSeries;
+exports.forEach = eachLimit;
+exports.forEachSeries = eachSeries;
+exports.forEachLimit = eachLimit$1;
+exports.forEachOf = eachOf;
+exports.forEachOfSeries = eachOfSeries;
+exports.forEachOfLimit = eachOfLimit;
+exports.inject = reduce;
+exports.foldl = reduce;
+exports.foldr = reduceRight;
+exports.select = filter;
+exports.selectLimit = filterLimit;
+exports.selectSeries = filterSeries;
+exports.wrapSync = asyncify;
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+})));
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(13)(module), __webpack_require__(31).setImmediate, __webpack_require__(1)))
+
+/***/ }),
+/* 10 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1030,7 +7817,7 @@ var ConfigUtil = function () {
 					var variableReference = tokens[i].substring(1); // string off the leading $
 					var variableResolution = finsembleConfig[variableReference]; // the variable value is another config property, which already must be set
 					var newValue = configString.replace(tokens[i], variableResolution); // replace the variable reference with new value
-					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.info("forceObjectsToLogger", "ConfigUtil.resolveConfigVariables:resolveString configString", tokens[i], variableReference, variableResolution, "oldvalue=", configString, "value=", newValue);
+					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.info("forceObjectsToLogger", "ConfigUtil.resolveConfigVariables:resolveString configString", tokens[i], variableReference, variableResolution, "old value=", configString, "value=", newValue);
 					needsAnotherPass = true; // <<-- here is the only place needsAnotherPass is set, since still resolving variables
 					configString = newValue;
 				}
@@ -1080,7 +7867,7 @@ var ConfigUtil = function () {
 		}
 	};
 
-	// This does mimimal processing of the manifest, just enough to support getting the router up, which is only expanding variables (e.g. moduleRoot) in the raw manifest
+	// This does minimal processing of the manifest, just enough to support getting the router up, which is only expanding variables (e.g. moduleRoot) in the raw manifest
 	this.getExpandedRawManifest = function (callback, errorCB) {
 		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("ConfigUtil.getExpandedRawManifest starting");
 
@@ -1090,7 +7877,7 @@ var ConfigUtil = function () {
 			application.getManifest(function (manifest) {
 				// get raw openfin manifest
 				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getExpandedRawManifest: manifest retrieved. Pre-variable resolution", manifest);
-				self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables first time so can fild config config location
+				self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables first time so can find config location
 				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getExpandedRawManifest:Complete. post-variable resolution", manifest);
 				callback(manifest);
 			}, function (err) {
@@ -1133,9 +7920,9 @@ var ConfigUtil = function () {
 		});
 	};
 
-	// This does a "first stage" processing of the manifest, providing enought config to start finsemble.
-	// Pull in the initial manifest, which includes gettig the "hiddlen" core config file along with its import definitions, and expand all variables.
-	// However, the full config processing, incluing actually doing the imports, is only done in the Config Service.
+	// This does a "first stage" processing of the manifest, providing enough config to start finsemble.
+	// Pull in the initial manifest, which includes getting the "hidden" core config file along with its import definitions, and expand all variables.
+	// However, the full config processing, including actually doing the imports, is only done in the Config Service.
 	this.getInitialManifest = function (callback) {
 
 		__WEBPACK_IMPORTED_MODULE_2__system__["System"].ready(function () {
@@ -1151,13 +7938,13 @@ var ConfigUtil = function () {
 					if (!error) {
 						Object.keys(newFinsembleConfigObject).forEach(function (key) {
 							if (key === "importConfig") {
-								// add any importConfig items from the core to the existing importConifg
+								// add any importConfig items from the core to the existing importConfig
 								manifest.finsemble.importConfig = manifest.finsemble.importConfig || [];
 								for (let i = 0; i < newFinsembleConfigObject.importConfig.length; i++) {
 									manifest.finsemble.importConfig.unshift(newFinsembleConfigObject.importConfig[i]);
 								}
 							} else if (key === "importThirdPartyConfig") {
-								// add any importThirdPartyConfig items from the core to the existing importConifg
+								// add any importThirdPartyConfig items from the core to the existing importConfig
 								manifest.finsemble.importThirdPartyConfig = manifest.finsemble.importThirdPartyConfig || [];
 								for (let i = 0; i < newFinsembleConfigObject.importThirdPartyConfig.length; i++) {
 									manifest.finsemble.importThirdPartyConfig.unshift(newFinsembleConfigObject.importThirdPartyConfig[i]);
@@ -1177,7 +7964,7 @@ var ConfigUtil = function () {
 		});
 	};
 
-	// output JSON objecvt to file
+	// output JSON object to file
 	this.promptAndSaveJSONToLocalFile = function (filename, jsonObject) {
 		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("saveJSONToLocalFile", filename, jsonObject);
 
@@ -1234,7 +8021,7 @@ var ConfigUtil = function () {
 		};
 	};
 
-	// convenience constants for definiting verification object. See example usage in ServiceManager or ConfigService.
+	// convenience constants for defining verification object. See example usage in ServiceManager or ConfigService.
 	// Required means startup will break without it, so error.
 	// Optional means startup will not break without it; however, it is documented and expected as part of the config that should always be there.  So warning message only.
 	// Deprecated mean startup will no break but old config format is used and should be updated.
@@ -1315,7 +8102,7 @@ var ConfigUtil = function () {
 	/**
   * Verifies config is correct and logs messages as needed. Recursively walks configObject and configVerifyObject.
   *
-  * @param {object} fullPathName path name of config being verfied (e.g. "manifest", "manifest.finsemble"); used for error messages
+  * @param {object} fullPathName path name of config being verified (e.g. "manifest", "manifest.finsemble"); used for error messages
   * @param {object} configObject the configuration object to verify (typically the manifest object or manifest.finsemble object)
   * @param {object} configVerifyObject object to drive the verification; data driven.
   *
@@ -1342,7 +8129,7 @@ var ConfigUtil = function () {
   *
   * @returns If correct, return true (with no log messages generated); return false otherwise. For optional or DEPRECATED generate warning if not defined, but no error unless if wrong type.
   *
-  * @example See ConfigService for example usuage.
+  * @example See ConfigService for example usage.
   *
   * @private
   */
@@ -1393,7 +8180,7 @@ var ConfigUtil = function () {
   *
   *		defaultAdaptor = ConfigUtil.getDefault(manifest, "manifest.finsemble.defaultStorage", "LocalStorageAdapter");
   *		sameDomainTransport = ConfigUtil.getDefault(finConfig, "finConfig.router.sameDomainTransport", "SharedWorker");
-  *		var serverAddress = getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress", "wss://localhost.chartiq.com:3376");
+  *		var serverAddress = getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress", "ws://127.0.0.1:3376");
   *
   */
 	this.getDefault = function (base, path, defaultValue) {
@@ -1420,12 +8207,11 @@ const ConfigUtilInstance = new ConfigUtil();
 /* harmony export (immutable) */ __webpack_exports__["ConfigUtilInstance"] = ConfigUtilInstance;
 
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\common\\configUtil.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\common\\configUtil.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\configUtil.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\configUtil.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-
-/***/ 11:
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1434,7 +8220,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.WRAPPERS = {
     /*
         TODO: For the time being these are just events our windows fire but not OpenFin (this is used in the OF wrapper. Long term we might have to reverse this)
-        TODO: Event naming is inconsistent. Our events should not be camel case to mantain consistency.
+        TODO: Event naming is inconsistent. Our events should not be camel case to maintain consistency.
     */
     EVENTS: ["title-changed", "bringToFront", "setBounds", "alwaysOnTop", "setOpacity"]
 };
@@ -1455,13 +8241,41 @@ exports.WINDOWSTATE = {
 //These channels are to start and stop services dynamically.
 exports.SERVICE_START_CHANNEL = "Finsemble.Service.Start";
 exports.SERVICE_STOP_CHANNEL = "Finsemble.Service.Stop";
+exports.DOCKING = {
+    GROUP_UPDATE: "DockingService.groupUpdate",
+    // For legacy reasons, this is named Workspace, even though it's generated by docking.
+    WORKSPACE_GROUP_UPDATE: "Finsemble.WorkspaceService.groupUpdate",
+};
 // These channels are for interrupting events
 exports.EVENT_INTERRUPT_CHANNEL = "Finsemble.Event.Interrupt";
 exports.INTERRUPTIBLE_EVENTS = ["close-requested", "closed", "close-complete", "_container-close-handlers"];
+exports.REMOTE_FOCUS = "WindowService.remoteFocus";
 exports.WORKSPACE = {
+    CLEAN_SHUTDOWN: "Finsemble.Workspace.cleanShutdown",
+    UPDATE_PUBSUB: "Finsemble.WorkspaceService.update",
     STORAGE_TOPIC: "finsemble.workspace",
     CACHE_STORAGE_TOPIC: "finsemble.workspace.cache",
+    ALL_WORKSPACES: "finsemble.allWorkspaces",
+    ACTIVE_WORKSPACE: "activeWorkspace",
+    // When we have the liberty of breaking API's, we should consolidate this topic.
+    LAST_USED_WORKSPACE_TOPIC: "finsemble",
+    LAST_USED_WORKSPACE: "finsemble.lastUsedWorkspace",
+    INITIAL_WORKSPACE_PREFERENCE: "finsemble.initialWorkspace",
+    PUBLISH_REASONS: {
+        INIT: "workspace:initialization",
+        LOAD_DATA_RETRIEVED: "workspace:load:dataRetrieved",
+        LOAD_FINISHED: "workspace:load:finished",
+        WINDOW_REMOVED: "window:remove",
+        WINDOW_ADDED: "window:add",
+        LOAD_STARTED: "workspace:load:start",
+        WORKSPACE_REMOVED: "Workspace:remove",
+        WORKSPACE_RENAMED: "rename",
+        SWITCHTO_TERMINATED: "workspace:switchTo:terminated",
+        NEW_WORKSPACE: "new workspace",
+        SAVE_AS: "APPLICATION LIFECYCLE:WORKSPACE LIFECYCLE:SaveAs:Workspace:Save As",
+    },
     API_CHANNELS: {
+        NEW_WORKSPACE: "Finsemble.Workspace.NewWorkspace",
         SAVE: "Finsemble.Workspace.Save",
         RENAME: "Finsemble.Workspace.Rename",
         SAVE_AS: "Finsemble.Workspace.SaveAs",
@@ -1474,18 +8288,25 @@ exports.WORKSPACE = {
         GET_GLOBAL_DATA: "Finsemble.Workspace.GetGlobalData",
         GET_VIEW_DATA: "Finsemble.Workspace.GetViewData",
         GET_WORKSPACES: "Finsemble.Workspace.GetWorkspaces",
+        GET_WORKSPACE_NAMES: "Finsemble.Workspace.GetWorkspaceNames",
         SET_WORKSPACE_ORDER: "Finsemble.Workspace.SetWorkspaceOrder",
+        GET_ACTIVE_WORKSPACE: "Finsemble.Workspace.GetActiveWorkspace",
         SET_ACTIVEWORKSPACE_DIRTY: "Finsemble.Workspace.SetActiveWorkspaceDirty",
         GET_TEMPLATES: "Finsemble.Workspace.GetTemplates",
         IMPORT_TEMPLATE: "Finsemble.Workspace.ImportTemplate",
         EXPORT_TEMPLATE: "Finsemble.Workspace.ExportTemplate",
         REMOVE_TEMPLATE: "Finsemble.Workspace.RemoveTemplate",
+        SET_WINDOW_STATE: "Finsemble.Workspace.SetWindowData",
+        GET_WINDOW_STATE: "Finsemble.Workspace.GetWindowData",
+        ADD_WINDOW: "WorkspaceService.addWindow",
+        REMOVE_WINDOW: "WorkspaceService.removeWindow",
     }
 };
-// These channels are to publish LifeCycle events on.
-// Currently unused but placeholder here for implementation, at least for Workspace.
-exports.APPLICATION_LIFECYCLE = {};
+exports.COMPONENT_STATE_STORAGE_TOPIC = "finsemble.componentStateStorage";
 exports.HEARTBEAT_TIMEOUT_CHANNEL = "Finsemble.WindowService.HeartbeatTimeout";
+exports.LAUNCHER_SERVICE = {
+    WINDOW_CLOSED: "LauncherService.WindowClosed"
+};
 exports.DELIVERY_MECHANISM = {
     PRELOAD: 'preload',
     INJECTION: 'injection',
@@ -1493,8 +8314,7 @@ exports.DELIVERY_MECHANISM = {
 
 
 /***/ }),
-
-/***/ 12:
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1949,15 +8769,42 @@ function unwrapListeners(arr) {
 
 
 /***/ }),
+/* 13 */
+/***/ (function(module, exports) {
 
-/***/ 13:
+module.exports = function(module) {
+	if(!module.webpackPolyfill) {
+		module.deprecate = function() {};
+		module.paths = [];
+		// module.parent = undefined by default
+		if(!module.children) module.children = [];
+		Object.defineProperty(module, "loaded", {
+			enumerable: true,
+			get: function() {
+				return module.l;
+			}
+		});
+		Object.defineProperty(module, "id", {
+			enumerable: true,
+			get: function() {
+				return module.i;
+			}
+		});
+		module.webpackPolyfill = 1;
+	}
+	return module;
+};
+
+
+/***/ }),
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const events_1 = __webpack_require__(12);
-const routerClientInstance_1 = __webpack_require__(4);
+const routerClientInstance_1 = __webpack_require__(5);
 const STARTUP_TIMEOUT_DURATION = 10000;
 const constants_1 = __webpack_require__(11);
 /**
@@ -2021,7 +8868,7 @@ class StartupManager {
         this.bindCorrectContext();
     }
     /**
-     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required depenencies are ready.
+     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required dependencies are ready.
      *
      * @param {FinsembleDependency} dependencies
      * @param {any} callback
@@ -2243,7 +9090,7 @@ class ShutdownManager {
         this.checkDependencies = this.checkDependencies.bind(this);
     }
     /**
-     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required depenencies are ready.
+     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required dependencies are ready.
      *
      * @param {FinsembleDependency} dependencies
      * @param {any} callback
@@ -2299,7 +9146,7 @@ class ShutdownManager {
     }
 }
 /**
- * This is a class that handles FSBL client/service dependnecy management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
+ * This is a class that handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
  * @shouldBePublished false
  * @private
  * @class FSBLDependencyManager
@@ -2354,7 +9201,7 @@ class FSBLDependencyManager extends events_1.EventEmitter {
         this.RouterClient.subscribe(constants_1.SERVICES_STATE_CHANNEL, (err, event) => {
             this.onServiceStateChange(event.data);
         });
-        // TODO: The pubsub responder doesnt seem to work here. IT works for the above when not closing.
+        // TODO: The pubsub responder doesn't seem to work here. IT works for the above when not closing.
         this.RouterClient.addListener(constants_1.SERVICE_CLOSED_CHANNEL, (err, event) => {
             let services = {};
             services[event.data.name] = {
@@ -2391,7 +9238,7 @@ class FSBLDependencyManager extends events_1.EventEmitter {
     }
 }
 /**
- * This is a class that handles FSBL client/service dependnecy management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
+ * This is a class that handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
  * @shouldBePublished false
  * @private
  * @class FSBLDependencyManager
@@ -2401,8 +9248,7 @@ exports.default = exports.FSBLDependencyManagerSingleton;
 
 
 /***/ }),
-
-/***/ 14:
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2536,6 +9382,7 @@ class ConfigClient extends baseClient_1._BaseClient {
             }
             this.routerClient.query("configService.getValue", { field: params.field }, function (err, response) {
                 if (err) {
+                    reject(err);
                     return cb(err);
                 }
                 resolve({ err, data: response.data });
@@ -2547,7 +9394,7 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
      * Get multiple values from the config.
-    * @param {Object[] | String[]} fields - An array of field objects. If there are no fields proviced, the complete configuration manifest are returned.
+    * @param {Object[] | String[]} fields - An array of field objects. If there are no fields provided, the complete configuration manifest are returned.
      * @param {String} fields[].field - The name of the field
      * @param {Function} cb -  Will return the value if found.
      * @returns {Object} - returns an object of with the fields as keys.If no callback is given and the value is local, this will run synchronous
@@ -2755,7 +9602,7 @@ class ConfigClient extends baseClient_1._BaseClient {
      * @param {Object} params - Params object
      * @param {String} [params.field] - The data field
      * @param {function} [fn] -  the function to remove from the listeners
-     * @param {function} cb -  returns true if it was succesfull in removing the listener.
+     * @param {function} [cb] -  returns true if it was successful in removing the listener.
      *
      * @example
      * var myFunction = function(err,data){}
@@ -2790,7 +9637,7 @@ class ConfigClient extends baseClient_1._BaseClient {
      * @param {String} params.field - The data field to listen for. If this is empty it listen to all changes of the store.
      * @param {function} params.listener - The listener function
      * @param {function} [fn] -  the function to remove from the listeners
-     * @param {function} cb -  returns true if it was succesfull in removing the listener.
+     * @param {function} [cb] -  returns true if it was successful in removing the listener.
      *
      * @example
      * var myFunction = function(err,data){ }
@@ -2848,7 +9695,7 @@ class ConfigClient extends baseClient_1._BaseClient {
      * If no configReference parameter is passed in (i.e. only the callback parameter is specified), then the complete manifest object is returned
      * (including manifest.finsemble).
      *
-     * @param {object=} params field property indentifies specific config to return
+     * @param {object=} params field property identifies specific config to return
      * @param {function} callback callback function(error, data) to get the configuration data
      * @private
      * @example
@@ -2899,7 +9746,7 @@ class ConfigClient extends baseClient_1._BaseClient {
      * Special Note: Anytime config is set using this API, the dataStore underlying configuration 'Finsemble-Configuration-Store' will also be updated. To get these dataStore events a listener can be set as shown in the example below. However, any config modifications made directly though the DataStore will not result in corresponding PubSub notifications.
      *
      * @param {object} params
-     * @param {object} params.newConfig provides the configuration properties to add into the existing configuration under manifest.finsemble. This config must match the Finsembe config requirements as described in [Understanding Finsemble's Configuration]{@tutorial Configuration}. It can include importConfig references to dynamically fetch additional configuration files.
+     * @param {object} params.newConfig provides the configuration properties to add into the existing configuration under manifest.finsemble. This config must match the Finsemble config requirements as described in [Understanding Finsemble's Configuration]{@tutorial Configuration}. It can include importConfig references to dynamically fetch additional configuration files.
      * @param {boolean} params.overwrite if true then overwrite any preexisting config with new config (can only set to true when running from same origin, not cross-domain); if false then newConfig must not match properties of existing config, including service and component configuration.
      * @param {boolean} params.replace true specifies any component or service definitions in the new config will place all existing non-system component and service configuration
      * @param {function} cb callback to be invoked upon task completion.
@@ -3020,8 +9867,7 @@ exports.default = configClient;
 
 
 /***/ }),
-
-/***/ 15:
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3073,13 +9919,13 @@ function traceString() {
 }
 /** An implementation of the ICentralLogger interface that
  * merely logs straight to the console rather than going over to
- * Central Logging serice. Used in situations where use of the
+ * Central Logging service. Used in situations where use of the
  * Central Logging service is not possible (such as in test
  * environments, or in the Central Logging service itself).
  */
 class LocalLogger {
     constructor() {
-        // Loggery things.
+        // Log things.
         // @TODO - Make consumers agnostic of these and remove from interface.
         this.start = () => { };
         this.isLogMessage = IsLogMessage;
@@ -3103,245 +9949,185 @@ exports.LocalLogger = LocalLogger;
 
 
 /***/ }),
-
-/***/ 16:
+/* 17 */
 /***/ (function(module, exports) {
 
-module.exports = function(module) {
-	if(!module.webpackPolyfill) {
-		module.deprecate = function() {};
-		module.paths = [];
-		// module.parent = undefined by default
-		if(!module.children) module.children = [];
-		Object.defineProperty(module, "loaded", {
-			enumerable: true,
-			get: function() {
-				return module.l;
-			}
-		});
-		Object.defineProperty(module, "id", {
-			enumerable: true,
-			get: function() {
-				return module.i;
-			}
-		});
-		module.webpackPolyfill = 1;
-	}
-	return module;
-};
-
-
-/***/ }),
-
-/***/ 162:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {class MockMonitor {
-	constructor(bounds) {
-		this.name = bounds.name;
-		this.left = bounds.left;
-		this.top = bounds.top;
-		this.right = bounds.right;
-		this.bottom = bounds.bottom;
-		this._monitor = {
-			availableRect: bounds,
-			unclaimedRect: bounds
-		};
-	}
+/**
+ * Convert array of 16 byte values to UUID string format of the form:
+ * XXXXXXXX-XXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+ */
+var byteToHex = [];
+for (var i = 0; i < 256; ++i) {
+  byteToHex[i] = (i + 0x100).toString(16).substr(1);
 }
-/* harmony export (immutable) */ __webpack_exports__["a"] = MockMonitor;
 
+function bytesToUuid(buf, offset) {
+  var i = offset || 0;
+  var bth = byteToHex;
+  return  bth[buf[i++]] + bth[buf[i++]] +
+          bth[buf[i++]] + bth[buf[i++]] + '-' +
+          bth[buf[i++]] + bth[buf[i++]] + '-' +
+          bth[buf[i++]] + bth[buf[i++]] + '-' +
+          bth[buf[i++]] + bth[buf[i++]] + '-' +
+          bth[buf[i++]] + bth[buf[i++]] +
+          bth[buf[i++]] + bth[buf[i++]] +
+          bth[buf[i++]] + bth[buf[i++]];
+}
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\services\\window\\Docking\\tests\\mocks\\mockMonitor.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\services\\window\\Docking\\tests\\mocks\\mockMonitor.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
+module.exports = bytesToUuid;
+
 
 /***/ }),
-
-/***/ 163:
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(process) {// passthrough to openfin. In the future we can make this the passthrough to any container.
+/* WEBPACK VAR INJECTION */(function(global) {// Unique ID creation requires a high quality random # generator.  In the
+// browser this is a little complicated due to unknown quality of Math.random()
+// and inconsistent support for the `crypto` API.  We do the best we can via
+// feature-detection
+var rng;
 
-const fin = {
-	desktop: {
-		Window: {},
-		Application: {},
-		Notification: {},
-		System: {
-			getMousePosition: cb => cb({})
-		}
-	}
-};
-class SystemWindow {
-	constructor(params, cb) {
-		return new fin.desktop.Window(params, cb);
-	}
-
-	static get getCurrent() {
-		return fin.desktop.Window.getCurrent;
-	}
-
-	static get wrap() {
-		return fin.desktop.Window.wrap;
-	}
-
+var crypto = global.crypto || global.msCrypto; // for IE 11
+if (crypto && crypto.getRandomValues) {
+  // WHATWG crypto RNG - http://wiki.whatwg.org/wiki/Crypto
+  var rnds8 = new Uint8Array(16);
+  rng = function whatwgRNG() {
+    crypto.getRandomValues(rnds8);
+    return rnds8;
+  };
 }
 
-class Application {
-	constructor(params, cb) {
-		return new fin.desktop.Application(params, cb);
-	}
+if (!rng) {
+  // Math.random()-based (RNG)
+  //
+  // If all else fails, use Math.random().  It's fast, but is of unspecified
+  // quality.
+  var  rnds = new Array(16);
+  rng = function() {
+    for (var i = 0, r; i < 16; i++) {
+      if ((i & 0x03) === 0) r = Math.random() * 0x100000000;
+      rnds[i] = r >>> ((i & 0x03) << 3) & 0xff;
+    }
 
-	static get getCurrent() {
-		return fin.desktop.Application.getCurrent;
-	}
-
-	static get wrap() {
-		return fin.desktop.Application.wrap;
-	}
+    return rnds;
+  };
 }
 
-class SystemNotification {
-	constructor(params) {
-		new fin.desktop.Notification(params);
-	}
-}
+module.exports = rng;
 
-class System {
-	static get Application() {
-		return Application;
-	}
-	static get Window() {
-		return SystemWindow;
-	}
-	static get Notification() {
-		return SystemNotification;
-	}
-
-	static getMousePosition(cb) {
-		fin.desktop.System.getMousePosition(mousePosition => {
-			if (mousePosition.left || mousePosition.left === 0) mousePosition.x = mousePosition.left;
-			if (mousePosition.top || mousePosition.top === 0) mousePosition.y = mousePosition.top;
-			cb(null, mousePosition);
-		}, err => {
-			cb(err, null);
-		});
-	}
-
-	static getMonitorInfo(cb) {
-		fin.desktop.System.getMonitorInfo(info => {
-			cb(info);
-		});
-	}
-
-	// static get makes this behave like a static variable. so calling system.ready is eqivalent to fin.desktop.main.
-	static get ready() {
-		return fin.desktop.main;
-	}
-
-	static get getHostSpecs() {
-		return fin.desktop.System.getHostSpecs;
-	}
-
-	static get launchExternalProcess() {
-		return fin.desktop.System.launchExternalProcess;
-	}
-
-	static get terminateExternalProcess() {
-		return fin.desktop.System.terminateExternalProcess;
-	}
-
-	static get getAllApplications() {
-		return fin.desktop.System.getAllApplications;
-	}
-
-	static get exit() {
-		return fin.desktop.System.exit;
-	}
-
-	static get clearCache() {
-		return fin.desktop.System.clearCache;
-	}
-
-	static get showDeveloperTools() {
-		return fin.desktop.System.showDeveloperTools;
-	}
-
-	static get getRuntimeInfo() {
-		return fin.desktop.System.getRuntimeInfo || chrome.desktop.getDetails;
-	}
-
-	static get addEventListener() {
-		/* events we use so far in Finsemble: monitor-info-changed, session-changed */
-		return fin.desktop.System.addEventListener;
-	}
-
-	static get getVersion() {
-		return fin.desktop.System.getVersion;
-	}
-
-	static get openUrlWithBrowser() {
-		return fin.desktop.System.openUrlWithBrowser;
-	}
-
-	static get getAllWindows() {
-		return fin.desktop.System.getAllWindows;
-	}
-
-	static FinsembleReady(cb) {
-		if (FSBL && FSBL.addEventListener) {
-			return FSBL.addEventListener("onready", cb);
-		}
-		return window.addEventListener("FSBLready", cb);
-	}
-
-	// This is not overriding or pointing to Openfin. This is the pattern used to close applications.
-	static closeApplication(app, cb = Function.prototype) {
-		const promiseResolver = resolve => {
-			let t;
-			let timeoutCleared = false;
-
-			// Need to terminate after closing because otherwise applications sit around in OpenFin with isRunning: false.
-			let terminateAndResolve = () => {
-				if (timeoutCleared) return;
-				timeoutCleared = true;
-				console.log("terminating ", app.uuid);
-				clearTimeout(t);
-				app.terminate(() => {
-					cb();
-					resolve();
-				}, () => {
-					app.terminate();
-				});
-			};
-
-			// Sometimes app.close() never calls back (only happens with logger). So after 2 seconds terminate.
-			t = setTimeout(terminateAndResolve, 2000);
-
-			console.log("closing ", app.uuid);
-			// Try to close normally
-			app.close(false, terminateAndResolve, () => {
-				if (timeoutCleared) return;
-				clearTimeout(t);
-				// If closing fails, force close
-				console.log("force closing ", app.uuid);
-				app.close(true, terminateAndResolve, terminateAndResolve);
-			});
-		};
-		return new Promise(promiseResolver);
-	}
-
-}
-
-module.exports = System;
-
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\services\\window\\Docking\\tests\\mocks\\mockSystem.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\services\\window\\Docking\\tests\\mocks\\mockSystem.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
+/* 19 */
+/***/ (function(module, exports, __webpack_require__) {
 
-/***/ 17:
+// Unique ID creation requires a high quality random # generator.  We feature
+// detect to determine the best RNG source, normalizing to a function that
+// returns 128-bits of randomness, since that's what's usually required
+var rng = __webpack_require__(18);
+var bytesToUuid = __webpack_require__(17);
+
+// **`v1()` - Generate time-based UUID**
+//
+// Inspired by https://github.com/LiosK/UUID.js
+// and http://docs.python.org/library/uuid.html
+
+// random #'s we need to init node and clockseq
+var _seedBytes = rng();
+
+// Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
+var _nodeId = [
+  _seedBytes[0] | 0x01,
+  _seedBytes[1], _seedBytes[2], _seedBytes[3], _seedBytes[4], _seedBytes[5]
+];
+
+// Per 4.2.2, randomize (14 bit) clockseq
+var _clockseq = (_seedBytes[6] << 8 | _seedBytes[7]) & 0x3fff;
+
+// Previous uuid creation time
+var _lastMSecs = 0, _lastNSecs = 0;
+
+// See https://github.com/broofa/node-uuid for API details
+function v1(options, buf, offset) {
+  var i = buf && offset || 0;
+  var b = buf || [];
+
+  options = options || {};
+
+  var clockseq = options.clockseq !== undefined ? options.clockseq : _clockseq;
+
+  // UUID timestamps are 100 nano-second units since the Gregorian epoch,
+  // (1582-10-15 00:00).  JSNumbers aren't precise enough for this, so
+  // time is handled internally as 'msecs' (integer milliseconds) and 'nsecs'
+  // (100-nanoseconds offset from msecs) since unix epoch, 1970-01-01 00:00.
+  var msecs = options.msecs !== undefined ? options.msecs : new Date().getTime();
+
+  // Per 4.2.1.2, use count of uuid's generated during the current clock
+  // cycle to simulate higher resolution clock
+  var nsecs = options.nsecs !== undefined ? options.nsecs : _lastNSecs + 1;
+
+  // Time since last uuid creation (in msecs)
+  var dt = (msecs - _lastMSecs) + (nsecs - _lastNSecs)/10000;
+
+  // Per 4.2.1.2, Bump clockseq on clock regression
+  if (dt < 0 && options.clockseq === undefined) {
+    clockseq = clockseq + 1 & 0x3fff;
+  }
+
+  // Reset nsecs if clock regresses (new clockseq) or we've moved onto a new
+  // time interval
+  if ((dt < 0 || msecs > _lastMSecs) && options.nsecs === undefined) {
+    nsecs = 0;
+  }
+
+  // Per 4.2.1.2 Throw error if too many uuids are requested
+  if (nsecs >= 10000) {
+    throw new Error('uuid.v1(): Can\'t create more than 10M uuids/sec');
+  }
+
+  _lastMSecs = msecs;
+  _lastNSecs = nsecs;
+  _clockseq = clockseq;
+
+  // Per 4.1.4 - Convert from unix epoch to Gregorian epoch
+  msecs += 12219292800000;
+
+  // `time_low`
+  var tl = ((msecs & 0xfffffff) * 10000 + nsecs) % 0x100000000;
+  b[i++] = tl >>> 24 & 0xff;
+  b[i++] = tl >>> 16 & 0xff;
+  b[i++] = tl >>> 8 & 0xff;
+  b[i++] = tl & 0xff;
+
+  // `time_mid`
+  var tmh = (msecs / 0x100000000 * 10000) & 0xfffffff;
+  b[i++] = tmh >>> 8 & 0xff;
+  b[i++] = tmh & 0xff;
+
+  // `time_high_and_version`
+  b[i++] = tmh >>> 24 & 0xf | 0x10; // include version
+  b[i++] = tmh >>> 16 & 0xff;
+
+  // `clock_seq_hi_and_reserved` (Per 4.2.2 - include variant)
+  b[i++] = clockseq >>> 8 | 0x80;
+
+  // `clock_seq_low`
+  b[i++] = clockseq & 0xff;
+
+  // `node`
+  var node = options.node || _nodeId;
+  for (var n = 0; n < 6; ++n) {
+    b[i + n] = node[n];
+  }
+
+  return buf ? buf : bytesToUuid(b);
+}
+
+module.exports = v1;
+
+
+/***/ }),
+/* 20 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3385,7 +10171,7 @@ var UserNotification = function () {
 			}, 0);
 		} else {
 			// Require configClient here instead of at top of page to avoid a dependency error (Router uses UserNotification before config service is ready).
-			if (!ConfigClient) ConfigClient = __webpack_require__(14).default;
+			if (!ConfigClient) ConfigClient = __webpack_require__(15).default;
 			ConfigClient.get({ field: "finsemble" }, function (err, finConfig) {
 				defaultTemplateURL = __WEBPACK_IMPORTED_MODULE_1__configUtil__["ConfigUtilInstance"].getDefault(finConfig, "finsemble.notificationURL", finConfig.moduleRoot + "/components/system/notification/notification.html");
 				cb(defaultTemplateURL);
@@ -3473,123 +10259,307 @@ var UserNotification = function () {
 
 /* harmony default export */ __webpack_exports__["default"] = (new UserNotification());
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\common\\userNotification.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\common\\userNotification.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\userNotification.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\userNotification.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-
-/***/ 18:
-/***/ (function(module, exports) {
-
-/**
- * Convert array of 16 byte values to UUID string format of the form:
- * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
- */
-var byteToHex = [];
-for (var i = 0; i < 256; ++i) {
-  byteToHex[i] = (i + 0x100).toString(16).substr(1);
-}
-
-function bytesToUuid(buf, offset) {
-  var i = offset || 0;
-  var bth = byteToHex;
-  // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
-  return ([bth[buf[i++]], bth[buf[i++]], 
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]],
-	bth[buf[i++]], bth[buf[i++]],
-	bth[buf[i++]], bth[buf[i++]]]).join('');
-}
-
-module.exports = bytesToUuid;
-
-
-/***/ }),
-
-/***/ 19:
-/***/ (function(module, exports) {
-
-// Unique ID creation requires a high quality random # generator.  In the
-// browser this is a little complicated due to unknown quality of Math.random()
-// and inconsistent support for the `crypto` API.  We do the best we can via
-// feature-detection
-
-// getRandomValues needs to be invoked in a context where "this" is a Crypto
-// implementation. Also, find the complete implementation of crypto on IE11.
-var getRandomValues = (typeof(crypto) != 'undefined' && crypto.getRandomValues && crypto.getRandomValues.bind(crypto)) ||
-                      (typeof(msCrypto) != 'undefined' && typeof window.msCrypto.getRandomValues == 'function' && msCrypto.getRandomValues.bind(msCrypto));
-
-if (getRandomValues) {
-  // WHATWG crypto RNG - http://wiki.whatwg.org/wiki/Crypto
-  var rnds8 = new Uint8Array(16); // eslint-disable-line no-undef
-
-  module.exports = function whatwgRNG() {
-    getRandomValues(rnds8);
-    return rnds8;
-  };
-} else {
-  // Math.random()-based (RNG)
-  //
-  // If all else fails, use Math.random().  It's fast, but is of unspecified
-  // quality.
-  var rnds = new Array(16);
-
-  module.exports = function mathRNG() {
-    for (var i = 0, r; i < 16; i++) {
-      if ((i & 0x03) === 0) r = Math.random() * 0x100000000;
-      rnds[i] = r >>> ((i & 0x03) << 3) & 0xff;
-    }
-
-    return rnds;
-  };
-}
-
-
-/***/ }),
-
-/***/ 191:
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(98);
+"use strict";
+
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+Object.defineProperty(exports, "__esModule", { value: true });
+const validate_1 = __webpack_require__(6);
+const logger_1 = __webpack_require__(0);
+const baseClient_1 = __webpack_require__(7);
+const p_limit_1 = __webpack_require__(36);
+const disentangledUtils_1 = __webpack_require__(23);
+const limit = p_limit_1.default(1);
+/**
+ *
+ * @introduction
+ * <h2>Storage Client</h2>
+ * The Storage client handles saving and retrieving data for your application.
+ * @hideconstructor
+ *  @todo add clear method
+ * @constructor
+ */
+class StorageClient extends baseClient_1._BaseClient {
+    constructor() {
+        super(...arguments);
+        //Did this because "delete" is a reserved keyword; for autocomplete the client is exported as a namespace with a bunch of functions and wouldn't work with a function called delete.
+        this.delete = this.remove;
+    }
+    /**
+     * Define the username for storage (i.e., each user has unique storage)
+     * @param {Object} params - Params object
+     * @param {String} params.user -  user name
+     * @param {function} cb -  callback to be called on success
+     *
+     * @example
+     * StorageClient.setUser({ user: "JohnDeere"});
+     */
+    setUser(params, cb) {
+        validate_1.default.args(params.user, "string", cb, "function=");
+        this.routerClient.query("Storage.setUser", { user: params.user }, function (err, response) {
+            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+            logMethod("APPLICATION LIFECYCLE:StorageClient.setUser", params, err, response);
+            if (cb) {
+                cb(err, response.data);
+            }
+        });
+    }
+    ;
+    /**
+     * Specifies the data store.  For normal operation this function doesn't have to be invoked -- the default data store is set in configuration.
+     * @param {Object} params - Params object
+     * @param {String} params.topic -  if specified then data store is set only for topic
+     * @param {string} params.dataStore -  identifies the data store (e.g. "localStorage", "redis")
+     * @param {function} cb -  callback to be called on success
+     *
+     * @example
+     * StorageClient.setStore({topic:"finsemble", dataStore:"redis"})
+     */
+    setStore(params, cb) {
+        validate_1.default.args(params.topic, "string", params.dataStore, "string=", cb, "function=");
+        logger_1.default.system.log("APPLICATION LIFECYCLE:StorageClient.setStore", params, cb);
+        this.routerClient.query("Storage.setStore", params, (err, response) => {
+            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+            logMethod("Storage.setStore", err, response);
+            if (cb) {
+                cb(err, response.data);
+            }
+        });
+    }
+    ;
+    /**
+     * Save a key value pair into storage.
+     * @param {Object} params - Params object
+     * @param {String} params.topic -  storage topic for key being stored
+     * @param {String} params.key -  The key to be stored
+     * @param {any} params.value -  The value to be stored
+     * @param {function} cb -  callback to be called on success
+     *
+     * @example
+     * StorageClient.save({topic:"finsemble", key:"testKey", value:"testValue"})
+     */
+    save(params, cb) {
+        if (typeof params.key !== "string" || typeof params.topic !== "string") {
+            throw new Error("Values for key and topic must be strings.");
+        }
+        const promiseResolver = (resolve, reject) => {
+            validate_1.default.args(params.topic, "string", params.key, "string", params.value, "any", cb, "function=");
+            this.routerClient.query("Storage.save", params, (err, response) => {
+                const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+                logMethod("Storage.save", err, response);
+                if (cb) {
+                    cb(err, response.data);
+                }
+                if (err) {
+                    reject({ err: err, data: null });
+                }
+                else {
+                    resolve({ err: err, data: response.data });
+                }
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    ;
+    /**
+     *
+     * @param params
+     * @private
+     */
+    save1(params) {
+        return limit(() => this.save(params));
+    }
+    /**
+     * Get a value from storage.
+     * @param {Object} params - Params object
+     * @param {String} params.key -  The key to get from storage
+     * @param {function} cb -  callback to be called on success
+     *
+     * @example
+     * StorageClient.get({topic:"finsemble", key:"testKey"}, function(err, data){
+     *	var myData = data;
+     * });
+     */
+    get(params, cb) {
+        if (typeof params.key !== "string" || typeof params.topic !== "string") {
+            throw new Error("Values for key and topic must be strings.");
+        }
+        const promiseResolver = (resolve, reject) => {
+            validate_1.default.args(params.topic, "string", params.key, "string", cb, "function=");
+            this.routerClient.query("Storage.get", params, (err, response) => {
+                if (err) {
+                    logger_1.default.system.error("Storage.get", err, response);
+                    cb(err, response ? response.data : null);
+                    return reject(err, response ? response.data : null);
+                }
+                logger_1.default.system.info("Storage.get", err, response);
+                if (cb)
+                    cb(err, response.data);
+                resolve(response.data);
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    ;
+    /**
+     *
+     * @param params
+     * @param cb
+     * @private
+     */
+    get1(params, cb) {
+        return limit(() => this.get(params));
+    }
+    /**
+     * Asynchronously updates provided key in storage by first retrieving the key
+     * then running a provided function on the result and re-saving its value.
+     * There’s no guarantees of consistency or atomicity
+     *
+     * @param params {any} Update storage params
+     * @param params.topic {string} The storage topic
+     * @param params.key {string} The storage key
+     * @param params.updateFn {Function} Function to run to determine the value to store
+     * @private
+     */
+    async updateStorage(params) {
+        const { topic, key, updateFn } = params;
+        const result = await this.get({ topic, key });
+        return this.save({ topic, key, value: updateFn(result) });
+    }
+    /**
+     *
+     * @param params
+     * @private
+     */
+    updateStorage1(params) {
+        return limit(() => this.updateStorage(params));
+    }
+    /**
+     * Get all keys for the topic.
+     * @param {Object} params - Params object
+     * @param {String} params.topic -  topic for the keys to return
+     * @param {String=} params.keyPrefix -  filter all keys that don't start with this prefix
+     * @param {function} cb -  callback to be called on success
+     *
+     * @example
+     * StorageClient.keys({topic:"finsemble", keyPrefix:"test"}, function(err, data){
+     *	var myKeys = data;
+     * });
+     */
+    keys(params, cb) {
+        validate_1.default.args(params.topic, "string", cb, "function=");
+        logger_1.default.system.debug("StorageClient.keys", params, cb);
+        this.routerClient.query("Storage.keys", params, function (err, response) {
+            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+            logMethod("Storage.keys", err, response);
+            if (cb) {
+                cb(err, response.data);
+            }
+        });
+    }
+    ;
+    /**
+     *
+     * @param params
+     * @private
+     */
+    keys1(params) {
+        return limit(() => disentangledUtils_1.promisify(this.keys.bind(this))(params));
+    }
+    /**
+     * Get a multiple values from storage based on regex.(coming soon)
+     * @param {Object} params - Params object
+     * @param {function} cb -  callback to be called on success
+     * @private
+     * @todo make this work.
+     * @example
+     * StorageClient.get({key:"testKey"});
+     */
+    getMultiple(params, cb) {
+        logger_1.default.system.info("StorageClient.getMultiple", params, cb);
+        this.routerClient.query("Storage.getMultiple", params, function (err, response) {
+            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+            logMethod("StorageClient.getMultiple:", params, response);
+            if (cb) {
+                cb(err, response);
+            }
+        });
+    }
+    ;
+    /**
+     * Delete a value from storage.
+     * @param {Object} params - Params object
+     * @param {String} params.key -  The key to get from storage
+     * @example
+     * StorageClient.remove({key:"testKey"})
+     */
+    remove(params, cb) {
+        const promiseResolver = (resolve, reject) => {
+            validate_1.default.args(params.topic, "string", params.key, "string", cb, "function=");
+            this.routerClient.query("Storage.delete", params, function (err, response) {
+                const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+                logMethod("StorageClient.delete", err, response);
+                if (cb) {
+                    cb(err, response.data);
+                }
+                if (err) {
+                    reject({ err: err, data: null });
+                }
+                else {
+                    resolve({ err: err, data: response.data });
+                }
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    ;
+    /**
+     *
+     * @param params
+     * @private
+     */
+    remove1(params) {
+        return limit(() => this.remove(params));
+    }
+    clearCache(cb) {
+        logger_1.default.system.log("StorageClient.clearCache", cb);
+        this.routerClient.query("Storage.clearCache", null, function (err, response) {
+            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+            logMethod("StorageClient.clearCache", err, response);
+            if (cb) {
+                cb(err, response.data);
+            }
+        });
+    }
+    ;
+}
+exports.StorageClient = StorageClient;
+;
+var storageClient = new StorageClient({
+    startupDependencies: {
+        services: ["storageService"]
+    },
+    onReady: function (cb) {
+        if (cb) {
+            cb();
+        }
+    },
+    name: "storageClient"
+});
+exports.default = storageClient;
 
 
 /***/ }),
-
-/***/ 2:
-/***/ (function(module, exports) {
-
-module.exports = function(originalModule) {
-	if(!originalModule.webpackPolyfill) {
-		var module = Object.create(originalModule);
-		// module.parent = undefined by default
-		if(!module.children) module.children = [];
-		Object.defineProperty(module, "loaded", {
-			enumerable: true,
-			get: function() {
-				return module.l;
-			}
-		});
-		Object.defineProperty(module, "id", {
-			enumerable: true,
-			get: function() {
-				return module.i;
-			}
-		});
-		Object.defineProperty(module, "exports", {
-			enumerable: true,
-		});
-		module.webpackPolyfill = 1;
-	}
-	return module;
-};
-
-
-/***/ }),
-
-/***/ 20:
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -4032,127 +11002,2136 @@ function toNumber(value) {
 
 module.exports = throttle;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
-
-/***/ 21:
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var rng = __webpack_require__(19);
-var bytesToUuid = __webpack_require__(18);
+"use strict";
 
-// **`v1()` - Generate time-based UUID**
-//
-// Inspired by https://github.com/LiosK/UUID.js
-// and http://docs.python.org/library/uuid.html
-
-var _nodeId;
-var _clockseq;
-
-// Previous uuid creation time
-var _lastMSecs = 0;
-var _lastNSecs = 0;
-
-// See https://github.com/broofa/node-uuid for API details
-function v1(options, buf, offset) {
-  var i = buf && offset || 0;
-  var b = buf || [];
-
-  options = options || {};
-  var node = options.node || _nodeId;
-  var clockseq = options.clockseq !== undefined ? options.clockseq : _clockseq;
-
-  // node and clockseq need to be initialized to random values if they're not
-  // specified.  We do this lazily to minimize issues related to insufficient
-  // system entropy.  See #189
-  if (node == null || clockseq == null) {
-    var seedBytes = rng();
-    if (node == null) {
-      // Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
-      node = _nodeId = [
-        seedBytes[0] | 0x01,
-        seedBytes[1], seedBytes[2], seedBytes[3], seedBytes[4], seedBytes[5]
-      ];
-    }
-    if (clockseq == null) {
-      // Per 4.2.2, randomize (14 bit) clockseq
-      clockseq = _clockseq = (seedBytes[6] << 8 | seedBytes[7]) & 0x3fff;
-    }
-  }
-
-  // UUID timestamps are 100 nano-second units since the Gregorian epoch,
-  // (1582-10-15 00:00).  JSNumbers aren't precise enough for this, so
-  // time is handled internally as 'msecs' (integer milliseconds) and 'nsecs'
-  // (100-nanoseconds offset from msecs) since unix epoch, 1970-01-01 00:00.
-  var msecs = options.msecs !== undefined ? options.msecs : new Date().getTime();
-
-  // Per 4.2.1.2, use count of uuid's generated during the current clock
-  // cycle to simulate higher resolution clock
-  var nsecs = options.nsecs !== undefined ? options.nsecs : _lastNSecs + 1;
-
-  // Time since last uuid creation (in msecs)
-  var dt = (msecs - _lastMSecs) + (nsecs - _lastNSecs)/10000;
-
-  // Per 4.2.1.2, Bump clockseq on clock regression
-  if (dt < 0 && options.clockseq === undefined) {
-    clockseq = clockseq + 1 & 0x3fff;
-  }
-
-  // Reset nsecs if clock regresses (new clockseq) or we've moved onto a new
-  // time interval
-  if ((dt < 0 || msecs > _lastMSecs) && options.nsecs === undefined) {
-    nsecs = 0;
-  }
-
-  // Per 4.2.1.2 Throw error if too many uuids are requested
-  if (nsecs >= 10000) {
-    throw new Error('uuid.v1(): Can\'t create more than 10M uuids/sec');
-  }
-
-  _lastMSecs = msecs;
-  _lastNSecs = nsecs;
-  _clockseq = clockseq;
-
-  // Per 4.1.4 - Convert from unix epoch to Gregorian epoch
-  msecs += 12219292800000;
-
-  // `time_low`
-  var tl = ((msecs & 0xfffffff) * 10000 + nsecs) % 0x100000000;
-  b[i++] = tl >>> 24 & 0xff;
-  b[i++] = tl >>> 16 & 0xff;
-  b[i++] = tl >>> 8 & 0xff;
-  b[i++] = tl & 0xff;
-
-  // `time_mid`
-  var tmh = (msecs / 0x100000000 * 10000) & 0xfffffff;
-  b[i++] = tmh >>> 8 & 0xff;
-  b[i++] = tmh & 0xff;
-
-  // `time_high_and_version`
-  b[i++] = tmh >>> 24 & 0xf | 0x10; // include version
-  b[i++] = tmh >>> 16 & 0xff;
-
-  // `clock_seq_hi_and_reserved` (Per 4.2.2 - include variant)
-  b[i++] = clockseq >>> 8 | 0x80;
-
-  // `clock_seq_low`
-  b[i++] = clockseq & 0xff;
-
-  // `node`
-  for (var n = 0; n < 6; ++n) {
-    b[i + n] = node[n];
-  }
-
-  return buf ? buf : bytesToUuid(b);
+Object.defineProperty(exports, "__esModule", { value: true });
+const uuid_1 = __webpack_require__(39);
+const get = __webpack_require__(28);
+const pick = __webpack_require__(37);
+//Class without deep openfin/system dependencies.
+function guuid() {
+    return uuid_1.v1(); // return global uuid
 }
+exports.guuid = guuid;
+function clone(obj, logFn) {
+    //This has been tested a good amount. Previous to this commit we were using a mix of deepmerge and JSON.parse(JSON.stringify()).
+    //Trying lodash.deepclone made my tests take 2-3s.
+    //JSON.parse everywhere made them take ~ 1s.
+    //Using JSON.parse on arrays and deep merge on objects makes them take 7-900ms.
+    if (Array.isArray(obj)) {
+        return obj.slice();
+    }
+    try {
+        return JSON.parse(JSON.stringify(obj));
+    }
+    catch (e) {
+        logFn("clone error", e);
+        return e;
+    }
+}
+exports.clone = clone;
+;
+function capitalizeFirst(s) {
+    return s.charAt(0).toUpperCase() + s.slice(1);
+}
+exports.capitalizeFirst = capitalizeFirst;
+class MockLogger {
+    constructor({ debug } = { debug: true }) {
+        if (debug) {
+            this.system = console;
+            this.system.debug = console.log;
+        }
+        else {
+            //Suppress everything but errors for tests
+            this.system = {
+                warn: Function.prototype,
+                debug: Function.prototype,
+                log: Function.prototype,
+                info: Function.prototype,
+                error: console.error
+            };
+        }
+    }
+    isLogMessage() { return true; }
+    ;
+    start() { }
+}
+;
+exports.mockLogger = new MockLogger();
+/** Converts a flat array into an array of arrays of length n.
+ *
+ * If the length of the array is not divisble by n, the last
+ * element of the new array will contain the remainder items.
+*/
+function chunkArray(n, arr) {
+    if (n <= 0) {
+        throw new Error("Can't chunk array by number less than 0");
+    }
+    return arr.reduce((prev, curr, index) => {
+        if (index % n === 0) {
+            const chunk = [];
+            for (let i = index; i < index + n; i++) {
+                if (i < arr.length) {
+                    chunk.push(arr[i]);
+                }
+            }
+            prev.push(chunk);
+        }
+        return prev;
+    }, []);
+}
+exports.chunkArray = chunkArray;
+/**
+ * Confirms wether a variable passed to it exists and is a number.
+ * If true, returns the parsed Number, otherwise returns false
+ * @param {string} [num] A string potentially containing a number
+ * @returns False or Number(input)
+ */
+function isNumber(num) {
+    if (!num || Number.isNaN(Number(num))) {
+        return false;
+    }
+    return Number(num);
+}
+exports.isNumber = isNumber;
+;
+/** Returns exactly what's passed to it. Useful for higher-order functions. */
+function identity(arg) {
+    return arg;
+}
+exports.identity = identity;
+/*
+typed-promisify, https://github.com/notenoughneon/typed-promisify
 
-module.exports = v1;
+MIT License
+
+Copyright (c) 2016 Emma Kuo
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ */
+// DH 3/11/2019 - I've removed the type-inferring overloads, as they aren't
+// working correctly.
+/**
+ * Wraps a callback accepting function in a promise. The callback must have the type
+ * specified in StandardCallback, and the wrapped function *MUST* call the callback
+ * on all possible code paths.
+ */
+function promisify(f, thisContext) {
+    return function () {
+        let args = Array.prototype.slice.call(arguments);
+        return new Promise((resolve, reject) => {
+            args.push((err, result) => err ? reject(err) : resolve(result));
+            f.apply(thisContext, args);
+        });
+    };
+}
+exports.promisify = promisify;
+/**
+ * Wraps a promsie in logs that fire immediately before and after the execution of the promise. Returns a new promise.
+ *
+ * @param {*} logger A logging function that will log the message. E.g. `Logger.system.debug` or `console.log`.
+ * @param {string} message A message to be logged. Suffixed with "start" and "end", before and after the promise, respectively.
+ * @param {Promise} promise The promise to be wrapped.
+ */
+exports.instrumentPromise = async (logger, message, promise) => {
+    const start = message + " start";
+    const end = message + " end";
+    logger(start);
+    return promise.then(() => logger(end));
+};
+/**
+ * Composes an array of functions together, producing
+ * a new function that is the result of applying each
+ * function from right to left on its arguments.
+ *
+ * @example
+ * const add1 = x => x + 1;
+ * const multiply3 = x => x * 3
+ * const mulityply3Add1 = composeRL(add1, multiply3);
+ * mulityply3Add1(4); // => 13
+*/
+exports.composeRL = (...fns) => fns.reduce((f, g) => (...args) => f(g(...args)));
+/**
+ * getProp utility - an alternative to lodash.get
+ * @author @harish2704, @muffypl, @pi0, @imnnquy
+ * @param {Object} object
+ * @param {String|Array} path
+ * @param {*} defaultVal
+ */
+function getProp(object, path, defaultVal) {
+    const _path = Array.isArray(path)
+        ? path
+        : path.split('.').filter(i => i.length);
+    if (!_path.length) {
+        return object === undefined ? defaultVal : object;
+    }
+    return getProp(object[_path.shift()], _path, defaultVal);
+}
+exports.getProp = getProp;
+function getUniqueName(baseName = "RouterClient") {
+    return `${baseName}-${Math.floor(Math.random() * 100)}-${Math.floor(Math.random() * 10000)}`;
+}
+exports.getUniqueName = getUniqueName;
+function getRandomWindowName(s, uuid) {
+    return `${getUniqueName(s)}-${uuid}`;
+}
+exports.getRandomWindowName = getRandomWindowName;
+/**
+ * Creates a promise that rejcts after the specified time with
+ * the given message.
+ */
+function timeoutPromise(ms, message) {
+    return new Promise((resolve, reject) => {
+        let id = setTimeout(() => {
+            clearTimeout(id);
+            reject(message);
+        }, ms);
+    });
+}
+exports.timeoutPromise = timeoutPromise;
+/**
+ * Wraps a promise in another promise that either rejects after the specified number of miliseconds
+ * or resolves with the result of the promise.
+ */
+function wrapWithTimeout(promise, ms, message) {
+    return Promise.race([
+        promise,
+        timeoutPromise(ms, message),
+    ]);
+}
+exports.wrapWithTimeout = wrapWithTimeout;
+/**
+ * Will determine if a given window is a StackedWindow. Returns true if the window is a
+ * StackedWindow, false otherwise
+ * @param {FinsembleWindow} win The window to check for StackedWindow
+ */
+function isStackedWindow(win) {
+    return win &&
+        ((get(win, "windowIdentifier.windowType")
+            || win.windowType) === "StackedWindow");
+}
+exports.isStackedWindow = isStackedWindow;
+;
+/**
+ * Converts an array into a record where the keys are the result of applying the key function
+ * to each item in the array, and the values are the items.
+ *
+ * @param key Either the key whose value you want to become the new index, or a function
+ * that returns the new index when given the current value.
+ * @param arr An array of values.
+ *
+ * @example
+ * const arr = [{foo: "bar"}, {foo: "bam"}];
+ * toRecord("foo", arr) // => {bar: {foo: "bar"}, {bam: {foo: "bam"}}}
+ *
+ * @example
+ * const arr = [{foo: "bar"}, {foo: "bam"}];
+ * toRecord(x => x.foo.toUpperCase(), arr) // => {BAR: {foo: "bar"}, {BAM: {foo: "bam"}}}
+ */
+function toRecord(key, arr) {
+    const keyFn = typeof key === "string"
+        ? x => x[key]
+        : key;
+    return arr.reduce((prev, curr) => {
+        prev[keyFn(curr)] = curr;
+        return prev;
+    }, {});
+}
+exports.toRecord = toRecord;
+/**
+ * Given an object and array of keys as strings,
+ * returns a new object copied from the first but
+ * with those keys removed.
+ */
+function removeKeys(obj, keys) {
+    if (!obj)
+        return obj;
+    const allKeys = Object.keys(obj);
+    const keepKeys = allKeys.filter(x => !keys.includes(x));
+    return pick(obj, keepKeys);
+}
+exports.removeKeys = removeKeys;
 
 
 /***/ }),
+/* 24 */
+/***/ (function(module, exports, __webpack_require__) {
 
-/***/ 22:
+/* WEBPACK VAR INJECTION */(function(global, module) {/**
+ * Lodash (Custom Build) <https://lodash.com/>
+ * Build: `lodash modularize exports="npm" -o ./`
+ * Copyright JS Foundation and other contributors <https://js.foundation/>
+ * Released under MIT license <https://lodash.com/license>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ */
+
+/** Used as the size to enable large array optimizations. */
+var LARGE_ARRAY_SIZE = 200;
+
+/** Used to stand-in for `undefined` hash values. */
+var HASH_UNDEFINED = '__lodash_hash_undefined__';
+
+/** Used to compose bitmasks for value comparisons. */
+var COMPARE_PARTIAL_FLAG = 1,
+    COMPARE_UNORDERED_FLAG = 2;
+
+/** Used as references for various `Number` constants. */
+var MAX_SAFE_INTEGER = 9007199254740991;
+
+/** `Object#toString` result references. */
+var argsTag = '[object Arguments]',
+    arrayTag = '[object Array]',
+    asyncTag = '[object AsyncFunction]',
+    boolTag = '[object Boolean]',
+    dateTag = '[object Date]',
+    errorTag = '[object Error]',
+    funcTag = '[object Function]',
+    genTag = '[object GeneratorFunction]',
+    mapTag = '[object Map]',
+    numberTag = '[object Number]',
+    nullTag = '[object Null]',
+    objectTag = '[object Object]',
+    promiseTag = '[object Promise]',
+    proxyTag = '[object Proxy]',
+    regexpTag = '[object RegExp]',
+    setTag = '[object Set]',
+    stringTag = '[object String]',
+    symbolTag = '[object Symbol]',
+    undefinedTag = '[object Undefined]',
+    weakMapTag = '[object WeakMap]';
+
+var arrayBufferTag = '[object ArrayBuffer]',
+    dataViewTag = '[object DataView]',
+    float32Tag = '[object Float32Array]',
+    float64Tag = '[object Float64Array]',
+    int8Tag = '[object Int8Array]',
+    int16Tag = '[object Int16Array]',
+    int32Tag = '[object Int32Array]',
+    uint8Tag = '[object Uint8Array]',
+    uint8ClampedTag = '[object Uint8ClampedArray]',
+    uint16Tag = '[object Uint16Array]',
+    uint32Tag = '[object Uint32Array]';
+
+/**
+ * Used to match `RegExp`
+ * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
+ */
+var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
+
+/** Used to detect host constructors (Safari). */
+var reIsHostCtor = /^\[object .+?Constructor\]$/;
+
+/** Used to detect unsigned integer values. */
+var reIsUint = /^(?:0|[1-9]\d*)$/;
+
+/** Used to identify `toStringTag` values of typed arrays. */
+var typedArrayTags = {};
+typedArrayTags[float32Tag] = typedArrayTags[float64Tag] =
+typedArrayTags[int8Tag] = typedArrayTags[int16Tag] =
+typedArrayTags[int32Tag] = typedArrayTags[uint8Tag] =
+typedArrayTags[uint8ClampedTag] = typedArrayTags[uint16Tag] =
+typedArrayTags[uint32Tag] = true;
+typedArrayTags[argsTag] = typedArrayTags[arrayTag] =
+typedArrayTags[arrayBufferTag] = typedArrayTags[boolTag] =
+typedArrayTags[dataViewTag] = typedArrayTags[dateTag] =
+typedArrayTags[errorTag] = typedArrayTags[funcTag] =
+typedArrayTags[mapTag] = typedArrayTags[numberTag] =
+typedArrayTags[objectTag] = typedArrayTags[regexpTag] =
+typedArrayTags[setTag] = typedArrayTags[stringTag] =
+typedArrayTags[weakMapTag] = false;
+
+/** Detect free variable `global` from Node.js. */
+var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
+
+/** Detect free variable `self`. */
+var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+
+/** Used as a reference to the global object. */
+var root = freeGlobal || freeSelf || Function('return this')();
+
+/** Detect free variable `exports`. */
+var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
+
+/** Detect free variable `module`. */
+var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
+
+/** Detect the popular CommonJS extension `module.exports`. */
+var moduleExports = freeModule && freeModule.exports === freeExports;
+
+/** Detect free variable `process` from Node.js. */
+var freeProcess = moduleExports && freeGlobal.process;
+
+/** Used to access faster Node.js helpers. */
+var nodeUtil = (function() {
+  try {
+    return freeProcess && freeProcess.binding && freeProcess.binding('util');
+  } catch (e) {}
+}());
+
+/* Node.js helper references. */
+var nodeIsTypedArray = nodeUtil && nodeUtil.isTypedArray;
+
+/**
+ * A specialized version of `_.filter` for arrays without support for
+ * iteratee shorthands.
+ *
+ * @private
+ * @param {Array} [array] The array to iterate over.
+ * @param {Function} predicate The function invoked per iteration.
+ * @returns {Array} Returns the new filtered array.
+ */
+function arrayFilter(array, predicate) {
+  var index = -1,
+      length = array == null ? 0 : array.length,
+      resIndex = 0,
+      result = [];
+
+  while (++index < length) {
+    var value = array[index];
+    if (predicate(value, index, array)) {
+      result[resIndex++] = value;
+    }
+  }
+  return result;
+}
+
+/**
+ * Appends the elements of `values` to `array`.
+ *
+ * @private
+ * @param {Array} array The array to modify.
+ * @param {Array} values The values to append.
+ * @returns {Array} Returns `array`.
+ */
+function arrayPush(array, values) {
+  var index = -1,
+      length = values.length,
+      offset = array.length;
+
+  while (++index < length) {
+    array[offset + index] = values[index];
+  }
+  return array;
+}
+
+/**
+ * A specialized version of `_.some` for arrays without support for iteratee
+ * shorthands.
+ *
+ * @private
+ * @param {Array} [array] The array to iterate over.
+ * @param {Function} predicate The function invoked per iteration.
+ * @returns {boolean} Returns `true` if any element passes the predicate check,
+ *  else `false`.
+ */
+function arraySome(array, predicate) {
+  var index = -1,
+      length = array == null ? 0 : array.length;
+
+  while (++index < length) {
+    if (predicate(array[index], index, array)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * The base implementation of `_.times` without support for iteratee shorthands
+ * or max array length checks.
+ *
+ * @private
+ * @param {number} n The number of times to invoke `iteratee`.
+ * @param {Function} iteratee The function invoked per iteration.
+ * @returns {Array} Returns the array of results.
+ */
+function baseTimes(n, iteratee) {
+  var index = -1,
+      result = Array(n);
+
+  while (++index < n) {
+    result[index] = iteratee(index);
+  }
+  return result;
+}
+
+/**
+ * The base implementation of `_.unary` without support for storing metadata.
+ *
+ * @private
+ * @param {Function} func The function to cap arguments for.
+ * @returns {Function} Returns the new capped function.
+ */
+function baseUnary(func) {
+  return function(value) {
+    return func(value);
+  };
+}
+
+/**
+ * Checks if a `cache` value for `key` exists.
+ *
+ * @private
+ * @param {Object} cache The cache to query.
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function cacheHas(cache, key) {
+  return cache.has(key);
+}
+
+/**
+ * Gets the value at `key` of `object`.
+ *
+ * @private
+ * @param {Object} [object] The object to query.
+ * @param {string} key The key of the property to get.
+ * @returns {*} Returns the property value.
+ */
+function getValue(object, key) {
+  return object == null ? undefined : object[key];
+}
+
+/**
+ * Converts `map` to its key-value pairs.
+ *
+ * @private
+ * @param {Object} map The map to convert.
+ * @returns {Array} Returns the key-value pairs.
+ */
+function mapToArray(map) {
+  var index = -1,
+      result = Array(map.size);
+
+  map.forEach(function(value, key) {
+    result[++index] = [key, value];
+  });
+  return result;
+}
+
+/**
+ * Creates a unary function that invokes `func` with its argument transformed.
+ *
+ * @private
+ * @param {Function} func The function to wrap.
+ * @param {Function} transform The argument transform.
+ * @returns {Function} Returns the new function.
+ */
+function overArg(func, transform) {
+  return function(arg) {
+    return func(transform(arg));
+  };
+}
+
+/**
+ * Converts `set` to an array of its values.
+ *
+ * @private
+ * @param {Object} set The set to convert.
+ * @returns {Array} Returns the values.
+ */
+function setToArray(set) {
+  var index = -1,
+      result = Array(set.size);
+
+  set.forEach(function(value) {
+    result[++index] = value;
+  });
+  return result;
+}
+
+/** Used for built-in method references. */
+var arrayProto = Array.prototype,
+    funcProto = Function.prototype,
+    objectProto = Object.prototype;
+
+/** Used to detect overreaching core-js shims. */
+var coreJsData = root['__core-js_shared__'];
+
+/** Used to resolve the decompiled source of functions. */
+var funcToString = funcProto.toString;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/** Used to detect methods masquerading as native. */
+var maskSrcKey = (function() {
+  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
+  return uid ? ('Symbol(src)_1.' + uid) : '';
+}());
+
+/**
+ * Used to resolve the
+ * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var nativeObjectToString = objectProto.toString;
+
+/** Used to detect if a method is native. */
+var reIsNative = RegExp('^' +
+  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
+  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
+);
+
+/** Built-in value references. */
+var Buffer = moduleExports ? root.Buffer : undefined,
+    Symbol = root.Symbol,
+    Uint8Array = root.Uint8Array,
+    propertyIsEnumerable = objectProto.propertyIsEnumerable,
+    splice = arrayProto.splice,
+    symToStringTag = Symbol ? Symbol.toStringTag : undefined;
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeGetSymbols = Object.getOwnPropertySymbols,
+    nativeIsBuffer = Buffer ? Buffer.isBuffer : undefined,
+    nativeKeys = overArg(Object.keys, Object);
+
+/* Built-in method references that are verified to be native. */
+var DataView = getNative(root, 'DataView'),
+    Map = getNative(root, 'Map'),
+    Promise = getNative(root, 'Promise'),
+    Set = getNative(root, 'Set'),
+    WeakMap = getNative(root, 'WeakMap'),
+    nativeCreate = getNative(Object, 'create');
+
+/** Used to detect maps, sets, and weakmaps. */
+var dataViewCtorString = toSource(DataView),
+    mapCtorString = toSource(Map),
+    promiseCtorString = toSource(Promise),
+    setCtorString = toSource(Set),
+    weakMapCtorString = toSource(WeakMap);
+
+/** Used to convert symbols to primitives and strings. */
+var symbolProto = Symbol ? Symbol.prototype : undefined,
+    symbolValueOf = symbolProto ? symbolProto.valueOf : undefined;
+
+/**
+ * Creates a hash object.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function Hash(entries) {
+  var index = -1,
+      length = entries == null ? 0 : entries.length;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+/**
+ * Removes all key-value entries from the hash.
+ *
+ * @private
+ * @name clear
+ * @memberOf Hash
+ */
+function hashClear() {
+  this.__data__ = nativeCreate ? nativeCreate(null) : {};
+  this.size = 0;
+}
+
+/**
+ * Removes `key` and its value from the hash.
+ *
+ * @private
+ * @name delete
+ * @memberOf Hash
+ * @param {Object} hash The hash to modify.
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function hashDelete(key) {
+  var result = this.has(key) && delete this.__data__[key];
+  this.size -= result ? 1 : 0;
+  return result;
+}
+
+/**
+ * Gets the hash value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf Hash
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function hashGet(key) {
+  var data = this.__data__;
+  if (nativeCreate) {
+    var result = data[key];
+    return result === HASH_UNDEFINED ? undefined : result;
+  }
+  return hasOwnProperty.call(data, key) ? data[key] : undefined;
+}
+
+/**
+ * Checks if a hash value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf Hash
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function hashHas(key) {
+  var data = this.__data__;
+  return nativeCreate ? (data[key] !== undefined) : hasOwnProperty.call(data, key);
+}
+
+/**
+ * Sets the hash `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf Hash
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the hash instance.
+ */
+function hashSet(key, value) {
+  var data = this.__data__;
+  this.size += this.has(key) ? 0 : 1;
+  data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
+  return this;
+}
+
+// Add methods to `Hash`.
+Hash.prototype.clear = hashClear;
+Hash.prototype['delete'] = hashDelete;
+Hash.prototype.get = hashGet;
+Hash.prototype.has = hashHas;
+Hash.prototype.set = hashSet;
+
+/**
+ * Creates an list cache object.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function ListCache(entries) {
+  var index = -1,
+      length = entries == null ? 0 : entries.length;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+/**
+ * Removes all key-value entries from the list cache.
+ *
+ * @private
+ * @name clear
+ * @memberOf ListCache
+ */
+function listCacheClear() {
+  this.__data__ = [];
+  this.size = 0;
+}
+
+/**
+ * Removes `key` and its value from the list cache.
+ *
+ * @private
+ * @name delete
+ * @memberOf ListCache
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function listCacheDelete(key) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  if (index < 0) {
+    return false;
+  }
+  var lastIndex = data.length - 1;
+  if (index == lastIndex) {
+    data.pop();
+  } else {
+    splice.call(data, index, 1);
+  }
+  --this.size;
+  return true;
+}
+
+/**
+ * Gets the list cache value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf ListCache
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function listCacheGet(key) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  return index < 0 ? undefined : data[index][1];
+}
+
+/**
+ * Checks if a list cache value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf ListCache
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function listCacheHas(key) {
+  return assocIndexOf(this.__data__, key) > -1;
+}
+
+/**
+ * Sets the list cache `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf ListCache
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the list cache instance.
+ */
+function listCacheSet(key, value) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  if (index < 0) {
+    ++this.size;
+    data.push([key, value]);
+  } else {
+    data[index][1] = value;
+  }
+  return this;
+}
+
+// Add methods to `ListCache`.
+ListCache.prototype.clear = listCacheClear;
+ListCache.prototype['delete'] = listCacheDelete;
+ListCache.prototype.get = listCacheGet;
+ListCache.prototype.has = listCacheHas;
+ListCache.prototype.set = listCacheSet;
+
+/**
+ * Creates a map cache object to store key-value pairs.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function MapCache(entries) {
+  var index = -1,
+      length = entries == null ? 0 : entries.length;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+/**
+ * Removes all key-value entries from the map.
+ *
+ * @private
+ * @name clear
+ * @memberOf MapCache
+ */
+function mapCacheClear() {
+  this.size = 0;
+  this.__data__ = {
+    'hash': new Hash,
+    'map': new (Map || ListCache),
+    'string': new Hash
+  };
+}
+
+/**
+ * Removes `key` and its value from the map.
+ *
+ * @private
+ * @name delete
+ * @memberOf MapCache
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function mapCacheDelete(key) {
+  var result = getMapData(this, key)['delete'](key);
+  this.size -= result ? 1 : 0;
+  return result;
+}
+
+/**
+ * Gets the map value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf MapCache
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function mapCacheGet(key) {
+  return getMapData(this, key).get(key);
+}
+
+/**
+ * Checks if a map value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf MapCache
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function mapCacheHas(key) {
+  return getMapData(this, key).has(key);
+}
+
+/**
+ * Sets the map `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf MapCache
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the map cache instance.
+ */
+function mapCacheSet(key, value) {
+  var data = getMapData(this, key),
+      size = data.size;
+
+  data.set(key, value);
+  this.size += data.size == size ? 0 : 1;
+  return this;
+}
+
+// Add methods to `MapCache`.
+MapCache.prototype.clear = mapCacheClear;
+MapCache.prototype['delete'] = mapCacheDelete;
+MapCache.prototype.get = mapCacheGet;
+MapCache.prototype.has = mapCacheHas;
+MapCache.prototype.set = mapCacheSet;
+
+/**
+ *
+ * Creates an array cache object to store unique values.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [values] The values to cache.
+ */
+function SetCache(values) {
+  var index = -1,
+      length = values == null ? 0 : values.length;
+
+  this.__data__ = new MapCache;
+  while (++index < length) {
+    this.add(values[index]);
+  }
+}
+
+/**
+ * Adds `value` to the array cache.
+ *
+ * @private
+ * @name add
+ * @memberOf SetCache
+ * @alias push
+ * @param {*} value The value to cache.
+ * @returns {Object} Returns the cache instance.
+ */
+function setCacheAdd(value) {
+  this.__data__.set(value, HASH_UNDEFINED);
+  return this;
+}
+
+/**
+ * Checks if `value` is in the array cache.
+ *
+ * @private
+ * @name has
+ * @memberOf SetCache
+ * @param {*} value The value to search for.
+ * @returns {number} Returns `true` if `value` is found, else `false`.
+ */
+function setCacheHas(value) {
+  return this.__data__.has(value);
+}
+
+// Add methods to `SetCache`.
+SetCache.prototype.add = SetCache.prototype.push = setCacheAdd;
+SetCache.prototype.has = setCacheHas;
+
+/**
+ * Creates a stack cache object to store key-value pairs.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function Stack(entries) {
+  var data = this.__data__ = new ListCache(entries);
+  this.size = data.size;
+}
+
+/**
+ * Removes all key-value entries from the stack.
+ *
+ * @private
+ * @name clear
+ * @memberOf Stack
+ */
+function stackClear() {
+  this.__data__ = new ListCache;
+  this.size = 0;
+}
+
+/**
+ * Removes `key` and its value from the stack.
+ *
+ * @private
+ * @name delete
+ * @memberOf Stack
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function stackDelete(key) {
+  var data = this.__data__,
+      result = data['delete'](key);
+
+  this.size = data.size;
+  return result;
+}
+
+/**
+ * Gets the stack value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf Stack
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function stackGet(key) {
+  return this.__data__.get(key);
+}
+
+/**
+ * Checks if a stack value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf Stack
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function stackHas(key) {
+  return this.__data__.has(key);
+}
+
+/**
+ * Sets the stack `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf Stack
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the stack cache instance.
+ */
+function stackSet(key, value) {
+  var data = this.__data__;
+  if (data instanceof ListCache) {
+    var pairs = data.__data__;
+    if (!Map || (pairs.length < LARGE_ARRAY_SIZE - 1)) {
+      pairs.push([key, value]);
+      this.size = ++data.size;
+      return this;
+    }
+    data = this.__data__ = new MapCache(pairs);
+  }
+  data.set(key, value);
+  this.size = data.size;
+  return this;
+}
+
+// Add methods to `Stack`.
+Stack.prototype.clear = stackClear;
+Stack.prototype['delete'] = stackDelete;
+Stack.prototype.get = stackGet;
+Stack.prototype.has = stackHas;
+Stack.prototype.set = stackSet;
+
+/**
+ * Creates an array of the enumerable property names of the array-like `value`.
+ *
+ * @private
+ * @param {*} value The value to query.
+ * @param {boolean} inherited Specify returning inherited property names.
+ * @returns {Array} Returns the array of property names.
+ */
+function arrayLikeKeys(value, inherited) {
+  var isArr = isArray(value),
+      isArg = !isArr && isArguments(value),
+      isBuff = !isArr && !isArg && isBuffer(value),
+      isType = !isArr && !isArg && !isBuff && isTypedArray(value),
+      skipIndexes = isArr || isArg || isBuff || isType,
+      result = skipIndexes ? baseTimes(value.length, String) : [],
+      length = result.length;
+
+  for (var key in value) {
+    if ((inherited || hasOwnProperty.call(value, key)) &&
+        !(skipIndexes && (
+           // Safari 9 has enumerable `arguments.length` in strict mode.
+           key == 'length' ||
+           // Node.js 0.10 has enumerable non-index properties on buffers.
+           (isBuff && (key == 'offset' || key == 'parent')) ||
+           // PhantomJS 2 has enumerable non-index properties on typed arrays.
+           (isType && (key == 'buffer' || key == 'byteLength' || key == 'byteOffset')) ||
+           // Skip index properties.
+           isIndex(key, length)
+        ))) {
+      result.push(key);
+    }
+  }
+  return result;
+}
+
+/**
+ * Gets the index at which the `key` is found in `array` of key-value pairs.
+ *
+ * @private
+ * @param {Array} array The array to inspect.
+ * @param {*} key The key to search for.
+ * @returns {number} Returns the index of the matched value, else `-1`.
+ */
+function assocIndexOf(array, key) {
+  var length = array.length;
+  while (length--) {
+    if (eq(array[length][0], key)) {
+      return length;
+    }
+  }
+  return -1;
+}
+
+/**
+ * The base implementation of `getAllKeys` and `getAllKeysIn` which uses
+ * `keysFunc` and `symbolsFunc` to get the enumerable property names and
+ * symbols of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {Function} keysFunc The function to get the keys of `object`.
+ * @param {Function} symbolsFunc The function to get the symbols of `object`.
+ * @returns {Array} Returns the array of property names and symbols.
+ */
+function baseGetAllKeys(object, keysFunc, symbolsFunc) {
+  var result = keysFunc(object);
+  return isArray(object) ? result : arrayPush(result, symbolsFunc(object));
+}
+
+/**
+ * The base implementation of `getTag` without fallbacks for buggy environments.
+ *
+ * @private
+ * @param {*} value The value to query.
+ * @returns {string} Returns the `toStringTag`.
+ */
+function baseGetTag(value) {
+  if (value == null) {
+    return value === undefined ? undefinedTag : nullTag;
+  }
+  return (symToStringTag && symToStringTag in Object(value))
+    ? getRawTag(value)
+    : objectToString(value);
+}
+
+/**
+ * The base implementation of `_.isArguments`.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an `arguments` object,
+ */
+function baseIsArguments(value) {
+  return isObjectLike(value) && baseGetTag(value) == argsTag;
+}
+
+/**
+ * The base implementation of `_.isEqual` which supports partial comparisons
+ * and tracks traversed objects.
+ *
+ * @private
+ * @param {*} value The value to compare.
+ * @param {*} other The other value to compare.
+ * @param {boolean} bitmask The bitmask flags.
+ *  1 - Unordered comparison
+ *  2 - Partial comparison
+ * @param {Function} [customizer] The function to customize comparisons.
+ * @param {Object} [stack] Tracks traversed `value` and `other` objects.
+ * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+ */
+function baseIsEqual(value, other, bitmask, customizer, stack) {
+  if (value === other) {
+    return true;
+  }
+  if (value == null || other == null || (!isObjectLike(value) && !isObjectLike(other))) {
+    return value !== value && other !== other;
+  }
+  return baseIsEqualDeep(value, other, bitmask, customizer, baseIsEqual, stack);
+}
+
+/**
+ * A specialized version of `baseIsEqual` for arrays and objects which performs
+ * deep comparisons and tracks traversed objects enabling objects with circular
+ * references to be compared.
+ *
+ * @private
+ * @param {Object} object The object to compare.
+ * @param {Object} other The other object to compare.
+ * @param {number} bitmask The bitmask flags. See `baseIsEqual` for more details.
+ * @param {Function} customizer The function to customize comparisons.
+ * @param {Function} equalFunc The function to determine equivalents of values.
+ * @param {Object} [stack] Tracks traversed `object` and `other` objects.
+ * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
+ */
+function baseIsEqualDeep(object, other, bitmask, customizer, equalFunc, stack) {
+  var objIsArr = isArray(object),
+      othIsArr = isArray(other),
+      objTag = objIsArr ? arrayTag : getTag(object),
+      othTag = othIsArr ? arrayTag : getTag(other);
+
+  objTag = objTag == argsTag ? objectTag : objTag;
+  othTag = othTag == argsTag ? objectTag : othTag;
+
+  var objIsObj = objTag == objectTag,
+      othIsObj = othTag == objectTag,
+      isSameTag = objTag == othTag;
+
+  if (isSameTag && isBuffer(object)) {
+    if (!isBuffer(other)) {
+      return false;
+    }
+    objIsArr = true;
+    objIsObj = false;
+  }
+  if (isSameTag && !objIsObj) {
+    stack || (stack = new Stack);
+    return (objIsArr || isTypedArray(object))
+      ? equalArrays(object, other, bitmask, customizer, equalFunc, stack)
+      : equalByTag(object, other, objTag, bitmask, customizer, equalFunc, stack);
+  }
+  if (!(bitmask & COMPARE_PARTIAL_FLAG)) {
+    var objIsWrapped = objIsObj && hasOwnProperty.call(object, '__wrapped__'),
+        othIsWrapped = othIsObj && hasOwnProperty.call(other, '__wrapped__');
+
+    if (objIsWrapped || othIsWrapped) {
+      var objUnwrapped = objIsWrapped ? object.value() : object,
+          othUnwrapped = othIsWrapped ? other.value() : other;
+
+      stack || (stack = new Stack);
+      return equalFunc(objUnwrapped, othUnwrapped, bitmask, customizer, stack);
+    }
+  }
+  if (!isSameTag) {
+    return false;
+  }
+  stack || (stack = new Stack);
+  return equalObjects(object, other, bitmask, customizer, equalFunc, stack);
+}
+
+/**
+ * The base implementation of `_.isNative` without bad shim checks.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a native function,
+ *  else `false`.
+ */
+function baseIsNative(value) {
+  if (!isObject(value) || isMasked(value)) {
+    return false;
+  }
+  var pattern = isFunction(value) ? reIsNative : reIsHostCtor;
+  return pattern.test(toSource(value));
+}
+
+/**
+ * The base implementation of `_.isTypedArray` without Node.js optimizations.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a typed array, else `false`.
+ */
+function baseIsTypedArray(value) {
+  return isObjectLike(value) &&
+    isLength(value.length) && !!typedArrayTags[baseGetTag(value)];
+}
+
+/**
+ * The base implementation of `_.keys` which doesn't treat sparse arrays as dense.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of property names.
+ */
+function baseKeys(object) {
+  if (!isPrototype(object)) {
+    return nativeKeys(object);
+  }
+  var result = [];
+  for (var key in Object(object)) {
+    if (hasOwnProperty.call(object, key) && key != 'constructor') {
+      result.push(key);
+    }
+  }
+  return result;
+}
+
+/**
+ * A specialized version of `baseIsEqualDeep` for arrays with support for
+ * partial deep comparisons.
+ *
+ * @private
+ * @param {Array} array The array to compare.
+ * @param {Array} other The other array to compare.
+ * @param {number} bitmask The bitmask flags. See `baseIsEqual` for more details.
+ * @param {Function} customizer The function to customize comparisons.
+ * @param {Function} equalFunc The function to determine equivalents of values.
+ * @param {Object} stack Tracks traversed `array` and `other` objects.
+ * @returns {boolean} Returns `true` if the arrays are equivalent, else `false`.
+ */
+function equalArrays(array, other, bitmask, customizer, equalFunc, stack) {
+  var isPartial = bitmask & COMPARE_PARTIAL_FLAG,
+      arrLength = array.length,
+      othLength = other.length;
+
+  if (arrLength != othLength && !(isPartial && othLength > arrLength)) {
+    return false;
+  }
+  // Assume cyclic values are equal.
+  var stacked = stack.get(array);
+  if (stacked && stack.get(other)) {
+    return stacked == other;
+  }
+  var index = -1,
+      result = true,
+      seen = (bitmask & COMPARE_UNORDERED_FLAG) ? new SetCache : undefined;
+
+  stack.set(array, other);
+  stack.set(other, array);
+
+  // Ignore non-index properties.
+  while (++index < arrLength) {
+    var arrValue = array[index],
+        othValue = other[index];
+
+    if (customizer) {
+      var compared = isPartial
+        ? customizer(othValue, arrValue, index, other, array, stack)
+        : customizer(arrValue, othValue, index, array, other, stack);
+    }
+    if (compared !== undefined) {
+      if (compared) {
+        continue;
+      }
+      result = false;
+      break;
+    }
+    // Recursively compare arrays (susceptible to call stack limits).
+    if (seen) {
+      if (!arraySome(other, function(othValue, othIndex) {
+            if (!cacheHas(seen, othIndex) &&
+                (arrValue === othValue || equalFunc(arrValue, othValue, bitmask, customizer, stack))) {
+              return seen.push(othIndex);
+            }
+          })) {
+        result = false;
+        break;
+      }
+    } else if (!(
+          arrValue === othValue ||
+            equalFunc(arrValue, othValue, bitmask, customizer, stack)
+        )) {
+      result = false;
+      break;
+    }
+  }
+  stack['delete'](array);
+  stack['delete'](other);
+  return result;
+}
+
+/**
+ * A specialized version of `baseIsEqualDeep` for comparing objects of
+ * the same `toStringTag`.
+ *
+ * **Note:** This function only supports comparing values with tags of
+ * `Boolean`, `Date`, `Error`, `Number`, `RegExp`, or `String`.
+ *
+ * @private
+ * @param {Object} object The object to compare.
+ * @param {Object} other The other object to compare.
+ * @param {string} tag The `toStringTag` of the objects to compare.
+ * @param {number} bitmask The bitmask flags. See `baseIsEqual` for more details.
+ * @param {Function} customizer The function to customize comparisons.
+ * @param {Function} equalFunc The function to determine equivalents of values.
+ * @param {Object} stack Tracks traversed `object` and `other` objects.
+ * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
+ */
+function equalByTag(object, other, tag, bitmask, customizer, equalFunc, stack) {
+  switch (tag) {
+    case dataViewTag:
+      if ((object.byteLength != other.byteLength) ||
+          (object.byteOffset != other.byteOffset)) {
+        return false;
+      }
+      object = object.buffer;
+      other = other.buffer;
+
+    case arrayBufferTag:
+      if ((object.byteLength != other.byteLength) ||
+          !equalFunc(new Uint8Array(object), new Uint8Array(other))) {
+        return false;
+      }
+      return true;
+
+    case boolTag:
+    case dateTag:
+    case numberTag:
+      // Coerce booleans to `1` or `0` and dates to milliseconds.
+      // Invalid dates are coerced to `NaN`.
+      return eq(+object, +other);
+
+    case errorTag:
+      return object.name == other.name && object.message == other.message;
+
+    case regexpTag:
+    case stringTag:
+      // Coerce regexes to strings and treat strings, primitives and objects,
+      // as equal. See http://www.ecma-international.org/ecma-262/7.0/#sec-regexp.prototype.tostring
+      // for more details.
+      return object == (other + '');
+
+    case mapTag:
+      var convert = mapToArray;
+
+    case setTag:
+      var isPartial = bitmask & COMPARE_PARTIAL_FLAG;
+      convert || (convert = setToArray);
+
+      if (object.size != other.size && !isPartial) {
+        return false;
+      }
+      // Assume cyclic values are equal.
+      var stacked = stack.get(object);
+      if (stacked) {
+        return stacked == other;
+      }
+      bitmask |= COMPARE_UNORDERED_FLAG;
+
+      // Recursively compare objects (susceptible to call stack limits).
+      stack.set(object, other);
+      var result = equalArrays(convert(object), convert(other), bitmask, customizer, equalFunc, stack);
+      stack['delete'](object);
+      return result;
+
+    case symbolTag:
+      if (symbolValueOf) {
+        return symbolValueOf.call(object) == symbolValueOf.call(other);
+      }
+  }
+  return false;
+}
+
+/**
+ * A specialized version of `baseIsEqualDeep` for objects with support for
+ * partial deep comparisons.
+ *
+ * @private
+ * @param {Object} object The object to compare.
+ * @param {Object} other The other object to compare.
+ * @param {number} bitmask The bitmask flags. See `baseIsEqual` for more details.
+ * @param {Function} customizer The function to customize comparisons.
+ * @param {Function} equalFunc The function to determine equivalents of values.
+ * @param {Object} stack Tracks traversed `object` and `other` objects.
+ * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
+ */
+function equalObjects(object, other, bitmask, customizer, equalFunc, stack) {
+  var isPartial = bitmask & COMPARE_PARTIAL_FLAG,
+      objProps = getAllKeys(object),
+      objLength = objProps.length,
+      othProps = getAllKeys(other),
+      othLength = othProps.length;
+
+  if (objLength != othLength && !isPartial) {
+    return false;
+  }
+  var index = objLength;
+  while (index--) {
+    var key = objProps[index];
+    if (!(isPartial ? key in other : hasOwnProperty.call(other, key))) {
+      return false;
+    }
+  }
+  // Assume cyclic values are equal.
+  var stacked = stack.get(object);
+  if (stacked && stack.get(other)) {
+    return stacked == other;
+  }
+  var result = true;
+  stack.set(object, other);
+  stack.set(other, object);
+
+  var skipCtor = isPartial;
+  while (++index < objLength) {
+    key = objProps[index];
+    var objValue = object[key],
+        othValue = other[key];
+
+    if (customizer) {
+      var compared = isPartial
+        ? customizer(othValue, objValue, key, other, object, stack)
+        : customizer(objValue, othValue, key, object, other, stack);
+    }
+    // Recursively compare objects (susceptible to call stack limits).
+    if (!(compared === undefined
+          ? (objValue === othValue || equalFunc(objValue, othValue, bitmask, customizer, stack))
+          : compared
+        )) {
+      result = false;
+      break;
+    }
+    skipCtor || (skipCtor = key == 'constructor');
+  }
+  if (result && !skipCtor) {
+    var objCtor = object.constructor,
+        othCtor = other.constructor;
+
+    // Non `Object` object instances with different constructors are not equal.
+    if (objCtor != othCtor &&
+        ('constructor' in object && 'constructor' in other) &&
+        !(typeof objCtor == 'function' && objCtor instanceof objCtor &&
+          typeof othCtor == 'function' && othCtor instanceof othCtor)) {
+      result = false;
+    }
+  }
+  stack['delete'](object);
+  stack['delete'](other);
+  return result;
+}
+
+/**
+ * Creates an array of own enumerable property names and symbols of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of property names and symbols.
+ */
+function getAllKeys(object) {
+  return baseGetAllKeys(object, keys, getSymbols);
+}
+
+/**
+ * Gets the data for `map`.
+ *
+ * @private
+ * @param {Object} map The map to query.
+ * @param {string} key The reference key.
+ * @returns {*} Returns the map data.
+ */
+function getMapData(map, key) {
+  var data = map.__data__;
+  return isKeyable(key)
+    ? data[typeof key == 'string' ? 'string' : 'hash']
+    : data.map;
+}
+
+/**
+ * Gets the native function at `key` of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {string} key The key of the method to get.
+ * @returns {*} Returns the function if it's native, else `undefined`.
+ */
+function getNative(object, key) {
+  var value = getValue(object, key);
+  return baseIsNative(value) ? value : undefined;
+}
+
+/**
+ * A specialized version of `baseGetTag` which ignores `Symbol.toStringTag` values.
+ *
+ * @private
+ * @param {*} value The value to query.
+ * @returns {string} Returns the raw `toStringTag`.
+ */
+function getRawTag(value) {
+  var isOwn = hasOwnProperty.call(value, symToStringTag),
+      tag = value[symToStringTag];
+
+  try {
+    value[symToStringTag] = undefined;
+    var unmasked = true;
+  } catch (e) {}
+
+  var result = nativeObjectToString.call(value);
+  if (unmasked) {
+    if (isOwn) {
+      value[symToStringTag] = tag;
+    } else {
+      delete value[symToStringTag];
+    }
+  }
+  return result;
+}
+
+/**
+ * Creates an array of the own enumerable symbols of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of symbols.
+ */
+var getSymbols = !nativeGetSymbols ? stubArray : function(object) {
+  if (object == null) {
+    return [];
+  }
+  object = Object(object);
+  return arrayFilter(nativeGetSymbols(object), function(symbol) {
+    return propertyIsEnumerable.call(object, symbol);
+  });
+};
+
+/**
+ * Gets the `toStringTag` of `value`.
+ *
+ * @private
+ * @param {*} value The value to query.
+ * @returns {string} Returns the `toStringTag`.
+ */
+var getTag = baseGetTag;
+
+// Fallback for data views, maps, sets, and weak maps in IE 11 and promises in Node.js < 6.
+if ((DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag) ||
+    (Map && getTag(new Map) != mapTag) ||
+    (Promise && getTag(Promise.resolve()) != promiseTag) ||
+    (Set && getTag(new Set) != setTag) ||
+    (WeakMap && getTag(new WeakMap) != weakMapTag)) {
+  getTag = function(value) {
+    var result = baseGetTag(value),
+        Ctor = result == objectTag ? value.constructor : undefined,
+        ctorString = Ctor ? toSource(Ctor) : '';
+
+    if (ctorString) {
+      switch (ctorString) {
+        case dataViewCtorString: return dataViewTag;
+        case mapCtorString: return mapTag;
+        case promiseCtorString: return promiseTag;
+        case setCtorString: return setTag;
+        case weakMapCtorString: return weakMapTag;
+      }
+    }
+    return result;
+  };
+}
+
+/**
+ * Checks if `value` is a valid array-like index.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @param {number} [length=MAX_SAFE_INTEGER] The upper bounds of a valid index.
+ * @returns {boolean} Returns `true` if `value` is a valid index, else `false`.
+ */
+function isIndex(value, length) {
+  length = length == null ? MAX_SAFE_INTEGER : length;
+  return !!length &&
+    (typeof value == 'number' || reIsUint.test(value)) &&
+    (value > -1 && value % 1 == 0 && value < length);
+}
+
+/**
+ * Checks if `value` is suitable for use as unique object key.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is suitable, else `false`.
+ */
+function isKeyable(value) {
+  var type = typeof value;
+  return (type == 'string' || type == 'number' || type == 'symbol' || type == 'boolean')
+    ? (value !== '__proto__')
+    : (value === null);
+}
+
+/**
+ * Checks if `func` has its source masked.
+ *
+ * @private
+ * @param {Function} func The function to check.
+ * @returns {boolean} Returns `true` if `func` is masked, else `false`.
+ */
+function isMasked(func) {
+  return !!maskSrcKey && (maskSrcKey in func);
+}
+
+/**
+ * Checks if `value` is likely a prototype object.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a prototype, else `false`.
+ */
+function isPrototype(value) {
+  var Ctor = value && value.constructor,
+      proto = (typeof Ctor == 'function' && Ctor.prototype) || objectProto;
+
+  return value === proto;
+}
+
+/**
+ * Converts `value` to a string using `Object.prototype.toString`.
+ *
+ * @private
+ * @param {*} value The value to convert.
+ * @returns {string} Returns the converted string.
+ */
+function objectToString(value) {
+  return nativeObjectToString.call(value);
+}
+
+/**
+ * Converts `func` to its source code.
+ *
+ * @private
+ * @param {Function} func The function to convert.
+ * @returns {string} Returns the source code.
+ */
+function toSource(func) {
+  if (func != null) {
+    try {
+      return funcToString.call(func);
+    } catch (e) {}
+    try {
+      return (func + '');
+    } catch (e) {}
+  }
+  return '';
+}
+
+/**
+ * Performs a
+ * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+ * comparison between two values to determine if they are equivalent.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to compare.
+ * @param {*} other The other value to compare.
+ * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+ * @example
+ *
+ * var object = { 'a': 1 };
+ * var other = { 'a': 1 };
+ *
+ * _.eq(object, object);
+ * // => true
+ *
+ * _.eq(object, other);
+ * // => false
+ *
+ * _.eq('a', 'a');
+ * // => true
+ *
+ * _.eq('a', Object('a'));
+ * // => false
+ *
+ * _.eq(NaN, NaN);
+ * // => true
+ */
+function eq(value, other) {
+  return value === other || (value !== value && other !== other);
+}
+
+/**
+ * Checks if `value` is likely an `arguments` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an `arguments` object,
+ *  else `false`.
+ * @example
+ *
+ * _.isArguments(function() { return arguments; }());
+ * // => true
+ *
+ * _.isArguments([1, 2, 3]);
+ * // => false
+ */
+var isArguments = baseIsArguments(function() { return arguments; }()) ? baseIsArguments : function(value) {
+  return isObjectLike(value) && hasOwnProperty.call(value, 'callee') &&
+    !propertyIsEnumerable.call(value, 'callee');
+};
+
+/**
+ * Checks if `value` is classified as an `Array` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an array, else `false`.
+ * @example
+ *
+ * _.isArray([1, 2, 3]);
+ * // => true
+ *
+ * _.isArray(document.body.children);
+ * // => false
+ *
+ * _.isArray('abc');
+ * // => false
+ *
+ * _.isArray(_.noop);
+ * // => false
+ */
+var isArray = Array.isArray;
+
+/**
+ * Checks if `value` is array-like. A value is considered array-like if it's
+ * not a function and has a `value.length` that's an integer greater than or
+ * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
+ * @example
+ *
+ * _.isArrayLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isArrayLike(document.body.children);
+ * // => true
+ *
+ * _.isArrayLike('abc');
+ * // => true
+ *
+ * _.isArrayLike(_.noop);
+ * // => false
+ */
+function isArrayLike(value) {
+  return value != null && isLength(value.length) && !isFunction(value);
+}
+
+/**
+ * Checks if `value` is a buffer.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.3.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a buffer, else `false`.
+ * @example
+ *
+ * _.isBuffer(new Buffer(2));
+ * // => true
+ *
+ * _.isBuffer(new Uint8Array(2));
+ * // => false
+ */
+var isBuffer = nativeIsBuffer || stubFalse;
+
+/**
+ * Performs a deep comparison between two values to determine if they are
+ * equivalent.
+ *
+ * **Note:** This method supports comparing arrays, array buffers, booleans,
+ * date objects, error objects, maps, numbers, `Object` objects, regexes,
+ * sets, strings, symbols, and typed arrays. `Object` objects are compared
+ * by their own, not inherited, enumerable properties. Functions and DOM
+ * nodes are compared by strict equality, i.e. `===`.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to compare.
+ * @param {*} other The other value to compare.
+ * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+ * @example
+ *
+ * var object = { 'a': 1 };
+ * var other = { 'a': 1 };
+ *
+ * _.isEqual(object, other);
+ * // => true
+ *
+ * object === other;
+ * // => false
+ */
+function isEqual(value, other) {
+  return baseIsEqual(value, other);
+}
+
+/**
+ * Checks if `value` is classified as a `Function` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a function, else `false`.
+ * @example
+ *
+ * _.isFunction(_);
+ * // => true
+ *
+ * _.isFunction(/abc/);
+ * // => false
+ */
+function isFunction(value) {
+  if (!isObject(value)) {
+    return false;
+  }
+  // The use of `Object#toString` avoids issues with the `typeof` operator
+  // in Safari 9 which returns 'object' for typed arrays and other constructors.
+  var tag = baseGetTag(value);
+  return tag == funcTag || tag == genTag || tag == asyncTag || tag == proxyTag;
+}
+
+/**
+ * Checks if `value` is a valid array-like length.
+ *
+ * **Note:** This method is loosely based on
+ * [`ToLength`](http://ecma-international.org/ecma-262/7.0/#sec-tolength).
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
+ * @example
+ *
+ * _.isLength(3);
+ * // => true
+ *
+ * _.isLength(Number.MIN_VALUE);
+ * // => false
+ *
+ * _.isLength(Infinity);
+ * // => false
+ *
+ * _.isLength('3');
+ * // => false
+ */
+function isLength(value) {
+  return typeof value == 'number' &&
+    value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
+}
+
+/**
+ * Checks if `value` is the
+ * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+ * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+ * @example
+ *
+ * _.isObject({});
+ * // => true
+ *
+ * _.isObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isObject(_.noop);
+ * // => true
+ *
+ * _.isObject(null);
+ * // => false
+ */
+function isObject(value) {
+  var type = typeof value;
+  return value != null && (type == 'object' || type == 'function');
+}
+
+/**
+ * Checks if `value` is object-like. A value is object-like if it's not `null`
+ * and has a `typeof` result of "object".
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+ * @example
+ *
+ * _.isObjectLike({});
+ * // => true
+ *
+ * _.isObjectLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isObjectLike(_.noop);
+ * // => false
+ *
+ * _.isObjectLike(null);
+ * // => false
+ */
+function isObjectLike(value) {
+  return value != null && typeof value == 'object';
+}
+
+/**
+ * Checks if `value` is classified as a typed array.
+ *
+ * @static
+ * @memberOf _
+ * @since 3.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a typed array, else `false`.
+ * @example
+ *
+ * _.isTypedArray(new Uint8Array);
+ * // => true
+ *
+ * _.isTypedArray([]);
+ * // => false
+ */
+var isTypedArray = nodeIsTypedArray ? baseUnary(nodeIsTypedArray) : baseIsTypedArray;
+
+/**
+ * Creates an array of the own enumerable property names of `object`.
+ *
+ * **Note:** Non-object values are coerced to objects. See the
+ * [ES spec](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
+ * for more details.
+ *
+ * @static
+ * @since 0.1.0
+ * @memberOf _
+ * @category Object
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of property names.
+ * @example
+ *
+ * function Foo() {
+ *   this.a = 1;
+ *   this.b = 2;
+ * }
+ *
+ * Foo.prototype.c = 3;
+ *
+ * _.keys(new Foo);
+ * // => ['a', 'b'] (iteration order is not guaranteed)
+ *
+ * _.keys('hi');
+ * // => ['0', '1']
+ */
+function keys(object) {
+  return isArrayLike(object) ? arrayLikeKeys(object) : baseKeys(object);
+}
+
+/**
+ * This method returns a new empty array.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.13.0
+ * @category Util
+ * @returns {Array} Returns the new empty array.
+ * @example
+ *
+ * var arrays = _.times(2, _.stubArray);
+ *
+ * console.log(arrays);
+ * // => [[], []]
+ *
+ * console.log(arrays[0] === arrays[1]);
+ * // => false
+ */
+function stubArray() {
+  return [];
+}
+
+/**
+ * This method returns `false`.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.13.0
+ * @category Util
+ * @returns {boolean} Returns `false`.
+ * @example
+ *
+ * _.times(2, _.stubFalse);
+ * // => [false, false]
+ */
+function stubFalse() {
+  return false;
+}
+
+module.exports = isEqual;
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(13)(module)))
+
+/***/ }),
+/* 25 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4161,6 +13140,7 @@ module.exports = v1;
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 
+const deepEqual = __webpack_require__(24);
 /** Singleton of the System class shared among all instances of Monitors
  * @TODO Refactor to instance member of class.
  */
@@ -4179,6 +13159,9 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 		} else {
 			throw new Error("Monitors class requires dependency injection. Ensure that System is being passed in.");
 		}
+
+		this.cachedMonitorInfo = null;
+
 		this.bindAllFunctions();
 		this.refreshMonitors(readyCB);
 
@@ -4189,7 +13172,8 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 		//This is to handle 'wake events'. This is technically only going to handle unlock events (user locks screen or logs out then logs back in)
 		//Technically, if the user has disabled 'lock on sleep', then this will not fire, but openfin does not have an event for waking/sleeping
 		System.addEventListener("session-changed", params => {
-			if (params.reason === "unlock") {
+			// FEA returns undefined, openfin returns reason
+			if (!params || typeof params === "object" && params.hasOwnProperty("reason") && (params.reason === "unlock" || params.reason === "remote-connect" || params.reason === "unknown")) {
 				this.refreshMonitors(changeCB);
 			}
 		});
@@ -4221,20 +13205,53 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 		return (scaledRect.right - scaledRect.left) / (dipRect.right - dipRect.left);
 	}
 
+	/**
+  * Determines if two monitor configurations are different by performing a deep equal
+  * @param {object} monitorInfo1 Object containing information about a set of monitors
+  * @param {object} monitorInfo2 Object containing information about a set of monitors
+  * @return {boolean} True if the monitors are different, false if they are the same
+  */
+	monitorInfoIsChanged(monitorInfo1, monitorInfo2) {
+		if (monitorInfo1 === null || monitorInfo2 === null || !deepEqual(monitorInfo1, monitorInfo2)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+  * Retrieves monitor info from the system and sends an event that docking responds to.
+  * If the number of monitors or id of all monitors hasn't changed, its assumed this
+  * is a scaling/resolution change. The internal state will still be updated and the
+  * returned result will include a 'monitorsChanged' boolean to indicate wether it
+  * has changed or not
+  *
+  * @param {Function} cb
+  */
 	refreshMonitors(cb = Function.prototype) {
+		let monitorsChanged = true;
+
 		System.getMonitorInfo(monitorInfo => {
+			if (!this.monitorInfoIsChanged(this.cachedMonitorInfo, monitorInfo)) {
+				console.info("Skipped refreshMonitors because monitors do not change.");
+				monitorsChanged = false;
+			}
 			//console.log("getAllMonitors");
 			this.allMonitors = [];
 			var primaryMonitor = monitorInfo.primaryMonitor;
 			this.primaryMonitor = primaryMonitor;
 			primaryMonitor.whichMonitor = "primary";
-			primaryMonitor.deviceScaleFactor = this.calculateMonitorScale(primaryMonitor.monitor.dipRect, primaryMonitor.monitor.scaledRect);
 
+			if (fin.container !== "Electron") {
+				primaryMonitor.deviceScaleFactor = this.calculateMonitorScale(primaryMonitor.monitor.dipRect, primaryMonitor.monitor.scaledRect);
+			}
 			primaryMonitor.position = 0;
 			this.allMonitors.push(primaryMonitor);
 			for (let i = 0; i < monitorInfo.nonPrimaryMonitors.length; i++) {
 				let monitor = monitorInfo.nonPrimaryMonitors[i];
-				monitor.deviceScaleFactor = this.calculateMonitorScale(monitor.monitor.dipRect, monitor.monitor.scaledRect);
+				if (fin.container !== "Electron") {
+					monitor.deviceScaleFactor = this.calculateMonitorScale(monitor.monitor.dipRect, monitor.monitor.scaledRect);
+				}
 				monitor.whichMonitor = i;
 				monitor.position = i + 1;
 				this.allMonitors.push(monitor);
@@ -4243,9 +13260,13 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 				let monitor = this.allMonitors[i];
 				this.rationalizeMonitor(monitor);
 			}
+			this.cachedMonitorInfo = monitorInfo;
 			cb(this.allMonitors);
 			this.ready = true;
-			this.emit("monitors-changed", this.allMonitors);
+			this.emit("monitors-changed", {
+				monitors: this.allMonitors,
+				monitorsChanged
+			});
 		});
 	}
 
@@ -4481,12 +13502,11 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 }
 /* harmony default export */ __webpack_exports__["a"] = (Monitors);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\common\\monitorsAndScaling.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\common\\monitorsAndScaling.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\monitorsAndScaling.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\monitorsAndScaling.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-
-/***/ 23:
+/* 26 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4546,9 +13566,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
  *
  * 			source is either the source's client name or "RouterService" (when the RouterService is the source)
  *
- * 			destination is either the destination's client name or "RouterService" (when the RouterService is the desgination)
+ * 			destination is either the destination's client name or "RouterService" (when the RouterService is the designation)
  *
- * 			callback(this) returns the constructor.  Normally a constructor is not asyncronous, but support in case the constructed transport requires async initialization.
+ * 			callback(this) returns the constructor.  Normally a constructor is not asynchronous, but support in case the constructed transport requires async initialization.
  *
  * The transport constructor must implement two functions.
  * 		1) send(transport, routerMessage) -- transport object contains destination transport info; routerMessage is the message to send
@@ -4576,16 +13596,16 @@ var RouterTransport = {
 	},
 
 	/**
-  * Gets array of active transports.  What is active depends both on config and what is supported by the environment. Typically, if OF IAB is defined then the IAB transport is added to active list.  Likewise, if SharedWorker defined, then SharedWork transport added to the active list.  Special transports that don't have backwards compatability (e.g. FinsembleTransport) are only added if specified in the config.
+  * Gets array of active transports.  What is active depends both on config and what is supported by the environment. Typically, if OF IAB is defined then the IAB transport is added to active list.  Likewise, if SharedWorker defined, then SharedWork transport added to the active list.  Special transports that don't have backwards compatibility (e.g. FinsembleTransport) are only added if specified in the config.
   *
-  * @param {string} params transport paramters
+  * @param {string} params transport parameters
   *
   * @returns array of active transport names
   */
 	getActiveTransports: function (params) {
 		var transportNames = [];
 
-		// convenience funciton to add transport to active list only if it's not already in the list
+		// convenience function to add transport to active list only if it's not already in the list
 		function addToActive(transportName) {
 			if (transportNames.indexOf(transportName) === -1) {
 				// if not already in the list, then add it
@@ -4602,10 +13622,10 @@ var RouterTransport = {
 		// if shared worker available, then add shared-worker transport to active list
 		if (SharedWorker) addToActive("SharedWorker");
 
-		// add whatever the sameDomainTrasnport is to the active list
+		// add whatever the sameDomainTransport is to the active list
 		addToActive(params.sameDomainTransport);
 
-		// add whatever the crossDomainTrasnport is to the active list
+		// add whatever the crossDomainTransport is to the active list
 		addToActive(params.crossDomainTransport);
 
 		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log("getActiveTransports", transportNames);
@@ -4613,7 +13633,7 @@ var RouterTransport = {
 	},
 
 	/**
-  * Get default transport for event router&mdash;this is the most reliable transport across all contexts.
+  * Get default transport for event router - this is the most reliable transport across all contexts.
   *
  	 * @param {object} params parameters for transport
   * @param {any} incomingMessageHandler
@@ -4645,8 +13665,8 @@ var RouterTransport = {
 
 			var isSameProtocol = window.location.protocol === parser.protocol;
 
-			var wport = window.location.port === undefined ? window.location.port : 80;
-			var pport = parser.port === undefined ? parser.port : 80;
+			var wport = window.location.port !== undefined ? window.location.port : 80;
+			var pport = parser.port !== undefined ? parser.port : 80;
 			var isSamePort = wport === pport;
 
 			var isCrossDomain = !(isSameHost && isSamePort && isSameProtocol);
@@ -4712,7 +13732,7 @@ var RouterTransportImplementation = {}; // a convenience namespace for router-tr
  * 		send(routerMessage) -- transports the event
  * 		identifier() -- returns transport name/identifier
  *
- * @param {object} params various parms to support transports
+ * @param {object} params various params to support transports
  * @param {any} parentMessageHandler callback for incoming event
  * @param {any} source either the client name or "RouterService"
  * @param {any} destination either the client name or "RouterService" (unused in SharedWorker)
@@ -4841,14 +13861,14 @@ RouterTransportImplementation.OpenFinTransport = function (params, parentMessage
  * 		send(event) -- transports the event
  * 		identifier() -- returns transport name/identifier
  *
- * @param {object} params various parms to support transports
+ * @param {object} params various params to support transports
  * @param {any} parentMessageHandler callback for incoming event
  * @param {any} source either the client name or "RouterService"
  * @param {any} destination either the client name or "RouterService" (unused in FinsembleTransport)
  */
 RouterTransportImplementation.FinsembleTransport = function (params, parentMessageHandler, source, destination, callback) {
 	/** @TODO - split into two separate vars for clarity. */
-	var serverAddress = __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress", __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.IAC.serverAddress", "wss://localhost.chartiq.com:3376"));
+	var serverAddress = __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress", __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.IAC.serverAddress", "ws://127.0.0.1:3376"));
 	const SOCKET_SERVER_ADDRESS = serverAddress + "/router"; // "router" is the socket namespace used on server
 
 	var self = this;
@@ -4875,14 +13895,14 @@ RouterTransportImplementation.FinsembleTransport = function (params, parentMessa
 		let dest;
 		let message;
 
-		// decide how to route the message based on whether client or routerservice is sending
+		// decide how to route the message based on whether client or routerService is sending
 		if (arguments.length === 1) {
 			// clients use just one parameter, so send client message to RouterService
 			dest = "ROUTER_SERVICE";
 			routerMessage = arguments[0];
 			message = { clientMessage: routerMessage }; // no client property needed to route on server since always going to router service
 		} else {
-			// router service uses both parameters, so send router-service mssage to a client
+			// router service uses both parameters, so send router-service message to a client
 			dest = "ROUTER_CLIENT";
 			routerMessage = arguments[1];
 			message = { client: transport.client, clientMessage: routerMessage }; // client property used to router on server
@@ -4939,7 +13959,7 @@ RouterTransportImplementation.FinsembleTransport = function (params, parentMessa
  * 		send(event) -- transports the event
  * 		identifier() -- returns transport name/identifier
  *
- * @param {object} params various parms to support transports
+ * @param {object} params various params to support transports
  * @param {any} parentMessageHandler callback for incoming event
  * @param {any} source either the client name or "RouterService"
  * @param {any} destination either the client name or "RouterService" (unused in FinsembleCloudTransport)
@@ -4971,14 +13991,14 @@ RouterTransportImplementation.FinsembleCloudTransport = function (params, parent
 		var dest;
 		var newMessage;
 
-		// decide how to route the message based on whether client or routerservice is sending
+		// decide how to route the message based on whether client or routerService is sending
 		if (arguments.length === 1) {
 			// clients use just one parameter, so send client message to RouterService
 			dest = "ROUTER_SERVICE";
 			routerMessage = arguments[0];
 			newMessage = { FinsembleUUID, clientMessage: routerMessage }; // no client property needed to route on server since always going to router service
 		} else {
-			// router service uses both parameters, so send router-service mssage to a client
+			// router service uses both parameters, so send router-service message to a client
 			dest = "ROUTER_CLIENT";
 			routerMessage = arguments[1];
 			newMessage = { FinsembleUUID, client: transport.client, clientMessage: routerMessage }; // client property used to router on server
@@ -5016,7 +14036,7 @@ RouterTransportImplementation.FinsembleCloudTransport = function (params, parent
 		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log("FinsembleCloudTransport Connected to Server", FinsembleUUID);
 		console.log("FinsembleCloudTransport Connected to Server");
 		if (source === "RouterService") {
-			// if this transport is for router service, use hardcoded socket address ("ROUTER_SERVICE_IN") along with FinsembleUUID
+			// if this transport is for router service, use hard coded socket address ("ROUTER_SERVICE_IN") along with FinsembleUUID
 			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("Setting Up Socket Connection", "ROUTER_SERVICE_IN" + FinsembleUUID);
 			console.log("Setting Up Socket Connection", "ROUTER_SERVICE_IN" + FinsembleUUID);
 			routerServerSocket.on("ROUTER_SERVICE_IN" + FinsembleUUID, function (data) {
@@ -5041,102 +14061,32 @@ RouterTransport.addTransport("FinsembleTransport", RouterTransportImplementation
 
 /* harmony default export */ __webpack_exports__["default"] = (RouterTransport);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\common\\routerTransport.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\common\\routerTransport.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\routerTransport.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\routerTransport.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-
-/***/ 24:
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {var scope = (typeof global !== "undefined" && global) ||
-            (typeof self !== "undefined" && self) ||
-            window;
-var apply = Function.prototype.apply;
-
-// DOM APIs, for completeness
-
-exports.setTimeout = function() {
-  return new Timeout(apply.call(setTimeout, scope, arguments), clearTimeout);
-};
-exports.setInterval = function() {
-  return new Timeout(apply.call(setInterval, scope, arguments), clearInterval);
-};
-exports.clearTimeout =
-exports.clearInterval = function(timeout) {
-  if (timeout) {
-    timeout.close();
-  }
-};
-
-function Timeout(id, clearFn) {
-  this._id = id;
-  this._clearFn = clearFn;
-}
-Timeout.prototype.unref = Timeout.prototype.ref = function() {};
-Timeout.prototype.close = function() {
-  this._clearFn.call(scope, this._id);
-};
-
-// Does not start the time, just sets up the members needed.
-exports.enroll = function(item, msecs) {
-  clearTimeout(item._idleTimeoutId);
-  item._idleTimeout = msecs;
-};
-
-exports.unenroll = function(item) {
-  clearTimeout(item._idleTimeoutId);
-  item._idleTimeout = -1;
-};
-
-exports._unrefActive = exports.active = function(item) {
-  clearTimeout(item._idleTimeoutId);
-
-  var msecs = item._idleTimeout;
-  if (msecs >= 0) {
-    item._idleTimeoutId = setTimeout(function onTimeout() {
-      if (item._onTimeout)
-        item._onTimeout();
-    }, msecs);
-  }
-};
-
-// setimmediate attaches itself to the global object
-__webpack_require__(27);
-// On some exotic environments, it's not clear which object `setimmediate` was
-// able to install onto.  Search each possibility in the same order as the
-// `setimmediate` library.
-exports.setImmediate = (typeof self !== "undefined" && self.setImmediate) ||
-                       (typeof global !== "undefined" && global.setImmediate) ||
-                       (this && this.setImmediate);
-exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
-                         (typeof global !== "undefined" && global.clearImmediate) ||
-                         (this && this.clearImmediate);
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
-
-/***/ }),
-
-/***/ 25:
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-/*!
+/* WEBPACK VAR INJECTION */(function(process) {/*!
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const routerTransport_1 = __webpack_require__(23);
+const routerTransport_1 = __webpack_require__(26);
 const Utils = __webpack_require__(8);
 const configUtil_1 = __webpack_require__(10);
 const validate_1 = __webpack_require__(6); // Finsemble args validator
-const userNotification_1 = __webpack_require__(17);
+const userNotification_1 = __webpack_require__(20);
 const system_1 = __webpack_require__(3);
 const logger_1 = __webpack_require__(0);
 var queue = []; // should never be used, but message sent before router ready will be queue
-const Globals = window;
-const localLogger_1 = __webpack_require__(15);
+const Globals = typeof window !== "undefined"
+    ? window
+    : process;
+const localLogger_1 = __webpack_require__(16);
 let Logger = logger_1.Logger;
 //@todo proper types for router messages would be great.
 // Use global data for these objects in case multiple clients running in same window (a side effect of injection and perhaps other edge conditions).
@@ -5157,9 +14107,9 @@ Globals.FSBLData.RouterClients = Globals.FSBLData.RouterClients || {};
  * @hideconstructor
  * @publishedName RouterClient
  * @param {string} clientName router base client name for human readable messages (window name is concatenated to baseClientName)
- * @param {string=} transportName router transport name, currently either "SharedWorker" or "OpenFinBus" (usually this is autoconfigured internally but can be selected for testing or special configurations)
+ * @param {string=} transportName router transport name, currently either "SharedWorker" or "OpenFinBus" (usually this is auto-configured internally but can be selected for testing or special configurations)
  */
-// uncomment for optimization.
+// un-comment for optimization.
 // console.time("FinMainStartup");
 exports.RouterClientConstructor = function (params) {
     validate_1.default.args(params, "object") && validate_1.default.args2("params.clientName", params.clientName, "string", "params.transportName", params.transportName, "string=");
@@ -5189,7 +14139,7 @@ exports.RouterClientConstructor = function (params) {
     var self = this;
     this.startupTime = 0;
     /////////////////////////////////////////////////////////////////////
-    // Private Message Contructors for Communicating with RouterService
+    // Private Message Constructors for Communicating with RouterService
     /////////////////////////////////////////////////////////////////////
     function InitialHandshakeMessage() {
         this.header = {
@@ -5370,9 +14320,9 @@ exports.RouterClientConstructor = function (params) {
         system_1.System.ready(function () {
             var finWindow = system_1.System.Window.getCurrent();
             Logger.system.debug(`WINDOW LIFECYCLE:STARTUP: fin.main invoked in ${finWindow.name}`);
-            window.console.debug(`WINDOW LIFECYCLE:STARTUP: fin.main invoked in ${finWindow.name}`);
+            console.debug(`WINDOW LIFECYCLE:STARTUP: fin.main invoked in ${finWindow.name}`);
             self.startupTime = performance.now();
-            // uncomment for optimization.
+            // un-comment for optimization.
             // console.timeEnd("FinMainStartup");
             if (callbackCounter++ === 0) { // this check should  not be needed; patch for OpenFin bug which invokes callback twice
                 // catch "window closing" event so can cleanup
@@ -5415,7 +14365,7 @@ exports.RouterClientConstructor = function (params) {
             routerDomainRoot: finConfig.moduleRoot,
             forceWindowTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.forceWindowTransport", {}),
             sameDomainTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.sameDomainTransport", "SharedWorker"),
-            crossDomainTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.crossDomainTransport", isElectron ? "FinsembleTransport" : "OpenFinBus"),
+            crossDomainTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.crossDomainTransport", "OpenFinBus"),
             transportSettings: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.transportSettings", {}),
             IAC: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.IAC", {})
         };
@@ -5426,7 +14376,7 @@ exports.RouterClientConstructor = function (params) {
                     .then(transportReady)
                     .catch(errHandler);
             }
-            else { // tranport specified...typically only for regression testing
+            else { // transport specified...typically only for regression testing
                 transport = routerTransport_1.default.getTransport(routerParams, transportName, incomingMessageHandler, clientName, "RouterService")
                     .then(transportReady)
                     .catch(errHandler);
@@ -5438,7 +14388,7 @@ exports.RouterClientConstructor = function (params) {
             transport = transportObj;
             handshakeHandler = finished; // set function to receive handshake response
             sendHandshake();
-            myTimer = setInterval(sendHandshake, 200); // start time to retry if response not recieved back from router service
+            myTimer = setInterval(sendHandshake, 200); // start time to retry if response not received back from router service
         }
         function handshakeFailedHandler() {
             clearInterval(myTimer);
@@ -5448,7 +14398,7 @@ exports.RouterClientConstructor = function (params) {
                 getClientTransport();
             }
             else {
-                let failureMessage = `Router ${transport.identifier()} failure for window ${window.name} after multiple retries.`;
+                let failureMessage = `A cross domain transport has failed to connect. Cross domain components may not work. Please contact your administrator.`;
                 Logger.system.error(failureMessage, routerParams);
                 let notificationURL = configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.notificationURL", finConfig.moduleRoot + "/components/system/notification/notification.html");
                 userNotification_1.default.alert("dev", "ONCE-SINCE-STARTUP", "FSBL-Internal-Transport-Failure", failureMessage, { url: notificationURL });
@@ -5495,9 +14445,10 @@ exports.RouterClientConstructor = function (params) {
     }
     // invoke client callbacks in the input array (that are attached to a specific channel and listener type)
     function invokeListenerCallbacks(map, message) {
-        var originalClientCallbackArray = map[message.header.channel] || {};
+        var originalClientCallbackArray = map[message.header.channel] || [];
         var clientCallbackArray = [];
-        if (clientCallbackArray === undefined) {
+        if (!Array.isArray(originalClientCallbackArray) ||
+            (originalClientCallbackArray.length === 0)) {
             Logger.system.warn("RouterClient: no listener for incoming transmit on channel " + message.header.channel + " from " + message.header.origin, message);
         }
         else {
@@ -5681,14 +14632,14 @@ exports.RouterClientConstructor = function (params) {
             }
         }
         if (!removed) {
-            Logger.system.warn("RouterClient: tried to remove non-existant listener on " + topic + " from " + JSON.stringify(subscribeID));
+            Logger.system.warn("RouterClient: tried to remove non-existent listener on " + topic + " from " + JSON.stringify(subscribeID));
         }
     }
     // callback function for invokeUnsubscribePubSubCallback to remove the subscriber from the subscription
     function removeSubscriber() {
         removeFromPubSubListOfSubscribers(pubsubListOfSubscribers, this.header.topic, this.header.subscribeID);
     }
-    // for incoming unsubscribe: invoke unsubscribe callback for pubsub servier
+    // for incoming unsubscribe: invoke unsubscribe callback for pubsub server
     function invokeUnsubscribePubSubCallback(unsubscribeMessage) {
         var callbacks = mapPubSubResponders[unsubscribeMessage.header.topic];
         if (callbacks === undefined) { // if undefined then may be a matching RegEx topic
@@ -5730,7 +14681,7 @@ exports.RouterClientConstructor = function (params) {
             Logger.system.warn("RouterClient: income publish rejected by pubsub responder", err, notifyData);
         }
     }
-    // for incoming Publish: invoke publish callback for pubsub servier
+    // for incoming Publish: invoke publish callback for pubsub server
     function invokePublishPubSubCallback(publishMessage) {
         var callbacks = mapPubSubResponders[publishMessage.header.topic];
         if (callbacks === undefined) { // if undefined then may be a matching RegEx topic
@@ -5750,7 +14701,7 @@ exports.RouterClientConstructor = function (params) {
                 Logger.system.info("RouterClient: incoming PubSub publish callback invoked", "TOPIC", publishMessage.header.topic, "PUBLISH MESSAGE", publishMessage);
                 callbacks.publishCallback(null, publishMessage); // invoke the callback (no error)
             }
-            else { // since no pubish callback defined, use default functionality
+            else { // since no publish callback defined, use default functionality
                 Logger.system.info("RouterClient: incoming PubSub publish", "TOPIC", publishMessage.header.topic, "PUBLISH MESSAGE", publishMessage);
                 publishMessage.sendNotifyToAllSubscribers(null, publishMessage.data); // must call from publish message (like a callback) so 'this' is properly set
             }
@@ -5909,7 +14860,7 @@ exports.RouterClientConstructor = function (params) {
                 Logger.system.debug("calibrationCalculation Intermediate Values", "lastRRT", rtt, "lastOffset", offset, "fastestOffset", offsetForFastest, "fastestRRT", fastestRRT);
             }
             timeOffset /= (TARGET_HANDSHAKE_COUNT - 1);
-            Logger.system.debug("RouterClient calibrationCalculation", "Average Offset", timeOffset, "Choosen FastestOffset", offsetForFastest, finalHandshakeMessage);
+            Logger.system.debug("RouterClient calibrationCalculation", "Average Offset", timeOffset, "Chosen FastestOffset", offsetForFastest, finalHandshakeMessage);
             callback(offsetForFastest); // use the offset with the shortest RTT since it is often the most accurate
         }
         function timeCalibrationHandlerFunction(message) {
@@ -5918,12 +14869,12 @@ exports.RouterClientConstructor = function (params) {
                 calibrationCalculation(message); // enough handshake data gather, so do the calibration
             }
             else {
-                message.clientBaseTime.push(window.performance.timing.navigationStart + window.performance.now());
+                message.clientBaseTime.push(Globals.performance.timing.navigationStart + Globals.performance.now());
                 sendToRouterService(new TimeCalibrationHandshakeMessage(message.clientBaseTime, message.serviceBaseTime));
             }
         }
         timeCalibrationHandler = timeCalibrationHandlerFunction; // used in routeIncomingMessage to route handshake response back to handler
-        timeCalibrationHandler(new TimeCalibrationHandshakeMessage([], [])); // invoke first time to start exchanging handshakes; will be invoked each time handshake message received back from FouterService
+        timeCalibrationHandler(new TimeCalibrationHandshakeMessage([], [])); // invoke first time to start exchanging handshakes; will be invoked each time handshake message received back from RouterService
     };
     /**
      * Backward compatibility?
@@ -5961,7 +14912,7 @@ exports.RouterClientConstructor = function (params) {
     /**
      * Add listener for incoming transmit events on specified channel. Each of the incoming events will trigger the specified event handler. The number of listeners is not limited (either local to this Finsemble window or in a separate Finsemble window).
      *
-     * See [transmit]{@link RouterClientConstructor#transmit} for sending a cooresponding event message to listener. See [removeListener]{@link RouterClientConstructor#removeListener} to remove the listener.
+     * See [transmit]{@link RouterClientConstructor#transmit} for sending a corresponding event message to listener. See [removeListener]{@link RouterClientConstructor#removeListener} to remove the listener.
      *
      * @param {string} channel any unique string to identify the channel (must match correspond transmit channel name)
      * @param {function} eventHandler function (see example below)
@@ -6011,8 +14962,8 @@ exports.RouterClientConstructor = function (params) {
     quite unexpected if the user isn't prepared. A better API would be to pass in some unique ID, or have a unique ID automatically generated,
     that could then be passed to this function, e.g:
 
-    RouterClient.addlistener('some-channel', 'my-unique-listener-id', () => { });
-    RouterClient.removeListener('some-channel', 'my-unique-listeenr-id');*/
+    RouterClient.addListener('some-channel', 'my-unique-listener-id', () => { });
+    RouterClient.removeListener('some-channel', 'my-unique-listener-id');*/
     /**
      * Remove event listener from specified channel for the specific event handler (only listeners created locally can be removed).
      *
@@ -6022,7 +14973,7 @@ exports.RouterClientConstructor = function (params) {
      * @param {function} eventHandler function used for the event handler when the listener was added
      */
     this.removeListener = function (channel, eventHandler) {
-        Logger.system.info("RouterClient.removelistener", "CHANNEL", channel, "EVENT HANDLER", eventHandler);
+        Logger.system.info("RouterClient.removeListener", "CHANNEL", channel, "EVENT HANDLER", eventHandler);
         validate_1.default.args(channel, "string", eventHandler, "function");
         var lastChannelListener = removeListenerCallBack(mapListeners, channel, eventHandler);
         if (lastChannelListener) {
@@ -6036,7 +14987,7 @@ exports.RouterClientConstructor = function (params) {
      *
      * See [query]{@link RouterClientConstructor#query} for sending a corresponding query-event message to this responder.
      *
-     * @param {string} channel any unique string to identify the channel (must match correspond query channel name); only one responder allower per channel
+     * @param {string} channel any unique string to identify the channel (must match correspond query channel name); only one responder allowed per channel
      * @param {function} queryEventHandler function to handle the incoming query (see example below); note incoming queryMessage contains function to send response
      * @example
      *
@@ -6098,8 +15049,8 @@ exports.RouterClientConstructor = function (params) {
         var newQueryID = `${clientID()}.${responderChannel}`;
         var timestamp = window.performance.timing.navigationStart + window.performance.now();
         var navstart = window.performance.timing.navigationStart;
-        var timenow = window.performance.now(); // these timer values used for logging diagnostices
-        Logger.system.info("RouterClient.query", "RESPONDER CHANNEL", responderChannel, "QUERY EVENT", queryEvent, "PARAMS", params, "QUERYID", newQueryID, { timestamp, navstart, timenow });
+        var timenow = window.performance.now(); // these timer values used for logging diagnostics
+        Logger.system.info("RouterClient.query", "RESPONDER CHANNEL", responderChannel, "QUERY EVENT", queryEvent, "PARAMS", params, "QUERY ID", newQueryID, { timestamp, navstart, timenow });
         if (arguments.length === 3) {
             responseEventHandler = params;
             params = { timeout: 20000 };
@@ -6111,7 +15062,12 @@ exports.RouterClientConstructor = function (params) {
             //Allows us to await on queries, cleaning up code quite a bit.
             const modifiedHandler = (err, response) => {
                 resolve({ err, response });
-                responseEventHandler(err, response);
+                if (typeof responseEventHandler === "function") {
+                    responseEventHandler(err, response);
+                }
+                else {
+                    Logger.system.warn("No response event handler passed to RouterClient.query", "RESPONDER CHANNEL", responderChannel, "QUERY EVENT", queryEvent, "PARAMS", params, "QUERY ID", newQueryID, { timestamp, navstart, timenow });
+                }
             };
             addQueryResponseCallBack(mapQueryResponses, newQueryID, modifiedHandler);
             addQueryResponseTimeout(mapQueryResponseTimeOut, newQueryID, responderChannel, params.timeout);
@@ -6140,7 +15096,7 @@ exports.RouterClientConstructor = function (params) {
         }
     };
     /**
-     * Add a PubSub responder for specified topic. All subscribes and publishes to the topic will comes to responder (whether from local window or another window). Only one PubSub responder allowed per topic value in Finsemble application; however, the topic value may be a regular-expression representing a set of related topics, in which case the PubSub responder will responder to all matching topics. When a regEx topic is used, the same default functionality is provides for each matching topic -- the difference is only one PubSub responder is needed to cover a set of related topics, plus the same callback handers can be used (if provided).
+     * Add a PubSub responder for specified topic. All subscribes and publishes to the topic will comes to responder (whether from local window or another window). Only one PubSub responder allowed per topic value in Finsemble application; however, the topic value may be a regular-expression representing a set of related topics, in which case the PubSub responder will responder to all matching topics. When a regEx topic is used, the same default functionality is provides for each matching topic -- the difference is only one PubSub responder is needed to cover a set of related topics, plus the same callback handlers can be used (if provided).
      *
      * All the callback function are optional because each PubSub responder comes with build-in default functionality (described below).
      *
@@ -6241,7 +15197,7 @@ exports.RouterClientConstructor = function (params) {
         }
     };
     /**
-     * Subscribe to a PubSub Responder. Each responder topic can have many subscribers (local in this window or remote in other windows). Each subscriber immediately (but asyncronouly) receives back current state in a notify; new notifys are receive for each publish sent to the same topic.
+     * Subscribe to a PubSub Responder. Each responder topic can have many subscribers (local in this window or remote in other windows). Each subscriber immediately (but asynchronously) receives back current state in a notify; new notifications are receive for each publish sent to the same topic.
      *
      * See [addPubSubResponder]{@link RouterClientConstructor#addPubSubResponder} for corresponding add of a SubPub responder to handle the subscribe. See [publish]{@link RouterClientConstructor#publish} for corresponding publish to notify the subscriber.
      *
@@ -6324,7 +15280,7 @@ exports.RouterClientConstructor = function (params) {
         return isTrusted;
     };
     /*
-     * @TODO: consider adding disconnectAllListerns(), disconnectAllResponders(), disconnectAllSubscribers()
+     * @TODO: consider adding disconnectAllListeners(), disconnectAllResponders(), disconnectAllSubscribers()
     */
     /**
      * Removes all listeners, responders, and subscribers for this router client -- automatically called when client is shutting down. Can be called multiple times.
@@ -6356,438 +15312,29 @@ exports.RouterClientConstructor = function (params) {
             delete mapSubscribersTopic[subscribeID];
         }
     };
-    //Prevent the loggerService window's routerClient from logging to itself. Instead, log locally for it. It's unlikely that we need to get the loggerService's routermessages. If we do, just uncomment this.
+    //Prevent the loggerService window's routerClient from logging to itself. Instead, log locally for it. It's unlikely that we need to get the loggerService's router messages. If we do, just un-comment this.
     if (system_1.System.Window.getCurrent().name === "loggerService") {
         Logger = new localLogger_1.LocalLogger();
     }
-    clientName = baseClientName + "." + window.name;
+    clientName = baseClientName + "." + Globals.name;
     /** @TODO - Move this to factory function, something like getRouterClient. */
     if (clientName in Globals.FSBLData.RouterClients) { // if previously constructed then return that existing client
         Logger.system.debug(`"RouterClient Check: reusing existing client for ${clientName}`);
-        console.debug(`"RouterClient Check: reusing existing client for ${clientName}`, window);
+        console.debug(`"RouterClient Check: reusing existing client for ${clientName}`, Globals);
     }
     else {
         Logger.system.debug(`"RouterClient Check: constructing new client for ${clientName}`);
-        console.debug(`"RouterClient Check: constructing new client for ${clientName}`, window);
+        console.debug(`"RouterClient Check: constructing new client for ${clientName}`, Globals);
         Globals.FSBLData.RouterClients[clientName] = this;
-        constructor(clientName, transportName); // constructure new router client
+        constructor(clientName, transportName); // constructor new router client
     }
     return Globals.FSBLData.RouterClients[clientName];
 };
 
-
-/***/ }),
-
-/***/ 26:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-
-/**
- * @introduction
- * <h2>Finsemble system wide settings for use by all components and services</h2>
- *
- */
-
-/**
- * Constructor for Finsemble SystemSettings
- * @private
- * @constructor
- */
-var SystemSettings = function () {
-	var currentDiagLevel = 3;
-
-	/**
-  * Returns diagnostic level
-  *
-  *@returns current diagnostic level
-  */
-	this.diagLevel = function () {
-		return currentDiagLevel;
-	};
-
-	/**
-  * Returns diagnostic level
-  *
-  *@returns current diagnostic level
-  */
-	this.setDiagLevel = function (level) {
-		currentDiagLevel = level;
-	};
-
-	/**
-  * Returns true if parameter validation is enabled
-  *
-  *@returns true if enable
-  */
-	this.validationEnabled = function () {
-		return currentDiagLevel >= 4;
-	};
-};
-
-/* harmony default export */ __webpack_exports__["a"] = (new SystemSettings());
-
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\common\\systemSettings.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\common\\systemSettings.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
-
-/***/ }),
-
-/***/ 27:
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
-    "use strict";
-
-    if (global.setImmediate) {
-        return;
-    }
-
-    var nextHandle = 1; // Spec says greater than zero
-    var tasksByHandle = {};
-    var currentlyRunningATask = false;
-    var doc = global.document;
-    var registerImmediate;
-
-    function setImmediate(callback) {
-      // Callback can either be a function or a string
-      if (typeof callback !== "function") {
-        callback = new Function("" + callback);
-      }
-      // Copy function arguments
-      var args = new Array(arguments.length - 1);
-      for (var i = 0; i < args.length; i++) {
-          args[i] = arguments[i + 1];
-      }
-      // Store and register the task
-      var task = { callback: callback, args: args };
-      tasksByHandle[nextHandle] = task;
-      registerImmediate(nextHandle);
-      return nextHandle++;
-    }
-
-    function clearImmediate(handle) {
-        delete tasksByHandle[handle];
-    }
-
-    function run(task) {
-        var callback = task.callback;
-        var args = task.args;
-        switch (args.length) {
-        case 0:
-            callback();
-            break;
-        case 1:
-            callback(args[0]);
-            break;
-        case 2:
-            callback(args[0], args[1]);
-            break;
-        case 3:
-            callback(args[0], args[1], args[2]);
-            break;
-        default:
-            callback.apply(undefined, args);
-            break;
-        }
-    }
-
-    function runIfPresent(handle) {
-        // From the spec: "Wait until any invocations of this algorithm started before this one have completed."
-        // So if we're currently running a task, we'll need to delay this invocation.
-        if (currentlyRunningATask) {
-            // Delay by doing a setTimeout. setImmediate was tried instead, but in Firefox 7 it generated a
-            // "too much recursion" error.
-            setTimeout(runIfPresent, 0, handle);
-        } else {
-            var task = tasksByHandle[handle];
-            if (task) {
-                currentlyRunningATask = true;
-                try {
-                    run(task);
-                } finally {
-                    clearImmediate(handle);
-                    currentlyRunningATask = false;
-                }
-            }
-        }
-    }
-
-    function installNextTickImplementation() {
-        registerImmediate = function(handle) {
-            process.nextTick(function () { runIfPresent(handle); });
-        };
-    }
-
-    function canUsePostMessage() {
-        // The test against `importScripts` prevents this implementation from being installed inside a web worker,
-        // where `global.postMessage` means something completely different and can't be used for this purpose.
-        if (global.postMessage && !global.importScripts) {
-            var postMessageIsAsynchronous = true;
-            var oldOnMessage = global.onmessage;
-            global.onmessage = function() {
-                postMessageIsAsynchronous = false;
-            };
-            global.postMessage("", "*");
-            global.onmessage = oldOnMessage;
-            return postMessageIsAsynchronous;
-        }
-    }
-
-    function installPostMessageImplementation() {
-        // Installs an event handler on `global` for the `message` event: see
-        // * https://developer.mozilla.org/en/DOM/window.postMessage
-        // * http://www.whatwg.org/specs/web-apps/current-work/multipage/comms.html#crossDocumentMessages
-
-        var messagePrefix = "setImmediate$" + Math.random() + "$";
-        var onGlobalMessage = function(event) {
-            if (event.source === global &&
-                typeof event.data === "string" &&
-                event.data.indexOf(messagePrefix) === 0) {
-                runIfPresent(+event.data.slice(messagePrefix.length));
-            }
-        };
-
-        if (global.addEventListener) {
-            global.addEventListener("message", onGlobalMessage, false);
-        } else {
-            global.attachEvent("onmessage", onGlobalMessage);
-        }
-
-        registerImmediate = function(handle) {
-            global.postMessage(messagePrefix + handle, "*");
-        };
-    }
-
-    function installMessageChannelImplementation() {
-        var channel = new MessageChannel();
-        channel.port1.onmessage = function(event) {
-            var handle = event.data;
-            runIfPresent(handle);
-        };
-
-        registerImmediate = function(handle) {
-            channel.port2.postMessage(handle);
-        };
-    }
-
-    function installReadyStateChangeImplementation() {
-        var html = doc.documentElement;
-        registerImmediate = function(handle) {
-            // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
-            // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called.
-            var script = doc.createElement("script");
-            script.onreadystatechange = function () {
-                runIfPresent(handle);
-                script.onreadystatechange = null;
-                html.removeChild(script);
-                script = null;
-            };
-            html.appendChild(script);
-        };
-    }
-
-    function installSetTimeoutImplementation() {
-        registerImmediate = function(handle) {
-            setTimeout(runIfPresent, 0, handle);
-        };
-    }
-
-    // If supported, we should attach to the prototype of global, since that is where setTimeout et al. live.
-    var attachTo = Object.getPrototypeOf && Object.getPrototypeOf(global);
-    attachTo = attachTo && attachTo.setTimeout ? attachTo : global;
-
-    // Don't get fooled by e.g. browserify environments.
-    if ({}.toString.call(global.process) === "[object process]") {
-        // For Node.js before 0.9
-        installNextTickImplementation();
-
-    } else if (canUsePostMessage()) {
-        // For non-IE10 modern browsers
-        installPostMessageImplementation();
-
-    } else if (global.MessageChannel) {
-        // For web workers, where supported
-        installMessageChannelImplementation();
-
-    } else if (doc && "onreadystatechange" in doc.createElement("script")) {
-        // For IE 6–8
-        installReadyStateChangeImplementation();
-
-    } else {
-        // For older browsers
-        installSetTimeoutImplementation();
-    }
-
-    attachTo.setImmediate = setImmediate;
-    attachTo.clearImmediate = clearImmediate;
-}(typeof self === "undefined" ? typeof global === "undefined" ? this : global : self));
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5), __webpack_require__(1)))
-
-/***/ }),
-
-/***/ 3:
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(process) {
-Object.defineProperty(exports, "__esModule", { value: true });
-/** The global `window` object. We cast it to a specific interface here to be
- * explicit about what Finsemble-related properties it may have.*/
-const Globals = 
-/** In our testing environments (i.e, mocha running in node.js),
- * `window` is not defined. Therefore, we have to check that `window`
- * exists; otherwise, in node, `process` is the global context.
- */
-typeof window !== "undefined" ?
-    window
-    : process;
-class SystemWindow {
-    constructor(params, cb, errCb) {
-        return new fin.desktop.Window(params, cb);
-    }
-    static get getCurrent() {
-        return fin.desktop.Window.getCurrent;
-    }
-    static get wrap() {
-        return fin.desktop.Window.wrap;
-    }
-}
-class Application {
-    constructor(params, cb, errCb) {
-        return new fin.desktop.Application(params, cb);
-    }
-    static get getCurrent() {
-        return fin.desktop.Application.getCurrent;
-    }
-    static get wrap() {
-        return fin.desktop.Application.wrap;
-    }
-}
-class SystemNotification {
-    constructor(params) {
-        new fin.desktop.Notification(params);
-    }
-}
-class System {
-    static get Application() {
-        return Application;
-    }
-    static get Window() {
-        return SystemWindow;
-    }
-    static get Notification() {
-        return SystemNotification;
-    }
-    static getMousePosition(cb) {
-        fin.desktop.System.getMousePosition((mousePosition) => {
-            if (mousePosition.left || mousePosition.left === 0)
-                mousePosition.x = mousePosition.left;
-            if (mousePosition.top || mousePosition.top === 0)
-                mousePosition.y = mousePosition.top;
-            cb(null, mousePosition);
-        }, (err) => { cb(err, null); });
-    }
-    static getMonitorInfo(cb) {
-        fin.desktop.System.getMonitorInfo((info) => {
-            cb(info);
-        });
-    }
-    // static get makes this behave like a static variable. so calling system.ready is eqivalent to fin.desktop.main.
-    static get ready() {
-        return fin.desktop.main;
-    }
-    static get getHostSpecs() {
-        return fin.desktop.System.getHostSpecs;
-    }
-    static get launchExternalProcess() {
-        return fin.desktop.System.launchExternalProcess;
-    }
-    static get terminateExternalProcess() {
-        return fin.desktop.System.terminateExternalProcess;
-    }
-    static get getAllApplications() {
-        return fin.desktop.System.getAllApplications;
-    }
-    static get exit() {
-        return fin.desktop.System.exit;
-    }
-    static get clearCache() {
-        return fin.desktop.System.clearCache;
-    }
-    static get showDeveloperTools() {
-        return fin.desktop.System.showDeveloperTools;
-    }
-    static get getRuntimeInfo() {
-        return fin.desktop.System.getRuntimeInfo || chrome.desktop.getDetails;
-    }
-    static get addEventListener() {
-        /* events we use so far in Finsemble: monitor-info-changed, session-changed */
-        return fin.desktop.System.addEventListener;
-    }
-    static get getVersion() {
-        return fin.desktop.System.getVersion;
-    }
-    static get openUrlWithBrowser() {
-        return fin.desktop.System.openUrlWithBrowser;
-    }
-    static get getAllWindows() {
-        return fin.desktop.System.getAllWindows;
-    }
-    static FinsembleReady(cb) {
-        if (Globals.FSBL && Globals.FSBL.addEventListener) {
-            return Globals.FSBL.addEventListener("onready", cb);
-        }
-        return window.addEventListener("FSBLready", cb);
-    }
-    // This is not overriding or pointing to Openfin. This is the pattern used to close applications.
-    static closeApplication(app, cb = Function.prototype) {
-        const promiseResolver = (resolve) => {
-            let t;
-            let timeoutCleared = false;
-            let terminateAndResolve = () => {
-                if (timeoutCleared)
-                    return;
-                console.log("Attempting to terminate", app.uuid);
-                app.terminate(() => {
-                    cb();
-                    resolve();
-                }, () => {
-                    if (timeoutCleared)
-                        return;
-                    timeoutCleared = true;
-                    clearInterval(t);
-                    // If closing fails, force close
-                    console.log("force closing ", app.uuid);
-                    app.terminate();
-                });
-            };
-            //Hanging apps can be unresponsive to close and terminate calls for a period of time, keep trying until they're closed
-            t = setInterval(terminateAndResolve, 2000);
-            console.log("closing ", app.uuid);
-            //OpenFin windows will wait to callback until close is successful, so no need to keep trying to close on a success callback.
-            app.close(false, () => {
-                console.log("app.close: successfully closed", app.uuid);
-                timeoutCleared = true;
-                clearInterval(t);
-                cb();
-                resolve();
-            }, terminateAndResolve);
-        };
-        return new Promise(promiseResolver);
-    }
-}
-exports.System = System;
-
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-
-/***/ 35:
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -7722,54 +16269,976 @@ function get(object, path, defaultValue) {
 
 module.exports = get;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
+/* 29 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
-/***/ 4:
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process, module) {/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+
+/**
+ * @introduction
+ * <h2>Finsemble system wide settings for use by all components and services</h2>
+ *
+ */
+
+/**
+ * Constructor for Finsemble SystemSettings
+ * @private
+ * @constructor
+ */
+var SystemSettings = function () {
+	var currentDiagLevel = 3;
+
+	/**
+  * Returns diagnostic level
+  *
+  *@returns current diagnostic level
+  */
+	this.diagLevel = function () {
+		return currentDiagLevel;
+	};
+
+	/**
+  * Returns diagnostic level
+  *
+  *@returns current diagnostic level
+  */
+	this.setDiagLevel = function (level) {
+		currentDiagLevel = level;
+	};
+
+	/**
+  * Returns true if parameter validation is enabled
+  *
+  *@returns true if enable
+  */
+	this.validationEnabled = function () {
+		return currentDiagLevel >= 4;
+	};
+};
+
+/* harmony default export */ __webpack_exports__["a"] = (new SystemSettings());
+
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\systemSettings.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\systemSettings.js"); } } })();
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
+
+/***/ }),
+/* 30 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
+    "use strict";
+
+    if (global.setImmediate) {
+        return;
+    }
+
+    var nextHandle = 1; // Spec says greater than zero
+    var tasksByHandle = {};
+    var currentlyRunningATask = false;
+    var doc = global.document;
+    var registerImmediate;
+
+    function setImmediate(callback) {
+      // Callback can either be a function or a string
+      if (typeof callback !== "function") {
+        callback = new Function("" + callback);
+      }
+      // Copy function arguments
+      var args = new Array(arguments.length - 1);
+      for (var i = 0; i < args.length; i++) {
+          args[i] = arguments[i + 1];
+      }
+      // Store and register the task
+      var task = { callback: callback, args: args };
+      tasksByHandle[nextHandle] = task;
+      registerImmediate(nextHandle);
+      return nextHandle++;
+    }
+
+    function clearImmediate(handle) {
+        delete tasksByHandle[handle];
+    }
+
+    function run(task) {
+        var callback = task.callback;
+        var args = task.args;
+        switch (args.length) {
+        case 0:
+            callback();
+            break;
+        case 1:
+            callback(args[0]);
+            break;
+        case 2:
+            callback(args[0], args[1]);
+            break;
+        case 3:
+            callback(args[0], args[1], args[2]);
+            break;
+        default:
+            callback.apply(undefined, args);
+            break;
+        }
+    }
+
+    function runIfPresent(handle) {
+        // From the spec: "Wait until any invocations of this algorithm started before this one have completed."
+        // So if we're currently running a task, we'll need to delay this invocation.
+        if (currentlyRunningATask) {
+            // Delay by doing a setTimeout. setImmediate was tried instead, but in Firefox 7 it generated a
+            // "too much recursion" error.
+            setTimeout(runIfPresent, 0, handle);
+        } else {
+            var task = tasksByHandle[handle];
+            if (task) {
+                currentlyRunningATask = true;
+                try {
+                    run(task);
+                } finally {
+                    clearImmediate(handle);
+                    currentlyRunningATask = false;
+                }
+            }
+        }
+    }
+
+    function installNextTickImplementation() {
+        registerImmediate = function(handle) {
+            process.nextTick(function () { runIfPresent(handle); });
+        };
+    }
+
+    function canUsePostMessage() {
+        // The test against `importScripts` prevents this implementation from being installed inside a web worker,
+        // where `global.postMessage` means something completely different and can't be used for this purpose.
+        if (global.postMessage && !global.importScripts) {
+            var postMessageIsAsynchronous = true;
+            var oldOnMessage = global.onmessage;
+            global.onmessage = function() {
+                postMessageIsAsynchronous = false;
+            };
+            global.postMessage("", "*");
+            global.onmessage = oldOnMessage;
+            return postMessageIsAsynchronous;
+        }
+    }
+
+    function installPostMessageImplementation() {
+        // Installs an event handler on `global` for the `message` event: see
+        // * https://developer.mozilla.org/en/DOM/window.postMessage
+        // * http://www.whatwg.org/specs/web-apps/current-work/multipage/comms.html#crossDocumentMessages
+
+        var messagePrefix = "setImmediate$" + Math.random() + "$";
+        var onGlobalMessage = function(event) {
+            if (event.source === global &&
+                typeof event.data === "string" &&
+                event.data.indexOf(messagePrefix) === 0) {
+                runIfPresent(+event.data.slice(messagePrefix.length));
+            }
+        };
+
+        if (global.addEventListener) {
+            global.addEventListener("message", onGlobalMessage, false);
+        } else {
+            global.attachEvent("onmessage", onGlobalMessage);
+        }
+
+        registerImmediate = function(handle) {
+            global.postMessage(messagePrefix + handle, "*");
+        };
+    }
+
+    function installMessageChannelImplementation() {
+        var channel = new MessageChannel();
+        channel.port1.onmessage = function(event) {
+            var handle = event.data;
+            runIfPresent(handle);
+        };
+
+        registerImmediate = function(handle) {
+            channel.port2.postMessage(handle);
+        };
+    }
+
+    function installReadyStateChangeImplementation() {
+        var html = doc.documentElement;
+        registerImmediate = function(handle) {
+            // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
+            // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called.
+            var script = doc.createElement("script");
+            script.onreadystatechange = function () {
+                runIfPresent(handle);
+                script.onreadystatechange = null;
+                html.removeChild(script);
+                script = null;
+            };
+            html.appendChild(script);
+        };
+    }
+
+    function installSetTimeoutImplementation() {
+        registerImmediate = function(handle) {
+            setTimeout(runIfPresent, 0, handle);
+        };
+    }
+
+    // If supported, we should attach to the prototype of global, since that is where setTimeout et al. live.
+    var attachTo = Object.getPrototypeOf && Object.getPrototypeOf(global);
+    attachTo = attachTo && attachTo.setTimeout ? attachTo : global;
+
+    // Don't get fooled by e.g. browserify environments.
+    if ({}.toString.call(global.process) === "[object process]") {
+        // For Node.js before 0.9
+        installNextTickImplementation();
+
+    } else if (canUsePostMessage()) {
+        // For non-IE10 modern browsers
+        installPostMessageImplementation();
+
+    } else if (global.MessageChannel) {
+        // For web workers, where supported
+        installMessageChannelImplementation();
+
+    } else if (doc && "onreadystatechange" in doc.createElement("script")) {
+        // For IE 6–8
+        installReadyStateChangeImplementation();
+
+    } else {
+        // For older browsers
+        installSetTimeoutImplementation();
+    }
+
+    attachTo.setImmediate = setImmediate;
+    attachTo.clearImmediate = clearImmediate;
+}(typeof self === "undefined" ? typeof global === "undefined" ? this : global : self));
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(1)))
+
+/***/ }),
+/* 31 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {var scope = (typeof global !== "undefined" && global) ||
+            (typeof self !== "undefined" && self) ||
+            window;
+var apply = Function.prototype.apply;
+
+// DOM APIs, for completeness
+
+exports.setTimeout = function() {
+  return new Timeout(apply.call(setTimeout, scope, arguments), clearTimeout);
+};
+exports.setInterval = function() {
+  return new Timeout(apply.call(setInterval, scope, arguments), clearInterval);
+};
+exports.clearTimeout =
+exports.clearInterval = function(timeout) {
+  if (timeout) {
+    timeout.close();
+  }
+};
+
+function Timeout(id, clearFn) {
+  this._id = id;
+  this._clearFn = clearFn;
+}
+Timeout.prototype.unref = Timeout.prototype.ref = function() {};
+Timeout.prototype.close = function() {
+  this._clearFn.call(scope, this._id);
+};
+
+// Does not start the time, just sets up the members needed.
+exports.enroll = function(item, msecs) {
+  clearTimeout(item._idleTimeoutId);
+  item._idleTimeout = msecs;
+};
+
+exports.unenroll = function(item) {
+  clearTimeout(item._idleTimeoutId);
+  item._idleTimeout = -1;
+};
+
+exports._unrefActive = exports.active = function(item) {
+  clearTimeout(item._idleTimeoutId);
+
+  var msecs = item._idleTimeout;
+  if (msecs >= 0) {
+    item._idleTimeoutId = setTimeout(function onTimeout() {
+      if (item._onTimeout)
+        item._onTimeout();
+    }, msecs);
+  }
+};
+
+// setimmediate attaches itself to the global object
+__webpack_require__(30);
+// On some exotic environments, it's not clear which object `setimmediate` was
+// able to install onto.  Search each possibility in the same order as the
+// `setimmediate` library.
+exports.setImmediate = (typeof self !== "undefined" && self.setImmediate) ||
+                       (typeof global !== "undefined" && global.setImmediate) ||
+                       (this && this.setImmediate);
+exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
+                         (typeof global !== "undefined" && global.clearImmediate) ||
+                         (this && this.clearImmediate);
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+
+/***/ }),
+/* 32 */,
+/* 33 */,
+/* 34 */,
+/* 35 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var rng = __webpack_require__(18);
+var bytesToUuid = __webpack_require__(17);
+
+function v4(options, buf, offset) {
+  var i = buf && offset || 0;
+
+  if (typeof(options) == 'string') {
+    buf = options == 'binary' ? new Array(16) : null;
+    options = null;
+  }
+  options = options || {};
+
+  var rnds = options.random || (options.rng || rng)();
+
+  // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
+  rnds[6] = (rnds[6] & 0x0f) | 0x40;
+  rnds[8] = (rnds[8] & 0x3f) | 0x80;
+
+  // Copy bytes to buffer, if provided
+  if (buf) {
+    for (var ii = 0; ii < 16; ++ii) {
+      buf[i + ii] = rnds[ii];
+    }
+  }
+
+  return buf || bytesToUuid(rnds);
+}
+
+module.exports = v4;
+
+
+/***/ }),
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-Object.defineProperty(exports, "__esModule", { value: true });
-/**
- * @introduction
- * <h2>Router Client Instance</h2>
- * Exports a single shared instance of the router client.  See {@link RouterClientConstructor} for the complete API definition with examples.
- *
- * Example:
- *
- *	// get a shared instance of RouterClient (shared within the containing component or service)
- *	var RouterClient = require('./routerClientInstance').default;
- *
- * @namespace routerClientInstance
- * @shouldBePublished false
- */
-const routerClientConstructor_1 = __webpack_require__(25);
-const logger_1 = __webpack_require__(0);
-let RCConstructor = routerClientConstructor_1.RouterClientConstructor;
-/** The logger needs a router client, and the router client needs a logger.
- * To get around this fundamental circular dependency, we pass a reference
- * of the RouterClient to the Logger. Only after this is called will the
- * RouterClient and Logger be ready. If RouterClient is NOT required before
- * the Logger, then this file will be dynamically required at Logger.start().
- */
-/** An instance of the IRouterClient interface, (that is, the Router Client).
- * All other clients are built on top of the RouterClient; its API is the
- * primary form of communication between the various components of Finsemble.
- */
-let RouterClientInstance = new RCConstructor({ clientName: "RouterClient" });
-logger_1.Logger.setRouterClient(RouterClientInstance);
-exports.default = RouterClientInstance;
+const pTry = __webpack_require__(38);
+
+const pLimit = concurrency => {
+	if (concurrency < 1) {
+		throw new TypeError('Expected `concurrency` to be a number from 1 and up');
+	}
+
+	const queue = [];
+	let activeCount = 0;
+
+	const next = () => {
+		activeCount--;
+
+		if (queue.length > 0) {
+			queue.shift()();
+		}
+	};
+
+	const run = (fn, resolve, ...args) => {
+		activeCount++;
+
+		const result = pTry(fn, ...args);
+
+		resolve(result);
+
+		result.then(next, next);
+	};
+
+	const enqueue = (fn, resolve, ...args) => {
+		if (activeCount < concurrency) {
+			run(fn, resolve, ...args);
+		} else {
+			queue.push(run.bind(null, fn, resolve, ...args));
+		}
+	};
+
+	const generator = (fn, ...args) => new Promise(resolve => enqueue(fn, resolve, ...args));
+	Object.defineProperties(generator, {
+		activeCount: {
+			get: () => activeCount
+		},
+		pendingCount: {
+			get: () => queue.length
+		}
+	});
+
+	return generator;
+};
+
+module.exports = pLimit;
+module.exports.default = pLimit;
 
 
 /***/ }),
+/* 37 */
+/***/ (function(module, exports, __webpack_require__) {
 
-/***/ 44:
+/* WEBPACK VAR INJECTION */(function(global) {/**
+ * lodash (Custom Build) <https://lodash.com/>
+ * Build: `lodash modularize exports="npm" -o ./`
+ * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+ * Released under MIT license <https://lodash.com/license>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ */
+
+/** Used as references for various `Number` constants. */
+var INFINITY = 1 / 0,
+    MAX_SAFE_INTEGER = 9007199254740991;
+
+/** `Object#toString` result references. */
+var argsTag = '[object Arguments]',
+    funcTag = '[object Function]',
+    genTag = '[object GeneratorFunction]',
+    symbolTag = '[object Symbol]';
+
+/** Detect free variable `global` from Node.js. */
+var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
+
+/** Detect free variable `self`. */
+var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+
+/** Used as a reference to the global object. */
+var root = freeGlobal || freeSelf || Function('return this')();
+
+/**
+ * A faster alternative to `Function#apply`, this function invokes `func`
+ * with the `this` binding of `thisArg` and the arguments of `args`.
+ *
+ * @private
+ * @param {Function} func The function to invoke.
+ * @param {*} thisArg The `this` binding of `func`.
+ * @param {Array} args The arguments to invoke `func` with.
+ * @returns {*} Returns the result of `func`.
+ */
+function apply(func, thisArg, args) {
+  switch (args.length) {
+    case 0: return func.call(thisArg);
+    case 1: return func.call(thisArg, args[0]);
+    case 2: return func.call(thisArg, args[0], args[1]);
+    case 3: return func.call(thisArg, args[0], args[1], args[2]);
+  }
+  return func.apply(thisArg, args);
+}
+
+/**
+ * A specialized version of `_.map` for arrays without support for iteratee
+ * shorthands.
+ *
+ * @private
+ * @param {Array} [array] The array to iterate over.
+ * @param {Function} iteratee The function invoked per iteration.
+ * @returns {Array} Returns the new mapped array.
+ */
+function arrayMap(array, iteratee) {
+  var index = -1,
+      length = array ? array.length : 0,
+      result = Array(length);
+
+  while (++index < length) {
+    result[index] = iteratee(array[index], index, array);
+  }
+  return result;
+}
+
+/**
+ * Appends the elements of `values` to `array`.
+ *
+ * @private
+ * @param {Array} array The array to modify.
+ * @param {Array} values The values to append.
+ * @returns {Array} Returns `array`.
+ */
+function arrayPush(array, values) {
+  var index = -1,
+      length = values.length,
+      offset = array.length;
+
+  while (++index < length) {
+    array[offset + index] = values[index];
+  }
+  return array;
+}
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Used to resolve the
+ * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var objectToString = objectProto.toString;
+
+/** Built-in value references. */
+var Symbol = root.Symbol,
+    propertyIsEnumerable = objectProto.propertyIsEnumerable,
+    spreadableSymbol = Symbol ? Symbol.isConcatSpreadable : undefined;
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeMax = Math.max;
+
+/**
+ * The base implementation of `_.flatten` with support for restricting flattening.
+ *
+ * @private
+ * @param {Array} array The array to flatten.
+ * @param {number} depth The maximum recursion depth.
+ * @param {boolean} [predicate=isFlattenable] The function invoked per iteration.
+ * @param {boolean} [isStrict] Restrict to values that pass `predicate` checks.
+ * @param {Array} [result=[]] The initial result value.
+ * @returns {Array} Returns the new flattened array.
+ */
+function baseFlatten(array, depth, predicate, isStrict, result) {
+  var index = -1,
+      length = array.length;
+
+  predicate || (predicate = isFlattenable);
+  result || (result = []);
+
+  while (++index < length) {
+    var value = array[index];
+    if (depth > 0 && predicate(value)) {
+      if (depth > 1) {
+        // Recursively flatten arrays (susceptible to call stack limits).
+        baseFlatten(value, depth - 1, predicate, isStrict, result);
+      } else {
+        arrayPush(result, value);
+      }
+    } else if (!isStrict) {
+      result[result.length] = value;
+    }
+  }
+  return result;
+}
+
+/**
+ * The base implementation of `_.pick` without support for individual
+ * property identifiers.
+ *
+ * @private
+ * @param {Object} object The source object.
+ * @param {string[]} props The property identifiers to pick.
+ * @returns {Object} Returns the new object.
+ */
+function basePick(object, props) {
+  object = Object(object);
+  return basePickBy(object, props, function(value, key) {
+    return key in object;
+  });
+}
+
+/**
+ * The base implementation of  `_.pickBy` without support for iteratee shorthands.
+ *
+ * @private
+ * @param {Object} object The source object.
+ * @param {string[]} props The property identifiers to pick from.
+ * @param {Function} predicate The function invoked per property.
+ * @returns {Object} Returns the new object.
+ */
+function basePickBy(object, props, predicate) {
+  var index = -1,
+      length = props.length,
+      result = {};
+
+  while (++index < length) {
+    var key = props[index],
+        value = object[key];
+
+    if (predicate(value, key)) {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
+/**
+ * The base implementation of `_.rest` which doesn't validate or coerce arguments.
+ *
+ * @private
+ * @param {Function} func The function to apply a rest parameter to.
+ * @param {number} [start=func.length-1] The start position of the rest parameter.
+ * @returns {Function} Returns the new function.
+ */
+function baseRest(func, start) {
+  start = nativeMax(start === undefined ? (func.length - 1) : start, 0);
+  return function() {
+    var args = arguments,
+        index = -1,
+        length = nativeMax(args.length - start, 0),
+        array = Array(length);
+
+    while (++index < length) {
+      array[index] = args[start + index];
+    }
+    index = -1;
+    var otherArgs = Array(start + 1);
+    while (++index < start) {
+      otherArgs[index] = args[index];
+    }
+    otherArgs[start] = array;
+    return apply(func, this, otherArgs);
+  };
+}
+
+/**
+ * Checks if `value` is a flattenable `arguments` object or array.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is flattenable, else `false`.
+ */
+function isFlattenable(value) {
+  return isArray(value) || isArguments(value) ||
+    !!(spreadableSymbol && value && value[spreadableSymbol]);
+}
+
+/**
+ * Converts `value` to a string key if it's not a string or symbol.
+ *
+ * @private
+ * @param {*} value The value to inspect.
+ * @returns {string|symbol} Returns the key.
+ */
+function toKey(value) {
+  if (typeof value == 'string' || isSymbol(value)) {
+    return value;
+  }
+  var result = (value + '');
+  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+}
+
+/**
+ * Checks if `value` is likely an `arguments` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an `arguments` object,
+ *  else `false`.
+ * @example
+ *
+ * _.isArguments(function() { return arguments; }());
+ * // => true
+ *
+ * _.isArguments([1, 2, 3]);
+ * // => false
+ */
+function isArguments(value) {
+  // Safari 8.1 makes `arguments.callee` enumerable in strict mode.
+  return isArrayLikeObject(value) && hasOwnProperty.call(value, 'callee') &&
+    (!propertyIsEnumerable.call(value, 'callee') || objectToString.call(value) == argsTag);
+}
+
+/**
+ * Checks if `value` is classified as an `Array` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an array, else `false`.
+ * @example
+ *
+ * _.isArray([1, 2, 3]);
+ * // => true
+ *
+ * _.isArray(document.body.children);
+ * // => false
+ *
+ * _.isArray('abc');
+ * // => false
+ *
+ * _.isArray(_.noop);
+ * // => false
+ */
+var isArray = Array.isArray;
+
+/**
+ * Checks if `value` is array-like. A value is considered array-like if it's
+ * not a function and has a `value.length` that's an integer greater than or
+ * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
+ * @example
+ *
+ * _.isArrayLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isArrayLike(document.body.children);
+ * // => true
+ *
+ * _.isArrayLike('abc');
+ * // => true
+ *
+ * _.isArrayLike(_.noop);
+ * // => false
+ */
+function isArrayLike(value) {
+  return value != null && isLength(value.length) && !isFunction(value);
+}
+
+/**
+ * This method is like `_.isArrayLike` except that it also checks if `value`
+ * is an object.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an array-like object,
+ *  else `false`.
+ * @example
+ *
+ * _.isArrayLikeObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isArrayLikeObject(document.body.children);
+ * // => true
+ *
+ * _.isArrayLikeObject('abc');
+ * // => false
+ *
+ * _.isArrayLikeObject(_.noop);
+ * // => false
+ */
+function isArrayLikeObject(value) {
+  return isObjectLike(value) && isArrayLike(value);
+}
+
+/**
+ * Checks if `value` is classified as a `Function` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a function, else `false`.
+ * @example
+ *
+ * _.isFunction(_);
+ * // => true
+ *
+ * _.isFunction(/abc/);
+ * // => false
+ */
+function isFunction(value) {
+  // The use of `Object#toString` avoids issues with the `typeof` operator
+  // in Safari 8-9 which returns 'object' for typed array and other constructors.
+  var tag = isObject(value) ? objectToString.call(value) : '';
+  return tag == funcTag || tag == genTag;
+}
+
+/**
+ * Checks if `value` is a valid array-like length.
+ *
+ * **Note:** This method is loosely based on
+ * [`ToLength`](http://ecma-international.org/ecma-262/7.0/#sec-tolength).
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
+ * @example
+ *
+ * _.isLength(3);
+ * // => true
+ *
+ * _.isLength(Number.MIN_VALUE);
+ * // => false
+ *
+ * _.isLength(Infinity);
+ * // => false
+ *
+ * _.isLength('3');
+ * // => false
+ */
+function isLength(value) {
+  return typeof value == 'number' &&
+    value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
+}
+
+/**
+ * Checks if `value` is the
+ * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+ * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+ * @example
+ *
+ * _.isObject({});
+ * // => true
+ *
+ * _.isObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isObject(_.noop);
+ * // => true
+ *
+ * _.isObject(null);
+ * // => false
+ */
+function isObject(value) {
+  var type = typeof value;
+  return !!value && (type == 'object' || type == 'function');
+}
+
+/**
+ * Checks if `value` is object-like. A value is object-like if it's not `null`
+ * and has a `typeof` result of "object".
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+ * @example
+ *
+ * _.isObjectLike({});
+ * // => true
+ *
+ * _.isObjectLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isObjectLike(_.noop);
+ * // => false
+ *
+ * _.isObjectLike(null);
+ * // => false
+ */
+function isObjectLike(value) {
+  return !!value && typeof value == 'object';
+}
+
+/**
+ * Checks if `value` is classified as a `Symbol` primitive or object.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+ * @example
+ *
+ * _.isSymbol(Symbol.iterator);
+ * // => true
+ *
+ * _.isSymbol('abc');
+ * // => false
+ */
+function isSymbol(value) {
+  return typeof value == 'symbol' ||
+    (isObjectLike(value) && objectToString.call(value) == symbolTag);
+}
+
+/**
+ * Creates an object composed of the picked `object` properties.
+ *
+ * @static
+ * @since 0.1.0
+ * @memberOf _
+ * @category Object
+ * @param {Object} object The source object.
+ * @param {...(string|string[])} [props] The property identifiers to pick.
+ * @returns {Object} Returns the new object.
+ * @example
+ *
+ * var object = { 'a': 1, 'b': '2', 'c': 3 };
+ *
+ * _.pick(object, ['a', 'c']);
+ * // => { 'a': 1, 'c': 3 }
+ */
+var pick = baseRest(function(object, props) {
+  return object == null ? {} : basePick(object, arrayMap(baseFlatten(props, 1), toKey));
+});
+
+module.exports = pick;
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+
+/***/ }),
+/* 38 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+const pTry = (fn, ...arguments_) => new Promise(resolve => {
+	resolve(fn(...arguments_));
+});
+
+module.exports = pTry;
+// TODO: remove this in the next major version
+module.exports.default = pTry;
+
+
+/***/ }),
+/* 39 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var v1 = __webpack_require__(19);
+var v4 = __webpack_require__(35);
+
+var uuid = v4;
+uuid.v1 = v1;
+uuid.v4 = v4;
+
+module.exports = uuid;
+
+
+/***/ }),
+/* 40 */,
+/* 41 */,
+/* 42 */,
+/* 43 */,
+/* 44 */,
+/* 45 */,
+/* 46 */,
+/* 47 */,
+/* 48 */,
+/* 49 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -8301,149 +17770,19 @@ class BoxMath {
 }
 /* harmony default export */ __webpack_exports__["a"] = (BoxMath);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\services\\window\\Docking\\boxMath.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\services\\window\\Docking\\boxMath.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\boxMath.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\boxMath.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-
-/***/ 45:
-/***/ (function(module, exports, __webpack_require__) {
-
-var rng = __webpack_require__(19);
-var bytesToUuid = __webpack_require__(18);
-
-function v4(options, buf, offset) {
-  var i = buf && offset || 0;
-
-  if (typeof(options) == 'string') {
-    buf = options === 'binary' ? new Array(16) : null;
-    options = null;
-  }
-  options = options || {};
-
-  var rnds = options.random || (options.rng || rng)();
-
-  // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
-  rnds[6] = (rnds[6] & 0x0f) | 0x40;
-  rnds[8] = (rnds[8] & 0x3f) | 0x80;
-
-  // Copy bytes to buffer, if provided
-  if (buf) {
-    for (var ii = 0; ii < 16; ++ii) {
-      buf[i + ii] = rnds[ii];
-    }
-  }
-
-  return buf || bytesToUuid(rnds);
-}
-
-module.exports = v4;
-
-
-/***/ }),
-
-/***/ 46:
+/* 50 */,
+/* 51 */,
+/* 52 */,
+/* 53 */,
+/* 54 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony export (immutable) */ __webpack_exports__["guuid"] = guuid;
-/* harmony export (immutable) */ __webpack_exports__["clone"] = clone;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_uuid__ = __webpack_require__(55);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_uuid___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_uuid__);
-function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
-
-
-//Class without deep openfin/system dependencies.
-function guuid() {
-	return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0_uuid__["v1"])(); // return global uuid
-}
-
-/**
- * Home baked clone method that was the most performant one that was tried back in 2017.
- * This has been tested a good amount. Previous to this commit we were using a mix of deepmerge and JSON.parse(JSON.stringify()).
- * Trying lodash.deepclone made my tests take 2-3s.
- * JSON.parse everywhere made them take ~ 1s.
- * Using JSON.parse on arrays and deep merge on objects makes them take 7-900ms.
- *
- * @export
- * @param {*} obj Thing to clone
- * @param {*} [errorCb = console.error] Callback to handle any errors.
- * @returns
- */
-function clone(obj, errorCb = console.error) {
-	if (Array.isArray(obj)) {
-		return obj.slice();
-	}
-	try {
-		return JSON.parse(JSON.stringify(obj));
-	} catch (e) {
-		errorCb(e);
-		return e;
-	}
-};
-
-class MockLogger {
-	constructor({ debug } = { debug: true }) {
-		if (debug) {
-			this.system = console;
-			this.system.debug = console.log;
-		} else {
-			//Suppress everything but errors for tests
-			this.system = {
-				warn: Function.prototype,
-				debug: Function.prototype,
-				log: Function.prototype,
-				info: Function.prototype,
-				error: console.error
-			};
-		}
-	}
-	isLogMessage() {
-		return true;
-	}
-
-	start() {}
-};
-
-const mockLogger = new MockLogger();
-/* harmony export (immutable) */ __webpack_exports__["mockLogger"] = mockLogger;
-
-
-/**
- * Wraps a promsie in logs that fire immediately before and after the execution of the promise. Returns a new promise.
- *
- * @param {*} logger A logging function that will log the message. E.g. `Logger.system.debug` or `console.log`.
- * @param {string} message A message to be logged. Suffixed with "start" and "end", before and after the promise, respectively.
- * @param {Promise} promise The promise to be wrapped.
- */
-const instrumentPromise = (() => {
-	var _ref = _asyncToGenerator(function* (logger, message, promise) {
-		const start = message + " start";
-		const end = message + " end";
-		logger(start);
-		return promise.then(function () {
-			return logger(end);
-		});
-	});
-
-	return function instrumentPromise(_x, _x2, _x3) {
-		return _ref.apply(this, arguments);
-	};
-})();
-/* harmony export (immutable) */ __webpack_exports__["instrumentPromise"] = instrumentPromise;
-
-
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\common\\disentangledUtils.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\common\\disentangledUtils.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
-
-/***/ }),
-
-/***/ 48:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__boxMath__ = __webpack_require__(44);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__boxMath__ = __webpack_require__(49);
 
 class DockableBox {
 	constructor(bounds) {
@@ -8719,7 +18058,7 @@ class DockableBox {
  * @function getSharedCorners Determines if another window has corners to which our window may snap/dock
  * @param  {type} win2 {description}		* @param  {Window} win2 Window proxy (movement object) of other window to which our window may snap/dock
  * @return {type} {description}		* @return {object} Object describing shared corners, including original vertices (topLeft, topRight, bottomRight, bottomLeft),
- *					and ammended vertices (rightTop, rightBottom, leftTop, leftBottom) to indicate shared tops or bottoms on
+ *					and amended vertices (rightTop, rightBottom, leftTop, leftBottom) to indicate shared tops or bottoms on
  *					on the left or right.
  */
 	getSharedCorners(win2) {
@@ -8997,19 +18336,18 @@ class DockableBox {
 }
 /* harmony default export */ __webpack_exports__["a"] = (DockableBox);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\services\\window\\Docking\\dockableBox.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\services\\window\\Docking\\dockableBox.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\dockableBox.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\dockableBox.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-
-/***/ 49:
+/* 55 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const ObjectPool_1 = __webpack_require__(53);
-const WindowPool_1 = __webpack_require__(62);
+const ObjectPool_1 = __webpack_require__(58);
+const WindowPool_1 = __webpack_require__(66);
 const logger_1 = __webpack_require__(0);
 const dependencies = {
     Logger: logger_1.default
@@ -9027,36 +18365,7 @@ exports.DockingPoolSingleton = DockingPoolSingleton;
 
 
 /***/ }),
-
-/***/ 5:
-/***/ (function(module, exports) {
-
-var g;
-
-// This works in non-strict mode
-g = (function() {
-	return this;
-})();
-
-try {
-	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1,eval)("this");
-} catch(e) {
-	// This works if the window reference is available
-	if(typeof window === "object")
-		g = window;
-}
-
-// g can still be undefined, but nothing to do about it...
-// We return undefined, instead of nothing here, so it's
-// easier to handle this case. if(!global) { ...}
-
-module.exports = g;
-
-
-/***/ }),
-
-/***/ 51:
+/* 56 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -9104,12 +18413,12 @@ const SPLIT_HANDLE_MAP = {
 /* harmony export (immutable) */ __webpack_exports__["SPLIT_HANDLE_MAP"] = SPLIT_HANDLE_MAP;
 
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\services\\window\\Docking\\constants.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\services\\window\\Docking\\constants.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\constants.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\constants.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-
-/***/ 53:
+/* 57 */,
+/* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9145,14 +18454,14 @@ class ObjectPool {
     remove(name) {
         Logger.system.debug(`${this.poolName} pool.remove for ${name}`);
         if (!this.objects.hasOwnProperty(name)) {
-            Logger.system.warn(`${this.poolName} pool.remove operating on non-existant value for ${name}`);
+            Logger.system.warn(`${this.poolName} pool.remove operating on non-existent value for ${name}`);
         }
         delete this.objects[name];
     }
     add(name, obj) {
         Logger.system.debug(`${this.poolName} pool.add for ${name}`);
         if (this.objects.hasOwnProperty(name)) {
-            Logger.system.warn(`${this.poolName} pool.add overwritting existing value for ${name}`);
+            Logger.system.warn(`${this.poolName} pool.add overwriting existing value for ${name}`);
         }
         this.objects[name] = obj;
     }
@@ -9170,8 +18479,7 @@ exports.ObjectPool = ObjectPool;
 
 
 /***/ }),
-
-/***/ 54:
+/* 59 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -9197,7 +18505,7 @@ class WindowGroup {
   * @param {object} params Params
   * @param {string} params.name name of the group
   * @param {object} params.windows array of windows in the group
-  * @param {object} dependencies Depdenency object that provides a Logger.
+  * @param {object} dependencies Dependency object that provides a Logger.
   * @param {Logger} dependencies.Logger
   */
 	constructor(params, dependencies) {
@@ -9346,9 +18654,21 @@ class WindowGroup {
 			if (self.interruptRestore) return done("restore interrupted");
 			let win = self.windows[windowName];
 			if (win.restore) {
-				if (win.windowState != __WEBPACK_IMPORTED_MODULE_1__constants__["WINDOWSTATE"].NORMAL) self.windows[windowName].restore({}, done);else done();
+				// if win.win exists, we're in a dockableGroup of dockalbeWindows
+				let windowState = win.win ? win.win.windowState : win.windowState;
+				if (windowState != __WEBPACK_IMPORTED_MODULE_1__constants__["WINDOWSTATE"].NORMAL) {
+					// The dockableWindow only takes a single parameter...a callback.
+					if (win.win) {
+						win.restore(done);
+					} else {
+						// All other window wraps accept 2 params for restore.
+						win.restore({}, done);
+					}
+				} else {
+					done();
+				}
 			} else {
-				Logger.system.error(windowName + " does not implment restore");
+				Logger.system.error(windowName + " does not implement restore");
 				done();
 			}
 		}
@@ -9369,14 +18689,14 @@ class WindowGroup {
 			if (win.restore) {
 				self.windows[windowName].restore({}, done);
 			} else {
-				Logger.system.error(windowName + " does not implment restore");
+				Logger.system.error(windowName + " does not implement restore");
 				done();
 			}
 		}
 		__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0_async__["forEach"])(windowList, restoreWindow, cb);
 	}
 
-	// Bring all windoes to top. Also sets the state of the group to always on top and new windows added to the group inherit the state of thw window
+	// Bring all windows to top. Also sets the state of the group to always on top and new windows added to the group inherit the state of thw window
 	allAlwaysOnTop(alwaysOnTop) {
 		this.isAlwaysOnTop = alwaysOnTop;
 		this.alwaysOnTop({ windowList: Object.keys(this.windows), restoreWindows: true, alwaysOnTop: alwaysOnTop });
@@ -9412,7 +18732,7 @@ class WindowGroup {
 	/**
   * Brings a group of windows to the front (BTF). In other words, puts those windows on top of any other windows so that they can be seen
   * @param {object} params
-  * @param {bool=true} params.restoreWindows If true then windows will attempt to be restored (unminimized) before being brought to front
+  * @param {bool=true} params.restoreWindows If true then windows will attempt to be restored (un-minimized) before being brought to front
   * @param {array} params.windowList The list of windows to BTF. Defaults to the windows that are in this window group. This can be a list of window names, or a list of actual window instances.
   * @param {string} params.componentType Optionally provide a componentType to BTF only those windows of that type in the list of windows.
   */
@@ -9444,7 +18764,7 @@ class WindowGroup {
 
 		function doBTF() {
 			// TODO, [terry] this chunk of code is repeated three times in windowGroup.js. It should be abstracted away
-			// TODO, [sidd] this code now uses async, previously was not using using the callback properly. Make all group functions do this
+			// TODO, [Sidd] this code now uses async, previously was not using using the callback properly. Make all group functions do this
 
 			__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0_async__["each"])(windowList, (w, callback) => {
 				let win;
@@ -9485,7 +18805,7 @@ class WindowGroup {
 			}
 		}
 
-		// If we are trying to hyperfocus a stack make sure to also include the children
+		// If we are trying to hyper focus a stack make sure to also include the children
 		for (let windowName in this.windows) {
 			let win = this.getWindow(windowName);
 			let parent = win.getParent();
@@ -9523,216 +18843,23 @@ class WindowGroup {
 /* harmony export (immutable) */ __webpack_exports__["a"] = WindowGroup;
 
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\common\\window\\windowGroup.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\common\\window\\windowGroup.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\window\\windowGroup.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\window\\windowGroup.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-
-/***/ 55:
-/***/ (function(module, exports, __webpack_require__) {
-
-var v1 = __webpack_require__(21);
-var v4 = __webpack_require__(45);
-
-var uuid = v4;
-uuid.v1 = v1;
-uuid.v4 = v4;
-
-module.exports = uuid;
-
-
-/***/ }),
-
-/***/ 6:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__systemSettings__ = __webpack_require__(26);
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-
-
-/**
- * @introduction
- * <h2>Finsemble Vaidate Functions</h2>
- *
- */
-
-/**
- * Constructor for Finsemble argment validator.
- *
- * Validatation logic is ONLY RAN when SystemSettings diagnotics level is set to debug (i.e. 4 or above)
- * A failed validation will generate a warning message, but nothing more; however application logic can check the validation results.
- *
- * @param {string} console Finsemble console object used to display messages and check diagnotic level
- * @constructor
- * @shouldBePublished false
- */
-var Validate = function () {
-
-	function warningMsg(paramDescript, thisArg, thisArgType) {
-
-		function getErrorObject() {
-			try {
-				throw Error('');
-			} catch (err) {
-				return err;
-			}
-		}
-
-		var err = getErrorObject();
-
-		var caller_line1 = err.stack.split("\n")[5];
-		var index1 = caller_line1.indexOf("at ");
-		var msgPart1 = caller_line1.slice(index1 + 2, caller_line1.length);
-
-		var caller_line2 = err.stack.split("\n")[6];
-		var index2 = caller_line2.indexOf("at ");
-		var msgPart2 = caller_line2.slice(index2 + 2, caller_line2.length);
-
-		console.warn("parameter validation failed: parameter " + paramDescript + " is of type '" + typeof thisArg + "' but should be of type '" + thisArgType + "' in" + msgPart1 + " called by" + msgPart2);
-	}
-
-	/**
-  * Confirm parameters are valid. A variable number of parameter pairs are supported.
-  * @param {any} param1 is arg to validate
-  * @param {string} paramType1 is required type for parameter (if '=' suffix then parameter is optional). "any" represents any type (but not "undefined").
-  * @param {any=} param2 is next arg to validate
-  * @param {string=} paramType2 os required type for next arg
-  * @return {boolean} returns turn if parameter list is valid; otherwise, false.
-  *
-  * @example
-  *
-  * var validate = new Validate(console);
-  * validate.args(name, "string", age, "number")
-  *
-  * validate.args(topic, "string", initialState, "object="); // with optional paramter (represented by "=")
-  *
-  * validate.args(topic, "string", initialState, "any"); // with "any" type
-  *
-  * validate.args(subscribeIDStruct, "object") && validate.args(subscribeIDStruct.subscribeID, "string"); // only do second varidate if first test successful
-  *
-  * validate.args(subscribeIDStruct, "object", subscribeIDStruct.subscribeID, "string"); // only check second parm if first validated successful
-  *
-  * validate.args(topic, "any", initialState, "object=", params, "object="); // depending on logic, can break into separate validations
-  * params = params || {};
-  * validate.args(params.subscribeCallback, "function=", params.publishCallback, "function=", params.unsubscribeCallback, "function=");
-  */
-	this.args = function (param1, paramType1, param2, paramType2 /*.....optional more paramter pairs....*/) {
-		var returnCode = true;
-		if (__WEBPACK_IMPORTED_MODULE_0__systemSettings__["a" /* default */].validationEnabled()) {
-			var parmCount = arguments.length;
-			if ((parmCount + 1) % 2 !== 0) {
-				// parameters must come in pairs (i.e. even number)
-				for (var i = 0; i < parmCount; i = i + 2) {
-					var optionalArg = false;
-					var thisArg = arguments[i];
-					var thisArgType = arguments[i + 1];
-					if (thisArgType.slice(-1) === "=") {
-						// if last char is "=" then optional argument
-						thisArgType = thisArgType.slice(0, -1);
-						optionalArg = true;
-					}
-					if (typeof thisArg !== thisArgType) {
-						// confirms basic case -- the required type
-						if (!optionalArg || typeof thisArg !== "undefined") {
-							// but optional parms can be undefined
-							if (typeof thisArg === "undefined" || thisArgType !== "any") {
-								// but "any" type doesn't have to match but can't be undefined
-								var parameterPosition = i / 2 + 1;
-								warningMsg(parameterPosition, thisArg, thisArgType);
-								returnCode = false;
-								break;
-							}
-						}
-					}
-				}
-			} else {
-				console.warn("validate.args requires even number of parameters: " + JSON.stringify(arguments));
-			}
-		}
-		return returnCode; // always return turn when validation is disable due debug lebel turned off
-	};
-
-	/**
-  * Confirm parameters are valid. args2() has the same functionality as args() except a third "parameter description" is passed in for each argument varified
-  * Typically this for passing in a properties name for better diagnostic messages when varifying object properties.
-  * A variable number of parameter "triples"" are supported.
-  *
-  * @param {string} paramName1 is descriptive name of param1 (for diagnostic message)
-  * @param {any} param1 is arg to validate
-  * @param {string} paramType1 is required type for parameter (if '=' suffix then parameter is optional). "any" represents any type (but not "undefined").
-  * @param {string} paramName2 is descriptive name of param1 (for diagnostic message)
-  * @param {any} param2 is arg to validate
-  * @param {string} paramType2 is required type for parameter (if '=' suffix then parameter is optional). "any" represents any type (but not "undefined").
-  * @return {boolean} returns turn if parameter list is valid; otherwise, false.
-  *
-  * @example
-  *
-  * var validate = new Utils.Validate(console);
-  * validate.args2("record.name", record.name, "string", "record.age", age, "number")
-  *
-  * // common case using args() and args2() together
-  * validate.args(topic, "any", initialState, "object=", params, "object=") &&
-  *   validate.args2("params.subscribeCallback", params.subscribeCallback, "function=", "params.publishCallback", params.publishCallback, "function=") &&
-  *   validate.args2("params.unsubscribeCallback", params.unsubscribeCallback, "function=");
-  */
-	this.args2 = function (paramName1, param1, paramType1, paramName2, param2, paramType2 /*.....optional, more paramter sets of three....*/) {
-
-		var returnCode = true;
-		if (__WEBPACK_IMPORTED_MODULE_0__systemSettings__["a" /* default */].validationEnabled()) {
-			var parmCount = arguments.length;
-			if ((parmCount + 1) % 3 !== 0) {
-				// parameters must come in sets of three
-				for (var i = 0; i < parmCount; i = i + 3) {
-					var optionalArg = false;
-					var thisArgName = arguments[i];
-					var thisArg = arguments[i + 1];
-					var thisArgType = arguments[i + 2];
-					if (thisArgType.slice(-1) === "=") {
-						// if last char is "=" then optional argument
-						thisArgType = thisArgType.slice(0, -1);
-						optionalArg = true;
-					}
-					if (typeof thisArg !== thisArgType) {
-						// confirms basic case -- the required type
-						if (!optionalArg || typeof thisArg !== "undefined") {
-							// but optional parms can be undefined
-							if (typeof thisArg === "undefined" || thisArgType !== "any") {
-								// but "any" type doesn't have to match but can't be undefined
-								var parameterPosition = i / 2 + 1;
-								warningMsg(thisArgName, thisArg, thisArgType);
-								returnCode = false;
-								break;
-							}
-						}
-					}
-				}
-			} else {
-				console.warn("validate.args requires even number of parameters: " + JSON.stringify(arguments));
-			}
-		}
-		return returnCode; // always return turn when validation is disable due debug lebel turned off
-	};
-};
-
-/* harmony default export */ __webpack_exports__["default"] = (new Validate());
-
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\common\\validate.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\common\\validate.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
-
-/***/ }),
-
-/***/ 62:
+/* 60 */,
+/* 61 */,
+/* 62 */,
+/* 63 */,
+/* 64 */,
+/* 65 */,
+/* 66 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const ObjectPool_1 = __webpack_require__(53);
+const ObjectPool_1 = __webpack_require__(58);
 class WindowPool extends ObjectPool_1.ObjectPool {
     *iterator() {
         for (let windowName in this.objects) {
@@ -9747,15 +18874,19 @@ exports.WindowPool = WindowPool;
 
 
 /***/ }),
-
-/***/ 69:
+/* 67 */,
+/* 68 */,
+/* 69 */,
+/* 70 */,
+/* 71 */,
+/* 72 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_window_windowGroup__ = __webpack_require__(54);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__dockableBox__ = __webpack_require__(48);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__constants__ = __webpack_require__(51);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__boxMath__ = __webpack_require__(44);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_window_windowGroup__ = __webpack_require__(59);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__dockableBox__ = __webpack_require__(54);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__constants__ = __webpack_require__(56);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__boxMath__ = __webpack_require__(49);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 
@@ -9811,7 +18942,7 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 
 		//Number of time's we've tried to fill a particular time. It's limited to 20 attempts to prevent infinite loops. Logs are emitted if we get into that state. Better to throw a warning than an infinite loop.
 		this.fillAttempts = 0;
-		// Add all dockablebox methods to this
+		// Add all dockableBox methods to this
 		this.dockableBox = new __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* default */]();
 		this.inheritDockableBox();
 		this.removeWindow = this.removeWindow.bind(this);
@@ -9913,7 +19044,7 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 	}
 
 	/**
-  * When you move a group of windows left to right, the anchor algo finds the left-most window, and then sorts all of the windows on how close they are to that window. This function just finds the approrpiate anchor for that move.
+  * When you move a group of windows left to right, the anchor algorithm finds the left-most window, and then sorts all of the windows on how close they are to that window. This function just finds the appropriate anchor for that move.
   * @param {*} movingDirection
   */
 	getMoveAnchor(movingDirection) {
@@ -9989,7 +19120,7 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 
 			if (comparingDimension === "top" || comparingDimension === "left") {
 				//Will order the array in ascending order.
-				//In OF's virtual screen, the top-left is the 0,0 point (though it could be (-2000, 2000), or whatever). The higher the top or left, the further to the right the window is. The higher the top number, the closer to the bottom of the screen the window is.
+				//In OpenFin's virtual screen, the top-left is the 0,0 point (though it could be (-2000, 2000), or whatever). The higher the top or left, the further to the right the window is. The higher the top number, the closer to the bottom of the screen the window is.
 				return aDim - bDim;
 			}
 			//sort the array in descending order.
@@ -10334,7 +19465,10 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 
 		this.getWindowArray().forEach(win => windowBounds[win.name] = win.getBounds());
 
-		calculator.cleanupSharedEdges(this, windowBounds);
+		/**
+   * 8/13/19 JC: Added true to the end to set 'triggerByAutoArrange', this will tell the calculator to move the group and to save the bounds
+   */
+		calculator.cleanupSharedEdges(this, windowBounds, true);
 
 		this.updateBounds();
 	}
@@ -10403,9 +19537,6 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 			//@todo, what went wrong to cause this.................
 			return [];
 		}
-		var splitEdge = edge.split(/(?=[A-Z])/).map(function (s) {
-			return s.toLowerCase();
-		});
 
 		var oppEdge = __WEBPACK_IMPORTED_MODULE_2__constants__["OPPOSITE_EDGE_MAP"][edge];
 		var windowSegment = win.getEdges("obj", includeCorners)[edge];
@@ -10573,7 +19704,7 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 		calculator.requestMove(newBounds, () => {
 			this.updateBounds();
 
-			//If we only partially filled the hole, calculate the remaining hole, and recurse.
+			//If we only partially filled the hole, calculate the remaining hole, and call recursively.
 			if (!this.isARectangle()) {
 				if (this.fillAttempts === 20) {
 					let windowBounds = JSON.stringify(this.getWindowArray().map(win => win.getBounds()));
@@ -10592,9 +19723,9 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 	}
 
 	moveTo(bounds, cb = Function.prototype) {
-		let anchor = this.getMoveAnchor("BottomRight");
-		const calculator = anchor.calculator;
-		bounds.name = anchor.name;
+		bounds.anchor = this.getMoveAnchor("BottomRight");
+		const calculator = bounds.anchor.calculator;
+		bounds.name = bounds.anchor.name;
 		bounds.changeType = 0;
 		calculator.requestMove(bounds, () => {
 			this.updateBounds();
@@ -10610,10 +19741,10 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 	getCornersThatCauseScaling() {
 		let { corners, edges } = this.getCornersAndEdgesOfAllWindows();
 		let uniqueCorners = corners.filter((value, index, self) => {
-			let firstOccurance = self.findIndex(val => {
+			let firstOccurence = self.findIndex(val => {
 				return val.x === value.x && val.y === value.y;
 			});
-			return firstOccurance === index;
+			return firstOccurence === index;
 		});
 		let cornersNotOnEdges = uniqueCorners.filter(corner => {
 			let otherEdges = edges.filter(edge => edge.window !== corner.window);
@@ -10682,7 +19813,7 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 	/**
   * Returns the scale of bounds 1 relative to bounds 2.
   * If bounds1 is 1, and bounds2 is 2, the scale will come out as 2.
-  * If boudns1 is 10 and bounds2 is 5, the scale will come out as 0.5. This is done for both x and y
+  * If bounds1 is 10 and bounds2 is 5, the scale will come out as 0.5. This is done for both x and y
   * @param {bounds} bounds1
   * @param {bounds} bounds2
   */
@@ -10696,7 +19827,7 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 	}
 
 	/**
-  * Essentiually moves the window's top-left to the x/y coordinates passed in.
+  * Essentially moves the window's top-left to the x/y coordinates passed in.
   * @param {object} params
   * @param {num} params.x x coordinate of a cartesian coordinate pair.
   * @param {num} params.y y coordinate of a cartesian coordinate pair.
@@ -10857,315 +19988,19 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 //DockableGroup.prototype = DockableBox;
 /* harmony default export */ __webpack_exports__["a"] = (DockableGroup);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\services\\window\\Docking\\dockableGroup.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\services\\window\\Docking\\dockableGroup.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\dockableGroup.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\dockableGroup.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-
-/***/ 7:
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-const routerClientInstance_1 = __webpack_require__(4);
-const validate_1 = __webpack_require__(6); // Finsemble args validator
-const logger_1 = __webpack_require__(0);
-const system_1 = __webpack_require__(3);
-const dependencyManager_1 = __webpack_require__(13);
-/**
- * @introduction
- * <h2>Base Client</h2>
- * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependecies are met, either client or service, the client's `onReady` method is fired.
- *
- * We're currently halfway through migrating our clients from extending a normal function prototype to an ES6 class.
- * "_BaseClient" represents the new class, while "BaseClient" is the original function. When the migration is complete,
- * we will remove the old function and rename "_BaseClient" to "BaseClient".
- * @constructor
- * @param {Object} params
- * @param {Function} params.onReady - A function to be called after the client has initialized.
- * @param {String} params.name - The name of the client
- * @shouldBePublished false
-    @example
-    import { _BaseClient as BaseClient } from "./baseClient";
-    var NewClient = function (params) {
-        BaseClient.call(this, params);
-        var self = this;
-
-        return this;
-    };
-
-    var clientInstance = new NewClient({
-        onReady: function (cb) {
-            Logger.system.log("NewClient Online");
-            cb();
-        },
-        name:"NewClient"
-    });
-    clientInstance.requiredServices = [REPLACE_THIS_ARRAY_WITH_DEPENENCIES];
-    clientInstance.initialize();
-    module.exports = clientInstance;
-    @private
- */
-class _BaseClient {
-    constructor(params) {
-        /** The current status of this service. */
-        this.status = "offline";
-        this.startupTime = 0;
-        this.initialized = false;
-        this.startupDependencies = { services: [], clients: [] };
-        /** Gets the current window. */
-        this.finsembleWindow = null;
-        /** Gets the current window name. */
-        this.windowName = "";
-        /** Queue of functions to process once the client goes online. */
-        this.clientReadyQueue = [];
-        /**
-         * @private
-         *
-         */
-        this.processClientReadyQueue = () => {
-            for (let cb of this.clientReadyQueue) {
-                cb();
-            }
-            this.clientReadyQueue = [];
-        };
-        /**
-         * @private
-         *
-         */
-        this.onReady = (cb) => {
-            this.clientReadyQueue.push(cb);
-            if (this.status === "online") {
-                this.processClientReadyQueue();
-            }
-        };
-        /** Check to see if the client can come online. We check this against the required services and clients */
-        /**
-     * @private
-     *
-     */
-        this.setClientOnline = () => {
-            this.status = "online";
-            const onReadyMessage = `STARTUP:CLIENT ONLINE:${this.finWindow.name}:${this.name}`;
-            this.startupTime = window.performance.now() - this.startupTime;
-            const readyCB = () => {
-                this.logger.system.debug(onReadyMessage);
-                this.processClientReadyQueue();
-                dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(this.name);
-            };
-            if (this._onReady) {
-                this._onReady(readyCB);
-            }
-            else {
-                readyCB();
-            }
-        };
-        /**
-         * @private
-         *
-         */
-        this.initialize = (cb = Function.prototype) => {
-            if (this.initialized)
-                return;
-            this.initialized = true;
-            this.startupTime = performance.now();
-            this.routerClient.onReady(() => {
-                // TODO, [terry] allow the finsembleWindow to be passed in, so we can support proxying windowClient in RPC
-                this.finWindow = system_1.System.Window.getCurrent();
-                this.windowName = this.finWindow.name;
-                this.logger.system.debug("Baseclient Init Router Ready", this.name);
-                dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor(this.startupDependencies, () => {
-                    cb();
-                    this.setClientOnline();
-                });
-            });
-        };
-        /**
-         * @private
-         *
-         */
-        this.onClose = (cb) => {
-            if (cb)
-                cb();
-        };
-        this.name = params.name;
-        this._onReady = params.onReady;
-        this.startupDependencies = params.startupDependencies || {
-            services: [],
-            clients: []
-        };
-        // @TODO - Refactor this to use DI.
-        this.logger = logger_1.default;
-        /**
-         * Reference to the RouterClient
-         */
-        this.routerClient = routerClientInstance_1.default;
-    }
-}
-exports._BaseClient = _BaseClient;
-/**
- * @introduction
- * <h2>Base Client</h2>
- * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependecies are met, either client or service, the client's `onReady` method is fired.
- * @constructor
- * @param {Object} params
- * @param {Function} params.onReady - A function to be called after the client has initialized.
- * @param {String} params.name - The name of the client
- * @shouldBePublished false
-    @example
-    import { _BaseClient as BaseClient } from "./baseClient";
-    var NewClient = function (params) {
-        BaseClient.call(this, params);
-        var self = this;
-
-        return this;
-    };
-
-    var clientInstance = new NewClient({
-        onReady: function (cb) {
-            Logger.system.log("NewClient Online");
-            cb();
-        },
-        name:"NewClient"
-    });
-    clientInstance.requiredServices = [REPLACE_THIS_ARRAY_WITH_DEPENENCIES];
-    clientInstance.initialize();
-    module.exports = clientInstance;
-    @private
- */
-var BaseClient = function (params) {
-    validate_1.default.args(params, "object=");
-    var self = this;
-    var status = "offline";
-    var onReady;
-    this.startupTime = 0;
-    if (params) {
-        if (params.onReady) {
-            onReady = params.onReady;
-        }
-        this.name = params.name;
-    }
-    this.initialized = false;
-    this.startupDependencies = params.startupDependencies || {
-        services: [],
-        clients: []
-    };
-    /**
-     * Reference to the RouterClient
-     *  @type {Object}
-     */
-    this.routerClient = routerClientInstance_1.default;
-    /**
-     * Gets the current openfin window - stays here for backward compatiblity
-     * @type {object}
-     */
-    this.finWindow = null;
-    /**
-     * Gets the current window
-     * @type {object}
-     */
-    this.finsembleWindow = null;
-    /**
-     * Gets the cusrrent window name
-     *  @type {string}
-     */
-    this.windowName = ""; //The current window
-    /**
-     * Services the are required to be online before the service can come online
-     *  @type {Array.<Object>}
-     */
-    this.requiredServices = [];
-    /**
-     * Clients the are required to be online before the service can come online
-     *  @type {Array.<Object>}
-     */
-    this.requiredClients = [];
-    /**
-     * Queue of functions to process once the client goes online.
-     * @private
-     */
-    this.clientReadyQueue = [];
-    /**
-     * Iterates through the clientReadyQueue, invoking each call to `.ready`.
-     */
-    this.processClientReadyQueue = function () {
-        for (var i = 0; i < this.clientReadyQueue.length; i++) {
-            let callback = this.clientReadyQueue[i];
-            if (typeof callback === "function") {
-                callback();
-            }
-        }
-        this.clientReadyQueue = [];
-    };
-    /**
-     * Method for adding callbacks to each client.
-     */
-    this.onReady = function (cb) {
-        this.clientReadyQueue.push(cb);
-        if (status === "online") {
-            this.processClientReadyQueue();
-        }
-    };
-    //Check to see if the client can come online. We check this against the required services and clients
-    this.setClientOnline = function () {
-        var self = this;
-        status = "online";
-        let onReadyMessage = `STARTUP:CLIENT ONLINE:${self.finWindow.name}:${self.name}`;
-        self.startupTime = performance.now() - self.startupTime;
-        if (onReady) {
-            onReady(function () {
-                logger_1.default.system.debug(onReadyMessage);
-                self.processClientReadyQueue();
-                dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(self.name);
-            });
-        }
-        else {
-            logger_1.default.system.debug(onReadyMessage);
-            self.processClientReadyQueue();
-            dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(self.name);
-        }
-    };
-    /**
-    * Starts the process of checking services and any other function required before the client can come online
-    */
-    this.initialize = function (cb = Function.prototype) {
-        if (self.initialized) {
-            return;
-        }
-        self.initialized = true;
-        self.setClientOnline = self.setClientOnline.bind(self);
-        self.startupTime = performance.now();
-        self.routerClient.onReady(function () {
-            // TODO, [terry] allow the finsembleWindow to be passed in, so we can support proxying windowClient in RPC
-            self.finWindow = system_1.System.Window.getCurrent();
-            self.windowName = self.finWindow.name;
-            logger_1.default.system.debug("Baseclient Init Router Ready", self.name);
-            dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor({
-                services: self.startupDependencies.services || [],
-                clients: self.startupDependencies.clients || []
-            }, () => {
-                cb();
-                self.setClientOnline();
-            });
-        });
-    };
-    this.onClose = function () { };
-};
-exports.default = BaseClient;
-
-
-/***/ }),
-
-/***/ 70:
+/* 73 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__boxMath__ = __webpack_require__(44);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__boxMath__ = __webpack_require__(49);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
+
+
 
 function DockableMonitor(params) {
 	let bounds;
@@ -11314,7 +20149,7 @@ function DockableMonitor(params) {
   * Determines if supplied window (or request) is near a given edge of the monitor
   *
   * @param {object} request The move request
-  * @return {string} A string containing any edges of the monitor the given requiest is near
+  * @return {string} A string containing any edges of the monitor the given request is near
   */
 	this.getSnappedEdge = function (request) {
 		let snappedEdge = "";
@@ -11427,6 +20262,7 @@ function DockableMonitor(params) {
 			height: height ? height : request.height
 		};
 
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("dockable.monitor.dockWindowToMonitor", request, width, height);
 		request.height = request.dockedHeight;
 		delete request.dockedHeight;
 
@@ -11463,6 +20299,8 @@ function DockableMonitor(params) {
   * @param {object} request The move request
   */
 	this.undockWindowFromMonitor = function (request) {
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("dockable.monitor.undockWindowFromMonitor", request);
+
 		//Old bounds is used by DockableWindow to determine its width and height when its undocked. In this scenario, since we're undocking and will use the oldBounds already stored in DockableWindow, we want to pass in an empty object since oldBounds will be empty when the component is undocked
 		this.onClaimedSpaceChanged({ win: request, oldBounds: {}, location: "NONE" });
 		return request;
@@ -11476,23 +20314,28 @@ function DockableMonitor(params) {
 
 /* harmony default export */ __webpack_exports__["a"] = (DockableMonitor);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\services\\window\\Docking\\dockableMonitor.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\services\\window\\Docking\\dockableMonitor.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\dockableMonitor.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\dockableMonitor.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-
-/***/ 71:
+/* 74 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__boxMath__ = __webpack_require__(44);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__dockableBox__ = __webpack_require__(48);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_disentangledUtils__ = __webpack_require__(46);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_lodash_get__ = __webpack_require__(35);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__boxMath__ = __webpack_require__(49);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__dockableBox__ = __webpack_require__(54);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_disentangledUtils__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_disentangledUtils___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__common_disentangledUtils__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_lodash_get__ = __webpack_require__(28);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_lodash_get___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_lodash_get__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_storageClient__ = __webpack_require__(21);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_storageClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__clients_storageClient__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__common_util__ = __webpack_require__(8);
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 /* global RouterClient */
+
+
 
 
 
@@ -11512,7 +20355,7 @@ let System;
  */
 let calculator;
 //Need config service in order to see if a particular window is dockable presentationalComponents -> components.Toolbar.component.dockable = true?
-const _throttle = __webpack_require__(20);
+const _throttle = __webpack_require__(22);
 
 //defaults for the openfin version.
 /*var OF_VERSION = {
@@ -11542,7 +20385,9 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
   * @param {Logger} dependencies.Logger
   */
 	constructor(win, bounds, dependencies) {
-		super(bounds);
+		var _this;
+
+		_this = super(bounds);
 		if (dependencies) {
 			calculator = dependencies.calculator;
 			System = dependencies.System;
@@ -11557,7 +20402,7 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 
 		// The default is to allow grouping. But if it is disabled using any of the various methods, disable it.
 		// @todo this is unsustainable. Needs some kind of cleanup. Should we differentiate docking/snapping?
-		if (typeof win.canGroup === 'boolean') {
+		if (typeof win.canGroup === "boolean") {
 			this.canGroup = win.canGroup;
 		} else {
 			const canGroup1 = __WEBPACK_IMPORTED_MODULE_3_lodash_get___default()(win, "windowDescriptor.customData.window.canGroup", true);
@@ -11582,6 +20427,8 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 		this.snappedWindows = [];
 		this.type = win.type;
 		this.calculator = calculator;
+		this.logger = Logger;
+		this.retrievedDockedWindowState = this.retrievedDockedWindowState.bind(this);
 		this.finishInitialize = this.finishInitialize.bind(this);
 		this.buildDefaultDockingOptions = this.buildDefaultDockingOptions.bind(this);
 		this.onBoundsChanged = this.onBoundsChanged.bind(this);
@@ -11596,8 +20443,13 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 		this.dock = this.dock.bind(this);
 		this.undock = this.undock.bind(this);
 		this.resizeThrottlePeriod = 5;
+
+		Logger.system.debug("dockableWindow constructing", this.name);
+
 		//This is triggered on a window move which is done by the user dragging a held down mouse over a window. In other words, this is only !finishedMove when a user is moving the window
-		this.win._stopMove();
+		// DH 3/6/2019 Setting the "markDirty" param to false ensures instantiating
+		// the DockableWindow doesn't mistakenly mark the workspace dirty.
+		this.win._stopMove(false);
 		const startTime = Date.now();
 		this.lastBoundsAdjustment = startTime;
 		this.resizeHandle = null;
@@ -11612,6 +20464,9 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 		this.ignoreTilingAndTabbingRequests = !this.allowTiling && !this.allowTabbing;
 		this.canMinimize = win.minimize;
 
+		// If the windowOptions say to show the taskbar icon, respect that. Default to true.
+		// This value is checked inside of showTaskbarIcon()
+		this.shouldShowTaskbarIcon = win.windowOptions && typeof win.windowOptions.showTaskbarIcon !== "undefined" ? win.windowOptions.showTaskbarIcon : true;
 		this.setBoundingBoxes();
 		this.addListeners();
 		//Disable the frame so that users cannot move the window. Only we move the window after we verify that their intended movement shouldn't result in a snap.
@@ -11620,7 +20475,9 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 		let options = win.hasOwnProperty("dockingOptions") ? win.dockingOptions : null;
 		let dockingDefaults = options !== null ? this.buildDefaultDockingOptions(options) : { isDockable: false };
 
+		// flag indicating if this a monitor-docked window (e.g. a toolbar)
 		this.isDockableComponent = dockingDefaults.isDockable;
+
 		this.monitorDockablePositions = {};
 		if (dockingDefaults.isDockable) {
 			if (Array.isArray(options.dockable)) {
@@ -11657,43 +20514,107 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 		//If overwriteDockedOptions is true we should expect there to be some information regarding this component in memory. That saved information will provide bounds for where the window should spawn
 		let startsDocked = options !== null && typeof options.startsDocked === "string" ? options.startsDocked : "none";
 
+		if (this.isDockableComponent) {
+			__WEBPACK_IMPORTED_MODULE_5__common_util__["Monitors"].on("monitors-changed", () => {
+				Logger.system.debug("MONITOR: monitors-changed so saveDockableData");
+				// keep the dockable window's monitor information up to date so can recognize on restart if monitor has changed
+				this.saveDockableData();
+				this.makeSureMonitorDockableIsVisible();
+			});
+		}
+
 		if (this.isDockableComponent && options && options.overwriteDockedOptions) {
-			this.win.getComponentState({}, (err, result) => {
-				if (err && err !== "Not found") {
-					Logger.system.error("Error retreiving component state. Using defaults.");
-					this.dockedPosition = this.monitorDockablePositions[startsDocked.toUpperCase()];
-					this.undockedPosition = {
+
+			// first look in component state for cached toolbar location -- this is only for backwards compatability with vertions before 3.9
+			this.win.getComponentState({}, (() => {
+				var _ref = _asyncToGenerator(function* (err, result) {
+					Logger.system.debug("MONITOR: getComponentState", err, result);
+					let monitorChanged, isToolbarVisible;
+
+					// for backwards compatability check if bounds data in component state, if not then check in storage
+					if (!result || !result.hasOwnProperty("window-bounds") || result["window-bounds"] == null) {
+						Logger.system.debug("MONITOR: read monitor-docked data from storage", err, result);
+
+						// get data from storage -- this is the normal path
+						result = yield __WEBPACK_IMPORTED_MODULE_4__clients_storageClient___default.a.get({ topic: win.name, key: win.name });
+					} else {
+						Logger.system.debug("MONITOR: using monitor-docked data from component state", err, result);
+						// since the bounds data is in component state only for backwords compatability, use it this time then remove it so that going forward the lastest values will be picked up from storage.
+						_this.win.setComponentState({
+							field: "window-bounds",
+							value: null
+						});
+					}
+					Logger.system.debug("MONITOR: DockableWindow get results", err, result);
+
+					let visible = result && result.hasOwnProperty("visible") && typeof result.visible === "boolean" ? result.visible : true;
+					let windowBounds = result && result.hasOwnProperty("window-bounds") && result["window-bounds"] !== null ? result["window-bounds"] : null;
+					let savedMonitorData = result ? result.monitorData : null;
+
+					// if all the saved data is available, then check if monitor changed since last restart;
+					// Note: currently monitorChanged is only used for diagnostics, but later will be used to affect window placement
+					if (windowBounds && savedMonitorData) {
+						monitorChanged = yield _this.monitorChanged(savedMonitorData);
+
+						// else since all the data isn't available, assume the monitors did not change since last restart;
+					} else {
+						monitorChanged = false;
+					}
+
+					// if could not find bounds data either in window state or in storage, then use default settings.
+					if (!windowBounds) {
+						Logger.system.debug("MONITOR: DockableWindow using defaults.", err);
+
+						_this.dockedPosition = _this.monitorDockablePositions[startsDocked.toUpperCase()];
+						_this.undockedPosition = {
+							width: dockingDefaults.undockedWidth,
+							height: dockingDefaults.undockedHeight
+						};
+
+						win._show();
+					} else {
+						// since have window Bounds, check if in visible space.  If not in visible space then will adjust bounds to be visible
+						let boundsToCheck = __WEBPACK_IMPORTED_MODULE_5__common_util__["clone"](windowBounds);
+						windowBounds = __WEBPACK_IMPORTED_MODULE_5__common_util__["adjustBoundsToBeOnMonitor"](boundsToCheck);
+						Logger.system.debug("MONITOR: DockableWindow status", result, monitorChanged, isToolbarVisible, boundsToCheck, windowBounds);
+
+						_this.top = windowBounds.top;
+						_this.bottom = windowBounds.bottom;
+						_this.left = windowBounds.left;
+						_this.right = windowBounds.right;
+						_this.width = windowBounds.width;
+						_this.height = windowBounds.height;
+						_this.dockedPosition = windowBounds.dockedPosition;
+
+						// move undocked toolbar to its previously saved location
+						_this.setBounds(windowBounds, function (err) {
+							// NOTE: there is a bug related to the "hidden" event that prevents visible state from being saved, so initial visiblity will alway be true until bug fixed
+							if (visible) {
+								win._show();
+								// observed problem with toolbar not being on top, so bring to front to
+								win._bringToFront();
+							}
+						});
+					}
+
+					_this.undockedPosition = {
 						width: dockingDefaults.undockedWidth,
 						height: dockingDefaults.undockedHeight
 					};
-					this.finishInitialize(options);
-					return;
-				}
-				let windowBounds = result && result.hasOwnProperty("window-bounds") && result["window-bounds"] !== null ? result["window-bounds"] : null;
-				if (!windowBounds) {
-					this.dockedPosition = this.monitorDockablePositions[startsDocked.toUpperCase()];
-				} else {
-					this.top = windowBounds.top;
-					this.bottom = windowBounds.bottom;
-					this.left = windowBounds.left;
-					this.right = windowBounds.right;
-					this.width = windowBounds.width;
-					this.height = windowBounds.height;
-					this.dockedPosition = windowBounds.dockedPosition;
-				}
 
-				this.undockedPosition = {
-					width: dockingDefaults.undockedWidth,
-					height: dockingDefaults.undockedHeight
-				};
+					_this.dockedParams = {
+						width: dockingDefaults.dockedWidth,
+						height: dockingDefaults.dockedHeight
+					};
 
-				this.dockedParams = {
-					width: dockingDefaults.dockedWidth,
-					height: dockingDefaults.dockedHeight
+					//@todo here we should check to see if the window's bounds match monitor bounds. If so, dock it. For now, we have a hack to not save the toolbar's location on dock.
+					_this.finishInitialize(options);
+				});
+
+				return function (_x, _x2) {
+					return _ref.apply(this, arguments);
 				};
-				//@todo here we should check to see if the window's bounds match monitor bounds. If so, dock it. For now, we have a hack to not save the toolbar's location on dock.
-				this.finishInitialize(options);
-			});
+			})());
 		} else if (dockingDefaults.isDocked && this.monitorDockablePositions.hasOwnProperty(startsDocked.toUpperCase())) {
 			this.dockedPosition = this.monitorDockablePositions[startsDocked.toUpperCase()];
 			this.undockedPosition = {
@@ -11721,6 +20642,77 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 	// }
 
 	/**
+  * Returns turn if the current monitor dimensions are different from the previous monitor dimensions
+  * @param {array} previousMonitorData the previous monitor info (an array of monitors)
+  */
+	monitorChanged(previousMonitorData) {
+		const monitorChangedPromiseResolver = resolve => {
+			System.getMonitorInfo(monitorInfo => {
+				let monitorData = [monitorInfo.primaryMonitor, ...monitorInfo.nonPrimaryMonitors];
+				let changed = false;
+				if (monitorData && previousMonitorData && monitorData.length == previousMonitorData.length) {
+					for (let i = 0; i < monitorData.length; i++) {
+						// since claimed space may change monitor dimensions, must compare against availableRect (which is independent of claimed space)
+						if (monitorData[i].availableRect.top != previousMonitorData[i].availableRect.top) changed = true;
+						if (monitorData[i].availableRect.bottom != previousMonitorData[i].availableRect.bottom) changed = true;
+						if (monitorData[i].availableRect.left != previousMonitorData[i].availableRect.left) changed = true;
+						if (monitorData[i].availableRect.right != previousMonitorData[i].availableRect.right) changed = true;
+						if (changed) break;
+					}
+				} else {
+					changed = true;
+				}
+				this.logger.system.debug("MONITOR: DockableWindow.monitorChanged", "monitorData", monitorData, "previousMonitorData", previousMonitorData, changed ? "changed" : "not changed");
+				resolve(changed);
+			});
+		};
+		return new Promise(monitorChangedPromiseResolver);
+	}
+
+	/**
+  * Returns turn if the toolber handle (i.e. what the user can grab to move toolbar) is visible on one of the current monitors (based on the toolbars current bounds
+  * @param {array} currentBounds the toolbars current bounds
+  */
+	isToolbarVisible(currentBounds) {
+		const isToolbarVisiblePromiseResolver = resolve => {
+			System.getMonitorInfo(monitorInfo => {
+				let monitorData = [monitorInfo.primaryMonitor, ...monitorInfo.nonPrimaryMonitors];
+				let isVisible = false;
+
+				// calculate the approximate bounds of the toolbar "handle", based on the current toolbar bounds;
+				// if these four points are within a single monitor then visible;
+				// this function is not exact since toolbar might span monitors but close enough until we rearchitect -- at worst will just move toolbar to default position;
+				// note the rightReference is calculated in relation to the left bounds
+				let topReference = currentBounds.top + 5;
+				let bottomReference = currentBounds.bottom - 5;
+				let leftReference = currentBounds.left + 5;
+				let rightReference = currentBounds.left + 20;
+
+				for (let i = 0; i < monitorData.length; i++) {
+					let topOK = false;
+					let bottomOK = false;
+					let leftOK = false;
+					let rightOK = false;
+
+					// since claimed space may change monitor dimensions, must compare against availableRect (which is independent of claimed space)
+					if (topReference >= monitorData[i].monitor.scaledRect.top) topOK = true;
+					if (bottomReference <= monitorData[i].monitor.scaledRect.bottom) bottomOK = true;
+					if (leftReference >= monitorData[i].monitor.scaledRect.left) leftOK = true;
+					if (rightReference <= monitorData[i].monitor.scaledRect.right) rightOK = true;
+
+					isVisible = topOK && bottomOK && leftOK && rightOK;
+
+					if (isVisible) break;
+				}
+				this.logger.system.debug("MONITOR: DockableWindow.isToolbarVisible", "monitorData", monitorData, "currentBounds", currentBounds, isVisible ? "isVisible" : "not visible");
+				this.logger.system.debug("MONITOR: DockableWindow.isToolbarVisible T-B-L-R=", topReference.toString(), bottomReference.toString(), leftReference.toString(), rightReference.toString());
+				resolve(isVisible);
+			});
+		};
+		return new Promise(isToolbarVisiblePromiseResolver);
+	}
+
+	/**
   * Returns a string representation of the docked location
   * @param {number} dockedPosition The integer value of the docked position
   */
@@ -11737,42 +20729,93 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 	}
 
 	/**
+  * Uses the state retrieved from storage and config to determine where to dock and dockable windows
+  * @param {object} params
+  * @param {Error} err The error, if any, returned from retrieving storage data
+  * @param {object} result The resulting data from storage
+  * @param {object} dockingDefaults The defaults to apply to dockable components
+  * @param {object} options The options retrieved from the config
+  * @param {boolean} startsDocked If true, the toolbar should dock
+  */
+	retrievedDockedWindowState(params) {
+
+		const { err, result, dockingDefaults, options, startsDocked } = params;
+
+		if (err && err !== "Not found") {
+			Logger.system.error("Error retrieving component state. Using defaults.");
+			this.dockedPosition = this.monitorDockablePositions[startsDocked.toUpperCase()];
+			this.undockedPosition = {
+				width: dockingDefaults.undockedWidth,
+				height: dockingDefaults.undockedHeight
+			};
+			this.finishInitialize(options);
+			return;
+		}
+
+		let windowBounds = result && result.hasOwnProperty("window-bounds") && result["window-bounds"] !== null ? result["window-bounds"] : null;
+
+		if (!windowBounds) {
+			this.dockedPosition = this.monitorDockablePositions[startsDocked.toUpperCase()];
+		} else {
+			this.top = windowBounds.top;
+			this.bottom = windowBounds.bottom;
+			this.left = windowBounds.left;
+			this.right = windowBounds.right;
+			this.width = windowBounds.width;
+			this.height = windowBounds.height;
+			this.dockedPosition = windowBounds.dockedPosition;
+		}
+
+		this.undockedPosition = {
+			width: dockingDefaults.undockedWidth,
+			height: dockingDefaults.undockedHeight
+		};
+
+		this.dockedParams = {
+			width: dockingDefaults.dockedWidth,
+			height: dockingDefaults.dockedHeight
+		};
+		//@todo here we should check to see if the window's bounds match monitor bounds. If so, dock it. For now, we have a hack to not save the toolbar's location on dock.
+		this.finishInitialize(options);
+	}
+
+	/**
   * Finishes the initialization of this dockable window
   * @param {object} dockingDefaults Defaults that have been determined by incoming config
   * @param {object} options
   */
 	finishInitialize(options) {
-		var _this = this;
+		var _this2 = this;
 
 		return _asyncToGenerator(function* () {
 			//This allows the config to specify whether a dockable component should show on the taskbar
-			_this.shouldShowTaskbarIcon = options !== null && options.hasOwnProperty("showTaskbarIcon") ? options.showTaskbarIcon : true;
-			_this.isDocked = _this.dockedPosition !== _this.monitorDockablePositions.NONE ? true : false;
+			_this2.shouldShowTaskbarIcon = options !== null && options.hasOwnProperty("showTaskbarIcon") ? options.showTaskbarIcon : true;
+			_this2.isDocked = _this2.dockedPosition !== _this2.monitorDockablePositions.NONE ? true : false;
 
 			//If the registering window is dockable, and wants to 'start docked' we need to determine which of the dockable positions it requests to start docked in. If the position is found, we call to dock it which will set the appropriate variables and move any launched windows out of its space.
-			if (_this.isDocked) {
+			if (_this2.isDocked) {
 				//We only dock the window if it's visible. If it's hidden, we don't want to claim space.
-				let locValue = _this.getDockedStringFromLocation(_this.dockedPosition);
+				let locValue = _this2.getDockedStringFromLocation(_this2.dockedPosition);
 				if (locValue !== null) {
-					let monitor = _this.calculator.getMonitorForWindow(_this);
+					let monitor = _this2.calculator.getMonitorForWindow(_this2);
 					let windowBounds = {
-						top: _this.top,
-						bottom: _this.bottom,
-						left: _this.left,
-						right: _this.right,
-						width: _this.width,
-						height: _this.height
+						top: _this2.top,
+						bottom: _this2.bottom,
+						left: _this2.left,
+						right: _this2.right,
+						width: _this2.width,
+						height: _this2.height
 					};
 
 					//Handles dimensions that need window specific calculations
 					switch (locValue) {
 						case "TOP":
-							windowBounds.height = _this.dockedParams.height;
+							windowBounds.height = _this2.dockedParams.height;
 							windowBounds.top = monitor.top;
 							windowBounds.bottom = monitor.top + windowBounds.height;
 							break;
 						case "BOTTOM":
-							windowBounds.height = _this.dockedParams.height;
+							windowBounds.height = _this2.dockedParams.height;
 							windowBounds.top = monitor.bottom - windowBounds.height;
 							windowBounds.bottom = monitor.bottom;
 							break;
@@ -11798,16 +20841,18 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 							break;
 					}
 
-					_this.setBounds(windowBounds, function (err) {
+					_this2.setBounds(windowBounds, function (err) {
 						if (err) {
 							Logger.system.error("Error moving dockable component to default docked position");
 						}
-						_this.dockedHeight = _this.dockedParams.height;
-						console.log("DOCKING TO MONITOR", locValue);
-						monitor.dockWindowToMonitor(_this, _this.undockedPosition.width, _this.undockedPosition.height);
+						_this2.dockedHeight = _this2.dockedParams.height;
+						monitor.dockWindowToMonitor(_this2, _this2.undockedPosition.width, _this2.undockedPosition.height);
 					});
 				}
 			}
+
+			// now that window is up, make sure the monitor data is save (also saved when bounds change or monitors change)
+			_this2.saveDockableData();
 		})();
 	}
 
@@ -11874,6 +20919,7 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 				width: oldBounds.width,
 				height: oldBounds.height
 			};
+			this.logger.system.debug("MONITOR: DockableWindow.dock", "undockedPosition", this.undockedPosition);
 
 			//Assuming the re-assignment of positions/size doesn't need to take place
 			//we don't need a switch here
@@ -11910,7 +20956,7 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 	}
 
 	hiddenUnclaimSpace() {
-		if (this.isDocked && this.isClaimingSpace) {
+		if (this.isDocked) {
 			let locValue = this.getDockedStringFromLocation(this.dockedPosition);
 			this.monitor.onClaimedSpaceChanged({
 				win: this,
@@ -11923,7 +20969,7 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 	}
 
 	unhiddenClaimSpace() {
-		if (this.isDocked && !this.isClaimingSpace) {
+		if (this.isDocked) {
 			let locValue = this.getDockedStringFromLocation(this.dockedPosition);
 			this.monitor.onClaimedSpaceChanged({
 				win: this,
@@ -11935,11 +20981,86 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 		}
 	}
 
+	saveDockableData() {
+		let thisWindow = this;
+		let bounds = {
+			top: thisWindow.top,
+			bottom: thisWindow.bottom,
+			left: thisWindow.left,
+			right: thisWindow.right,
+			width: thisWindow.width,
+			height: thisWindow.height,
+			isDockable: this.isDocked,
+			dockedPosition: thisWindow.dockedPosition
+		};
+
+		// must save the monitor date since if monitors changed since last restart then toolbar will use default settings (otherwise might have problems with visibility)
+		System.getMonitorInfo(monitorInfo => {
+			let monitorData = [monitorInfo.primaryMonitor, ...monitorInfo.nonPrimaryMonitors];
+			this.logger.system.debug("MONITOR: DockableWindow saveDockableData", monitorData, !this.isHidden, bounds);
+			__WEBPACK_IMPORTED_MODULE_4__clients_storageClient___default.a.save({
+				topic: this.name, key: this.name, value: {
+					visible: !this.isHidden,
+					"window-bounds": bounds,
+					monitorData
+				}
+			});
+		});
+	}
+
+	/**
+  * If toolbar is not visible then move it to a visible position
+  */
+	makeSureMonitorDockableIsVisible() {
+		var _this3 = this;
+
+		return _asyncToGenerator(function* () {
+			_this3.logger.system.debug("DockableWindow.makeSureMonitorDockableIsVisible");
+			let currentBounds = {
+				top: _this3.top,
+				bottom: _this3.bottom,
+				left: _this3.left,
+				right: _this3.right,
+				width: _this3.width,
+				height: _this3.height
+			};
+
+			// Could optionally put in user notication here.  I tested but commented out since not specified and it might be overkill.
+			// UserNotification.alert("system", "ALWAYS", "toolbar", "Toolbar moved out of visible space. Adjusted to a visible position.", { duration: 1000 * 3});
+
+			let newBounds = __WEBPACK_IMPORTED_MODULE_5__common_util__["adjustBoundsToBeOnMonitor"](currentBounds);
+			_this3.logger.system.debug("DockableWindow.makeSureMonitorDockableIsVisible requestMove", "currentBounds", currentBounds, "newBounds", newBounds);
+
+			// have to clone since the call below to calculator.requestMove modifies the bounds that were passed in (causing setBounds to be incorrect)
+			let newCopy = __WEBPACK_IMPORTED_MODULE_5__common_util__["clone"](newBounds);
+
+			// since the toolbar is not visible, set to new adjusted position;
+			// before moving, call request move to insure internal docking state is correctly maintained.
+			_this3.calculator.requestMove(newBounds, function (bounds) {
+				_this3.logger.system.debug("DockableWindow.makeSureMonitorDockableIsVisible setBounds", "newBounds", newBounds);
+				_this3.setBounds(newCopy, function (err) {
+					if (!_this3.hidden) {
+						_this3.win._show();
+						// when remote connection is made using RDP, the monitor changes will redisplay window and potentially leave toolbar on bottom;
+						// using a timer is dirty, but until we implement multi-monitor architecture there is not a signal to key on to indicate all monitor changes are done
+						// (i.e. the time to invoke bringToFront since all the other windows have already been moved); note this bringToFront fixes an observed problen when RDP
+						// caused the monitor change and the toolbar was left on the bottom of many other windows
+						setTimeout(function () {
+							_this3.logger.system.debug("DockableWindow.makeSureMonitorDockableIsVisible bringToFront");
+							_this3.win._bringToFront();
+						}, 3000);
+					}
+				});
+			});
+		})();
+	}
+
 	/**
  * @function {function name}
  * @return {type} {description}
  */
 	onBoundsChanged() {
+		this.logger.system.debug("MONITOR: onBoundsChanged", this.isDockableComponent);
 		//window.methodCalls["onBoundsChanged"]++;
 		//this represents the dockableWindow's context
 		this.setOpacity({ opacity: 1 });
@@ -11953,6 +21074,12 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 		this.monitor = this.calculator.getMonitorForWindow(this);
 		this.calculator.onMouseUp();
 		this.win._stopMove();
+
+		if (this.isDockableComponent) {
+			this.logger.system.debug("MONITOR: onBoundsChanged saveDockableData");
+			this.saveDockableData();
+			this.makeSureMonitorDockableIsVisible();
+		}
 	}
 
 	/**
@@ -11983,7 +21110,7 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 			var invalidateRequest = false;
 			var shouldThrottle = request.timestamp < self.lastBoundsAdjustment + self.resizeThrottlePeriod;
 
-			//@note this conditional here is for testing. Node is faster than JS or something. In openfin, we need to also exlude requests that came in at the same time as the request we last processed. I think they sometimes send multiple events and in my testing, that never happens. Truthfully though I don't know why this bit has to be different in the different environments. But I do remember losing a day when I ported this stuff from test-world to openfin. Don't delete it. --Brad
+			//@note this conditional here is for testing. Node is faster than JS or something. In openfin, we need to also exclude requests that came in at the same time as the request we last processed. I think they sometimes send multiple events and in my testing, that never happens. Truthfully though I don't know why this bit has to be different in the different environments. But I do remember losing a day when I ported this stuff from test-world to openfin. Don't delete it. --Brad
 			if (typeof fin === "undefined") {
 				invalidateRequest = shouldThrottle || request.timestamp < self.lastBoundsAdjustment;
 			} else {
@@ -12032,10 +21159,14 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 
 			//This comparison used to check right and bottom...props that don't exist on the request.
 			//If all of the bounds haven't changed, don't waste time processing it.
-			if (request.left === self.left && request.top === self.top && request.width === self.width && request.height === self.height) {
-				console.log("No change being requested. Dropping.");
-				if (callback) callback();
-				return;
+			//On monitor resolution change, bounds will not change, but we still need to move
+			//If the changeSource is "system", we might need to move even if the bounds haven't changed.
+			if (request.changeSource !== "system") {
+				if (request.left === self.left && request.top === self.top && request.width === self.width && request.height === self.height) {
+					console.debug("No change being requested. Dropping.");
+					if (callback) callback();
+					return;
+				}
 			}
 			self.win.eventManager.removeListener(BOUNDS_CHANGING, self.onBoundsChanging);
 
@@ -12205,7 +21336,7 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 			bottom: bounds.bottom,
 			persistBounds: bounds.persistBounds
 		};
-		//Old way was to update the monitor on the window when onMouseUp occurred, but now the OS (as well as user) can move a window and the monitor for that window should be updated everytime
+		//Old way was to update the monitor on the window when onMouseUp occurred, but now the OS (as well as user) can move a window and the monitor for that window should be updated every time
 		this.monitor = this.calculator.getMonitorForWindow(this);
 		//window.methodCalls["setBounds"]++;
 		this.win._setBounds({ bounds }, () => {
@@ -12337,12 +21468,36 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 		});
 	}
 
+	/**
+ * @function setHidden
+ * @param  {function=} callback when done
+ *
+  * Sets the internal state to hidden.  Only needed if window is hidden outside of this class.
+ */
+	setHidden(cb = Function.prototype) {
+		this.logger.system.debug("MONITOR: DockableWindow hide state");
+		this.isHidden = true;
+	}
+
+	/**
+ * @function setHidden
+ * @param  {function=} callback when done
+ *
+  * Sets the internal state to shown (i.e. not hidden). Only needed if window is hidden outside of this class.
+ */
+	setShown(cb = Function.prototype) {
+		this.logger.system.debug("MONITOR: DockableWindow.show state");
+		this.isHidden = false;
+	}
+
 	hide(cb = Function.prototype) {
 		this.win._hide(cb);
+		this.isHidden = true;
 	}
 
 	show(cb = Function.prototype) {
 		this.win._show(cb);
+		this.isHidden = false;
 	}
 
 	minimize(cb = Function.prototype) {
@@ -12450,12 +21605,12 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 	}
 
 	/**
-  * Adds eventListenrs so that when the finWIndow moves, we can do things with that data.
+  * Adds eventListeners so that when the finWIndow moves, we can do things with that data.
   */
 	addListeners() {
 		this.addEventListener(BOUNDS_CHANGED, this.onBoundsChanged);
-		//this.addEventListener('bounds-changed', onBoundsChangedOutside);
 		this.addEventListener(BOUNDS_CHANGING, this.onBoundsChanging);
+		this.win.addEventListener(BOUNDS_CHANGED, this.onBoundsChanged);
 		this.win.addEventListener("hidden", this.hiddenUnclaimSpace);
 		this.win.addEventListener("shown", this.unhiddenClaimSpace);
 		this.win.addEventListener(SYSTEM_BOUNDS_CHANGED, this.nativeWindowBoundsChanged);
@@ -12463,27 +21618,27 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 }
 /* harmony default export */ __webpack_exports__["a"] = (DockableWindow);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\services\\window\\Docking\\dockableWindow.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\services\\window\\Docking\\dockableWindow.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\dockableWindow.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\dockableWindow.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-
-/***/ 72:
+/* 75 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(global, process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__dockableMonitor__ = __webpack_require__(70);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__dockableGroup__ = __webpack_require__(69);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__dockableBox__ = __webpack_require__(48);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__boxMath__ = __webpack_require__(44);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__maskBoundsCalculator__ = __webpack_require__(73);
+/* WEBPACK VAR INJECTION */(function(global, process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__dockableMonitor__ = __webpack_require__(73);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__dockableGroup__ = __webpack_require__(72);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__dockableBox__ = __webpack_require__(54);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__boxMath__ = __webpack_require__(49);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__maskBoundsCalculator__ = __webpack_require__(76);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__maskBoundsCalculator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__maskBoundsCalculator__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_async__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_async___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_async__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Common_Pools_PoolSingletons__ = __webpack_require__(49);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Common_Pools_PoolSingletons__ = __webpack_require__(55);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Common_Pools_PoolSingletons___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6__Common_Pools_PoolSingletons__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_disentangledUtils__ = __webpack_require__(46);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__constants__ = __webpack_require__(51);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_disentangledUtils__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_disentangledUtils___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7__common_disentangledUtils__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__constants__ = __webpack_require__(56);
 
 
 
@@ -12503,7 +21658,7 @@ let System;
 var RouterClient = null;
 if (typeof window !== "undefined") {
 	if (window.RouterClient) {
-		//docking serviec
+		//docking service
 		RouterClient = window.RouterClient;
 	}
 }
@@ -12569,7 +21724,7 @@ function setBoundsErrorCB(err) {
  */
 class DockingCalculator {
 	/**
-  * @param {object} params Config for the Calclator
+  * @param {object} params Config for the Calculator
   * @param {object} dependencies Dependency object that provides the System, and Logger.
   * @param {System} dependencies.System
   * @param {Logger} dependencies.Logger
@@ -12582,13 +21737,13 @@ class DockingCalculator {
 			throw new Error("DockingCalculator class requires dependency injection. Ensure that dependencies are being passed in as the 2nd parameter.");
 		}
 
-		//object that's created onMouseDown. Used to cache potentially expensive operations and common information needed accros functions.
+		//object that's created onMouseDown. Used to cache potentially expensive operations and common information needed across functions.
 		this.resizeObject = {};
 		this.groupMode = {
 			enabled: true
 		};
 		this.groupMask = null;
-		//Placedholder for the moveRequest. @todo, see if this is necessary. Pretty sure I just pass the reference around everywhere.
+		//Placeholder for the moveRequest. @todo, see if this is necessary. Pretty sure I just pass the reference around everywhere.
 		this.moveRequest = null;
 		this.dockingPool = __WEBPACK_IMPORTED_MODULE_6__Common_Pools_PoolSingletons__["DockingPoolSingleton"];
 		//See comment above.
@@ -12599,7 +21754,7 @@ class DockingCalculator {
 		this.resizeEventThrottlePeriod = 0;
 		this.moveCount = 0;
 		this.intersection = null;
-		//The groupmask operations are asynchronous and take a variable amount of time. Generally speaking, show takes longer to complete than hide. So if you call show, and 4ms later call hide, you can finish hiding the group mask before the show has completed. This boolean tells the calculator whether the mask should be hidden or shown. Before calling .show or .hide, we check to see if the last function called matches. So if we expect the mask to be hidden, but we're about to call .show, we exit early.
+		//The group mask operations are asynchronous and take a variable amount of time. Generally speaking, show takes longer to complete than hide. So if you call show, and 4ms later call hide, you can finish hiding the group mask before the show has completed. This boolean tells the calculator whether the mask should be hidden or shown. Before calling .show or .hide, we check to see if the last function called matches. So if we expect the mask to be hidden, but we're about to call .show, we exit early.
 		this.groupMaskExpectedState = "hidden";
 		this.groupMaskQueue = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_5_async__["queue"])(function (task, callback) {
 			task(callback);
@@ -12618,7 +21773,7 @@ class DockingCalculator {
  * The general idea is that the user says "Hey, I'd like to move my window 10px to the right of this window. The calculator spins through, notices that the window that the user is moving is within a snapping buffer around the other window. So it responds, "You're too close to that window, sorry, but we're snapping you.". If the movingWindow isn't within the stationaryWindow's buffer, we give the window the all clear to proceed.
  ****************************************/
 	/**
- * This is the core controller of the program. It routes the window's moveRequest to the appropriate place, and it recieves the modified bounds afterwards. It communicates the modified bounds to the window via the CB.
+ * This is the core controller of the program. It routes the window's moveRequest to the appropriate place, and it receives the modified bounds afterwards. It communicates the modified bounds to the window via the CB.
  * @param  {moveRequest} Request from the `dockableWindow`.
  * @param  {function} cb What to do after the window's new bounds have been calculated.
  */
@@ -12685,6 +21840,27 @@ class DockingCalculator {
 		moveRequest.movingRegion = this.resizeObject.correctedHandle;
 		moveRequest.resizeHandle = moveRequest.forceResizeHandle ? moveRequest.resizeHandle : this.resizeObject.correctedHandle;
 
+		/**
+   * 5/20/19 Joe: Previously handleMoveRequestForMaximizedWindow was being called
+   * without setting movingGroup. In the event that the maximize request comes
+   * into a window that is a group, this will throw an error.
+   */
+		this.movingGroup = this.getMovingGroup(moveRequest);
+
+		/**
+   * 6/5/19 Joe: If the moving window is in a group (movingGroup is defined)
+   * and any windows in the group that aren't the moving window are maximized
+   * then restore them
+   */
+		if (this.movingGroup) {
+			Object.keys(this.movingGroup.windows).map(windowName => {
+				const win = this.movingGroup.windows[windowName];
+				if (win.isMaximized && win.name !== this.movingWindow.name) {
+					win.restore();
+				}
+			});
+		}
+
 		if (this.movingWindow.isMaximized) {
 			return this.handleMoveRequestForMaximizedWindow(userRequest, cb);
 		}
@@ -12717,7 +21893,7 @@ class DockingCalculator {
   */
 	handleMoveRequestForMaximizedWindow(req, cb) {
 		if (!req.mousePosition) {
-			Logger.system.error("Assertion Failed! A move request was received for a maximized window, but the request" + "is missing a mouse position. If moving the window programatically, did you forget to add a mouse position ? ");
+			Logger.system.error("Assertion Failed! A move request was received for a maximized window, but the request" + "is missing a mouse position. If moving the window programmatically, did you forget to add a mouse position ? ");
 			return cb(null);
 		}
 
@@ -12772,10 +21948,14 @@ class DockingCalculator {
 					cb(null);
 				});
 			}
+
+			// If the window has been restored, we want to reset this.movingWindow.isMaximized
+			// otherwise every subsequent move of this window will enter this function
+			this.movingWindow.isMaximized = false;
 		});
 	}
 	/**
-  * Makes sure that the requested move is occuring in space that is unclaimed by toolbars or other components. This should prevent a window from resizing/moving on top of a toolbar until it passes a threshold.
+  * Makes sure that the requested move is occurring in space that is unclaimed by toolbars or other components. This should prevent a window from resizing/moving on top of a toolbar until it passes a threshold.
   * @param {object} moveRequest moverequest.
   */
 	makeSureMoveIsInUnclaimedSpace(moveRequest) {
@@ -12873,6 +22053,28 @@ class DockingCalculator {
 	}
 
 	/**
+  * Loops through all DockableGroups and reconstitutes gaps. This is to clean up an issue where
+  * grouped windows containing a single pixel gap would break on mouse down as the system would
+  * no longer consider them snapped, and therefore would break and remove the group
+  */
+	fixAllGroupGaps() {
+		Object.values(this.getGroups()).forEach(group => {
+			this.cleanupGroupGaps(group);
+		});
+	}
+
+	/**
+  * Given a group, will clean up the gaps and reconstitute the groups
+  * @param {object} group An object containing groups, with groupName as key
+  */
+	cleanupGroupGaps(group) {
+		let windowBounds = this.getBoundsOfGroupWindows(group);
+		//windowBounds = this.cleanupSharedEdges(group, windowBounds, 0);
+		windowBounds = this.cleanupGaps(group, windowBounds);
+		this.setBoundsOfGroupWindows(group, windowBounds);
+	}
+
+	/**
   * This function caches information in the resizeObject so that it doesn't need to be calculated onMouseMove.
   */
 	onMouseDown(moveRequest) {
@@ -12882,6 +22084,11 @@ class DockingCalculator {
 		if (RouterClient) RouterClient.transmit("Assimilation.taskbar", { visible: false });
 
 		if (this.moveCount === 0) {
+			/*
+    * JC 7/26/19 - Cleanup group gaps on first move to solve an issue where grouped
+    * windows with a single pixel gap would break when the group was moved
+    */
+			this.fixAllGroupGaps();
 			this.recalculateSnaps();
 		}
 		this.moveCount++;
@@ -13062,8 +22269,17 @@ class DockingCalculator {
 				this.removeWindowFromAllGroups(win);
 			}
 
-			//Band-aid to prevent aeroshake from pummeling the application.
-			win.showTaskbarIcon();
+			// If this window is in a movable group, get the window in the
+			// top right and show only its taskbar icon.
+			const movableGroup = this.getMovableGroup(win.name);
+			if (movableGroup) {
+				let groupAnchor = movableGroup.getMoveAnchor("BottomLeft");
+				if (groupAnchor.name === win.name) {
+					win.showTaskbarIcon();
+				}
+			} else {
+				win.showTaskbarIcon();
+			}
 		}
 
 		let movedWin = {
@@ -13119,7 +22335,7 @@ class DockingCalculator {
 		this.movingGroup = null;
 		this.movingWindow = null;
 		this.resizeObject = {};
-		//moveRequest is null on groupmask resizes..sometimes.
+		//moveRequest is null on group mask resizes..sometimes.
 		//@todo, investigate.
 		if (this.moveRequest && this.groupMode.enabled && groupAction.name) {
 			// let group = this.getGroup(groupAction.name);
@@ -13171,17 +22387,19 @@ class DockingCalculator {
 		let isDone = false;
 		for (let i = 0; i < monitors.length; i++) {
 			let mon = monitors[i];
-			//Only need to move windows if the current monitor is the one we docked too and if the current window is on said monitor
+			//Only need to move windows if the current monitor is the one we docked to and if the current window is on said monitor
 			if (dockedWin.monitor.name === mon.name && win.monitor.name === mon.name) {
-				let { availableRect } = mon.rawMonitor;
-				// @todo remove these clones. Numbers don't need to be cloned.
+				// Use DockableMonitor's representation since that gets updated when dockableWindows
+				// are docked/undocked. Using unclaimedRect instead of availableRect, availableRect
+				// comes from the container, where unclaimedRect is maintained by DockingService
+				let { unclaimedRect } = mon;
 				let newBounds = {
-					left: __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_7__common_disentangledUtils__["clone"])(win.left),
-					right: __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_7__common_disentangledUtils__["clone"])(win.right),
-					top: __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_7__common_disentangledUtils__["clone"])(win.top),
-					bottom: __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_7__common_disentangledUtils__["clone"])(win.bottom),
-					height: __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_7__common_disentangledUtils__["clone"])(win.height),
-					width: __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_7__common_disentangledUtils__["clone"])(win.width),
+					left: win.left,
+					right: win.right,
+					top: win.top,
+					bottom: win.bottom,
+					height: win.height,
+					width: win.width,
 					changeType: 1,
 					name: win.name,
 					hasChanged: false,
@@ -13190,9 +22408,12 @@ class DockingCalculator {
 
 				//If we're docking a window to the top of the monitor, and the top another window is in claimed space, resize it so that the window shrinks by the height of the newly docked window. This basically squishes the window out of space it shouldn't be in.
 				if (dockedWin.monitorDockablePositions.TOP === dockedWin.dockedPosition) {
-					if (win.top <= availableRect.top) {
+					if (win.top < unclaimedRect.top) {
+						// Set the top of the window to the bottom of the toolbar docked to the top of the monitor
 						newBounds.top = dockedWin.bottom;
-						newBounds.height = newBounds.bottom - newBounds.top;
+						/* To calculate another dimension we need to assume one bound is fixed. Height shouldn't change so it's safer to calculate bottom from the new top and height.
+      Previously, we used the new top and old bottom of the window to calculate the new bottom. Depending on how the monitor dimensions changed this could cause the height to be set very small or even negative */
+						newBounds.bottom = newBounds.top + newBounds.height;
 						newBounds.hasChanged = true;
 						newBounds.mousePosition = {
 							x: win.left + win.width / 2,
@@ -13202,9 +22423,12 @@ class DockingCalculator {
 				}
 
 				if (dockedWin.monitorDockablePositions.BOTTOM === dockedWin.dockedPosition) {
-					if (win.bottom >= availableRect.bottom) {
+					if (win.bottom > unclaimedRect.bottom) {
+						// Set the bottom of the window to the top of the toolbar docked to the bottom of the monitor
 						newBounds.bottom = dockedWin.top;
-						newBounds.height = newBounds.bottom - newBounds.top;
+						/* To calculate another dimension we need to assume one bound is fixed. Height shouldn't change so it's safer to calculate the top from the new bottom and height.
+      Previously, we used the new bottom and old top of the window to calculate the new bottom. Depending on how the monitor dimensions changed this could cause the height to be set very small or even negative */
+						newBounds.top = newBounds.bottom - newBounds.height;
 						newBounds.hasChanged = true;
 						newBounds.mousePosition = {
 							x: win.left + win.width / 2,
@@ -13265,15 +22489,21 @@ class DockingCalculator {
 		let { action, dockableWin: win, dockableMonitor: monitor, location } = params;
 		Logger.system.warn("Adjust claimed space", action, location);
 
-		let adjustedMonitor;
+		let adjustedMonitor = monitor;
 		switch (action) {
 			case "dock":
-				adjustedMonitor = this.claimSpace(win, monitor, location);
-				win.isClaimingSpace = true;
+				// ToDo: this manipulation here of claimed space state within a window is lacking abstraction; ideally encapsulate the functionality within the DockableWindow;
+				// or minimally provide functions (win.enableClaimedSpace() and win.disableClaimedSpace())
+				if (!win.isClaimingSpace) {
+					adjustedMonitor = this.claimSpace(win, monitor, location);
+					win.isClaimingSpace = true;
+				}
 				break;
 			case "undock":
-				adjustedMonitor = this.releaseClaimedSpace(win, monitor);
-				win.isClaimingSpace = false;
+				if (win.isClaimingSpace) {
+					adjustedMonitor = this.releaseClaimedSpace(win, monitor);
+					win.isClaimingSpace = false;
+				}
 				break;
 			default:
 				break;
@@ -13338,6 +22568,8 @@ class DockingCalculator {
   * Updates local references of monitor information. Happens when a user removes/adds a monitor.
   */
 	updateMonitorInfo(monitorUpdate) {
+		Logger.system.debug("MONITOR: dockingCalculator.updateMonitorInfo", monitorUpdate);
+
 		restrictedAreas = [];
 		//@todo, pick up zones that are off limits from terry's update.
 		monitorUpdate.forEach(monitor => {
@@ -13610,12 +22842,10 @@ class DockingCalculator {
 		for (var snappedWindow of dockingPoolIterator) {
 			if (debug) {
 				Logger.system.debug("forceObjectsToLogger", "ws dockingPoolIterator", snappedWindow.name);
+				Logger.system.debug("forceObjectsToLogger", "ws win.sharesAnEdgeWith(snappedWindow)", win.sharesAnEdgeWith(snappedWindow));
 			}
 			if (snappedWindow.name === win.name) {
 				continue;
-			}
-			if (debug) {
-				Logger.system.debug("forceObjectsToLogger", "ws win.sharesAnEdgeWith(snappedWindow)", win.sharesAnEdgeWith(snappedWindow));
 			}
 			if (win.sharesAnEdgeWith(snappedWindow) || win.sharesACornerWith(snappedWindow)) {
 				this.snapTwoWindows(win, snappedWindow);
@@ -13858,7 +23088,7 @@ class DockingCalculator {
 
 			var bTop = b.top;
 			var bLeft = b.left;
-			//if the window's top is above the anchor's top, compare its bottom to the anchor's top. In a 3x3 grid, this will ensure that windows in row 2 end up after windows in row 3. Looking at the grid below, if we just compared the window's top to the anchor's top, window D would appear in the array before D, even though D is closer to G. By comparing the bottoms of windows above the anchor, we force the algo to look at the left instead of the top. That all may be a crock of shit, too. I Basically, if I resize from the top-right of this group I want it to go: G, H, I, D, E, F, A, B, C. The algo below does that.
+			//if the window's top is above the anchor's top, compare its bottom to the anchor's top. In a 3x3 grid, this will ensure that windows in row 2 end up after windows in row 3. Looking at the grid below, if we just compared the window's top to the anchor's top, window D would appear in the array before D, even though D is closer to G. By comparing the bottoms of windows above the anchor, we force the algorithm to look at the left instead of the top. That all may be a crock of shit, too. I Basically, if I resize from the top-right of this group I want it to go: G, H, I, D, E, F, A, B, C. The algorithm below does that.
 			/**
     * +-----------+--------------+-------------+
     * |           |              |             |
@@ -13931,7 +23161,7 @@ class DockingCalculator {
 	}
 
 	/**
-  * Virtually unsnaps a window from all other windows. This doesn't affect physical positioning. Only the relationships that Docking is a warae of.
+  * Virtually unsnaps a window from all other windows. This doesn't affect physical positioning. Only the relationships that Docking is a aware of.
   */
 	wipeSnapRelationships(name) {
 		let win = this.getWindow(name);
@@ -13964,7 +23194,7 @@ class DockingCalculator {
 	}
 
 	/**
- * Deregisters the window.
+ * Unregisters the window.
  * @param  {string} name
  */
 	removeWindow(name, removeListeners = true) {
@@ -14088,7 +23318,7 @@ class DockingCalculator {
 		monitorPool.add(monitor.name, monitor);
 	}
 	/**
- * Deregisters a monitor with the calculator.
+ * Unregisters a monitor with the calculator.
  * @param  {type} name
  * @return {type}
  */
@@ -14157,7 +23387,7 @@ class DockingCalculator {
 	}
 
 	/**
-  * At one point we weren't sure if we were going to allow groups to snap because of bugs. This is vestigal and should be removed at some point.
+  * At one point we weren't sure if we were going to allow groups to snap because of bugs. This is vestigial and should be removed at some point.
   */
 	setAllowGroupsToSnap(bool) {
 		ALLOW_GROUPS_TO_SNAP = bool;
@@ -14426,7 +23656,7 @@ class DockingCalculator {
 	}
 
 	/**
-  * Vestigal function; used to pop a window out of a group. Can likely be removed in the future.
+  * Vestigial function; used to pop a window out of a group. Can likely be removed in the future.
   */
 	ejectWindow(name) {
 		var win = this.getWindow(name);
@@ -14451,7 +23681,7 @@ class DockingCalculator {
  * @param  {number} groupMode.headerHeight How large the header is in windows. This shouldn't be in this config. So bad.
  * @param  {number} groupMode.groupTileBuffer How large the buffer is on the edge of a group to trigger a group-tile operation.
  * @param  {boolean} groupMode.allowSnappedWindowsToResize Whether snapped windows will resize as a group.
- * @param  {boolean} groupMode.fillHolesOnUndock Whether leaving a group triggers a hole-filling opeartion
+ * @param  {boolean} groupMode.fillHolesOnUndock Whether leaving a group triggers a hole-filling operation
  * @param  {boolean} groupMode.undockDisbandsEntireGroup Whether clicking the undock button on one window will disband the entire group.
  * @param  {boolean} groupMode.requireRectangularityForGroupResize Whether a group must be a rectangle to scale the individual windows as a unit.
  */
@@ -14519,7 +23749,7 @@ class DockingCalculator {
 
 	/**
  * Convenience function I used for like 2 minutes.
- * @todo, remove this funciton.
+ * @todo, remove this function.
  * @param  {dockableWindow} stationary
  * @param  {dockableWindow} moving
  */
@@ -14682,7 +23912,7 @@ class DockingCalculator {
  */
 	snapWindow(request) {
 		var intersection = null;
-		//order matters here. corners should take precedence, as they'll also handle the vanilla bottom/top/left/right order. The algo stops with the first intersection.
+		//order matters here. corners should take precedence, as they'll also handle the vanilla bottom/top/left/right order. The algorithm stops with the first intersection.
 		var regions = ["bottomLeft", "bottomRight", "topLeft", "topRight", "leftTop", "leftBottom", "rightTop", "rightBottom", "top", "left", "right", "bottom"];
 
 		var stationaryBoundingBoxes = stationaryWindow.snappingRegions;
@@ -15291,7 +24521,7 @@ class DockingCalculator {
   * @param {moveRequest} moveRequest
   */
 	scaleGroup(moveRequest) {
-		//TODO: see group.scale and conver this to use that
+		//TODO: see group.scale and convert this to use that
 		var self = this;
 		var group = this.getMovingGroup(moveRequest);
 		var groupIter;
@@ -15450,7 +24680,7 @@ class DockingCalculator {
 	}
 
 	/**
-  * This returns an object with all of the bounds of all of the windows in a given group. This should be moved in to the dockabeGroup.
+  * This returns an object with all of the bounds of all of the windows in a given group. This should be moved in to the dockableGroup.
   */
 	getBoundsOfGroupWindows(group) {
 		var groupIter = this.groupWindowIterator(group);
@@ -15470,7 +24700,12 @@ class DockingCalculator {
 		for (var win of groupIter) {
 			windowBounds[win.name].name = win.name;
 			this.moveWindow(windowBounds[win.name]);
-			if (stopMove) win.win.stopMove();
+			if (stopMove) {
+				win.win.stopMove();
+
+				//TODO: Calling stop move should take care of saving the window options, but didn't seem to work in for certain windows in groups
+				win.win._saveWindowOptions();
+			}
 		}
 	}
 	/**
@@ -15489,7 +24724,13 @@ class DockingCalculator {
 		return "";
 	}
 
-	cleanupSharedEdges(group, windowBounds) {
+	/**
+  * Cleans up shared edges of windows in a group
+  * @param {*} group The group to operate on
+  * @param {*} windowBounds An object containing bounds key'ed by window name
+  * @param {*} triggeredByAutoArrange Wether or not this cleanup was trigger by auto arrange (if true will fire stopMove())
+  */
+	cleanupSharedEdges(group, windowBounds, triggeredByAutoArrange = false) {
 		let groupIter = this.groupWindowIterator(group);
 		for (let win of groupIter) {
 			let edges = {
@@ -15527,7 +24768,7 @@ class DockingCalculator {
 				}
 			}
 		}
-		this.setBoundsOfGroupWindows(group, windowBounds);
+		this.setBoundsOfGroupWindows(group, windowBounds, triggeredByAutoArrange);
 		return windowBounds;
 	}
 
@@ -15678,7 +24919,7 @@ class DockingCalculator {
 	}
 
 	/**
-  * Run after everything, it removes any gaps that might have occured (e.g., from fractional pixels, rounding, etc). It needs better inline documentation.
+  * Run after everything, it removes any gaps that might have occurred (e.g., from fractional pixels, rounding, etc). It needs better inline documentation.
   */
 	cleanupGaps(group, windowBounds) {
 		var groupIter = this.groupWindowIterator(group);
@@ -15777,7 +25018,7 @@ class DockingCalculator {
 	resizeInteriorWindow(moveRequest) {
 		var shortCircuits = this.shouldShortCircuit(moveRequest);
 		var resizeHandle = this.resizeObject.correctedHandle;
-		//Hole filling algo for tiling calls this method. It passes in the resize handle. It'll never be a corner. No need for the resizeObject here.
+		//Hole filling algorithm for tiling calls this method. It passes in the resize handle. It'll never be a corner. No need for the resizeObject here.
 		if (moveRequest.forceResizeHandle) {
 			resizeHandle = moveRequest.resizeHandle;
 		}
@@ -15805,7 +25046,7 @@ class DockingCalculator {
 				}
 			}
 		}
-		//will snap the window to other windows before goign and modifying the rest of it
+		//will snap the window to other windows before going and modifying the rest of it
 		for (let i = 0, len = snappableWindows.length; i < len; i++) {
 
 			if (snappedWindowNames.includes(snappableWindows[i]) || snappableWindows[i] === this.movingWindow.name) {
@@ -15873,7 +25114,7 @@ class DockingCalculator {
 						return s.toLowerCase();
 					});
 					splitHandle.forEach(handle => {
-						//if splitHandle == bottomLeft and the originalHandle is bottom, we don't want to do anything with the Left edge. The algo will run through this function twice.
+						//if splitHandle == bottomLeft and the originalHandle is bottom, we don't want to do anything with the Left edge. The algorithm will run through this function twice.
 						var doStuff = handle === originalHandle || handle === __WEBPACK_IMPORTED_MODULE_8__constants__["OPPOSITE_EDGE_MAP"][originalHandle];
 						if (doStuff && !terds.includes(snapObj.name + handle)) {
 							movingWindowSnappedWindows.push({
@@ -16099,14 +25340,16 @@ class DockingCalculator {
 
 		let self = this;
 		let group = this.getMovableGroup(moveRequest.name);
-		let movingDirection = this.getMovingDirection(moveRequest, this.movingWindow);
-		let moveAnchor = group.getMoveAnchor(movingDirection);
-		if (moveAnchor === "NotMoving") {
-			return invokeCallback();
+		if (typeof moveRequest.anchor === "undefined") {
+			let movingDirection = this.getMovingDirection(moveRequest, this.movingWindow);
+			moveRequest.anchor = group.getMoveAnchor(movingDirection);
+			if (moveRequest.anchor === "NotMoving") {
+				return invokeCallback();
+			}
 		}
 		let updateGroupWindowsByDelta = function (delta, moveWindows, cb) {
 			// console.log("updateGroupWindowsByDelta", delta);
-			var groupIter = self.groupWindowIterator(group, moveAnchor);
+			var groupIter = self.groupWindowIterator(group, moveRequest.anchor);
 			//don't need to add anything if the delta is 0.
 			var modifyBounds = delta.x || delta.y;
 			for (let win of groupIter) {
@@ -16139,7 +25382,7 @@ class DockingCalculator {
 		};
 
 		let delta = self.getMoveDelta(moveRequest);
-		//processSnaps was added for moving groups out of claimed space. When you snapped a window to a movable group, the movable group would dsnap to the top of the other window rather than being dumped below the claimed space. Basically the first request whould shift it down 40px, but then it'd snap to the top of the other window. When we move windows out of claimed space, processSnaps is false.
+		//processSnaps was added for moving groups out of claimed space. When you snapped a window to a movable group, the movable group would snap to the top of the other window rather than being dumped below the claimed space. Basically the first request would shift it down 40px, but then it'd snap to the top of the other window. When we move windows out of claimed space, processSnaps is false.
 		if (ALLOW_GROUPS_TO_SNAP) {
 			//make the group get its new bounds, but don't move the windows until the snap calculation is finished.
 			updateGroupWindowsByDelta(delta, false);
@@ -16211,7 +25454,7 @@ class DockingCalculator {
 
 	/**
   * If a corner of a window is on the edge of the group, but it's not an actual corner, we need to treat that as an edge resize. See inline documentation for more. This is basically correcting errant resize-handles.
-  * @note this behavior is locked behind `requireRectangularityForGroupResize`. Without that flag turned on, there's no need to change the resizehandle.
+  * @note this behavior is locked behind `requireRectangularityForGroupResize`. Without that flag turned on, there's no need to change the resize handle.
   */
 	correctResizeObject(win, resizeObject, force) {
 		//If we don't require rectangularity, we don't need to  change the resize handle.
@@ -16327,7 +25570,7 @@ class DockingCalculator {
 		var snappableWindows = this.getSnappableWindows(moveRequest);
 		var snappableMonitors = this.getSnappableMonitors(moveRequest);
 
-		//When a window is moved (ends up inside checkBuffers) and it is docked, we can safely assume the window is being undocked (why else would you move a window that takes up the width of the window (or height)?). Here, we set the new bounds of the move request and call to undock the window, which will propegate to all the necessary items changing (the window will shrink, undock, etc).
+		//When a window is moved (ends up inside checkBuffers) and it is docked, we can safely assume the window is being undocked (why else would you move a window that takes up the width of the window (or height)?). Here, we set the new bounds of the move request and call to undock the window, which will propagate to all the necessary items changing (the window will shrink, undock, etc).
 		let dockableWin = this.movingWindow;
 		if (dockableWin.isDocked) {
 			//if the user tries to resize a docked component, ignore it.
@@ -16363,7 +25606,7 @@ class DockingCalculator {
 			snappableMonitors = [];
 		}
 
-		//processSnaps was added for moving groups out of claimed space. When you snapped a window to a movable group, the movable group would dsnap to the top of the other window rather than being dumped below the claimed space. Basically the first request whould shift it down 40px, but then it'd snap to the top of the other window. When we move windows out of claimed space, processSnaps is false.
+		//processSnaps was added for moving groups out of claimed space. When you snapped a window to a movable group, the movable group would snap to the top of the other window rather than being dumped below the claimed space. Basically the first request would shift it down 40px, but then it'd snap to the top of the other window. When we move windows out of claimed space, processSnaps is false.
 		if (moveRequest.processSnaps === false || !snappableWindows.length && !snappableMonitors.length && cb) {
 			moveRequest.finished = true;
 			this.hideGroupMask();
@@ -16405,7 +25648,7 @@ class DockingCalculator {
 			this.setStationaryWindow(win);
 			win.setOpacity({ opacity: SNAPPING_OPACITY });
 			modifiedRequest = this.snapWindow(moveRequest);
-			//The original request has been changed because of a snap to anstraddler window. replace the reference so new comparisons are made against the newly snapped window.
+			//The original request has been changed because of a snap to a straddler window. replace the reference so new comparisons are made against the newly snapped window.
 			moveRequest = modifiedRequest;
 
 			moveRequest.windowBoundingBox = __WEBPACK_IMPORTED_MODULE_3__boxMath__["a" /* default */].getWindowBoundingBox(moveRequest);
@@ -16552,7 +25795,7 @@ class DockingCalculator {
   *				Iterators				*
  ****************************************/
 	*groupWindowIterator(group, orderAnchor = this.movingWindow) {
-		//TODO: move this into group so you can do group.windowITerator (also will help clenaup group.scale)
+		//TODO: move this into group so you can do group.windowIterator (also will help cleanup group.scale)
 		let windows = this.orderWindows(group.windows, orderAnchor);
 		//preserves order..for .. in does not.
 		for (let i = 0; i < windows.length; i++) {
@@ -16566,12 +25809,11 @@ class DockingCalculator {
 }
 /* harmony default export */ __webpack_exports__["a"] = (DockingCalculator);
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\services\\window\\Docking\\dockingCalculator.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\services\\window\\Docking\\dockingCalculator.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(5), __webpack_require__(1), __webpack_require__(2)(module)))
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\dockingCalculator.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\dockingCalculator.js"); } } })();
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(4), __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-
-/***/ 73:
+/* 76 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(process) {// Wanted to do ES6 export but that didn't work in current WP configurations, not sure why
@@ -16609,7 +25851,7 @@ function mouseDown(initialBounds, mousePosition, resizeObj) {
  * @param {object} mousePosition The moveRequest's mousePosition (top and left)
  */
 function mousePosToBounds(mousePosition) {
-	// We will use the next 2 variales to decide whether we are modifying the width
+	// We will use the next 2 variables to decide whether we are modifying the width
 	// or height or both
 	const noHorResize = !resizeObject.movingEdges.left && !resizeObject.movingEdges.right;
 	const noVertResize = !resizeObject.movingEdges.top && !resizeObject.movingEdges.bottom;
@@ -16622,19 +25864,19 @@ function mousePosToBounds(mousePosition) {
 		left: oldBounds.left,
 		name: "groupMask"
 	};
-	// If we are chnaging the top position if the mask
+	// If we are changing the top position if the mask
 	// we know this when movingEdges.top is true
 	if (resizeObject.movingEdges.top) {
 		bounds.top = bounds.top + topPixels;
 		if (mousePosition.y > mouseDownPosition.y) {
-			// If wondering why *2, its because we initially added those 
+			// If wondering why *2, its because we initially added those
 			// pixels above, see const bounds = {}
 			bounds.height = bounds.height - Math.abs(topPixels * 2);
 		} else {
 			bounds.height = bounds.height + Math.abs(topPixels * 2);
 		}
 	}
-	// If we are chnaging the left position of the mask 
+	// If we are changing the left position of the mask
 	// we know this when movingEdges.left is true
 	if (resizeObject.movingEdges.left) {
 		bounds.left = bounds.left + leftPixels;
@@ -16648,6319 +25890,42 @@ function mousePosToBounds(mousePosition) {
 	return bounds;
 }
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\services\\window\\Docking\\maskBoundsCalculator.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\services\\window\\Docking\\maskBoundsCalculator.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\maskBoundsCalculator.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\maskBoundsCalculator.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-
-/***/ 8:
+/* 77 */,
+/* 78 */,
+/* 79 */,
+/* 80 */,
+/* 81 */,
+/* 82 */,
+/* 83 */,
+/* 84 */,
+/* 85 */,
+/* 86 */,
+/* 87 */,
+/* 88 */,
+/* 89 */,
+/* 90 */,
+/* 91 */,
+/* 92 */,
+/* 93 */,
+/* 94 */,
+/* 95 */,
+/* 96 */,
+/* 97 */,
+/* 98 */,
+/* 99 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony export (immutable) */ __webpack_exports__["getOpenfinVersion"] = getOpenfinVersion;
-/* harmony export (immutable) */ __webpack_exports__["castToPromise"] = castToPromise;
-/* harmony export (immutable) */ __webpack_exports__["isPercentage"] = isPercentage;
-/* harmony export (immutable) */ __webpack_exports__["crossDomain"] = crossDomain;
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getAllMonitors", function() { return getAllMonitors; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getMonitorFromOpenFinXY", function() { return getMonitorFromOpenFinXY; });
-/* harmony export (immutable) */ __webpack_exports__["getMonitorFromWindow"] = getMonitorFromWindow;
-/* harmony export (immutable) */ __webpack_exports__["getFinWindow"] = getFinWindow;
-/* harmony export (immutable) */ __webpack_exports__["getWindowDescriptor"] = getWindowDescriptor;
-/* harmony export (immutable) */ __webpack_exports__["findMonitor"] = findMonitor;
-/* harmony export (immutable) */ __webpack_exports__["getWhichMonitor"] = getWhichMonitor;
-/* harmony export (immutable) */ __webpack_exports__["getMonitorFromCommand"] = getMonitorFromCommand;
-/* harmony export (immutable) */ __webpack_exports__["windowOnMonitor"] = windowOnMonitor;
-/* harmony export (immutable) */ __webpack_exports__["getMonitorByDescriptor"] = getMonitorByDescriptor;
-/* harmony export (immutable) */ __webpack_exports__["getMonitor"] = getMonitor;
-/* harmony export (immutable) */ __webpack_exports__["getMyWindowIdentifier"] = getMyWindowIdentifier;
-/* harmony export (immutable) */ __webpack_exports__["camelCase"] = camelCase;
-/* harmony export (immutable) */ __webpack_exports__["clone"] = clone;
-/* harmony export (immutable) */ __webpack_exports__["getUniqueName"] = getUniqueName;
-/* harmony export (immutable) */ __webpack_exports__["guuid"] = guuid;
-/* harmony export (immutable) */ __webpack_exports__["injectJS"] = injectJS;
-/* harmony export (immutable) */ __webpack_exports__["openSharedData"] = openSharedData;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__system__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__ = __webpack_require__(22);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1__ = __webpack_require__(21);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_uuid_v1__);
-/*!
- * Copyright 2017 by ChartIQ, Inc.
- * All rights reserved.
- */
-
-
-const Monitors = new __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__["a" /* default */](Function.prototype, Function.prototype, { System: __WEBPACK_IMPORTED_MODULE_0__system__["System"] });
-/* harmony export (immutable) */ __webpack_exports__["Monitors"] = Monitors;
-
-
-
-
-var allMonitors = [];
-
-/*if (typeof fin !== "undefined") { //For Docking Tests -> removing this because Monitors are now handled bu the Monitors object. Docking tests will fail.
-	System.ready(() => {
-		System.addEventListener("monitor-info-changed", function () {
-			allMonitors = [];
-			getAllMonitors();
-		});
-	});
-}*/
-
-/**
- * Gets the openfin version in object form.
- */
-function getOpenfinVersion(cb = Function.prototype) {
-	return new Promise(function (resolve /*, reject*/) {
-		__WEBPACK_IMPORTED_MODULE_0__system__["System"].getVersion(ver => {
-			let verArr = ver.split(".").map(Number);
-			let versionObject = {
-				major: verArr[0],
-				chromium: verArr[1],
-				minor: verArr[2],
-				patch: verArr[3]
-			};
-			cb(versionObject);
-			resolve({ versionObject });
-		});
-	});
-};
-/**
-	 * Given a function _that returns a value_, this method will return a thenable object.
-	 * **NOTE** This will not work if your function doesn't return something.
-	 *  <example>
-	 *		function myFunc(){
-				console.log('I promise that this is not a promise.');
-			 }
-		let myPromise = util.castToPromise(myFunc);
-		myPromise().then(doSomethingElse);
-		</example>
-
-	 */
-function castToPromise(f) {
-	return function () {
-		return new Promise((resolve, reject) => {
-			//Calls f, checks to see if the returned object has a `then` method. if not, it will resolve the result from the intiial function.
-			const result = f.apply(null, Array.from(arguments));
-			try {
-				return result.then(resolve, reject);
-			} catch (e) {
-				if (e instanceof TypeError) {
-					resolve(result);
-				} else {
-					reject(e);
-				}
-			}
-		});
-	};
-};
-
-/**
- * @introduction
- * <h2>Finsemble Utility Functions</h2>
- */
-
-function isPercentage(val) {
-	if (typeof val !== "string") {
-		return false;
-	}
-	return val.indexOf("%") !== -1;
-};
-
-function crossDomain(url) {
-	var parser = document.createElement("a");
-	parser.href = url;
-
-	var isSameHost = window.location.hostname === parser.hostname;
-
-	var isSameProtocol = window.location.protocol === parser.protocol;
-
-	var wport = window.location.port === undefined ? window.location.port : 80;
-	var pport = parser.port === undefined ? parser.port : 80;
-	var isSamePort = wport === pport;
-
-	var isCrossDomain = !(isSameHost && isSamePort && isSameProtocol);
-	__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.debug("Launcher crossDomain=" + isCrossDomain + " (" + isSameHost + ":" + isSameProtocol + ":" + isSamePort + ")");
-	return isCrossDomain;
-};
-
-/**
- * Gets an array of monitor descriptors. Essentially rationalizing the results of OpenFin getMonitorInfo.
- * into a single array with additional information added.
- *
- * whichMonitor is set to the secondary monitor number, or "primary" if the primary monitor.
- * position is set to a zero index, where primary is the zero position, and each non-primary increments thereafter.
- *
- * Additionally, width and height are calculated and filled in for availableRect and monitorRect.
- *
- * @param {callback-array} cb Returns a list of monitor descriptors (optional or use promise)
- */
-var getAllMonitors = Monitors.getAllMonitors;
-
-/**
- * Retrieves a monitor descriptor given an absolute X Y on the OpenFin virtual screen
- * @param  {number} x The x position
- * @param  {number} y The y position
- * @param {callback-object}  cb Returns the monitor information from OpenFin.
- * "isPrimary" is set to true if it's the primary monitor.
- * null is returned if the x,y coordinates are beyond the bounds of the virtual screen.
- */
-var getMonitorFromOpenFinXY = Monitors.getMonitorFromScaledXY;
-
-/**
- * Retrieves a monitor descriptor for a window. If the window straddles two monitors
- * then the monitor from the top left is provided and "straddling" flag is set to true.
- *
- * @param  {WindowDescriptor}   windowDescriptor A windowDescriptor
- * @param  {Function} cb               Returns a monitor descriptor (optional or use promise)
- * @returns {Promise} A promise that resolves to a monitor descriptor
- */
-function getMonitorFromWindow(windowDescriptor, cb) {
-	var x = Number.isFinite(windowDescriptor.x) ? windowDescriptor.x : windowDescriptor.defaultLeft;
-	var y = Number.isFinite(windowDescriptor.y) ? windowDescriptor.y : windowDescriptor.defaultTop;
-	var x2 = x + windowDescriptor.defaultWidth;
-	var y2 = y + windowDescriptor.defaultHeight;
-	return new Promise(function (resolve, reject) {
-
-		// get monitor of top-left
-		Monitors.getMonitorFromScaledXY(x, y, function (monitor) {
-			if (!monitor) {
-				__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.debug("getMonitorFromWindow - top-left is off screen, trying bottom right");
-				// get monitor of bottom-right
-				Monitors.getMonitorFromScaledXY(x2, y2, function (monitor) {
-					if (!monitor) {
-						__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.debug("getMonitorFromWindow - bottom-right is off screen, getting primary");
-						// get primary monitor - add message to the monitor saying that this window isn't really on a monitor
-						Monitors.getAllMonitors(function (monitors) {
-							if (monitors[0]) {
-								if (cb) {
-									cb(monitors[0]);
-								}
-								resolve(monitors[0]);
-							} else {
-								reject(new Error("Cannot find monitor for window."));
-								if (cb) {
-									cb(null);
-								}
-							}
-						});
-						return;
-					}
-					monitor = clone(monitor);
-					var monitorRect = monitor.monitorRect;
-					if (monitorRect.left < x || monitorRect.right < y) {
-						monitor.straddling = true;
-					}
-					if (cb) {
-						cb(monitor);
-					}
-					resolve(monitor);
-				});
-				return;
-			}
-			monitor = clone(monitor);
-			var monitorRect = monitor.monitorRect;
-			if (monitorRect.right > x2 || monitorRect.bottom > y2) {
-				monitor.straddling = true;
-			}
-			if (cb) {
-				cb(monitor);
-			}
-			resolve(monitor);
-		});
-	});
-};
-
-/**
- * Returns a finWindow or null if not found
- * @param  {WindowIdentifier}   windowIdentifier A window identifier
- * @param  {Function} cb               Optional callback containing finWindow or null if not found (or use Promise)
- * @return {Promise}                    Promise that resulves to a finWindow or rejects if not found
- */
-function getFinWindow(windowIdentifier, cb) {
-	return new Promise(function (resolve, reject) {
-		// Default to current window
-		var myWindow = __WEBPACK_IMPORTED_MODULE_0__system__["System"].Window.getCurrent();
-
-		// Get OpenFin options (windowDescriptor) for current window
-		// we need this info even if we're going to reference a different window
-		myWindow.getOptions(function (options) {
-			// If windowName is provided, then find that window
-			if (windowIdentifier && windowIdentifier.windowName) {
-				// If we didn't get a uuid from the caller, then assume
-				// it's the same window as current window
-				if (!windowIdentifier.uuid) {
-					windowIdentifier.uuid = options.uuid;
-				}
-				/**
-     * Try to wrap the window; if it exists, getInfo will get in
-     *  to the success function. If not, it'll go into the error callback.
-     */
-				let remoteWindow = __WEBPACK_IMPORTED_MODULE_0__system__["System"].Window.wrap(windowIdentifier.uuid, windowIdentifier.windowName);
-				remoteWindow.getInfo(() => {
-					if (cb) {
-						cb(remoteWindow);
-					}
-
-					resolve(remoteWindow);
-				}, function () {
-					if (cb) {
-						cb(null);
-					}
-					reject("Window " + windowIdentifier.windowName + " not found." + `UUID: ${windowIdentifier.uuid}`);
-					console.debug("util.getFinWindow: Window " + windowIdentifier.windowName + " not found");
-					return;
-				});
-			} else if (windowIdentifier && windowIdentifier.componentType) {
-				if (typeof LauncherService !== "undefined") {
-					let remoteWindow = LauncherService.componentFinder(windowIdentifier);
-					if (remoteWindow) {
-						resolve(remoteWindow);
-						if (cb) {
-							cb(remoteWindow);
-						}
-					} else {
-						reject("util.getFinWindow: Component " + windowIdentifier.componentType + " not found.");
-						if (cb) {
-							cb(null);
-						}
-					}
-				} else {
-					//@TODO, get this through a remote call to Launcher service
-					reject("getFinWindow by componentType is currently only operable within LaunchService");
-					if (cb) {
-						cb(null);
-					}
-				}
-			} else {
-				// return windowDescriptor for current window
-				if (cb) {
-					cb(myWindow);
-				}
-				resolve(myWindow);
-			}
-		});
-	});
-};
-
-/**
- * Retrieves a windowDescriptor given a windowIdentifier
- * @param {WindowIdentifier} [windowIdentifier] The window to locate. If empty then the current window is returned.
- * @param {function} cb Function to retrieve result (optional or use Promise)
- * @return {Promise} A promise that resolves to a WindowDescriptor
- */
-function getWindowDescriptor(windowIdentifier, cb) {
-	return new Promise(function (resolve, reject) {
-		getFinWindow(windowIdentifier).then(function (finWindow) {
-			finWindow.getOptions(function (options) {
-				if (cb) {
-					cb(options);
-				}
-				resolve(options);
-			});
-		}).catch(function (errorMessage) {
-			console.warn(errorMessage);
-			if (cb) {
-				cb(null);
-			}
-			reject(errorMessage);
-		});
-	});
-};
-
-function findMonitor(monitors, field, value) {
-	for (var i = 0; i < monitors.length; i++) {
-		var monitor = monitors[i];
-		if (monitor[field] === value) {
-			return monitor;
-		}
-	}
-	return null;
-};
-/**
- * @param {number} commandMonitor
- * @param {Array.<Object>} monitors
- * @param {number} launchingMonitorPosition
- * commandMonitor, monitors, launchingMonitorPosition
- */
-function getWhichMonitor(params, cb) {
-	//First release of this method took 3 params.
-	if (arguments.length > 2) {
-		params = {
-			commandMonitor: arguments[0],
-			monitors: arguments[1],
-			launchingMonitorPosition: arguments[2]
-		};
-		cb = null;
-	}
-	var monitor;
-	var { commandMonitor, monitors, launchingMonitorPosition } = params;
-	var isANumber = commandMonitor && commandMonitor !== "" || commandMonitor === 0;
-	if (commandMonitor === "primary") {
-		monitor = findMonitor(monitors, "whichMonitor", "primary");
-	} else if (commandMonitor === "next") {
-		let position = launchingMonitorPosition + 1;
-		if (position >= monitors.length) {
-			position = 0;
-		}
-		monitor = monitors[position];
-	} else if (commandMonitor === "previous") {
-		let position = launchingMonitorPosition - 1;
-		if (position < 0) {
-			position = monitors.length - 1;
-		}
-		monitor = monitors[position];
-	} else if (commandMonitor === "mine") {
-		var waiting = true;
-		//assuming this is always used in the launcher
-		var w = activeWindows.getWindow(params.windowIdentifier.windowName);
-		w._getBounds((err, bounds) => {
-			if (!err) {
-				Monitors.getMonitorFromScaledXY(bounds.left, bounds.top, monitor => {
-					cb(monitor);
-				});
-			} else {
-				monitor = monitors[0];
-				cb(monitor);
-			}
-		});
-	} else if (isANumber) {
-		if (commandMonitor >= monitors.length) {
-			commandMonitor = monitors.length - 1;
-		}
-		monitor = monitors.filter(monitor => monitor.position === commandMonitor)[0];
-	} else if (launchingMonitorPosition) {
-		monitor = monitors[launchingMonitorPosition];
-	}
-
-	if (!monitor) {
-		// primary if no monitor found
-		monitor = monitors[0];
-	}
-
-	if (!waiting) {
-		if (cb) {
-			cb(monitor);
-		} else {
-			//maintaining backwards compatibility
-			return monitor;
-		}
-	}
-};
-
-/**
- * Gets a monitorInfo based on a command. A command is the typical "monitor" param
- * @param  {string} commandMonitor   Monitor command. See {@link LauncherClient#spawn}
- * @param  {object} windowIdentifier The windowIdentifier of the calling function. Necessary to support "next","previous" an default.
- * @param {function} [cb] Optional callback
- * @returns {Promise} A promise that resolves to a monitorInfo
- */
-function getMonitorFromCommand(commandMonitor, windowIdentifier, cb) {
-	return new Promise(function (resolve /*, reject*/) {
-		getMonitor(windowIdentifier, function (monitorInfo) {
-			Monitors.getAllMonitors(function (monitors) {
-				let params = {
-					commandMonitor: commandMonitor,
-					monitors: monitors,
-					launchingMonitorPosition: monitorInfo.position
-				};
-				getWhichMonitor(params, function (finalMonitorInfo) {
-					if (cb) {
-						cb(finalMonitorInfo);
-					}
-					resolve(finalMonitorInfo);
-				});
-			});
-		});
-	});
-};
-
-/**
- * @private
- * @param {WindowDescriptor} windowDescriptor
- * @param {monitorDimensions} monitorDimensions
- * @returns {boolean} Whether window is on the current monitor.
- */
-function windowOnMonitor(windowDescriptor, monitorDimensions) {
-	//if right or left edge is within the window's bounds.
-	if (windowDescriptor.left >= monitorDimensions.left && windowDescriptor.left < monitorDimensions.right || windowDescriptor.right <= monitorDimensions.right && windowDescriptor.right > monitorDimensions.left) {
-		return true;
-	}
-	return false;
-};
-/**
- * Convenience function to get the monitor for the current window
- * @param {WindowDescriptor} [windowIdentifier] The window to find the monitor for. Current window if empty.
- * @param  {Function} cb Returns a monitor descriptor (optional or use Promise)
- * @returns {Promise} A promise that resolves to a monitor descriptor
- */
-function getMonitorByDescriptor(windowDescriptor, cb) {
-	return new Promise(function (resolve /*, reject*/) {
-		getMonitorFromWindow(windowDescriptor, function (monitor) {
-			if (cb) {
-				cb(monitor);
-			}
-			resolve(monitor);
-		});
-	});
-};
-/**
- * Convenience function to get the monitor for the current window
- * @param {WindowIdentifier} [windowIdentifier] The window to find the monitor for. Current window if empty.
- * @param  {Function} cb Returns a monitor descriptor (optional or use Promise)
- * @returns {Promise} A promise that resolves to a monitor descriptor
- */
-function getMonitor(windowIdentifier, cb) {
-	return new Promise(function (resolve, reject) {
-		getWindowDescriptor(windowIdentifier, function (windowDescriptor) {
-			if (!windowDescriptor) {
-				reject("util.getMonitor: Can't locate windowDescriptor.");
-			} else {
-				getMonitorFromWindow(windowDescriptor, function (monitor) {
-					if (cb) {
-						cb(monitor);
-					}
-					resolve(monitor);
-				});
-			}
-		});
-	});
-};
-/**
- * Returns a windowIdentifier for the current window
- * @param {Function} cb Callback function returns windowIdentifier for this window (optional or use Promise)
- * @returns {Promise} A promise that resolves to a windowIdentifier
- */
-// @TODO, [Terry] this should be eliminated in favor of calls to windowClient.getWindowIdentifier()
-function getMyWindowIdentifier(cb) {
-	var finWindow = __WEBPACK_IMPORTED_MODULE_0__system__["System"].Window.getCurrent();
-	return new Promise(function (resolve) {
-		finWindow.getOptions(windowDescriptor => {
-			var componentType = null;
-
-			// Figure out the component type from what was originally stored when we launched the window
-			// options.customData is where our stuff is found
-			var customData = windowDescriptor.customData;
-			if (customData && customData.component) {
-				componentType = customData.component.type;
-			}
-			var windowIdentifier = {
-				windowName: finWindow.name,
-				uuid: finWindow.uuid,
-				componentType: componentType
-			};
-
-			if (cb) {
-				cb(windowIdentifier);
-			}
-			resolve(windowIdentifier);
-		});
-	});
-};
-/**
- *	@returns {string} Transforms an array of strings into a camelcased string.
- * @memberof Utils
- */
-function camelCase() {
-	var str = "";
-	for (var i = 0; i < arguments.length; i++) {
-		str += " " + arguments[i];
-	}
-	return str.replace(/\s(.)/g, function ($1) {
-		return $1.toUpperCase();
-	}).replace(/\s/g, "").replace(/^(.)/, function ($1) {
-		return $1.toLowerCase();
-	});
-};
-
-/**
- * Convenience method for cloning an object.
- * @param  {any} from The thing you want to copy
- * @param {any=} to Where you want your copy to end up.
- * @return {any} to Where you want your copy gwe end up.
- */
-function clone(from, to) {
-	if (from === null || typeof from !== "object") {
-		return from;
-	}
-	// if (from.constructor != Object && from.constructor != Array) return from;
-	if (from.constructor == Date || from.constructor == RegExp || from.constructor == Function || from.constructor == String || from.constructor == Number || from.constructor == Boolean) {
-		return new from.constructor(from);
-	}
-
-	to = to || new from.constructor();
-
-	for (var n in from) {
-		to[n] = typeof to[n] === "undefined" ? clone(from[n], null) : to[n];
-	}
-
-	return to;
-}
-
-function getUniqueName(baseName) {
-	if (!baseName) {
-		baseName = "RouterClient";
-	}
-	var uuid = baseName + "-" + Math.floor(Math.random() * 100) + "-" + Math.floor(Math.random() * 10000);
-	return uuid;
-};
-
-function guuid() {
-	return __WEBPACK_IMPORTED_MODULE_3_uuid_v1___default()(); // return global uuid
-};
-
-function injectJS(path, cb) {
-	//Inject a script tag with the path given. Once the script is loaded, it executes the callback.
-	var script = document.createElement("script");
-	script.onload = cb;
-	script.type = "text/javascript";
-	script.async = true;
-	script.src = path;
-	var head = document.getElementsByTagName("head")[0];
-	var firstScript = head.getElementsByTagName("script")[0];
-	head.insertBefore(script, firstScript);
-};
-
-/** Daniel H. 1/14/2019
- * @TODO - This method is only used in the DragAndDrop client, and it introduces a sneaky circular dependency between
- * this module and the launcherClient. It should be refactored out of this module. This can't be done until v4.0.0, as
- * it would be a breaking change to our API.
- */
-/**
- * This will either open a component with the shared data or publish the shared data using the linker client if the window is linked.
- * @experimental
- *
- * @param {object} params
- * @param {object} [params.data]
- * @param {boolean} [params.publishOnly] if the component is linked, this will only publish the data, not force open a window if it does not exist. If the component is not linked, this is ignored.
- * @param {function} [params.multipleOpenerHandler] Optional. This function is called with on object that contains a map of componentTypes to the data types they can open. It must return a list of components to be opened. If no handler is provided, the first found component will be chosen. It is possible that the component opened may not handle all the data provided.
- * @param {function} cb callback invoked with action taken.
- *
- * @since 1.5: multipleOpenerHandler and callback added
- *
- */
-function openSharedData(params, cb) {
-	var launcherClient = FSBL.Clients.LauncherClient;
-	var linkerClient = FSBL.Clients.LinkerClient;
-	//If no handler is specified to deal with multiple components, use the first found
-	if (!params.multipleOpenerHandler) params.multipleOpenerHandler = function (componentsMappedToData) {
-		// find the component that can open the most amount of data
-		var maxDataTypesOpened = 0;
-		var componentToOpen;
-		for (var componentType of Object.keys(componentsMappedToData)) {
-			if (componentsMappedToData[componentType].length > maxDataTypesOpened) {
-				componentToOpen = componentType;
-				maxDataTypesOpened = componentsMappedToData[componentType].length;
-			}
-		}
-		return [componentToOpen];
-	};
-
-	var errors = [];
-	var componentsMappedToData = {};
-
-	// Loop through the data
-	launcherClient.getComponentsThatCanReceiveDataTypes({ dataTypes: Object.keys(params.data) }, function (err, dataTypeComponentMap) {
-		for (var dataType of Object.keys(dataTypeComponentMap)) {
-			if (!dataTypeComponentMap[dataType].componentTypes.length) {
-				var error = "No Components Available to Handle the type: " + dataType;
-				errors.push(error);
-				__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.error(error);
-			} else {
-				for (var component of dataTypeComponentMap[dataType].componentTypes) {
-					if (!componentsMappedToData[component]) {
-						componentsMappedToData[component] = [dataType];
-					} else componentsMappedToData[component].push(dataType);
-				}
-			}
-		}
-
-		// What if multiple components need to be opened?
-		var componentsToOpen = Object.keys(componentsMappedToData);
-		if (componentsToOpen.length) {
-			if (componentsToOpen.length > 1) {
-				componentsToOpen = params.multipleOpenerHandler(componentsMappedToData);
-			}
-			var linkerChannels = Object.keys(linkerClient.channels);
-			if (linkerChannels.length) {
-				//if linked
-				var linkedWindows = linkerClient.getLinkedComponents({ componentTypes: componentsToOpen, windowIdentifier: linkerClient.windowIdentifier() });
-				// TODO: deal with the case if not all componentTypes that need to be opened are linked
-				if (linkedWindows.length || params.publishOnly) {
-					// If pubishOnly is true then just publish, not spawn
-					linkerClient.publish({
-						dataType: "Finsemble.DragAndDropClient",
-						data: params.data
-					});
-					if (cb) cb(errors.length ? errors : null, "Data published");
-				} else {
-					// spawn
-					for (let component of componentsToOpen) {
-						launcherClient.spawn(component, {
-							data: {
-								sharedData: params.data,
-								linker: {
-									channels: linkerChannels
-								}
-							},
-							addToWorkspace: true
-						});
-					}
-					if (cb) cb(errors.length ? errors : null, "Linked Window(s) spawned with data");
-				}
-			} else {
-				if (!params.publishOnly) {
-					for (let component of componentsToOpen) {
-						launcherClient.spawn(component, {
-							data: {
-								sharedData: params.data
-							},
-							addToWorkspace: true
-						});
-					}
-					if (cb) cb(errors.length ? errors : null, "New Window(s) spawned with data");
-				}
-			}
-		} else {
-			if (cb) cb(errors.length ? errors : null, null);
-		}
-	});
-};
-
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\common\\util.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\common\\util.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
-
-/***/ }),
-
-/***/ 9:
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(setImmediate, process, global, module) {(function (global, factory) {
-   true ? factory(exports) :
-  typeof define === 'function' && define.amd ? define(['exports'], factory) :
-  (factory((global.async = global.async || {})));
-}(this, (function (exports) { 'use strict';
-
-function slice(arrayLike, start) {
-    start = start|0;
-    var newLen = Math.max(arrayLike.length - start, 0);
-    var newArr = Array(newLen);
-    for(var idx = 0; idx < newLen; idx++)  {
-        newArr[idx] = arrayLike[start + idx];
-    }
-    return newArr;
-}
-
-/**
- * Creates a continuation function with some arguments already applied.
- *
- * Useful as a shorthand when combined with other control flow functions. Any
- * arguments passed to the returned function are added to the arguments
- * originally passed to apply.
- *
- * @name apply
- * @static
- * @memberOf module:Utils
- * @method
- * @category Util
- * @param {Function} fn - The function you want to eventually apply all
- * arguments to. Invokes with (arguments...).
- * @param {...*} arguments... - Any number of arguments to automatically apply
- * when the continuation is called.
- * @returns {Function} the partially-applied function
- * @example
- *
- * // using apply
- * async.parallel([
- *     async.apply(fs.writeFile, 'testfile1', 'test1'),
- *     async.apply(fs.writeFile, 'testfile2', 'test2')
- * ]);
- *
- *
- * // the same process without using apply
- * async.parallel([
- *     function(callback) {
- *         fs.writeFile('testfile1', 'test1', callback);
- *     },
- *     function(callback) {
- *         fs.writeFile('testfile2', 'test2', callback);
- *     }
- * ]);
- *
- * // It's possible to pass any number of additional arguments when calling the
- * // continuation:
- *
- * node> var fn = async.apply(sys.puts, 'one');
- * node> fn('two', 'three');
- * one
- * two
- * three
- */
-var apply = function(fn/*, ...args*/) {
-    var args = slice(arguments, 1);
-    return function(/*callArgs*/) {
-        var callArgs = slice(arguments);
-        return fn.apply(null, args.concat(callArgs));
-    };
-};
-
-var initialParams = function (fn) {
-    return function (/*...args, callback*/) {
-        var args = slice(arguments);
-        var callback = args.pop();
-        fn.call(this, args, callback);
-    };
-};
-
-/**
- * Checks if `value` is the
- * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
- * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an object, else `false`.
- * @example
- *
- * _.isObject({});
- * // => true
- *
- * _.isObject([1, 2, 3]);
- * // => true
- *
- * _.isObject(_.noop);
- * // => true
- *
- * _.isObject(null);
- * // => false
- */
-function isObject(value) {
-  var type = typeof value;
-  return value != null && (type == 'object' || type == 'function');
-}
-
-var hasSetImmediate = typeof setImmediate === 'function' && setImmediate;
-var hasNextTick = typeof process === 'object' && typeof process.nextTick === 'function';
-
-function fallback(fn) {
-    setTimeout(fn, 0);
-}
-
-function wrap(defer) {
-    return function (fn/*, ...args*/) {
-        var args = slice(arguments, 1);
-        defer(function () {
-            fn.apply(null, args);
-        });
-    };
-}
-
-var _defer;
-
-if (hasSetImmediate) {
-    _defer = setImmediate;
-} else if (hasNextTick) {
-    _defer = process.nextTick;
-} else {
-    _defer = fallback;
-}
-
-var setImmediate$1 = wrap(_defer);
-
-/**
- * Take a sync function and make it async, passing its return value to a
- * callback. This is useful for plugging sync functions into a waterfall,
- * series, or other async functions. Any arguments passed to the generated
- * function will be passed to the wrapped function (except for the final
- * callback argument). Errors thrown will be passed to the callback.
- *
- * If the function passed to `asyncify` returns a Promise, that promises's
- * resolved/rejected state will be used to call the callback, rather than simply
- * the synchronous return value.
- *
- * This also means you can asyncify ES2017 `async` functions.
- *
- * @name asyncify
- * @static
- * @memberOf module:Utils
- * @method
- * @alias wrapSync
- * @category Util
- * @param {Function} func - The synchronous function, or Promise-returning
- * function to convert to an {@link AsyncFunction}.
- * @returns {AsyncFunction} An asynchronous wrapper of the `func`. To be
- * invoked with `(args..., callback)`.
- * @example
- *
- * // passing a regular synchronous function
- * async.waterfall([
- *     async.apply(fs.readFile, filename, "utf8"),
- *     async.asyncify(JSON.parse),
- *     function (data, next) {
- *         // data is the result of parsing the text.
- *         // If there was a parsing error, it would have been caught.
- *     }
- * ], callback);
- *
- * // passing a function returning a promise
- * async.waterfall([
- *     async.apply(fs.readFile, filename, "utf8"),
- *     async.asyncify(function (contents) {
- *         return db.model.create(contents);
- *     }),
- *     function (model, next) {
- *         // `model` is the instantiated model object.
- *         // If there was an error, this function would be skipped.
- *     }
- * ], callback);
- *
- * // es2017 example, though `asyncify` is not needed if your JS environment
- * // supports async functions out of the box
- * var q = async.queue(async.asyncify(async function(file) {
- *     var intermediateStep = await processFile(file);
- *     return await somePromise(intermediateStep)
- * }));
- *
- * q.push(files);
- */
-function asyncify(func) {
-    return initialParams(function (args, callback) {
-        var result;
-        try {
-            result = func.apply(this, args);
-        } catch (e) {
-            return callback(e);
-        }
-        // if result is Promise object
-        if (isObject(result) && typeof result.then === 'function') {
-            result.then(function(value) {
-                invokeCallback(callback, null, value);
-            }, function(err) {
-                invokeCallback(callback, err.message ? err : new Error(err));
-            });
-        } else {
-            callback(null, result);
-        }
-    });
-}
-
-function invokeCallback(callback, error, value) {
-    try {
-        callback(error, value);
-    } catch (e) {
-        setImmediate$1(rethrow, e);
-    }
-}
-
-function rethrow(error) {
-    throw error;
-}
-
-var supportsSymbol = typeof Symbol === 'function';
-
-function isAsync(fn) {
-    return supportsSymbol && fn[Symbol.toStringTag] === 'AsyncFunction';
-}
-
-function wrapAsync(asyncFn) {
-    return isAsync(asyncFn) ? asyncify(asyncFn) : asyncFn;
-}
-
-function applyEach$1(eachfn) {
-    return function(fns/*, ...args*/) {
-        var args = slice(arguments, 1);
-        var go = initialParams(function(args, callback) {
-            var that = this;
-            return eachfn(fns, function (fn, cb) {
-                wrapAsync(fn).apply(that, args.concat(cb));
-            }, callback);
-        });
-        if (args.length) {
-            return go.apply(this, args);
-        }
-        else {
-            return go;
-        }
-    };
-}
-
-/** Detect free variable `global` from Node.js. */
-var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
-
-/** Detect free variable `self`. */
-var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
-
-/** Used as a reference to the global object. */
-var root = freeGlobal || freeSelf || Function('return this')();
-
-/** Built-in value references. */
-var Symbol$1 = root.Symbol;
-
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * Used to resolve the
- * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
- * of values.
- */
-var nativeObjectToString = objectProto.toString;
-
-/** Built-in value references. */
-var symToStringTag$1 = Symbol$1 ? Symbol$1.toStringTag : undefined;
-
-/**
- * A specialized version of `baseGetTag` which ignores `Symbol.toStringTag` values.
- *
- * @private
- * @param {*} value The value to query.
- * @returns {string} Returns the raw `toStringTag`.
- */
-function getRawTag(value) {
-  var isOwn = hasOwnProperty.call(value, symToStringTag$1),
-      tag = value[symToStringTag$1];
-
-  try {
-    value[symToStringTag$1] = undefined;
-    var unmasked = true;
-  } catch (e) {}
-
-  var result = nativeObjectToString.call(value);
-  if (unmasked) {
-    if (isOwn) {
-      value[symToStringTag$1] = tag;
-    } else {
-      delete value[symToStringTag$1];
-    }
-  }
-  return result;
-}
-
-/** Used for built-in method references. */
-var objectProto$1 = Object.prototype;
-
-/**
- * Used to resolve the
- * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
- * of values.
- */
-var nativeObjectToString$1 = objectProto$1.toString;
-
-/**
- * Converts `value` to a string using `Object.prototype.toString`.
- *
- * @private
- * @param {*} value The value to convert.
- * @returns {string} Returns the converted string.
- */
-function objectToString(value) {
-  return nativeObjectToString$1.call(value);
-}
-
-/** `Object#toString` result references. */
-var nullTag = '[object Null]';
-var undefinedTag = '[object Undefined]';
-
-/** Built-in value references. */
-var symToStringTag = Symbol$1 ? Symbol$1.toStringTag : undefined;
-
-/**
- * The base implementation of `getTag` without fallbacks for buggy environments.
- *
- * @private
- * @param {*} value The value to query.
- * @returns {string} Returns the `toStringTag`.
- */
-function baseGetTag(value) {
-  if (value == null) {
-    return value === undefined ? undefinedTag : nullTag;
-  }
-  return (symToStringTag && symToStringTag in Object(value))
-    ? getRawTag(value)
-    : objectToString(value);
-}
-
-/** `Object#toString` result references. */
-var asyncTag = '[object AsyncFunction]';
-var funcTag = '[object Function]';
-var genTag = '[object GeneratorFunction]';
-var proxyTag = '[object Proxy]';
-
-/**
- * Checks if `value` is classified as a `Function` object.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a function, else `false`.
- * @example
- *
- * _.isFunction(_);
- * // => true
- *
- * _.isFunction(/abc/);
- * // => false
- */
-function isFunction(value) {
-  if (!isObject(value)) {
-    return false;
-  }
-  // The use of `Object#toString` avoids issues with the `typeof` operator
-  // in Safari 9 which returns 'object' for typed arrays and other constructors.
-  var tag = baseGetTag(value);
-  return tag == funcTag || tag == genTag || tag == asyncTag || tag == proxyTag;
-}
-
-/** Used as references for various `Number` constants. */
-var MAX_SAFE_INTEGER = 9007199254740991;
-
-/**
- * Checks if `value` is a valid array-like length.
- *
- * **Note:** This method is loosely based on
- * [`ToLength`](http://ecma-international.org/ecma-262/7.0/#sec-tolength).
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
- * @example
- *
- * _.isLength(3);
- * // => true
- *
- * _.isLength(Number.MIN_VALUE);
- * // => false
- *
- * _.isLength(Infinity);
- * // => false
- *
- * _.isLength('3');
- * // => false
- */
-function isLength(value) {
-  return typeof value == 'number' &&
-    value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
-}
-
-/**
- * Checks if `value` is array-like. A value is considered array-like if it's
- * not a function and has a `value.length` that's an integer greater than or
- * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
- * @example
- *
- * _.isArrayLike([1, 2, 3]);
- * // => true
- *
- * _.isArrayLike(document.body.children);
- * // => true
- *
- * _.isArrayLike('abc');
- * // => true
- *
- * _.isArrayLike(_.noop);
- * // => false
- */
-function isArrayLike(value) {
-  return value != null && isLength(value.length) && !isFunction(value);
-}
-
-// A temporary value used to identify if the loop should be broken.
-// See #1064, #1293
-var breakLoop = {};
-
-/**
- * This method returns `undefined`.
- *
- * @static
- * @memberOf _
- * @since 2.3.0
- * @category Util
- * @example
- *
- * _.times(2, _.noop);
- * // => [undefined, undefined]
- */
-function noop() {
-  // No operation performed.
-}
-
-function once(fn) {
-    return function () {
-        if (fn === null) return;
-        var callFn = fn;
-        fn = null;
-        callFn.apply(this, arguments);
-    };
-}
-
-var iteratorSymbol = typeof Symbol === 'function' && Symbol.iterator;
-
-var getIterator = function (coll) {
-    return iteratorSymbol && coll[iteratorSymbol] && coll[iteratorSymbol]();
-};
-
-/**
- * The base implementation of `_.times` without support for iteratee shorthands
- * or max array length checks.
- *
- * @private
- * @param {number} n The number of times to invoke `iteratee`.
- * @param {Function} iteratee The function invoked per iteration.
- * @returns {Array} Returns the array of results.
- */
-function baseTimes(n, iteratee) {
-  var index = -1,
-      result = Array(n);
-
-  while (++index < n) {
-    result[index] = iteratee(index);
-  }
-  return result;
-}
-
-/**
- * Checks if `value` is object-like. A value is object-like if it's not `null`
- * and has a `typeof` result of "object".
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
- * @example
- *
- * _.isObjectLike({});
- * // => true
- *
- * _.isObjectLike([1, 2, 3]);
- * // => true
- *
- * _.isObjectLike(_.noop);
- * // => false
- *
- * _.isObjectLike(null);
- * // => false
- */
-function isObjectLike(value) {
-  return value != null && typeof value == 'object';
-}
-
-/** `Object#toString` result references. */
-var argsTag = '[object Arguments]';
-
-/**
- * The base implementation of `_.isArguments`.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an `arguments` object,
- */
-function baseIsArguments(value) {
-  return isObjectLike(value) && baseGetTag(value) == argsTag;
-}
-
-/** Used for built-in method references. */
-var objectProto$3 = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty$2 = objectProto$3.hasOwnProperty;
-
-/** Built-in value references. */
-var propertyIsEnumerable = objectProto$3.propertyIsEnumerable;
-
-/**
- * Checks if `value` is likely an `arguments` object.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an `arguments` object,
- *  else `false`.
- * @example
- *
- * _.isArguments(function() { return arguments; }());
- * // => true
- *
- * _.isArguments([1, 2, 3]);
- * // => false
- */
-var isArguments = baseIsArguments(function() { return arguments; }()) ? baseIsArguments : function(value) {
-  return isObjectLike(value) && hasOwnProperty$2.call(value, 'callee') &&
-    !propertyIsEnumerable.call(value, 'callee');
-};
-
-/**
- * Checks if `value` is classified as an `Array` object.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an array, else `false`.
- * @example
- *
- * _.isArray([1, 2, 3]);
- * // => true
- *
- * _.isArray(document.body.children);
- * // => false
- *
- * _.isArray('abc');
- * // => false
- *
- * _.isArray(_.noop);
- * // => false
- */
-var isArray = Array.isArray;
-
-/**
- * This method returns `false`.
- *
- * @static
- * @memberOf _
- * @since 4.13.0
- * @category Util
- * @returns {boolean} Returns `false`.
- * @example
- *
- * _.times(2, _.stubFalse);
- * // => [false, false]
- */
-function stubFalse() {
-  return false;
-}
-
-/** Detect free variable `exports`. */
-var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
-
-/** Detect free variable `module`. */
-var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
-
-/** Detect the popular CommonJS extension `module.exports`. */
-var moduleExports = freeModule && freeModule.exports === freeExports;
-
-/** Built-in value references. */
-var Buffer = moduleExports ? root.Buffer : undefined;
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeIsBuffer = Buffer ? Buffer.isBuffer : undefined;
-
-/**
- * Checks if `value` is a buffer.
- *
- * @static
- * @memberOf _
- * @since 4.3.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a buffer, else `false`.
- * @example
- *
- * _.isBuffer(new Buffer(2));
- * // => true
- *
- * _.isBuffer(new Uint8Array(2));
- * // => false
- */
-var isBuffer = nativeIsBuffer || stubFalse;
-
-/** Used as references for various `Number` constants. */
-var MAX_SAFE_INTEGER$1 = 9007199254740991;
-
-/** Used to detect unsigned integer values. */
-var reIsUint = /^(?:0|[1-9]\d*)$/;
-
-/**
- * Checks if `value` is a valid array-like index.
- *
- * @private
- * @param {*} value The value to check.
- * @param {number} [length=MAX_SAFE_INTEGER] The upper bounds of a valid index.
- * @returns {boolean} Returns `true` if `value` is a valid index, else `false`.
- */
-function isIndex(value, length) {
-  var type = typeof value;
-  length = length == null ? MAX_SAFE_INTEGER$1 : length;
-
-  return !!length &&
-    (type == 'number' ||
-      (type != 'symbol' && reIsUint.test(value))) &&
-        (value > -1 && value % 1 == 0 && value < length);
-}
-
-/** `Object#toString` result references. */
-var argsTag$1 = '[object Arguments]';
-var arrayTag = '[object Array]';
-var boolTag = '[object Boolean]';
-var dateTag = '[object Date]';
-var errorTag = '[object Error]';
-var funcTag$1 = '[object Function]';
-var mapTag = '[object Map]';
-var numberTag = '[object Number]';
-var objectTag = '[object Object]';
-var regexpTag = '[object RegExp]';
-var setTag = '[object Set]';
-var stringTag = '[object String]';
-var weakMapTag = '[object WeakMap]';
-
-var arrayBufferTag = '[object ArrayBuffer]';
-var dataViewTag = '[object DataView]';
-var float32Tag = '[object Float32Array]';
-var float64Tag = '[object Float64Array]';
-var int8Tag = '[object Int8Array]';
-var int16Tag = '[object Int16Array]';
-var int32Tag = '[object Int32Array]';
-var uint8Tag = '[object Uint8Array]';
-var uint8ClampedTag = '[object Uint8ClampedArray]';
-var uint16Tag = '[object Uint16Array]';
-var uint32Tag = '[object Uint32Array]';
-
-/** Used to identify `toStringTag` values of typed arrays. */
-var typedArrayTags = {};
-typedArrayTags[float32Tag] = typedArrayTags[float64Tag] =
-typedArrayTags[int8Tag] = typedArrayTags[int16Tag] =
-typedArrayTags[int32Tag] = typedArrayTags[uint8Tag] =
-typedArrayTags[uint8ClampedTag] = typedArrayTags[uint16Tag] =
-typedArrayTags[uint32Tag] = true;
-typedArrayTags[argsTag$1] = typedArrayTags[arrayTag] =
-typedArrayTags[arrayBufferTag] = typedArrayTags[boolTag] =
-typedArrayTags[dataViewTag] = typedArrayTags[dateTag] =
-typedArrayTags[errorTag] = typedArrayTags[funcTag$1] =
-typedArrayTags[mapTag] = typedArrayTags[numberTag] =
-typedArrayTags[objectTag] = typedArrayTags[regexpTag] =
-typedArrayTags[setTag] = typedArrayTags[stringTag] =
-typedArrayTags[weakMapTag] = false;
-
-/**
- * The base implementation of `_.isTypedArray` without Node.js optimizations.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a typed array, else `false`.
- */
-function baseIsTypedArray(value) {
-  return isObjectLike(value) &&
-    isLength(value.length) && !!typedArrayTags[baseGetTag(value)];
-}
-
-/**
- * The base implementation of `_.unary` without support for storing metadata.
- *
- * @private
- * @param {Function} func The function to cap arguments for.
- * @returns {Function} Returns the new capped function.
- */
-function baseUnary(func) {
-  return function(value) {
-    return func(value);
-  };
-}
-
-/** Detect free variable `exports`. */
-var freeExports$1 = typeof exports == 'object' && exports && !exports.nodeType && exports;
-
-/** Detect free variable `module`. */
-var freeModule$1 = freeExports$1 && typeof module == 'object' && module && !module.nodeType && module;
-
-/** Detect the popular CommonJS extension `module.exports`. */
-var moduleExports$1 = freeModule$1 && freeModule$1.exports === freeExports$1;
-
-/** Detect free variable `process` from Node.js. */
-var freeProcess = moduleExports$1 && freeGlobal.process;
-
-/** Used to access faster Node.js helpers. */
-var nodeUtil = (function() {
-  try {
-    // Use `util.types` for Node.js 10+.
-    var types = freeModule$1 && freeModule$1.require && freeModule$1.require('util').types;
-
-    if (types) {
-      return types;
-    }
-
-    // Legacy `process.binding('util')` for Node.js < 10.
-    return freeProcess && freeProcess.binding && freeProcess.binding('util');
-  } catch (e) {}
-}());
-
-/* Node.js helper references. */
-var nodeIsTypedArray = nodeUtil && nodeUtil.isTypedArray;
-
-/**
- * Checks if `value` is classified as a typed array.
- *
- * @static
- * @memberOf _
- * @since 3.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a typed array, else `false`.
- * @example
- *
- * _.isTypedArray(new Uint8Array);
- * // => true
- *
- * _.isTypedArray([]);
- * // => false
- */
-var isTypedArray = nodeIsTypedArray ? baseUnary(nodeIsTypedArray) : baseIsTypedArray;
-
-/** Used for built-in method references. */
-var objectProto$2 = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty$1 = objectProto$2.hasOwnProperty;
-
-/**
- * Creates an array of the enumerable property names of the array-like `value`.
- *
- * @private
- * @param {*} value The value to query.
- * @param {boolean} inherited Specify returning inherited property names.
- * @returns {Array} Returns the array of property names.
- */
-function arrayLikeKeys(value, inherited) {
-  var isArr = isArray(value),
-      isArg = !isArr && isArguments(value),
-      isBuff = !isArr && !isArg && isBuffer(value),
-      isType = !isArr && !isArg && !isBuff && isTypedArray(value),
-      skipIndexes = isArr || isArg || isBuff || isType,
-      result = skipIndexes ? baseTimes(value.length, String) : [],
-      length = result.length;
-
-  for (var key in value) {
-    if ((inherited || hasOwnProperty$1.call(value, key)) &&
-        !(skipIndexes && (
-           // Safari 9 has enumerable `arguments.length` in strict mode.
-           key == 'length' ||
-           // Node.js 0.10 has enumerable non-index properties on buffers.
-           (isBuff && (key == 'offset' || key == 'parent')) ||
-           // PhantomJS 2 has enumerable non-index properties on typed arrays.
-           (isType && (key == 'buffer' || key == 'byteLength' || key == 'byteOffset')) ||
-           // Skip index properties.
-           isIndex(key, length)
-        ))) {
-      result.push(key);
-    }
-  }
-  return result;
-}
-
-/** Used for built-in method references. */
-var objectProto$5 = Object.prototype;
-
-/**
- * Checks if `value` is likely a prototype object.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a prototype, else `false`.
- */
-function isPrototype(value) {
-  var Ctor = value && value.constructor,
-      proto = (typeof Ctor == 'function' && Ctor.prototype) || objectProto$5;
-
-  return value === proto;
-}
-
-/**
- * Creates a unary function that invokes `func` with its argument transformed.
- *
- * @private
- * @param {Function} func The function to wrap.
- * @param {Function} transform The argument transform.
- * @returns {Function} Returns the new function.
- */
-function overArg(func, transform) {
-  return function(arg) {
-    return func(transform(arg));
-  };
-}
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeKeys = overArg(Object.keys, Object);
-
-/** Used for built-in method references. */
-var objectProto$4 = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty$3 = objectProto$4.hasOwnProperty;
-
-/**
- * The base implementation of `_.keys` which doesn't treat sparse arrays as dense.
- *
- * @private
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of property names.
- */
-function baseKeys(object) {
-  if (!isPrototype(object)) {
-    return nativeKeys(object);
-  }
-  var result = [];
-  for (var key in Object(object)) {
-    if (hasOwnProperty$3.call(object, key) && key != 'constructor') {
-      result.push(key);
-    }
-  }
-  return result;
-}
-
-/**
- * Creates an array of the own enumerable property names of `object`.
- *
- * **Note:** Non-object values are coerced to objects. See the
- * [ES spec](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
- * for more details.
- *
- * @static
- * @since 0.1.0
- * @memberOf _
- * @category Object
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of property names.
- * @example
- *
- * function Foo() {
- *   this.a = 1;
- *   this.b = 2;
- * }
- *
- * Foo.prototype.c = 3;
- *
- * _.keys(new Foo);
- * // => ['a', 'b'] (iteration order is not guaranteed)
- *
- * _.keys('hi');
- * // => ['0', '1']
- */
-function keys(object) {
-  return isArrayLike(object) ? arrayLikeKeys(object) : baseKeys(object);
-}
-
-function createArrayIterator(coll) {
-    var i = -1;
-    var len = coll.length;
-    return function next() {
-        return ++i < len ? {value: coll[i], key: i} : null;
-    }
-}
-
-function createES2015Iterator(iterator) {
-    var i = -1;
-    return function next() {
-        var item = iterator.next();
-        if (item.done)
-            return null;
-        i++;
-        return {value: item.value, key: i};
-    }
-}
-
-function createObjectIterator(obj) {
-    var okeys = keys(obj);
-    var i = -1;
-    var len = okeys.length;
-    return function next() {
-        var key = okeys[++i];
-        return i < len ? {value: obj[key], key: key} : null;
-    };
-}
-
-function iterator(coll) {
-    if (isArrayLike(coll)) {
-        return createArrayIterator(coll);
-    }
-
-    var iterator = getIterator(coll);
-    return iterator ? createES2015Iterator(iterator) : createObjectIterator(coll);
-}
-
-function onlyOnce(fn) {
-    return function() {
-        if (fn === null) throw new Error("Callback was already called.");
-        var callFn = fn;
-        fn = null;
-        callFn.apply(this, arguments);
-    };
-}
-
-function _eachOfLimit(limit) {
-    return function (obj, iteratee, callback) {
-        callback = once(callback || noop);
-        if (limit <= 0 || !obj) {
-            return callback(null);
-        }
-        var nextElem = iterator(obj);
-        var done = false;
-        var running = 0;
-        var looping = false;
-
-        function iterateeCallback(err, value) {
-            running -= 1;
-            if (err) {
-                done = true;
-                callback(err);
-            }
-            else if (value === breakLoop || (done && running <= 0)) {
-                done = true;
-                return callback(null);
-            }
-            else if (!looping) {
-                replenish();
-            }
-        }
-
-        function replenish () {
-            looping = true;
-            while (running < limit && !done) {
-                var elem = nextElem();
-                if (elem === null) {
-                    done = true;
-                    if (running <= 0) {
-                        callback(null);
-                    }
-                    return;
-                }
-                running += 1;
-                iteratee(elem.value, elem.key, onlyOnce(iterateeCallback));
-            }
-            looping = false;
-        }
-
-        replenish();
-    };
-}
-
-/**
- * The same as [`eachOf`]{@link module:Collections.eachOf} but runs a maximum of `limit` async operations at a
- * time.
- *
- * @name eachOfLimit
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.eachOf]{@link module:Collections.eachOf}
- * @alias forEachOfLimit
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {number} limit - The maximum number of async operations at a time.
- * @param {AsyncFunction} iteratee - An async function to apply to each
- * item in `coll`. The `key` is the item's key, or index in the case of an
- * array.
- * Invoked with (item, key, callback).
- * @param {Function} [callback] - A callback which is called when all
- * `iteratee` functions have finished, or an error occurs. Invoked with (err).
- */
-function eachOfLimit(coll, limit, iteratee, callback) {
-    _eachOfLimit(limit)(coll, wrapAsync(iteratee), callback);
-}
-
-function doLimit(fn, limit) {
-    return function (iterable, iteratee, callback) {
-        return fn(iterable, limit, iteratee, callback);
-    };
-}
-
-// eachOf implementation optimized for array-likes
-function eachOfArrayLike(coll, iteratee, callback) {
-    callback = once(callback || noop);
-    var index = 0,
-        completed = 0,
-        length = coll.length;
-    if (length === 0) {
-        callback(null);
-    }
-
-    function iteratorCallback(err, value) {
-        if (err) {
-            callback(err);
-        } else if ((++completed === length) || value === breakLoop) {
-            callback(null);
-        }
-    }
-
-    for (; index < length; index++) {
-        iteratee(coll[index], index, onlyOnce(iteratorCallback));
-    }
-}
-
-// a generic version of eachOf which can handle array, object, and iterator cases.
-var eachOfGeneric = doLimit(eachOfLimit, Infinity);
-
-/**
- * Like [`each`]{@link module:Collections.each}, except that it passes the key (or index) as the second argument
- * to the iteratee.
- *
- * @name eachOf
- * @static
- * @memberOf module:Collections
- * @method
- * @alias forEachOf
- * @category Collection
- * @see [async.each]{@link module:Collections.each}
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {AsyncFunction} iteratee - A function to apply to each
- * item in `coll`.
- * The `key` is the item's key, or index in the case of an array.
- * Invoked with (item, key, callback).
- * @param {Function} [callback] - A callback which is called when all
- * `iteratee` functions have finished, or an error occurs. Invoked with (err).
- * @example
- *
- * var obj = {dev: "/dev.json", test: "/test.json", prod: "/prod.json"};
- * var configs = {};
- *
- * async.forEachOf(obj, function (value, key, callback) {
- *     fs.readFile(__dirname + value, "utf8", function (err, data) {
- *         if (err) return callback(err);
- *         try {
- *             configs[key] = JSON.parse(data);
- *         } catch (e) {
- *             return callback(e);
- *         }
- *         callback();
- *     });
- * }, function (err) {
- *     if (err) console.error(err.message);
- *     // configs is now a map of JSON data
- *     doSomethingWith(configs);
- * });
- */
-var eachOf = function(coll, iteratee, callback) {
-    var eachOfImplementation = isArrayLike(coll) ? eachOfArrayLike : eachOfGeneric;
-    eachOfImplementation(coll, wrapAsync(iteratee), callback);
-};
-
-function doParallel(fn) {
-    return function (obj, iteratee, callback) {
-        return fn(eachOf, obj, wrapAsync(iteratee), callback);
-    };
-}
-
-function _asyncMap(eachfn, arr, iteratee, callback) {
-    callback = callback || noop;
-    arr = arr || [];
-    var results = [];
-    var counter = 0;
-    var _iteratee = wrapAsync(iteratee);
-
-    eachfn(arr, function (value, _, callback) {
-        var index = counter++;
-        _iteratee(value, function (err, v) {
-            results[index] = v;
-            callback(err);
-        });
-    }, function (err) {
-        callback(err, results);
-    });
-}
-
-/**
- * Produces a new collection of values by mapping each value in `coll` through
- * the `iteratee` function. The `iteratee` is called with an item from `coll`
- * and a callback for when it has finished processing. Each of these callback
- * takes 2 arguments: an `error`, and the transformed item from `coll`. If
- * `iteratee` passes an error to its callback, the main `callback` (for the
- * `map` function) is immediately called with the error.
- *
- * Note, that since this function applies the `iteratee` to each item in
- * parallel, there is no guarantee that the `iteratee` functions will complete
- * in order. However, the results array will be in the same order as the
- * original `coll`.
- *
- * If `map` is passed an Object, the results will be an Array.  The results
- * will roughly be in the order of the original Objects' keys (but this can
- * vary across JavaScript engines).
- *
- * @name map
- * @static
- * @memberOf module:Collections
- * @method
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {AsyncFunction} iteratee - An async function to apply to each item in
- * `coll`.
- * The iteratee should complete with the transformed item.
- * Invoked with (item, callback).
- * @param {Function} [callback] - A callback which is called when all `iteratee`
- * functions have finished, or an error occurs. Results is an Array of the
- * transformed items from the `coll`. Invoked with (err, results).
- * @example
- *
- * async.map(['file1','file2','file3'], fs.stat, function(err, results) {
- *     // results is now an array of stats for each file
- * });
- */
-var map = doParallel(_asyncMap);
-
-/**
- * Applies the provided arguments to each function in the array, calling
- * `callback` after all functions have completed. If you only provide the first
- * argument, `fns`, then it will return a function which lets you pass in the
- * arguments as if it were a single function call. If more arguments are
- * provided, `callback` is required while `args` is still optional.
- *
- * @name applyEach
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @category Control Flow
- * @param {Array|Iterable|Object} fns - A collection of {@link AsyncFunction}s
- * to all call with the same arguments
- * @param {...*} [args] - any number of separate arguments to pass to the
- * function.
- * @param {Function} [callback] - the final argument should be the callback,
- * called when all functions have completed processing.
- * @returns {Function} - If only the first argument, `fns`, is provided, it will
- * return a function which lets you pass in the arguments as if it were a single
- * function call. The signature is `(..args, callback)`. If invoked with any
- * arguments, `callback` is required.
- * @example
- *
- * async.applyEach([enableSearch, updateSchema], 'bucket', callback);
- *
- * // partial application example:
- * async.each(
- *     buckets,
- *     async.applyEach([enableSearch, updateSchema]),
- *     callback
- * );
- */
-var applyEach = applyEach$1(map);
-
-function doParallelLimit(fn) {
-    return function (obj, limit, iteratee, callback) {
-        return fn(_eachOfLimit(limit), obj, wrapAsync(iteratee), callback);
-    };
-}
-
-/**
- * The same as [`map`]{@link module:Collections.map} but runs a maximum of `limit` async operations at a time.
- *
- * @name mapLimit
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.map]{@link module:Collections.map}
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {number} limit - The maximum number of async operations at a time.
- * @param {AsyncFunction} iteratee - An async function to apply to each item in
- * `coll`.
- * The iteratee should complete with the transformed item.
- * Invoked with (item, callback).
- * @param {Function} [callback] - A callback which is called when all `iteratee`
- * functions have finished, or an error occurs. Results is an array of the
- * transformed items from the `coll`. Invoked with (err, results).
- */
-var mapLimit = doParallelLimit(_asyncMap);
-
-/**
- * The same as [`map`]{@link module:Collections.map} but runs only a single async operation at a time.
- *
- * @name mapSeries
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.map]{@link module:Collections.map}
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {AsyncFunction} iteratee - An async function to apply to each item in
- * `coll`.
- * The iteratee should complete with the transformed item.
- * Invoked with (item, callback).
- * @param {Function} [callback] - A callback which is called when all `iteratee`
- * functions have finished, or an error occurs. Results is an array of the
- * transformed items from the `coll`. Invoked with (err, results).
- */
-var mapSeries = doLimit(mapLimit, 1);
-
-/**
- * The same as [`applyEach`]{@link module:ControlFlow.applyEach} but runs only a single async operation at a time.
- *
- * @name applyEachSeries
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @see [async.applyEach]{@link module:ControlFlow.applyEach}
- * @category Control Flow
- * @param {Array|Iterable|Object} fns - A collection of {@link AsyncFunction}s to all
- * call with the same arguments
- * @param {...*} [args] - any number of separate arguments to pass to the
- * function.
- * @param {Function} [callback] - the final argument should be the callback,
- * called when all functions have completed processing.
- * @returns {Function} - If only the first argument is provided, it will return
- * a function which lets you pass in the arguments as if it were a single
- * function call.
- */
-var applyEachSeries = applyEach$1(mapSeries);
-
-/**
- * A specialized version of `_.forEach` for arrays without support for
- * iteratee shorthands.
- *
- * @private
- * @param {Array} [array] The array to iterate over.
- * @param {Function} iteratee The function invoked per iteration.
- * @returns {Array} Returns `array`.
- */
-function arrayEach(array, iteratee) {
-  var index = -1,
-      length = array == null ? 0 : array.length;
-
-  while (++index < length) {
-    if (iteratee(array[index], index, array) === false) {
-      break;
-    }
-  }
-  return array;
-}
-
-/**
- * Creates a base function for methods like `_.forIn` and `_.forOwn`.
- *
- * @private
- * @param {boolean} [fromRight] Specify iterating from right to left.
- * @returns {Function} Returns the new base function.
- */
-function createBaseFor(fromRight) {
-  return function(object, iteratee, keysFunc) {
-    var index = -1,
-        iterable = Object(object),
-        props = keysFunc(object),
-        length = props.length;
-
-    while (length--) {
-      var key = props[fromRight ? length : ++index];
-      if (iteratee(iterable[key], key, iterable) === false) {
-        break;
-      }
-    }
-    return object;
-  };
-}
-
-/**
- * The base implementation of `baseForOwn` which iterates over `object`
- * properties returned by `keysFunc` and invokes `iteratee` for each property.
- * Iteratee functions may exit iteration early by explicitly returning `false`.
- *
- * @private
- * @param {Object} object The object to iterate over.
- * @param {Function} iteratee The function invoked per iteration.
- * @param {Function} keysFunc The function to get the keys of `object`.
- * @returns {Object} Returns `object`.
- */
-var baseFor = createBaseFor();
-
-/**
- * The base implementation of `_.forOwn` without support for iteratee shorthands.
- *
- * @private
- * @param {Object} object The object to iterate over.
- * @param {Function} iteratee The function invoked per iteration.
- * @returns {Object} Returns `object`.
- */
-function baseForOwn(object, iteratee) {
-  return object && baseFor(object, iteratee, keys);
-}
-
-/**
- * The base implementation of `_.findIndex` and `_.findLastIndex` without
- * support for iteratee shorthands.
- *
- * @private
- * @param {Array} array The array to inspect.
- * @param {Function} predicate The function invoked per iteration.
- * @param {number} fromIndex The index to search from.
- * @param {boolean} [fromRight] Specify iterating from right to left.
- * @returns {number} Returns the index of the matched value, else `-1`.
- */
-function baseFindIndex(array, predicate, fromIndex, fromRight) {
-  var length = array.length,
-      index = fromIndex + (fromRight ? 1 : -1);
-
-  while ((fromRight ? index-- : ++index < length)) {
-    if (predicate(array[index], index, array)) {
-      return index;
-    }
-  }
-  return -1;
-}
-
-/**
- * The base implementation of `_.isNaN` without support for number objects.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is `NaN`, else `false`.
- */
-function baseIsNaN(value) {
-  return value !== value;
-}
-
-/**
- * A specialized version of `_.indexOf` which performs strict equality
- * comparisons of values, i.e. `===`.
- *
- * @private
- * @param {Array} array The array to inspect.
- * @param {*} value The value to search for.
- * @param {number} fromIndex The index to search from.
- * @returns {number} Returns the index of the matched value, else `-1`.
- */
-function strictIndexOf(array, value, fromIndex) {
-  var index = fromIndex - 1,
-      length = array.length;
-
-  while (++index < length) {
-    if (array[index] === value) {
-      return index;
-    }
-  }
-  return -1;
-}
-
-/**
- * The base implementation of `_.indexOf` without `fromIndex` bounds checks.
- *
- * @private
- * @param {Array} array The array to inspect.
- * @param {*} value The value to search for.
- * @param {number} fromIndex The index to search from.
- * @returns {number} Returns the index of the matched value, else `-1`.
- */
-function baseIndexOf(array, value, fromIndex) {
-  return value === value
-    ? strictIndexOf(array, value, fromIndex)
-    : baseFindIndex(array, baseIsNaN, fromIndex);
-}
-
-/**
- * Determines the best order for running the {@link AsyncFunction}s in `tasks`, based on
- * their requirements. Each function can optionally depend on other functions
- * being completed first, and each function is run as soon as its requirements
- * are satisfied.
- *
- * If any of the {@link AsyncFunction}s pass an error to their callback, the `auto` sequence
- * will stop. Further tasks will not execute (so any other functions depending
- * on it will not run), and the main `callback` is immediately called with the
- * error.
- *
- * {@link AsyncFunction}s also receive an object containing the results of functions which
- * have completed so far as the first argument, if they have dependencies. If a
- * task function has no dependencies, it will only be passed a callback.
- *
- * @name auto
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @category Control Flow
- * @param {Object} tasks - An object. Each of its properties is either a
- * function or an array of requirements, with the {@link AsyncFunction} itself the last item
- * in the array. The object's key of a property serves as the name of the task
- * defined by that property, i.e. can be used when specifying requirements for
- * other tasks. The function receives one or two arguments:
- * * a `results` object, containing the results of the previously executed
- *   functions, only passed if the task has any dependencies,
- * * a `callback(err, result)` function, which must be called when finished,
- *   passing an `error` (which can be `null`) and the result of the function's
- *   execution.
- * @param {number} [concurrency=Infinity] - An optional `integer` for
- * determining the maximum number of tasks that can be run in parallel. By
- * default, as many as possible.
- * @param {Function} [callback] - An optional callback which is called when all
- * the tasks have been completed. It receives the `err` argument if any `tasks`
- * pass an error to their callback. Results are always returned; however, if an
- * error occurs, no further `tasks` will be performed, and the results object
- * will only contain partial results. Invoked with (err, results).
- * @returns undefined
- * @example
- *
- * async.auto({
- *     // this function will just be passed a callback
- *     readData: async.apply(fs.readFile, 'data.txt', 'utf-8'),
- *     showData: ['readData', function(results, cb) {
- *         // results.readData is the file's contents
- *         // ...
- *     }]
- * }, callback);
- *
- * async.auto({
- *     get_data: function(callback) {
- *         console.log('in get_data');
- *         // async code to get some data
- *         callback(null, 'data', 'converted to array');
- *     },
- *     make_folder: function(callback) {
- *         console.log('in make_folder');
- *         // async code to create a directory to store a file in
- *         // this is run at the same time as getting the data
- *         callback(null, 'folder');
- *     },
- *     write_file: ['get_data', 'make_folder', function(results, callback) {
- *         console.log('in write_file', JSON.stringify(results));
- *         // once there is some data and the directory exists,
- *         // write the data to a file in the directory
- *         callback(null, 'filename');
- *     }],
- *     email_link: ['write_file', function(results, callback) {
- *         console.log('in email_link', JSON.stringify(results));
- *         // once the file is written let's email a link to it...
- *         // results.write_file contains the filename returned by write_file.
- *         callback(null, {'file':results.write_file, 'email':'user@example.com'});
- *     }]
- * }, function(err, results) {
- *     console.log('err = ', err);
- *     console.log('results = ', results);
- * });
- */
-var auto = function (tasks, concurrency, callback) {
-    if (typeof concurrency === 'function') {
-        // concurrency is optional, shift the args.
-        callback = concurrency;
-        concurrency = null;
-    }
-    callback = once(callback || noop);
-    var keys$$1 = keys(tasks);
-    var numTasks = keys$$1.length;
-    if (!numTasks) {
-        return callback(null);
-    }
-    if (!concurrency) {
-        concurrency = numTasks;
-    }
-
-    var results = {};
-    var runningTasks = 0;
-    var hasError = false;
-
-    var listeners = Object.create(null);
-
-    var readyTasks = [];
-
-    // for cycle detection:
-    var readyToCheck = []; // tasks that have been identified as reachable
-    // without the possibility of returning to an ancestor task
-    var uncheckedDependencies = {};
-
-    baseForOwn(tasks, function (task, key) {
-        if (!isArray(task)) {
-            // no dependencies
-            enqueueTask(key, [task]);
-            readyToCheck.push(key);
-            return;
-        }
-
-        var dependencies = task.slice(0, task.length - 1);
-        var remainingDependencies = dependencies.length;
-        if (remainingDependencies === 0) {
-            enqueueTask(key, task);
-            readyToCheck.push(key);
-            return;
-        }
-        uncheckedDependencies[key] = remainingDependencies;
-
-        arrayEach(dependencies, function (dependencyName) {
-            if (!tasks[dependencyName]) {
-                throw new Error('async.auto task `' + key +
-                    '` has a non-existent dependency `' +
-                    dependencyName + '` in ' +
-                    dependencies.join(', '));
-            }
-            addListener(dependencyName, function () {
-                remainingDependencies--;
-                if (remainingDependencies === 0) {
-                    enqueueTask(key, task);
-                }
-            });
-        });
-    });
-
-    checkForDeadlocks();
-    processQueue();
-
-    function enqueueTask(key, task) {
-        readyTasks.push(function () {
-            runTask(key, task);
-        });
-    }
-
-    function processQueue() {
-        if (readyTasks.length === 0 && runningTasks === 0) {
-            return callback(null, results);
-        }
-        while(readyTasks.length && runningTasks < concurrency) {
-            var run = readyTasks.shift();
-            run();
-        }
-
-    }
-
-    function addListener(taskName, fn) {
-        var taskListeners = listeners[taskName];
-        if (!taskListeners) {
-            taskListeners = listeners[taskName] = [];
-        }
-
-        taskListeners.push(fn);
-    }
-
-    function taskComplete(taskName) {
-        var taskListeners = listeners[taskName] || [];
-        arrayEach(taskListeners, function (fn) {
-            fn();
-        });
-        processQueue();
-    }
-
-
-    function runTask(key, task) {
-        if (hasError) return;
-
-        var taskCallback = onlyOnce(function(err, result) {
-            runningTasks--;
-            if (arguments.length > 2) {
-                result = slice(arguments, 1);
-            }
-            if (err) {
-                var safeResults = {};
-                baseForOwn(results, function(val, rkey) {
-                    safeResults[rkey] = val;
-                });
-                safeResults[key] = result;
-                hasError = true;
-                listeners = Object.create(null);
-
-                callback(err, safeResults);
-            } else {
-                results[key] = result;
-                taskComplete(key);
-            }
-        });
-
-        runningTasks++;
-        var taskFn = wrapAsync(task[task.length - 1]);
-        if (task.length > 1) {
-            taskFn(results, taskCallback);
-        } else {
-            taskFn(taskCallback);
-        }
-    }
-
-    function checkForDeadlocks() {
-        // Kahn's algorithm
-        // https://en.wikipedia.org/wiki/Topological_sorting#Kahn.27s_algorithm
-        // http://connalle.blogspot.com/2013/10/topological-sortingkahn-algorithm.html
-        var currentTask;
-        var counter = 0;
-        while (readyToCheck.length) {
-            currentTask = readyToCheck.pop();
-            counter++;
-            arrayEach(getDependents(currentTask), function (dependent) {
-                if (--uncheckedDependencies[dependent] === 0) {
-                    readyToCheck.push(dependent);
-                }
-            });
-        }
-
-        if (counter !== numTasks) {
-            throw new Error(
-                'async.auto cannot execute tasks due to a recursive dependency'
-            );
-        }
-    }
-
-    function getDependents(taskName) {
-        var result = [];
-        baseForOwn(tasks, function (task, key) {
-            if (isArray(task) && baseIndexOf(task, taskName, 0) >= 0) {
-                result.push(key);
-            }
-        });
-        return result;
-    }
-};
-
-/**
- * A specialized version of `_.map` for arrays without support for iteratee
- * shorthands.
- *
- * @private
- * @param {Array} [array] The array to iterate over.
- * @param {Function} iteratee The function invoked per iteration.
- * @returns {Array} Returns the new mapped array.
- */
-function arrayMap(array, iteratee) {
-  var index = -1,
-      length = array == null ? 0 : array.length,
-      result = Array(length);
-
-  while (++index < length) {
-    result[index] = iteratee(array[index], index, array);
-  }
-  return result;
-}
-
-/** `Object#toString` result references. */
-var symbolTag = '[object Symbol]';
-
-/**
- * Checks if `value` is classified as a `Symbol` primitive or object.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
- * @example
- *
- * _.isSymbol(Symbol.iterator);
- * // => true
- *
- * _.isSymbol('abc');
- * // => false
- */
-function isSymbol(value) {
-  return typeof value == 'symbol' ||
-    (isObjectLike(value) && baseGetTag(value) == symbolTag);
-}
-
-/** Used as references for various `Number` constants. */
-var INFINITY = 1 / 0;
-
-/** Used to convert symbols to primitives and strings. */
-var symbolProto = Symbol$1 ? Symbol$1.prototype : undefined;
-var symbolToString = symbolProto ? symbolProto.toString : undefined;
-
-/**
- * The base implementation of `_.toString` which doesn't convert nullish
- * values to empty strings.
- *
- * @private
- * @param {*} value The value to process.
- * @returns {string} Returns the string.
- */
-function baseToString(value) {
-  // Exit early for strings to avoid a performance hit in some environments.
-  if (typeof value == 'string') {
-    return value;
-  }
-  if (isArray(value)) {
-    // Recursively convert values (susceptible to call stack limits).
-    return arrayMap(value, baseToString) + '';
-  }
-  if (isSymbol(value)) {
-    return symbolToString ? symbolToString.call(value) : '';
-  }
-  var result = (value + '');
-  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
-}
-
-/**
- * The base implementation of `_.slice` without an iteratee call guard.
- *
- * @private
- * @param {Array} array The array to slice.
- * @param {number} [start=0] The start position.
- * @param {number} [end=array.length] The end position.
- * @returns {Array} Returns the slice of `array`.
- */
-function baseSlice(array, start, end) {
-  var index = -1,
-      length = array.length;
-
-  if (start < 0) {
-    start = -start > length ? 0 : (length + start);
-  }
-  end = end > length ? length : end;
-  if (end < 0) {
-    end += length;
-  }
-  length = start > end ? 0 : ((end - start) >>> 0);
-  start >>>= 0;
-
-  var result = Array(length);
-  while (++index < length) {
-    result[index] = array[index + start];
-  }
-  return result;
-}
-
-/**
- * Casts `array` to a slice if it's needed.
- *
- * @private
- * @param {Array} array The array to inspect.
- * @param {number} start The start position.
- * @param {number} [end=array.length] The end position.
- * @returns {Array} Returns the cast slice.
- */
-function castSlice(array, start, end) {
-  var length = array.length;
-  end = end === undefined ? length : end;
-  return (!start && end >= length) ? array : baseSlice(array, start, end);
-}
-
-/**
- * Used by `_.trim` and `_.trimEnd` to get the index of the last string symbol
- * that is not found in the character symbols.
- *
- * @private
- * @param {Array} strSymbols The string symbols to inspect.
- * @param {Array} chrSymbols The character symbols to find.
- * @returns {number} Returns the index of the last unmatched string symbol.
- */
-function charsEndIndex(strSymbols, chrSymbols) {
-  var index = strSymbols.length;
-
-  while (index-- && baseIndexOf(chrSymbols, strSymbols[index], 0) > -1) {}
-  return index;
-}
-
-/**
- * Used by `_.trim` and `_.trimStart` to get the index of the first string symbol
- * that is not found in the character symbols.
- *
- * @private
- * @param {Array} strSymbols The string symbols to inspect.
- * @param {Array} chrSymbols The character symbols to find.
- * @returns {number} Returns the index of the first unmatched string symbol.
- */
-function charsStartIndex(strSymbols, chrSymbols) {
-  var index = -1,
-      length = strSymbols.length;
-
-  while (++index < length && baseIndexOf(chrSymbols, strSymbols[index], 0) > -1) {}
-  return index;
-}
-
-/**
- * Converts an ASCII `string` to an array.
- *
- * @private
- * @param {string} string The string to convert.
- * @returns {Array} Returns the converted array.
- */
-function asciiToArray(string) {
-  return string.split('');
-}
-
-/** Used to compose unicode character classes. */
-var rsAstralRange = '\\ud800-\\udfff';
-var rsComboMarksRange = '\\u0300-\\u036f';
-var reComboHalfMarksRange = '\\ufe20-\\ufe2f';
-var rsComboSymbolsRange = '\\u20d0-\\u20ff';
-var rsComboRange = rsComboMarksRange + reComboHalfMarksRange + rsComboSymbolsRange;
-var rsVarRange = '\\ufe0e\\ufe0f';
-
-/** Used to compose unicode capture groups. */
-var rsZWJ = '\\u200d';
-
-/** Used to detect strings with [zero-width joiners or code points from the astral planes](http://eev.ee/blog/2015/09/12/dark-corners-of-unicode/). */
-var reHasUnicode = RegExp('[' + rsZWJ + rsAstralRange  + rsComboRange + rsVarRange + ']');
-
-/**
- * Checks if `string` contains Unicode symbols.
- *
- * @private
- * @param {string} string The string to inspect.
- * @returns {boolean} Returns `true` if a symbol is found, else `false`.
- */
-function hasUnicode(string) {
-  return reHasUnicode.test(string);
-}
-
-/** Used to compose unicode character classes. */
-var rsAstralRange$1 = '\\ud800-\\udfff';
-var rsComboMarksRange$1 = '\\u0300-\\u036f';
-var reComboHalfMarksRange$1 = '\\ufe20-\\ufe2f';
-var rsComboSymbolsRange$1 = '\\u20d0-\\u20ff';
-var rsComboRange$1 = rsComboMarksRange$1 + reComboHalfMarksRange$1 + rsComboSymbolsRange$1;
-var rsVarRange$1 = '\\ufe0e\\ufe0f';
-
-/** Used to compose unicode capture groups. */
-var rsAstral = '[' + rsAstralRange$1 + ']';
-var rsCombo = '[' + rsComboRange$1 + ']';
-var rsFitz = '\\ud83c[\\udffb-\\udfff]';
-var rsModifier = '(?:' + rsCombo + '|' + rsFitz + ')';
-var rsNonAstral = '[^' + rsAstralRange$1 + ']';
-var rsRegional = '(?:\\ud83c[\\udde6-\\uddff]){2}';
-var rsSurrPair = '[\\ud800-\\udbff][\\udc00-\\udfff]';
-var rsZWJ$1 = '\\u200d';
-
-/** Used to compose unicode regexes. */
-var reOptMod = rsModifier + '?';
-var rsOptVar = '[' + rsVarRange$1 + ']?';
-var rsOptJoin = '(?:' + rsZWJ$1 + '(?:' + [rsNonAstral, rsRegional, rsSurrPair].join('|') + ')' + rsOptVar + reOptMod + ')*';
-var rsSeq = rsOptVar + reOptMod + rsOptJoin;
-var rsSymbol = '(?:' + [rsNonAstral + rsCombo + '?', rsCombo, rsRegional, rsSurrPair, rsAstral].join('|') + ')';
-
-/** Used to match [string symbols](https://mathiasbynens.be/notes/javascript-unicode). */
-var reUnicode = RegExp(rsFitz + '(?=' + rsFitz + ')|' + rsSymbol + rsSeq, 'g');
-
-/**
- * Converts a Unicode `string` to an array.
- *
- * @private
- * @param {string} string The string to convert.
- * @returns {Array} Returns the converted array.
- */
-function unicodeToArray(string) {
-  return string.match(reUnicode) || [];
-}
-
-/**
- * Converts `string` to an array.
- *
- * @private
- * @param {string} string The string to convert.
- * @returns {Array} Returns the converted array.
- */
-function stringToArray(string) {
-  return hasUnicode(string)
-    ? unicodeToArray(string)
-    : asciiToArray(string);
-}
-
-/**
- * Converts `value` to a string. An empty string is returned for `null`
- * and `undefined` values. The sign of `-0` is preserved.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to convert.
- * @returns {string} Returns the converted string.
- * @example
- *
- * _.toString(null);
- * // => ''
- *
- * _.toString(-0);
- * // => '-0'
- *
- * _.toString([1, 2, 3]);
- * // => '1,2,3'
- */
-function toString(value) {
-  return value == null ? '' : baseToString(value);
-}
-
-/** Used to match leading and trailing whitespace. */
-var reTrim = /^\s+|\s+$/g;
-
-/**
- * Removes leading and trailing whitespace or specified characters from `string`.
- *
- * @static
- * @memberOf _
- * @since 3.0.0
- * @category String
- * @param {string} [string=''] The string to trim.
- * @param {string} [chars=whitespace] The characters to trim.
- * @param- {Object} [guard] Enables use as an iteratee for methods like `_.map`.
- * @returns {string} Returns the trimmed string.
- * @example
- *
- * _.trim('  abc  ');
- * // => 'abc'
- *
- * _.trim('-_-abc-_-', '_-');
- * // => 'abc'
- *
- * _.map(['  foo  ', '  bar  '], _.trim);
- * // => ['foo', 'bar']
- */
-function trim(string, chars, guard) {
-  string = toString(string);
-  if (string && (guard || chars === undefined)) {
-    return string.replace(reTrim, '');
-  }
-  if (!string || !(chars = baseToString(chars))) {
-    return string;
-  }
-  var strSymbols = stringToArray(string),
-      chrSymbols = stringToArray(chars),
-      start = charsStartIndex(strSymbols, chrSymbols),
-      end = charsEndIndex(strSymbols, chrSymbols) + 1;
-
-  return castSlice(strSymbols, start, end).join('');
-}
-
-var FN_ARGS = /^(?:async\s+)?(function)?\s*[^\(]*\(\s*([^\)]*)\)/m;
-var FN_ARG_SPLIT = /,/;
-var FN_ARG = /(=.+)?(\s*)$/;
-var STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
-
-function parseParams(func) {
-    func = func.toString().replace(STRIP_COMMENTS, '');
-    func = func.match(FN_ARGS)[2].replace(' ', '');
-    func = func ? func.split(FN_ARG_SPLIT) : [];
-    func = func.map(function (arg){
-        return trim(arg.replace(FN_ARG, ''));
-    });
-    return func;
-}
-
-/**
- * A dependency-injected version of the [async.auto]{@link module:ControlFlow.auto} function. Dependent
- * tasks are specified as parameters to the function, after the usual callback
- * parameter, with the parameter names matching the names of the tasks it
- * depends on. This can provide even more readable task graphs which can be
- * easier to maintain.
- *
- * If a final callback is specified, the task results are similarly injected,
- * specified as named parameters after the initial error parameter.
- *
- * The autoInject function is purely syntactic sugar and its semantics are
- * otherwise equivalent to [async.auto]{@link module:ControlFlow.auto}.
- *
- * @name autoInject
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @see [async.auto]{@link module:ControlFlow.auto}
- * @category Control Flow
- * @param {Object} tasks - An object, each of whose properties is an {@link AsyncFunction} of
- * the form 'func([dependencies...], callback). The object's key of a property
- * serves as the name of the task defined by that property, i.e. can be used
- * when specifying requirements for other tasks.
- * * The `callback` parameter is a `callback(err, result)` which must be called
- *   when finished, passing an `error` (which can be `null`) and the result of
- *   the function's execution. The remaining parameters name other tasks on
- *   which the task is dependent, and the results from those tasks are the
- *   arguments of those parameters.
- * @param {Function} [callback] - An optional callback which is called when all
- * the tasks have been completed. It receives the `err` argument if any `tasks`
- * pass an error to their callback, and a `results` object with any completed
- * task results, similar to `auto`.
- * @example
- *
- * //  The example from `auto` can be rewritten as follows:
- * async.autoInject({
- *     get_data: function(callback) {
- *         // async code to get some data
- *         callback(null, 'data', 'converted to array');
- *     },
- *     make_folder: function(callback) {
- *         // async code to create a directory to store a file in
- *         // this is run at the same time as getting the data
- *         callback(null, 'folder');
- *     },
- *     write_file: function(get_data, make_folder, callback) {
- *         // once there is some data and the directory exists,
- *         // write the data to a file in the directory
- *         callback(null, 'filename');
- *     },
- *     email_link: function(write_file, callback) {
- *         // once the file is written let's email a link to it...
- *         // write_file contains the filename returned by write_file.
- *         callback(null, {'file':write_file, 'email':'user@example.com'});
- *     }
- * }, function(err, results) {
- *     console.log('err = ', err);
- *     console.log('email_link = ', results.email_link);
- * });
- *
- * // If you are using a JS minifier that mangles parameter names, `autoInject`
- * // will not work with plain functions, since the parameter names will be
- * // collapsed to a single letter identifier.  To work around this, you can
- * // explicitly specify the names of the parameters your task function needs
- * // in an array, similar to Angular.js dependency injection.
- *
- * // This still has an advantage over plain `auto`, since the results a task
- * // depends on are still spread into arguments.
- * async.autoInject({
- *     //...
- *     write_file: ['get_data', 'make_folder', function(get_data, make_folder, callback) {
- *         callback(null, 'filename');
- *     }],
- *     email_link: ['write_file', function(write_file, callback) {
- *         callback(null, {'file':write_file, 'email':'user@example.com'});
- *     }]
- *     //...
- * }, function(err, results) {
- *     console.log('err = ', err);
- *     console.log('email_link = ', results.email_link);
- * });
- */
-function autoInject(tasks, callback) {
-    var newTasks = {};
-
-    baseForOwn(tasks, function (taskFn, key) {
-        var params;
-        var fnIsAsync = isAsync(taskFn);
-        var hasNoDeps =
-            (!fnIsAsync && taskFn.length === 1) ||
-            (fnIsAsync && taskFn.length === 0);
-
-        if (isArray(taskFn)) {
-            params = taskFn.slice(0, -1);
-            taskFn = taskFn[taskFn.length - 1];
-
-            newTasks[key] = params.concat(params.length > 0 ? newTask : taskFn);
-        } else if (hasNoDeps) {
-            // no dependencies, use the function as-is
-            newTasks[key] = taskFn;
-        } else {
-            params = parseParams(taskFn);
-            if (taskFn.length === 0 && !fnIsAsync && params.length === 0) {
-                throw new Error("autoInject task functions require explicit parameters.");
-            }
-
-            // remove callback param
-            if (!fnIsAsync) params.pop();
-
-            newTasks[key] = params.concat(newTask);
-        }
-
-        function newTask(results, taskCb) {
-            var newArgs = arrayMap(params, function (name) {
-                return results[name];
-            });
-            newArgs.push(taskCb);
-            wrapAsync(taskFn).apply(null, newArgs);
-        }
-    });
-
-    auto(newTasks, callback);
-}
-
-// Simple doubly linked list (https://en.wikipedia.org/wiki/Doubly_linked_list) implementation
-// used for queues. This implementation assumes that the node provided by the user can be modified
-// to adjust the next and last properties. We implement only the minimal functionality
-// for queue support.
-function DLL() {
-    this.head = this.tail = null;
-    this.length = 0;
-}
-
-function setInitial(dll, node) {
-    dll.length = 1;
-    dll.head = dll.tail = node;
-}
-
-DLL.prototype.removeLink = function(node) {
-    if (node.prev) node.prev.next = node.next;
-    else this.head = node.next;
-    if (node.next) node.next.prev = node.prev;
-    else this.tail = node.prev;
-
-    node.prev = node.next = null;
-    this.length -= 1;
-    return node;
-};
-
-DLL.prototype.empty = function () {
-    while(this.head) this.shift();
-    return this;
-};
-
-DLL.prototype.insertAfter = function(node, newNode) {
-    newNode.prev = node;
-    newNode.next = node.next;
-    if (node.next) node.next.prev = newNode;
-    else this.tail = newNode;
-    node.next = newNode;
-    this.length += 1;
-};
-
-DLL.prototype.insertBefore = function(node, newNode) {
-    newNode.prev = node.prev;
-    newNode.next = node;
-    if (node.prev) node.prev.next = newNode;
-    else this.head = newNode;
-    node.prev = newNode;
-    this.length += 1;
-};
-
-DLL.prototype.unshift = function(node) {
-    if (this.head) this.insertBefore(this.head, node);
-    else setInitial(this, node);
-};
-
-DLL.prototype.push = function(node) {
-    if (this.tail) this.insertAfter(this.tail, node);
-    else setInitial(this, node);
-};
-
-DLL.prototype.shift = function() {
-    return this.head && this.removeLink(this.head);
-};
-
-DLL.prototype.pop = function() {
-    return this.tail && this.removeLink(this.tail);
-};
-
-DLL.prototype.toArray = function () {
-    var arr = Array(this.length);
-    var curr = this.head;
-    for(var idx = 0; idx < this.length; idx++) {
-        arr[idx] = curr.data;
-        curr = curr.next;
-    }
-    return arr;
-};
-
-DLL.prototype.remove = function (testFn) {
-    var curr = this.head;
-    while(!!curr) {
-        var next = curr.next;
-        if (testFn(curr)) {
-            this.removeLink(curr);
-        }
-        curr = next;
-    }
-    return this;
-};
-
-function queue(worker, concurrency, payload) {
-    if (concurrency == null) {
-        concurrency = 1;
-    }
-    else if(concurrency === 0) {
-        throw new Error('Concurrency must not be zero');
-    }
-
-    var _worker = wrapAsync(worker);
-    var numRunning = 0;
-    var workersList = [];
-
-    var processingScheduled = false;
-    function _insert(data, insertAtFront, callback) {
-        if (callback != null && typeof callback !== 'function') {
-            throw new Error('task callback must be a function');
-        }
-        q.started = true;
-        if (!isArray(data)) {
-            data = [data];
-        }
-        if (data.length === 0 && q.idle()) {
-            // call drain immediately if there are no tasks
-            return setImmediate$1(function() {
-                q.drain();
-            });
-        }
-
-        for (var i = 0, l = data.length; i < l; i++) {
-            var item = {
-                data: data[i],
-                callback: callback || noop
-            };
-
-            if (insertAtFront) {
-                q._tasks.unshift(item);
-            } else {
-                q._tasks.push(item);
-            }
-        }
-
-        if (!processingScheduled) {
-            processingScheduled = true;
-            setImmediate$1(function() {
-                processingScheduled = false;
-                q.process();
-            });
-        }
-    }
-
-    function _next(tasks) {
-        return function(err){
-            numRunning -= 1;
-
-            for (var i = 0, l = tasks.length; i < l; i++) {
-                var task = tasks[i];
-
-                var index = baseIndexOf(workersList, task, 0);
-                if (index === 0) {
-                    workersList.shift();
-                } else if (index > 0) {
-                    workersList.splice(index, 1);
-                }
-
-                task.callback.apply(task, arguments);
-
-                if (err != null) {
-                    q.error(err, task.data);
-                }
-            }
-
-            if (numRunning <= (q.concurrency - q.buffer) ) {
-                q.unsaturated();
-            }
-
-            if (q.idle()) {
-                q.drain();
-            }
-            q.process();
-        };
-    }
-
-    var isProcessing = false;
-    var q = {
-        _tasks: new DLL(),
-        concurrency: concurrency,
-        payload: payload,
-        saturated: noop,
-        unsaturated:noop,
-        buffer: concurrency / 4,
-        empty: noop,
-        drain: noop,
-        error: noop,
-        started: false,
-        paused: false,
-        push: function (data, callback) {
-            _insert(data, false, callback);
-        },
-        kill: function () {
-            q.drain = noop;
-            q._tasks.empty();
-        },
-        unshift: function (data, callback) {
-            _insert(data, true, callback);
-        },
-        remove: function (testFn) {
-            q._tasks.remove(testFn);
-        },
-        process: function () {
-            // Avoid trying to start too many processing operations. This can occur
-            // when callbacks resolve synchronously (#1267).
-            if (isProcessing) {
-                return;
-            }
-            isProcessing = true;
-            while(!q.paused && numRunning < q.concurrency && q._tasks.length){
-                var tasks = [], data = [];
-                var l = q._tasks.length;
-                if (q.payload) l = Math.min(l, q.payload);
-                for (var i = 0; i < l; i++) {
-                    var node = q._tasks.shift();
-                    tasks.push(node);
-                    workersList.push(node);
-                    data.push(node.data);
-                }
-
-                numRunning += 1;
-
-                if (q._tasks.length === 0) {
-                    q.empty();
-                }
-
-                if (numRunning === q.concurrency) {
-                    q.saturated();
-                }
-
-                var cb = onlyOnce(_next(tasks));
-                _worker(data, cb);
-            }
-            isProcessing = false;
-        },
-        length: function () {
-            return q._tasks.length;
-        },
-        running: function () {
-            return numRunning;
-        },
-        workersList: function () {
-            return workersList;
-        },
-        idle: function() {
-            return q._tasks.length + numRunning === 0;
-        },
-        pause: function () {
-            q.paused = true;
-        },
-        resume: function () {
-            if (q.paused === false) { return; }
-            q.paused = false;
-            setImmediate$1(q.process);
-        }
-    };
-    return q;
-}
-
-/**
- * A cargo of tasks for the worker function to complete. Cargo inherits all of
- * the same methods and event callbacks as [`queue`]{@link module:ControlFlow.queue}.
- * @typedef {Object} CargoObject
- * @memberOf module:ControlFlow
- * @property {Function} length - A function returning the number of items
- * waiting to be processed. Invoke like `cargo.length()`.
- * @property {number} payload - An `integer` for determining how many tasks
- * should be process per round. This property can be changed after a `cargo` is
- * created to alter the payload on-the-fly.
- * @property {Function} push - Adds `task` to the `queue`. The callback is
- * called once the `worker` has finished processing the task. Instead of a
- * single task, an array of `tasks` can be submitted. The respective callback is
- * used for every task in the list. Invoke like `cargo.push(task, [callback])`.
- * @property {Function} saturated - A callback that is called when the
- * `queue.length()` hits the concurrency and further tasks will be queued.
- * @property {Function} empty - A callback that is called when the last item
- * from the `queue` is given to a `worker`.
- * @property {Function} drain - A callback that is called when the last item
- * from the `queue` has returned from the `worker`.
- * @property {Function} idle - a function returning false if there are items
- * waiting or being processed, or true if not. Invoke like `cargo.idle()`.
- * @property {Function} pause - a function that pauses the processing of tasks
- * until `resume()` is called. Invoke like `cargo.pause()`.
- * @property {Function} resume - a function that resumes the processing of
- * queued tasks when the queue is paused. Invoke like `cargo.resume()`.
- * @property {Function} kill - a function that removes the `drain` callback and
- * empties remaining tasks from the queue forcing it to go idle. Invoke like `cargo.kill()`.
- */
-
-/**
- * Creates a `cargo` object with the specified payload. Tasks added to the
- * cargo will be processed altogether (up to the `payload` limit). If the
- * `worker` is in progress, the task is queued until it becomes available. Once
- * the `worker` has completed some tasks, each callback of those tasks is
- * called. Check out [these](https://camo.githubusercontent.com/6bbd36f4cf5b35a0f11a96dcd2e97711ffc2fb37/68747470733a2f2f662e636c6f75642e6769746875622e636f6d2f6173736574732f313637363837312f36383130382f62626330636662302d356632392d313165322d393734662d3333393763363464633835382e676966) [animations](https://camo.githubusercontent.com/f4810e00e1c5f5f8addbe3e9f49064fd5d102699/68747470733a2f2f662e636c6f75642e6769746875622e636f6d2f6173736574732f313637363837312f36383130312f38346339323036362d356632392d313165322d383134662d3964336430323431336266642e676966)
- * for how `cargo` and `queue` work.
- *
- * While [`queue`]{@link module:ControlFlow.queue} passes only one task to one of a group of workers
- * at a time, cargo passes an array of tasks to a single worker, repeating
- * when the worker is finished.
- *
- * @name cargo
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @see [async.queue]{@link module:ControlFlow.queue}
- * @category Control Flow
- * @param {AsyncFunction} worker - An asynchronous function for processing an array
- * of queued tasks. Invoked with `(tasks, callback)`.
- * @param {number} [payload=Infinity] - An optional `integer` for determining
- * how many tasks should be processed per round; if omitted, the default is
- * unlimited.
- * @returns {module:ControlFlow.CargoObject} A cargo object to manage the tasks. Callbacks can
- * attached as certain properties to listen for specific events during the
- * lifecycle of the cargo and inner queue.
- * @example
- *
- * // create a cargo object with payload 2
- * var cargo = async.cargo(function(tasks, callback) {
- *     for (var i=0; i<tasks.length; i++) {
- *         console.log('hello ' + tasks[i].name);
- *     }
- *     callback();
- * }, 2);
- *
- * // add some items
- * cargo.push({name: 'foo'}, function(err) {
- *     console.log('finished processing foo');
- * });
- * cargo.push({name: 'bar'}, function(err) {
- *     console.log('finished processing bar');
- * });
- * cargo.push({name: 'baz'}, function(err) {
- *     console.log('finished processing baz');
- * });
- */
-function cargo(worker, payload) {
-    return queue(worker, 1, payload);
-}
-
-/**
- * The same as [`eachOf`]{@link module:Collections.eachOf} but runs only a single async operation at a time.
- *
- * @name eachOfSeries
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.eachOf]{@link module:Collections.eachOf}
- * @alias forEachOfSeries
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {AsyncFunction} iteratee - An async function to apply to each item in
- * `coll`.
- * Invoked with (item, key, callback).
- * @param {Function} [callback] - A callback which is called when all `iteratee`
- * functions have finished, or an error occurs. Invoked with (err).
- */
-var eachOfSeries = doLimit(eachOfLimit, 1);
-
-/**
- * Reduces `coll` into a single value using an async `iteratee` to return each
- * successive step. `memo` is the initial state of the reduction. This function
- * only operates in series.
- *
- * For performance reasons, it may make sense to split a call to this function
- * into a parallel map, and then use the normal `Array.prototype.reduce` on the
- * results. This function is for situations where each step in the reduction
- * needs to be async; if you can get the data before reducing it, then it's
- * probably a good idea to do so.
- *
- * @name reduce
- * @static
- * @memberOf module:Collections
- * @method
- * @alias inject
- * @alias foldl
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {*} memo - The initial state of the reduction.
- * @param {AsyncFunction} iteratee - A function applied to each item in the
- * array to produce the next step in the reduction.
- * The `iteratee` should complete with the next state of the reduction.
- * If the iteratee complete with an error, the reduction is stopped and the
- * main `callback` is immediately called with the error.
- * Invoked with (memo, item, callback).
- * @param {Function} [callback] - A callback which is called after all the
- * `iteratee` functions have finished. Result is the reduced value. Invoked with
- * (err, result).
- * @example
- *
- * async.reduce([1,2,3], 0, function(memo, item, callback) {
- *     // pointless async:
- *     process.nextTick(function() {
- *         callback(null, memo + item)
- *     });
- * }, function(err, result) {
- *     // result is now equal to the last value of memo, which is 6
- * });
- */
-function reduce(coll, memo, iteratee, callback) {
-    callback = once(callback || noop);
-    var _iteratee = wrapAsync(iteratee);
-    eachOfSeries(coll, function(x, i, callback) {
-        _iteratee(memo, x, function(err, v) {
-            memo = v;
-            callback(err);
-        });
-    }, function(err) {
-        callback(err, memo);
-    });
-}
-
-/**
- * Version of the compose function that is more natural to read. Each function
- * consumes the return value of the previous function. It is the equivalent of
- * [compose]{@link module:ControlFlow.compose} with the arguments reversed.
- *
- * Each function is executed with the `this` binding of the composed function.
- *
- * @name seq
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @see [async.compose]{@link module:ControlFlow.compose}
- * @category Control Flow
- * @param {...AsyncFunction} functions - the asynchronous functions to compose
- * @returns {Function} a function that composes the `functions` in order
- * @example
- *
- * // Requires lodash (or underscore), express3 and dresende's orm2.
- * // Part of an app, that fetches cats of the logged user.
- * // This example uses `seq` function to avoid overnesting and error
- * // handling clutter.
- * app.get('/cats', function(request, response) {
- *     var User = request.models.User;
- *     async.seq(
- *         _.bind(User.get, User),  // 'User.get' has signature (id, callback(err, data))
- *         function(user, fn) {
- *             user.getCats(fn);      // 'getCats' has signature (callback(err, data))
- *         }
- *     )(req.session.user_id, function (err, cats) {
- *         if (err) {
- *             console.error(err);
- *             response.json({ status: 'error', message: err.message });
- *         } else {
- *             response.json({ status: 'ok', message: 'Cats found', data: cats });
- *         }
- *     });
- * });
- */
-function seq(/*...functions*/) {
-    var _functions = arrayMap(arguments, wrapAsync);
-    return function(/*...args*/) {
-        var args = slice(arguments);
-        var that = this;
-
-        var cb = args[args.length - 1];
-        if (typeof cb == 'function') {
-            args.pop();
-        } else {
-            cb = noop;
-        }
-
-        reduce(_functions, args, function(newargs, fn, cb) {
-            fn.apply(that, newargs.concat(function(err/*, ...nextargs*/) {
-                var nextargs = slice(arguments, 1);
-                cb(err, nextargs);
-            }));
-        },
-        function(err, results) {
-            cb.apply(that, [err].concat(results));
-        });
-    };
-}
-
-/**
- * Creates a function which is a composition of the passed asynchronous
- * functions. Each function consumes the return value of the function that
- * follows. Composing functions `f()`, `g()`, and `h()` would produce the result
- * of `f(g(h()))`, only this version uses callbacks to obtain the return values.
- *
- * Each function is executed with the `this` binding of the composed function.
- *
- * @name compose
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @category Control Flow
- * @param {...AsyncFunction} functions - the asynchronous functions to compose
- * @returns {Function} an asynchronous function that is the composed
- * asynchronous `functions`
- * @example
- *
- * function add1(n, callback) {
- *     setTimeout(function () {
- *         callback(null, n + 1);
- *     }, 10);
- * }
- *
- * function mul3(n, callback) {
- *     setTimeout(function () {
- *         callback(null, n * 3);
- *     }, 10);
- * }
- *
- * var add1mul3 = async.compose(mul3, add1);
- * add1mul3(4, function (err, result) {
- *     // result now equals 15
- * });
- */
-var compose = function(/*...args*/) {
-    return seq.apply(null, slice(arguments).reverse());
-};
-
-var _concat = Array.prototype.concat;
-
-/**
- * The same as [`concat`]{@link module:Collections.concat} but runs a maximum of `limit` async operations at a time.
- *
- * @name concatLimit
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.concat]{@link module:Collections.concat}
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {number} limit - The maximum number of async operations at a time.
- * @param {AsyncFunction} iteratee - A function to apply to each item in `coll`,
- * which should use an array as its result. Invoked with (item, callback).
- * @param {Function} [callback] - A callback which is called after all the
- * `iteratee` functions have finished, or an error occurs. Results is an array
- * containing the concatenated results of the `iteratee` function. Invoked with
- * (err, results).
- */
-var concatLimit = function(coll, limit, iteratee, callback) {
-    callback = callback || noop;
-    var _iteratee = wrapAsync(iteratee);
-    mapLimit(coll, limit, function(val, callback) {
-        _iteratee(val, function(err /*, ...args*/) {
-            if (err) return callback(err);
-            return callback(null, slice(arguments, 1));
-        });
-    }, function(err, mapResults) {
-        var result = [];
-        for (var i = 0; i < mapResults.length; i++) {
-            if (mapResults[i]) {
-                result = _concat.apply(result, mapResults[i]);
-            }
-        }
-
-        return callback(err, result);
-    });
-};
-
-/**
- * Applies `iteratee` to each item in `coll`, concatenating the results. Returns
- * the concatenated list. The `iteratee`s are called in parallel, and the
- * results are concatenated as they return. There is no guarantee that the
- * results array will be returned in the original order of `coll` passed to the
- * `iteratee` function.
- *
- * @name concat
- * @static
- * @memberOf module:Collections
- * @method
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {AsyncFunction} iteratee - A function to apply to each item in `coll`,
- * which should use an array as its result. Invoked with (item, callback).
- * @param {Function} [callback(err)] - A callback which is called after all the
- * `iteratee` functions have finished, or an error occurs. Results is an array
- * containing the concatenated results of the `iteratee` function. Invoked with
- * (err, results).
- * @example
- *
- * async.concat(['dir1','dir2','dir3'], fs.readdir, function(err, files) {
- *     // files is now a list of filenames that exist in the 3 directories
- * });
- */
-var concat = doLimit(concatLimit, Infinity);
-
-/**
- * The same as [`concat`]{@link module:Collections.concat} but runs only a single async operation at a time.
- *
- * @name concatSeries
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.concat]{@link module:Collections.concat}
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {AsyncFunction} iteratee - A function to apply to each item in `coll`.
- * The iteratee should complete with an array an array of results.
- * Invoked with (item, callback).
- * @param {Function} [callback(err)] - A callback which is called after all the
- * `iteratee` functions have finished, or an error occurs. Results is an array
- * containing the concatenated results of the `iteratee` function. Invoked with
- * (err, results).
- */
-var concatSeries = doLimit(concatLimit, 1);
-
-/**
- * Returns a function that when called, calls-back with the values provided.
- * Useful as the first function in a [`waterfall`]{@link module:ControlFlow.waterfall}, or for plugging values in to
- * [`auto`]{@link module:ControlFlow.auto}.
- *
- * @name constant
- * @static
- * @memberOf module:Utils
- * @method
- * @category Util
- * @param {...*} arguments... - Any number of arguments to automatically invoke
- * callback with.
- * @returns {AsyncFunction} Returns a function that when invoked, automatically
- * invokes the callback with the previous given arguments.
- * @example
- *
- * async.waterfall([
- *     async.constant(42),
- *     function (value, next) {
- *         // value === 42
- *     },
- *     //...
- * ], callback);
- *
- * async.waterfall([
- *     async.constant(filename, "utf8"),
- *     fs.readFile,
- *     function (fileData, next) {
- *         //...
- *     }
- *     //...
- * ], callback);
- *
- * async.auto({
- *     hostname: async.constant("https://server.net/"),
- *     port: findFreePort,
- *     launchServer: ["hostname", "port", function (options, cb) {
- *         startServer(options, cb);
- *     }],
- *     //...
- * }, callback);
- */
-var constant = function(/*...values*/) {
-    var values = slice(arguments);
-    var args = [null].concat(values);
-    return function (/*...ignoredArgs, callback*/) {
-        var callback = arguments[arguments.length - 1];
-        return callback.apply(this, args);
-    };
-};
-
-/**
- * This method returns the first argument it receives.
- *
- * @static
- * @since 0.1.0
- * @memberOf _
- * @category Util
- * @param {*} value Any value.
- * @returns {*} Returns `value`.
- * @example
- *
- * var object = { 'a': 1 };
- *
- * console.log(_.identity(object) === object);
- * // => true
- */
-function identity(value) {
-  return value;
-}
-
-function _createTester(check, getResult) {
-    return function(eachfn, arr, iteratee, cb) {
-        cb = cb || noop;
-        var testPassed = false;
-        var testResult;
-        eachfn(arr, function(value, _, callback) {
-            iteratee(value, function(err, result) {
-                if (err) {
-                    callback(err);
-                } else if (check(result) && !testResult) {
-                    testPassed = true;
-                    testResult = getResult(true, value);
-                    callback(null, breakLoop);
-                } else {
-                    callback();
-                }
-            });
-        }, function(err) {
-            if (err) {
-                cb(err);
-            } else {
-                cb(null, testPassed ? testResult : getResult(false));
-            }
-        });
-    };
-}
-
-function _findGetResult(v, x) {
-    return x;
-}
-
-/**
- * Returns the first value in `coll` that passes an async truth test. The
- * `iteratee` is applied in parallel, meaning the first iteratee to return
- * `true` will fire the detect `callback` with that result. That means the
- * result might not be the first item in the original `coll` (in terms of order)
- * that passes the test.
-
- * If order within the original `coll` is important, then look at
- * [`detectSeries`]{@link module:Collections.detectSeries}.
- *
- * @name detect
- * @static
- * @memberOf module:Collections
- * @method
- * @alias find
- * @category Collections
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {AsyncFunction} iteratee - A truth test to apply to each item in `coll`.
- * The iteratee must complete with a boolean value as its result.
- * Invoked with (item, callback).
- * @param {Function} [callback] - A callback which is called as soon as any
- * iteratee returns `true`, or after all the `iteratee` functions have finished.
- * Result will be the first item in the array that passes the truth test
- * (iteratee) or the value `undefined` if none passed. Invoked with
- * (err, result).
- * @example
- *
- * async.detect(['file1','file2','file3'], function(filePath, callback) {
- *     fs.access(filePath, function(err) {
- *         callback(null, !err)
- *     });
- * }, function(err, result) {
- *     // result now equals the first file in the list that exists
- * });
- */
-var detect = doParallel(_createTester(identity, _findGetResult));
-
-/**
- * The same as [`detect`]{@link module:Collections.detect} but runs a maximum of `limit` async operations at a
- * time.
- *
- * @name detectLimit
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.detect]{@link module:Collections.detect}
- * @alias findLimit
- * @category Collections
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {number} limit - The maximum number of async operations at a time.
- * @param {AsyncFunction} iteratee - A truth test to apply to each item in `coll`.
- * The iteratee must complete with a boolean value as its result.
- * Invoked with (item, callback).
- * @param {Function} [callback] - A callback which is called as soon as any
- * iteratee returns `true`, or after all the `iteratee` functions have finished.
- * Result will be the first item in the array that passes the truth test
- * (iteratee) or the value `undefined` if none passed. Invoked with
- * (err, result).
- */
-var detectLimit = doParallelLimit(_createTester(identity, _findGetResult));
-
-/**
- * The same as [`detect`]{@link module:Collections.detect} but runs only a single async operation at a time.
- *
- * @name detectSeries
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.detect]{@link module:Collections.detect}
- * @alias findSeries
- * @category Collections
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {AsyncFunction} iteratee - A truth test to apply to each item in `coll`.
- * The iteratee must complete with a boolean value as its result.
- * Invoked with (item, callback).
- * @param {Function} [callback] - A callback which is called as soon as any
- * iteratee returns `true`, or after all the `iteratee` functions have finished.
- * Result will be the first item in the array that passes the truth test
- * (iteratee) or the value `undefined` if none passed. Invoked with
- * (err, result).
- */
-var detectSeries = doLimit(detectLimit, 1);
-
-function consoleFunc(name) {
-    return function (fn/*, ...args*/) {
-        var args = slice(arguments, 1);
-        args.push(function (err/*, ...args*/) {
-            var args = slice(arguments, 1);
-            if (typeof console === 'object') {
-                if (err) {
-                    if (console.error) {
-                        console.error(err);
-                    }
-                } else if (console[name]) {
-                    arrayEach(args, function (x) {
-                        console[name](x);
-                    });
-                }
-            }
-        });
-        wrapAsync(fn).apply(null, args);
-    };
-}
-
-/**
- * Logs the result of an [`async` function]{@link AsyncFunction} to the
- * `console` using `console.dir` to display the properties of the resulting object.
- * Only works in Node.js or in browsers that support `console.dir` and
- * `console.error` (such as FF and Chrome).
- * If multiple arguments are returned from the async function,
- * `console.dir` is called on each argument in order.
- *
- * @name dir
- * @static
- * @memberOf module:Utils
- * @method
- * @category Util
- * @param {AsyncFunction} function - The function you want to eventually apply
- * all arguments to.
- * @param {...*} arguments... - Any number of arguments to apply to the function.
- * @example
- *
- * // in a module
- * var hello = function(name, callback) {
- *     setTimeout(function() {
- *         callback(null, {hello: name});
- *     }, 1000);
- * };
- *
- * // in the node repl
- * node> async.dir(hello, 'world');
- * {hello: 'world'}
- */
-var dir = consoleFunc('dir');
-
-/**
- * The post-check version of [`during`]{@link module:ControlFlow.during}. To reflect the difference in
- * the order of operations, the arguments `test` and `fn` are switched.
- *
- * Also a version of [`doWhilst`]{@link module:ControlFlow.doWhilst} with asynchronous `test` function.
- * @name doDuring
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @see [async.during]{@link module:ControlFlow.during}
- * @category Control Flow
- * @param {AsyncFunction} fn - An async function which is called each time
- * `test` passes. Invoked with (callback).
- * @param {AsyncFunction} test - asynchronous truth test to perform before each
- * execution of `fn`. Invoked with (...args, callback), where `...args` are the
- * non-error args from the previous callback of `fn`.
- * @param {Function} [callback] - A callback which is called after the test
- * function has failed and repeated execution of `fn` has stopped. `callback`
- * will be passed an error if one occurred, otherwise `null`.
- */
-function doDuring(fn, test, callback) {
-    callback = onlyOnce(callback || noop);
-    var _fn = wrapAsync(fn);
-    var _test = wrapAsync(test);
-
-    function next(err/*, ...args*/) {
-        if (err) return callback(err);
-        var args = slice(arguments, 1);
-        args.push(check);
-        _test.apply(this, args);
-    }
-
-    function check(err, truth) {
-        if (err) return callback(err);
-        if (!truth) return callback(null);
-        _fn(next);
-    }
-
-    check(null, true);
-
-}
-
-/**
- * The post-check version of [`whilst`]{@link module:ControlFlow.whilst}. To reflect the difference in
- * the order of operations, the arguments `test` and `iteratee` are switched.
- *
- * `doWhilst` is to `whilst` as `do while` is to `while` in plain JavaScript.
- *
- * @name doWhilst
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @see [async.whilst]{@link module:ControlFlow.whilst}
- * @category Control Flow
- * @param {AsyncFunction} iteratee - A function which is called each time `test`
- * passes. Invoked with (callback).
- * @param {Function} test - synchronous truth test to perform after each
- * execution of `iteratee`. Invoked with any non-error callback results of
- * `iteratee`.
- * @param {Function} [callback] - A callback which is called after the test
- * function has failed and repeated execution of `iteratee` has stopped.
- * `callback` will be passed an error and any arguments passed to the final
- * `iteratee`'s callback. Invoked with (err, [results]);
- */
-function doWhilst(iteratee, test, callback) {
-    callback = onlyOnce(callback || noop);
-    var _iteratee = wrapAsync(iteratee);
-    var next = function(err/*, ...args*/) {
-        if (err) return callback(err);
-        var args = slice(arguments, 1);
-        if (test.apply(this, args)) return _iteratee(next);
-        callback.apply(null, [null].concat(args));
-    };
-    _iteratee(next);
-}
-
-/**
- * Like ['doWhilst']{@link module:ControlFlow.doWhilst}, except the `test` is inverted. Note the
- * argument ordering differs from `until`.
- *
- * @name doUntil
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @see [async.doWhilst]{@link module:ControlFlow.doWhilst}
- * @category Control Flow
- * @param {AsyncFunction} iteratee - An async function which is called each time
- * `test` fails. Invoked with (callback).
- * @param {Function} test - synchronous truth test to perform after each
- * execution of `iteratee`. Invoked with any non-error callback results of
- * `iteratee`.
- * @param {Function} [callback] - A callback which is called after the test
- * function has passed and repeated execution of `iteratee` has stopped. `callback`
- * will be passed an error and any arguments passed to the final `iteratee`'s
- * callback. Invoked with (err, [results]);
- */
-function doUntil(iteratee, test, callback) {
-    doWhilst(iteratee, function() {
-        return !test.apply(this, arguments);
-    }, callback);
-}
-
-/**
- * Like [`whilst`]{@link module:ControlFlow.whilst}, except the `test` is an asynchronous function that
- * is passed a callback in the form of `function (err, truth)`. If error is
- * passed to `test` or `fn`, the main callback is immediately called with the
- * value of the error.
- *
- * @name during
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @see [async.whilst]{@link module:ControlFlow.whilst}
- * @category Control Flow
- * @param {AsyncFunction} test - asynchronous truth test to perform before each
- * execution of `fn`. Invoked with (callback).
- * @param {AsyncFunction} fn - An async function which is called each time
- * `test` passes. Invoked with (callback).
- * @param {Function} [callback] - A callback which is called after the test
- * function has failed and repeated execution of `fn` has stopped. `callback`
- * will be passed an error, if one occurred, otherwise `null`.
- * @example
- *
- * var count = 0;
- *
- * async.during(
- *     function (callback) {
- *         return callback(null, count < 5);
- *     },
- *     function (callback) {
- *         count++;
- *         setTimeout(callback, 1000);
- *     },
- *     function (err) {
- *         // 5 seconds have passed
- *     }
- * );
- */
-function during(test, fn, callback) {
-    callback = onlyOnce(callback || noop);
-    var _fn = wrapAsync(fn);
-    var _test = wrapAsync(test);
-
-    function next(err) {
-        if (err) return callback(err);
-        _test(check);
-    }
-
-    function check(err, truth) {
-        if (err) return callback(err);
-        if (!truth) return callback(null);
-        _fn(next);
-    }
-
-    _test(check);
-}
-
-function _withoutIndex(iteratee) {
-    return function (value, index, callback) {
-        return iteratee(value, callback);
-    };
-}
-
-/**
- * Applies the function `iteratee` to each item in `coll`, in parallel.
- * The `iteratee` is called with an item from the list, and a callback for when
- * it has finished. If the `iteratee` passes an error to its `callback`, the
- * main `callback` (for the `each` function) is immediately called with the
- * error.
- *
- * Note, that since this function applies `iteratee` to each item in parallel,
- * there is no guarantee that the iteratee functions will complete in order.
- *
- * @name each
- * @static
- * @memberOf module:Collections
- * @method
- * @alias forEach
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {AsyncFunction} iteratee - An async function to apply to
- * each item in `coll`. Invoked with (item, callback).
- * The array index is not passed to the iteratee.
- * If you need the index, use `eachOf`.
- * @param {Function} [callback] - A callback which is called when all
- * `iteratee` functions have finished, or an error occurs. Invoked with (err).
- * @example
- *
- * // assuming openFiles is an array of file names and saveFile is a function
- * // to save the modified contents of that file:
- *
- * async.each(openFiles, saveFile, function(err){
- *   // if any of the saves produced an error, err would equal that error
- * });
- *
- * // assuming openFiles is an array of file names
- * async.each(openFiles, function(file, callback) {
- *
- *     // Perform operation on file here.
- *     console.log('Processing file ' + file);
- *
- *     if( file.length > 32 ) {
- *       console.log('This file name is too long');
- *       callback('File name too long');
- *     } else {
- *       // Do work to process file here
- *       console.log('File processed');
- *       callback();
- *     }
- * }, function(err) {
- *     // if any of the file processing produced an error, err would equal that error
- *     if( err ) {
- *       // One of the iterations produced an error.
- *       // All processing will now stop.
- *       console.log('A file failed to process');
- *     } else {
- *       console.log('All files have been processed successfully');
- *     }
- * });
- */
-function eachLimit(coll, iteratee, callback) {
-    eachOf(coll, _withoutIndex(wrapAsync(iteratee)), callback);
-}
-
-/**
- * The same as [`each`]{@link module:Collections.each} but runs a maximum of `limit` async operations at a time.
- *
- * @name eachLimit
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.each]{@link module:Collections.each}
- * @alias forEachLimit
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {number} limit - The maximum number of async operations at a time.
- * @param {AsyncFunction} iteratee - An async function to apply to each item in
- * `coll`.
- * The array index is not passed to the iteratee.
- * If you need the index, use `eachOfLimit`.
- * Invoked with (item, callback).
- * @param {Function} [callback] - A callback which is called when all
- * `iteratee` functions have finished, or an error occurs. Invoked with (err).
- */
-function eachLimit$1(coll, limit, iteratee, callback) {
-    _eachOfLimit(limit)(coll, _withoutIndex(wrapAsync(iteratee)), callback);
-}
-
-/**
- * The same as [`each`]{@link module:Collections.each} but runs only a single async operation at a time.
- *
- * @name eachSeries
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.each]{@link module:Collections.each}
- * @alias forEachSeries
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {AsyncFunction} iteratee - An async function to apply to each
- * item in `coll`.
- * The array index is not passed to the iteratee.
- * If you need the index, use `eachOfSeries`.
- * Invoked with (item, callback).
- * @param {Function} [callback] - A callback which is called when all
- * `iteratee` functions have finished, or an error occurs. Invoked with (err).
- */
-var eachSeries = doLimit(eachLimit$1, 1);
-
-/**
- * Wrap an async function and ensure it calls its callback on a later tick of
- * the event loop.  If the function already calls its callback on a next tick,
- * no extra deferral is added. This is useful for preventing stack overflows
- * (`RangeError: Maximum call stack size exceeded`) and generally keeping
- * [Zalgo](http://blog.izs.me/post/59142742143/designing-apis-for-asynchrony)
- * contained. ES2017 `async` functions are returned as-is -- they are immune
- * to Zalgo's corrupting influences, as they always resolve on a later tick.
- *
- * @name ensureAsync
- * @static
- * @memberOf module:Utils
- * @method
- * @category Util
- * @param {AsyncFunction} fn - an async function, one that expects a node-style
- * callback as its last argument.
- * @returns {AsyncFunction} Returns a wrapped function with the exact same call
- * signature as the function passed in.
- * @example
- *
- * function sometimesAsync(arg, callback) {
- *     if (cache[arg]) {
- *         return callback(null, cache[arg]); // this would be synchronous!!
- *     } else {
- *         doSomeIO(arg, callback); // this IO would be asynchronous
- *     }
- * }
- *
- * // this has a risk of stack overflows if many results are cached in a row
- * async.mapSeries(args, sometimesAsync, done);
- *
- * // this will defer sometimesAsync's callback if necessary,
- * // preventing stack overflows
- * async.mapSeries(args, async.ensureAsync(sometimesAsync), done);
- */
-function ensureAsync(fn) {
-    if (isAsync(fn)) return fn;
-    return initialParams(function (args, callback) {
-        var sync = true;
-        args.push(function () {
-            var innerArgs = arguments;
-            if (sync) {
-                setImmediate$1(function () {
-                    callback.apply(null, innerArgs);
-                });
-            } else {
-                callback.apply(null, innerArgs);
-            }
-        });
-        fn.apply(this, args);
-        sync = false;
-    });
-}
-
-function notId(v) {
-    return !v;
-}
-
-/**
- * Returns `true` if every element in `coll` satisfies an async test. If any
- * iteratee call returns `false`, the main `callback` is immediately called.
- *
- * @name every
- * @static
- * @memberOf module:Collections
- * @method
- * @alias all
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {AsyncFunction} iteratee - An async truth test to apply to each item
- * in the collection in parallel.
- * The iteratee must complete with a boolean result value.
- * Invoked with (item, callback).
- * @param {Function} [callback] - A callback which is called after all the
- * `iteratee` functions have finished. Result will be either `true` or `false`
- * depending on the values of the async tests. Invoked with (err, result).
- * @example
- *
- * async.every(['file1','file2','file3'], function(filePath, callback) {
- *     fs.access(filePath, function(err) {
- *         callback(null, !err)
- *     });
- * }, function(err, result) {
- *     // if result is true then every file exists
- * });
- */
-var every = doParallel(_createTester(notId, notId));
-
-/**
- * The same as [`every`]{@link module:Collections.every} but runs a maximum of `limit` async operations at a time.
- *
- * @name everyLimit
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.every]{@link module:Collections.every}
- * @alias allLimit
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {number} limit - The maximum number of async operations at a time.
- * @param {AsyncFunction} iteratee - An async truth test to apply to each item
- * in the collection in parallel.
- * The iteratee must complete with a boolean result value.
- * Invoked with (item, callback).
- * @param {Function} [callback] - A callback which is called after all the
- * `iteratee` functions have finished. Result will be either `true` or `false`
- * depending on the values of the async tests. Invoked with (err, result).
- */
-var everyLimit = doParallelLimit(_createTester(notId, notId));
-
-/**
- * The same as [`every`]{@link module:Collections.every} but runs only a single async operation at a time.
- *
- * @name everySeries
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.every]{@link module:Collections.every}
- * @alias allSeries
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {AsyncFunction} iteratee - An async truth test to apply to each item
- * in the collection in series.
- * The iteratee must complete with a boolean result value.
- * Invoked with (item, callback).
- * @param {Function} [callback] - A callback which is called after all the
- * `iteratee` functions have finished. Result will be either `true` or `false`
- * depending on the values of the async tests. Invoked with (err, result).
- */
-var everySeries = doLimit(everyLimit, 1);
-
-/**
- * The base implementation of `_.property` without support for deep paths.
- *
- * @private
- * @param {string} key The key of the property to get.
- * @returns {Function} Returns the new accessor function.
- */
-function baseProperty(key) {
-  return function(object) {
-    return object == null ? undefined : object[key];
-  };
-}
-
-function filterArray(eachfn, arr, iteratee, callback) {
-    var truthValues = new Array(arr.length);
-    eachfn(arr, function (x, index, callback) {
-        iteratee(x, function (err, v) {
-            truthValues[index] = !!v;
-            callback(err);
-        });
-    }, function (err) {
-        if (err) return callback(err);
-        var results = [];
-        for (var i = 0; i < arr.length; i++) {
-            if (truthValues[i]) results.push(arr[i]);
-        }
-        callback(null, results);
-    });
-}
-
-function filterGeneric(eachfn, coll, iteratee, callback) {
-    var results = [];
-    eachfn(coll, function (x, index, callback) {
-        iteratee(x, function (err, v) {
-            if (err) {
-                callback(err);
-            } else {
-                if (v) {
-                    results.push({index: index, value: x});
-                }
-                callback();
-            }
-        });
-    }, function (err) {
-        if (err) {
-            callback(err);
-        } else {
-            callback(null, arrayMap(results.sort(function (a, b) {
-                return a.index - b.index;
-            }), baseProperty('value')));
-        }
-    });
-}
-
-function _filter(eachfn, coll, iteratee, callback) {
-    var filter = isArrayLike(coll) ? filterArray : filterGeneric;
-    filter(eachfn, coll, wrapAsync(iteratee), callback || noop);
-}
-
-/**
- * Returns a new array of all the values in `coll` which pass an async truth
- * test. This operation is performed in parallel, but the results array will be
- * in the same order as the original.
- *
- * @name filter
- * @static
- * @memberOf module:Collections
- * @method
- * @alias select
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {Function} iteratee - A truth test to apply to each item in `coll`.
- * The `iteratee` is passed a `callback(err, truthValue)`, which must be called
- * with a boolean argument once it has completed. Invoked with (item, callback).
- * @param {Function} [callback] - A callback which is called after all the
- * `iteratee` functions have finished. Invoked with (err, results).
- * @example
- *
- * async.filter(['file1','file2','file3'], function(filePath, callback) {
- *     fs.access(filePath, function(err) {
- *         callback(null, !err)
- *     });
- * }, function(err, results) {
- *     // results now equals an array of the existing files
- * });
- */
-var filter = doParallel(_filter);
-
-/**
- * The same as [`filter`]{@link module:Collections.filter} but runs a maximum of `limit` async operations at a
- * time.
- *
- * @name filterLimit
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.filter]{@link module:Collections.filter}
- * @alias selectLimit
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {number} limit - The maximum number of async operations at a time.
- * @param {Function} iteratee - A truth test to apply to each item in `coll`.
- * The `iteratee` is passed a `callback(err, truthValue)`, which must be called
- * with a boolean argument once it has completed. Invoked with (item, callback).
- * @param {Function} [callback] - A callback which is called after all the
- * `iteratee` functions have finished. Invoked with (err, results).
- */
-var filterLimit = doParallelLimit(_filter);
-
-/**
- * The same as [`filter`]{@link module:Collections.filter} but runs only a single async operation at a time.
- *
- * @name filterSeries
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.filter]{@link module:Collections.filter}
- * @alias selectSeries
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {Function} iteratee - A truth test to apply to each item in `coll`.
- * The `iteratee` is passed a `callback(err, truthValue)`, which must be called
- * with a boolean argument once it has completed. Invoked with (item, callback).
- * @param {Function} [callback] - A callback which is called after all the
- * `iteratee` functions have finished. Invoked with (err, results)
- */
-var filterSeries = doLimit(filterLimit, 1);
-
-/**
- * Calls the asynchronous function `fn` with a callback parameter that allows it
- * to call itself again, in series, indefinitely.
-
- * If an error is passed to the callback then `errback` is called with the
- * error, and execution stops, otherwise it will never be called.
- *
- * @name forever
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @category Control Flow
- * @param {AsyncFunction} fn - an async function to call repeatedly.
- * Invoked with (next).
- * @param {Function} [errback] - when `fn` passes an error to it's callback,
- * this function will be called, and execution stops. Invoked with (err).
- * @example
- *
- * async.forever(
- *     function(next) {
- *         // next is suitable for passing to things that need a callback(err [, whatever]);
- *         // it will result in this function being called again.
- *     },
- *     function(err) {
- *         // if next is called with a value in its first parameter, it will appear
- *         // in here as 'err', and execution will stop.
- *     }
- * );
- */
-function forever(fn, errback) {
-    var done = onlyOnce(errback || noop);
-    var task = wrapAsync(ensureAsync(fn));
-
-    function next(err) {
-        if (err) return done(err);
-        task(next);
-    }
-    next();
-}
-
-/**
- * The same as [`groupBy`]{@link module:Collections.groupBy} but runs a maximum of `limit` async operations at a time.
- *
- * @name groupByLimit
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.groupBy]{@link module:Collections.groupBy}
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {number} limit - The maximum number of async operations at a time.
- * @param {AsyncFunction} iteratee - An async function to apply to each item in
- * `coll`.
- * The iteratee should complete with a `key` to group the value under.
- * Invoked with (value, callback).
- * @param {Function} [callback] - A callback which is called when all `iteratee`
- * functions have finished, or an error occurs. Result is an `Object` whoses
- * properties are arrays of values which returned the corresponding key.
- */
-var groupByLimit = function(coll, limit, iteratee, callback) {
-    callback = callback || noop;
-    var _iteratee = wrapAsync(iteratee);
-    mapLimit(coll, limit, function(val, callback) {
-        _iteratee(val, function(err, key) {
-            if (err) return callback(err);
-            return callback(null, {key: key, val: val});
-        });
-    }, function(err, mapResults) {
-        var result = {};
-        // from MDN, handle object having an `hasOwnProperty` prop
-        var hasOwnProperty = Object.prototype.hasOwnProperty;
-
-        for (var i = 0; i < mapResults.length; i++) {
-            if (mapResults[i]) {
-                var key = mapResults[i].key;
-                var val = mapResults[i].val;
-
-                if (hasOwnProperty.call(result, key)) {
-                    result[key].push(val);
-                } else {
-                    result[key] = [val];
-                }
-            }
-        }
-
-        return callback(err, result);
-    });
-};
-
-/**
- * Returns a new object, where each value corresponds to an array of items, from
- * `coll`, that returned the corresponding key. That is, the keys of the object
- * correspond to the values passed to the `iteratee` callback.
- *
- * Note: Since this function applies the `iteratee` to each item in parallel,
- * there is no guarantee that the `iteratee` functions will complete in order.
- * However, the values for each key in the `result` will be in the same order as
- * the original `coll`. For Objects, the values will roughly be in the order of
- * the original Objects' keys (but this can vary across JavaScript engines).
- *
- * @name groupBy
- * @static
- * @memberOf module:Collections
- * @method
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {AsyncFunction} iteratee - An async function to apply to each item in
- * `coll`.
- * The iteratee should complete with a `key` to group the value under.
- * Invoked with (value, callback).
- * @param {Function} [callback] - A callback which is called when all `iteratee`
- * functions have finished, or an error occurs. Result is an `Object` whoses
- * properties are arrays of values which returned the corresponding key.
- * @example
- *
- * async.groupBy(['userId1', 'userId2', 'userId3'], function(userId, callback) {
- *     db.findById(userId, function(err, user) {
- *         if (err) return callback(err);
- *         return callback(null, user.age);
- *     });
- * }, function(err, result) {
- *     // result is object containing the userIds grouped by age
- *     // e.g. { 30: ['userId1', 'userId3'], 42: ['userId2']};
- * });
- */
-var groupBy = doLimit(groupByLimit, Infinity);
-
-/**
- * The same as [`groupBy`]{@link module:Collections.groupBy} but runs only a single async operation at a time.
- *
- * @name groupBySeries
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.groupBy]{@link module:Collections.groupBy}
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {number} limit - The maximum number of async operations at a time.
- * @param {AsyncFunction} iteratee - An async function to apply to each item in
- * `coll`.
- * The iteratee should complete with a `key` to group the value under.
- * Invoked with (value, callback).
- * @param {Function} [callback] - A callback which is called when all `iteratee`
- * functions have finished, or an error occurs. Result is an `Object` whoses
- * properties are arrays of values which returned the corresponding key.
- */
-var groupBySeries = doLimit(groupByLimit, 1);
-
-/**
- * Logs the result of an `async` function to the `console`. Only works in
- * Node.js or in browsers that support `console.log` and `console.error` (such
- * as FF and Chrome). If multiple arguments are returned from the async
- * function, `console.log` is called on each argument in order.
- *
- * @name log
- * @static
- * @memberOf module:Utils
- * @method
- * @category Util
- * @param {AsyncFunction} function - The function you want to eventually apply
- * all arguments to.
- * @param {...*} arguments... - Any number of arguments to apply to the function.
- * @example
- *
- * // in a module
- * var hello = function(name, callback) {
- *     setTimeout(function() {
- *         callback(null, 'hello ' + name);
- *     }, 1000);
- * };
- *
- * // in the node repl
- * node> async.log(hello, 'world');
- * 'hello world'
- */
-var log = consoleFunc('log');
-
-/**
- * The same as [`mapValues`]{@link module:Collections.mapValues} but runs a maximum of `limit` async operations at a
- * time.
- *
- * @name mapValuesLimit
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.mapValues]{@link module:Collections.mapValues}
- * @category Collection
- * @param {Object} obj - A collection to iterate over.
- * @param {number} limit - The maximum number of async operations at a time.
- * @param {AsyncFunction} iteratee - A function to apply to each value and key
- * in `coll`.
- * The iteratee should complete with the transformed value as its result.
- * Invoked with (value, key, callback).
- * @param {Function} [callback] - A callback which is called when all `iteratee`
- * functions have finished, or an error occurs. `result` is a new object consisting
- * of each key from `obj`, with each transformed value on the right-hand side.
- * Invoked with (err, result).
- */
-function mapValuesLimit(obj, limit, iteratee, callback) {
-    callback = once(callback || noop);
-    var newObj = {};
-    var _iteratee = wrapAsync(iteratee);
-    eachOfLimit(obj, limit, function(val, key, next) {
-        _iteratee(val, key, function (err, result) {
-            if (err) return next(err);
-            newObj[key] = result;
-            next();
-        });
-    }, function (err) {
-        callback(err, newObj);
-    });
-}
-
-/**
- * A relative of [`map`]{@link module:Collections.map}, designed for use with objects.
- *
- * Produces a new Object by mapping each value of `obj` through the `iteratee`
- * function. The `iteratee` is called each `value` and `key` from `obj` and a
- * callback for when it has finished processing. Each of these callbacks takes
- * two arguments: an `error`, and the transformed item from `obj`. If `iteratee`
- * passes an error to its callback, the main `callback` (for the `mapValues`
- * function) is immediately called with the error.
- *
- * Note, the order of the keys in the result is not guaranteed.  The keys will
- * be roughly in the order they complete, (but this is very engine-specific)
- *
- * @name mapValues
- * @static
- * @memberOf module:Collections
- * @method
- * @category Collection
- * @param {Object} obj - A collection to iterate over.
- * @param {AsyncFunction} iteratee - A function to apply to each value and key
- * in `coll`.
- * The iteratee should complete with the transformed value as its result.
- * Invoked with (value, key, callback).
- * @param {Function} [callback] - A callback which is called when all `iteratee`
- * functions have finished, or an error occurs. `result` is a new object consisting
- * of each key from `obj`, with each transformed value on the right-hand side.
- * Invoked with (err, result).
- * @example
- *
- * async.mapValues({
- *     f1: 'file1',
- *     f2: 'file2',
- *     f3: 'file3'
- * }, function (file, key, callback) {
- *   fs.stat(file, callback);
- * }, function(err, result) {
- *     // result is now a map of stats for each file, e.g.
- *     // {
- *     //     f1: [stats for file1],
- *     //     f2: [stats for file2],
- *     //     f3: [stats for file3]
- *     // }
- * });
- */
-
-var mapValues = doLimit(mapValuesLimit, Infinity);
-
-/**
- * The same as [`mapValues`]{@link module:Collections.mapValues} but runs only a single async operation at a time.
- *
- * @name mapValuesSeries
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.mapValues]{@link module:Collections.mapValues}
- * @category Collection
- * @param {Object} obj - A collection to iterate over.
- * @param {AsyncFunction} iteratee - A function to apply to each value and key
- * in `coll`.
- * The iteratee should complete with the transformed value as its result.
- * Invoked with (value, key, callback).
- * @param {Function} [callback] - A callback which is called when all `iteratee`
- * functions have finished, or an error occurs. `result` is a new object consisting
- * of each key from `obj`, with each transformed value on the right-hand side.
- * Invoked with (err, result).
- */
-var mapValuesSeries = doLimit(mapValuesLimit, 1);
-
-function has(obj, key) {
-    return key in obj;
-}
-
-/**
- * Caches the results of an async function. When creating a hash to store
- * function results against, the callback is omitted from the hash and an
- * optional hash function can be used.
- *
- * If no hash function is specified, the first argument is used as a hash key,
- * which may work reasonably if it is a string or a data type that converts to a
- * distinct string. Note that objects and arrays will not behave reasonably.
- * Neither will cases where the other arguments are significant. In such cases,
- * specify your own hash function.
- *
- * The cache of results is exposed as the `memo` property of the function
- * returned by `memoize`.
- *
- * @name memoize
- * @static
- * @memberOf module:Utils
- * @method
- * @category Util
- * @param {AsyncFunction} fn - The async function to proxy and cache results from.
- * @param {Function} hasher - An optional function for generating a custom hash
- * for storing results. It has all the arguments applied to it apart from the
- * callback, and must be synchronous.
- * @returns {AsyncFunction} a memoized version of `fn`
- * @example
- *
- * var slow_fn = function(name, callback) {
- *     // do something
- *     callback(null, result);
- * };
- * var fn = async.memoize(slow_fn);
- *
- * // fn can now be used as if it were slow_fn
- * fn('some name', function() {
- *     // callback
- * });
- */
-function memoize(fn, hasher) {
-    var memo = Object.create(null);
-    var queues = Object.create(null);
-    hasher = hasher || identity;
-    var _fn = wrapAsync(fn);
-    var memoized = initialParams(function memoized(args, callback) {
-        var key = hasher.apply(null, args);
-        if (has(memo, key)) {
-            setImmediate$1(function() {
-                callback.apply(null, memo[key]);
-            });
-        } else if (has(queues, key)) {
-            queues[key].push(callback);
-        } else {
-            queues[key] = [callback];
-            _fn.apply(null, args.concat(function(/*args*/) {
-                var args = slice(arguments);
-                memo[key] = args;
-                var q = queues[key];
-                delete queues[key];
-                for (var i = 0, l = q.length; i < l; i++) {
-                    q[i].apply(null, args);
-                }
-            }));
-        }
-    });
-    memoized.memo = memo;
-    memoized.unmemoized = fn;
-    return memoized;
-}
-
-/**
- * Calls `callback` on a later loop around the event loop. In Node.js this just
- * calls `process.nextTick`.  In the browser it will use `setImmediate` if
- * available, otherwise `setTimeout(callback, 0)`, which means other higher
- * priority events may precede the execution of `callback`.
- *
- * This is used internally for browser-compatibility purposes.
- *
- * @name nextTick
- * @static
- * @memberOf module:Utils
- * @method
- * @see [async.setImmediate]{@link module:Utils.setImmediate}
- * @category Util
- * @param {Function} callback - The function to call on a later loop around
- * the event loop. Invoked with (args...).
- * @param {...*} args... - any number of additional arguments to pass to the
- * callback on the next tick.
- * @example
- *
- * var call_order = [];
- * async.nextTick(function() {
- *     call_order.push('two');
- *     // call_order now equals ['one','two']
- * });
- * call_order.push('one');
- *
- * async.setImmediate(function (a, b, c) {
- *     // a, b, and c equal 1, 2, and 3
- * }, 1, 2, 3);
- */
-var _defer$1;
-
-if (hasNextTick) {
-    _defer$1 = process.nextTick;
-} else if (hasSetImmediate) {
-    _defer$1 = setImmediate;
-} else {
-    _defer$1 = fallback;
-}
-
-var nextTick = wrap(_defer$1);
-
-function _parallel(eachfn, tasks, callback) {
-    callback = callback || noop;
-    var results = isArrayLike(tasks) ? [] : {};
-
-    eachfn(tasks, function (task, key, callback) {
-        wrapAsync(task)(function (err, result) {
-            if (arguments.length > 2) {
-                result = slice(arguments, 1);
-            }
-            results[key] = result;
-            callback(err);
-        });
-    }, function (err) {
-        callback(err, results);
-    });
-}
-
-/**
- * Run the `tasks` collection of functions in parallel, without waiting until
- * the previous function has completed. If any of the functions pass an error to
- * its callback, the main `callback` is immediately called with the value of the
- * error. Once the `tasks` have completed, the results are passed to the final
- * `callback` as an array.
- *
- * **Note:** `parallel` is about kicking-off I/O tasks in parallel, not about
- * parallel execution of code.  If your tasks do not use any timers or perform
- * any I/O, they will actually be executed in series.  Any synchronous setup
- * sections for each task will happen one after the other.  JavaScript remains
- * single-threaded.
- *
- * **Hint:** Use [`reflect`]{@link module:Utils.reflect} to continue the
- * execution of other tasks when a task fails.
- *
- * It is also possible to use an object instead of an array. Each property will
- * be run as a function and the results will be passed to the final `callback`
- * as an object instead of an array. This can be a more readable way of handling
- * results from {@link async.parallel}.
- *
- * @name parallel
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @category Control Flow
- * @param {Array|Iterable|Object} tasks - A collection of
- * [async functions]{@link AsyncFunction} to run.
- * Each async function can complete with any number of optional `result` values.
- * @param {Function} [callback] - An optional callback to run once all the
- * functions have completed successfully. This function gets a results array
- * (or object) containing all the result arguments passed to the task callbacks.
- * Invoked with (err, results).
- *
- * @example
- * async.parallel([
- *     function(callback) {
- *         setTimeout(function() {
- *             callback(null, 'one');
- *         }, 200);
- *     },
- *     function(callback) {
- *         setTimeout(function() {
- *             callback(null, 'two');
- *         }, 100);
- *     }
- * ],
- * // optional callback
- * function(err, results) {
- *     // the results array will equal ['one','two'] even though
- *     // the second function had a shorter timeout.
- * });
- *
- * // an example using an object instead of an array
- * async.parallel({
- *     one: function(callback) {
- *         setTimeout(function() {
- *             callback(null, 1);
- *         }, 200);
- *     },
- *     two: function(callback) {
- *         setTimeout(function() {
- *             callback(null, 2);
- *         }, 100);
- *     }
- * }, function(err, results) {
- *     // results is now equals to: {one: 1, two: 2}
- * });
- */
-function parallelLimit(tasks, callback) {
-    _parallel(eachOf, tasks, callback);
-}
-
-/**
- * The same as [`parallel`]{@link module:ControlFlow.parallel} but runs a maximum of `limit` async operations at a
- * time.
- *
- * @name parallelLimit
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @see [async.parallel]{@link module:ControlFlow.parallel}
- * @category Control Flow
- * @param {Array|Iterable|Object} tasks - A collection of
- * [async functions]{@link AsyncFunction} to run.
- * Each async function can complete with any number of optional `result` values.
- * @param {number} limit - The maximum number of async operations at a time.
- * @param {Function} [callback] - An optional callback to run once all the
- * functions have completed successfully. This function gets a results array
- * (or object) containing all the result arguments passed to the task callbacks.
- * Invoked with (err, results).
- */
-function parallelLimit$1(tasks, limit, callback) {
-    _parallel(_eachOfLimit(limit), tasks, callback);
-}
-
-/**
- * A queue of tasks for the worker function to complete.
- * @typedef {Object} QueueObject
- * @memberOf module:ControlFlow
- * @property {Function} length - a function returning the number of items
- * waiting to be processed. Invoke with `queue.length()`.
- * @property {boolean} started - a boolean indicating whether or not any
- * items have been pushed and processed by the queue.
- * @property {Function} running - a function returning the number of items
- * currently being processed. Invoke with `queue.running()`.
- * @property {Function} workersList - a function returning the array of items
- * currently being processed. Invoke with `queue.workersList()`.
- * @property {Function} idle - a function returning false if there are items
- * waiting or being processed, or true if not. Invoke with `queue.idle()`.
- * @property {number} concurrency - an integer for determining how many `worker`
- * functions should be run in parallel. This property can be changed after a
- * `queue` is created to alter the concurrency on-the-fly.
- * @property {Function} push - add a new task to the `queue`. Calls `callback`
- * once the `worker` has finished processing the task. Instead of a single task,
- * a `tasks` array can be submitted. The respective callback is used for every
- * task in the list. Invoke with `queue.push(task, [callback])`,
- * @property {Function} unshift - add a new task to the front of the `queue`.
- * Invoke with `queue.unshift(task, [callback])`.
- * @property {Function} remove - remove items from the queue that match a test
- * function.  The test function will be passed an object with a `data` property,
- * and a `priority` property, if this is a
- * [priorityQueue]{@link module:ControlFlow.priorityQueue} object.
- * Invoked with `queue.remove(testFn)`, where `testFn` is of the form
- * `function ({data, priority}) {}` and returns a Boolean.
- * @property {Function} saturated - a callback that is called when the number of
- * running workers hits the `concurrency` limit, and further tasks will be
- * queued.
- * @property {Function} unsaturated - a callback that is called when the number
- * of running workers is less than the `concurrency` & `buffer` limits, and
- * further tasks will not be queued.
- * @property {number} buffer - A minimum threshold buffer in order to say that
- * the `queue` is `unsaturated`.
- * @property {Function} empty - a callback that is called when the last item
- * from the `queue` is given to a `worker`.
- * @property {Function} drain - a callback that is called when the last item
- * from the `queue` has returned from the `worker`.
- * @property {Function} error - a callback that is called when a task errors.
- * Has the signature `function(error, task)`.
- * @property {boolean} paused - a boolean for determining whether the queue is
- * in a paused state.
- * @property {Function} pause - a function that pauses the processing of tasks
- * until `resume()` is called. Invoke with `queue.pause()`.
- * @property {Function} resume - a function that resumes the processing of
- * queued tasks when the queue is paused. Invoke with `queue.resume()`.
- * @property {Function} kill - a function that removes the `drain` callback and
- * empties remaining tasks from the queue forcing it to go idle. No more tasks
- * should be pushed to the queue after calling this function. Invoke with `queue.kill()`.
- */
-
-/**
- * Creates a `queue` object with the specified `concurrency`. Tasks added to the
- * `queue` are processed in parallel (up to the `concurrency` limit). If all
- * `worker`s are in progress, the task is queued until one becomes available.
- * Once a `worker` completes a `task`, that `task`'s callback is called.
- *
- * @name queue
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @category Control Flow
- * @param {AsyncFunction} worker - An async function for processing a queued task.
- * If you want to handle errors from an individual task, pass a callback to
- * `q.push()`. Invoked with (task, callback).
- * @param {number} [concurrency=1] - An `integer` for determining how many
- * `worker` functions should be run in parallel.  If omitted, the concurrency
- * defaults to `1`.  If the concurrency is `0`, an error is thrown.
- * @returns {module:ControlFlow.QueueObject} A queue object to manage the tasks. Callbacks can
- * attached as certain properties to listen for specific events during the
- * lifecycle of the queue.
- * @example
- *
- * // create a queue object with concurrency 2
- * var q = async.queue(function(task, callback) {
- *     console.log('hello ' + task.name);
- *     callback();
- * }, 2);
- *
- * // assign a callback
- * q.drain = function() {
- *     console.log('all items have been processed');
- * };
- *
- * // add some items to the queue
- * q.push({name: 'foo'}, function(err) {
- *     console.log('finished processing foo');
- * });
- * q.push({name: 'bar'}, function (err) {
- *     console.log('finished processing bar');
- * });
- *
- * // add some items to the queue (batch-wise)
- * q.push([{name: 'baz'},{name: 'bay'},{name: 'bax'}], function(err) {
- *     console.log('finished processing item');
- * });
- *
- * // add some items to the front of the queue
- * q.unshift({name: 'bar'}, function (err) {
- *     console.log('finished processing bar');
- * });
- */
-var queue$1 = function (worker, concurrency) {
-    var _worker = wrapAsync(worker);
-    return queue(function (items, cb) {
-        _worker(items[0], cb);
-    }, concurrency, 1);
-};
-
-/**
- * The same as [async.queue]{@link module:ControlFlow.queue} only tasks are assigned a priority and
- * completed in ascending priority order.
- *
- * @name priorityQueue
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @see [async.queue]{@link module:ControlFlow.queue}
- * @category Control Flow
- * @param {AsyncFunction} worker - An async function for processing a queued task.
- * If you want to handle errors from an individual task, pass a callback to
- * `q.push()`.
- * Invoked with (task, callback).
- * @param {number} concurrency - An `integer` for determining how many `worker`
- * functions should be run in parallel.  If omitted, the concurrency defaults to
- * `1`.  If the concurrency is `0`, an error is thrown.
- * @returns {module:ControlFlow.QueueObject} A priorityQueue object to manage the tasks. There are two
- * differences between `queue` and `priorityQueue` objects:
- * * `push(task, priority, [callback])` - `priority` should be a number. If an
- *   array of `tasks` is given, all tasks will be assigned the same priority.
- * * The `unshift` method was removed.
- */
-var priorityQueue = function(worker, concurrency) {
-    // Start with a normal queue
-    var q = queue$1(worker, concurrency);
-
-    // Override push to accept second parameter representing priority
-    q.push = function(data, priority, callback) {
-        if (callback == null) callback = noop;
-        if (typeof callback !== 'function') {
-            throw new Error('task callback must be a function');
-        }
-        q.started = true;
-        if (!isArray(data)) {
-            data = [data];
-        }
-        if (data.length === 0) {
-            // call drain immediately if there are no tasks
-            return setImmediate$1(function() {
-                q.drain();
-            });
-        }
-
-        priority = priority || 0;
-        var nextNode = q._tasks.head;
-        while (nextNode && priority >= nextNode.priority) {
-            nextNode = nextNode.next;
-        }
-
-        for (var i = 0, l = data.length; i < l; i++) {
-            var item = {
-                data: data[i],
-                priority: priority,
-                callback: callback
-            };
-
-            if (nextNode) {
-                q._tasks.insertBefore(nextNode, item);
-            } else {
-                q._tasks.push(item);
-            }
-        }
-        setImmediate$1(q.process);
-    };
-
-    // Remove unshift function
-    delete q.unshift;
-
-    return q;
-};
-
-/**
- * Runs the `tasks` array of functions in parallel, without waiting until the
- * previous function has completed. Once any of the `tasks` complete or pass an
- * error to its callback, the main `callback` is immediately called. It's
- * equivalent to `Promise.race()`.
- *
- * @name race
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @category Control Flow
- * @param {Array} tasks - An array containing [async functions]{@link AsyncFunction}
- * to run. Each function can complete with an optional `result` value.
- * @param {Function} callback - A callback to run once any of the functions have
- * completed. This function gets an error or result from the first function that
- * completed. Invoked with (err, result).
- * @returns undefined
- * @example
- *
- * async.race([
- *     function(callback) {
- *         setTimeout(function() {
- *             callback(null, 'one');
- *         }, 200);
- *     },
- *     function(callback) {
- *         setTimeout(function() {
- *             callback(null, 'two');
- *         }, 100);
- *     }
- * ],
- * // main callback
- * function(err, result) {
- *     // the result will be equal to 'two' as it finishes earlier
- * });
- */
-function race(tasks, callback) {
-    callback = once(callback || noop);
-    if (!isArray(tasks)) return callback(new TypeError('First argument to race must be an array of functions'));
-    if (!tasks.length) return callback();
-    for (var i = 0, l = tasks.length; i < l; i++) {
-        wrapAsync(tasks[i])(callback);
-    }
-}
-
-/**
- * Same as [`reduce`]{@link module:Collections.reduce}, only operates on `array` in reverse order.
- *
- * @name reduceRight
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.reduce]{@link module:Collections.reduce}
- * @alias foldr
- * @category Collection
- * @param {Array} array - A collection to iterate over.
- * @param {*} memo - The initial state of the reduction.
- * @param {AsyncFunction} iteratee - A function applied to each item in the
- * array to produce the next step in the reduction.
- * The `iteratee` should complete with the next state of the reduction.
- * If the iteratee complete with an error, the reduction is stopped and the
- * main `callback` is immediately called with the error.
- * Invoked with (memo, item, callback).
- * @param {Function} [callback] - A callback which is called after all the
- * `iteratee` functions have finished. Result is the reduced value. Invoked with
- * (err, result).
- */
-function reduceRight (array, memo, iteratee, callback) {
-    var reversed = slice(array).reverse();
-    reduce(reversed, memo, iteratee, callback);
-}
-
-/**
- * Wraps the async function in another function that always completes with a
- * result object, even when it errors.
- *
- * The result object has either the property `error` or `value`.
- *
- * @name reflect
- * @static
- * @memberOf module:Utils
- * @method
- * @category Util
- * @param {AsyncFunction} fn - The async function you want to wrap
- * @returns {Function} - A function that always passes null to it's callback as
- * the error. The second argument to the callback will be an `object` with
- * either an `error` or a `value` property.
- * @example
- *
- * async.parallel([
- *     async.reflect(function(callback) {
- *         // do some stuff ...
- *         callback(null, 'one');
- *     }),
- *     async.reflect(function(callback) {
- *         // do some more stuff but error ...
- *         callback('bad stuff happened');
- *     }),
- *     async.reflect(function(callback) {
- *         // do some more stuff ...
- *         callback(null, 'two');
- *     })
- * ],
- * // optional callback
- * function(err, results) {
- *     // values
- *     // results[0].value = 'one'
- *     // results[1].error = 'bad stuff happened'
- *     // results[2].value = 'two'
- * });
- */
-function reflect(fn) {
-    var _fn = wrapAsync(fn);
-    return initialParams(function reflectOn(args, reflectCallback) {
-        args.push(function callback(error, cbArg) {
-            if (error) {
-                reflectCallback(null, { error: error });
-            } else {
-                var value;
-                if (arguments.length <= 2) {
-                    value = cbArg;
-                } else {
-                    value = slice(arguments, 1);
-                }
-                reflectCallback(null, { value: value });
-            }
-        });
-
-        return _fn.apply(this, args);
-    });
-}
-
-/**
- * A helper function that wraps an array or an object of functions with `reflect`.
- *
- * @name reflectAll
- * @static
- * @memberOf module:Utils
- * @method
- * @see [async.reflect]{@link module:Utils.reflect}
- * @category Util
- * @param {Array|Object|Iterable} tasks - The collection of
- * [async functions]{@link AsyncFunction} to wrap in `async.reflect`.
- * @returns {Array} Returns an array of async functions, each wrapped in
- * `async.reflect`
- * @example
- *
- * let tasks = [
- *     function(callback) {
- *         setTimeout(function() {
- *             callback(null, 'one');
- *         }, 200);
- *     },
- *     function(callback) {
- *         // do some more stuff but error ...
- *         callback(new Error('bad stuff happened'));
- *     },
- *     function(callback) {
- *         setTimeout(function() {
- *             callback(null, 'two');
- *         }, 100);
- *     }
- * ];
- *
- * async.parallel(async.reflectAll(tasks),
- * // optional callback
- * function(err, results) {
- *     // values
- *     // results[0].value = 'one'
- *     // results[1].error = Error('bad stuff happened')
- *     // results[2].value = 'two'
- * });
- *
- * // an example using an object instead of an array
- * let tasks = {
- *     one: function(callback) {
- *         setTimeout(function() {
- *             callback(null, 'one');
- *         }, 200);
- *     },
- *     two: function(callback) {
- *         callback('two');
- *     },
- *     three: function(callback) {
- *         setTimeout(function() {
- *             callback(null, 'three');
- *         }, 100);
- *     }
- * };
- *
- * async.parallel(async.reflectAll(tasks),
- * // optional callback
- * function(err, results) {
- *     // values
- *     // results.one.value = 'one'
- *     // results.two.error = 'two'
- *     // results.three.value = 'three'
- * });
- */
-function reflectAll(tasks) {
-    var results;
-    if (isArray(tasks)) {
-        results = arrayMap(tasks, reflect);
-    } else {
-        results = {};
-        baseForOwn(tasks, function(task, key) {
-            results[key] = reflect.call(this, task);
-        });
-    }
-    return results;
-}
-
-function reject$1(eachfn, arr, iteratee, callback) {
-    _filter(eachfn, arr, function(value, cb) {
-        iteratee(value, function(err, v) {
-            cb(err, !v);
-        });
-    }, callback);
-}
-
-/**
- * The opposite of [`filter`]{@link module:Collections.filter}. Removes values that pass an `async` truth test.
- *
- * @name reject
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.filter]{@link module:Collections.filter}
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {Function} iteratee - An async truth test to apply to each item in
- * `coll`.
- * The should complete with a boolean value as its `result`.
- * Invoked with (item, callback).
- * @param {Function} [callback] - A callback which is called after all the
- * `iteratee` functions have finished. Invoked with (err, results).
- * @example
- *
- * async.reject(['file1','file2','file3'], function(filePath, callback) {
- *     fs.access(filePath, function(err) {
- *         callback(null, !err)
- *     });
- * }, function(err, results) {
- *     // results now equals an array of missing files
- *     createFiles(results);
- * });
- */
-var reject = doParallel(reject$1);
-
-/**
- * The same as [`reject`]{@link module:Collections.reject} but runs a maximum of `limit` async operations at a
- * time.
- *
- * @name rejectLimit
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.reject]{@link module:Collections.reject}
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {number} limit - The maximum number of async operations at a time.
- * @param {Function} iteratee - An async truth test to apply to each item in
- * `coll`.
- * The should complete with a boolean value as its `result`.
- * Invoked with (item, callback).
- * @param {Function} [callback] - A callback which is called after all the
- * `iteratee` functions have finished. Invoked with (err, results).
- */
-var rejectLimit = doParallelLimit(reject$1);
-
-/**
- * The same as [`reject`]{@link module:Collections.reject} but runs only a single async operation at a time.
- *
- * @name rejectSeries
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.reject]{@link module:Collections.reject}
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {Function} iteratee - An async truth test to apply to each item in
- * `coll`.
- * The should complete with a boolean value as its `result`.
- * Invoked with (item, callback).
- * @param {Function} [callback] - A callback which is called after all the
- * `iteratee` functions have finished. Invoked with (err, results).
- */
-var rejectSeries = doLimit(rejectLimit, 1);
-
-/**
- * Creates a function that returns `value`.
- *
- * @static
- * @memberOf _
- * @since 2.4.0
- * @category Util
- * @param {*} value The value to return from the new function.
- * @returns {Function} Returns the new constant function.
- * @example
- *
- * var objects = _.times(2, _.constant({ 'a': 1 }));
- *
- * console.log(objects);
- * // => [{ 'a': 1 }, { 'a': 1 }]
- *
- * console.log(objects[0] === objects[1]);
- * // => true
- */
-function constant$1(value) {
-  return function() {
-    return value;
-  };
-}
-
-/**
- * Attempts to get a successful response from `task` no more than `times` times
- * before returning an error. If the task is successful, the `callback` will be
- * passed the result of the successful task. If all attempts fail, the callback
- * will be passed the error and result (if any) of the final attempt.
- *
- * @name retry
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @category Control Flow
- * @see [async.retryable]{@link module:ControlFlow.retryable}
- * @param {Object|number} [opts = {times: 5, interval: 0}| 5] - Can be either an
- * object with `times` and `interval` or a number.
- * * `times` - The number of attempts to make before giving up.  The default
- *   is `5`.
- * * `interval` - The time to wait between retries, in milliseconds.  The
- *   default is `0`. The interval may also be specified as a function of the
- *   retry count (see example).
- * * `errorFilter` - An optional synchronous function that is invoked on
- *   erroneous result. If it returns `true` the retry attempts will continue;
- *   if the function returns `false` the retry flow is aborted with the current
- *   attempt's error and result being returned to the final callback.
- *   Invoked with (err).
- * * If `opts` is a number, the number specifies the number of times to retry,
- *   with the default interval of `0`.
- * @param {AsyncFunction} task - An async function to retry.
- * Invoked with (callback).
- * @param {Function} [callback] - An optional callback which is called when the
- * task has succeeded, or after the final failed attempt. It receives the `err`
- * and `result` arguments of the last attempt at completing the `task`. Invoked
- * with (err, results).
- *
- * @example
- *
- * // The `retry` function can be used as a stand-alone control flow by passing
- * // a callback, as shown below:
- *
- * // try calling apiMethod 3 times
- * async.retry(3, apiMethod, function(err, result) {
- *     // do something with the result
- * });
- *
- * // try calling apiMethod 3 times, waiting 200 ms between each retry
- * async.retry({times: 3, interval: 200}, apiMethod, function(err, result) {
- *     // do something with the result
- * });
- *
- * // try calling apiMethod 10 times with exponential backoff
- * // (i.e. intervals of 100, 200, 400, 800, 1600, ... milliseconds)
- * async.retry({
- *   times: 10,
- *   interval: function(retryCount) {
- *     return 50 * Math.pow(2, retryCount);
- *   }
- * }, apiMethod, function(err, result) {
- *     // do something with the result
- * });
- *
- * // try calling apiMethod the default 5 times no delay between each retry
- * async.retry(apiMethod, function(err, result) {
- *     // do something with the result
- * });
- *
- * // try calling apiMethod only when error condition satisfies, all other
- * // errors will abort the retry control flow and return to final callback
- * async.retry({
- *   errorFilter: function(err) {
- *     return err.message === 'Temporary error'; // only retry on a specific error
- *   }
- * }, apiMethod, function(err, result) {
- *     // do something with the result
- * });
- *
- * // to retry individual methods that are not as reliable within other
- * // control flow functions, use the `retryable` wrapper:
- * async.auto({
- *     users: api.getUsers.bind(api),
- *     payments: async.retryable(3, api.getPayments.bind(api))
- * }, function(err, results) {
- *     // do something with the results
- * });
- *
- */
-function retry(opts, task, callback) {
-    var DEFAULT_TIMES = 5;
-    var DEFAULT_INTERVAL = 0;
-
-    var options = {
-        times: DEFAULT_TIMES,
-        intervalFunc: constant$1(DEFAULT_INTERVAL)
-    };
-
-    function parseTimes(acc, t) {
-        if (typeof t === 'object') {
-            acc.times = +t.times || DEFAULT_TIMES;
-
-            acc.intervalFunc = typeof t.interval === 'function' ?
-                t.interval :
-                constant$1(+t.interval || DEFAULT_INTERVAL);
-
-            acc.errorFilter = t.errorFilter;
-        } else if (typeof t === 'number' || typeof t === 'string') {
-            acc.times = +t || DEFAULT_TIMES;
-        } else {
-            throw new Error("Invalid arguments for async.retry");
-        }
-    }
-
-    if (arguments.length < 3 && typeof opts === 'function') {
-        callback = task || noop;
-        task = opts;
-    } else {
-        parseTimes(options, opts);
-        callback = callback || noop;
-    }
-
-    if (typeof task !== 'function') {
-        throw new Error("Invalid arguments for async.retry");
-    }
-
-    var _task = wrapAsync(task);
-
-    var attempt = 1;
-    function retryAttempt() {
-        _task(function(err) {
-            if (err && attempt++ < options.times &&
-                (typeof options.errorFilter != 'function' ||
-                    options.errorFilter(err))) {
-                setTimeout(retryAttempt, options.intervalFunc(attempt));
-            } else {
-                callback.apply(null, arguments);
-            }
-        });
-    }
-
-    retryAttempt();
-}
-
-/**
- * A close relative of [`retry`]{@link module:ControlFlow.retry}.  This method
- * wraps a task and makes it retryable, rather than immediately calling it
- * with retries.
- *
- * @name retryable
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @see [async.retry]{@link module:ControlFlow.retry}
- * @category Control Flow
- * @param {Object|number} [opts = {times: 5, interval: 0}| 5] - optional
- * options, exactly the same as from `retry`
- * @param {AsyncFunction} task - the asynchronous function to wrap.
- * This function will be passed any arguments passed to the returned wrapper.
- * Invoked with (...args, callback).
- * @returns {AsyncFunction} The wrapped function, which when invoked, will
- * retry on an error, based on the parameters specified in `opts`.
- * This function will accept the same parameters as `task`.
- * @example
- *
- * async.auto({
- *     dep1: async.retryable(3, getFromFlakyService),
- *     process: ["dep1", async.retryable(3, function (results, cb) {
- *         maybeProcessData(results.dep1, cb);
- *     })]
- * }, callback);
- */
-var retryable = function (opts, task) {
-    if (!task) {
-        task = opts;
-        opts = null;
-    }
-    var _task = wrapAsync(task);
-    return initialParams(function (args, callback) {
-        function taskFn(cb) {
-            _task.apply(null, args.concat(cb));
-        }
-
-        if (opts) retry(opts, taskFn, callback);
-        else retry(taskFn, callback);
-
-    });
-};
-
-/**
- * Run the functions in the `tasks` collection in series, each one running once
- * the previous function has completed. If any functions in the series pass an
- * error to its callback, no more functions are run, and `callback` is
- * immediately called with the value of the error. Otherwise, `callback`
- * receives an array of results when `tasks` have completed.
- *
- * It is also possible to use an object instead of an array. Each property will
- * be run as a function, and the results will be passed to the final `callback`
- * as an object instead of an array. This can be a more readable way of handling
- *  results from {@link async.series}.
- *
- * **Note** that while many implementations preserve the order of object
- * properties, the [ECMAScript Language Specification](http://www.ecma-international.org/ecma-262/5.1/#sec-8.6)
- * explicitly states that
- *
- * > The mechanics and order of enumerating the properties is not specified.
- *
- * So if you rely on the order in which your series of functions are executed,
- * and want this to work on all platforms, consider using an array.
- *
- * @name series
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @category Control Flow
- * @param {Array|Iterable|Object} tasks - A collection containing
- * [async functions]{@link AsyncFunction} to run in series.
- * Each function can complete with any number of optional `result` values.
- * @param {Function} [callback] - An optional callback to run once all the
- * functions have completed. This function gets a results array (or object)
- * containing all the result arguments passed to the `task` callbacks. Invoked
- * with (err, result).
- * @example
- * async.series([
- *     function(callback) {
- *         // do some stuff ...
- *         callback(null, 'one');
- *     },
- *     function(callback) {
- *         // do some more stuff ...
- *         callback(null, 'two');
- *     }
- * ],
- * // optional callback
- * function(err, results) {
- *     // results is now equal to ['one', 'two']
- * });
- *
- * async.series({
- *     one: function(callback) {
- *         setTimeout(function() {
- *             callback(null, 1);
- *         }, 200);
- *     },
- *     two: function(callback){
- *         setTimeout(function() {
- *             callback(null, 2);
- *         }, 100);
- *     }
- * }, function(err, results) {
- *     // results is now equal to: {one: 1, two: 2}
- * });
- */
-function series(tasks, callback) {
-    _parallel(eachOfSeries, tasks, callback);
-}
-
-/**
- * Returns `true` if at least one element in the `coll` satisfies an async test.
- * If any iteratee call returns `true`, the main `callback` is immediately
- * called.
- *
- * @name some
- * @static
- * @memberOf module:Collections
- * @method
- * @alias any
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {AsyncFunction} iteratee - An async truth test to apply to each item
- * in the collections in parallel.
- * The iteratee should complete with a boolean `result` value.
- * Invoked with (item, callback).
- * @param {Function} [callback] - A callback which is called as soon as any
- * iteratee returns `true`, or after all the iteratee functions have finished.
- * Result will be either `true` or `false` depending on the values of the async
- * tests. Invoked with (err, result).
- * @example
- *
- * async.some(['file1','file2','file3'], function(filePath, callback) {
- *     fs.access(filePath, function(err) {
- *         callback(null, !err)
- *     });
- * }, function(err, result) {
- *     // if result is true then at least one of the files exists
- * });
- */
-var some = doParallel(_createTester(Boolean, identity));
-
-/**
- * The same as [`some`]{@link module:Collections.some} but runs a maximum of `limit` async operations at a time.
- *
- * @name someLimit
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.some]{@link module:Collections.some}
- * @alias anyLimit
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {number} limit - The maximum number of async operations at a time.
- * @param {AsyncFunction} iteratee - An async truth test to apply to each item
- * in the collections in parallel.
- * The iteratee should complete with a boolean `result` value.
- * Invoked with (item, callback).
- * @param {Function} [callback] - A callback which is called as soon as any
- * iteratee returns `true`, or after all the iteratee functions have finished.
- * Result will be either `true` or `false` depending on the values of the async
- * tests. Invoked with (err, result).
- */
-var someLimit = doParallelLimit(_createTester(Boolean, identity));
-
-/**
- * The same as [`some`]{@link module:Collections.some} but runs only a single async operation at a time.
- *
- * @name someSeries
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.some]{@link module:Collections.some}
- * @alias anySeries
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {AsyncFunction} iteratee - An async truth test to apply to each item
- * in the collections in series.
- * The iteratee should complete with a boolean `result` value.
- * Invoked with (item, callback).
- * @param {Function} [callback] - A callback which is called as soon as any
- * iteratee returns `true`, or after all the iteratee functions have finished.
- * Result will be either `true` or `false` depending on the values of the async
- * tests. Invoked with (err, result).
- */
-var someSeries = doLimit(someLimit, 1);
-
-/**
- * Sorts a list by the results of running each `coll` value through an async
- * `iteratee`.
- *
- * @name sortBy
- * @static
- * @memberOf module:Collections
- * @method
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {AsyncFunction} iteratee - An async function to apply to each item in
- * `coll`.
- * The iteratee should complete with a value to use as the sort criteria as
- * its `result`.
- * Invoked with (item, callback).
- * @param {Function} callback - A callback which is called after all the
- * `iteratee` functions have finished, or an error occurs. Results is the items
- * from the original `coll` sorted by the values returned by the `iteratee`
- * calls. Invoked with (err, results).
- * @example
- *
- * async.sortBy(['file1','file2','file3'], function(file, callback) {
- *     fs.stat(file, function(err, stats) {
- *         callback(err, stats.mtime);
- *     });
- * }, function(err, results) {
- *     // results is now the original array of files sorted by
- *     // modified date
- * });
- *
- * // By modifying the callback parameter the
- * // sorting order can be influenced:
- *
- * // ascending order
- * async.sortBy([1,9,3,5], function(x, callback) {
- *     callback(null, x);
- * }, function(err,result) {
- *     // result callback
- * });
- *
- * // descending order
- * async.sortBy([1,9,3,5], function(x, callback) {
- *     callback(null, x*-1);    //<- x*-1 instead of x, turns the order around
- * }, function(err,result) {
- *     // result callback
- * });
- */
-function sortBy (coll, iteratee, callback) {
-    var _iteratee = wrapAsync(iteratee);
-    map(coll, function (x, callback) {
-        _iteratee(x, function (err, criteria) {
-            if (err) return callback(err);
-            callback(null, {value: x, criteria: criteria});
-        });
-    }, function (err, results) {
-        if (err) return callback(err);
-        callback(null, arrayMap(results.sort(comparator), baseProperty('value')));
-    });
-
-    function comparator(left, right) {
-        var a = left.criteria, b = right.criteria;
-        return a < b ? -1 : a > b ? 1 : 0;
-    }
-}
-
-/**
- * Sets a time limit on an asynchronous function. If the function does not call
- * its callback within the specified milliseconds, it will be called with a
- * timeout error. The code property for the error object will be `'ETIMEDOUT'`.
- *
- * @name timeout
- * @static
- * @memberOf module:Utils
- * @method
- * @category Util
- * @param {AsyncFunction} asyncFn - The async function to limit in time.
- * @param {number} milliseconds - The specified time limit.
- * @param {*} [info] - Any variable you want attached (`string`, `object`, etc)
- * to timeout Error for more information..
- * @returns {AsyncFunction} Returns a wrapped function that can be used with any
- * of the control flow functions.
- * Invoke this function with the same parameters as you would `asyncFunc`.
- * @example
- *
- * function myFunction(foo, callback) {
- *     doAsyncTask(foo, function(err, data) {
- *         // handle errors
- *         if (err) return callback(err);
- *
- *         // do some stuff ...
- *
- *         // return processed data
- *         return callback(null, data);
- *     });
- * }
- *
- * var wrapped = async.timeout(myFunction, 1000);
- *
- * // call `wrapped` as you would `myFunction`
- * wrapped({ bar: 'bar' }, function(err, data) {
- *     // if `myFunction` takes < 1000 ms to execute, `err`
- *     // and `data` will have their expected values
- *
- *     // else `err` will be an Error with the code 'ETIMEDOUT'
- * });
- */
-function timeout(asyncFn, milliseconds, info) {
-    var fn = wrapAsync(asyncFn);
-
-    return initialParams(function (args, callback) {
-        var timedOut = false;
-        var timer;
-
-        function timeoutCallback() {
-            var name = asyncFn.name || 'anonymous';
-            var error  = new Error('Callback function "' + name + '" timed out.');
-            error.code = 'ETIMEDOUT';
-            if (info) {
-                error.info = info;
-            }
-            timedOut = true;
-            callback(error);
-        }
-
-        args.push(function () {
-            if (!timedOut) {
-                callback.apply(null, arguments);
-                clearTimeout(timer);
-            }
-        });
-
-        // setup timer and call original function
-        timer = setTimeout(timeoutCallback, milliseconds);
-        fn.apply(null, args);
-    });
-}
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeCeil = Math.ceil;
-var nativeMax = Math.max;
-
-/**
- * The base implementation of `_.range` and `_.rangeRight` which doesn't
- * coerce arguments.
- *
- * @private
- * @param {number} start The start of the range.
- * @param {number} end The end of the range.
- * @param {number} step The value to increment or decrement by.
- * @param {boolean} [fromRight] Specify iterating from right to left.
- * @returns {Array} Returns the range of numbers.
- */
-function baseRange(start, end, step, fromRight) {
-  var index = -1,
-      length = nativeMax(nativeCeil((end - start) / (step || 1)), 0),
-      result = Array(length);
-
-  while (length--) {
-    result[fromRight ? length : ++index] = start;
-    start += step;
-  }
-  return result;
-}
-
-/**
- * The same as [times]{@link module:ControlFlow.times} but runs a maximum of `limit` async operations at a
- * time.
- *
- * @name timesLimit
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @see [async.times]{@link module:ControlFlow.times}
- * @category Control Flow
- * @param {number} count - The number of times to run the function.
- * @param {number} limit - The maximum number of async operations at a time.
- * @param {AsyncFunction} iteratee - The async function to call `n` times.
- * Invoked with the iteration index and a callback: (n, next).
- * @param {Function} callback - see [async.map]{@link module:Collections.map}.
- */
-function timeLimit(count, limit, iteratee, callback) {
-    var _iteratee = wrapAsync(iteratee);
-    mapLimit(baseRange(0, count, 1), limit, _iteratee, callback);
-}
-
-/**
- * Calls the `iteratee` function `n` times, and accumulates results in the same
- * manner you would use with [map]{@link module:Collections.map}.
- *
- * @name times
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @see [async.map]{@link module:Collections.map}
- * @category Control Flow
- * @param {number} n - The number of times to run the function.
- * @param {AsyncFunction} iteratee - The async function to call `n` times.
- * Invoked with the iteration index and a callback: (n, next).
- * @param {Function} callback - see {@link module:Collections.map}.
- * @example
- *
- * // Pretend this is some complicated async factory
- * var createUser = function(id, callback) {
- *     callback(null, {
- *         id: 'user' + id
- *     });
- * };
- *
- * // generate 5 users
- * async.times(5, function(n, next) {
- *     createUser(n, function(err, user) {
- *         next(err, user);
- *     });
- * }, function(err, users) {
- *     // we should now have 5 users
- * });
- */
-var times = doLimit(timeLimit, Infinity);
-
-/**
- * The same as [times]{@link module:ControlFlow.times} but runs only a single async operation at a time.
- *
- * @name timesSeries
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @see [async.times]{@link module:ControlFlow.times}
- * @category Control Flow
- * @param {number} n - The number of times to run the function.
- * @param {AsyncFunction} iteratee - The async function to call `n` times.
- * Invoked with the iteration index and a callback: (n, next).
- * @param {Function} callback - see {@link module:Collections.map}.
- */
-var timesSeries = doLimit(timeLimit, 1);
-
-/**
- * A relative of `reduce`.  Takes an Object or Array, and iterates over each
- * element in series, each step potentially mutating an `accumulator` value.
- * The type of the accumulator defaults to the type of collection passed in.
- *
- * @name transform
- * @static
- * @memberOf module:Collections
- * @method
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {*} [accumulator] - The initial state of the transform.  If omitted,
- * it will default to an empty Object or Array, depending on the type of `coll`
- * @param {AsyncFunction} iteratee - A function applied to each item in the
- * collection that potentially modifies the accumulator.
- * Invoked with (accumulator, item, key, callback).
- * @param {Function} [callback] - A callback which is called after all the
- * `iteratee` functions have finished. Result is the transformed accumulator.
- * Invoked with (err, result).
- * @example
- *
- * async.transform([1,2,3], function(acc, item, index, callback) {
- *     // pointless async:
- *     process.nextTick(function() {
- *         acc.push(item * 2)
- *         callback(null)
- *     });
- * }, function(err, result) {
- *     // result is now equal to [2, 4, 6]
- * });
- *
- * @example
- *
- * async.transform({a: 1, b: 2, c: 3}, function (obj, val, key, callback) {
- *     setImmediate(function () {
- *         obj[key] = val * 2;
- *         callback();
- *     })
- * }, function (err, result) {
- *     // result is equal to {a: 2, b: 4, c: 6}
- * })
- */
-function transform (coll, accumulator, iteratee, callback) {
-    if (arguments.length <= 3) {
-        callback = iteratee;
-        iteratee = accumulator;
-        accumulator = isArray(coll) ? [] : {};
-    }
-    callback = once(callback || noop);
-    var _iteratee = wrapAsync(iteratee);
-
-    eachOf(coll, function(v, k, cb) {
-        _iteratee(accumulator, v, k, cb);
-    }, function(err) {
-        callback(err, accumulator);
-    });
-}
-
-/**
- * It runs each task in series but stops whenever any of the functions were
- * successful. If one of the tasks were successful, the `callback` will be
- * passed the result of the successful task. If all tasks fail, the callback
- * will be passed the error and result (if any) of the final attempt.
- *
- * @name tryEach
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @category Control Flow
- * @param {Array|Iterable|Object} tasks - A collection containing functions to
- * run, each function is passed a `callback(err, result)` it must call on
- * completion with an error `err` (which can be `null`) and an optional `result`
- * value.
- * @param {Function} [callback] - An optional callback which is called when one
- * of the tasks has succeeded, or all have failed. It receives the `err` and
- * `result` arguments of the last attempt at completing the `task`. Invoked with
- * (err, results).
- * @example
- * async.tryEach([
- *     function getDataFromFirstWebsite(callback) {
- *         // Try getting the data from the first website
- *         callback(err, data);
- *     },
- *     function getDataFromSecondWebsite(callback) {
- *         // First website failed,
- *         // Try getting the data from the backup website
- *         callback(err, data);
- *     }
- * ],
- * // optional callback
- * function(err, results) {
- *     Now do something with the data.
- * });
- *
- */
-function tryEach(tasks, callback) {
-    var error = null;
-    var result;
-    callback = callback || noop;
-    eachSeries(tasks, function(task, callback) {
-        wrapAsync(task)(function (err, res/*, ...args*/) {
-            if (arguments.length > 2) {
-                result = slice(arguments, 1);
-            } else {
-                result = res;
-            }
-            error = err;
-            callback(!err);
-        });
-    }, function () {
-        callback(error, result);
-    });
-}
-
-/**
- * Undoes a [memoize]{@link module:Utils.memoize}d function, reverting it to the original,
- * unmemoized form. Handy for testing.
- *
- * @name unmemoize
- * @static
- * @memberOf module:Utils
- * @method
- * @see [async.memoize]{@link module:Utils.memoize}
- * @category Util
- * @param {AsyncFunction} fn - the memoized function
- * @returns {AsyncFunction} a function that calls the original unmemoized function
- */
-function unmemoize(fn) {
-    return function () {
-        return (fn.unmemoized || fn).apply(null, arguments);
-    };
-}
-
-/**
- * Repeatedly call `iteratee`, while `test` returns `true`. Calls `callback` when
- * stopped, or an error occurs.
- *
- * @name whilst
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @category Control Flow
- * @param {Function} test - synchronous truth test to perform before each
- * execution of `iteratee`. Invoked with ().
- * @param {AsyncFunction} iteratee - An async function which is called each time
- * `test` passes. Invoked with (callback).
- * @param {Function} [callback] - A callback which is called after the test
- * function has failed and repeated execution of `iteratee` has stopped. `callback`
- * will be passed an error and any arguments passed to the final `iteratee`'s
- * callback. Invoked with (err, [results]);
- * @returns undefined
- * @example
- *
- * var count = 0;
- * async.whilst(
- *     function() { return count < 5; },
- *     function(callback) {
- *         count++;
- *         setTimeout(function() {
- *             callback(null, count);
- *         }, 1000);
- *     },
- *     function (err, n) {
- *         // 5 seconds have passed, n = 5
- *     }
- * );
- */
-function whilst(test, iteratee, callback) {
-    callback = onlyOnce(callback || noop);
-    var _iteratee = wrapAsync(iteratee);
-    if (!test()) return callback(null);
-    var next = function(err/*, ...args*/) {
-        if (err) return callback(err);
-        if (test()) return _iteratee(next);
-        var args = slice(arguments, 1);
-        callback.apply(null, [null].concat(args));
-    };
-    _iteratee(next);
-}
-
-/**
- * Repeatedly call `iteratee` until `test` returns `true`. Calls `callback` when
- * stopped, or an error occurs. `callback` will be passed an error and any
- * arguments passed to the final `iteratee`'s callback.
- *
- * The inverse of [whilst]{@link module:ControlFlow.whilst}.
- *
- * @name until
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @see [async.whilst]{@link module:ControlFlow.whilst}
- * @category Control Flow
- * @param {Function} test - synchronous truth test to perform before each
- * execution of `iteratee`. Invoked with ().
- * @param {AsyncFunction} iteratee - An async function which is called each time
- * `test` fails. Invoked with (callback).
- * @param {Function} [callback] - A callback which is called after the test
- * function has passed and repeated execution of `iteratee` has stopped. `callback`
- * will be passed an error and any arguments passed to the final `iteratee`'s
- * callback. Invoked with (err, [results]);
- */
-function until(test, iteratee, callback) {
-    whilst(function() {
-        return !test.apply(this, arguments);
-    }, iteratee, callback);
-}
-
-/**
- * Runs the `tasks` array of functions in series, each passing their results to
- * the next in the array. However, if any of the `tasks` pass an error to their
- * own callback, the next function is not executed, and the main `callback` is
- * immediately called with the error.
- *
- * @name waterfall
- * @static
- * @memberOf module:ControlFlow
- * @method
- * @category Control Flow
- * @param {Array} tasks - An array of [async functions]{@link AsyncFunction}
- * to run.
- * Each function should complete with any number of `result` values.
- * The `result` values will be passed as arguments, in order, to the next task.
- * @param {Function} [callback] - An optional callback to run once all the
- * functions have completed. This will be passed the results of the last task's
- * callback. Invoked with (err, [results]).
- * @returns undefined
- * @example
- *
- * async.waterfall([
- *     function(callback) {
- *         callback(null, 'one', 'two');
- *     },
- *     function(arg1, arg2, callback) {
- *         // arg1 now equals 'one' and arg2 now equals 'two'
- *         callback(null, 'three');
- *     },
- *     function(arg1, callback) {
- *         // arg1 now equals 'three'
- *         callback(null, 'done');
- *     }
- * ], function (err, result) {
- *     // result now equals 'done'
- * });
- *
- * // Or, with named functions:
- * async.waterfall([
- *     myFirstFunction,
- *     mySecondFunction,
- *     myLastFunction,
- * ], function (err, result) {
- *     // result now equals 'done'
- * });
- * function myFirstFunction(callback) {
- *     callback(null, 'one', 'two');
- * }
- * function mySecondFunction(arg1, arg2, callback) {
- *     // arg1 now equals 'one' and arg2 now equals 'two'
- *     callback(null, 'three');
- * }
- * function myLastFunction(arg1, callback) {
- *     // arg1 now equals 'three'
- *     callback(null, 'done');
- * }
- */
-var waterfall = function(tasks, callback) {
-    callback = once(callback || noop);
-    if (!isArray(tasks)) return callback(new Error('First argument to waterfall must be an array of functions'));
-    if (!tasks.length) return callback();
-    var taskIndex = 0;
-
-    function nextTask(args) {
-        var task = wrapAsync(tasks[taskIndex++]);
-        args.push(onlyOnce(next));
-        task.apply(null, args);
-    }
-
-    function next(err/*, ...args*/) {
-        if (err || taskIndex === tasks.length) {
-            return callback.apply(null, arguments);
-        }
-        nextTask(slice(arguments, 1));
-    }
-
-    nextTask([]);
-};
-
-/**
- * An "async function" in the context of Async is an asynchronous function with
- * a variable number of parameters, with the final parameter being a callback.
- * (`function (arg1, arg2, ..., callback) {}`)
- * The final callback is of the form `callback(err, results...)`, which must be
- * called once the function is completed.  The callback should be called with a
- * Error as its first argument to signal that an error occurred.
- * Otherwise, if no error occurred, it should be called with `null` as the first
- * argument, and any additional `result` arguments that may apply, to signal
- * successful completion.
- * The callback must be called exactly once, ideally on a later tick of the
- * JavaScript event loop.
- *
- * This type of function is also referred to as a "Node-style async function",
- * or a "continuation passing-style function" (CPS). Most of the methods of this
- * library are themselves CPS/Node-style async functions, or functions that
- * return CPS/Node-style async functions.
- *
- * Wherever we accept a Node-style async function, we also directly accept an
- * [ES2017 `async` function]{@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function}.
- * In this case, the `async` function will not be passed a final callback
- * argument, and any thrown error will be used as the `err` argument of the
- * implicit callback, and the return value will be used as the `result` value.
- * (i.e. a `rejected` of the returned Promise becomes the `err` callback
- * argument, and a `resolved` value becomes the `result`.)
- *
- * Note, due to JavaScript limitations, we can only detect native `async`
- * functions and not transpilied implementations.
- * Your environment must have `async`/`await` support for this to work.
- * (e.g. Node > v7.6, or a recent version of a modern browser).
- * If you are using `async` functions through a transpiler (e.g. Babel), you
- * must still wrap the function with [asyncify]{@link module:Utils.asyncify},
- * because the `async function` will be compiled to an ordinary function that
- * returns a promise.
- *
- * @typedef {Function} AsyncFunction
- * @static
- */
-
-/**
- * Async is a utility module which provides straight-forward, powerful functions
- * for working with asynchronous JavaScript. Although originally designed for
- * use with [Node.js](http://nodejs.org) and installable via
- * `npm install --save async`, it can also be used directly in the browser.
- * @module async
- * @see AsyncFunction
- */
-
-
-/**
- * A collection of `async` functions for manipulating collections, such as
- * arrays and objects.
- * @module Collections
- */
-
-/**
- * A collection of `async` functions for controlling the flow through a script.
- * @module ControlFlow
- */
-
-/**
- * A collection of `async` utility functions.
- * @module Utils
- */
-
-var index = {
-    apply: apply,
-    applyEach: applyEach,
-    applyEachSeries: applyEachSeries,
-    asyncify: asyncify,
-    auto: auto,
-    autoInject: autoInject,
-    cargo: cargo,
-    compose: compose,
-    concat: concat,
-    concatLimit: concatLimit,
-    concatSeries: concatSeries,
-    constant: constant,
-    detect: detect,
-    detectLimit: detectLimit,
-    detectSeries: detectSeries,
-    dir: dir,
-    doDuring: doDuring,
-    doUntil: doUntil,
-    doWhilst: doWhilst,
-    during: during,
-    each: eachLimit,
-    eachLimit: eachLimit$1,
-    eachOf: eachOf,
-    eachOfLimit: eachOfLimit,
-    eachOfSeries: eachOfSeries,
-    eachSeries: eachSeries,
-    ensureAsync: ensureAsync,
-    every: every,
-    everyLimit: everyLimit,
-    everySeries: everySeries,
-    filter: filter,
-    filterLimit: filterLimit,
-    filterSeries: filterSeries,
-    forever: forever,
-    groupBy: groupBy,
-    groupByLimit: groupByLimit,
-    groupBySeries: groupBySeries,
-    log: log,
-    map: map,
-    mapLimit: mapLimit,
-    mapSeries: mapSeries,
-    mapValues: mapValues,
-    mapValuesLimit: mapValuesLimit,
-    mapValuesSeries: mapValuesSeries,
-    memoize: memoize,
-    nextTick: nextTick,
-    parallel: parallelLimit,
-    parallelLimit: parallelLimit$1,
-    priorityQueue: priorityQueue,
-    queue: queue$1,
-    race: race,
-    reduce: reduce,
-    reduceRight: reduceRight,
-    reflect: reflect,
-    reflectAll: reflectAll,
-    reject: reject,
-    rejectLimit: rejectLimit,
-    rejectSeries: rejectSeries,
-    retry: retry,
-    retryable: retryable,
-    seq: seq,
-    series: series,
-    setImmediate: setImmediate$1,
-    some: some,
-    someLimit: someLimit,
-    someSeries: someSeries,
-    sortBy: sortBy,
-    timeout: timeout,
-    times: times,
-    timesLimit: timeLimit,
-    timesSeries: timesSeries,
-    transform: transform,
-    tryEach: tryEach,
-    unmemoize: unmemoize,
-    until: until,
-    waterfall: waterfall,
-    whilst: whilst,
-
-    // aliases
-    all: every,
-    allLimit: everyLimit,
-    allSeries: everySeries,
-    any: some,
-    anyLimit: someLimit,
-    anySeries: someSeries,
-    find: detect,
-    findLimit: detectLimit,
-    findSeries: detectSeries,
-    forEach: eachLimit,
-    forEachSeries: eachSeries,
-    forEachLimit: eachLimit$1,
-    forEachOf: eachOf,
-    forEachOfSeries: eachOfSeries,
-    forEachOfLimit: eachOfLimit,
-    inject: reduce,
-    foldl: reduce,
-    foldr: reduceRight,
-    select: filter,
-    selectLimit: filterLimit,
-    selectSeries: filterSeries,
-    wrapSync: asyncify
-};
-
-exports['default'] = index;
-exports.apply = apply;
-exports.applyEach = applyEach;
-exports.applyEachSeries = applyEachSeries;
-exports.asyncify = asyncify;
-exports.auto = auto;
-exports.autoInject = autoInject;
-exports.cargo = cargo;
-exports.compose = compose;
-exports.concat = concat;
-exports.concatLimit = concatLimit;
-exports.concatSeries = concatSeries;
-exports.constant = constant;
-exports.detect = detect;
-exports.detectLimit = detectLimit;
-exports.detectSeries = detectSeries;
-exports.dir = dir;
-exports.doDuring = doDuring;
-exports.doUntil = doUntil;
-exports.doWhilst = doWhilst;
-exports.during = during;
-exports.each = eachLimit;
-exports.eachLimit = eachLimit$1;
-exports.eachOf = eachOf;
-exports.eachOfLimit = eachOfLimit;
-exports.eachOfSeries = eachOfSeries;
-exports.eachSeries = eachSeries;
-exports.ensureAsync = ensureAsync;
-exports.every = every;
-exports.everyLimit = everyLimit;
-exports.everySeries = everySeries;
-exports.filter = filter;
-exports.filterLimit = filterLimit;
-exports.filterSeries = filterSeries;
-exports.forever = forever;
-exports.groupBy = groupBy;
-exports.groupByLimit = groupByLimit;
-exports.groupBySeries = groupBySeries;
-exports.log = log;
-exports.map = map;
-exports.mapLimit = mapLimit;
-exports.mapSeries = mapSeries;
-exports.mapValues = mapValues;
-exports.mapValuesLimit = mapValuesLimit;
-exports.mapValuesSeries = mapValuesSeries;
-exports.memoize = memoize;
-exports.nextTick = nextTick;
-exports.parallel = parallelLimit;
-exports.parallelLimit = parallelLimit$1;
-exports.priorityQueue = priorityQueue;
-exports.queue = queue$1;
-exports.race = race;
-exports.reduce = reduce;
-exports.reduceRight = reduceRight;
-exports.reflect = reflect;
-exports.reflectAll = reflectAll;
-exports.reject = reject;
-exports.rejectLimit = rejectLimit;
-exports.rejectSeries = rejectSeries;
-exports.retry = retry;
-exports.retryable = retryable;
-exports.seq = seq;
-exports.series = series;
-exports.setImmediate = setImmediate$1;
-exports.some = some;
-exports.someLimit = someLimit;
-exports.someSeries = someSeries;
-exports.sortBy = sortBy;
-exports.timeout = timeout;
-exports.times = times;
-exports.timesLimit = timeLimit;
-exports.timesSeries = timesSeries;
-exports.transform = transform;
-exports.tryEach = tryEach;
-exports.unmemoize = unmemoize;
-exports.until = until;
-exports.waterfall = waterfall;
-exports.whilst = whilst;
-exports.all = every;
-exports.allLimit = everyLimit;
-exports.allSeries = everySeries;
-exports.any = some;
-exports.anyLimit = someLimit;
-exports.anySeries = someSeries;
-exports.find = detect;
-exports.findLimit = detectLimit;
-exports.findSeries = detectSeries;
-exports.forEach = eachLimit;
-exports.forEachSeries = eachSeries;
-exports.forEachLimit = eachLimit$1;
-exports.forEachOf = eachOf;
-exports.forEachOfSeries = eachOfSeries;
-exports.forEachOfLimit = eachOfLimit;
-exports.inject = reduce;
-exports.foldl = reduce;
-exports.foldr = reduceRight;
-exports.select = filter;
-exports.selectLimit = filterLimit;
-exports.selectSeries = filterSeries;
-exports.wrapSync = asyncify;
-
-Object.defineProperty(exports, '__esModule', { value: true });
-
-})));
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(24).setImmediate, __webpack_require__(1), __webpack_require__(5), __webpack_require__(16)(module)))
-
-/***/ }),
-
-/***/ 98:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(module, process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__dockableWindow__ = __webpack_require__(71);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__mockMonitor__ = __webpack_require__(162);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__dockingCalculator__ = __webpack_require__(72);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_disentangledUtils__ = __webpack_require__(46);
+/* WEBPACK VAR INJECTION */(function(module, process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__dockableWindow__ = __webpack_require__(74);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__mockMonitor__ = __webpack_require__(160);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__dockingCalculator__ = __webpack_require__(75);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_disentangledUtils__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_disentangledUtils___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__common_disentangledUtils__);
 
 
 var dockableWindows = {};
@@ -22969,8 +25934,8 @@ var dockableWindows = {};
 var DockingCalculator = new __WEBPACK_IMPORTED_MODULE_2__dockingCalculator__["a" /* default */]({}, {
 	Logger: __WEBPACK_IMPORTED_MODULE_3__common_disentangledUtils__["mockLogger"]
 });
-var CONSTANTS = __webpack_require__(51);
-const MockSystem = __webpack_require__(163);
+var CONSTANTS = __webpack_require__(56);
+const MockSystem = __webpack_require__(161);
 // var AutoArrange = require("../../../MultiWindowFeatures/autoArrange");
 
 DockingCalculator.sendAutoArrangeStatusUpdate = Function.prototype;
@@ -23134,10 +26099,309 @@ function DockingMath() {
 DockingMath.prototype = DockingCalculator;
 module.exports = new DockingMath();
 
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } /* eslint-disable camelcase, no-undef */ var webpackExports = typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__ : module.exports; /* eslint-enable camelcase, no-undef */ if (typeof webpackExports === 'function') { __REACT_HOT_LOADER__.register(webpackExports, 'module.exports', "C:\\projects\\finsemble\\src\\services\\window\\Docking\\tests\\mocks\\mockDockingService.js"); return; } /* eslint-disable no-restricted-syntax */ for (var key in webpackExports) { /* eslint-enable no-restricted-syntax */ if (!Object.prototype.hasOwnProperty.call(webpackExports, key)) { continue; } var namedExport = void 0; try { namedExport = webpackExports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\projects\\finsemble\\src\\services\\window\\Docking\\tests\\mocks\\mockDockingService.js"); } } })();
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\tests\\mocks\\mockDockingService.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\tests\\mocks\\mockDockingService.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)(module), __webpack_require__(1)))
 
-/***/ })
+/***/ }),
+/* 100 */,
+/* 101 */,
+/* 102 */,
+/* 103 */,
+/* 104 */,
+/* 105 */,
+/* 106 */,
+/* 107 */,
+/* 108 */,
+/* 109 */,
+/* 110 */,
+/* 111 */,
+/* 112 */,
+/* 113 */,
+/* 114 */,
+/* 115 */,
+/* 116 */,
+/* 117 */,
+/* 118 */,
+/* 119 */,
+/* 120 */,
+/* 121 */,
+/* 122 */,
+/* 123 */,
+/* 124 */,
+/* 125 */,
+/* 126 */,
+/* 127 */,
+/* 128 */,
+/* 129 */,
+/* 130 */,
+/* 131 */,
+/* 132 */,
+/* 133 */,
+/* 134 */,
+/* 135 */,
+/* 136 */,
+/* 137 */,
+/* 138 */,
+/* 139 */,
+/* 140 */,
+/* 141 */,
+/* 142 */,
+/* 143 */,
+/* 144 */,
+/* 145 */,
+/* 146 */,
+/* 147 */,
+/* 148 */,
+/* 149 */,
+/* 150 */,
+/* 151 */,
+/* 152 */,
+/* 153 */,
+/* 154 */,
+/* 155 */,
+/* 156 */,
+/* 157 */,
+/* 158 */,
+/* 159 */,
+/* 160 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
-/******/ });
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process, module) {class MockMonitor {
+	constructor(bounds) {
+		this.name = bounds.name;
+		this.left = bounds.left;
+		this.top = bounds.top;
+		this.right = bounds.right;
+		this.bottom = bounds.bottom;
+		this._monitor = {
+			availableRect: bounds,
+			unclaimedRect: bounds
+		};
+	}
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = MockMonitor;
+
+
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\tests\\mocks\\mockMonitor.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\tests\\mocks\\mockMonitor.js"); } } })();
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
+
+/***/ }),
+/* 161 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(process) {// passthrough to openfin. In the future we can make this the passthrough to any container.
+
+const fin = {
+	desktop: {
+		Window: {},
+		Application: {},
+		Notification: {},
+		System: {
+			getMousePosition: cb => cb({})
+		}
+	}
+};
+class SystemWindow {
+	constructor(params, cb) {
+		return new fin.desktop.Window(params, cb);
+	}
+
+	static get getCurrent() {
+		return fin.desktop.Window.getCurrent;
+	}
+
+	static get wrap() {
+		return fin.desktop.Window.wrap;
+	}
+
+}
+
+class Application {
+	constructor(params, cb) {
+		return new fin.desktop.Application(params, cb);
+	}
+
+	static get getCurrent() {
+		return fin.desktop.Application.getCurrent;
+	}
+
+	static get wrap() {
+		return fin.desktop.Application.wrap;
+	}
+}
+
+class SystemNotification {
+	constructor(params) {
+		new fin.desktop.Notification(params);
+	}
+}
+
+class System {
+	static get Application() {
+		return Application;
+	}
+	static get Window() {
+		return SystemWindow;
+	}
+	static get Notification() {
+		return SystemNotification;
+	}
+
+	static getMousePosition(cb) {
+		fin.desktop.System.getMousePosition(mousePosition => {
+			if (mousePosition.left || mousePosition.left === 0) mousePosition.x = mousePosition.left;
+			if (mousePosition.top || mousePosition.top === 0) mousePosition.y = mousePosition.top;
+			cb(null, mousePosition);
+		}, err => {
+			cb(err, null);
+		});
+	}
+
+	static getMonitorInfo(cb) {
+		fin.desktop.System.getMonitorInfo(info => {
+			cb(info);
+		});
+	}
+
+	// static get makes this behave like a static variable. so calling system.ready is eqivalent to fin.desktop.main.
+	static get ready() {
+		return fin.desktop.main;
+	}
+
+	static get getHostSpecs() {
+		return fin.desktop.System.getHostSpecs;
+	}
+
+	static get launchExternalProcess() {
+		return fin.desktop.System.launchExternalProcess;
+	}
+
+	static get terminateExternalProcess() {
+		return fin.desktop.System.terminateExternalProcess;
+	}
+
+	static get getAllApplications() {
+		return fin.desktop.System.getAllApplications;
+	}
+
+	static get exit() {
+		return fin.desktop.System.exit;
+	}
+
+	static get clearCache() {
+		return fin.desktop.System.clearCache;
+	}
+
+	static get showDeveloperTools() {
+		return fin.desktop.System.showDeveloperTools;
+	}
+
+	static get getRuntimeInfo() {
+		return fin.desktop.System.getRuntimeInfo || chrome.desktop.getDetails;
+	}
+
+	static get addEventListener() {
+		/* events we use so far in Finsemble: monitor-info-changed, session-changed */
+		return fin.desktop.System.addEventListener;
+	}
+
+	static get getVersion() {
+		return fin.desktop.System.getVersion;
+	}
+
+	static get openUrlWithBrowser() {
+		return fin.desktop.System.openUrlWithBrowser;
+	}
+
+	static get getAllWindows() {
+		return fin.desktop.System.getAllWindows;
+	}
+
+	static FinsembleReady(cb) {
+		if (FSBL && FSBL.addEventListener) {
+			return FSBL.addEventListener("onready", cb);
+		}
+		return window.addEventListener("FSBLready", cb);
+	}
+
+	// This is not overriding or pointing to Openfin. This is the pattern used to close applications.
+	static closeApplication(app, cb = Function.prototype) {
+		const promiseResolver = resolve => {
+			let t;
+			let timeoutCleared = false;
+
+			// Need to terminate after closing because otherwise applications sit around in OpenFin with isRunning: false.
+			let terminateAndResolve = () => {
+				if (timeoutCleared) return;
+				timeoutCleared = true;
+				console.log("terminating ", app.uuid);
+				clearTimeout(t);
+				app.terminate(() => {
+					cb();
+					resolve();
+				}, () => {
+					app.terminate();
+				});
+			};
+
+			// Sometimes app.close() never calls back (only happens with logger). So after 2 seconds terminate.
+			t = setTimeout(terminateAndResolve, 2000);
+
+			console.log("closing ", app.uuid);
+			// Try to close normally
+			app.close(false, terminateAndResolve, () => {
+				if (timeoutCleared) return;
+				clearTimeout(t);
+				// If closing fails, force close
+				console.log("force closing ", app.uuid);
+				app.close(true, terminateAndResolve, terminateAndResolve);
+			});
+		};
+		return new Promise(promiseResolver);
+	}
+
+}
+
+module.exports = System;
+
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\tests\\mocks\\mockSystem.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\tests\\mocks\\mockSystem.js"); } } })();
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
+
+/***/ }),
+/* 162 */,
+/* 163 */,
+/* 164 */,
+/* 165 */,
+/* 166 */,
+/* 167 */,
+/* 168 */,
+/* 169 */,
+/* 170 */,
+/* 171 */,
+/* 172 */,
+/* 173 */,
+/* 174 */,
+/* 175 */,
+/* 176 */,
+/* 177 */,
+/* 178 */,
+/* 179 */,
+/* 180 */,
+/* 181 */,
+/* 182 */,
+/* 183 */,
+/* 184 */,
+/* 185 */,
+/* 186 */,
+/* 187 */,
+/* 188 */,
+/* 189 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(99);
+
+
+/***/ })
+/******/ ]);
 //# sourceMappingURL=mockDockingService.js.map

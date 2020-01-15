@@ -6,17 +6,17 @@ import SystemSettings from "./systemSettings";
 
 /**
  * @introduction
- * <h2>Finsemble Vaidate Functions</h2>
+ * <h2>Finsemble Validate Functions</h2>
  *
  */
 
 /**
- * Constructor for Finsemble argment validator.
+ * Constructor for Finsemble argument validator.
  *
- * Validatation logic is ONLY RAN when SystemSettings diagnotics level is set to debug (i.e. 4 or above)
+ * Validation logic is ONLY RAN when SystemSettings diagnostics level is set to debug (i.e. 4 or above)
  * A failed validation will generate a warning message, but nothing more; however application logic can check the validation results.
  *
- * @param {string} console Finsemble console object used to display messages and check diagnotic level
+ * @param {string} console Finsemble console object used to display messages and check diagnostic level
  * @constructor
  * @shouldBePublished false
  */
@@ -25,7 +25,7 @@ var Validate = function () {
 	function warningMsg(paramDescript, thisArg, thisArgType) {
 
 		function getErrorObject() {
-			try { throw Error(''); } catch (err) { return err; }
+			try { throw Error(""); } catch (err) { return err; }
 		}
 
 		var err = getErrorObject();
@@ -58,7 +58,7 @@ var Validate = function () {
 	 *
 	 * validate.args(topic, "string", initialState, "any"); // with "any" type
 	 *
-	 * validate.args(subscribeIDStruct, "object") && validate.args(subscribeIDStruct.subscribeID, "string"); // only do second varidate if first test successful
+	 * validate.args(subscribeIDStruct, "object") && validate.args(subscribeIDStruct.subscribeID, "string"); // only do second validate if first test successful
 	 *
 	 * validate.args(subscribeIDStruct, "object", subscribeIDStruct.subscribeID, "string"); // only check second parm if first validated successful
 	 *
@@ -80,7 +80,7 @@ var Validate = function () {
 						optionalArg = true;
 					}
 					if (typeof (thisArg) !== thisArgType) { // confirms basic case -- the required type
-						if (!optionalArg || typeof (thisArg) !== "undefined") { // but optional parms can be undefined
+						if (!optionalArg || typeof (thisArg) !== "undefined") { // but optional params can be undefined
 							if (typeof (thisArg) === "undefined" || thisArgType !== "any") { // but "any" type doesn't have to match but can't be undefined
 								var parameterPosition = (i / 2) + 1;
 								warningMsg(parameterPosition, thisArg, thisArgType);
@@ -94,12 +94,12 @@ var Validate = function () {
 				console.warn("validate.args requires even number of parameters: " + JSON.stringify(arguments));
 			}
 		}
-		return returnCode; // always return turn when validation is disable due debug lebel turned off
+		return returnCode; // always return turn when validation is disable due debug label turned off
 	};
 
 	/**
-	 * Confirm parameters are valid. args2() has the same functionality as args() except a third "parameter description" is passed in for each argument varified
-	 * Typically this for passing in a properties name for better diagnostic messages when varifying object properties.
+	 * Confirm parameters are valid. args2() has the same functionality as args() except a third "parameter description" is passed in for each argument verified
+	 * Typically this for passing in a properties name for better diagnostic messages when verifying object properties.
 	 * A variable number of parameter "triples"" are supported.
 	 *
 	 * @param {string} paramName1 is descriptive name of param1 (for diagnostic message)
@@ -136,9 +136,8 @@ var Validate = function () {
 						optionalArg = true;
 					}
 					if (typeof (thisArg) !== thisArgType) { // confirms basic case -- the required type
-						if (!optionalArg || typeof (thisArg) !== "undefined") { // but optional parms can be undefined
+						if (!optionalArg || typeof (thisArg) !== "undefined") { // but optional params can be undefined
 							if (typeof (thisArg) === "undefined" || thisArgType !== "any") { // but "any" type doesn't have to match but can't be undefined
-								var parameterPosition = (i / 2) + 1;
 								warningMsg(thisArgName, thisArg, thisArgType);
 								returnCode = false;
 								break;
@@ -150,7 +149,7 @@ var Validate = function () {
 				console.warn("validate.args requires even number of parameters: " + JSON.stringify(arguments));
 			}
 		}
-		return returnCode; // always return turn when validation is disable due debug lebel turned off
+		return returnCode; // always return turn when validation is disable due debug label turned off
 	};
 };
 

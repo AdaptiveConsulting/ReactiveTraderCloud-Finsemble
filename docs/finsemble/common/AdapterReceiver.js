@@ -39,7 +39,7 @@ export default class AdapterReceiver {
 	 */
 	loaded(name, adapter) {
 		this.adapters[name] = adapter;
-		//old variable. leaving for backwards compaitibility.
+		//old variable. leaving for backwards compatibility.
 		this.storageAdapters[name] = adapter;
 		if (this.callbacks[name]) {
 			this.callbacks[name]();

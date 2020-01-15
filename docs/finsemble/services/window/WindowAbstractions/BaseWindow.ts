@@ -3,7 +3,7 @@
 // 	ToDO: fix name versus windowName
 // 	TODO: should not be any checks for window methods: e.g. if (this.win._updateOptions) -- should have everything in base class
 //	TODO: LauncherService should not be looking at workspace service bounds to determine monitor to use (need an architecture solution here)
-// 	TODO: discuss BaseWindow.bindFunctions(this) (sidenote: I removed the extra bindings from the wrap)
+// 	TODO: discuss BaseWindow.bindFunctions(this) (side note: I removed the extra bindings from the wrap)
 
 import RouterClient from "../../../clients/routerClientInstance";
 import Logger from "../../../clients/logger";
@@ -15,7 +15,8 @@ import { WindowEventManager } from "../../../common/window/WindowEventManager";
 import * as constants from "../../../common/constants"
 import { FinsembleEvent } from "../../../common/window/FinsembleEvent";
 import { System } from "../../../common/system";
-
+import { WORKSPACE } from "../../../common/constants";
+import { clone } from "../../../common/disentangledUtils";
 declare global {
 	interface Window {
 		_FSBLCache: any;
@@ -26,18 +27,26 @@ declare global {
 //This will go away as we move those things into proper classes.
 import DistributedStoreClient from "../../../clients/distributedStoreClient";
 import StorageClient from "../../../clients/storageClient";
+import WorkspaceClient from "../../../clients/workspaceClient";
 DistributedStoreClient.initialize();
 StorageClient.initialize();
 const BOUNDS_SET = "bounds-set";
 const BOUNDS_CHANGING = "bounds-change-request";
 const BOUNDS_CHANGED = "disabled-frame-bounds-changed";
-const WORKSPACE_CACHE_TOPIC = "finsemble.workspace.cache";
 if (!window._FSBLCache) window._FSBLCache = {
 	storeClientReady: false,
 	windowStore: null,
 	windows: {},
 	gettingWindow: [],
 	windowAttempts: {}
+};
+export type componentMutateParams = {
+	field?: string,
+	fields?: { field: string }[],
+	key?: string,
+	stateVar?: "componentState" | "windowState",
+	topic?: string,
+	value?: any
 };
 export class BaseWindow extends EventEmitter {
 	Group: any;
@@ -129,7 +138,7 @@ export class BaseWindow extends EventEmitter {
 		this.finishedMove = false;
 	}
 
- 	_stopMove() {
+	_stopMove(markDirty = true) {
 		this.finishedMove = true;
 	}
 
@@ -143,12 +152,12 @@ export class BaseWindow extends EventEmitter {
 			delete params.windowType; //Prevent infinite loop
 			let BW = BaseWindow as any; //have to do this because we're mutating the class using static functions and all kinds of bad stuff. This tells the typescript compiler that the BaseWindow here is of type any -- basically don't worry about its type.
 
-			var childClassObject = new BW.types[params.setWindowType](params);
+			const childClassObject = new BW.types[params.setWindowType](params);
 			//childClassObject.windowType = windowType;
 			return childClassObject;
-		}  //We are a specfic kind of window
+		}  //We are a specific kind of window
 		if (params) {
-			for (var i in params) {
+			for (let i in params) {
 				this[i] = params[i];
 			}
 		}
@@ -202,8 +211,7 @@ export class BaseWindow extends EventEmitter {
 			if (err) {
 				Logger.system.error("BaseWindow parent change notification error", err);
 			} else {
-				var parentState = message.data;
-				parentState = parentState || {};
+				const parentState = message.data || {};
 
 				if (parentState.type == "Added") {
 					Logger.system.debug("BaseWindow Parent Notification: window.addedToStack listener", parentState);
@@ -418,7 +426,7 @@ export class BaseWindow extends EventEmitter {
 		RouterClient.unsubscribe(this.wrapStateChangeSubscription);
 	}
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Handers to generate wrapper events from incoming transmits
+	// Handlers to generate wrapper events from incoming transmits
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	handleWrapStateChange = (err, response) => {
 		let state: WrapState = response.data.state;
@@ -536,7 +544,7 @@ export class BaseWindow extends EventEmitter {
 		Logger.system.debug("FinsembleWindow.queryWindowService", this.windowServiceChannelName(methodName), params);
 		console.debug("FinsembleWindow.queryWindowService", this, this.windowServiceChannelName(methodName), params);
 
-		var responseData = null;
+		let responseData = null;
 		RouterClient.query(this.windowServiceChannelName(methodName), params, (err, queryResponseMessage) => {
 			if (err) {
 				Logger.system.warn(`WindowService.${methodName}: failed`, err);
@@ -551,7 +559,7 @@ export class BaseWindow extends EventEmitter {
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Core Window Functions: can be invoked by any service or component.  Most are sent to the WindowService to be exectuted.
+	// Core Window Functions: can be invoked by any service or component.  Most are sent to the WindowService to be executed.
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	_eventHandled(interceptor, guid, canceled: boolean = false) {
@@ -575,7 +583,7 @@ export class BaseWindow extends EventEmitter {
 			cancelable: cancelable
 		});
 
-		var internalHandler = (data) => {
+		const internalHandler = (data) => {
 			// TODO: need to create event list with properties:
 			interceptor.setData(data);
 			handler(interceptor); // this is where a handler can delay the event
@@ -609,7 +617,7 @@ export class BaseWindow extends EventEmitter {
 			Logger.system.error("trying to remove non-existent handler", eventName);
 			return;
 		}
-		for (var i = this.eventlistenerHandlerMap[eventName].length - 1; i >= 0; i--) {
+		for (let i = this.eventlistenerHandlerMap[eventName].length - 1; i >= 0; i--) {
 			let handlerStoredData = this.eventlistenerHandlerMap[eventName][i];
 			if (handlerStoredData.handler === handler) {
 				this.eventManager.removeListener(eventName, handlerStoredData.internalHandler);
@@ -621,9 +629,9 @@ export class BaseWindow extends EventEmitter {
 	}
 
 	/**
-	 *Register a window with docking. Use this if you don't want to use the full initilization function
+	 *Register a window with docking. Use this if you don't want to use the full initialization function
 	 *
-	 * @param {Object} params - can be anything that is passed to docking for window registration. @todo This should be removed soom
+	 * @param {Object} params - can be anything that is passed to docking for window registration. @todo This should be removed soon
 	 * @param {Function} cb
 	 * @memberof FSBLWindow
 	 */
@@ -646,7 +654,7 @@ export class BaseWindow extends EventEmitter {
 	/**
 	 *This is if we want to handle the full register/ready state inside of the window
 	 register with docking
-	 send the message to laucnher saying that component is ready
+	 send the message to launcher saying that component is ready
 	 *
 	 * @memberof FSBLWindow
 	 */
@@ -673,7 +681,7 @@ export class BaseWindow extends EventEmitter {
 		Logger.system.debug("BaseWindow._minimize", params);
 		params = params || {};
 		if (!params.invokedByParent && this.parentWindow) {
-			// if parent defined and not circuluar loop, invoke parent functionality.  Parent result passed back to caller
+			// if parent defined and not circular loop, invoke parent functionality.  Parent result passed back to caller
 			params.windowIdentifier = this.identifier; // add this window's identifier for parent invocation
 			this.parentWindow._minimize(params, (err, result) => {
 				Logger.system.debug("BaseWindow._minimize parent", result);
@@ -691,7 +699,7 @@ export class BaseWindow extends EventEmitter {
 		params = params || {};
 
 		if (!params.invokedByParent && this.parentWindow) {
-			// if parent defined and not circuluar loop, invoke parent functionality.  Parent result passed back to caller
+			// if parent defined and not circular loop, invoke parent functionality.  Parent result passed back to caller
 			params.windowIdentifier = this.identifier; // add this window's identifier for parent invocation
 			this.parentWindow._maximize(params, function (err, result) {
 				Logger.system.debug("BaseWindow._maximize parent", result);
@@ -708,7 +716,7 @@ export class BaseWindow extends EventEmitter {
 		Logger.system.debug("BaseWindow._restore", params);
 		params = params || {};
 		if (!params.invokedByParent && this.parentWindow) {
-			// if parent defined and not circuluar loop, invoke parent functionality.  Parent result passed back to caller
+			// if parent defined and not circular loop, invoke parent functionality.  Parent result passed back to caller
 			params.windowIdentifier = this.identifier; // add this window's identifier for parent invocation
 			this.parentWindow._restore(params, function (err, result) {
 				Logger.system.debug("BaseWindow._restore parent", result);
@@ -723,7 +731,7 @@ export class BaseWindow extends EventEmitter {
 		Logger.system.debug("BaseWindow._blur", params);
 		params = params || {};
 		if (!params.invokedByParent && this.parentWindow) {
-			// if parent defined and not circuluar loop, invoke parent functionality.  Parent result passed back to caller
+			// if parent defined and not circular loop, invoke parent functionality.  Parent result passed back to caller
 			params.windowIdentifier = this.identifier; // add this window's identifier for parent invocation
 			this.parentWindow._blur(params, function (err, result) {
 				Logger.system.debug("BaseWindow._blur parent", result);
@@ -740,7 +748,7 @@ export class BaseWindow extends EventEmitter {
 		Logger.system.debug("BaseWindow._focus", params);
 		params = params || {};
 		if (!params.invokedByParent && this.parentWindow) {
-			// if parent defined and not circuluar loop, invoke parent functionality.  Parent result passed back to caller
+			// if parent defined and not circular loop, invoke parent functionality.  Parent result passed back to caller
 			params.windowIdentifier = this.identifier; // add this window's identifier for parent invocation
 			this.parentWindow._focus(params, function (err, result) {
 				Logger.system.debug("BaseWindow._focus parent", result);
@@ -757,7 +765,7 @@ export class BaseWindow extends EventEmitter {
 		Logger.system.debug("BaseWindow._bringToFront", params);
 		params = params || {};
 		if (!params.invokedByParent && this.parentWindow) {
-			// if parent defined and not circuluar loop, invoke parent functionality.  Parent result passed back to caller
+			// if parent defined and not circular loop, invoke parent functionality.  Parent result passed back to caller
 			params.windowIdentifier = this.identifier; // add this window's identifier for parent invocation
 			this.parentWindow._bringToFront(params, function (err, result) {
 				Logger.system.debug("BaseWindow._bringToFront parent", result);
@@ -774,7 +782,7 @@ export class BaseWindow extends EventEmitter {
 		Logger.system.debug("BaseWindow._isShowing", params);
 		params = params || {};
 		if (!params.invokedByParent && this.parentWindow) {
-			// if parent defined and not circuluar loop, invoke parent functionality.  Parent result passed back to caller
+			// if parent defined and not circular loop, invoke parent functionality.  Parent result passed back to caller
 			params.windowIdentifier = this.identifier; // add this window's identifier for parent invocation
 			this.parentWindow._isShowing(params, function (err, result) {
 				Logger.system.debug("BaseWindow._isShowing parent", result);
@@ -799,7 +807,7 @@ export class BaseWindow extends EventEmitter {
 
 		this.mergeBounds(bounds);//This happens twice...remove this
 		if (!params.invokedByParent && this.parentWindow) {
-			// if parent defined and not circuluar loop, invoke parent functionality.  Parent result passed back to caller
+			// if parent defined and not circular loop, invoke parent functionality.  Parent result passed back to caller
 			params.windowIdentifier = this.identifier; // add this window's identifier for parent invocation
 			this.parentWindow._setBounds(params, function (err, result) {
 				Logger.system.debug("BaseWindow._setBounds parent", result);
@@ -816,14 +824,14 @@ export class BaseWindow extends EventEmitter {
 		Logger.system.debug("BaseWindow._getBounds", params);
 		params = params || {};
 		if (!params.invokedByParent && this.parentWindow) {
-			// if parent defined and not circuluar loop, invoke parent functionality.  Parent result passed back to caller
+			// if parent defined and not circular loop, invoke parent functionality.  Parent result passed back to caller
 			params.windowIdentifier = this.identifier; // add this window's identifier for parent invocation
 			this.parentWindow._getBounds(params, function (err, bounds) {
 				Logger.system.debug("BaseWindow._getBounds parent", bounds);
-				cb(err, bounds);  // shouldContinue not defined in return value, but implicitedly false
+				cb(err, bounds);  // shouldContinue not defined in return value, but implicitly false
 			});
 		} else {
-			cb(null, { shouldContinue: true }); // if should continue, bounds will be calculated by dervived class
+			cb(null, { shouldContinue: true }); // if should continue, bounds will be calculated by derived class
 		}
 	}
 
@@ -833,7 +841,7 @@ export class BaseWindow extends EventEmitter {
 		Logger.system.debug("BaseWindow._updateOptions", params);
 		params = params || {};
 		if (!params.invokedByParent && this.parentWindow) {
-			// if parent defined and not circuluar loop, invoke parent functionality.  Parent result passed back to caller
+			// if parent defined and not circular loop, invoke parent functionality.  Parent result passed back to caller
 			params.windowIdentifier = this.identifier; // add this window's identifier for parent invocation
 			this.parentWindow._updateOptions(params, function (err, result) {
 				Logger.system.debug("BaseWindow._updateOptions parent", result);
@@ -850,7 +858,7 @@ export class BaseWindow extends EventEmitter {
 		Logger.system.debug("BaseWindow._hide", params);
 		params = params || {};
 		if (!params.invokedByParent && this.parentWindow) {
-			// if parent defined and not circuluar loop, invoke parent functionality.  Parent result passed back to caller
+			// if parent defined and not circular loop, invoke parent functionality.  Parent result passed back to caller
 			params.windowIdentifier = this.identifier; // add this window's identifier for parent invocation
 			this.parentWindow._hide(params, function (err, result) {
 				Logger.system.debug("BaseWindow._hide parent", result);
@@ -867,7 +875,7 @@ export class BaseWindow extends EventEmitter {
 		Logger.system.debug("BaseWindow._show", params);
 		params = params || {};
 		if (!params.invokedByParent && this.parentWindow) {
-			// if parent defined and not circuluar loop, invoke parent functionality.  Parent result passed back to caller
+			// if parent defined and not circular loop, invoke parent functionality.  Parent result passed back to caller
 			params.windowIdentifier = this.identifier; // add this window's identifier for parent invocation
 			this.parentWindow._show(params, function (err, result) {
 				Logger.system.debug("BaseWindow._show parent", result);
@@ -890,18 +898,35 @@ export class BaseWindow extends EventEmitter {
 	_close(params, cb = Function.prototype) {
 		Logger.system.debug("WRAP CLOSE. BaseWindow._close", this.name, params);
 		params = params || {};
-		if (!params.invokedByParent && !params.ignoreParent && this.parentWindow) {
-			// if parent defined and not circuluar loop, invoke parent functionality.  Parent result passed back to caller
+		const parentWindow = this.parentWindow;
+		if (params.fromSystem) {
+			// If the close is initiated from a system close (i.e. close from the taskbar or using the hotkey) and we're closing a stacked window, close the entire stacked window.
+			// Except for when a native window is part of that stack and the system close is initiated on the native window, in which case we only close the native window instead of the whole stack.
+			// fromSystem is only set by the openfinWindowWrapper in _systemClosed. It is not set by other kinds of windows.
+			if (parentWindow && parentWindow.componentType.toLowerCase() === "stackedwindow") {
+				params = {};
+				params.removeFromWorkspace = true;
+				params.fromSystem = true;
+				params.stackedWindowIdentifier = parentWindow.identifier;
+				parentWindow.close(params, function (err, result) {
+					Logger.system.debug("BaseWindow.close stacked window", result);
+					cb(err, { shouldContinue: false });
+				});
+			}
+			else {
+				cb(null, { shouldContinue: true });
+			}
+		}
+		else if (!params.invokedByParent && !params.ignoreParent && parentWindow) {
+			// if parent defined and not circular loop, invoke parent functionality.  Parent result passed back to caller
 			params.windowIdentifier = this.identifier; // add this window's identifier for parent invocation
 			params.noDocking = true; // when removing from stacked window don't register child with docking
-			this.parentWindow._removeWindow(params, function (err, result) {
+			parentWindow._removeWindow(params, function (err, result) {
 				Logger.system.debug("BaseWindow._close parent", result);
 				cb(err, { shouldContinue: true });
 			});
-		} else if (params.fromSystem) {
-			//if it's a system-close, we don't want to call finWindow.close. finWindow doesn't exist in that case. So we pass shouldContinue: false
-			cb(null, { shouldContinue: false });
-		} else {
+		}
+		else {
 			cb(null, { shouldContinue: true });
 		}
 	}
@@ -912,7 +937,7 @@ export class BaseWindow extends EventEmitter {
 		Logger.system.debug("BaseWindow._alwaysOnTop", params);
 		params = params || {};
 		if (!params.invokedByParent && this.parentWindow) {
-			// if parent defined and not circuluar loop, invoke parent functionality.  Parent result passed back to caller
+			// if parent defined and not circular loop, invoke parent functionality.  Parent result passed back to caller
 			params.windowIdentifier = this.identifier; // add this window's identifier for parent invocation
 			this.parentWindow._alwaysOnTop(params, function (err, result) {
 				Logger.system.debug("BaseWindow._alwaysOnTop parent", result);
@@ -929,7 +954,7 @@ export class BaseWindow extends EventEmitter {
 		Logger.system.debug("BaseWindow._setOpacity", params);
 		params = params || {};
 		if (!params.invokedByParent && this.parentWindow) {
-			// if parent defined and not circuluar loop, invoke parent functionality.  Parent result passed back to caller
+			// if parent defined and not circular loop, invoke parent functionality.  Parent result passed back to caller
 			params.windowIdentifier = this.identifier; // add this window's identifier for parent invocation
 			this.parentWindow._setOpacity(params, function (err, result) {
 				Logger.system.debug("BaseWindow._setOpacity parent", result);
@@ -946,7 +971,7 @@ export class BaseWindow extends EventEmitter {
 		Logger.system.debug("BaseWindow._saveWindowOptions", params);
 		params = params || {};
 		if (!params.invokedByParent && this.parentWindow) {
-			// if parent defined and not circuluar loop, invoke parent functionality.  Parent result passed back to caller
+			// if parent defined and not circular loop, invoke parent functionality.  Parent result passed back to caller
 			params.windowIdentifier = this.identifier; // add this window's identifier for parent invocation
 			this.parentWindow._saveWindowOptions(params, function (err, result) {
 				Logger.system.debug("BaseWindow._saveWindowOptions parent", result);
@@ -961,7 +986,7 @@ export class BaseWindow extends EventEmitter {
 		return cb(null, {});
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Other Baseclass Function: These are common functions shared across derived classess
+	// Other Baseclass Function: These are common functions shared across derived classes
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	/**
@@ -1002,7 +1027,7 @@ export class BaseWindow extends EventEmitter {
 			} else {
 				Logger.system.debug("TabTile.stopTabTile results", queryResponseMessage.data);
 			}
-			var stopTabTileResults = queryResponseMessage.data;
+			const stopTabTileResults = queryResponseMessage.data;
 			if (callback) {
 				callback(err, stopTabTileResults, this.defaultStopTrackingAction);
 			} else {
@@ -1012,7 +1037,7 @@ export class BaseWindow extends EventEmitter {
 	}
 
 	/**
-	 * Defines default TabTile action for stopTabTileMonitoring.  May be overriden by client -- see example in stopTabTileMonitoring. Typically inherited (base function only).
+	 * Defines default TabTile action for stopTabTileMonitoring.  May be overwritten by client -- see example in stopTabTileMonitoring. Typically inherited (base function only).
 	 *
 	 * @param {any} stopTabTileResults
 	 * @memberof BaseWindow
@@ -1047,6 +1072,7 @@ export class BaseWindow extends EventEmitter {
 	mergeBounds(bounds) {
 		if (!bounds || !Number.isInteger(bounds.top)) {
 			console.error("Invalid bounds", bounds);
+			Logger.system.warn("BaseWindow.mergeBounds Invalid bounds", "bounds=", bounds);
 			return; //TODO: figure out how this is even possible
 		}
 
@@ -1100,35 +1126,43 @@ export class BaseWindow extends EventEmitter {
 	 * @param {object} params
 	 * @param {string} params.stateVar A string containing "componentState" or "windowState"
 	 * @param {string} params.field field
-	 *  @param {array} params.fields fields
+	 * @param {array} params.fields fields
+	 * @param {string} params.key The storage key for the window.
 	 * @param {function} cb Callback
 	 * @private
 	 **/
-	getFSBLState(params, cb) {
+	async getFSBLState(params: {
+		stateVar: "componentState" | "windowState",
+		field?: string,
+		fields?: string[],
+		key: string,
+	}, cb: StandardCallback) {
 		Logger.system.debug("BaseWindow.getState", params);
 
-		params.topic = WORKSPACE_CACHE_TOPIC;
-
-		StorageClient.get(params, (err, response) => {
-			var data = response;
+		StorageClient.get({ topic: WORKSPACE.CACHE_STORAGE_TOPIC, key: params.key }, (err, response) => {
 			if (params.stateVar === "componentState") {
-				this.componentState = data;
+				this.componentState = response;
 			} else if (params.stateVar === "windowState") {
-				this.windowState = data;
+				this.windowState = response;
 			}
-			if (response && params.field) {
-				cb(err, data[params.field]);
-			} else if (params.fields) {
-				var respObject = {};
-				for (var i = 0; i < params.fields.length; i++) {
-					if (data[params.fields[i]]) {
-						respObject[params.fields[i]] = data[params.fields[i]];
-					}
-				}
-				return cb(null, respObject);
 
-			} else if (response) {
-				return cb(null, data);
+			const { field, fields } = params;
+
+			if (response) {
+				if (field) {
+					cb(err, response[field]);
+				} else if (fields) {
+					const respObject = {};
+					for (let i = 0; i < fields.length; i++) {
+						if (response[fields[i]]) {
+							respObject[fields[i]] = response[fields[i]];
+						}
+					}
+					return cb(null, respObject);
+
+				} else {
+					return cb(null, response);
+				}
 			} else {
 				Logger.system.info("WindowClient:getComponentState:error, response, params", err, response, params);
 				cb("Not found", response);
@@ -1141,17 +1175,14 @@ export class BaseWindow extends EventEmitter {
 	 *
 	 * @param {object} params
 	 * @param {string} params.field field
-	 *  @param {array} params.fields fields
+	 * @param {array} params.fields fields
 	 * @param {function} cb Callback
 	 */
 	getComponentState(params, cb) {
 		if (!params) params = {};
 		if (params.fields && !Array.isArray(params.fields)) { params.fields = [params.fields]; }
 
-		params.key = this.componentKey;
-		params.stateVar = "componentState";
-
-		return this.getFSBLState(params, cb);
+		return this.getFSBLState({ ...params, key: this.componentKey, stateVar: "componentState" }, cb);
 	}
 
 	/**
@@ -1173,33 +1204,6 @@ export class BaseWindow extends EventEmitter {
 	}
 
 	/**
-	 * Checks to see if this save makes the workspace 'dirty'. We use this when deciding whether to prompt the user to save their workspace.
-	 *
-	 * @param {object} params
-	 * @param {string} params.field field
-	 * @param {string} params.windowName windowName
-	 * @param {function} cb Callback
-	 * @private
-	 */
-	setWorkspaceDirtyIfRequired(newState, oldState) {
-
-		/**
-		 * We clone the value below because:
-		 *
-		 * let's say that the user passes this in:
-		 * {value: undefined,
-		 * anotherValue: true}.
-		 *
-		 * When that is persisted to localStorage, it'll come back as {anotherValue: true}. Those two values are different. So we stringify the value coming in to compare it to what was saved.
-		 */
-		let cleanValue = JSON.parse(JSON.stringify(newState));
-		if (!deepEqual(oldState, cleanValue)) {
-			Logger.system.debug("APPLICATION LIFECYCLE:  Setting Active Workspace Dirty: Saved state does not match current component state");
-			RouterClient.transmit(constants.WORKSPACE.API_CHANNELS.SET_ACTIVEWORKSPACE_DIRTY, { windowName: this.windowName });
-		}
-	}
-
-	/**
 	 * Given params, will set the component state. Any fields included will be added to the state
 	 *
 	 * @param {object} params
@@ -1207,14 +1211,30 @@ export class BaseWindow extends EventEmitter {
 	 *  @param {array} params.fields fields
 	 * @param {function} cb Callback
 	 */
-	setComponentState(params, cb) {
+	setComponentState(params, cb = Function.prototype) {
 		if (!params) params = {};
 		if (params.fields && !Array.isArray(params.fields)) { params.fields = [params.fields]; }
 
-		params.key = this.componentKey;
-		params.stateVar = "componentState";
+		return this.setFSBLState({ ...params, key: this.componentKey, stateVar: "componentState" }, cb);
+	}
 
-		return this.setFSBLState(params, cb);
+	/**
+	 * Removes one or more specified attributes from a component state in storage
+	 * for this window.
+	 *
+	 * In addition to the name of the window, params should include either a `field`
+	 * property as a string or a `fields` property as an array of strings.
+	 *
+	 * @param {object} params
+	 * @param {string} [params.field] field
+	 * @param {array} [params.fields] fields
+	 * @param {function} cb Callback
+	 */
+	removeComponentState(params?: componentMutateParams, cb: StandardCallback = (e, r) => { }) {
+		if (!params) params = {};
+		if (params.fields && !Array.isArray(params.fields)) { params.fields = [params.fields]; }
+
+		return this.removeFSBLState({ ...params, key: this.componentKey, stateVar: "componentState" }, cb);
 	}
 
 	/**
@@ -1229,10 +1249,7 @@ export class BaseWindow extends EventEmitter {
 		if (!params) params = {};
 		if (params.fields && !Array.isArray(params.fields)) { params.fields = [params.fields]; }
 
-		params.key = this.windowKey;
-		params.stateVar = "windowState";
-
-		return this.setFSBLState(params, cb);
+		return this.setFSBLState({ ...params, key: this.windowKey, stateVar: "windowState" }, cb);
 	}
 
 	saveWindowState(state) {
@@ -1240,21 +1257,34 @@ export class BaseWindow extends EventEmitter {
 	}
 
 	saveCompleteWindowState(state, cb?) {
+		Logger.system.debug("COMPONENT LIFECYCLE:SAVING STATE:", state.name);
 		if (!state) return cb("No State Provided");
 		if (state.customData && state.customData.manifest) {
 			delete state.customData.manifest;
 		}
-		let params = {
-			topic: WORKSPACE_CACHE_TOPIC,
-			key: this.windowKey,
-			value: state
-		};
-		StorageClient.save(params, cb);
+
+		delete state.callstack;
+		delete state.x;
+		delete state.y;
+		delete state.blurred;
+		delete state.permissions;
+		delete state.invokedByParent;
+		delete state.monitorDimensions;
+		if (state.windowIdentifier) delete state.windowIdentifier.title;
+
+
+		WorkspaceClient._setWindowState({
+			windowName: this.windowName,
+			state: { windowData: state }
+		}).then(() => {
+			if (cb) cb();
+		});
 	}
 
 	deleteCompleteWindowState(cb) {
+		Logger.system.debug("COMPONENT LIFECYCLE:REMOVING STATE:", this.windowKey);
 		let params = {
-			topic: WORKSPACE_CACHE_TOPIC,
+			topic: WORKSPACE.CACHE_STORAGE_TOPIC,
 			key: this.windowKey
 		};
 		StorageClient.delete(params, cb);
@@ -1268,7 +1298,7 @@ export class BaseWindow extends EventEmitter {
 	 * @param {function=} cb Callback
 	 **/
 	setFSBLState(params, cb) {
-		var getParams = {
+		const getParams = {
 			key: params.key,
 			stateVar: params.stateVar
 		};
@@ -1283,7 +1313,7 @@ export class BaseWindow extends EventEmitter {
 		this.getFSBLState(getParams, () => {
 			/* Sidd Notes: We are always comparing the entire saved state to see if things have changed instead of just the new fields - that is expensive. */
 			Logger.system.debug("BaseWindow.getState", params);
-			params.topic = WORKSPACE_CACHE_TOPIC;
+			params.topic = WORKSPACE.CACHE_STORAGE_TOPIC;
 			let localComponentState = merge(this[params.stateVar], {});
 			let fields = params.fields;
 
@@ -1300,7 +1330,62 @@ export class BaseWindow extends EventEmitter {
 				localComponentState[field.field] = field.value;
 			}
 
-			this.setWorkspaceDirtyIfRequired(localComponentState, this[params.stateVar]);
+			params.value = localComponentState;
+			Logger.system.debug("COMPONENT LIFECYCLE: SAVING " + params.stateVar + ":", localComponentState);
+
+			WorkspaceClient._setWindowState({
+				windowName: this.windowName,
+				state: { [params.stateVar]: localComponentState }
+			}).then(() => {
+				this[params.stateVar] = localComponentState;
+				if (cb) cb();
+			});
+		});
+	}
+
+	/**
+	 * Removes one or more specified attributes from either component or window state in storage.
+	 *
+	 * In addition to the name of the window, params should include either a `field`
+	 * property as a string or a `fields` property as an array of strings.
+	 *
+	 * @param {object} params
+	 * @param {string} [params.field] field
+	 * @param {array} [params.fields] fields
+	 * @param {function=} cb Callback
+	 **/
+	removeFSBLState(params: componentMutateParams, cb: StandardCallback = (e, r) => { }) {
+		const getParams = {
+			key: params.key,
+			stateVar: params.stateVar
+		};
+		if (!getParams.key) {
+			if (getParams.stateVar === "componentState") {
+				getParams.key = this.componentKey;
+			} else if (getParams.stateVar === "windowState") {
+				getParams.key = this.windowKey;
+			}
+		}
+
+		this.getFSBLState(getParams, () => {
+			/* Sidd Notes: We are always comparing the entire saved state to see if things have changed instead of just the new fields - that is expensive. */
+			Logger.system.debug("BaseWindow.getState", params);
+			params.topic = WORKSPACE.CACHE_STORAGE_TOPIC;
+			// deepmerge treats undefined as empty object
+			let localComponentState = merge(this[params.stateVar], {});
+			let fields = params.fields;
+
+			if (params.field) {
+				fields = [{
+					field: params.field
+				}];
+			}
+
+			for (let i = 0; i < fields.length; i++) {
+				let field = fields[i];
+				if (!field.field) { continue; }
+				delete localComponentState[field.field];
+			}
 
 			params.value = localComponentState;
 			Logger.system.debug("COMPONENT LIFECYCLE: SAVING " + params.stateVar + ":", localComponentState);

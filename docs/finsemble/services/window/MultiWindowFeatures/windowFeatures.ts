@@ -31,7 +31,7 @@ class WindowFeatures implements Interface_Window.WindowFeatures {
 	/**
 	 * @typedef SpawnResults
 	 * @type {Object}
-	 * @property {windowIdentiier} component
+	 * @property {windowIdentifier} component
 	 * @property {windowDescriptor} windowDescriptor
 	*/
 

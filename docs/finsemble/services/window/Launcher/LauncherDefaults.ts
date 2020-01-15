@@ -40,7 +40,7 @@ export default function LauncherDefaults() {
 			zoom: false,
 			reloadIgnoringCache: true
 		},
-		//so that child-apps inherit taskbar icon from the main application. This prevents apps (eg, symphony) from showinge up as the taskbar icon.
+		//so that child-apps inherit taskbar icon from the main application. This prevents apps (eg, symphony) from showing up as the taskbar icon.
 		icon: null,
 		customData: {
 			component: {
@@ -111,4 +111,44 @@ export default function LauncherDefaults() {
 			}
 		}
 	};
+}
+
+export const UNKNOWN_DEFAULT_CONFIG = {
+	window: {
+		url: "about:blank",
+		frame: false,
+		resizable: true,
+		autoShow: true,
+		top: "center",
+		left: "center",
+		width: 400,
+		height: 432,
+		addToWorkspace: false,
+	},
+	component: {
+		inject: false,
+		spawnOnStartup: false,
+	},
+	foreign: {
+		services: {
+			dockingService: {
+				canGroup: true,
+				isArrangable: true
+			}
+		},
+		components: {
+			"App Launcher": {
+				launchableByUser: true
+			},
+			"Window Manager": {
+				showLinker: true,
+				FSBLHeader: true,
+				persistWindowState: true,
+				title: "Welcome"
+			},
+			Toolbar: {
+				iconClass: "ff-component"
+			}
+		}
+	}
 }

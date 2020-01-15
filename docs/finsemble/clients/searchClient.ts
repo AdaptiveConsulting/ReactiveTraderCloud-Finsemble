@@ -73,14 +73,14 @@ class SearchClient extends _BaseClient {
 				params.searchCallback(message.data, (err, res) => { message.sendQueryResponse(err, res); });
 			});
 			//This is where we receive calls for a result item action event
-			this.routerClient.addResponder("Search.Provider.ItemAction." + provider, (err, message) => {//create a query respo =>nder
+			this.routerClient.addResponder("Search.Provider.ItemAction." + provider, (err, message) => {//create a query responder
 				if (err) return console.error(err);
 				if (!message) return;
 				if (params.itemActionCallback) params.itemActionCallback(message.data, message.header.origin, (err, res) => { message.sendQueryResponse(err, res); });
 			});
 			//This is where we receive calls for a provider level event
 			if (params.providerActionCallback) {
-				this.routerClient.addResponder("Search.Provider.Action." + provider, (err, message) => {//create a query respo =>nder
+				this.routerClient.addResponder("Search.Provider.Action." + provider, (err, message) => {//create a query responder
 					if (err) return console.error(err);
 					if (!message) return;
 					if (params.providerActionCallback) params.providerActionCallback(message.header.origin, (err, res) => { message.sendQueryResponse(err, res); });
@@ -124,8 +124,8 @@ class SearchClient extends _BaseClient {
 	 * @param {String} params.text - The name of the provider
 	 * @param {String} params.windowName Optional. Will be set to the window which is invoking the API method.
 	 * @param {function} cb - callback to called as search results for each provider are returned. Results are combined as they come in.
-	 * So, every response will have the complete list of results that have been returned. Example: You have two proviers; provider one retunrs results first, you'll have an array with just the that providers data. Once Provider
-	 * two returns you'll have results for proiver one and provider two.
+	 * So, every response will have the complete list of results that have been returned. Example: You have two providers; provider one returns results first, you'll have an array with just the that providers data. Once Provider
+	 * two returns you'll have results for provider one and provider two.
 	 * @example
 	 * FSBL.Clients.SearchClient.search({
 	 *		text: "Chart",

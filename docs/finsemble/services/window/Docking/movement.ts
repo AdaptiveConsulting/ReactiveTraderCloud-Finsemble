@@ -1,6 +1,6 @@
 
 
-// example file to illustate the interface hooks which may or may not be used by Docking
+// example file to illustrate the interface hooks which may or may not be used by Docking
 
 import {
 	BasePrivateWindowInterface,

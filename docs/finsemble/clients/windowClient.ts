@@ -15,11 +15,10 @@ import { ConfigUtilInstance as configUtil } from "../common/configUtil";
 import deepEqual = require("lodash.isequal");
 import { parallel as asyncParallel } from "async";
 import RouterClient from "./routerClientInstance";
-import { debug } from "util";
 
 const lodashGet = require('lodash.get');
-const WORKSPACE_CACHE_TOPIC = "finsemble.workspace.cache"; // window data stored in this topic for access by workspace service
 
+// DH 3/6/2019 - @TODO - All uses of this should be replaced with calls to the WindowStorageManager
 import { WORKSPACE, DELIVERY_MECHANISM } from "../common/constants";
 import configClient from "./configClient";
 
@@ -36,6 +35,20 @@ type InjectHeaderParams = {
 type getStackedWindowParams = {
 	create?: boolean,
 	windowIdentifiers?: WindowIdentifier[]
+};
+
+type GroupData = {
+	windowNames: string[];
+	isMovable: boolean;
+	isAlwaysOnTop: boolean;
+	topRightWindow: string;
+	isARectangle: boolean;
+};
+
+type GroupUpdate = {
+	data: {
+		groupData: { [k: string]: GroupData }
+	}
 };
 
 var finsembleWindow;
@@ -106,6 +119,7 @@ class WindowClient extends BaseClient {
 	options: { customData?: any; defaultTop?: any; defaultLeft?: any; width?: any; };
 	windowHash: string;
 	title: any;
+	windowGroups: GroupData[];
 	toolbarBottom: number;
 	containers: any[];
 	componentState: { [x: string]: any; };
@@ -153,7 +167,7 @@ class WindowClient extends BaseClient {
 		this.bindFunctions();
 
 		/**
-		 * Minmizes window along with all windows docked to it.
+		 * Minimizes window along with all windows docked to it.
 		 * @param {function} cb Optional callback
 		 * @example
 		 * FSBL.Clients.WindowClient.minimizeWithDockedWindows();
@@ -170,6 +184,7 @@ class WindowClient extends BaseClient {
 		this.onWindowMaximized = this.onWindowMaximized.bind(this);
 		this.onWindowBlurred = this.onWindowBlurred.bind(this);
 		this.onWindowFocused = this.onWindowFocused.bind(this);
+		this.onParentSet = this.onParentSet.bind(this);
 		this.onMinimizedRestored = this.onMinimizedRestored.bind(this);
 		this.onWindowMinimized = this.onWindowMinimized.bind(this);
 		this.close = this.close.bind(this);
@@ -223,8 +238,48 @@ class WindowClient extends BaseClient {
 	 * @private
 	 */
 	onWindowMinimized() {
-		this.routerClient.query("DockingService.windowMinimized", finsembleWindow.name, Function.prototype);
+		this.routerClient.query("DockingService.windowMinimized", { windowName: finsembleWindow.name });
 		finsembleWindow.addEventListener("restored", this.onMinimizedRestored);
+	}
+
+	/**
+	 * Handles the event that fires when the finsemble window's parent is set.
+	 * @private
+	 * @param evt the event itself, which is ignored.  Any time a parent is set, force a group data update.
+	 */
+	private onParentSet(evt) {
+		this.requestGroupDataPublish();
+	}
+
+	/**
+	 * Returns a list of the groups this window is in, if any.
+	 */
+	getWindowGroups() {
+		return this.windowGroups;
+	}
+
+	/**
+	 * Handler for group updates from the window service.  Stores the groups that this window is in,
+	 * if any.
+	 * @private
+	 * @param err the error, if any
+	 * @param res the received updated group data
+	 */
+	private groupUpdateHandler(err, res: GroupUpdate) {
+		if (err) {
+			FSBL.Clients.Logger.error(err);
+			return;
+		}
+		this.windowGroups = Object.values(res.data.groupData).
+			filter(group => group.windowNames.includes(this.getWindowNameForDocking()));
+	};
+
+	/**
+	 * Requests an updated group data message.
+	 * @private
+	 */
+	private requestGroupDataPublish() {
+		this.routerClient.transmit("DockingService.requestGroupDataPublish");
 	}
 
 	/**
@@ -288,7 +343,6 @@ class WindowClient extends BaseClient {
 	listenForHashChanges() {
 		//get url on page load.
 		finsembleWindow.updateOptions({ url: window.top.location.href }, () => {
-			//StorageClient.save({ topic: WORKSPACE_CACHE_TOPIC, key: this.windowHash, value: finsembleWindow.windowOptions });
 		});
 
 		var self = this;
@@ -302,8 +356,6 @@ class WindowClient extends BaseClient {
 				}
 				pushState.apply(history, arguments);
 				finsembleWindow.updateOptions({ url: window.top.location.href }, () => {
-					//StorageClient.save({ topic: WORKSPACE_CACHE_TOPIC, key: self.windowHash, value: finsembleWindow.windowOptions });
-
 				});
 				return;
 			};
@@ -315,14 +367,14 @@ class WindowClient extends BaseClient {
 				}
 				replaceState.apply(history, arguments);
 				finsembleWindow.updateOptions({ url: window.top.location.toString() });
-				StorageClient.save({ topic: WORKSPACE_CACHE_TOPIC, key: self.windowHash, value: finsembleWindow.windowOptions });
+
+				StorageClient.save({ topic: WORKSPACE.CACHE_STORAGE_TOPIC, key: self.windowHash, value: finsembleWindow.windowOptions });
 				return;
 			};
 		})(window.history);
 
 		window.addEventListener("hashchange", () => {
 			finsembleWindow.updateOptions({ url: window.top.location.toString() }, () => {
-				//StorageClient.save({ topic: WORKSPACE_CACHE_TOPIC, key: this.windowHash, value: finsembleWindow.windowOptions });
 			});
 		});
 
@@ -336,7 +388,7 @@ class WindowClient extends BaseClient {
 	getInitialOptions(callback) {
 		if (!this.isInAService) {
 			finsembleWindow.getOptions((err, options) => {
-				//err happens if the window doesn't exist in the windowService (e.g., it's a service that's included the windowClient). This will be revisted in the future, but for now we need to make sure that the system doesn't have errors.
+				//err happens if the window doesn't exist in the windowService (e.g., it's a service that's included the windowClient). This will be revisited in the future, but for now we need to make sure that the system doesn't have errors.
 				if (err) options = {};
 				finsembleWindow.windowOptions = options;
 				this.options = options;
@@ -376,7 +428,7 @@ class WindowClient extends BaseClient {
 	 * @param {function} callback
 	 * @private
 	 */
-	setinitialWindowBounds(callback) {
+	setInitialWindowBounds(callback) {
 		Logger.system.warn("`FSBL.Clients.WindowClient.setInitialWindowBounds is deprecated and will be removed in a future version of finsemble. Use 'getInitialOptions' and 'cacheInitialBounds' instead.");
 		asyncParallel([
 			this.getInitialOptions,
@@ -409,10 +461,11 @@ class WindowClient extends BaseClient {
 	 *		return;
 	 *	}
 	 *	self.saveWindowBounds(bounds);
+	 * @private
 	 *});
 	 */
 	saveWindowBounds(bounds: WindowBounds, setActiveWorkspaceDirty: boolean) {
-		Logger.system.debug("WINDOW LIFECYCLE:SavingBounds:", bounds, "setActiveWOrkspaceDirty", setActiveWorkspaceDirty);
+		Logger.system.debug("WINDOW LIFECYCLE:SavingBounds:", bounds, "setActiveWorkspaceDirty", setActiveWorkspaceDirty);
 		if (typeof setActiveWorkspaceDirty === "undefined") {
 			setActiveWorkspaceDirty = false;
 		}
@@ -441,17 +494,11 @@ class WindowClient extends BaseClient {
 			//prop doesn't exist.
 			return;
 		}
-
-		//StorageClient.save({ topic: WORKSPACE_CACHE_TOPIC, key: self.windowHash, value: finsembleWindow.windowOptions });
-		if (setActiveWorkspaceDirty) {
-			Logger.system.log("APPLICATION LIFECYCLE: Setting Active Workspace Dirty: Window Moved");
-			this.dirtyTheWorkspace();
-		}
 	};
 
 	/**
-	 * Minmizes window.
-	 * @param {function} cb Optional callback
+	 * Minimizes window.
+	 * @param {function} [cb] Optional callback
 	 * @example
 	 * FSBL.Clients.WindowClient.minimize();
 	 */
@@ -486,7 +533,7 @@ class WindowClient extends BaseClient {
 
 
 	/**
-	 * Restores window from a maximized state.
+	 * Restores window from a maximized or minimized state.
 	 * @param {function} cb Optional callback
 	 * @example
 	 * FSBL.Clients.WindowClient.restore();
@@ -556,6 +603,7 @@ class WindowClient extends BaseClient {
 		finsembleWindow.removeEventListener("focused", this.onWindowFocused);
 		finsembleWindow.removeEventListener("close-requested", this.close);
 		finsembleWindow.removeEventListener("minimized", this.onWindowMinimized);
+		finsembleWindow.removeEventListener("parent-set", this.onParentSet);
 	};
 
 
@@ -623,18 +671,12 @@ class WindowClient extends BaseClient {
 	 * FSBL.Clients.WindowClient.getComponentState({
 	 *	 field: 'myChartLayout',
 	 * }, function (err, state) {
-	 * 	if (state === null) {
-	 * 		return;
-	 *	}
 	 * 	importLayout(state);
 	 * });
 	 *
 	 * FSBL.Clients.WindowClient.getComponentState({
 	 * 		fields: ['myChartLayout', 'chartType'],
 	 * }, function (err, state) {
-	 *	if (state === null) {
-	 *		return;
-	 *	}
 	 * 	var chartType = state['chartType'];
 	 * 	var myChartLayout = state['myChartLayout'];
 	 * });
@@ -657,9 +699,9 @@ class WindowClient extends BaseClient {
 
 		var hash = this.getContainerHash(params.windowName);
 
-		StorageClient.get({ topic: WORKSPACE_CACHE_TOPIC, key: hash }, (err, response) => {
+		StorageClient.get({ topic: WORKSPACE.CACHE_STORAGE_TOPIC, key: hash }, (err, response) => {
 			if (err) {
-				Logger.system.error("Error retreiving window client's component state.");
+				Logger.system.error("Error retrieving window client's component state.");
 				cb(err);
 				return;
 			}
@@ -682,49 +724,6 @@ class WindowClient extends BaseClient {
 				Logger.system.info("WindowClient:getComponentState:error, response, params", err, response, params);
 				cb("Not found", response);
 			}
-		});
-	};
-
-	/**
-	 * Checks to see if this save makes the workspace 'dirty'. We use this when deciding whether to prompt the user to save their workspace.
-	 * @param {object} params
-	 * @param {string} params.field field
-	 * @param {string} params.windowName windowName
-	 * @param {function} cb Callback
-	 * @private
-	 */
-	compareSavedState(params: {
-		field: string,
-		value: any,
-		windowName: string
-	}, cb: Function = Function.prototype) {
-		// if (!WorkspaceClient || WorkspaceClient.activeWorkspace.isDirty) { return; }
-		/* Once upon a time, a component could have multiple sub-containers. This hash has the window name repeating
-		twice because of that now defunct requirement. In the future we will eliminate the duplication but at the
-		cost of backward compatibility issues. Ideally, implement a phase out approach. Read from "single" and if not found
-		look for "double". Make all saves to "single". Over time, all databases will therefore be transformed.
-		*/
-		var hash = util.camelCase("activeWorkspace", finsembleWindow ? finsembleWindow.name : window.name, params.windowName);
-		console.info(WORKSPACE_CACHE_TOPIC, hash);
-		StorageClient.get({ topic: WORKSPACE_CACHE_TOPIC, key: hash }, (err, response) => {
-			console.info(hash, params, response);
-			Logger.system.debug("comparing saved state response:", response, "params:", params);
-
-			/**
-			 * We clone the value below because:
-			 *
-			 * let's say that the user passes this in:
-			 * {value: undefined,
-			 * anotherValue: true}.
-			 *
-			 * When that is persisted to localStorage, it'll come back as {anotherValue: true}. Those two values are different. So we stringify the value coming in to compare it to what was saved.
-			 */
-			let cleanValue = JSON.parse(JSON.stringify(params.value));
-			if (!response || !deepEqual(response[params.field], cleanValue)) {
-				Logger.system.debug("APPLICATION LIFECYCLE:  Setting Active Workspace Dirty: Saved state does not match current component state");
-				this.dirtyTheWorkspace();
-			}
-			cb();
 		});
 	};
 
@@ -782,15 +781,39 @@ class WindowClient extends BaseClient {
 			windowName: params.windowName
 		}
 
-		this.compareSavedState(_params, () => {
-			Logger.system.debug("COMPONENT LIFECYCLE:SAVING STATE:", this.componentState);
-			StorageClient.save({ topic: WORKSPACE_CACHE_TOPIC, key: hash, value: this.componentState }, function (err, response) {
-				if (cb) { cb(err, response); }
-			});
+		StorageClient.save({ topic: WORKSPACE.CACHE_STORAGE_TOPIC, key: hash, value: this.componentState }, function (err, response) {
+			if (cb) { cb(err, response); }
 		});
 
 	}
 
+	/**
+	 * Given a field, this function removes it from app state.
+	 * @param {object} params
+	 * @param {string} [params.field] field
+	 * @param {Array.<string>} [params.fields] fields
+	 * @param {string} [params.windowName] The name of the window to remove component state from
+	 * @param {function} [cb] Callback
+	 * @example <caption>The example below shows how we remove our chart layout when it no longer needed.</caption>
+	 * // remove unused state value
+	 * FSBL.Clients.WindowClient.removeComponentState({ field: 'myChartLayout'});
+	 * FSBL.Clients.WindowClient.removeComponentState({ fields: [{field:'myChartLayout'}, {field:'chartType'}]);
+	 **/
+	async removeComponentState(params: {
+		field?: string,
+		fields?: { field: string }[],
+		windowName?: string
+	}, cb: StandardCallback = (e, r) => { }) {
+		Validate.args(params, "object", cb, "function=") &&
+			(Validate as any).args2("params.field", params.field, "string");
+
+		const wrap = finsembleWindow || (await FinsembleWindow.getInstance({ name: params.windowName || window.name }));
+		return wrap.removeComponentState(params, cb);
+	}
+
+	/**
+	 * Gets the window name of current window or the parent, if tabbed.
+	 */
 	getWindowNameForDocking() {
 		let parent = finsembleWindow.parentWindow;
 		return parent ? parent.name : finsembleWindow.name;
@@ -813,17 +836,6 @@ class WindowClient extends BaseClient {
 	formGroup() {
 		let windowName = this.getWindowNameForDocking()
 		this.routerClient.transmit("DockingService.formGroup", { windowName });
-		this.dirtyTheWorkspace(windowName);
-	}
-
-	/**
-	 * Makes the workspace dirty.
-	 * @private
-	 */
-	dirtyTheWorkspace(windowName = finsembleWindow ? finsembleWindow.name : window.name) {
-		if (WorkspaceClient && !WorkspaceClient.activeWorkspace.isDirty) {
-			this.routerClient.transmit(WORKSPACE.API_CHANNELS.SET_ACTIVEWORKSPACE_DIRTY, { windowName }, null);
-		}
 	}
 
 	/**
@@ -841,7 +853,7 @@ class WindowClient extends BaseClient {
 		if (finsembleWindow.parentWindow) {
 			// TABBING TBD: need more orderly startup with state managed from just one place (StackWindowManagerService also controls register/deregister)
 			Logger.system.debug("registerWithDockingManager ignore registration request if has a parent");
-			if (cb) cb(); // return without error because stil want component to come up
+			if (cb) cb(); // return without error because still want component to come up
 		}
 		var windowName = finsembleWindow.name;
 		var uuid = finsembleWindow.uuid;
@@ -860,13 +872,6 @@ class WindowClient extends BaseClient {
 			Logger.system.debug("WINDOW LIFECYCLE: Docking Registration complete.");
 			if (cb) {
 				cb();
-			}
-		});
-
-		this.routerClient.addListener("DockingService." + windowName, (err, response) => {
-			if (response.data.command === "saveWindowLocation") {
-				//this.saveWindowBounds(response.data.bounds, true);
-				this.dirtyTheWorkspace();
 			}
 		});
 	}
@@ -899,7 +904,7 @@ class WindowClient extends BaseClient {
 	}
 
 	/**
-	 * Helper function to display devtools if you disable context-menus on your chromium windows. You must call this function if you want the hotkey to work.
+	 * Helper function to display dev-tools if you disable context-menus on your chromium windows. You must call this function if you want the hotkey to work.
 	 * @private
 	 */
 	enableReloadHotkey() {
@@ -918,7 +923,7 @@ class WindowClient extends BaseClient {
 	}
 
 	/**
-	 * Helper function to display devtools if you disable context-menus on your chromium windows. You must call this function if you want the hotkey to work.
+	 * Helper function to display dev-tools if you disable context-menus on your chromium windows. You must call this function if you want the hotkey to work.
 	 * @private
 	 */
 	enableDevToolsHotkey() {
@@ -930,7 +935,7 @@ class WindowClient extends BaseClient {
 					var windowName = finsembleWindow.name;
 					System.showDeveloperTools(uuid, windowName);
 				}, function (err) {
-					Logger.system.error("devtools", err);
+					Logger.system.error("dev-tools", err);
 				});
 			}
 		});
@@ -1045,69 +1050,6 @@ class WindowClient extends BaseClient {
 	}
 
 	/**
-	 * This function is invoked inside of {@link WindowClient#start|WindowClient.start()}. It adds listeners for 'close' (when the workspace is switched), 'bringToFront', 'restore', and 'move' (used in AutoArrange).
-	 *
-	 * **NOTE:** If you are using the finsemble windowTitleBar component, you do not need to call this function.
-	 * @example
-	 * FSBL.Clients.WorkspaceClient.addWorkspaceListeners();
-	 * @private
-	 */
-	addWorkspaceListeners() {
-
-		// pubsub ensures close command can't be loss in a race condition (e.g. if close is issued while the destinateion window was reloading)
-		this.routerClient.subscribe("WorkspaceService." + finsembleWindow.name, (err, response) => {
-			if (response.data.state === "start") {
-				// do nothing since normal startup
-			} else if (response.data.state === "close") {
-				// since going to close, reset this pubsub state back to default state (otherwise would keep closing);
-				// note may not see local log of this outgoing publish because window is closing (but publish will go out before close)
-				this.routerClient.publish("WorkspaceService." + finsembleWindow.name, { "state": "start" });
-
-				this.close({
-					removeFromWorkspace: false
-				});
-			} else {
-				Logger.system.warn("incoming notify has unknown state", finsembleWindow.name, response.data);
-			}
-		});
-
-		this.routerClient.addListener("WorkspaceService." + finsembleWindow.name, (err, response) => {
-			switch (response.data.command) {
-				case "bringToFront":
-					this.bringWindowToFront();
-					break;
-				case "restore":
-					this.restore();
-					break;
-				case "move":
-					finsembleWindow.animate({
-						transition: {
-							position: {
-								left: response.data.left,
-								top: response.data.top,
-								duration: 250
-							}
-						}, options:
-							{}
-					},
-						(err) => {
-							if (err) {
-								Logger.system.error("WindowClient:WorkspaceService: Animate failed: " + err);
-							} else {
-								this.routerClient.transmit("DockingService.updateWindowPositions", {});
-								Logger.system.debug("WindowClient:WorkspaceService successfully moved window.");
-								this.getBounds((err, bounds) => {
-									//this.saveWindowBounds(bounds, true);
-									this.dirtyTheWorkspace();
-								});
-							}
-						});
-					break;
-			}
-		});
-	};
-
-	/**
 	 * @private
 	 */
 	injectStylesheetOverride() {
@@ -1136,6 +1078,7 @@ class WindowClient extends BaseClient {
 	 * Prevents the browser's default behavior of loading files/images if they're dropped anywhere in the window.
 	 * If a component has a drop area that _doesn't_ preventDefault, the image/file will still be loaded.
 	 * This only prevents bad behavior from happening when the user drops an image/file on part of the window that _isn't_ listening for drag/drop events (usually by accident).
+	 * @private
 	 */
 	preventUnintendedDropEvents() {
 		function preventDefault(e) { e.preventDefault(); }
@@ -1211,17 +1154,11 @@ class WindowClient extends BaseClient {
 		this.listenForHashChanges();
 		this.preventUnintendedDropEvents();
 		this.rejectWindowsKeyResizes();
-		//FinsembleWindow listenrs
+		//FinsembleWindow listeners
 		//@todo, make the openfin window trigger an event on the finsemble window, which will emit up. we then use addListener instead of addEventListener
-		finsembleWindow.addListener("clearParent", () => {
-			Logger.system.info("WindowClient.clearParent show");
-			//sometimes a window ends up hidden if the stack it's exiting is under load, call show to prevent that
-			finsembleWindow.show();
-			//this.registerWithDockingManager(); // stack takes care of this
-		});
 		finsembleWindow.addListener("setParent", () => {
 			Logger.system.info("WindowClient.setParent deregisterWithDockingManager");
-			this.deregisterWithDockingManager(); // stack takes care of this too but doesnt work at startup or workspace switch so do again here
+			this.deregisterWithDockingManager(); // stack takes care of this too but doesn't work at startup or workspace switch so do again here
 		});
 		finsembleWindow.addEventListener("maximized", this.onWindowMaximized);
 		finsembleWindow.addEventListener("minimized", this.onWindowMinimized);
@@ -1230,6 +1167,8 @@ class WindowClient extends BaseClient {
 		finsembleWindow.addEventListener("blurred", this.onWindowBlurred);
 		// On focus add a border to the window
 		finsembleWindow.addEventListener("focused", this.onWindowFocused);
+		finsembleWindow.addEventListener("parent-set", this.onParentSet);
+
 		if (typeof FSBL !== "undefined") {
 			FSBL.onShutdown(() => {
 				Logger.system.info("WINDOW LIFECYCLE:SHUTDOWN: FSBL.onShutdown start");
@@ -1253,6 +1192,7 @@ class WindowClient extends BaseClient {
 	 * so that the UI reflects what is going on in the component window.
 	 * @param {string} command The state object to set
 	 * @param {object} state The new state (merged with existing)
+	 * @private
 	 */
 	updateHeaderState(command: string, state: any) {
 		if (!this.commandChannel) {
@@ -1279,7 +1219,6 @@ class WindowClient extends BaseClient {
 		RouterClient.query("DockingService.leaveGroup", {
 			name: windowName
 		}, () => { });
-		this.dirtyTheWorkspace(windowName);
 	}
 
 	/**
@@ -1297,7 +1236,7 @@ class WindowClient extends BaseClient {
 	setWindowTitle(title) {
 		Validate.args(title, "string");
 		this.title = title;
-		//document.title = title;  // casuses flickering in chromium 53
+		//document.title = title;  // causes flickering in chromium 53
 		this.updateHeaderState("Main", { windowTitle: title });
 		finsembleWindow.setTitle(title);
 	}
@@ -1402,6 +1341,7 @@ class WindowClient extends BaseClient {
 	 * Highlights the window as active by creating a border around the window.
 	 *
 	 * @param {boolean} active  Set to false to turn off activity
+	 * @private
 	 */
 	setActive(active: boolean) {
 		if (active) {
@@ -1422,7 +1362,7 @@ class WindowClient extends BaseClient {
 	};
 
 	/**
-	 *
+	 * This is used by the Finsemble Window Title Bar when a tab is dragged for tiling or tabbing.
 	 * @param {*} params - params.windowIdentifier is required.
 	 * @param {*} cb
 	 */
@@ -1434,7 +1374,7 @@ class WindowClient extends BaseClient {
 	};
 
 	/**
-	 *
+	 * This is used to cancel a tabbing or tiling operation.
 	 * @param {*} params - put windowIdentifier in params.windowIdentifier. If not provided, must set params.waitForIdentifier true
 	 * @param {*} cb
 	 */
@@ -1447,7 +1387,7 @@ class WindowClient extends BaseClient {
 	};
 
 	/**
-	 *
+	 * This is used to let Finsemble know which window is being dragged. params.windowIdentifier must be the identifier of the tab being dragged. This is only used if the identifier is unknown when startTilingOrTabbing is called.
 	 * @param {*} params - windowIdentifier is required
 	 * @param {*} cb
 	 */
@@ -1459,7 +1399,7 @@ class WindowClient extends BaseClient {
 	};
 
 	/**
-	 *
+	 * This function is used by the Finsemble Window Title Bar to end tiling or tabbing.
 	 * @param {*} params
 	 * @param {object} params.mousePosition Where the pointer is on the screen
 	 * @param {number} params.mousePosition.x X position of the pointer
@@ -1474,44 +1414,25 @@ class WindowClient extends BaseClient {
 		},
 		allowDropOnSelf?: boolean
 	}, cb: Function = Function.prototype) {
-		let windowPosition = {
-			left: finsembleWindow.windowOptions.left,
-			top: finsembleWindow.windowOptions.top,
-			height: finsembleWindow.windowOptions.height,
-			width: finsembleWindow.windowOptions.width,
-			right: finsembleWindow.windowOptions.right,
-			bottom: finsembleWindow.windowOptions.bottom,
-		};
-
-		let transmitAndQueryStop = () => { // We both transmit and query because no stack operation shound happen until this is done and there are a lot of listeners around. TODO: clean them up and move the transmit to docking.
+		// We both transmit and query because no stack operation should happen until this is done and there are a lot of listeners around.
+		const transmitAndQueryStop = () => {
 			RouterClient.query("DockingService.stopTilingOrTabbing", params, () => {
 				cb();
 			});
 			RouterClient.transmit("DockingService.stopTilingOrTabbing", params);
 		};
-
+		// Get the mouse position if not passed through for transmit to the router,
+		// If allowDropOnSelf is true, it came from a tab/window drop event. Run the callback.
 		if (!params.mousePosition) {
 			return System.getMousePosition((err, position) => {
 				params.mousePosition = position;
-				let pointIsInBox = this.isPointInBox(position, windowPosition);
-				if (!params.allowDropOnSelf && pointIsInBox) {
-					Logger.system.debug("StopTilingOrTabbing windowClient cancel 1:", params, windowPosition, err);
-					RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
-					return cb();
-				}
-				Logger.system.debug("StopTilingOrTabbing windowClient stop 1:", err, params, windowPosition, err);
 				transmitAndQueryStop();
+				if (!params.allowDropOnSelf) return cb();
 			});
+		} else {
+			transmitAndQueryStop();
+			if (!params.allowDropOnSelf) return cb();
 		}
-		let pointIsInBox = this.isPointInBox(params.mousePosition, windowPosition);
-		if (!params.allowDropOnSelf && pointIsInBox) {
-			Logger.system.debug("StopTilingOrTabbing windowClient cancel 2:", params, windowPosition);
-			RouterClient.transmit("DockingService.cancelTilingOrTabbing", params);
-			return cb();
-		}
-		Logger.system.debug("StopTilingOrTabbing windowClient stop 2:", params, windowPosition);
-		transmitAndQueryStop();
-
 	};
 
 
@@ -1556,7 +1477,7 @@ class WindowClient extends BaseClient {
 			});
 
 		} else {
-			cb(null, finsembleWindow.getParent());
+			finsembleWindow.getParent(cb);
 		}
 	}
 
@@ -1665,10 +1586,10 @@ class WindowClient extends BaseClient {
 	/**
 	 * Kicks off all of the necessary methods for the app. It
 	 * 1. Injects the header bar into the window.
-	 * 2. Sets up listeners to handle close and move requests from the appplication.
+	 * 2. Sets up listeners to handle close and move requests from the application.
 	 * 3. Adds a listener that saves the window's state every time it's moved or resized.
 	 * @param {function} callback
-	 * See the [windowTitleBar tutorial](tutorial-PresentationComponents.html#window-title-bar) for more information.
+	 * See the [windowTitleBar tutorial](tutorial-UIComponents.html#window-title-bar) for more information.
 	 * @private
 	 */
 	async start(callback = Function.prototype) {
@@ -1699,6 +1620,8 @@ class WindowClient extends BaseClient {
 				finsembleWindow = this.finsembleWindow;
 				this.windowHash = util.camelCase("activeWorkspace", finsembleWindow.name);
 				this.addListeners();
+				this.routerClient.subscribe("Finsemble.WorkspaceService.groupUpdate",
+					(err, res) => this.groupUpdateHandler(err, res));
 				done();
 			});
 		};
@@ -1732,12 +1655,6 @@ class WindowClient extends BaseClient {
 				}
 
 				asyncParallel([
-					function addWorkspaceAndBoundsListeners(done) {
-						if (!isCompoundWindow) {
-							self.addWorkspaceListeners();
-						}
-						done();
-					},
 					function injectCSS(done) {
 						if (shouldInjectCSS) {
 							self.injectStylesheetOverride();
@@ -1771,7 +1688,7 @@ class WindowClient extends BaseClient {
 						 * Checks the config for a deprecated value or new value under windowService, or dockingService if windowService doesn't exist.
 						 * @param {array || string} deprecatedValues The deprecated value, if its an array, its multiple values to check for
 						 * @param {string} newValue The new value to check for if the deprecated value doesn't exist
-						 * @param {boolean} defaultVal The default value if the prop is unfound under both windowService and dockingService
+						 * @param {boolean} defaultVal The default value if the prop is not found under both windowService and dockingService
 						 */
 						const checkDeprecatedAndCompare = (params) => {
 							//Ex. params.baseString = "customData.foreign.services";
@@ -1829,7 +1746,7 @@ class WindowClient extends BaseClient {
 							//If 'manageWindowMovement' wasn't found, we still want to register with docking (and manage window movement) if the component isDockable or has an FSBLHeader
 							manageMovement = manageMovement || FSBLHeader || isDockable;
 
-							//Checks the config for deprecated props 'isArrangable' and 'isArrangeable'. If niether of these is found, will search 'allowAutoArrange'
+							//Checks the config for deprecated props 'isArrangable' and 'isArrangeable'. If neither of these is found, will search 'allowAutoArrange'
 							let autoArrange = checkDeprecatedAndCompare({
 								baseString: "customData.foreign.services",
 								newPath: "windowService",
@@ -1854,7 +1771,7 @@ class WindowClient extends BaseClient {
 								default: manageMovement
 							});
 
-							//Since 'allowSnapping' is esentially 'if true enable' and 'ignoreSnappingRequests' is essentially 'if true disable' we need to toggle this value depending on what prop was found. The core code still uses 'ignoreSnappingRequests'.
+							//Since 'allowSnapping' is essentially 'if true enable' and 'ignoreSnappingRequests' is essentially 'if true disable' we need to toggle this value depending on what prop was found. The core code still uses 'ignoreSnappingRequests'.
 							if (customData && customData.foreign && customData.foreign.services) {
 								let service = customData.foreign.services.windowService !== undefined ? "windowService" : "dockingService";
 
@@ -1889,7 +1806,7 @@ class WindowClient extends BaseClient {
 								default: manageMovement
 							});
 
-							//Since 'allowTiling'/'allowTabbing' is esentially 'if true enable' and 'ignoreTilingAndTabbingRequests' is essentially 'if true disable' we need to toggle this value depending on what prop was found.
+							//Since 'allowTiling'/'allowTabbing' is essentially 'if true enable' and 'ignoreTilingAndTabbingRequests' is essentially 'if true disable' we need to toggle this value depending on what prop was found.
 							if (customData && customData.foreign && customData.foreign.services) {
 								let service = customData.foreign.services.windowService !== undefined ? "windowService" : "dockingService";
 
@@ -1937,7 +1854,7 @@ class WindowClient extends BaseClient {
 								}
 							}
 
-							//Determines whether a dockable component should retrieve its state from memory, or start with default (config defined) options everytime
+							//Determines whether a dockable component should retrieve its state from memory, or start with default (config defined) options every time
 							customData.window.overwriteStartDocked = configUtil.getDefault(customData, "customData.foreign.services.workspaceService.global", false);
 
 							self.registerWithDockingManager(customData.window, () => {

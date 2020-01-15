@@ -5,7 +5,7 @@
  * Daniel H. 1/2/19
  * I've done the bare minimum to get this to compile, but much
  * is missing from this.
- * @TODO Move to a seperate file and complete. */
+ * @TODO Move to a separate file and complete. */
 export type WindowDescriptor = {
 	name?: string,
 	uuid?: string,
@@ -20,6 +20,8 @@ export type WindowDescriptor = {
 		monitorDimensions?: {};
 		window?: {
 			allowToSpawnOffScreen: boolean;
+			windowType?: string;
+			native?: boolean;
 		};
 		// Daniel H. 1/16/19 - This appears to be a duplicate of the top level manifest.
 		// @TODO - Pick one and remove the other.
@@ -40,7 +42,7 @@ export type WindowDescriptor = {
 	affinity?: string;
 	alwaysOnTop?: boolean;
 	showTaskbarIcon?: boolean;
-	// Daniel H. - 1/16/19 - This apears to be duplicate data with defaultLeft, etc.
+	// Daniel H. - 1/16/19 - This appears to be duplicate data with defaultLeft, etc.
 	// Same story for .bounds.left, etc.
 	// @TODO - Refactor to single source of truth. See other comments from same date in file.
 	left?: number;
@@ -66,5 +68,6 @@ export type WindowDescriptor = {
 	// Array of window names saying who can call execJS on the window. Will eventually be window service, the splinter agent that creates the window, and the window that requested that the window be spawned.
 	execJSWhitelist?: Array<string>,
 	preload?: Array<any>,
-	preloadScripts?: Array<any>
+	preloadScripts?: Array<any>,
+	windowType?: string
 }

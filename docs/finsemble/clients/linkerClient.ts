@@ -55,7 +55,7 @@ declare type linkerGroup = {
  * The Linker API provides a mechanism for synchronizing components on a piece of data. For instance, a user might want to link multiple components by stock symbol.
  * Using the Linker API, a developer could enable their component to participate in this synchronization.
  * The developer would use {@link LinkerClient#subscribe} to receive synchronization events, and they would use {@link LinkerClient#publish} to send them.
- * The Linker API is inherently similar to the [Router Client's](RouterClientConstructor.html) pub/sub mechanism. The primary difference is that the Linker API is designed for end-user interaction.
+ * The Linker API is inherently similar to the [Router Client's](IRouterClient.html) pub/sub mechanism. The primary difference is that the Linker API is designed for end-user interaction.
  * By exposing the Linker API, developers allow **end users** to create and destroy linkages at run-time.
  * </p>
  *
@@ -70,8 +70,8 @@ declare type linkerGroup = {
  * <p>
  * End users create linkages by assigning components to "channels." Our default implementation represents channels by color.
  * When a component is assigned to the purple channel, publish and subscribe messages are only received by other components assigned to that channel.
- * If you're using Finsemble's built-in Linker component, you won't have to code this. The Linker component does the work of assigning and unassigning its associated component to the selected channel.
- * However, the Linker API exposes functionality so that you can manage channels programatically if you choose.
+ * If you're using Finsemble's built-in Linker component, you won't have to code this. The Linker component does the work of assigning and un-assigning its associated component to the selected channel.
+ * However, the Linker API exposes functionality so that you can manage channels programmatically if you choose.
  * You could use these functions to build your own Linker component using a different paradigm, or intelligently link components based on your own business logic.
  * **Note:** it is not necessary to stick to a color convention. Channels are simple strings and so can be anything.
  * </p>
@@ -135,7 +135,7 @@ class LinkerClient extends _BaseClient {
 	/**
 	 * Create a new Linker channel. This channel will be available *globally*.
 	 * @param {object} params
-	 * @param cb - Optional. Callback to retrieve returned results asynchyronously
+	 * @param cb - Optional. Callback to retrieve returned results asynchronously
 	 * @return {Array.<string>} Returns an array of all available channels
 	 * @private
 	 * @since TBD deprecated createGroup
@@ -157,7 +157,7 @@ class LinkerClient extends _BaseClient {
 		}
 
 		this.allChannels.push(params);
-		this.allGroups = this.allChannels; // backward compatiblity
+		this.allGroups = this.allChannels; // backward compatibility
 		this.linkerStore.setValue({ field: "params", value: this.allChannels });
 
 		return asyncIt(this.allChannels, cb);
@@ -167,7 +167,7 @@ class LinkerClient extends _BaseClient {
 	 * Remove a Linker channel. It will be removed globally. Any component that is currently assigned to this channel will be unassigned.
 	 *
 	 * @param {string} name - The name of the channel to remove
-	 * @param cb - Optional. Callback to retrieve returned results asynchyronously
+	 * @param cb - Optional. Callback to retrieve returned results asynchronously
 	 * @returns {Array.<string>} Returns an array of available channels
 	 * @since TBD deprecated deleteGroup
 	 * @private
@@ -219,11 +219,11 @@ class LinkerClient extends _BaseClient {
 		this.linkerStore.setValue({ field: "clients." + key, value: this.clients[key] });
 	};
 	/**
-	 * Add a component to a Linker channel programatically. Components will begin receiving any new contexts published to this channel but will *not* receive the currently established context.
+	 * Add a component to a Linker channel programmatically. Components will begin receiving any new contexts published to this channel but will *not* receive the currently established context.
 	 *
 	 * @param {string} channel - The name of the channel to link our component to, or an array of names.
 	 * @param windowIdentifier -  Optional. Window Identifier for the component. If null, it defaults to the current window.
-	 * @param cb - Optional. Callback to retrieve returned results asynchyronously.
+	 * @param cb - Optional. Callback to retrieve returned results asynchronously.
 	 * @return {LinkerState} The new state: linked channels, all channels
 	 * @since 2.3 deprecated addToGroup
 	 * @example
@@ -264,7 +264,7 @@ class LinkerClient extends _BaseClient {
 	 *
 	 * @param {string} channel - Channel to remove, or an array of channels. If null, then all channels will be removed.
 	 * @param windowIdentifier -  Window Identifier for the client (optional). Current window if left null.
-	 * @param cb - Optional. Callback to retrieve returned results asynchyronously
+	 * @param cb - Optional. Callback to retrieve returned results asynchronously
 	 * @return {LinkerState} Returns the new state: linked channels, all channels
 	 * @since 2.3 deprecated removeFromGroup
 	 * @example
@@ -308,7 +308,7 @@ class LinkerClient extends _BaseClient {
 
 	/**
 	 * Returns all available Linker channels
-	 * @param cb - Optional. Callback to retrieve returned results asynchyronously
+	 * @param cb - Optional. Callback to retrieve returned results asynchronously
 	 * @return {array} An array of all channels. Each array item is {name:channelName} plus any other optional fields such as color.
 	 * @since 2.3 deprecated getAllGroups
 	 * @example
@@ -322,7 +322,7 @@ class LinkerClient extends _BaseClient {
 	/**
 	 * Retrieve all channels linked to the requested component. Also returns all available channels.
 	 * @param windowIdentifier Which component, or null for the current window.
-	 * @param cb - Optional. Callback to retrieve returned results asynchyronously
+	 * @param cb - Optional. Callback to retrieve returned results asynchronously
 	 * @return {LinkerState} The current state: linked channels, all channels
 	 * @since 2.3 deprecated getGroups, no longer supports a callback
 	 * @example
@@ -362,7 +362,7 @@ class LinkerClient extends _BaseClient {
 	/**
 	* Remove all listeners for the specified dataType.
 	* @param {String}  dataType - The data type be subscribed to
-	* @param {function} cb - Optional. Callback to retrieve returned results asynchyronously (empty object)
+	* @param {function} cb - Optional. Callback to retrieve returned results asynchronously (empty object)
 	*
 	* @example
 	* LinkerClient.unsubscribe("symbol");
@@ -380,7 +380,7 @@ class LinkerClient extends _BaseClient {
 	* @param {String}  params.dataType - The data type being sent.
 	* @param {any}  params.data - The data ("context") being transmitted.
     * @params.channels - Optional. Specifies which channels publish this piece of data. This overrides the default which is to publish to all linked channels.
-	* @param cb - Optional. Callback to retrieve returned results asynchyronously
+	* @param cb - Optional. Callback to retrieve returned results asynchronously
 	* @example
 	* LinkerClient.publish({dataType:"symbol",data:"AAPL"})
 	*/
@@ -417,7 +417,7 @@ class LinkerClient extends _BaseClient {
 		if (this.dataListenerList[dataType]) {
 			return this.dataListenerList[dataType].push(cb);
 		}
-		this.dataListenerList[dataType] = cb;
+		this.dataListenerList[dataType] = [cb];
 	};
 
 	/**
@@ -427,7 +427,7 @@ class LinkerClient extends _BaseClient {
 	 * @param {Array.<string>} params.channels Restrict to these channels.
 	 * @param {Array.<string>} params.componentTypes Restrict to these componentTypes.
 	 * @param {windowIdentifier} params.windowIdentifier Restrict to this component.
-	 * @param cb - Optional. Callback to retrieve returned results asynchyronously.
+	 * @param cb - Optional. Callback to retrieve returned results asynchronously.
 	 * @returns {array} An array of linked components, their windows, and their linked channels.
 	 *
 	 * @since 1.5
@@ -466,7 +466,7 @@ class LinkerClient extends _BaseClient {
 			var myChannels = Object.keys(this.clients[key].channels);
 
 			if (!params.channels) {
-				// If no channels are specified, use the window identifier's channels
+				// If no channels are specified, use the window identifier channels
 				params.channels = myChannels;
 			} else {
 				// Otherwise use an intersection of params.channels and the component's channels
@@ -500,9 +500,12 @@ class LinkerClient extends _BaseClient {
 		return asyncIt(linkedWindows, cb);
 	};
 
-	//Need to do this better. Get newest items so we don't create it every time
-	//This looks to see if there is a listener for a specific data type
+	/**
+	 * Handles listeners (looks to see if there is a listener for a specific data type)
+	 * @private
+	 */
 	handleListeners = (err, data) => {
+		//Need to do this better. Get newest items so we don't create it every time
 		var listeners = this.dataListenerList[data.data.type];
 		if (listeners && listeners.length > 0) {
 			for (var i = 0; i < listeners.length; i++) {
@@ -511,7 +514,10 @@ class LinkerClient extends _BaseClient {
 		}
 	}
 
-	//add new listeners for channels when channels are updated
+	/**
+	 * Adds new listeners for channels when channels are updated
+	 * @private
+	 */
 	updateListeners() {
 		// Remove listeners
 		for (let i = this.channelListenerList.length - 1; i >= 0; i--) {
@@ -583,7 +589,7 @@ class LinkerClient extends _BaseClient {
 			linkerStore.getValues(["channels"], (err, values) => {
 				if (values && values["channels"]) {
 					this.allChannels = values["channels"];
-					this.allGroups = this.allChannels; // backward compatiblity
+					this.allGroups = this.allChannels; // backward compatibility
 				}
 				// Now get the linker state (which channels are enabled) for this instance. The windowClient will have retrieved this from Storage.
 				// Use this to initialize our channel state.
@@ -630,8 +636,8 @@ class LinkerClient extends _BaseClient {
 			linkerStore.addListener({}, (err, response) => {
 				var values = response.value.values;
 				this.allChannels = values.channels;
-				if (values.groups) this.allChannels = values.groups; // backward compatiblity
-				this.allGroups = this.allChannels; // backward compatiblity
+				if (values.groups) this.allChannels = values.groups; // backward compatibility
+				this.allGroups = this.allChannels; // backward compatibility
 				this.clients = values.clients;
 			});
 		});
@@ -650,7 +656,7 @@ class LinkerClient extends _BaseClient {
 	};
 
 	/**
-	 * Minize all windows except those on specified channel
+	 * Minimize all windows except those on specified channel
 	 * @param {string} channel
 	 * @private
 	 */
@@ -679,37 +685,85 @@ class LinkerClient extends _BaseClient {
 	groups = this.channels;
 	allGroups = this.allChannels;
 
+	/**
+	 * Creates a linker channel
+	 * @param {linkerGroup} group The linker channel to create
+	 * @param {Function} cb The callback
+	 * @private
+	 */
 	createGroup(group: linkerGroup, cb) {
 		return this.createChannel(group, cb);
 	};
 
+	/**
+	 * Removes a linker channel from the list of available channels
+	 * @param {string} groupName The name of the channel to delete
+	 * @param {Function} cb The callback
+	 * @private
+	 */
 	deleteGroup(groupName: string, cb) {
 		return this.removeChannel(groupName, cb);
 	};
 
+	/**
+	 * Adds a given window to given channel
+	 * @param {string} groupName The channel name
+	 * @param {WindowIdentifier} client The window to add to the given channel
+	 * @param {Function} cb The callback (optional)
+	 * @private
+	 */
 	addToGroup(groupName: string, client: WindowIdentifier, cb?: StandardCallback) {
 		var state = this.linkToChannel(groupName, client);
 		if (cb) cb(null, state);
 		return state;
 	};
 
+	/**
+	 * Remove a given window from a linker channel
+	 * @param {string} groupName The name of the linker channel to disconnect from
+	 * @param {WindowIdentifier} client The window to remove from the given channel
+	 * @param {Function} cb The callback (optional)
+	 * @returns The response from removing the window from the given channel
+	 * @private
+	 */
 	removeFromGroup(groupName: string, client: WindowIdentifier, cb?: StandardCallback) {
 		var state = this.unlinkFromChannel(groupName, client);
 		if (cb) cb(null, state);
 		return state;
 	};
 
+	/**
+	 * Gets a list of all linker channels
+	 * @param {Function} cb The callback
+	 * @returns An array of linker channel names
+	 * @private
+	 */
 	getAllGroups(cb: Function) {
 		var channels = this.getAllChannels();
 		if (cb) cb(channels);
 		return channels;
 	};
+
+	/**
+	 * Asynchronously returns the list of all linked channels of a given window
+	 * @param {WindowIdentifier} [client] The window to find linked groups of
+	 * @param {Function} cb The callback (optional)
+	 * @returns Asynchronously returns list of channels
+	 * @private
+	 */
 	getGroups(client?: WindowIdentifier, cb?: Function) {
 		var state = this.getState(client);
 		state.groups = state.channels;
 		return asyncIt(state, cb);
 	};
 
+	/**
+	* Remove all listeners for the specified dataType.
+	* @param {String}  dataType - The data type be subscribed to
+	* @example
+	* LinkerClient.unsubscribe("symbol");
+	* @deprecated since version 4.0
+	*/
 	unSubscribe(dataType: string) {
 		this.unsubscribe(dataType);
 	};
@@ -720,7 +774,7 @@ class LinkerClient extends _BaseClient {
 	 * @param {Array.<string>} params.channels Restrict to these channels.
 	 * @param {Array.<string>} params.componentTypes Restrict to these componentTypes
 	 * @param {windowIdentifier} params.windowIdentifier Restrict to this component
-	 * @param cb - Optional. Callback to retrieve returned results asynchyronously
+	 * @param cb - Optional. Callback to retrieve returned results asynchronously
 	 * @returns {array} An array of linked components, their windows, and their linked channels
 	 *
 	 * @example <caption>Get all components linked to a given component</caption>
@@ -745,6 +799,13 @@ class LinkerClient extends _BaseClient {
 		params.windowIdentifier = params.client;
 		return this.getLinkedComponents(params, cb);
 	};
+
+	/**
+	 * Asynchronously retrieves a window's windowIdentifier
+	 * @param {any} [params] Parameters
+	 * @param {Function} cb The callback
+	 * @private
+	 */
 	windowIdentifier(params, cb) {
 		return asyncIt(this.windowClient.getWindowIdentifier(), cb);
 	};
@@ -761,6 +822,11 @@ class LinkerClient extends _BaseClient {
 	};
 	linkerWindow = null;
 	loading = false;
+
+	/**
+	 * Opens the linker window
+	 * @param {Function} cb The callback
+	 */
 	openLinkerWindow(cb) {
 		Validate.args(cb, "function");
 		if (this.loading) { return; } // If in process of loading then return. This prevents double clicks on the icon.

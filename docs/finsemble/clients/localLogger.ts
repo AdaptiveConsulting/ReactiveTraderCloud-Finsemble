@@ -54,12 +54,12 @@ function traceString() {
 
 /** An implementation of the ICentralLogger interface that
  * merely logs straight to the console rather than going over to
- * Central Logging serice. Used in situations where use of the 
+ * Central Logging service. Used in situations where use of the
  * Central Logging service is not possible (such as in test
  * environments, or in the Central Logging service itself).
  */
 export class LocalLogger implements ICentralLogger {
-	// Loggery things.
+	// Log things.
 	// @TODO - Make consumers agnostic of these and remove from interface.
 	start = () => { }
 	isLogMessage = IsLogMessage;

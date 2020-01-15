@@ -49,6 +49,7 @@ if ((fin.container === "browser" || window.top === window) && !Globals.FSBLAlrea
 		var status = "offline";
 		var windowName = "";
 		var startTimeoutValue;
+		this.clickedMailTo = false;
 		var startTimer;
 		this.FinsembleWindow = FinsembleWindow;
 		this.System = System;
@@ -141,7 +142,8 @@ if ((fin.container === "browser" || window.top === window) && !Globals.FSBLAlrea
 			}, this.setFSBLOnline);
 		};
 
-		this.isinitialized = false;
+		this.isInitialized = false;
+		this.isinitialized = this.isInitialized;
 		this.initialize = function (cb) {
 			console.log("FSBL.initialize called");
 			this.Clients.Logger.log(`WINDOW LIFECYCLE:STARTUP: FSBL.initialized invoked in ${finsembleWindow.name}`);
@@ -150,14 +152,14 @@ if ((fin.container === "browser" || window.top === window) && !Globals.FSBLAlrea
 				deferredCallback = cb || Function.prototype;
 				return;
 			}
-			if (this.isinitialized) {
+			if (this.isInitialized) {
 				if (cb) {
 					this.addEventListener("onReady", cb);
 				}
 				return;
 			}
 
-			this.isinitialized = true;
+			this.isInitialized = true;
 			if (cb) {
 				this.addEventListener("onReady", cb);
 			}
@@ -220,7 +222,7 @@ if ((fin.container === "browser" || window.top === window) && !Globals.FSBLAlrea
 		this.addEventListener = function (listenerType, callback) {
 			Validate.args(listenerType, "string", callback, "function");
 			// If we're already online then immediately call the callback. Don't add a listener
-			// since we only ever want to call onReady once. Note, asychronizing the callback since
+			// since we only ever want to call onReady once. Note, async'ing the callback since
 			// that's the expected interface
 			if (listenerType === "onReady" && status === "online") {
 				setTimeout(callback, 0);
@@ -378,6 +380,29 @@ if ((fin.container === "browser" || window.top === window) && !Globals.FSBLAlrea
 			});
 		});
 
+		// Attaches a click handler to the DOM when a window is loaded.
+		// When something on the DOM is clicked, it checks to see if its a mailto link.
+		// If it is a mailto link, it sets the appropriate FSBL variable (clickedMailTo).
+		// This allows the beforeunload event to ignore the window close
+		const setupClickHandler = () => {
+			let body = document.querySelector("body");
+			body.addEventListener('click', function (e) {
+				// If the target of the click is an anchor tag and if the hyperlink reference
+				// includes "mailto" then set clickedMailTo to true
+				if ((e.target as HTMLAnchorElement).tagName.toLowerCase() === 'a' && (e.target as HTMLAnchorElement).href.includes('mailto')) {
+					FSBL.clickedMailTo = true;
+				}
+			});
+		}
+
+		//When DOMContentLoaded fires (or after the window loads and the event has already fired) add a click handler to check whats clicked.
+		if (document.readyState === "loading") {  // Loading hasn't finished yet
+			document.addEventListener("DOMContentLoaded", setupClickHandler);
+		} else {  // `DOMContentLoaded` has already fired
+			setupClickHandler();
+		}
+
+
 		// Capture error and log it; define here (as early as possible) to catch early errors
 		window.addEventListener("error", function (errorObject) {
 			var stack = errorObject.error ? errorObject.error.stack.substring(errorObject.error.stack.search("at ")) : ""; // strip off irrelevant part of stack
@@ -395,11 +420,29 @@ if ((fin.container === "browser" || window.top === window) && !Globals.FSBLAlrea
 				// This casting is needed, otherwise compiler loses track of what kind of event it is (probably a TSC version thing).
 				(event as PromiseRejectionEvent).reason);
 		});
+
 		window.addEventListener("unload", function (event) {
 			started = false;
 			FSBL.windowClose();
 		});
-		window.addEventListener("beforeunload", FSBL.windowClose);
+
+		// Adding events to check if a mailto link was clicked on unload.
+		// Essentially, if a mailto link is clicked the browser tells the OS to open the
+		// default mail client, for some reason this also tells the window
+		// to unload the document and its resources.
+		// By setting a boolean and checking said boolean in the beforeunload/unload event
+		// we can allow the action to proceed and _not_ close the window. If this event is
+		// fired any other time and a mailto link _wasn't_ clicked, it will continue to close
+		// NOTE: https://stackoverflow.com/questions/9740510/mailto-link-in-chrome-is-triggering-window-onbeforeunload-can-i-prevent-this
+		window.addEventListener("beforeunload", function (e) {
+			//Don't close the window if this was a click on a mailto link. otherwise reset the flag
+			if (!FSBL.clickedMailTo) {
+				FSBL.windowClose();
+			} else {
+				FSBL.clickedMailTo = false;
+				e.preventDefault();
+			}
+		});
 
 
 	});

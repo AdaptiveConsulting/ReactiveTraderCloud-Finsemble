@@ -10,7 +10,6 @@ import {
 } from "./Interface.StackedWindowManager";
 
 import RouterClient from "../../../clients/routerClientInstance";
-import WorkspaceClient from "../../../clients/workspaceClient";
 import Logger from "../../../clients/logger";
 import { FinsembleWindow } from "../../../common/window/FinsembleWindow";
 import { BaseWindow } from "../../window/WindowAbstractions/BaseWindow";
@@ -31,7 +30,7 @@ import { GroupPoolSingleton } from "../Common/Pools/PoolSingletons";
 
 declare var window: any;
 
-/** @TODO - This should be unnecessary. DistributedStoreClient.inialize should be idempotent,
+/** @TODO - This should be unnecessary. DistributedStoreClient.initialize should be idempotent,
  * and then we can remove this odd shielding of it behind this "if" statement. */
 if (!window.DistributedStoreClient) {
 	window.DistributedStoreClient = DistributedStoreClient
@@ -39,7 +38,7 @@ if (!window.DistributedStoreClient) {
 }
 
 /**
- * Constructure for stackedWindow record -- this is what's saved in the store
+ * Constructor for stackedWindow record -- this is what's saved in the store
  *
  * @param {any} stackedWindowIdentifier
  * @memberof StackedWindowManager
@@ -81,12 +80,12 @@ class StackedWindowManager implements StackedWindowManagement {
 		this.childNameToSID = {}; // mapping from child window name to it parent stackedWindowIdentifier
 
 		/**
-		 * The following events (and these only) should be propogated from the children to the stack.
+		 * The following events (and these only) should be propagated from the children to the stack.
 		 */
 		this.childEventsToHandle = [
 			"minimized", "restored", "shown", "hidden", "focused",
 			"broughtToFront", "setBounds", "alwaysOnTop", "setOpacity",
-			"title-changed", "bounds-change-request", "bounds-change-end", "bounds-changed",
+			"bounds-change-request", "bounds-change-end", "bounds-changed",
 			"system-maximized", "system-bounds-changed", "system-restored"
 		];
 
@@ -97,7 +96,7 @@ class StackedWindowManager implements StackedWindowManagement {
 
 	initialize(finsembleConfig, callback = Function.prototype) {
 
-		// addReadyTimeout default should be larger than the router failover time (i.e. when failover goes to cross-domain) -- default failover time adds up to 6 seconds
+		// addReadyTimeout default should be larger than the router failover time (i.e. when failover goes to cross-domain) -- default fail over time adds up to 6 seconds
 		this.addReadyTimeout = ConfigUtil.getDefault(finsembleConfig, "finsembleConfig.stackedWindow.addReadyTimeout", 6500);
 		Logger.system.debug(`"StackedWindowManager addReadyTimeout ${this.addReadyTimeout}`);
 
@@ -157,7 +156,7 @@ class StackedWindowManager implements StackedWindowManagement {
 
 			if (thisStackRecord) {
 				Logger.system.debug("StackedWindowManager saveStore", windowName, thisStackRecord);
-				thisStackRecord.customData.spawnData.windowIdentifiers = thisStackRecord.childWindowIdentifiers; // TODO: this is hacky. Lots of duplicate info in the descriptor
+				thisStackRecord.customData.spawnData.windowIdentifiers = thisStackRecord.childWindowIdentifiers; // TODO: this is a hack. Lots of duplicate info in the descriptor
 				this.globalStore.setValue({ field: windowName, value: { identifier: stackedWindowIdentifier, descriptor: thisStackRecord } }, () => {
 					if (!this.stackedWindowWrappers[windowName]) {
 						FinsembleWindowInternal.getInstance({ stackedWindowManager: this, name: windowName }, (err, wrappedWindow) => {
@@ -328,24 +327,16 @@ class StackedWindowManager implements StackedWindowManagement {
 		});
 	}
 
-	visibleChildEventHandler(stackedWindowName, stackWrap, eventObject) {
+	async visibleChildEventHandler(stackedWindowName, stackWrap, eventObject) {
 		let event = eventObject.data;
-		if (event.eventName === "title-changed") {
-			let stackedWindowIdentifier = this.childNameToSID[event.name];
-			if (stackedWindowIdentifier) { // might not be set when stacked window is closing -- fix in cleanup but put out warn for now
-				let thisStackRecord = this.storeCache[stackedWindowIdentifier.windowName];
-				for (let i = 0; i < thisStackRecord.childWindowIdentifiers.length; i++) {
-					let childIdentifier = thisStackRecord.childWindowIdentifiers[i];
-					if (childIdentifier.windowName == event.name) {
-						childIdentifier.title = event.title;
-						this.saveStore(stackedWindowIdentifier, { noNotification: true });
-						break;
-					}
-				}
-			} else {
-				Logger.system.warn("stacked window didn't exist for title-change -- ignoring error for now");
-			}
+		if (event.eventName === "bounds-change-end") {
+			await this.saveStore({
+				windowName: stackedWindowName,
+				name: stackedWindowName,
+				windowType: "StackedWindow"
+			}, { closing: false });
 		}
+
 		Logger.system.verbose("StackedWindowManager transmitting event", event.eventName, this.eventChannelName(stackedWindowName, event.eventName), event);
 
 		stackWrap.eventManager.trigger(event.eventName, event);
@@ -396,7 +387,7 @@ class StackedWindowManager implements StackedWindowManagement {
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// The next section of functions are orinted to managing Stacked Windows throught out the system.
+	// The next section of functions are oriented to managing Stacked Windows throughout the system.
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// returns true if all the groupWindows are in the array of child windows
@@ -417,7 +408,7 @@ class StackedWindowManager implements StackedWindowManagement {
 		return (groupWindowCount === matchCount); // return true if all group windows found in child windows
 	}
 
-	// when a new child window is added to the stack, this function determines if the stacked window should join any of the childs groups
+	// when a new child window is added to the stack, this function determines if the stacked window should join any of the children groups
 	joinGroups(groups, stackedWindowIdentifier) {
 		var thisStackRecord = this.storeCache[stackedWindowIdentifier.windowName];
 		if (!thisStackRecord) {
@@ -451,7 +442,7 @@ class StackedWindowManager implements StackedWindowManagement {
 	 *
 	 * @param {object} params Parameters
 	 * @param {array=} params.windowIdentifiers array of windowIdentifiers to add to stack on creation.
-	 * @param {boolean=} params.new if true then stacked window being defined for first time with no presistent state
+	 * @param {boolean=} params.new if true then stacked window being defined for first time with no persistent state
 	 * @param {function=} callback function(err, stackedWindowIdentifier)
 	 * @memberof StackedWindowManager
 	 * @private
@@ -463,7 +454,7 @@ class StackedWindowManager implements StackedWindowManagement {
 		var thisStackRecord;
 
 		// TABBING TBD: need to finish before callback -- async
-		//if (true || params.new) { // being created for the first time (not from workspace with presistent state)
+		//if (true || params.new) { // being created for the first time (not from workspace with persistent state)
 		thisStackRecord = new WindowRecord(stackedWindowIdentifier); // blank initial record
 		Object.assign(thisStackRecord, params); // merge windowDescriptor into stackRecord
 		thisStackRecord.registeredWithDockingManager = false;
@@ -498,11 +489,11 @@ class StackedWindowManager implements StackedWindowManagement {
 					}
 					Logger.system.debug("StackedWindowManager.createStackedWindow all available windows added");
 
-					// if there is a visible window but the cooresponding child window never became ready (for any reason) then set a new visible window
+					// if there is a visible window but the corresponding child window never became ready (for any reason) then set a new visible window
 					if (thisStackRecord.visibleWindowIdentifier && !this.ifWindowInStack({ thisStackRecord, windowName: thisStackRecord.visibleWindowIdentifier.windowName })) {
 						// if children then set the first child as the visible window
 						if (thisStackRecord.childWindowIdentifiers.length) {
-							Logger.system.error("StackedWindowManager.createStackedWindow resetting visible window to first child since previous visible window could't be added");
+							Logger.system.error("StackedWindowManager.createStackedWindow resetting visible window to first child since previous visible window couldn't be added");
 							this.setVisibleWindow({ stackedWindowIdentifier, windowIdentifier: thisStackRecord.childWindowIdentifiers[0] }); // make the first window visible by default
 						}
 					}
@@ -512,14 +503,13 @@ class StackedWindowManager implements StackedWindowManagement {
 						Logger.system.error("StackedWindowManager.createStackedWindow: no children became ready");
 					}
 
-					// note the LauncherService will add to the workspace after spawn completes (spawn is the main client of this function)
-					this.addWorkspaceListeners(stackedWindowIdentifier); // setup listeners to manager workspace.
-					this.saveStore(stackedWindowIdentifier); // save again now children added
-
 					// send notification to LauncherClient that the window has been created (otherwise LauncherClient hangs)
 					RouterClient.publish("Finsemble." + stackedWindowIdentifier.windowName + ".componentReady", {
 						name: stackedWindowIdentifier.windowName
 					});
+
+					// note the LauncherService will add to the workspace after spawn completes (spawn is the main client of this function)
+					await this.saveStore(stackedWindowIdentifier); // save again now children added
 				}
 			};
 
@@ -533,14 +523,14 @@ class StackedWindowManager implements StackedWindowManagement {
 	}
 
 	/**
-	 * Adds window as a child to a stacked window.  Adds to the top of the stack, or if specied to a specific location in the stack;
+	 * Adds window as a child to a stacked window.  Adds to the top of the stack, or if specified to a specific location in the stack;
 	 *
 	 * @param {object=} params Parameters
 	 * @param {object} params.stackedWindowIdentifier stacked window to operate on stacked window to operate on
 	 * @param {object} params.windowIdentifier window to add
 	 * @param {number=} params.position the location in the stack to push the window.  Location 0 is the bottom of the stack. Defaults to the top of stack.
 	 * @param {boolean=} params.noSave if true then don't save the store after updating it (will be saved by caller)
-	 * @param {boolean=} params.ignorePreviousState if true then ignore the previous state of the window being added (with in another stack and registered with docking handled elsewere)
+	 * @param {boolean=} params.ignorePreviousState if true then ignore the previous state of the window being added (with in another stack and registered with docking handled elsewhere)
 	 * @param {boolean=} params.noVisibility if true don't automatically set visibility when first window added to the stack (needed for ordered startup)
 	 * @param {function=} callback function(err)
 	 * @memberof StackedWindowManager
@@ -565,7 +555,7 @@ class StackedWindowManager implements StackedWindowManagement {
 					Logger.system.debug("StackedWindowManager.addWindow waiting", params.windowIdentifier.windowName);
 				} else if (readyTimedout) { // if timeout failure
 					// if was rejected because of timeout, then don't accept it now -- window won't be part of stack because too slow become ready (in theory this shouldn't happen)
-					// TBD -- although this case should not happen if timeouts are correct, if it doesn should probably pull out of stacked window and make visible
+					// TBD -- although this case should not happen if timeouts are correct, if it doesn't should probably pull out of stacked window and make visible
 					Logger.system.error("StackedWindowManager.addWindow already timed out before ready so not added", params.windowIdentifier.windowName);
 				} else {
 					Logger.system.debug("StackedWindowManager wrapper state", params.windowIdentifier.windowName, response.data.state);
@@ -598,10 +588,10 @@ class StackedWindowManager implements StackedWindowManagement {
 								this.mergeBounds(thisStackRecord, bounds);
 								thisStackRecord.bounds = bounds;
 								Object.assign(thisStackRecord, bounds);
-								this.setVisibleWindow({ stackedWindowIdentifier, windowIdentifier });
+								this.setVisibleWindow({ stackedWindowIdentifier, windowIdentifier, noSave: params.noSave });
 								// if stacked window has a predefined visibleWindow and it matches the window being added, then set this window to the visible window
 							} else if (thisStackRecord.visibleWindowIdentifier && thisStackRecord.visibleWindowIdentifier.windowName === windowIdentifier.windowName) {
-								this.setVisibleWindow({ stackedWindowIdentifier, windowIdentifier });
+								this.setVisibleWindow({ stackedWindowIdentifier, windowIdentifier, noSave: params.noSave });
 
 								// if stacked window has a predefined visibleWindow and it does not match the window being added, then hide this window
 							} else {
@@ -620,14 +610,17 @@ class StackedWindowManager implements StackedWindowManagement {
 								if (parentWindow && parentWindow.name != thisStackRecord.name) {
 									// if the window being added was already in a stackedWindow, remove it from that stacked window (the window is already unregistered with docking)
 									Logger.system.debug("StackedWindowManager.addWindow removing from previous parentWindow", parentWindow.identifier);
+									// if adding a window to this stack that needs to be removed from another stack,
+									// then when removing don't automatically make the window visible; instead use normally visibility settings in new stacked window
 									await this.removeWindow({
 										stackedWindowIdentifier: parentWindow.identifier,
 										windowIdentifier: windowIdentifier,
+										noVisible: true,
 										noDocking: true
 									});
 								} else {
 									// else window is standalone and registered with docking, so deregister with docking (since only stacked window is registered)
-									Logger.system.debug("StackedWindowManager.addWindow deregistering from docking (case 1)", windowIdentifier);
+									Logger.system.debug("StackedWindowManager.addWindow unregistering from docking (case 1)", windowIdentifier);
 									if (params.inheritGroups && params.newStack) {
 										await this.registerWithDockingManager({ windowIdentifier: stackedWindowIdentifier });
 										let groups = await this.getGroups(windowIdentifier);
@@ -638,7 +631,7 @@ class StackedWindowManager implements StackedWindowManagement {
 							}
 
 							if (!noSave) {
-								this.saveStore(stackedWindowIdentifier); // update the cache and the global store
+								await this.saveStore(stackedWindowIdentifier); // update the cache and the global store
 							}
 
 							// Notify interested listeners (e.g. BaseWindow wrappers for added window) that window was added to the stack
@@ -690,10 +683,8 @@ class StackedWindowManager implements StackedWindowManagement {
 				closeChildren = removeFromWorkspace;
 			}
 			//this.deregisterWithDockingManager({ windowIdentifier: stackedWindowIdentifier, removeFromWorkspace });
-			this.removeWorkspaceListeners(stackedWindowIdentifier);
 
 			var thisStackRecord = this.storeCache[stackedWindowIdentifier.windowName];
-			await this.saveStore(stackedWindowIdentifier, { closing: true }); // save the latest state (bounds changes are too frequent to always save)
 			Logger.system.debug("StackedWindowManager.closeStackedWindow saveStore done", params.stackedWindowIdentifier.windowName);
 
 			if (!thisStackRecord) {
@@ -706,24 +697,26 @@ class StackedWindowManager implements StackedWindowManagement {
 				RouterClient.publish("Finsemble." + stackedWindowIdentifier.windowName + ".componentReady", {});
 
 				if (removeFromWorkspace) {
-
 					if (closeChildren) {
 						while (thisStackRecord.childWindowIdentifiers.length > 0) {
 							// the currently visible window is closed one at a time to support orderly close, which might require UI interaction
 							await this.deleteWindow({
-								noCloseStack: true, waitChildClose: params.waitChildClose, stackedWindowIdentifier,
-								windowIdentifier: thisStackRecord.visibleWindowIdentifier
+								noCloseStack: true, 
+								waitChildClose: params.waitChildClose, 
+								stackedWindowIdentifier,
+								windowIdentifier: thisStackRecord.visibleWindowIdentifier,
+								removeFromWorkspace,
+								fromSystem: params.fromSystem
 							});
 						}
 					} else {
 						while (thisStackRecord.childWindowIdentifiers.length > 0) {
 							await this.removeWindow({
 								noCloseStack: true, waitChildClose: params.waitChildClose, stackedWindowIdentifier,
-								windowIdentifier: thisStackRecord.visibleWindowIdentifier
+								windowIdentifier: thisStackRecord.visibleWindowIdentifier,
 							});
 						}
 					}
-					WorkspaceClient.removeWindow({ name: stackedWindowIdentifier.windowName }); // remove this stacked window from the workspace
 					this.deregisterWithDockingManager({ windowIdentifier: stackedWindowIdentifier, removeFromWorkspace });
 					delete this.storeCache[stackedWindowIdentifier.windowName]; // remove stacked window from cache
 					this.globalStore.removeValue({ field: stackedWindowIdentifier.windowName }); // remove stacked window from window global store
@@ -731,7 +724,15 @@ class StackedWindowManager implements StackedWindowManagement {
 					resolve(); callback();
 					//});
 				} else {
-					// essentially shouldn't have to do anything but cleanup local state -- workspace is closing children individually
+					// clear the pubsub parent state for each child window (if not done, children will for some cases incorrectly have a parent specified);
+					// note removeWindow() will also clear this parent state, but this path doesn't invoke removeWindow
+					for (let i = 0; i < thisStackRecord.childWindowIdentifiers.length; i++) {
+						let childName = thisStackRecord.childWindowIdentifiers[i].name;
+						Logger.system.debug("StackedWindowManager.closeStackedWindow cleaning up parent state for child", childName);
+						RouterClient.publish(`Finsemble.parentChange.${childName}`, {});
+					}
+
+					// essentially shouldn't have to do anything else but cleanup local state -- workspace is closing children individually
 					let visibleChildWrapper = this.childWindow[thisStackRecord.visibleWindowIdentifier.windowName];
 					this.removeChildEventListener(stackedWindowIdentifier.windowName, thisStackRecord.visibleWindowIdentifier.windowName, visibleChildWrapper);
 					delete this.storeCache[stackedWindowIdentifier.windowName]; // remove stacked window from cache
@@ -752,6 +753,7 @@ class StackedWindowManager implements StackedWindowManagement {
 	 * @param {object} params.stackedWindowIdentifier stacked window to operate on
 	 * @param {object} params.windowIdentifier window to remove
 	 * @param {boolean=} params.noDocking if true then do not register removed window with docking (the workspace is unaffected)
+	 * @param {boolean=} params.noVisible if true then do not make window visible when removing it
 	 * @param {boolean=} params.waitChildClose if true then wait for child wrapper to close before returned (needed for cleanly switching workspaces)
 	 * @param {boolean=false} params.closeWindow
 	 * @param {boolean=false} params.noCloseStack  if true don't close the stack window when only one child
@@ -761,8 +763,8 @@ class StackedWindowManager implements StackedWindowManagement {
 	 * @private
 	 */
 	removeWindow(params, callback = Function.prototype) {
-		const promiseResolver = (resolve) => {
-			var { noCloseStack, stackedWindowIdentifier, windowIdentifier, noDocking } = params;
+		const promiseResolver = async (resolve) => {
+			var { noVisible, noCloseStack, stackedWindowIdentifier, windowIdentifier, noDocking } = params;
 			var thisStackRecord = this.storeCache[stackedWindowIdentifier.windowName];
 			Logger.system.debug("StackedWindowManager.removeWindow", params, thisStackRecord);
 
@@ -789,16 +791,23 @@ class StackedWindowManager implements StackedWindowManagement {
 					this.setVisibleWindow({ stackedWindowIdentifier, windowIdentifier: thisStackRecord.childWindowIdentifiers[0] }); // make the first window visible by default
 				}
 
-				this.saveStore(params.stackedWindowIdentifier);
+				if (!noVisible) { // unless specified otherwise, show the window being removed from the stacked window (it might not be visible)
+					childWrapper._show({ invokedByParent: true });
+				}
+
+				await this.saveStore(params.stackedWindowIdentifier);
 
 				// Notify interested listeners (e.g. BaseWindow wrappers of the removed window) that window was removed from the stack
-				Logger.system.debug("StackedWindowManager remove parent notification", windowIdentifier.windowName);
+				Logger.system.debug("StackedWindowManager.removeWindow parent notification", windowIdentifier.windowName);
 				RouterClient.publish(`Finsemble.parentChange.${windowIdentifier.windowName}`, { type: "Removed", stackedWindowIdentifier });
 				RouterClient.publish(`Finsemble.parentChange.${windowIdentifier.windowName}`, {});
 
-				if (!noCloseStack && thisStackRecord.childWindowIdentifiers.length === 1) { // normally if no more child windows then unregister and close the stackedWindow
+				// if only one child window now then unregister stacked window, pull child out, and close stackedWindow;
+				// compare for <= 1 since might be concurrently removing multiple windows from stack for crashed components (i.e. this function is not fully reentrant yet)
+				if (!noCloseStack && thisStackRecord.childWindowIdentifiers.length <= 1) {
 					//@early-exit. If you uncomment this return statement, the callback will be invoked twice. That causes errors and looks bad
-					//save the child value first because sometimes it's removed from the stackrecord before the query returns, but it still needs to be unregistered
+					//save the child value first because sometimes it's removed from the stackRecord before the query returns, but it still needs to be unregistered
+					Logger.system.debug("StackedWindowManager.removeWindowparent closing stacked window", stackedWindowIdentifier);
 					let lastChild = thisStackRecord.childWindowIdentifiers[0];
 					return RouterClient.query("DockingService.getGroupsForWindow", { name: thisStackRecord.name }, (err, response) => {
 						this.registerWithDockingManager({ windowIdentifier: lastChild }, async () => {
@@ -816,12 +825,15 @@ class StackedWindowManager implements StackedWindowManagement {
 
 							let { wrap } = await FinsembleWindow.getInstance(params.stackedWindowIdentifier);
 							// for now must call close on public wrapper to have wrapper cleanup happen correctly
+							Logger.system.debug("StackedWindowManager.removeWindowparent invoking public close", stackedWindowIdentifier);
 							wrap.close({ closeChildren: false, stackedWindowIdentifier, removeFromWorkspace: true, invokedByParent: true, force: false }, (err) => {
 								callback(err);
 								resolve({ err });
 							});
 						});
 					});
+				} else {
+					Logger.system.debug("StackedWindowManager.removeWindowparent NOT closing stacked window", noCloseStack, thisStackRecord);
 				}
 			} else {
 				err = "StackedWindowManager.removeWindow unknown stackedWindowIdentifier";
@@ -867,7 +879,19 @@ class StackedWindowManager implements StackedWindowManagement {
 				params.noDocking = true;
 				await this.removeWindow(params);
 				let { wrap } = await FinsembleWindow.getInstance(params.windowIdentifier);
-				wrap.close({ invokedByParent: true, force: false }, (err) => {
+				wrap.close({
+					/* 
+					 * If the close event is sent from the system (i.e. user is closing a stacked window from the taskbar), tell the wrapper to not show the error
+					 * when attempting to close that window (because the window is already closed from the system).
+					 * For now we're still calling this function even if it's a system close because we need some way to close a slacked window from the 
+					 * taskbar. We can also change the event name we pass into "this.setupSystemListener" in case of a system close in the openfinWindowWrapper file from 
+					 * 'closed' to 'system-closed' so we don't have to close twice. But we decided it's a big change and we should go with a less risky approach in this bug fixing PR.
+					 */
+					suppressError: params.fromSystem,
+					invokedByParent: true,
+					force: false,
+					removeFromWorkspace: true
+				}, (err) => {
 					callback(err);
 					resolve({ err });
 				});
@@ -882,7 +906,7 @@ class StackedWindowManager implements StackedWindowManagement {
 	 * @param {object} params Parameters
 	 * @param {object} params.stackedWindowIdentifier stacked window to operate on
 	 * @param {object} params.windowIdentifier
-	 * @param {object} params.force if force is true then reset vistible even if it is already marked as visible in store (this is for startup)
+	 * @param {object} params.force if force is true then reset visible even if it is already marked as visible in store (this is for startup)
 	 * @todo the force param needs to handle the code below around previouslyVisibleWindow. In that case, the previouslyVisible window may exist, but the listeners may not have been added yet.
 	 * @param {function=} callback function(err)
 	 * @memberof StackedWindowManager
@@ -897,7 +921,7 @@ class StackedWindowManager implements StackedWindowManagement {
 		if (thisStackRecord) {
 			//if (force || !this.isShowing(params)) { // skip if window is already showing
 			let previouslyVisibleWindow;
-			if (thisStackRecord.visibleWindowIdentifier) { // if previous visisble window
+			if (thisStackRecord.visibleWindowIdentifier) { // if previous visible window
 				previouslyVisibleWindow = this.childWindow[thisStackRecord.visibleWindowIdentifier.windowName]; // will use below to hide previous after setting next
 				if (previouslyVisibleWindow) {
 					this.removeChildEventListener(stackedWindowIdentifier.windowName, thisStackRecord.visibleWindowIdentifier.windowName, previouslyVisibleWindow);
@@ -912,7 +936,7 @@ class StackedWindowManager implements StackedWindowManagement {
 			this.addChildEventListener(stackedWindowIdentifier.windowName, thisStackRecord.visibleWindowIdentifier.windowName, childWrapper);
 			Logger.system.debug("StackedWindowManager.setVisibleWindow showing", windowIdentifier, "Cache equality", this.childWindow[windowIdentifier.windowName] === window._FSBLCache.windows[windowIdentifier.windowName] ? "equal" : "not-equal");
 			childWrapper._bringToFront({ invokedByParent: true }); // make sure the window is in front (use case: adding tab to window that isn't in front)
-			childWrapper._show({ invokedByParent: true }, () => {  // make the window visisble
+			childWrapper._show({ invokedByParent: true }, () => {  // make the window visible
 				childWrapper._focus({ invokedByParent: true });
 				Logger.system.debug("StackedWindowManager.setVisibleWindow shown", windowIdentifier);
 				//Doing it this way so that the window in the back is visible when the one in the front hides. This reduces the flickering effect of switching tabs.
@@ -921,7 +945,9 @@ class StackedWindowManager implements StackedWindowManagement {
 					previouslyVisibleWindow._hide({ invokedByParent: true });
 				}
 			});
-			this.saveStore(params.stackedWindowIdentifier);
+			if (!params.noSave) {
+				this.saveStore(params.stackedWindowIdentifier);
+			}
 			//} //else {
 			//Logger.system.debug("StackedWindowManager.setVisibleWindow window already showing", params);
 			//}
@@ -1003,7 +1029,7 @@ class StackedWindowManager implements StackedWindowManagement {
 		callback(null);
 	}
 
-	// stacked window maximize (invoked remotely trhough stacked window wrapper)
+	// stacked window maximize (invoked remotely through stacked window wrapper)
 	maximize(params, callback = Function.prototype) {
 		var self = this;
 		Logger.system.debug("StackedWindowManager.maximize", params);
@@ -1059,7 +1085,7 @@ class StackedWindowManager implements StackedWindowManagement {
 				params.windowIdentifier = thisStackRecord.visibleWindowIdentifier;
 			}
 
-			// regarding "true" below.  For now don't check isShowing. Currently multi-window functions (like bringWindowsToFront) operates off all windows causes errors to be logged (not just visbile windows).
+			// regarding "true" below.  For now don't check isShowing. Currently multi-window functions (like bringWindowsToFront) operates off all windows causes errors to be logged (not just visible windows).
 			if (true || this.isShowing(params)) {
 				var visibleWindow = this.childWindow[params.windowIdentifier.windowName];
 				params.invokedByParent = true; // prevents wrapper function from recalling parent (causing a loop)
@@ -1084,6 +1110,11 @@ class StackedWindowManager implements StackedWindowManagement {
 							callback(err);
 						});
 					}
+					else {
+						// If the window is neither minimized nor maximized, we don't need to do anything but still need to invoke the callback.
+						// Otherwise bringToFront won't happen after restore.
+						callback();
+					}
 				});
 
 			} else {
@@ -1092,8 +1123,8 @@ class StackedWindowManager implements StackedWindowManagement {
 		} else { // else must be an outdated request from a closed stacked window
 			Logger.system.warn("ignoring command because StackedWindow undefined (probably okay due to its recent close)", params);
 			err = "undefined window";
+			callback(err);
 		}
-		callback(err);
 	}
 
 	// stacked window focus (invoked remotely through stacked window wrapper)
@@ -1182,7 +1213,7 @@ class StackedWindowManager implements StackedWindowManagement {
 				params.invokedByParent = true; // prevents wrapper function from recalling parent (causing a loop)
 				visibleWindow._setBounds(params); // invoke function on active window's wrapper
 			} else if (params.windowIdentifier) {
-				Logger.system.error(`StackedWindowManager Warning: setBounds received for hidden window ${params.windowIdentifier}`);
+				Logger.system.warn(`StackedWindowManager Warning: setBounds received for hidden window ${params.windowIdentifier}`);
 			}
 		}
 
@@ -1208,7 +1239,7 @@ class StackedWindowManager implements StackedWindowManagement {
 
 		if (thisStackRecord.bounds) {
 			callback(null, thisStackRecord.bounds);
-		} else if (!thisStackRecord.visibleWindowIdentifier) { // since no visible window use empty bounds; this is to handle an intermittant error that sometimes occurred when creating a stack
+		} else if (!thisStackRecord.visibleWindowIdentifier) { // since no visible window use empty bounds; this is to handle an intermittent error that sometimes occurred when creating a stack
 			let emptyBounds = { left: 0, right: 0, width: 10, top: 0, bottom: 0, height: 10 };
 			callback(null, emptyBounds);
 		} else if (this.isShowing(params)) {
@@ -1228,7 +1259,7 @@ class StackedWindowManager implements StackedWindowManagement {
 			});
 		} else if (!this.operatingDirectlyOnStackedWindow(params)) {
 			Logger.system.error(`StackedWindowManager Warning: getBounds received for hidden window ${params.windowIdentifier.windowName}`);
-			callback("getbounds on hidden window");
+			callback("getBounds on hidden window");
 		} else if (thisStackRecord && thisStackRecord.bounds) {
 			callback(null, thisStackRecord.bounds);
 		} else {
@@ -1253,7 +1284,7 @@ class StackedWindowManager implements StackedWindowManagement {
 				var visibleWindow = this.childWindow[params.windowIdentifier.windowName];
 				params.invokedByParent = true; // prevents wrapper function from recalling parent (causing a loop)
 				visibleWindow._updateOptions(params); // invoke function on active window's wrapper
-				// if (visibleWindow) { // update options is invoked during docking registeration while stacked window is being created, so may not have visisble window
+				// if (visibleWindow) { // update options is invoked during docking registration while stacked window is being created, so may not have visible window
 				// 	visibleWindow._updateOptions(params); // invoke function on active window's wrapper
 				// }
 			} else {
@@ -1386,11 +1417,11 @@ class StackedWindowManager implements StackedWindowManagement {
 	// TABBING TBD: NEED GENERAL PARAMETERIZED VERSIONS OF THE FUNCTIONS BELOW PULLED OUT OF THE WINDOW CLIENT AND PUT IN COMMON TO SHARE
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	// placehold for workspace integration
+	// placeholder for workspace integration
 	saveWindowOptions(params, stackedWindow, maincallback = Function.prototype) {
 		Logger.system.debug("StackedWindowManager.setComponentState", stackedWindow.identifier);
 
-		let descriptor = {};
+		let descriptor: any = {};
 
 		// Only save required items to cache instead of saving everything.
 		let thingsToInclude = ["name", "windowName", "childWindowIdentifiers", "top", "left", "height", "width", "bottom", "right", "windowType", "visibleWindowIdentifier", "customData", "bounds"];
@@ -1409,6 +1440,10 @@ class StackedWindowManager implements StackedWindowManagement {
 			if (thingsToInclude.includes(k)) {
 				descriptor[k] = thisStackRecord[k];
 			}
+		}
+
+		if (descriptor.bounds && descriptor.bounds.persistBounds) {
+			delete descriptor.bounds.persistBounds;
 		}
 
 		stackedWindow.saveCompleteWindowState(descriptor, () => {
@@ -1441,78 +1476,6 @@ class StackedWindowManager implements StackedWindowManagement {
 			}
 
 		});
-
-	}
-
-	/**
-	 * It adds listeners for workspace 'close' (when the workspace is switched), 'bringToFront', 'restore', and 'move' (used in AutoArrange).
-	 */
-	addWorkspaceListeners(stackedWindowIdentifier) {
-		Logger.system.debug("StackedWindowManager.addWorkspaceListeners", stackedWindowIdentifier);
-		var subscribeID; // must be saved to unsubsribed later
-		var listenerFunction; // must be saved to remove listener later
-
-		// pubsub ensures close command can't be loss in a race condition (e.g. if close is issued while the destinateion window was reloading)
-		//subscribeID = RouterClient.subscribe(`WorkspaceService.${stackedWindowIdentifier.windowName}`, (err, response) => {
-		// Logger.system.debug("StackedWindowManager Workspace incoming notification", `WorkspaceService.${stackedWindowIdentifier.windowName}`, response.data);
-		// if (response.data.state === "start") {
-		// 	// do nothing since normal startup
-		// } else if (response.data.state === "close") {
-		// 	// since going to close, reset this pubsub state back to default state (otherwise would keep closing);
-		// 	// note may not see local log of this outgoing publish because window is closing (but publish will go out before close)
-		// 	RouterClient.publish(`WorkspaceService.${stackedWindowIdentifier.windowName}`, { "state": "start" });
-		// 	this.closeStackedWindow({ stackedWindowIdentifier, removeFromWorkspace: false }); // close the stacked window
-		// } else {
-		// 	Logger.system.warn("StackedWindowManager incoming notify has unknown state", stackedWindowIdentifier.windowName, response.data);
-		// }
-		//});
-
-		RouterClient.addListener(`WorkspaceService.${stackedWindowIdentifier.windowName}`, listenerFunction = (err, response) => {
-			Logger.system.debug("StackedWindowManager Workspace incoming transmit", `WorkspaceService.${stackedWindowIdentifier.windowName}`, response.data);
-			var thisStackRecord = this.storeCache[stackedWindowIdentifier.windowName];
-			var visibleWindowWrapper = this.childWindow[thisStackRecord.visibleWindowIdentifier.windowName];
-			switch (response.data.command) {
-				case "bringToFront":
-					visibleWindowWrapper.bringToFront();
-					break;
-				case "restore":
-					visibleWindowWrapper.restore();
-					break;
-				case "move":
-					visibleWindowWrapper.animate({
-						transition: {
-							position: {
-								left: response.data.left,
-								top: response.data.top,
-								duration: 250
-							}
-						}, options: {}
-					},
-						function (err) {
-							if (err) {
-								Logger.system.error("StackedWindowManager:WorkspaceService: Animate failed: " + err);
-							} else {
-								RouterClient.transmit("DockingService.updateWindowPositions", {});
-								Logger.system.debug("StackedWindowManager:WorkspaceService successfully moved window.");
-							}
-						});
-					break;
-			}
-		});
-
-		this.stackedWindowListeners[stackedWindowIdentifier.windowName] = { subscribeID, listenerFunction };
-	}
-
-	removeWorkspaceListeners(stackedWindowIdentifier) {
-		Logger.system.debug("StackedWindowManager.removeWorkspaceListeners", stackedWindowIdentifier);
-		var stackedWindowListeners = this.stackedWindowListeners[stackedWindowIdentifier.windowName]; // these handles save with listeners added above
-		if (stackedWindowListeners) {
-			//RouterClient.unsubscribe(stackedWindowListeners.subscribeID);
-			RouterClient.removeListener("WorkspaceService." + stackedWindowIdentifier.windowName, stackedWindowListeners.listenerFunction);
-			delete this.stackedWindowListeners[stackedWindowIdentifier.windowName];
-		} else {
-			Logger.system.debug(`StackedWindowManager.removeWorkspaceListeners. No workspace listeners found for ${stackedWindowIdentifier.windowName}`);
-		}
 
 	}
 

@@ -1,3 +1,33 @@
+export interface RouterResponse<T> {
+	data: T;
+	header: {
+		channel: string;
+		origin: string;
+		incomingTransportInfo: {
+			port: number;
+			transportID: "SharedWorker" | "OpenFinBus";
+			lastClient: string;
+			origin: string;
+		};
+		// D.H 2/28/2019
+		// This should be refined according to the constructors in routerClientContructor.ts
+		type: string;
+	};
+}
+
+export interface RouterMessage<T = any> extends RouterResponse<T> {
+	options: {
+		supressWarnings: boolean;
+	}
+	originatedHere(): boolean;
+}
+
+export interface ResponderMessage<T = any> extends RouterMessage {
+	data: T;
+	sendQueryResponse(error: string | Error | null, data?: any);
+}
+
+
 export interface IRouterClient {
 
 	/**
@@ -10,7 +40,7 @@ export interface IRouterClient {
 	/**
 	 * Adds a listener for incoming transmit events on the specified channel. Each of the incoming events will trigger the specified event handler. The number of listeners is not limited (either local to this Finsemble window or in a separate Finsemble window).
 	 *
-	 * See [transmit]{@link RouterClientConstructor#transmit} for sending a cooresponding event message to the listener. See [removeListener]{@link RouterClientConstructor#removeListener} to remove the listener.
+	 * See [transmit]{@link RouterClientConstructor#transmit} for sending a corresponding event message to the listener. See [removeListener]{@link RouterClientConstructor#removeListener} to remove the listener.
 	 *
 	 * @param {string} channel A unique string to identify the channel (must match correspond transmit channel name).
 	 * @param {function} eventHandler A callback handling any possible error and the response (see example below).
@@ -26,7 +56,7 @@ export interface IRouterClient {
 	 * });
 	 *
 	 */
-	addListener(channel: string, eventHandler: StandardCallback): void;
+	addListener: (channel: string, eventHandler: StandardCallback<string | Error, RouterMessage>) => void;
 
 	/**
 	 * Transmits an event to all listeners on the specified channel. If no there are no listeners on the channel, the event is discarded without error. All listeners on the channel in this Finsemble window and other Finsemble windows will receive the transmit.
@@ -76,7 +106,7 @@ export interface IRouterClient {
 	 * });
 	 *
 	 */
-	addResponder(channel: string, queryEventHandler: StandardCallback): void;
+	addResponder<T = any>(channel: string, queryEventHander: StandardCallback<string, ResponderMessage<T>>): void;
 
 	/**@TODO - Standardize how we do overloads. This is experimental. */
 
@@ -134,14 +164,14 @@ export interface IRouterClient {
 	 *
 	 * You may omit any of the callbacks. If you do, default callbacks will be provided, the behavior of which are described below.
 	 *
-	 * Note an exact topic match will take precedence over a regEx match, but otherwise no specific matching priority is guarenteed for overlapping RegEx topics.
+	 * Note an exact topic match will take precedence over a regEx match, but otherwise no specific matching priority is guaranteed for overlapping RegEx topics.
 	 *
 	 * See [subscribe]{@link RouterClientConstructor#subscribe} and [publish]{@link RouterClientConstructor#publish} for interacting with a PubSub responder.
 	 *
 	 * @param {string} topic A unique topic for this responder, or a topic RegEx (e.g. '/abc.+/') to handle a set of topics.
 	 * @param {object} initialState The initial state for the topic (defaults to empty object).
 	 * @param {object} params Optional parameters.
-	 * @param {function} params.subscribeCallback Used to set custom behavior regarding whether an incoming subscribe request is accepted or rejcted (the default callback automatically accepts all incoming requests).
+	 * @param {function} params.subscribeCallback Used to set custom behavior regarding whether an incoming subscribe request is accepted or rejected (the default callback automatically accepts all incoming requests).
 	 * @param {function} params.publishCallback Used to set custom behavior in publishing data (the default callback automatically sets the publish data as the new state).
 	 * @param {function} params.unsubscribeCallback Used to set custom behavior when receiving an unsubscribe request. The default callback automatically accepts the request by calling `.removeSubscriber()`. See example code.
 	 * @param {function} callback An optional callback function, accepting a possible error and the response. If addPubSubResponder failed, then the error will be set; otherwise, the response will have a value of "success".
@@ -206,7 +236,7 @@ export interface IRouterClient {
 	 */
 	removePubSubResponder(topic: string | RegExp): void;
 	/**
-	 * Subscribe to a PubSub Responder. Each responder topic can have many subscribers (local in this window or remote in other windows). Each subscriber immediately (but asyncronouly) receives back current state in a notify; new notifys are receive for each publish sent to the same topic.
+	 * Subscribe to a PubSub Responder. Each responder topic can have many subscribers (local in this window or remote in other windows). Each subscriber immediately (but asynchronously) receives back current state in a notify; new notifications are received for each publish sent to the same topic.
 	 *
 	 * See [addPubSubResponder]{@link RouterClientConstructor#addPubSubResponder} for corresponding addition of a PubSub responder to handle the subscribe. See [publish]{@link RouterClientConstructor#publish} for how to publish data to subscribers.
 	 *
@@ -257,7 +287,7 @@ export interface IRouterClient {
 	 */
 	unsubscribe(subscribeIDStruct: { subscribeID: string, topic: string }): void
 
-	/** @TODO - Fix the second sentance - it's confusing. */
+	/** @TODO - Fix the second sentence - it's confusing. */
 	/**
 	 * Tests an incoming router message to see if it originated from the same origin (e.g. a trusted source...not cross-domain).
 	 *

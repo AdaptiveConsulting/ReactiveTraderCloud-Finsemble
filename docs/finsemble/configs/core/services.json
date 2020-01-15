@@ -128,7 +128,8 @@
 				"whitelist": [],
 				"onlySpawned": true,
 				"focusDelay": 30,
-				"eventIgnore": 50
+				"eventIgnore": 50,
+				"hotkeyTimeout": 60000
 			}
 		},
 		"RPCService": {

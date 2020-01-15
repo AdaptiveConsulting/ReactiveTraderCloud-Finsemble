@@ -4,8 +4,6 @@ import { EventEmitter } from "events";
 import DistributedStoreClient from "../../clients/distributedStoreClient";
 import StorageClient from "../../clients/storageClient";
 import * as util from "../util";
-import { isEqual as deepEqual } from "lodash";
-import * as merge from "deepmerge";
 import { WindowEventManager } from "./WindowEventManager";
 import * as constants from "../constants"
 import { FinsembleEvent } from "./FinsembleEvent";
@@ -25,7 +23,6 @@ StorageClient.initialize();
 const BOUNDS_SET = "bounds-set";
 const BOUNDS_CHANGING = "bounds-change-request";
 const BOUNDS_CHANGED = "bounds-changed";
-const WORKSPACE_CACHE_TOPIC = "finsemble.workspace.cache";
 if (!window._FSBLCache) window._FSBLCache = {
 	storeClientReady: false,
 	windowStore: null,
@@ -33,6 +30,12 @@ if (!window._FSBLCache) window._FSBLCache = {
 	gettingWindow: [],
 	windowAttempts: {}
 };
+
+function retrieveManifestPromise() {
+	return new Promise((resolve, reject) => {
+		System.Application.getCurrent().getManifest(resolve, reject);
+	});
+}
 export class FinsembleWindow {
 	addListener: Function;
 	Group: any;
@@ -59,7 +62,12 @@ export class FinsembleWindow {
 	removeListeners?: Function;
 	parentSubscribeID: any;
 	eventManager: WindowEventManager;
-	eventlistenerHandlerMap: object = {};
+	eventlistenerHandlerMap: Partial<{ [key in WindowEventName]: {
+		handler: (...args) => void,
+		internalHandler: (...args) => void,
+		interceptor: FinsembleEvent,
+		guid: string,
+	}[] }> = {};
 	guid: string;
 	private settingParent: boolean;
 
@@ -114,7 +122,7 @@ export class FinsembleWindow {
 		if (interceptor.delayable) RouterClient.publish(constants.EVENT_INTERRUPT_CHANNEL + "." + guid, { canceled: canceled });
 	}
 
-	addEventListener(eventName, handler) {
+	addEventListener(eventName: WindowEventName, handler) {
 		Logger.system.info("EVENT TAG. Event listener added", eventName, "on ", this.name);
 		eventName = this.standardizeEventName(eventName);
 		// We send this guid so that Window service can keep track of individual listeners for event interruption.
@@ -161,12 +169,12 @@ export class FinsembleWindow {
 		});
 	}
 
-	removeEventListener(eventName, handler) {
+	removeEventListener(eventName: WindowEventName, handler) {
 		eventName = this.standardizeEventName(eventName);
 		const promiseResolver = async (resolve) => {
 			if (!this.eventlistenerHandlerMap[eventName]) { // trying to remove non-existent handler.
-				Logger.system.error("trying to remove non-existent handler", eventName);
-				return;
+				Logger.system.debug("trying to remove non-existent handler", eventName);
+				return resolve();
 			}
 			for (var i = this.eventlistenerHandlerMap[eventName].length - 1; i >= 0; i--) {
 				let handlerStoredData = this.eventlistenerHandlerMap[eventName][i];
@@ -179,6 +187,7 @@ export class FinsembleWindow {
 					resolve();
 				}
 			}
+			resolve();
 		}
 
 		return new Promise(promiseResolver);
@@ -228,7 +237,7 @@ export class FinsembleWindow {
 			var childClassObject = new BW(params);
 			//childClassObject.windowType = windowType;
 			return childClassObject;
-		}  //We are a specfic kind of window
+		}  //We are a specific kind of window
 		if (params) {
 			for (var i in params) {
 				this[i] = params[i];
@@ -289,7 +298,7 @@ export class FinsembleWindow {
 	 * @param {*} cb
 	 */
 	static wrap = FinsembleWindow.getInstance;
-	static getInstance(params, cb = Function.prototype) { // new async wrap
+	static getInstance(params, cb = Function.prototype): Promise<{ wrap: FinsembleWindow }> { // new async wrap
 		let myName = System.Window.getCurrent().name;
 		if (params && params.windowName) {
 			params.name = params.windowName;
@@ -396,26 +405,74 @@ export class FinsembleWindow {
 		return new Promise(promiseResolver);
 	}
 
+	/**
+	 * Method for determining whether the window being wrapped is the startup app's main window (the service manager).
+	 *
+	 * @static
+	 * @memberof FinsembleWindow
+	 */
+	static isStartupApplication = async function (windowName): Promise<boolean> {
+		let isStartupApplication;
+		// Here, we get the application 'manifest'. This will only be returned _if the application was created via the manifest_. In other words, this will only work if we're in the startup app.
+
+		const manifest: any = await retrieveManifestPromise()
+			.catch((e) => {
+				// If the application executing FinsembleWindow was created via the API getManifest will
+				// reject with an error. If that happens, we know we're not in the service manager, so we can just assign it to false and move on.
+				isStartupApplication = false;
+			});
+		// If the window that I'm in is the same window as the startup app, I am the service manager.
+		// We cannot wrap the service manager.
+
+		// No need to do these checks if we're in a window that lives in the startup app.
+		if (manifest) {
+			switch (fin.container) {
+				case "Electron":
+					isStartupApplication = manifest && manifest.startup_app && manifest.startup_app.name === windowName;
+					break;
+				default:
+					// openfin takes the uuid of the startup app as defined in the manifest and assigns it to the name of the main window for the startup app.
+					isStartupApplication = manifest && manifest.startup_app && manifest.startup_app.uuid === windowName;
+			}
+		}
+		return isStartupApplication;
+	}
+
+
 	static _windowReady = function (windowName) {
 		Logger.system.debug(`windowServiceReady: ${windowName} starting`);
+		let subscribeId;
+		const COMPONENT_STATE_CHANGE_CHANNEL = "Finsemble.Component.State." + windowName;
 		const promiseResolver = async (resolve, reject) => {
-			if (windowName === "Finsemble" || windowName.toLowerCase().endsWith("service")) {
-				reject("Cannot Wrap Service Manager or Services");
-			} else { // wait only for components managed by the window service
-				Logger.system.debug(`windowServiceReady: ${windowName} waiting`);
-				let subscribeId = RouterClient.subscribe("Finsemble.Component.State." + windowName, (err, response) => {
-					let state: WrapState = response.data.state;
-					Logger.system.debug(`windowServiceReady: ${windowName} state change: ${state}`);
-					switch (state) {
-						case "ready": case "reloading": case "closing": // if ready state or any state beyond
-							Logger.system.debug(`windowServiceReady: ${windowName} ${state}`);
-							RouterClient.unsubscribe(subscribeId);
-							resolve();
-							break;
-					}
-				});
+			// Subscribe handler for component state. Once new state is retrieved, resolve out of _windowReady
+			// This is a closure so it easily has access to the promise resolve method.
+			function onComponentStateChanged(err, response) {
+				let state: WrapState = response.data.state;
+				Logger.system.debug(`windowServiceReady: ${windowName} state change: ${state}`);
+				console.log(`windowServiceReady: ${windowName} state change: ${state}`);
+				switch (state) {
+					// if ready state or any state beyond
+					case "ready":
+					case "reloading":
+					case "closing":
+						Logger.system.debug(`windowServiceReady: ${windowName} ${state}`);
+						RouterClient.unsubscribe(subscribeId);
+						resolve();
+						break;
+				}
 			}
-		};
+
+			let isStartupApplication = await FinsembleWindow.isStartupApplication(windowName);
+
+			if (isStartupApplication || windowName.toLowerCase().endsWith("service")) {
+				reject("Cannot Wrap Service Manager or Services");
+			} else {
+				// wait only for components managed by the window service
+				Logger.system.debug(`windowServiceReady: ${windowName} waiting`);
+				subscribeId = RouterClient.subscribe(COMPONENT_STATE_CHANGE_CHANNEL, onComponentStateChanged);
+			}
+		}
+
 		return new Promise(promiseResolver);
 	};
 
@@ -463,20 +520,20 @@ export class FinsembleWindow {
 				wrap.windowState = FinsembleWindow.WINDOWSTATE.NORMAL;
 			});
 
-			//Subscribe to parent inside the wrap so if getinstance is called after window creation the parent window will be availble.
+			//Subscribe to parent inside the wrap so if getInstance is called after window creation the parent window will be available.
 			wrap.parentSubscribeID = RouterClient.subscribe(`Finsemble.parentChange.${identifier.windowName}`, (err, message) => {
 				if (err) {
 					Logger.system.error("FinsembleWindow parent change notification error", err);
-					resolve({wrap});
+					resolve({ wrap });
 				} else {
 					var parentState = message.data || {};
-	
+
 					if (parentState.type === "Added") {
 						Logger.system.debug("FinsembleWindow Parent Notification: window.addedToStack listener", parentState);
-						wrap.setParent(parentState.stackedWindowIdentifier, () => {resolve({ wrap });});
+						wrap.setParent(parentState.stackedWindowIdentifier, () => { resolve({ wrap }); });
 					} else if (parentState.type === "Exists") {
 						Logger.system.debug("FinsembleWindow Parent Notification: Parent already exists, checking if added to wrap", parentState);
-						wrap.setParentOnWrap(parentState.stackedWindowIdentifier, () => {resolve({ wrap });});
+						wrap.setParentOnWrap(parentState.stackedWindowIdentifier, () => { resolve({ wrap }); });
 					} else if (parentState.type === "Removed") {
 						Logger.system.debug("FinsembleWindow Parent Notification: window.removedFromStack listener", parentState);
 						wrap.clearParent();
@@ -486,12 +543,10 @@ export class FinsembleWindow {
 						resolve({ wrap });
 					}
 					else {
-						resolve({wrap});
+						resolve({ wrap });
 					}
 				}
-				
 			});
-			
 		}
 		return new Promise(promiseResolver);
 	}
@@ -509,27 +564,25 @@ export class FinsembleWindow {
 			this.removeListeners();
 		}
 
+		// do not move this line of code. The order of execution is important.
+		this.cleanupRouter();
+
 		//Remove all event listeners.
 		for (let eventName in this.eventlistenerHandlerMap) {
 			console.log("Event name in for loop", eventName);
 			let events = this.eventlistenerHandlerMap[eventName];
 			for (let i = 0; i < events.length; i++) {
 				Logger.system.log("WRAP Destructor. removeEventListener", eventName, this.name, "in", window.name);
-				await this.removeEventListener(eventName, events[i].handler);
+				await this.removeEventListener(eventName as WindowEventName, events[i].handler);
 				console.log("Event name listener removed", eventName);
 			}
 		}
 		Logger.system.log("WRAP Destructor. removeEventListener DONE");
 		console.log("handleWrapRemoveRequest name Done!");
 
-		RouterClient.unsubscribe(this.parentSubscribeID);
-
 		if (event) event.done();
 
 		this.eventManager.cleanup();
-		//If we were listening for title changes, unsubscribe.
-
-		this.cleanupRouter();
 
 		if (this.name !== window.name) {
 			delete window._FSBLCache.windows[this.name];
@@ -544,15 +597,20 @@ export class FinsembleWindow {
 		if (this.TITLE_CHANGED_SUBSCRIPTION) {
 			RouterClient.unsubscribe(this.TITLE_CHANGED_SUBSCRIPTION);
 		}
+		RouterClient.unsubscribe(this.parentSubscribeID);
 		RouterClient.unsubscribe(this.wrapStateChangeSubscription);
 	}
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Handers to generate wrapper events from incoming transmits
+	// Handlers to generate wrapper events from incoming transmits
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	handleWrapStateChange = (err, response) => {
 		let state: WrapState = response.data.state;
 		if (state !== this.wrapState) {
 			this.wrapState = state;
+			// 5/1/19: JoeC. Eventmanager wasn't throwing ready event, so all ready listeners would never fire
+			if (this.wrapState === "ready") {
+				this.eventManager.trigger('ready');
+			}
 			this.eventManager.trigger("wrap-state-changed", {
 				state
 			});
@@ -561,7 +619,7 @@ export class FinsembleWindow {
 
 	onReady(callback) {
 		if (this.wrapState === "ready") {
-			callback();
+			return callback();
 		}
 		this.eventManager.on("ready", callback);
 	}
@@ -586,7 +644,7 @@ export class FinsembleWindow {
 			params = params || {};
 			params.windowIdentifier = this.identifier; // add this window's identifier
 
-			// if Logger debug is enable, then add callstack to query parameters for debugging -- shows where public window requests originated
+			// if Logger debug is enable, then add call stack to query parameters for debugging -- shows where public window requests originated
 			if (Logger.setting().system.Debug) {
 				params.callstack = Logger.callStack(); // add callstack to query for debugging -- shows where public window requests originated
 			}
@@ -613,12 +671,12 @@ export class FinsembleWindow {
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Core Window Functions: can be invoked by any service or component.  Most are sent to the WindowService to be exectuted.
+	// Core Window Functions: can be invoked by any service or component.  Most are sent to the WindowService to be executed.
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Core Public Window Functions: can be invoked by any service or component.  These are sent to the WindowService to be exectuted.
+	// Core Public Window Functions: can be invoked by any service or component.  These are sent to the WindowService to be executed.
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	minimize(params, callback) {
@@ -673,11 +731,11 @@ export class FinsembleWindow {
 		this.queryWindowService("updateOptions", params, callback);
 	}
 
-	hide(params, callback) {
+	hide(params?, callback?) {
 		this.queryWindowService("hide", params, callback);
 	}
 
-	show(params, callback) {
+	show(params, callback?) {
 		this.queryWindowService("show", params, callback);
 	}
 
@@ -686,7 +744,7 @@ export class FinsembleWindow {
 	}
 
 	close(params = {}, callback = Function.prototype) {
-		Logger.system.debug("WRAP CLOSE. Public close initiated for", this.name);
+		Logger.system.debug("WRAP CLOSE. Public close initiated for", this.name, params);
 		this.queryWindowService("close", params, () => {
 			Logger.system.debug("WRAP CLOSE. Public close initiated for", this.name);
 			callback();
@@ -695,9 +753,9 @@ export class FinsembleWindow {
 
 
 	/**
-	 *Register a window with docking. Use this if you don't want to use the full initilization function
+	 *Register a window with docking. Use this if you don't want to use the full initialization function
 	 *
-	 * @param {Object} params - can be anything that is passed to docking for window registration. @todo This should be removed soom
+	 * @param {Object} params - can be anything that is passed to docking for window registration. @todo This should be removed soon
 	 * @param {Function} cb
 	 * @memberof FSBLWindow
 	 */
@@ -720,7 +778,7 @@ export class FinsembleWindow {
 	/**
 	 *This is if we want to handle the full register/ready state inside of the window
 	 register with docking
-	 send the message to laucnher saying that component is ready
+	 send the message to launcher saying that component is ready
 	 *
 	 * @memberof FSBLWindow
 	 */
@@ -740,7 +798,7 @@ export class FinsembleWindow {
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Other Baseclass Function: These are common functions shared across derived classess
+	// Other BaseClass Function: These are common functions shared across derived classes
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	/**
@@ -791,7 +849,7 @@ export class FinsembleWindow {
 	}
 
 	/**
-	 * Defines default TabTile action for stopTabTileMonitoring.  May be overriden by client -- see example in stopTabTileMonitoring. Typically inherited (base function only).
+	 * Defines default TabTile action for stopTabTileMonitoring.  May be overridden by client -- see example in stopTabTileMonitoring. Typically inherited (base function only).
 	 *
 	 * @param {any} stopTabTileResults
 	 * @memberof FinsembleWindow
@@ -894,6 +952,27 @@ export class FinsembleWindow {
 		this.queryWindowService("setComponentState", params, cb);
 	}
 
+
+	/**
+	 * Removes one or more specified attributes from either component or window state in storage
+	 * for this window.
+	 *
+	 * In addition to the name of the window, params should include either a `field`
+	 * property as a string or a `fields` property as an array of strings.
+	 *
+	 * @param {object} params
+	 * @param {string} [params.field] field
+	 * @param {array} [params.fields] fields
+	 * @param {function} cb Callback
+	 */
+	removeComponentState(params: {
+		field?: string,
+		fields?: { field: string }[],
+		windowName?: string
+	}, cb: StandardCallback = (e, r) => { }) {
+		this.queryWindowService("removeComponentState", params, cb);
+	}
+
 	/**
 	 * Given params, will set the window state. Any fields included will be added to the state
 	 *
@@ -912,7 +991,7 @@ export class FinsembleWindow {
 
 
 	/**
-	 *Cancels startTabTileMonitoring. Example use is a user "excapes" out of a drag operation.
+	 *Cancels startTabTileMonitoring. Example use is a user "escapes" out of a drag operation.
 	 *
 	 * @param {object} params for future use
 	 * @memberof FinsembleWindow
@@ -946,7 +1025,7 @@ export class FinsembleWindow {
 	 *
 	 */
 	setParent(stackedWindowIdentifier, cb = Function.prototype) {
-		if (this.settingParent) return cb("Too many calls to setParent", null); //TODO check if the parent is different
+		if (this.settingParent) return this.getParent(cb); //TODO check if the parent is different
 		this.settingParent = stackedWindowIdentifier;
 
 		if (this.parentWindow && (this.parentWindow.name === stackedWindowIdentifier.windowName)) {
@@ -1075,7 +1154,7 @@ export class FinsembleWindow {
 		return params;
 	}
 	/**
-	 * Returns store for stacked window.  Example usuage below.
+	 * Returns store for stacked window.  Example usage below.
 	 *
 	 * @memberof StackedWindow
 	 *
@@ -1087,14 +1166,14 @@ export class FinsembleWindow {
 	 *					stackedWindowIdentifier: the stacked window identifier
 	 *					childWindowIdentifiers: the window identifiers for all children in the stacked window
 	 *					visibleWindowIdentifier: the window identifier for the currently visible window
-	 *					bounds: the current window bounds/corrdiantes for the stacked window (i.e. the current bounds of the visisble window)
+	 *					bounds: the current window bounds/coordinates for the stacked window (i.e. the current bounds of the visible window)
 	 *				}
 	 */
 	getStore(callback = Function.prototype) {
 		return this.getWindowStore(callback);
 	}
 	/**
-	 * Adds window as a child to a stacked window.  Adds to the top of the stack, or if specied to a specific location in the stack;
+	 * Adds window as a child to a stacked window.  Adds to the top of the stack, or if specified to a specific location in the stack;
 	 *
 	 * @param {object=} params
 		 * @param {object} params.stackedWindowIdentifier stacked window to operate on stacked window to operate on

@@ -43,7 +43,7 @@ export class LauncherEntry {
 
   definePubicInterface() {
     // Note: More Cleanup To Do: better to have all the router message handling done here, with pure calls into to the launcher (i.e. not passing in router message to launcher).
-    // So for now using the laucher code close to as-is, although had to do some refactoring for this interface
+    // So for now using the launcher code close to as-is, although had to do some refactoring for this interface
 
     Logger.system.debug(`LauncherEntry.definePubicInterface`);
 

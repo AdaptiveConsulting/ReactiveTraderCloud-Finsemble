@@ -35,7 +35,7 @@ export class AuthenticationClient extends BaseClient {
 	/**
 	 * During Finsemble's start-up process, this function must be invoked before Finsemble will start the application.
 	 * Once invoked, the authenticated user name and authorization credentials are received by the Authentication Service and published on the "AuthenticationService.authorization" channel.
-	 * Any component can revieve the credentials by subscribing to that channel or by calling {@link AuthenticationClient#getCurrentCredentials}.
+	 * Any component can revive the credentials by subscribing to that channel or by calling {@link AuthenticationClient#getCurrentCredentials}.
 	 *
 	 * Note that all calls to Storage Client are keyed to the authenticated *user*. See {@link StorageClient#setUser}.
 	 * If authentication is not enabled, then "defaultUser" is used instead.
@@ -65,7 +65,7 @@ export class AuthenticationClient extends BaseClient {
 	};
 
 	/**
-	 * ALPHA Automatic SignOn Function. Not used by components signing on, but only by "system dialog" component that prompts the user for signon data. This command will send the user-input sign-on data back to the Authentication Service.
+	 * ALPHA Automatic SignOn Function. Not used by components signing on, but only by "system dialog" component that prompts the user for sign on data. This command will send the user-input sign-on data back to the Authentication Service.
 	 *
 	 * @param {string} signOnData
 	 */
@@ -76,10 +76,10 @@ export class AuthenticationClient extends BaseClient {
 	};
 
 	/**
-	 * ALPHA Automatic SignOn Function. Returns the signon data after either prompting user or getting a cached version.
+	 * ALPHA Automatic SignOn Function. Returns the sign on data after either prompting user or getting a cached version.
 	 *
-	 * @param {string} signOnKey component-defined unique identifier string representing the sign-on data (the same string must be used for each unique signon).
-	 * @param {object} params object { icon, prompt, force, userMsg }.  `icon` is a URL to icon to displace in sign-on dialog. `prompt` is a string to display in signon dialog. `force` indicates if sign-on dialog should be used even if accepted sign-on data is available in the encrypted store. `userMsg` is an optional message to be displayed for the user in the sign-on dialog.
+	 * @param {string} signOnKey component-defined unique identifier string representing the sign-on data (the same string must be used for each unique sign on).
+	 * @param {object} params object { icon, prompt, force, userMsg }.  `icon` is a URL to icon to displace in sign-on dialog. `prompt` is a string to display in sign on dialog. `force` indicates if sign-on dialog should be used even if accepted sign-on data is available in the encrypted store. `userMsg` is an optional message to be displayed for the user in the sign-on dialog.
 	 * @param {function} cb callback (err,response) with the response being an object: { signOnKey, username, password, validationRequired }
 	 * @private
 	 */
@@ -118,7 +118,7 @@ export class AuthenticationClient extends BaseClient {
 	 * @private
 	 */
 	appAcceptSignOn = (signOnKey) => {
-		this.logger.system.info("AUTHORIZATION: Accepted application signon.", signOnKey);
+		this.logger.system.info("AUTHORIZATION: Accepted application sign on.", signOnKey);
 		Validate.args(signOnKey, "string");
 		this.routerClient.transmit("authentication.appAcceptSignOn", { signOnKey });
 	};
@@ -130,7 +130,7 @@ export class AuthenticationClient extends BaseClient {
 	 * @private
 	 */
 	appRejectSignOn = (signOnKey) => {
-		this.logger.system.error("AUTHORIZATION: Rejected application signon.", signOnKey);
+		this.logger.system.error("AUTHORIZATION: Rejected application sign on.", signOnKey);
 		Validate.args(signOnKey, "string");
 		this.routerClient.transmit("authentication.appRejectSignOn", { signOnKey });
 	};

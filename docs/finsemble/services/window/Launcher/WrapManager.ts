@@ -41,7 +41,7 @@ class WrapManagerSingleton {
 		let requestCleanup = (owner, done) => {
 			Logger.system.debug("WRAP. requesting cleanup from", owner, "for", identifier.windowName);
 			//shortcut. when a window closes we should remove it from any list where it's an owner.
-			//can ignore all that aren' tservices once this work.
+			//can ignore all that aren't services once this work.
 			RouterClient.publish("Finsemble." + identifier.windowName + ".wrapReady", { name: identifier.windowName, state: "closed" });
 
 			return RouterClient.query(`${owner}.removeWrap.${identifier.windowName}`, { identifier }, () => {
