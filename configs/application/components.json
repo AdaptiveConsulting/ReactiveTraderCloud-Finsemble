@@ -1,552 +1,552 @@
 {
-    "comment": "Reactive Trader Components",
-    "components": {
-        "Blotter": {
-            "window": {
-                "url": "$componentRoot/blotter",
-                "frame": false,
-                "resizable": true,
-                "autoShow": true,
-                "top": "center",
-                "left": "center",
-                "width": 850,
-                "height": 475
-            },
-            "foreign": {
-                "services": {
-                    "dockingService": {
-                        "canGroup": true,
-                        "isArrangable": true
-                    }
-                },
-                "components": {
-                    "App Launcher": {
-                        "launchableByUser": true
-                    },
-                    "Window Manager": {
-                        "title": "Blotter",
-                        "FSBLHeader": true,
-                        "persistWindowState": false
-                    },
-                    "Toolbar": {
-                        "iconClass": "blotter"
-                    }
-                }
-            }
-        },
-        "Analytics": {
-            "window": {
-                "url": "$componentRoot/analytics",
-                "frame": true,
-                "resizable": true,
-                "autoShow": true,
-                "top": "center",
-                "left": "center",
-                "width": 330,
-                "height": 870
-            },
-            "foreign": {
-                "services": {
-                    "dockingService": {
-                        "canGroup": true,
-                        "isArrangable": true
-                    }
-                },
-                "components": {
-                    "App Launcher": {
-                        "launchableByUser": true
-                    },
-                    "Window Manager": {
-                        "title": "Analytics",
-                        "FSBLHeader": true,
-                        "persistWindowState": false
-                    },
-                    "Toolbar": {
-                        "iconClass": "ff-component"
-                    }
-                }
-            }
-        },
-        "EURUSD": {
-            "window": {
-                "url": "$componentRoot/spot/EURUSD",
-                "frame": true,
-                "resizable": true,
-                "autoShow": true,
-                "top": "center",
-                "left": "center",
-                "width": 360,
-                "height": 184
-            },
-            "component": {
-                "inject": ["$applicationRoot/components/mindcontrol/spotTileDrag.js", "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"]
-            },
-            "foreign": {
-                "services": {
-                    "dockingService": {
-                        "canGroup": true,
-                        "isArrangable": true
-                    }
-                },
-                "components": {
-                    "App Launcher": {
-                        "launchableByUser": false
-                    },
-                    "Window Manager": {
-                        "FSBLHeader": true,
-                        "title": "EURUSD",
-                        "persistWindowState": false
-                    },
-                    "Toolbar": {
-                        "iconClass": "EURUSD"
-                    }
-                }
-            }
-        },
-        "GBPUSD": {
-            "window": {
-                "url": "$componentRoot/spot/GBPUSD",
-                "frame": false,
-                "resizable": true,
-                "autoShow": true,
-                "top": "center",
-                "left": "center",
-                "width": 370,
-                "height": 184
-            },
-            "component": {
-                "inject": ["$applicationRoot/components/mindcontrol/spotTileDrag.js", "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"]
-            },
-            "foreign": {
-                "services": {
-                    "dockingService": {
-                        "canGroup": true,
-                        "isArrangable": true
-                    }
-                },
-                "components": {
-                    "App Launcher": {
-                        "launchableByUser": true
-                    },
-                    "Window Manager": {
-                        "title": "GBPUSD",
-                        "FSBLHeader": {
-                            "component": "windowTitleBar",
-                            "bumpElements": {
-                                "fixed": "all",
-                                "absolute": "all",
-                                "bumpBy": "auto"
-                            },
-                            "bodyMarginTop": "auto",
-                            "forceHeaderHeight": false
-                        },
-                        "persistWindowState": false,
-                        "showLinker": true
-                    },
-                    "Toolbar": {
-                        "iconClass": "GBPUSD"
-                    }
-                }
-            }
-        },
-        "EURJPY": {
-            "window": {
-                "url": "$componentRoot/spot/EURJPY",
-                "frame": false,
-                "resizable": true,
-                "autoShow": true,
-                "top": "center",
-                "left": "center",
-                "width": 370,
-                "height": 184
-            },
-            "component": {
-                "inject": ["$applicationRoot/components/mindcontrol/spotTileDrag.js", "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"]
-            },
-            "foreign": {
-                "services": {
-                    "dockingService": {
-                        "canGroup": true,
-                        "isArrangable": true
-                    }
-                },
-                "components": {
-                    "App Launcher": {
-                        "launchableByUser": true
-                    },
-                    "Window Manager": {
-                        "title": "EURJPY",
-                        "FSBLHeader": true,
-                        "persistWindowState": false,
-                        "showLinker": true
-                    },
-                    "Toolbar": {
-                        "iconClass": "EURJPY"
-                    }
-                }
-            }
-        },
-        "NZDUSD": {
-            "window": {
-                "url": "$componentRoot/spot/NZDUSD",
-                "frame": false,
-                "resizable": true,
-                "autoShow": true,
-                "top": "center",
-                "left": "center",
-                "width": 370,
-                "height": 184
-            },
-            "component": {
-                "inject": ["$applicationRoot/components/mindcontrol/spotTileDrag.js", "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"]
-            },
-            "foreign": {
-                "services": {
-                    "dockingService": {
-                        "canGroup": true,
-                        "isArrangable": true
-                    }
-                },
-                "components": {
-                    "App Launcher": {
-                        "launchableByUser": true
-                    },
-                    "Window Manager": {
-                        "title": "NZDUSD",
-                        "FSBLHeader": true,
-                        "persistWindowState": false,
-                        "showLinker": true
-                    },
-                    "Toolbar": {
-                        "iconClass": "NZDUSD"
-                    }
-                }
-            }
-        },
-        "EURCAD": {
-            "window": {
-                "url": "$componentRoot/spot/EURCAD",
-                "frame": false,
-                "resizable": true,
-                "autoShow": true,
-                "top": "center",
-                "left": "center",
-                "width": 370,
-                "height": 184
-            },
-            "component": {
-                "inject": ["$applicationRoot/components/mindcontrol/spotTileDrag.js", "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"]
-            },
-            "foreign": {
-                "services": {
-                    "dockingService": {
-                        "canGroup": true,
-                        "isArrangable": true
-                    }
-                },
-                "components": {
-                    "App Launcher": {
-                        "launchableByUser": true
-                    },
-                    "Window Manager": {
-                        "title": "EURCAD",
-                        "FSBLHeader": true,
-                        "persistWindowState": false,
-                        "showLinker": true
-                    },
-                    "Toolbar": {
-                        "iconClass": "EURCAD"
-                    }
-                }
-            }
-        },
-        "GBPJPY": {
-            "window": {
-                "url": "$componentRoot/spot/GBPJPY",
-                "frame": false,
-                "resizable": true,
-                "autoShow": true,
-                "top": "center",
-                "left": "center",
-                "width": 370,
-                "height": 184
-            },
-            "component": {
-                "inject": ["$applicationRoot/components/mindcontrol/spotTileDrag.js", "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"]
-            },
-            "foreign": {
-                "services": {
-                    "dockingService": {
-                        "canGroup": true,
-                        "isArrangable": true
-                    }
-                },
-                "components": {
-                    "App Launcher": {
-                        "launchableByUser": true
-                    },
-                    "Window Manager": {
-                        "title": "GBPJPY",
-                        "FSBLHeader": true,
-                        "persistWindowState": false,
-                        "showLinker": true
-                    },
-                    "Toolbar": {
-                        "iconClass": "GBPJPY"
-                    }
-                }
-            }
-        },
-        "AUDUSD": {
-            "window": {
-                "url": "$componentRoot/spot/AUDUSD",
-                "frame": false,
-                "resizable": true,
-                "autoShow": true,
-                "top": "center",
-                "left": "center",
-                "width": 370,
-                "height": 184
-            },
-            "component": {
-                "inject": ["$applicationRoot/components/mindcontrol/spotTileDrag.js", "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"]
-            },
-            "foreign": {
-                "services": {
-                    "dockingService": {
-                        "canGroup": true,
-                        "isArrangable": true
-                    }
-                },
-                "components": {
-                    "App Launcher": {
-                        "launchableByUser": true
-                    },
-                    "Window Manager": {
-                        "title": "AUDUSD",
-                        "FSBLHeader": true,
-                        "persistWindowState": false,   
-                        "showLinker": true
-                    },
-                    "Toolbar": {
-                        "iconClass": "AUDUSD"
-                    }
-                }
-            }
-        },
-        "USDJPY": {
-            "window": {
-                "url": "$componentRoot/spot/USDJPY?tileView=Analytics",
-                "frame": false,
-                "resizable": true,
-                "autoShow": true,
-                "top": "center",
-                "left": "center",
-                "width": 370,
-                "height": 184
-            },
-            "component": {
-                "inject": ["$applicationRoot/components/mindcontrol/spotTileDrag.js", "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"]
-            },
-            "foreign": {
-                "services": {
-                    "dockingService": {
-                        "canGroup": true,
-                        "isArrangable": true
-                    }
-                },
-                "components": {
-                    "App Launcher": {
-                        "launchableByUser": true
-                    },
-                    "Window Manager": {
-                        "title": "USDJPY",
-                        "FSBLHeader": true,
-                        "persistWindowState": false,
-                        "showLinker": true
-                    },
-                    "Toolbar": {
-                        "iconClass": "USDJPY"
-                    }
-                }
-            }
-        },
-        "GBPUSD Analytics": {
-            "window": {
-                "url": "$componentRoot/spot/GBPUSD?tileView=Analytics",
-                "frame": false,
-                "resizable": true,
-                "autoShow": true,
-                "top": "center",
-                "left": "center",
-                "width": 370,
-                "height": 184
-            },
-            "component": {
-                "inject": false
-            },
-            "foreign": {
-                "services": {
-                    "dockingService": {
-                        "canGroup": true,
-                        "isArrangable": true
-                    }
-                },
-                "components": {
-                    "App Launcher": {
-                        "launchableByUser": true
-                    },
-                    "Window Manager": {
-                        "title": "GBPUSD Analytics",
-                        "FSBLHeader": true,
-                        "persistWindowState": false,
-                        "showLinker": false
-                    },
-                    "Toolbar": {
-                        "iconClass": "GBPUSD Analytics"
-                    }
-                }
-            }
-        },
-        "EURJPY Analytics": {
-            "window": {
-                "url": "$componentRoot/spot/EURJPY?tileView=Analytics",
-                "frame": false,
-                "resizable": true,
-                "autoShow": true,
-                "top": "center",
-                "left": "center",
-                "width": 370,
-                "height": 184
-            },
-            "component": {
-                "inject": false
-            },
-            "foreign": {
-                "services": {
-                    "dockingService": {
-                        "canGroup": true,
-                        "isArrangable": true
-                    }
-                },
-                "components": {
-                    "App Launcher": {
-                        "launchableByUser": true
-                    },
-                    "Window Manager": {
-                        "title": "EURJPY Analytics",
-                        "FSBLHeader": true,
-                        "persistWindowState": false,
-                        "showLinker": false
-                    },
-                    "Toolbar": {
-                        "iconClass": "EURJPY Analytics"
-                    }
-                }
-            }
-        },
-        "Toolbar": {
-            "window": {
-                "id": "launcher",
-                "url": "$applicationRoot/components/toolbar/toolbar.html",
-                "width": 600,
-                "height": 39,
-                "dockedHeight": 39,
-                "top": 10,
-                "left": 0,
-                "right": 0,
-                "position": "available",
-                "autoShow": true,
-                "dockable": [
-                    "top",
-                    "bottom"
-                ],
-                "maxHeight": 39,
-                "minHeight": 39,
-                "minWidth": 300,
-                "docked": "top",
-                "canGroup": false,
-                "options": {
-                    "autoShow": false,
-                    "contextMenu": false,
-                    "showTaskbarIcon": false,
-                    "smallWindow": true,
-                    "cornerRounding": {
-                        "height": 7,
-                        "width": 7
-                    }
-                }
-            },
-            "component": {
-                "category": "system",
-                "spawnOnStartup": true,
-                "spawnOnHotKey": [
-                    "ctrl",
-                    "alt",
-                    "l"
-                ],
-                "spawnOnAllMonitors": false,
-                "canMinimize": false
-            },
-            "foreign": {
-                "services": {
-                    "dockingService": {
-                        "isArrangable": false,
-                        "ignoreSnappingRequests": true,
-                        "ignoreTilingAndTabbingRequests": true
-                    },
-                    "workspaceService": {
-                        "global": true
-                    }
-                },
-                "components": {
-                    "App Launcher": {
-                        "launchableByUser": false
-                    },
-                    "Window Manager": {
-                        "persistWindowState": false,
-                        "FSBLHeader": false
-                    }
-                }
-            }
-        },
-        "Currency Chart": {
-            "window": {
-                "url": "http://adaptiveconsulting.github.io/ReactiveTraderCloud/chartiq/template-advanced.html",
-                "frame": false,
-                "resizable": true,
-                "autoShow": true,
-                "top": "center",
-                "left": "center",
-                "width": 1000,
-                "height": 750
-            },
-            "component": {
-                "inject": ["$applicationRoot/components/mindcontrol/chartSubscribeLinker.js", "$applicationRoot/components/mindcontrol/chartDragAndDropReceiver.js"]
-            },
-            "foreign": {
-                "services": {
-                    "dockingService": {
-                        "canGroup": true,
-                        "isArrangable": true
-                    }
-                },
-                "components": {
-                    "App Launcher": {
-                        "launchableByUser": true
-                    },
-                    "Window Manager": {
-                        "title": "CurrencyChart",
-                        "FSBLHeader": true,
-                        "hackScrollbar": true,
-                        "persistWindowState": true,
-                        "showLinker": true
-                    },
-                    "Toolbar": {
-                        "iconClass": "CurrencyChart"
-                    }
-                }
-            }
-        }
-    }
+	"comment": "Reactive Trader Components",
+	"components": {
+			"Blotter": {
+					"window": {
+							"url": "$componentRoot/blotter",
+							"frame": false,
+							"resizable": true,
+							"autoShow": true,
+							"top": "center",
+							"left": "center",
+							"width": 850,
+							"height": 475
+					},
+					"foreign": {
+							"services": {
+									"dockingService": {
+											"canGroup": true,
+											"isArrangable": true
+									}
+							},
+							"components": {
+									"App Launcher": {
+											"launchableByUser": true
+									},
+									"Window Manager": {
+											"title": "Blotter",
+											"FSBLHeader": true,
+											"persistWindowState": false
+									},
+									"Toolbar": {
+											"iconClass": "blotter"
+									}
+							}
+					}
+			},
+			"Analytics": {
+					"window": {
+							"url": "$componentRoot/analytics",
+							"frame": true,
+							"resizable": true,
+							"autoShow": true,
+							"top": "center",
+							"left": "center",
+							"width": 330,
+							"height": 870
+					},
+					"foreign": {
+							"services": {
+									"dockingService": {
+											"canGroup": true,
+											"isArrangable": true
+									}
+							},
+							"components": {
+									"App Launcher": {
+											"launchableByUser": true
+									},
+									"Window Manager": {
+											"title": "Analytics",
+											"FSBLHeader": true,
+											"persistWindowState": false
+									},
+									"Toolbar": {
+											"iconClass": "ff-component"
+									}
+							}
+					}
+			},
+			"EURUSD": {
+					"window": {
+							"url": "$componentRoot/spot/EURUSD",
+							"frame": true,
+							"resizable": true,
+							"autoShow": true,
+							"top": "center",
+							"left": "center",
+							"width": 360,
+							"height": 184
+					},
+					"component": {
+							"inject": ["$applicationRoot/components/mindcontrol/spotTileDrag.js", "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"]
+					},
+					"foreign": {
+							"services": {
+									"dockingService": {
+											"canGroup": true,
+											"isArrangable": true
+									}
+							},
+							"components": {
+									"App Launcher": {
+											"launchableByUser": false
+									},
+									"Window Manager": {
+											"FSBLHeader": true,
+											"title": "EURUSD",
+											"persistWindowState": false
+									},
+									"Toolbar": {
+											"iconClass": "EURUSD"
+									}
+							}
+					}
+			},
+			"GBPUSD": {
+					"window": {
+							"url": "$componentRoot/spot/GBPUSD",
+							"frame": false,
+							"resizable": true,
+							"autoShow": true,
+							"top": "center",
+							"left": "center",
+							"width": 370,
+							"height": 184
+					},
+					"component": {
+							"inject": ["$applicationRoot/components/mindcontrol/spotTileDrag.js", "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"]
+					},
+					"foreign": {
+							"services": {
+									"dockingService": {
+											"canGroup": true,
+											"isArrangable": true
+									}
+							},
+							"components": {
+									"App Launcher": {
+											"launchableByUser": true
+									},
+									"Window Manager": {
+											"title": "GBPUSD",
+											"FSBLHeader": {
+													"component": "windowTitleBar",
+													"bumpElements": {
+															"fixed": "all",
+															"absolute": "all",
+															"bumpBy": "auto"
+													},
+													"bodyMarginTop": "auto",
+													"forceHeaderHeight": false
+											},
+											"persistWindowState": false,
+											"showLinker": true
+									},
+									"Toolbar": {
+											"iconClass": "GBPUSD"
+									}
+							}
+					}
+			},
+			"EURJPY": {
+					"window": {
+							"url": "$componentRoot/spot/EURJPY",
+							"frame": false,
+							"resizable": true,
+							"autoShow": true,
+							"top": "center",
+							"left": "center",
+							"width": 370,
+							"height": 184
+					},
+					"component": {
+							"inject": ["$applicationRoot/components/mindcontrol/spotTileDrag.js", "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"]
+					},
+					"foreign": {
+							"services": {
+									"dockingService": {
+											"canGroup": true,
+											"isArrangable": true
+									}
+							},
+							"components": {
+									"App Launcher": {
+											"launchableByUser": true
+									},
+									"Window Manager": {
+											"title": "EURJPY",
+											"FSBLHeader": true,
+											"persistWindowState": false,
+											"showLinker": true
+									},
+									"Toolbar": {
+											"iconClass": "EURJPY"
+									}
+							}
+					}
+			},
+			"NZDUSD": {
+					"window": {
+							"url": "$componentRoot/spot/NZDUSD",
+							"frame": false,
+							"resizable": true,
+							"autoShow": true,
+							"top": "center",
+							"left": "center",
+							"width": 370,
+							"height": 184
+					},
+					"component": {
+							"inject": ["$applicationRoot/components/mindcontrol/spotTileDrag.js", "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"]
+					},
+					"foreign": {
+							"services": {
+									"dockingService": {
+											"canGroup": true,
+											"isArrangable": true
+									}
+							},
+							"components": {
+									"App Launcher": {
+											"launchableByUser": true
+									},
+									"Window Manager": {
+											"title": "NZDUSD",
+											"FSBLHeader": true,
+											"persistWindowState": false,
+											"showLinker": true
+									},
+									"Toolbar": {
+											"iconClass": "NZDUSD"
+									}
+							}
+					}
+			},
+			"EURCAD": {
+					"window": {
+							"url": "$componentRoot/spot/EURCAD",
+							"frame": false,
+							"resizable": true,
+							"autoShow": true,
+							"top": "center",
+							"left": "center",
+							"width": 370,
+							"height": 184
+					},
+					"component": {
+							"inject": ["$applicationRoot/components/mindcontrol/spotTileDrag.js", "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"]
+					},
+					"foreign": {
+							"services": {
+									"dockingService": {
+											"canGroup": true,
+											"isArrangable": true
+									}
+							},
+							"components": {
+									"App Launcher": {
+											"launchableByUser": true
+									},
+									"Window Manager": {
+											"title": "EURCAD",
+											"FSBLHeader": true,
+											"persistWindowState": false,
+											"showLinker": true
+									},
+									"Toolbar": {
+											"iconClass": "EURCAD"
+									}
+							}
+					}
+			},
+			"GBPJPY": {
+					"window": {
+							"url": "$componentRoot/spot/GBPJPY",
+							"frame": false,
+							"resizable": true,
+							"autoShow": true,
+							"top": "center",
+							"left": "center",
+							"width": 370,
+							"height": 184
+					},
+					"component": {
+							"inject": ["$applicationRoot/components/mindcontrol/spotTileDrag.js", "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"]
+					},
+					"foreign": {
+							"services": {
+									"dockingService": {
+											"canGroup": true,
+											"isArrangable": true
+									}
+							},
+							"components": {
+									"App Launcher": {
+											"launchableByUser": true
+									},
+									"Window Manager": {
+											"title": "GBPJPY",
+											"FSBLHeader": true,
+											"persistWindowState": false,
+											"showLinker": true
+									},
+									"Toolbar": {
+											"iconClass": "GBPJPY"
+									}
+							}
+					}
+			},
+			"AUDUSD": {
+					"window": {
+							"url": "$componentRoot/spot/AUDUSD",
+							"frame": false,
+							"resizable": true,
+							"autoShow": true,
+							"top": "center",
+							"left": "center",
+							"width": 370,
+							"height": 184
+					},
+					"component": {
+							"inject": ["$applicationRoot/components/mindcontrol/spotTileDrag.js", "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"]
+					},
+					"foreign": {
+							"services": {
+									"dockingService": {
+											"canGroup": true,
+											"isArrangable": true
+									}
+							},
+							"components": {
+									"App Launcher": {
+											"launchableByUser": true
+									},
+									"Window Manager": {
+											"title": "AUDUSD",
+											"FSBLHeader": true,
+											"persistWindowState": false,   
+											"showLinker": true
+									},
+									"Toolbar": {
+											"iconClass": "AUDUSD"
+									}
+							}
+					}
+			},
+			"USDJPY": {
+					"window": {
+							"url": "$componentRoot/spot/USDJPY?tileView=Analytics",
+							"frame": false,
+							"resizable": true,
+							"autoShow": true,
+							"top": "center",
+							"left": "center",
+							"width": 370,
+							"height": 184
+					},
+					"component": {
+							"inject": ["$applicationRoot/components/mindcontrol/spotTileDrag.js", "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"]
+					},
+					"foreign": {
+							"services": {
+									"dockingService": {
+											"canGroup": true,
+											"isArrangable": true
+									}
+							},
+							"components": {
+									"App Launcher": {
+											"launchableByUser": true
+									},
+									"Window Manager": {
+											"title": "USDJPY",
+											"FSBLHeader": true,
+											"persistWindowState": false,
+											"showLinker": true
+									},
+									"Toolbar": {
+											"iconClass": "USDJPY"
+									}
+							}
+					}
+			},
+			"GBPUSD Analytics": {
+					"window": {
+							"url": "$componentRoot/spot/GBPUSD?tileView=Analytics",
+							"frame": false,
+							"resizable": true,
+							"autoShow": true,
+							"top": "center",
+							"left": "center",
+							"width": 370,
+							"height": 184
+					},
+					"component": {
+							"inject": false
+					},
+					"foreign": {
+							"services": {
+									"dockingService": {
+											"canGroup": true,
+											"isArrangable": true
+									}
+							},
+							"components": {
+									"App Launcher": {
+											"launchableByUser": true
+									},
+									"Window Manager": {
+											"title": "GBPUSD Analytics",
+											"FSBLHeader": true,
+											"persistWindowState": false,
+											"showLinker": false
+									},
+									"Toolbar": {
+											"iconClass": "GBPUSD Analytics"
+									}
+							}
+					}
+			},
+			"EURJPY Analytics": {
+					"window": {
+							"url": "$componentRoot/spot/EURJPY?tileView=Analytics",
+							"frame": false,
+							"resizable": true,
+							"autoShow": true,
+							"top": "center",
+							"left": "center",
+							"width": 370,
+							"height": 184
+					},
+					"component": {
+							"inject": false
+					},
+					"foreign": {
+							"services": {
+									"dockingService": {
+											"canGroup": true,
+											"isArrangable": true
+									}
+							},
+							"components": {
+									"App Launcher": {
+											"launchableByUser": true
+									},
+									"Window Manager": {
+											"title": "EURJPY Analytics",
+											"FSBLHeader": true,
+											"persistWindowState": false,
+											"showLinker": false
+									},
+									"Toolbar": {
+											"iconClass": "EURJPY Analytics"
+									}
+							}
+					}
+			},
+			"Toolbar": {
+					"window": {
+							"id": "launcher",
+							"url": "$applicationRoot/components/toolbar/toolbar.html",
+							"width": 600,
+							"height": 39,
+							"dockedHeight": 39,
+							"top": 10,
+							"left": 0,
+							"right": 0,
+							"position": "available",
+							"autoShow": true,
+							"dockable": [
+									"top",
+									"bottom"
+							],
+							"maxHeight": 39,
+							"minHeight": 39,
+							"minWidth": 300,
+							"docked": "top",
+							"canGroup": false,
+							"options": {
+									"autoShow": false,
+									"contextMenu": false,
+									"showTaskbarIcon": false,
+									"smallWindow": true,
+									"cornerRounding": {
+											"height": 7,
+											"width": 7
+									}
+							}
+					},
+					"component": {
+							"category": "system",
+							"spawnOnStartup": true,
+							"spawnOnHotKey": [
+									"ctrl",
+									"alt",
+									"l"
+							],
+							"spawnOnAllMonitors": false,
+							"canMinimize": false
+					},
+					"foreign": {
+							"services": {
+									"dockingService": {
+											"isArrangable": false,
+											"ignoreSnappingRequests": true,
+											"ignoreTilingAndTabbingRequests": true
+									},
+									"workspaceService": {
+											"global": true
+									}
+							},
+							"components": {
+									"App Launcher": {
+											"launchableByUser": false
+									},
+									"Window Manager": {
+											"persistWindowState": false,
+											"FSBLHeader": false
+									}
+							}
+					}
+			},
+			"Currency Chart": {
+					"window": {
+							"url": "http://adaptiveconsulting.github.io/ReactiveTraderCloud/chartiq/template-advanced.html",
+							"frame": false,
+							"resizable": true,
+							"autoShow": true,
+							"top": "center",
+							"left": "center",
+							"width": 1000,
+							"height": 750
+					},
+					"component": {
+							"inject": ["$applicationRoot/components/mindcontrol/chartSubscribeLinker.js", "$applicationRoot/components/mindcontrol/chartDragAndDropReceiver.js"]
+					},
+					"foreign": {
+							"services": {
+									"dockingService": {
+											"canGroup": true,
+											"isArrangable": true
+									}
+							},
+							"components": {
+									"App Launcher": {
+											"launchableByUser": true
+									},
+									"Window Manager": {
+											"title": "CurrencyChart",
+											"FSBLHeader": true,
+											"hackScrollbar": true,
+											"persistWindowState": true,
+											"showLinker": true
+									},
+									"Toolbar": {
+											"iconClass": "CurrencyChart"
+									}
+							}
+					}
+			}
+	}
 }
