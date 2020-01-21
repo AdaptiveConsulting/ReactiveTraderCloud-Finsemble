@@ -1,5 +1,6 @@
 import React from "react";
 import { FinsembleButton } from "@chartiq/finsemble-react-controls";
+import BringtoFrontIcon from "./assets/to-front-icon";
 
 // Store
 import ToolbarStore from "../stores/toolbarStore";
@@ -16,8 +17,15 @@ export default class BringToFront extends React.Component {
 	render() {
 		let tooltip = "Bring all Windows to the Front";
 		let buttonClass = "ff-bring-to-front finsemble-toolbar-button-icon";
-		return (<FinsembleButton className={this.props.classes + " icon-only"} buttonType={["Toolbar"]} title={tooltip} onClick={this.bringToFront}>
-			<i className={buttonClass}></i>
-		</FinsembleButton>);
+		return (
+			<FinsembleButton
+				className={this.props.classes + " icon-only"}
+				buttonType={["Toolbar"]}
+				title={tooltip}
+				onClick={this.bringToFront}
+			>
+				<BringtoFrontIcon />
+			</FinsembleButton>
+		);
 	}
 }

@@ -4,18 +4,26 @@
 */
 
 "use strict";
-type valueParam = {
+type fieldOnlyParam = {
+	/** Name of the field */
+	field: string
+}
+type fieldOnlyParams = fieldOnlyParam[] | string[];
+
+type fieldAndValueParam = {
+	/** Name of the field */
 	field: string,
+	/** Value of the field */
 	value?: any
 };
-type valueParams = valueParam[] | string[];
+type fieldAndValueParams = fieldAndValueParam[] | string[];
 type listenerParam = {
 	/**
 	 * The data field to listen for.
 	*/
 	field?: string,
 	/**
-	 * the function to call when a listener is triggered. If this is empty, fn is used.
+	 * The function to be called when the observed piece of config is modified. If this is empty, fn is used.
 	 */
 	listener?: Function
 }
@@ -31,9 +39,12 @@ import Logger from "./logger";
  * @introduction
  * <h2>Config Client</h2>
  *
- * This client provides run-time access to Finsemble's configuration. See the [Configuration tutorial](tutorial-Configuration.html) for a configuration overview.
- * The Config Client functions similar to a global store created with the DistributedStoreClient and offers many of the same methods.
+ * This client provides run-time access to Finsemble's configuration.
+ * The Config Client functions similar to a global store created with the Distributed Store Client and offers many of the same methods.
  * Values modified at runtime are not persisted.
+ *
+ *
+ * See the [Configuration tutorial](tutorial-Configuration.html) for a configuration overview.
  *
  * @hideconstructor
  * @constructor
@@ -60,25 +71,23 @@ class ConfigClient extends BaseClient {
 	}
 	/**
 	 * Get a value from the config.
-	 * @param {valueParam | String} params - Params object. This can also be a string
-	 * @param {String} params.field - The field where the value is stored.
-	 * @param {Function} cb -  Will return the value if found.
-	 * @returns {any} - The value of the field. If no callback is given and the value is local, this will run synchronous
+	 * @param {Function} cb Will return the value if found.
+	 * @returns {any} The value of the field. If no callback is given and the value is local, this will run synchronous
 	 * @example
-	 * FSBL.Clients.ConfigClient.getValue({field:'field1'},function(err,value){});
-	 * FSBL.Clients.ConfigClient.getValue('field1',function(err,value){});
+	 * FSBL.Clients.ConfigClient.getValue({ field:'field1' }, function(err,value){ });
+	 * FSBL.Clients.ConfigClient.getValue('field1', function(err,value){ });
 	 */
-	getValue(params: string | valueParam, cb = Function.prototype): Promise<any> {
+	getValue(params: fieldOnlyParam | string, cb = Function.prototype): Promise<any> {
 		if (typeof params === "string") { params = { field: params }; }
 
 		const promiseResolver = (resolve, reject) => {
-			if (!(params as valueParam).field) {
+			if (!(params as fieldOnlyParam).field) {
 				const err = "no field provided";
 				reject(err);
 				return cb(err);
 			}
 
-			this.routerClient.query("configService.getValue", { field: (params as valueParam).field },
+			this.routerClient.query("configService.getValue", { field: (params as fieldOnlyParam).field },
 				function (err, response) {
 					if (err) { reject(err); return cb(err); }
 					resolve({ err, data: response.data });
@@ -91,16 +100,15 @@ class ConfigClient extends BaseClient {
 
 	/**
 	 * Get multiple values from the config.
-	* @param {Object[] | String[]} fields - An array of field objects. If there are no fields provided, the complete configuration manifest are returned.
-	 * @param {String} fields[].field - The name of the field
-	 * @param {Function} cb -  Will return the value if found.
-	 * @returns {Object} - returns an object of with the fields as keys.If no callback is given and the value is local, this will run synchronous
+	* @param {fieldOnlyParam[] | string[]} fields An array of field objects. If there are no fields provided, the complete configuration manifest is returned.
+	 * @param {Function} cb Will return the value if found.
+	 * @returns {Object} - Returns an object of with the fields as keys. If no callback is given and the value is local, this will run synchronous
 	 * @example
-	 * FSBL.Clients.ConfigClient.getValues([{field:'field1'},{field2:'field2'}],function(err,values){});
-	 * FSBL.Clients.ConfigClient.getValues(['field1','field2'],function(err,values){});
+	 * FSBL.Clients.ConfigClient.getValues([{ field: 'field1' },{ field2: 'field2' }],function(err,values){ });
+	 * FSBL.Clients.ConfigClient.getValues(['field1','field2'], function(err,values){ });
 	 * FSBL.Clients.ConfigClient.get(null, callback); // returns the complete manifest containing the finsemble property
 	*/
-	getValues(fields: valueParams, cb = Function.prototype) {
+	getValues(fields?: fieldOnlyParam[] | string[], cb = Function.prototype) {
 		if (typeof fields === "function") {
 			cb = fields;
 			fields = null;
@@ -123,17 +131,14 @@ class ConfigClient extends BaseClient {
 	};
 
 	/**
-	 * Set a value in the config. Setting a value will trigger events that you can listen to using addListener
-	 * @param {Object} params - Params object
-	 * @param {String} params.field - The name of the field where data will be stored
-	 * @param {any} params.value - Value to be stored
-	 * @param {function} cb optional callback
+	 * Set a value in the config. Setting a value will trigger events that you can listen to using <a href="ConfigClient.html#addListener">addListener</a>.
+	 * @param {function} cb Optional callback
 	 * @returns {null}
 	 *
 	 * @example
-	 * FSBL.Clients.ConfigClient.setValue({field:'field1',value:"new value"});
+	 * FSBL.Clients.ConfigClient.setValue({ field:'field1', value:"new value" });
 	 */
-	setValue(params: valueParam, cb) {
+	setValue(params: fieldAndValueParam, cb?) {
 		var data = {
 			field: params.field,
 			value: params.value
@@ -145,16 +150,13 @@ class ConfigClient extends BaseClient {
 
 	/**
 	 * This will set multiple values in the config.
-	 * @param {Object} fields - An Array of field objects
-	 * @param {String} fields.field - The name of the field
-	 * @param {any} fields.value - Field value
-	 * @param {function} cb optional callback
+	 * @param {function} cb Optional callback
 	 * @returns {null}
 	 *
 	 * @example
-	 * FSBL.Clients.ConfigClient.setValues([{field:'field1',value:"new value"}]);
+	 * FSBL.Clients.ConfigClient.setValues([{ field:'field1', value: "new value" }]);
 	 */
-	setValues(fields: valueParams, cb?) {
+	setValues(fields: fieldAndValueParams, cb?) {
 		if (!fields) {
 			return Logger.system.error("ConfigClient.SetValues. No params given");
 		}
@@ -168,13 +170,12 @@ class ConfigClient extends BaseClient {
 
 	/**
 	 * Remove a value from the config.
-	 * @param {Object | String} params - Either an object or string
-	 * @param {String} param.field - The name of the field
-	 * @param {Function} cb -  returns an error if there is one
+	 * @param {fieldAndValueParam | String} params - Either an object or string
+	 * @param {Function} cb -  Returns an error if there is one
 	 * @example
-	 * FSBL.Clients.ConfigClient.removeValue({field:'field1'},function(err,bool){});
+	 * FSBL.Clients.ConfigClient.removeValue({ field:'field1' }, function(err,bool){ });
 	 */
-	removeValue(params: valueParam, cb = Function.prototype) {
+	removeValue(params: fieldAndValueParam, cb = Function.prototype) {
 
 		if (params !== undefined) {
 			if (!params.field && typeof params === "string") {
@@ -190,12 +191,15 @@ class ConfigClient extends BaseClient {
 
 	/**
 	 * Removes multiple values from the config.
-	 * @param {Array.<Object>} params - An Array of field objects
-	 * @param {Function} cb -  returns an error if there is one.
+	 * @param {fieldAndValueParams} params - An Array of field objects
+	 * @param {Function} cb -  Returns an error if there is one.
 	 * @example
-	 * FSBL.Clients.ConfigClient.removeValue({field:'field1'},function(err,bool){});
+	 * FSBL.Clients.ConfigClient.removeValues([{
+	 * 	field:'field1'
+	 * }],
+	 * function(err,bool){	});
 	 */
-	removeValues(params: valueParams, cb = Function.prototype) {
+	removeValues(params: fieldAndValueParams, cb = Function.prototype) {
 		if (!Array.isArray(params)) { return cb("The passed in parameter needs to be an array"); }
 		//casting needed here because params doesn't have an index method?? My guess is that their type defs aren't great.
 		asyncMap((params as any), this.removeValue, function (err, data) {
@@ -219,19 +223,17 @@ class ConfigClient extends BaseClient {
 
 	/**
 	* Add a listener to the config at either the root config level or field level. If no field is given, the root config level is used. You can also listen for changes to config fields any number of levels deep -- finsemble.configitem.deeperconfigitem.evendeeperconfigitem
-	* @param {Object} params - Params object
-	* @param {String} params.field - The data field to listen for. If this is empty it listen to all changes of the store.
-	* @param {Function} fn -  the function to call when a listener is triggered
-	* @param {Function} cb - callback
+	* @param {Function} fn The function to be called when the observed piece of config is modified.
+	* @param {Function} cb Callback to be invoked after the listener is added.
 	* @example
 	* var myFunction = function(err,data){};
-	* FSBL.Clients.ConfigClient.addListener({field:'field1'},myFunction,cb);
+	* FSBL.Clients.ConfigClient.addListener({ field:'field1' }, myFunction, cb);
 	*/
-	addListener(params: listenerParam, fn, cb?) {
+	addListener(params: fieldOnlyParam, fn, cb?) {
 		var field = null;
 		if (typeof params === "function") {
 			fn = params;
-			params = {};
+			params = { field };
 		}
 		if (params.field) { field = params.field; }
 
@@ -249,13 +251,9 @@ class ConfigClient extends BaseClient {
 
 	/**
 	 *
-	* Add an array of listeners as objects or strings. If using strings, you must provide a function callback.
-	* @param {Object | Array.<Object>} params - Params object
-	* @param {String} params[].field - The data field to listen for.
-	* @param {String} params[].listener - the function to call when a listener is triggered. If this is empty, fn is used.
-	* @param {function} fn -  the function to call when a listener is triggered
-	* @param {function} cb
-   	* @todo make the typing proper.
+	* Add an array of listeners as objects or strings. If using strings, you must provide a function callback as the second parameter.
+	* @param {function} fn The function to be called when the observed piece of config is modified.
+	* @param {function} cb Callback to be invoked after the listeners are added.
 	* @example
 	* var myFunction = function(err,data){}
   * FSBL.Clients.ConfigClient.addListeners(
@@ -277,7 +275,7 @@ class ConfigClient extends BaseClient {
 	*/
 	addListeners(params: listenerParam | listenerParam[], fn?: Function, cb?: Function) {
 		if (!Array.isArray(params)) {
-			return this.addListener(params, fn, cb);
+			return this.addListener({ field: params.field }, fn, cb);
 		}
 
 		for (var i = 0; i < params.length; i++) {
@@ -310,23 +308,24 @@ class ConfigClient extends BaseClient {
 
 	/**
 	 * Remove a listener from config. If no field is given, we look for a config root listener
-	 * @param {Object} params - Params object
-	 * @param {String} [params.field] - The data field
-	 * @param {function} [fn] -  the function to remove from the listeners
-	 * @param {function} [cb] -  returns true if it was successful in removing the listener.
+	 * @param {function} fn The listener to remove.
+	 * @param {function} cb Returns true if it was successful in removing the listener.
 	 *
 	 * @example
-	 * var myFunction = function(err,data){}
-	 * FSBL.Clients.ConfigClient.removeListener({field:'field1'},MyFunction,function(bool){});
-	 * FSBL.Clients.ConfigClient.removeListener(MyFunction,function(bool){});
+	 * var myFunction = function(err,data){ }
+	 * FSBL.Clients.ConfigClient.removeListener({
+	 * 	field:'field1'
+	 * }, MyFunction, function(bool){ });
+	 * FSBL.Clients.ConfigClient.removeListener(MyFunction, function(bool){ });
 	 */
-	removeListener(params: listenerParam, fn, cb?) {
+	removeListener(params: fieldOnlyParam, fn: Function, cb?: Function) {
 		var field = null;
 
+		// The case below is for removing the root level config listener
 		if (typeof params === "function") {
 			cb = fn;
 			fn = params;
-			params = {};
+			params = { field };
 		}
 
 		if (params.field) { field = params.field; }
@@ -344,24 +343,25 @@ class ConfigClient extends BaseClient {
 
 	/**
 	 * Remove an array of listeners from the config
-	 * @param {Object | Array.<Object>} params - Params object
-	 * @param {String} params.field - The data field to listen for. If this is empty it listen to all changes of the store.
-	 * @param {function} params.listener - The listener function
-	 * @param {function} [fn] -  the function to remove from the listeners
-	 * @param {function} [cb] -  returns true if it was successful in removing the listener.
+	 * @param {removeListenersType} params
+	 * @param {function} fn The listener to remove
+	 * @param {function} cb Returns true if it was successful in removing the listener.
 	 *
 	 * @example
 	 * var myFunction = function(err,data){ }
-	 * FSBL.Clients.ConfigClient.removeListeners({field:'field1'},MyFunction,function(bool){});
-	 * FSBL.Clients.ConfigClient.removeListeners([{field:'field1',listener:MyFunction}],function(bool){});
-	 * FSBL.Clients.ConfigClient.removeListeners(['field1'],MyFunction,function(bool){});
+	 * FSBL.Clients.ConfigClient.removeListeners({
+	 * 	field: 'field1'
+	 * }, MyFunction, function(bool){ });
+	 * FSBL.Clients.ConfigClient.removeListeners([{ field:'field1', listener: MyFunction }], function(bool){ });
+	 * FSBL.Clients.ConfigClient.removeListeners(['field1'], MyFunction, function(bool) { });
 	 */
 	removeListeners(params: removeListenersType, fn?: Function, cb?: Function) {
 		if (!Array.isArray(params)) {
+			// The typecasting below is bad but it prevents build problems. We should tighten the APIs.
 			if (typeof params === "function") {
-				this.removeListener({}, params, cb);
+				this.removeListener(({} as fieldOnlyParam), params, cb);
 			} else if (params.field) {
-				this.removeListener(params, fn, cb);
+				this.removeListener((params as fieldOnlyParam), fn, cb);
 			}
 			return cb("missing fields");
 		}
@@ -441,7 +441,7 @@ class ConfigClient extends BaseClient {
 	 * @private
 	 * @example
 	 *
-	 * FSBL.Clients.ConfigClient.get({ field: "finsemble" },function(err, finsemble) {
+	 * FSBL.Clients.ConfigClient.get({ field: "finsemble" }, function(err, finsemble) {
 	 *		if (!err) {
 	 *			finsembleConfig = finsemble;
 	 *		} else {
@@ -458,11 +458,11 @@ class ConfigClient extends BaseClient {
 	 * FSBL.Clients.ConfigClient.get({}, callback); // alternate form; returns the complete manifest containing the finsemble property
 	 * FSBL.Clients.ConfigClient.get({ field: "finsemble.components" }, callback);
 	 * FSBL.Clients.ConfigClient.get({ field: "finsemble.services" }, callback);
-	 * FSBL.Clients.ConfigClient.get({ field: "finsemble.components" },callback);
-	 * FSBL.Clients.ConfigClient.get({ field: "finsemble.assimilation.whitelist" }, callback);
-	 * FSBL.Clients.ConfigClient.get({ field: "runtime.version",callback) }; // returns the manifest's runtime.version property
+	 * FSBL.Clients.ConfigClient.get({ field: "finsemble.components" }, callback);
+	 * FSBL.Clients.ConfigClient.get({ field: "finsemble.assimilation" }, callback);
+	 * FSBL.Clients.ConfigClient.get({ field: "runtime.version", callback) }; // returns the manifest's runtime.version property
 	 */
-	get(params: valueParam | {}, callback) {
+	get(params: fieldOnlyParam | {}, callback) {
 		Logger.system.debug("ConfigClient.Get", params);
 		Logger.system.warn("This functionality has been deprecated. It will be removed in Finsemble version 3.0. Use getValue instead.", params);
 
@@ -487,7 +487,7 @@ class ConfigClient extends BaseClient {
 	 * @param {function} callback
 	 */
 
-	set = (params: valueParam | {}, callback) => {
+	set = (params: fieldAndValueParam | {}, callback) => {
 		Logger.system.debug("ConfigClient.Set", params);
 		// if only one argument then assume no filtering parameters -- the complete manifest will be returned
 		if (arguments.length === 1) {
@@ -503,20 +503,20 @@ class ConfigClient extends BaseClient {
 	}
 
 	/**
-	 * Dynamically set config values within the Finsemble configuration.  New config properties may be set or existing ones modified. Note that configuration changes will not necessarily dynamically modify the components or services that use the corresponding configuration -- it depends if the component or service handles the corresponding change notifications (either though PubSub or the Config's DataStore). Also, these changes do not persist in any config files.)
+	 * Dynamically set config values within the Finsemble configuration.  New config properties may be set or existing ones modified. Note that configuration changes will not necessarily dynamically modify the components or services that use the corresponding configuration -- it depends if the component or service handles the corresponding change notifications (either though PubSub or the Config's DataStore). Also, these changes do not persist in any config files.
 	 *
-	 * Special Note: Anytime config is set using this API, the newConfig along with the updated manifest will by published to the PubSub topic "Config.changeNotification".  To get these notifications any component or service can subscribe to the topic. An example is shown below.
+	 * <b>Note</b>: Anytime config is set using this API, the newConfig along with the updated manifest will by published to the PubSub topic "Config.changeNotification".  To get these notifications any component or service can subscribe to the topic. An example is shown below.
 	 *
-	 * Special Note: Anytime config is set using this API, the dataStore underlying configuration 'Finsemble-Configuration-Store' will also be updated. To get these dataStore events a listener can be set as shown in the example below. However, any config modifications made directly though the DataStore will not result in corresponding PubSub notifications.
+	 * <b>Note</b>: Anytime config is set using this API, the dataStore underlying configuration 'Finsemble-Configuration-Store' will also be updated. To get these dataStore events a listener can be set as shown in the example below. However, any config modifications made directly though the DataStore will not result in corresponding PubSub notifications.
 	 *
 	 * @param {object} params
-	 * @param {object} params.newConfig provides the configuration properties to add into the existing configuration under manifest.finsemble. This config must match the Finsemble config requirements as described in [Understanding Finsemble's Configuration]{@tutorial Configuration}. It can include importConfig references to dynamically fetch additional configuration files.
-	 * @param {boolean} params.overwrite if true then overwrite any preexisting config with new config (can only set to true when running from same origin, not cross-domain); if false then newConfig must not match properties of existing config, including service and component configuration.
-	 * @param {boolean} params.replace true specifies any component or service definitions in the new config will place all existing non-system component and service configuration
-	 * @param {function} cb callback to be invoked upon task completion.
+	 * @param {object} params.newConfig Provides the configuration properties to add into the existing configuration under manifest.finsemble. This config must match the Finsemble config requirements as described in the [Configuration tutorial]{@tutorial Configuration}. It can include importConfig references to dynamically fetch additional configuration files.
+	 * @param {boolean} params.overwrite If true then overwrite any preexisting config with new config (can only set to true when running from same origin, not cross-domain); if false then newConfig must not match properties of existing config, including service and component configuration.
+	 * @param {boolean} params.replace True specifies any component or service definitions in the new config will place all existing non-system component and service configuration
+	 * @param {StandardCallback} callback Callback to be invoked upon task completion.
 	 * @example
 	 * // Examples using processAndSet()
-	 * FSBL.Clients.ConfigClient.processAndSet({ newConfig: { myNewConfigField: 12345 }, overwrite: false});
+	 * FSBL.Clients.ConfigClient.processAndSet({ newConfig: { myNewConfigField: 12345 }, overwrite: false });
 	 * FSBL.Clients.ConfigClient.processAndSet(
 	 * {
 	 *	newConfig: {
@@ -581,16 +581,17 @@ class ConfigClient extends BaseClient {
 
 	/**
 	 * Sets a value on the configStore and persists that value to storage. On application restart, this value will overwrite any application defaults.
-	 * @param {Object} params - Params object
-	 * @param {String} params.field - The name of the field where data will be stored
-	 * @param {any} params.value - Value to be stored
-	 * @param {function} callback - callback to be invoked when preferences have been retrieved from the service.
+	 * @param {fieldAndValueParam} params
+	 * @param {StandardCallback} callback Callback to be invoked when callback to be invoked when preferences have been retrieved from the service.
 	 * @example
-	 * FSBL.Clients.ConfigClient.setPreference({field: "finsemble.initialWorkspace", value: "Workspace 2" }, (err, response) => {
+	 * FSBL.Clients.ConfigClient.setPreference({
+	 * 	field: "finsemble.initialWorkspace",
+	 * 	value: "Workspace 2"
+	 * }, (err, response) => {
 	 * 		//preference has been set
 	 * });
 	 */
-	setPreference(params: valueParam, callback?: StandardCallback) {
+	setPreference(params: fieldAndValueParam, callback?: StandardCallback) {
 		this.routerClient.query("PreferencesService.setPreference", params, function (queryErr, queryResponse) {
 			if (callback) {
 				callback(queryErr, queryResponse ? queryResponse.data : null);
@@ -600,14 +601,14 @@ class ConfigClient extends BaseClient {
 
 	/**
 	 * Retrieves all of the preferences set for the application.
-	 * @param {Object} params - parameters to pass to getPreferences. Optional. Defaults to null and currently ignored.
-	 * @param {function} callback - callback to be invoked when preferences have been retrieved from the service.
+	 * @param {Object} params Parameters to pass to getPreferences. Optional. Defaults to null and currently ignored.
+	 * @param {StandardCallback} callback Callback to be invoked when preferences have been retrieved from the service.
 	 * @example
-	 * FSBL.Clients.ConfigClient.getPreferences((err, preferences)=>{
+	 * FSBL.Clients.ConfigClient.getPreferences((err, preferences)=> {
 	 * 		//use preferences.
 	 * });
 	 */
-	getPreferences(params: any, callback?: StandardCallback) {
+	getPreferences(params?: any, callback?: StandardCallback) {
 		if (typeof params === "function") {
 			callback = params;
 			params = null;

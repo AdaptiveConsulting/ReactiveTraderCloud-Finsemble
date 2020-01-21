@@ -38,9 +38,8 @@ function removeGlobalStore(params, cb) {
  * <h2>Distributed Store Client</h2>
  * The Distributed Store Client handles creating, retrieving, and destroying stores. Stores are used to save and retrieve data either locally or globally.
  * This data is not persisted. You can add listeners at multiple levels (store or field), and get the updated data as it's updated in the store.
- * Fields are stored within the store as key/value pair.
+ * Fields are stored within the store as key/value pair. For more information, see the <a href="tutorial-DistributedStore.html">Distributed Store tutorial</a>.
  *
- * For more information, see the [Distributed Store tutorial](tutorial-DistributedStore.html).
 
  * @hideconstructor
  * @constructor
@@ -55,14 +54,16 @@ class DistributedStoreClient extends _BaseClient {
 
 
 	/**
-	 * Get a store. If no store is set then we'll get the global Finsemble store. If global is not set we'll check local first then we'll check global.
-	 * @param {Object} params - Params object
-	 * @param {String} params.store -  The namespace of the value
-	 * @param {boolean} params.global - If true, indicates the store is global.
+	 * Get a store. If no store is set, you will get the global Finsemble store. If global is not set, Finsemble will check local first then check global.
+	 * @param {String} params.store The name of the store.
+	 * @param {boolean} params.global Whether a store is accessible outside of the component it's created in.
 	 * @param {function} cb -  Will return the value if found.
 	 * @returns {StoreModel} - returns the store
 	 * @example
-	 * DistributedStoreClient.getStore({store:'store1'},function(storeObject){});
+	 * FSBL.Clients.DistributedStoreClient.getStore({
+	 * 	store:'store1'
+	 * },
+	 * function(error, storeObject){});
 	 */
 	getStore(params: {
 		store?: string,
@@ -84,19 +85,24 @@ class DistributedStoreClient extends _BaseClient {
 
 	/**
 	 *Creates a store.
-	 * @param params Params object
-	 * @param {string} params.store The namespace of to use
-	 * @param {any} [params.values] -  Starting values for the store
-	 * @param {boolean} params.global If true, indicates the store is global.
-	 * @param {boolean} [params.persist] - Should this store persists? THe store must be global to use this flag.
-	 * @param {function} cb -  Will return the store on success.
-	 * @returns {function} - Callback will receive the store
+	 * @param {string} params.store The name of the store.
+	 * @param {any} params.values Starting values for the store.
+	 * @param {boolean} params.global Whether a store is accessible outside of the component it's created in.
+	 * @param {boolean} params.persist Whether to persist the values of the store to storage. The store must be global to use this flag.
+	 * @param {function} cb  Will return the store on success.
+	 * @returns {function} Callback will receive the store
 	 * @example
-	 * DistributedStoreClient.createStore({store:"store1",global:false,values:{}},function(storeObject){});
+	 * FSBL.Clients.DistributedStoreClient.createStore({
+	 * 	store:"store1",
+	 * 	global:false,
+	 * 	values:{}
+	 * },
+	 * function(error, storeObject){});
 	 */
 	createStore(params: {
 		store: string,
 		global?: boolean,
+		persist?: boolean,
 		values?: any
 	}, cb: Function = Function.prototype): Promise<{ err: any, data: any }> {
 		const promiseResolver = (resolve, reject) => {
@@ -127,13 +133,16 @@ class DistributedStoreClient extends _BaseClient {
 	};
 
 	/**
-	 * Remove a store . If global is not set and a local store isn't found we'll try to remove the global store
-	 * @param {Object} params - Params object
-	 * @param {String} params.store -  The namespace of to use
-	 * @param {boolean} [params.global] - Is this a global store?
-	 * @param {function} cb
+	 * Remove a store. If global is not set and a local store isn't found, Finsemble will remove the global store.
+	 * @param {String} params.store The name of the store.
+	 * @param {boolean} params.global Whether the store you're trying to remove is a global store.
+	 * @param {function} cb Callback to be invoked when the store is removed.
 	 * @example
-	 * DistributedStoreClient.removeStore({store:"store1",global:true},function(){});
+	 * FSBL.Clients.DistributedStoreClient.removeStore({
+	 * 	store:"store1",
+	 * 	global:true
+	 * },
+	 * function(){});
 	 */
 	removeStore(params: {
 		store: string,

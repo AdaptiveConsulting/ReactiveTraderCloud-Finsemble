@@ -24,6 +24,7 @@ export default class FDC3 {
 	_get(path, done) {
 		fetch(this.config.url + path, {
 			method: "GET"
+
 		}).then((response) => {
 			response.json().then((data) => {
 				// We are expecting 200 here for data

@@ -431,7 +431,6 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 		var responderCallback = map[queryMessage.header.channel];
 		if (responderCallback === undefined) {
 			Logger.system.warn("RouterClient: no query responder define on channel " + queryMessage.header.channel + " incoming from " + queryMessage.header.origin, queryMessage);
-			responderCallback(null, queryMessage); // invoke the callback (no error), queryMessage);
 		} else {
 			if (!queryMessage.header.error) {
 				queryMessage.originatedHere = originatedHere; // add local function to test origin

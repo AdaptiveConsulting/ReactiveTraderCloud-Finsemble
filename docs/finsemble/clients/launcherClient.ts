@@ -39,7 +39,7 @@ interface ShowWindowParams extends SpawnParams {
  * @property {string} [url] url to load (if HTML5 component).
  * @property {string} [native] The name of the native app (if a native component launched by Assimilation service).
  * @property {string} name The name of the window (sometimes randomly assigned).
- * @property {string} componentType The type of component (from components.json).
+ * @property {string} componentType The type of component (from <i>components.json</i>).
  */
 
 /**
@@ -60,12 +60,26 @@ var okayToOpenMenu = {};
  *
  * @introduction
  * <h2>Launcher Client</h2>
- * The Launcher Client handles spawning windows. It also maintains the list of components which can be spawned.
+ *
+ * The Launcher Client handles spawning windows of all kinds.
+ * Finsemble provides the architecture to launch, resize, and reposition any component, whether native, modern, or third-party.
+ *
+ *
+ * The Launcher API has capabilities to customize your end user's experience.
+ * This includes CSS-like positioning and a fully display-aware positioning that deals with idiosyncrasies such as monitors with different scaling resolutions.
+ *
+ *
+ * CSS provides higher level abstractions that aid in laying out an application that is composed of constituent parts.
+ * Finsemble has borrowed CSS’s positioning paradigm and applied it to the task of laying out windows on the desktop.
+ * This CSS-style positioning allows windows to be positioned on the `left`, `right`, `top`, or `bottom` of the end user’s screen for instance; we also developed new positions, such as `adjacent`, which allows a child window to spawn adjacent to their parent.
+ * Components can be positioned and sized by percentage, relative to the monitor or to each other (nested windows).
+ *
+ *
+ * The Launcher Client frequently uses the parameters <code>windowName</code> and <code>componentType</code>. [Learn more about them here](tutorial-ComponentTypesAndWindowNames.html).
  *
  *
  *
  * @hideconstructor
- *
  * @constructor
  */
 class LauncherClient extends BaseClient {
@@ -79,11 +93,9 @@ class LauncherClient extends BaseClient {
 	}
 
 	/** @alias LauncherClient# */
-	//var self = this;
-	//BaseClient.call(this, params);
 
 	/**
-	 * Get a list of registered components (those that were entered into *components.json*).
+	 * Get a list of registered components (those that were entered into <i>components.json</i>).
 	 *
 	 * @param {Function} cb Callback returns an object map of components. Each component object
 	 * contains the default config for that component.
@@ -100,7 +112,7 @@ class LauncherClient extends BaseClient {
 	}
 
 	/**
-	 * Get the component config (i.e. from components.json) for a specific component.
+	 * Get the component config (from <i>components.json</i>) for a specific component.
 	 *
 	 * @param {String} componentType The type of the component.
 	 * @param {Function} cb Callback returns the default config (windowDescriptor) for the requested componentType.
@@ -120,31 +132,33 @@ class LauncherClient extends BaseClient {
 	}
 
 	/**
-	 * Gets monitorInfo (dimensions and position) for a given windowIdentifier or for a specific monitor.
+	 * Gets monitor information for a given windowIdentifier or for a specific monitor.
 	 * If neither the identifier or monitor are provided then the monitorInfo for the current window is returned.
 	 *
 	 *
 	 * The information returned contains:
 	 *
-	 * **monitorRect** - The full dimensions for the monitor.
-	 *
-	 * **availableRect** - The dimensions for the available space on the monitor (less windows toolbars).
-	 *
-	 * **unclaimedRect** - The dimensions for available monitor space less any space claimed by components (such as the application Toolbar).
+	 * **monitorRect** - The full dimensions for the monitor. <br>
+	 * **availableRect** - The dimensions for the available space on the monitor (less the Windows task bar). <br>
+	 * **unclaimedRect** - The dimensions for available monitor space less any space claimed by components (such as the Toolbar). <br>
 	 *
 	 * Each of these is supplemented with the following additional members:
 	 *
-	 * **width** - The width as calculated (right - left).
-	 *
-	 * **height** - The height as calculated (bottom - top).
-	 *
-	 * **position** - The position of the monitor, numerically from zero to X. Primary monitor is zero.
-	 *
+	 * **width** - The width as calculated (right - left). <br>
+	 * **height** - The height as calculated (bottom - top). <br>
+	 * **position** - The position of the monitor, numerically from zero to X. Primary monitor is zero. <br>
 	 * **whichMonitor** - Contains the string "primary" if it is the primary monitor.
 	 *
-	 * @param  {object} [params]               Parameters
-	 * @param  {WindowIdentifier} [params.windowIdentifier] The windowIdentifier to get the monitorInfo. If undefined, then the current window.
-	 * @param  {number|string} [params.monitor] If passed then a specific monitor is identified. Valid values are the same as for {@link LauncherClient#spawn}.
+	 * @param  {WindowIdentifier} params.windowIdentifier The windowIdentifier to get the monitorInfo. If undefined, then the current window.
+	 * @param  {number|string} params.monitor If passed then a specific monitor is identified. Valid values include:
+	 *
+	 * <b>"mine"</b> - Place the window on the same monitor as the calling window.
+	 *
+	 * Integer value from 0-n (0 being the primary monitor).
+	 *
+	 * <b>"primary"</b> indicates the user's primary monitor.
+	 *
+	 * <b>"all"</b> - Put a copy of the component on all monitors.
 	 * @param  {Function} cb Returns a monitorInfo object containing the monitorRect, availableRect and unclaimedRect.
 	 */
 	getMonitorInfo(params: {
@@ -174,7 +188,7 @@ class LauncherClient extends BaseClient {
 	}
 
 	/**
-	 * Gets monitorInfo (dimensions and position) for all monitors. Returns an array of monitorInfo objects. See {@link LauncherClient#getMonitorInfo} for the format of a monitorInfo object.
+	 * Gets monitorInfo (dimensions and position) for all monitors. Returns an array of monitorInfo objects. See <a href="LauncherClient.html#getMonitorInfo">LauncherClient#getMonitorInfo</a> for the format of a monitorInfo object.
 	 *
 	 *
 	 *
@@ -197,12 +211,11 @@ class LauncherClient extends BaseClient {
 	}
 
 	/**
-	 * Registers a component with the launcher service
+	 * Registers a component with the Launcher Service. This method registers a given component in a component manifest, making it available to an app launcher component.
 	 *
-	 * @param {object} params -
-	 * @param {String} params.componentType - componentType
-	 * @param {object} params.manifest - this should be a component manifest
-	 * @param  {Function} cb
+	 * @param {String} params.componentType The key of the component in the component's config.
+	 * @param {object} params.manifest This should be a component manifest, i.e., a component configuration file like <i>components.json</i>.
+	 * @param {Function} cb The callback to be invoked after the method completes successfully.
 	 */
 	registerComponent(params: {
 		componentType: string,
@@ -221,10 +234,9 @@ class LauncherClient extends BaseClient {
 	}
 
 	/**
-	 * Registers a component with the launcher service
+	 * Unregisters a component with the Launcher Service.
 	 *
-	 * @param {object} params -
-	 * @param {String} params.componentType - componentType
+	 * @param {String} params.componentType The key of the component in the component's config.
 	 * @param  {Function} cb
 	 */
 	unRegisterComponent(params: {
@@ -246,7 +258,7 @@ class LauncherClient extends BaseClient {
 
 	/**
 	 * A convenience method for dealing with a common use-case, which is toggling the appearance and disappearance of a child window when a button is pressed, aka drop down menus. Simply call this method from the click handler for your element. Your child window will need to close itself on blur events.
-	 * @param {HTMLElement|selector} element The DOM element, or selector, clicked by the end user
+	 * @param {HTMLElement|selector} element The DOM element, or selector, clicked by the end user.
 	 * @param {windowIdentifier} windowIdentifier Identifies the child window
 	 * @param {object} params Parameters to be passed to {@link LauncherClient#showWindow} if the child window is allowed to open
 	 */
@@ -288,11 +300,11 @@ class LauncherClient extends BaseClient {
 	 * @param {boolean} [params.slave] Cannot be set for an existing window. Will only go into effect if the window is spawned.
 	 * (In other words, only use this in conjunction with spawnIfNotFound).
 	 * @param {Function} cb Callback to be invoked after function is completed. Callback contains an object with the following information:
-	 * **windowIdentifier** - The {@link WindowIdentifier} for the new window.
-	 * **windowDescriptor** - The {@link WindowDescriptor} of the new window.
-	 * **finWindow** - An `OpenFin` window referencing the new window.
+	 * <b>windowIdentifier</b> - The {@link WindowIdentifier} for the new window.
+	 * <b>windowDescriptor</b> - The {@link WindowDescriptor} of the new window.
+	 * <b>finWindow</b> - An `OpenFin` window referencing the new window.
 	 * @example
-	 * LauncherClient.showWindow({windowName: "Welcome Component-86-3416-Finsemble", componentType: "Welcome Component"}, {spawnIfNotFound: true});
+	 * FSBL.Clients.LauncherClient.showWindow({windowName: "Welcome Component-86-3416-Finsemble", componentType: "Welcome Component"}, {spawnIfNotFound: true});
 	 */
 	showWindow(windowIdentifier: WindowIdentifier, params: ShowWindowParams, cb: Function = Function.prototype) {
 		Validate.args(windowIdentifier, "object", params, "object=", cb, "function=");
@@ -328,7 +340,7 @@ class LauncherClient extends BaseClient {
 	}
 
 	/**
-	 * Asks the Launcher service to spawn a new component. Any parameter below can also be specified in config/components.json, which will
+	 * Asks the Launcher service to spawn a new component. Any parameter below can also be specified in <i>../config/components.json</i>, which will
 	 * then operate as the default for that value.
 	 *
 	 * The launcher parameters mimic CSS window positioning.
@@ -485,7 +497,7 @@ class LauncherClient extends BaseClient {
 	}
 
 	/**
-	 * Returns a {@link WindowIdentifier} for the current window
+	 * Returns a windowIdentifier for the current window.
 	 *
 	 * @param {WindowIdentifier} cb Callback function returns windowIdentifier for this window (optional or use the returned Promise)
 	 * @returns {Promise} A promise that resolves to a windowIdentifier
@@ -506,11 +518,11 @@ class LauncherClient extends BaseClient {
 	}
 
 	/**
-	* Gets the {@link WindowDescriptor} for all open windows.
+	* Gets the windowDescriptor for all open windows.
 	*
-	* *Note: This returns descriptors even if the window is not part of the workspace*.
+	* <b>Note:</b> This returns descriptors even if the window is not part of the workspace.
 	*
-	* @param {function} cb Callback returns an array of windowDescriptors
+	* @param {StandardCallback} cb Callback returns an array of windowDescriptors.
 	*
 	*/
 	getActiveDescriptors(cb: Function = Function.prototype) {
@@ -571,20 +583,20 @@ class LauncherClient extends BaseClient {
 	}
 
 	/**
-	 * Gets components that can receive specific data types. Returns an object containing a of ComponentTypes mapped to a list of dataTypes they can receive. This is based on the "advertiseReceivers" property in a component's config.
-	 * @param params
-	 * @param {Array.<string>} [params.dataTypes] An array of data types. Looks for components that can receive those data types
+	 * Gets components that can receive specific data types. Returns an object containing componentTypes mapped to a list of dataTypes they can receive. This is based on the "advertiseReceivers" property in a component's config.
+	 * @param {Array.<string>} params.dataTypes An array of data types. Looks for components that can receive those data types.
+	 * @param {Function} cb The callback to be invoked after the method completes successfully.
 	 *
 	 * @since 2.0
 	 *
 	 * @example
-	 * LauncherClient.getComponentsThatCanReceiveDataTypes({ dataTypes: ['chartiq.chart', 'salesforce.contact']}, function(err, response) {
+	 * FSBL.Client.LauncherClient.getComponentsThatCanReceiveDataTypes({ dataTypes: ['chartiq.chart', 'salesforce.contact']}, function(err, response) {
 	 * 	//Response contains: {'chartiq.chart': ['Advanced Chart'], 'salesforce.contact': ['Salesforce Contact']}
 	 * })
 	 *
 	 */
 	getComponentsThatCanReceiveDataTypes(params: {
-		dataTypes?: string[]
+		dataTypes: string[]
 	}, cb: Function = Function.prototype) {
 		Validate.args(cb, "function=");
 		if (params.dataTypes && !Array.isArray(params.dataTypes)) { params.dataTypes = [params.dataTypes]; }
@@ -602,7 +614,7 @@ class LauncherClient extends BaseClient {
 	/**
 	 * Brings a windows to front. If no windowList, groupName or componentType is specified, brings all windows to front.
 	 * @param params
-	 * @param {Array.<string | Object>} [params.windowList] Optional. An array of window names or window identifiers. Not to be used with componentType.
+	 * @param {Array.<string | Object>} [params.windowList] Optional. An array An array of window names or window identifiers. Not to be used with componentType.
 	 * @param {string} [params.groupName] Optional. The name of a window group to bring to front.
 	 * @param {string} [params.componentType] Optional. The componentType to bring to front. Not to be used with windowList.
 	 *

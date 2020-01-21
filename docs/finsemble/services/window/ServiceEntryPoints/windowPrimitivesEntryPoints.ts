@@ -16,13 +16,20 @@ import { WindowPoolSingleton } from "../Common/Pools/PoolSingletons";
 import WorkspaceClient from "../../../clients/workspaceClient";
 import { REMOTE_FOCUS } from "../../../common/constants";
 import { BaseWindow } from "../WindowAbstractions/BaseWindow";
+import { Launcher } from "../Launcher/launcher"
+import DockingMain from "../Docking/dockingMain";
+import { ResponderMessage } from "../../../clients/IRouterClient";
+
+
 
 export class WindowPrimitives {
-	dockingMain: any;
+	dockingMain: DockingMain;
+	launcher: Launcher;
 	eventInterruptors: any;
 
-	constructor(dockingMain) {
+	constructor(dockingMain: DockingMain, launcher: Launcher) {
 		this.dockingMain = dockingMain;
+		this.launcher = launcher;
 		this.bindAllFunctions();
 		this.eventInterruptors = {};
 	}
@@ -148,7 +155,7 @@ export class WindowPrimitives {
 	 * them here. For every focus event coming from a window not
 	 * managed by Finsemble's container, we manually blur
 	 * whatever window had focus previously.
-	 * 
+	 *
 	 * If we can figure out a different way to synchronize
 	 * focus between container and OS, we can remove this ad hoc
 	 * and manual handling here.
@@ -158,9 +165,9 @@ export class WindowPrimitives {
 
 		// DH 6/15/2019 - These types aren't right, but the best way to
 		// fix would be to type the ObjectPools, which would require significant
-		// refactoring. 
+		// refactoring.
 		const windows: any[] = Object.values(WindowPoolSingleton.getAll());
-	
+
 			const focused: BaseWindow = windows
 				.find((x: { focused: boolean }) => x.focused) as BaseWindow;
 			if (focused && focused.name !== name) {
@@ -198,8 +205,8 @@ export class WindowPrimitives {
 			// when we add an event listener, there are two parameters: event name, and handler to be invoked when the event is thrown.
 			// When we're removing listeners here, we're saying 'remove the listener for this event, the handler was 'callback'.
 			// That's not true. In this case, callback is queryMessage.sendResponse.
-			// The function below will never invoke the callback, it will simply search amongst the event handlers for 
-			// event 'whatever event' for a handler that === callback. It will never find that, 
+			// The function below will never invoke the callback, it will simply search amongst the event handlers for
+			// event 'whatever event' for a handler that === callback. It will never find that,
 			// because we never added a listener with that handler.
 			// - Brad
 			// @todo make remove eventListener actually do something
@@ -620,19 +627,17 @@ export class WindowPrimitives {
 		}
 	}
 
-	async closeHandler(queryError, queryMessage) {
-		var wrapState: WrapState;
+	async closeHandler(queryError, queryMessage: ResponderMessage) {
 
-		let { windowIdentifier, eventName } = this.publicWindowHandlerPreface("close", queryError, queryMessage)
-		let callback = queryMessage.sendQueryResponse;
+		const { windowIdentifier } = this.publicWindowHandlerPreface("close", queryError, queryMessage)
 
-		let delayInterrupters = (eventName, afterSetup) => {
-			let delayers = {};
+		const delayInterrupters = (eventName, afterSetup) => {
+			const delayers = {};
 			let listenerCount = 0;
 			let resolvePromise;
 			let promiseResolved = false;
 
-			let gotResponses = setTimeout(() => { // deal with dead windows and bad actors who do not act upon requested delays.
+			const gotResponses = setTimeout(() => { // deal with dead windows and bad actors who do not act upon requested delays.
 				for (let guid in this.eventInterruptors[windowIdentifier.name][eventName]) {
 					if (!delayers[guid]) {
 						Logger.system.warn(windowIdentifier.name, " had a bad wrap somewhere that did not publish or remove ", guid, " listener for ", eventName, ". Details:", this.eventInterruptors[windowIdentifier.name][eventName][guid]);
@@ -646,9 +651,9 @@ export class WindowPrimitives {
 					Logger.system.debug("closeHandler: Waiting on ", delayers);
 				}
 			}, 1000);
-			let listener = (sid, eventGuid, response) => {
+      const listener = (sid, eventGuid, response) => {
 				if (promiseResolved) return;
-				let data = response.data;
+				const data = response.data;
 				if (Object.keys(data).length > 0 && this.eventInterruptors[windowIdentifier.name][eventName][eventGuid]) { // if initial pubsub "empty" state without any key then ignore
 					Logger.system.debug("Got Publish from intteruptor", windowIdentifier.name, eventName, eventGuid, response);
 					if (!data.delayed && !data.canceled) {
@@ -673,16 +678,16 @@ export class WindowPrimitives {
 				}
 			};
 
-			let p = new Promise(function (resolve, reject) {
+			const p = new Promise(function (resolve, reject) {
 				resolvePromise = resolve;
 			});
 
-			let eventInterruptors = this.eventInterruptors[windowIdentifier.name];
+			const eventInterruptors = this.eventInterruptors[windowIdentifier.name];
 			if (eventInterruptors && eventInterruptors[eventName]) {
 				for (let eventGuid in eventInterruptors[eventName]) {
 					listenerCount++;
 					Logger.system.debug("Adding Subscriber for intteruptor", windowIdentifier.name, eventName, eventGuid, " for origin ", eventInterruptors[eventName][eventGuid]);
-					let sid = RouterClient.subscribe(Constants.EVENT_INTERRUPT_CHANNEL + "." + eventGuid, (err, response) => {
+					const sid = RouterClient.subscribe(Constants.EVENT_INTERRUPT_CHANNEL + "." + eventGuid, (err, response) => {
 						listener(sid, eventGuid, response);
 					});
 				}
@@ -694,13 +699,13 @@ export class WindowPrimitives {
 			return p;
 		}
 
-		let wrap = WindowPoolSingleton.get(windowIdentifier.name);
+		const wrap = WindowPoolSingleton.get(windowIdentifier.name);
 
 		if (wrap) {
 
 			Logger.system.debug("WRAP CLOSE. starting in wrap", windowIdentifier.name);
 
-			let wrapState = "closing";
+      let wrapState = "closing";
 			// we update wrapState over the router, but it's not always happening fast enough to prevent new listeners from being set up
 			wrap.wrapState = wrapState;
 
@@ -746,11 +751,25 @@ export class WindowPrimitives {
 				RouterClient.publish("Finsemble.Component.State." + windowIdentifier.name, { state: wrapState });
 
 				WindowPoolSingleton.remove(windowIdentifier.name);
-				callback();
+				queryMessage.sendQueryResponse(null, null);
 			});
 
+		// else if no wrap for the window being closed (might be an error or might be because window's spawn is still pending and it's wrap hasn't been saved yet)
 		} else {
-			callback(`unidentified window name: ${windowIdentifier.name}`, null);
+			// this section handles the specific case of trying to close a window that hasn't finished spawning yet, which happens when reloading a workspace (due to an OpenFin bug).
+			// Since wrap couldn't be found in pool, it may be than the spawn window never completely finished and is now stuck in pendind; therefore attempt a force kill.
+			// Must call the launcher to close/kill window because it has knowledge of whether or not a window spawn is pending.
+			const { err } = await this.launcher.forceKillWindowIfPending(windowIdentifier);
+			if (err && !err.includes("not pending"))
+				// there was a pending window but err occurred trying to close it
+				queryMessage.sendQueryResponse(`${windowIdentifier.name} close error: ${err}`, null);
+			else if (err && err.includes("not pending")) {
+				// there was no pending window therefore trying to close an unknown window
+				queryMessage.sendQueryResponse(`${windowIdentifier.name} is unknown`);
+			} else {
+				// the pending window was closed so okay
+				queryMessage.sendQueryResponse(null, null);
+			}
 		}
 	}
 }

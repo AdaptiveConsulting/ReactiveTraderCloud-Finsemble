@@ -1,6 +1,6 @@
 import StorageClient from "../../clients/storageClient";
 import { Workspace, ActiveWorkspace, WorkspaceImport, GroupData } from '../../common/workspace';
-import { composeRL, getRandomWindowName, guuid, removeKeys } from "../../common/disentangledUtils";
+import { composeRL, getRandomWindowName, guuid, removeKeys, identity } from "../../common/disentangledUtils";
 import { camelCase } from "../../common/util";
 import { WORKSPACE } from "../../common/constants";
 import * as Fuse from "fuse.js";
@@ -11,6 +11,19 @@ import ConfigClient from "../../clients/configClient";
 import { get } from 'lodash';
 import * as merge from 'deepmerge';
 import { Logger } from "../../clients/logger";
+
+/** If, for whatever reason, there are no configured workspaces
+ * use this instead. Also used when workspace times out.
+ */
+export const emptyWS: WorkspaceImport = {
+	name: "Empty Workspace",
+	componentStates: {},
+	groups: {},
+	type: "workspace",
+	version: "1.0.0",
+	windowData: [],
+	windows: []
+};
 
 const IGNORE_PROPS = ["show", "callstack", "x", "y", "blurred",
 	"window-bounds", "title", "windowIdentifier", "bounds",
@@ -177,7 +190,8 @@ export class WorkspaceManager {
 
 	/**
 	 * Adds a workspace to the system, persisting it to storage. If the requested
-	 * name is already in use, a new one will generated.
+	 * name is already in use and "force" is set to be false, a workspace with a different
+	 * name will be generated.
 	 *
 	 * Returns the final name of the workspace in storage as a string.
 	 */
@@ -324,6 +338,15 @@ export class WorkspaceManager {
 		const windowPromises: Promise<FinsembleWindowData>[] = wsWindows.map(WorkspaceManager.formatWindow);
 		const windows = await Promise.all(windowPromises);
 
+		const workspaceNames = await WorkspaceManager.getWorkspaceNames(trace);
+		const nameAlreadyExists = workspaceNames.includes(ws.name);
+		if (nameAlreadyExists) {
+			if (force) {
+				await WorkspaceManager.removeWorkspace(trace, ws.name);
+			} else {
+				ws.name = getNextWorkspaceName(ws.name, workspaceNames);
+			}
+		}
 
 		for (const winData of windows) {
 			await WorkspaceManager._WS.setCompleteState(
@@ -338,7 +361,7 @@ export class WorkspaceManager {
 			...ws,
 			windows: windows.map((x: FinsembleWindowData) => x.name)
 		};
-		return WorkspaceManager.addWorkspace(trace, createdWorkspace, force);
+		return WorkspaceManager.addWorkspace(trace, createdWorkspace);
 	}
 
 	/**
@@ -380,10 +403,10 @@ export class WorkspaceManager {
 	 * Retrieves all workspaces from storage.
 	 */
 	static async getWorkspaces(trace: Trace): Promise<Workspace[]> {
-		const workspaces = await WorkspaceManager.getWorkspaceNames(trace) || [];
-		return await Promise.all(
-			workspaces.map(x => WorkspaceManager.getWorkspace(trace, x))
-		);
+		const workspaceNames = await WorkspaceManager.getWorkspaceNames(trace) || [];
+    return (await Promise.all(
+      workspaceNames.map(x => WorkspaceManager.getWorkspace(trace, x)
+        .catch(x => null)))).filter(identity);
 	}
 
 	/**
@@ -447,22 +470,27 @@ export class WorkspaceManager {
 			await WorkspaceManager._WS.removeManyCompleteStates(aws.windows);
 		}
 
-		const newActive = await WorkspaceManager.getWorkspace(trace, workspaceName);
-		const states = await WorkspaceManager._WS.getManyCompleteStates(newActive.windows, workspaceName);
+    let ws;
+    try {
+		  const newActive = await WorkspaceManager.getWorkspace(trace, workspaceName);
+		  const states = await WorkspaceManager._WS.getManyCompleteStates(newActive.windows, workspaceName);
+      for (const s of states) {
+			  await WorkspaceManager._WS.setCompleteState(s);
+		  }   
+		  ws = newActive;
+    } catch (error) {
+      await WorkspaceManager.addWorkspace(trace, emptyWS);
+      ws = emptyWS;
+    }
 
-		const value = { ...newActive, isDirty: false, guid: guuid() };
 		await WorkspaceManager._SC.save1({
-			value,
+			value: { ...ws, isDirty: false, guid: guuid() },
 			topic: CACHE_STORAGE_TOPIC,
 			key: ACTIVE_WORKSPACE,
 		});
 		log(trace, "Active workspace set.");
 
-		for (const s of states) {
-			await WorkspaceManager._WS.setCompleteState(s);
-		}
-
-		return value;
+		return ws;
 	}
 
 	/**

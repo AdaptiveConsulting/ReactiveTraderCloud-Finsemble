@@ -15,6 +15,13 @@ const Globals = window as IGlobals;
  * @class
  */
 
+
+declare type setValuesParam = {
+	/** The name of the field where data will be stored */
+	field: string,
+	/** Value to be stored */
+	value: any
+}
 class StoreModel extends _BaseClient {
 	routerClient;
 	isGlobal: boolean;
@@ -79,14 +86,13 @@ class StoreModel extends _BaseClient {
 
 	/**
 	 * Set a value in the store. Two events will be triggered with topics of: store and field.
-	 * @param {Object} params - Params object
-	 * @param {String} params.field - The name of the field where data will be stored
-	 * @param {String} params.value - Value to be stored
+	 * @param {String} params.field The name of the field where data will be stored
+	 * @param {String} params.value Value to be stored
 	 * @param {function} cb callback
 	 * @returns {null}
 	 *
 	 * @example
-	 * store.setValue({field:'field1',value:"new value"});
+	 * store.setValue({ field:'field1', value:"new value" });
 	 */
 	setValue(params: { field: string, value: any }, cb: StandardCallback) {
 		if (!params.field) { Logger.system.error("DistributedStore.setValue:no field provided", params); }
@@ -137,15 +143,13 @@ class StoreModel extends _BaseClient {
 
 	/**
 	 * This will set multiple values in the store.
-	 * @param {Object[]} fields - An Array of field objects
-	 * @param {String} fields.field - The name of the field
-	 * @param {any} fields.value - Field value
 	 * @param {function} cb callback
+	 * @param {Array<setValuesParam>} fields An array where each element is like the object below.
 	 * @example
-	 * store.setValues([{field:'field1',value:"new value"}]);
+	 * store.setValues([{ field:'field1', value:"new value" }]);
 	 */
 	setValues(
-		fields: { field: string, value: any }[],
+		fields: setValuesParam[],
 		cb?: StandardCallback,
 	) {
 		if (!fields) {
@@ -162,16 +166,15 @@ class StoreModel extends _BaseClient {
 	};
 
 	/**
-	 * Get a value from the store. If global is not set, we'll check local first then we'll check global.
-	 * @param {string|object} params - Params object. This can also be a string
-	 * @param {String} params.field - The field where the value is stored.
-	 * @param {Function} cb -  Will return the value if found.
-	 * @returns {any} - The value of the field. If no callback is given and the value is local, this will run synchronous
+	 * Get a value from the store. If global is not set, we'll check local first then we'll check global. Returns the value of the field. If no callback is given and the value is local, this will run synchronously.
+	 * @param {String} params.field The field where the value is stored.
+	 * @param {StandardCallback} cb Will return the value if found.
+	 * @returns {any} The value of the field. If no callback is given and the value is local, this will run synchronous
 	 * @example
-	store.getValue({field:'field1'},function(err,value){});
-	store.getValue('field1',function(err,value){});
+	 * store.getValue({ field: 'field1' }, function(err,value){});
+	 * store.getValue('field1', function(err,value){});
 	 */
-	getValue(params: { field: string } | string, cb: StandardCallback) {
+	getValue(params: { field: string } | string, cb?: StandardCallback) {
 		if (typeof params === "string") { params = { field: params }; }
 		if (!params.field) {
 			if (!cb) { return "no field provided"; }
@@ -189,13 +192,14 @@ class StoreModel extends _BaseClient {
 	};
 
 	/**
-	 * Get multiple values from the store.
-	 * @param {Array.<object>|Array.<String>} fields - An Array of field objects. If there are no fields provided, all values in the store are returned.
-	 * @param {Function} [cb] -  Will return the value if found.
+	 * Get multiple values from the store. Returns an object of with the fields as keys.If no callback is given and the value is local, this will run synchronously. Returns an object of with the fields as keys.If no callback is given and the value is local, this will run synchronous
+	 * @param {Array.<object>|Array.<String>} fields An Array of field objects. If there are no fields provided, all values in the store are returned.
+	 * @param {string} fields.field The field where the value is stored.
+	 * @param {Function} [cb] Will return the value if found.
 	 * @returns {Object} - returns an object of with the fields as keys.If no callback is given and the value is local, this will run synchronous
 	 * @example
-	 * store.getValues([{field:'field1'},{field:'field2'}],function(err,values){});
-	 * store.getValues(['field1','field2'],function(err,values){});
+	 * store.getValues([{ field:'field1' }, { field:'field2' }], function(err,values){});
+	 * store.getValues(['field1', 'field2'], function(err,values){});
 	 */
 	getValues(fields: { field: string }[] | string[], cb): { [k: string]: any } | void {
 		if (typeof fields === "function") {
@@ -254,11 +258,12 @@ class StoreModel extends _BaseClient {
 
 	/**
 	 * Remove a value from the store.
-	* @param {Object | String} params - Either an object or string
-	 * @param {String} param.field - The name of the field
-	 * @param {Function} cb -  returns an error if there is one
+	* @param {Object | String} params - Either an object (`{ field: string }`) or string
+	 * @param {String} param.field The name of the field
+	 * @param {Function} cb returns an error if there is one
+	 * @todo this function needs some help. The first should be 'if(typeof params === "string");.
 	 * @example
-	 * store.removeValue({field:'field1'},function(err,bool){});
+	 * store.removeValue({ field: 'field1' }, function(err,bool){});
 	 */
 	removeValue(params, cb) {
 		if (!params.field) {
@@ -276,12 +281,12 @@ class StoreModel extends _BaseClient {
 	/**
 	 * Removes multiple values from the store.
 	 * @param {Object[] | String[]} params - An Array of field objects
-	 * @param {String} param[].field - The name of the field
+	 * @param {String} params.field - The name of the field
 	 * @param {Function} cb -  returns an error if there is one.
 	 * @example
-	 * store.removeValue({field:'field1'},function(err,bool){});
+	 * store.removeValues([{ field: 'field1' }], function(err,bool){});
 	 */
-	removeValues(params, cb) {
+	removeValues(params: string[] | { field: string }[], cb) {
 		if (!Array.isArray(params)) { return cb("The passed in parameter needs to be an array"); }
 		asyncMap(params, this.removeValue, (err, data) => {
 			return cb(err, data);
@@ -290,7 +295,7 @@ class StoreModel extends _BaseClient {
 
 	/**
 	 * Destroys the store.
-	 * @param {Function} cb -  Will return the value if found.
+	 * @param {Function} cb Function to be invoked after the store is destroyed.
 	 * @example
 	 * store.destroy();
 	 */
@@ -319,18 +324,16 @@ class StoreModel extends _BaseClient {
 	};
 
 	/**
-	* Add a listener to the store at either the store or field level. If no field is given, the store level is used. You can also listen to nested object -- field1.nestedField
-	* @param {Object} params - Params object
-	* @param {String} params.field - The data field to listen for. If this is empty it listen to all changes of the store.
-	* @param {Function} fn -  the function to call when a listener is triggered
-	* @param {Function} cb - callback
+	* Add a listener to the store at either the store or field level. If no field is given, the store level is used. You can also listen to nested object (e.g., field1.nestedField).
+      * @param {String} params.field The piece of data that you want to listen on. If this is empty it listens to all changes of the store.
+	* @param {Function} fn the function to call when the data changes
+	* @param {Function} cb callback to be invoked
 	* @example
-	*var myFunction = function(err,data){
-	}
-	* store.addListener({field:'field1'},myFunction,cb);
-
+	* var myFunction = function(err,data) {
+	* }
+	* store.addListener({ field:'field1' }, myFunction, cb);
 	*/
-	addListener(params, fn, cb) {
+	addListener(params: { field?: string }, fn, cb) {
 		var field = null;
 		if (typeof params === "function") {
 			fn = params;
@@ -352,22 +355,26 @@ class StoreModel extends _BaseClient {
 
 	/**
 	* Add an array of listeners as  objects or strings. If using strings, you must provide a function callback.
-	* @param {Object[] | String[]} params - Params object
-	* @param {String} params.field - The data field to listen for.
-	* @param {String} [params.listener] - the function to call when a listener is triggered. If this is empty, fn is used.
-	* @param {function} [fn] -  the function to call when a listener is triggered
-	* @param {function} cb callback
+	* @param {String} params.field The piece of data that you want listen on. If this is empty it listen to all changes of the store.
+	* @param {String} params.listener The function to call when the piece of data is modified. If this is empty, fn is used.
+	* @param {function} fn The function to call when the piece of data is modified.
+	* @param {function} cb callback to be invoked when the listeners are added.
 	* @example
-	*var myFunction = function(err,data){
-
-	}
-	store.addListeners([{field:'field1',listener:myFunction},{field:'field2',listener:myFunction}],null,cb);
-
-	store.addListeners([{field:'field1'},{field:'field2',listener:myFunction}],myFunction,cb);
-
-	store.addListeners(['field1','field2'],myFunction,cb);
+	* var myFunction = function(err,data){
+	* }
+	* store.addListeners([{
+	* 	field: 'field1',
+	* 	listener: myFunction
+	* },
+	* {
+	* 	field:'field2',
+	* 	listener: myFunction
+	* }],
+	* null, cb);
+	* store.addListeners([{ field: 'field1' },{ field: 'field2', listener: myFunction }], myFunction, cb);
+	* store.addListeners(['field1','field2'], myFunction, cb);
 	*/
-	addListeners(params, fn, cb) {
+	addListeners(params: { field: string, listener?: Function } | { field: string, listener?: Function }[] | string[], fn?, cb?) {
 		if (!Array.isArray(params)) {
 			return this.addListener(params, fn, cb);
 		}
@@ -380,7 +387,7 @@ class StoreModel extends _BaseClient {
 				field = item;
 			} else if (item.field) {
 				field = item.field;
-				ls = params[i].listener;
+				ls = (params[i] as any).listener;
 			}
 
 			var combined = this.name + (field ? "." + field : "");
@@ -402,19 +409,17 @@ class StoreModel extends _BaseClient {
 	};
 
 	/**
-	 * Remove a listener from  store. If no field is given, we look for a store listener
-	 * @param {Object} params - Params object
-	 * @param {String} params.field - The data field
-	 * @param {function} [fn] -  the function to remove from the listeners
-	 * @param {function} [cb] -  returns true if it was successful in removing the listener.
+	 * Remove a listener from store. If no field is given, we look for a store listener
+	 * @param {String} params.field - The data field with the listener that you want to remove.
+	 * @param {function} fn The handler passed into `addListener` or `addListeners`.
+	 * @param {function} cb returns true if it was successful in removing the listener.
 	 *
 	 * @example
-	 * var myFunction = function(err,data){
-			}
-	 * store.removeListener({field:'field1'},MyFunction,function(bool){});
-	StoreCstorelient.removeListener(MyFunction,function(bool){});
+	 * var myFunction = function(err,data){}
+	 * store.removeListener({ field: 'field1' }, MyFunction, function(bool){});
+	 * store.removeListener(MyFunction, function(bool){});
 	 */
-	removeListener(params, fn, cb) {
+	removeListener(params?: { field?: string }, fn?, cb?) {
 		var field = null;
 
 		if (typeof params === "function") {
@@ -438,20 +443,18 @@ class StoreModel extends _BaseClient {
 
 	/**
 	 * Remove an array of listeners from the store
-	 * @param {Object[] | String[]} params - Params object
-	 * @param {String} params.field - The data field to listen for. If this is empty it listen to all changes of the store.
-	 * @param {String} params.listener - The listener function
-	 * @param {function} [fn] -  the function to remove from the listeners
-	 * @param {function} [cb] -  returns true if it was successful in removing the listener.
+	 * @param {String} params.field The data field with the listener that you want to remove.
+	 * @param {String} params.listener The handler passed into `addListener` or `addListeners`.
+	 * @param {function} fn The handler passed into `addListener` or `addListeners`.
+	 * @param {function} cb returns true if it was successful in removing the listener.
 	 *
 	 * @example
-	 * var myFunction = function(err,data){
-			}
-	 * store.removeListeners({field:'field1'},MyFunction,function(bool){});
-	store.removeListeners([{field:'field1',listener:MyFunction}],function(bool){});
-	store.removeListeners(['field1'],MyFunction,function(bool){});
+	 * var myFunction = function(err,data){}
+	 * store.removeListeners({ field: 'field1' }, MyFunction, function(bool){});
+	 * store.removeListeners([{ field: 'field1', listener: MyFunction}], function(bool){});
+	 * store.removeListeners(['field1'], MyFunction, function(bool){});
 	 */
-	removeListeners(params, fn, cb) {
+	removeListeners(params, fn, cb?) {
 		if (!Array.isArray(params)) {
 			if (typeof params === "function") {
 				this.removeListener({}, params, cb);

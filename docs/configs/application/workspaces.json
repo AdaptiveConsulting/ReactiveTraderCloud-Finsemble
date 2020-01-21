@@ -1,3 +1,11 @@
 {
-    "workspaces": []
+	"workspaces": [
+		{
+			"version": "1.0.0",
+			"name": "Default Workspace",
+			"type": "workspace",
+			"groups": {},
+			"windows": []
+		}
+	]
 }

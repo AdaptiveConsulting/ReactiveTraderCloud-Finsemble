@@ -427,9 +427,9 @@ export var LoggerConstructor = function (dependencies?: { RouterClient: any; }) 
 	};
 
 	/**
-	 * Log a dev verbose message (an extra level of verbose-debug output)
+	 * Log a dev verbose message (an extra level of verbose-debug output).
 	 *
-	 * @param {Array.<any>} messageParm message parameter of any type that can be stringified (e.g. string, object)
+	 * @param {any} message parameter of any type that can be stringified (e.g. string, object)
 	 *
 	 * @example
 	 *

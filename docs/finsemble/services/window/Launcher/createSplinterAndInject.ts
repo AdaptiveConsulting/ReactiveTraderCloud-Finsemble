@@ -173,17 +173,17 @@ export class CreateSplinterAndInject {
 
 	doSpawn(windowDescriptor: any): Promise<{ err: any, windowIdentifier: any }> {
 		const promiseResolver = async (resolve) => {
-			let windowType = windowDescriptor.customData.window.windowType;
-			if (windowType == "openfin") windowType = "OpenFinWindow"; // Config friendly naming
-			if (windowType == "assimilation") windowType = "NativeWindow"; // Config friendly naming
-			if (windowType == "assimilated") windowType = "NativeWindow"; // Config friendly naming
-			if (windowType == "native") windowType = "FinsembleNativeWindow"; // Config friendly naming
-			if (windowType == "application") windowType = "OpenFinApplication"; // Config friendly naming
-			if (windowDescriptor.customData.window.native) windowType = "NativeWindow"; //Backward Compatibility
-			if (windowDescriptor.type === "openfinApplication") windowType = "OpenFinApplication"; //Backward Compatibility
-			if (windowDescriptor.customData.window.compound) windowType = "CompoundWindow";
-			if (!windowType) windowType = "OpenFinWindow";
+			const window = windowDescriptor.customData.window;
+			let windowType = window.windowType;
 
+			// Construct an object of values that may be used to calculate the windowType
+			const winConfig = {
+				windowType: windowType,
+				native: window.native,
+				compound: window.compound,
+				type: windowDescriptor.type
+			}
+			windowType = util.getWindowType(winConfig);
 			if (windowType == "FinsembleNativeWindow") {
 				windowType = "NativeWindow";
 				windowDescriptor.isWPF = true;

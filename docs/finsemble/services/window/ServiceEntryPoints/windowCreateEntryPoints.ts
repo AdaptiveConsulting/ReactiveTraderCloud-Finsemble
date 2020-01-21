@@ -1,10 +1,11 @@
 import RouterClient from "../../../clients/routerClientInstance";
 import Logger from "../../../clients/logger";
+import { Launcher } from "../Launcher/launcher"
 
 export class WindowCreateEntry {
 	finsembleConfig: any;
 	manifest: any;
-	launcher: any;
+	launcher: Launcher;
 
 	constructor(manifest, launcher) {
 		this.manifest = manifest;

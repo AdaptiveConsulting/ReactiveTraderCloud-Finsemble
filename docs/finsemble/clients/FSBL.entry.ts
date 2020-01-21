@@ -11,7 +11,7 @@ const { APPLICATION_STATE_CHANNEL } = applicationConstants;
 import { each as asyncEach, asyncify, timeout as asyncTimeout } from "async";
 import { IGlobals } from "../common/Globals";
 import wrapCallbacks from "../common/wrapCallbacks";
-import { ConfigUtilInstance as  ConfigUtils } from "../common/configUtil";
+import { ConfigUtilInstance as ConfigUtils } from "../common/configUtil";
 import * as Utils from "../common/util";
 import Validate from "../common/validate";
 /** The global `window` object. We cast it to a specific interface here to be
@@ -283,7 +283,6 @@ if ((fin.container === "browser" || window.top === window) && !Globals.FSBLAlrea
 		 */
 		this.listenForShutdown = function () {
 			this.Clients.Logger.system.debug("WINDOW LIFECYCLE:Startup:Listening for the application shutdown request.");
-			//this.Clients.RouterClient.addListener("LauncherService.shutdownRequest", this.handleShutdown.bind(this));
 		};
 		/**
 		 * Triggers the application shutdown sequence.

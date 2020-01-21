@@ -1,10 +1,10 @@
 import { FSBLDependencyManagerSingleton as FSBLDependencyManager } from "../../common/dependencyManager";
-import { WorkspaceManager as WSM, WorkspaceManager } from "./workspaceManager";
+import { WorkspaceManager as WSM, emptyWS } from "./workspaceManager";
 import { WindowStorageManager as WinStore } from "../../common/windowStorageManager";
 import { ResponderMessage } from "../../clients/IRouterClient";
 import { Workspace, ActiveWorkspace, WorkspaceImport, GroupData } from "../../common/workspace";
 import { FinsembleWindow } from "../../common/window/FinsembleWindow";
-import { promisify, wrapWithTimeout, isStackedWindow } from "../../common/disentangledUtils";
+import { promisify, wrapWithTimeout, isStackedWindow, isNumber } from "../../common/disentangledUtils";
 import RouterClient from "../../clients/routerClientInstance";
 import UserNotification from "../../common/userNotification";
 import { FinsembleWindowData } from "../../common/FinsembleWindowData";
@@ -62,18 +62,7 @@ const channelToOldReason = {
 	SAVE_AS: PUBLISH_REASONS.SAVE_AS,
 };
 
-/** If, for whatever reason, there are no configured workspaces
- * use this instead. Also used when workspace times out.
- */
-const emptyWS: WorkspaceImport = {
-	name: "Empty Workspace",
-	componentStates: {},
-	groups: {},
-	type: "workspace",
-	version: "1.0.0",
-	windowData: [],
-	windows: []
-};
+
 
 /**
  * Setting *what* happened in the workspace service is very
@@ -137,6 +126,7 @@ class WorkspaceService extends BaseService {
 	private static loadWorkspaceTimeoutMessage: string;
 	private static closeWorkspaceTimeout: number;
 	private static closeWorkspaceTimeoutMessage: string;
+	private static concurrentSpawnLimit: number;
 
 	constructor(params) {
 		super(params);
@@ -159,7 +149,7 @@ class WorkspaceService extends BaseService {
 			|| get(finsemble, "services.workspaceService.loadWorkspaceTimeout") || 30000;
 
 		WorkspaceService.loadWorkspaceTimeoutMessage = get(finsemble, "finsemble.servicesConfig.workspace.loadFailureNotificationMessage",
-			"Some workspace components haven't loaded. If you save your workspace, those components will be permanently removed.");
+			"Some workspace components haven't fully loaded.");
 
 		WorkspaceService.closeWorkspaceTimeout = get(finsemble, "servicesConfig.workspace.closeWorkspaceTimeout")
 			|| get(finsemble, "services.workspaceService.closeWorkspaceTimeout") || 30000;
@@ -167,8 +157,17 @@ class WorkspaceService extends BaseService {
 		WorkspaceService.closeWorkspaceTimeoutMessage = get(finsemble, "finsemble.servicesConfig.workspace.closeFailureNotificationMessage",
 			"Problem closing current workspace. Please close any windows remaining on your screen and then select another workspace to open.");
 
+		const processorConfigValue = get(finsemble, "servicesConfig.launcher.concurrentSpawnLimit") || get(finsemble, "services.launcherService.concurrentSpawnLimit");
+
+		const configValueNum = isNumber(processorConfigValue);
+		if (!configValueNum) {
+			WorkspaceService.concurrentSpawnLimit = Math.ceil(navigator.hardwareConcurrency / 2);
+		} else {
+			WorkspaceService.concurrentSpawnLimit = Math.ceil(configValueNum);
+		}
+
 		const promptOnDirty = await ConfigClient.getValue({ field: "finsemble.preferences.workspaceService.promptUserOnDirtyWorkspace" });
-		WorkspaceManager.autosave = promptOnDirty === false;
+		WSM.autosave = promptOnDirty === false;
 
 
 		const workspaceNames = await WSM.getWorkspaceNames(trace);
@@ -481,8 +480,8 @@ class WorkspaceService extends BaseService {
 		// If the close failed, we create a new emtpy workspace
 		const finalName = closeSucceeded ? name : await WSM.addWorkspace(trace, emptyWS);
 
-		await WorkspaceService.publishUpdate(trace, PUBLISH_REASONS.LOAD_STARTED);
-		const aws = await WSM.setActiveWorkspace(trace, finalName);
+    await WorkspaceService.publishUpdate(trace, PUBLISH_REASONS.LOAD_STARTED);
+    const aws = await WSM.setActiveWorkspace(trace, finalName);
 		await WorkspaceService.publishUpdate(trace, PUBLISH_REASONS.LOAD_DATA_RETRIEVED);
 		await WorkspaceService.load(trace, finalName);
 
@@ -525,8 +524,10 @@ class WorkspaceService extends BaseService {
 									 * getInstance doesn't resolve on all code paths.
 									 * Wrapping it like this ensures the code continues.
 								 */
+								// if the spawn never completed then public wrap might not be fully available, so disabling waitForReady allows wrap to be created before window is fully ready.
+								// this allows a workspace to be closed even though some of the spawns didn't complete (and the workspace load timed out)
 								const wrap =
-									await promisify<FinsembleWindow>(FinsembleWindow.getInstance)({ windowName: win.name });
+									await promisify<FinsembleWindow>(FinsembleWindow.getInstance)({ windowName: win.name, waitForReady: false });
 
 								wrap.close({
 									removeFromWorkspace: false,
@@ -607,48 +608,61 @@ class WorkspaceService extends BaseService {
 				}
 			});
 		});
-		const spawnList = (list: FinsembleWindowData[]): Promise<void>[] => {
-			return list.map(async win => {
-				/** DH 3/5/2019
-				 * Component state is stored in several places right now.
-				 * @TODO pick a place stick with it across the system.
-				 */
-				const component = get(win, "customData.component.type", win.componentType);
-				Logger.debug(LIFECYCLE, "Launching component", win.name);
+		const spawnPromise = async win => {
+			/** DH 3/5/2019
+			 * Component state is stored in several places right now.
+			 * @TODO pick a place stick with it across the system.
+			 */
+			const component = get(win, "customData.component.type", win.componentType);
+			Logger.debug(LIFECYCLE, "Launching component", win.name);
 
-				// autoShow will be undefined if there is no reason to use it, this way
-				// Finsemble will pull its value from the component config
-				let autoShow = undefined;
-				//If the current window is a stack child, we want to hide it when it spawns until the stack is ready/calls it to be visible
-				if (windowsWhichAreChildrenOfAStack.includes(win.name)) {
-					autoShow = false;
-					win.autoShow = false;
-				}
-				let componentSpawnParams: {
-					spawnedByWorkspaceService: boolean,
-					addToWorkspace: boolean,
-					options: any,
-					autoShow?: boolean | undefined
-				} = {
-					spawnedByWorkspaceService: true,
-					addToWorkspace: false,
-					options: win,
-					autoShow: autoShow
-				};
-				try {
-					await promisify(LauncherClient.spawn.bind(LauncherClient))(component, componentSpawnParams);
-				} catch (error) {
-					Logger.system.error(error);
-				}
-			});
-		}
+			// autoShow will be undefined if there is no reason to use it, this way
+			// Finsemble will pull its value from the component config
+			let autoShow = undefined;
+			//If the current window is a stack child, we want to hide it when it spawns until the stack is ready/calls it to be visible
+			if (windowsWhichAreChildrenOfAStack.includes(win.name)) {
+				autoShow = false;
+				win.autoShow = false;
+			}
+			let componentSpawnParams: {
+				spawnedByWorkspaceService: boolean,
+				addToWorkspace: boolean,
+				options: any,
+				autoShow?: boolean | undefined
+			} = {
+				spawnedByWorkspaceService: true,
+				addToWorkspace: false,
+				options: win,
+				autoShow: autoShow
+			};
+			try {
+				await promisify(LauncherClient.spawn.bind(LauncherClient))(component, componentSpawnParams);
+			} catch (error) {
+				Logger.system.error(error);
+			}
+		};
 
 		const TIMEOUT = WorkspaceService.loadWorkspaceTimeout;
 
+		// limit the number of concurrent spawns (in part to side-step "third-party" spawn bug, but also to distribute load over time)
+		const limitToCores = pLimit(WorkspaceService.concurrentSpawnLimit);
+
 		try {
 			await wrapWithTimeout(new Promise(async (resolve) => {
-				await Promise.all(spawnList(notStacks));
-				await Promise.all(spawnList(stacks));
+				const performanceString = `Workspace ${name} load`;
+				performance.mark(`${performanceString} start`);
+
+				// spawn all the non-stacked windows first and wait for them to complete (any stacked windows will assume the children are already spawned)
+				Logger.debug(LIFECYCLE, "Launching component spawnNotStacks", notStacks);
+				const spawnNotStacks = notStacks.map(win => limitToCores(() => spawnPromise(win)));
+				await Promise.all(spawnNotStacks);
+
+				// now can spawn all the stacked windows (and wait for them to complete)
+				Logger.debug(LIFECYCLE, "Launching component spawnStacks", stacks);
+				const spawnStacks = stacks.map(win => limitToCores(() => spawnPromise(win)));;
+				await Promise.all(spawnStacks);
+
+				performance.mark(`${performanceString} end`);
 				resolve();
 			}), TIMEOUT, `Attempt to load workspace windows timed out after ${TIMEOUT} ms.`);
 		} catch (error) {

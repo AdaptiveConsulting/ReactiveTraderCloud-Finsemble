@@ -131,7 +131,7 @@ export class BaseService {
 		function showDeveloperTools(done) {
 			const myWindow = System.Window.getCurrent();
 			myWindow.isShowing((isShowing) => {
-				if (isShowing && service.customData.showDevConsoleOnVisible!==false) {
+				if (isShowing && service.customData.showDevConsoleOnVisible !== false) {
 					System.showDeveloperTools(
 						myWindow.uuid,
 						myWindow.name,
@@ -208,7 +208,7 @@ export class BaseService {
 	/**
 	 * Really only for shutdown right now. Simple array that gets looped through on shutdown.
 	 * @param {string} listenerType
-	 * @param {function} callback
+	 * @param {function} callback The callback to be invoked after the method completes successfully.
 	 */
 	addEventListener(listenerType, callback) {
 		if (!this.listeners[listenerType]) {
@@ -218,7 +218,7 @@ export class BaseService {
 	}
 
 	/**
-	 * When the application sends out a shutdown message, this function is invoked. It iterates through any registered cleanup methods. When all of them have finished (or 10 seconds elapses), it sends a response to the application saying that it's completed cleanup (`shutdownComplete`, below).
+	 * When the application sends out a shutdown message, this function is invoked. It iterates through any registered cleanup methods. When all of them have finished, it sends a response to the application saying that it's completed cleanup (`shutdownComplete`, below).
 	 * @private
 	*/
 	onShutdown(cb) {
@@ -227,14 +227,13 @@ export class BaseService {
 	}
 
 	/**
-	 * When the application sends out a shutdown message, this function is invoked. It iterates through any registered cleanup methods. When all of them have finished (or 10 seconds elapses), it sends a response to the application saying that it's completed cleanup (`shutdownComplete`, below).
+	 * When the application sends out a shutdown message, this function is invoked. It iterates through any registered cleanup methods. When all of them have finished, it sends a response to the application saying that it's completed cleanup (`shutdownComplete`, below).
 	 * @private
 	*/
 	handleShutdown(err, message) {
 		var self = this;
 		function handleShutdownAction(handler, done) {
 			let cleanup = asyncAsyncify(handler);
-			cleanup = asyncTimeout(cleanup, 10000); // services may need some time to cleanup (depends on service)
 			cleanup(null, done);
 		}
 		function shutdownComplete(err?, data?) {

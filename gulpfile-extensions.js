@@ -90,8 +90,6 @@ module.exports = taskMethods => {
 
 	taskMethods.post = done => {
 		gulp.task("deploy", deployToDocs());
-		gulp.task("createInstallers", createInstallers);
-
 		done();
 	};
 

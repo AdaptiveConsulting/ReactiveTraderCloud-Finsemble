@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "http://localhost:3375/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 177);
+/******/ 	return __webpack_require__(__webpack_require__.s = 178);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -85,7 +85,7 @@ var CONSOLE_DEFAULT_LOG_SETTING = { Error: true, Warn: true, Info: true, Log: tr
 const MAX_LOG_MESSAGE_SIZE = 50000;
 const OVER_LOG_SIZE_LIMIT_MESSAGE = `Log argument greater than ${MAX_LOG_MESSAGE_SIZE / 1000}KB. Check local Console to see output of the object.`;
 const MAX_QUEUE_SIZE = 5 * 1000; // maximum logger queue size; plenty of space although shouldn't need much since continuously sending to logger if working correctly;
-const throttle = __webpack_require__(22);
+const throttle = __webpack_require__(23);
 const system_1 = __webpack_require__(3);
 const localLogger_1 = __webpack_require__(16);
 /**
@@ -475,9 +475,9 @@ exports.LoggerConstructor = function (dependencies) {
         }
     };
     /**
-     * Log a dev verbose message (an extra level of verbose-debug output)
+     * Log a dev verbose message (an extra level of verbose-debug output).
      *
-     * @param {Array.<any>} messageParm message parameter of any type that can be stringified (e.g. string, object)
+     * @param {any} message parameter of any type that can be stringified (e.g. string, object)
      *
      * @example
      *
@@ -1120,6 +1120,14 @@ class System {
         }
         return window.addEventListener("FSBLready", cb);
     }
+    /**
+     * Performs handshake with FEA to indicate the primary application started successfully
+     */
+    static startupApplicationHandshake() {
+        if (fin.desktop.System.startupApplicationHandshake) {
+            fin.desktop.System.startupApplicationHandshake();
+        }
+    }
     // This is not overriding or pointing to Openfin. This is the pattern used to close applications.
     static closeApplication(app, cb = Function.prototype) {
         const promiseResolver = (resolve) => {
@@ -1155,6 +1163,9 @@ class System {
             }, terminateAndResolve);
         };
         return new Promise(promiseResolver);
+    }
+    static isElectron() {
+        return fin.container === 'Electron';
     }
 }
 exports.System = System;
@@ -1199,7 +1210,7 @@ module.exports = g;
 * All rights reserved.
 */
 Object.defineProperty(exports, "__esModule", { value: true });
-const routerClientConstructor_1 = __webpack_require__(27);
+const routerClientConstructor_1 = __webpack_require__(28);
 const logger_1 = __webpack_require__(0);
 let RCConstructor = routerClientConstructor_1.RouterClientConstructor;
 /** The logger needs a router client, and the router client needs a logger.
@@ -1724,10 +1735,13 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (immutable) */ __webpack_exports__["injectJS"] = injectJS;
 /* harmony export (immutable) */ __webpack_exports__["openSharedData"] = openSharedData;
 /* harmony export (immutable) */ __webpack_exports__["getNewBoundsWhenMovedToMonitor"] = getNewBoundsWhenMovedToMonitor;
+/* harmony export (immutable) */ __webpack_exports__["isOnAMonitor"] = isOnAMonitor;
 /* harmony export (immutable) */ __webpack_exports__["adjustBoundsToBeOnMonitor"] = adjustBoundsToBeOnMonitor;
+/* harmony export (immutable) */ __webpack_exports__["getWindowType"] = getWindowType;
+/* harmony export (immutable) */ __webpack_exports__["adjustWindowIfInTaskbarSpace"] = adjustWindowIfInTaskbarSpace;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__system__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__ = __webpack_require__(25);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__ = __webpack_require__(26);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_logger__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1__ = __webpack_require__(19);
@@ -2377,7 +2391,7 @@ function getNewBoundsWhenMovedToMonitor(monitor, bounds) {
 	let monitorRect = monitor.unclaimedRect || monitor.availableRect || monitor.monitorRect;
 
 	// Placeholder for new bounds
-	let newBounds = Object.create(bounds);
+	let newBounds = clone(bounds);
 
 	// adjust vertical offset from monitor by moving top down or bottom up
 	if (bounds.top < monitorRect.top) {
@@ -2418,18 +2432,13 @@ function getNewBoundsWhenMovedToMonitor(monitor, bounds) {
 };
 
 /**
- * Takes a window's bounds and makes sure it's on a monitor. If the window isn't on a monitor, we determine the closest monitor
- * based on the distance from the top-left corner of the window to the center of the monitor, and then pull the monitor along that line
- * until the window is on the edge of the monitor
- * @param {*} currentBounds
- * @returns the new bounds for the window. which are different from currentBounds only if the window needs to be relocated
+ * Given bounds of a window, will check all monitors against those bounds
+ * Will return true if it is completely on a single monitor, false otherwise
+ * @param {*} bounds
+ * @returns True if the supplied bounds are entirely within a single monitor, false otherwise
  */
-function adjustBoundsToBeOnMonitor(bounds) {
-	let newBounds = Object.create(bounds);
-
-	// Determine if on a monitor, and if not, pull top-left corner directly toward center of monitor until it completely onscreen
-	let isOnAMonitor = this.Monitors.allMonitors.some(monitor => {
-
+function isOnAMonitor(bounds) {
+	return this.Monitors.allMonitors.some(monitor => {
 		/*
    * 8/26/19 Joe: This used to only use the monitorRect (the entirety of monitor's dimensions)
    * Switched it to use the unclaimedRect. If window is inside of claimed space, then its
@@ -2438,33 +2447,278 @@ function adjustBoundsToBeOnMonitor(bounds) {
    */
 		let monitorRect = monitor.unclaimedRect || monitor.monitorRect;
 
-		// Check to see tf it's to the right of the left side of the monitor,
-		// to the left of the right side, etc.basically is it within the monitor's bounds.
-		let isOnMonitor = bounds.left >= monitorRect.left && bounds.left <= monitorRect.right && bounds.right >= monitorRect.left && bounds.right <= monitorRect.right && bounds.top >= monitorRect.top && bounds.top <= monitorRect.bottom && bounds.bottom >= monitorRect.top && bounds.bottom <= monitorRect.bottom;
-
-		return isOnMonitor;
+		return bounds.left >= monitorRect.left && bounds.left <= monitorRect.right && bounds.right >= monitorRect.left && bounds.right <= monitorRect.right && bounds.top >= monitorRect.top && bounds.top <= monitorRect.bottom && bounds.bottom >= monitorRect.top && bounds.bottom <= monitorRect.bottom;
 	});
+}
 
-	if (!isOnAMonitor) {
-
-		// calculate if the window is on any monitor, and the distance between the top left and the center of the window
-		let monitorAdjustments = this.Monitors.allMonitors.map(monitor => this.getNewBoundsWhenMovedToMonitor(monitor, bounds));
-
-		// Get the closest monitor, the one with minimum distanceMoved
-		let monitorAdjustmentClosest = monitorAdjustments.sort((md1, md2) => md1.distanceMoved - md2.distanceMoved)[0];
-
-		// notify the movement
-		__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.info("Launcher.adjustWindowDescriptorBoundsToBeOnMonitor: not on monitor.  bounds", bounds, "monitor name", monitorAdjustmentClosest.monitor.name, "newBounds", monitorAdjustmentClosest.newBounds);
-
-		// assign bounds
-		newBounds = monitorAdjustmentClosest.newBounds;
-	} else {
+/**
+ * Takes a window's bounds and makes sure it's on a monitor. If the window is just off the monitor, bounds will be adjusted to be on the monitor it was on and then the check will occur again. If the window isn't on a monitor (or runs off of a monitor), we determine the closest monitor
+ * based on the distance from the top-left corner of the window to the center of the monitor, and then pull the monitor along that line
+ * until the window is on the edge of the monitor
+ * @param {*} currentBounds
+ * @returns the new bounds for the window. which are different from currentBounds only if the window needs to be relocated
+ */
+function adjustBoundsToBeOnMonitor(bounds) {
+	if (this.isOnAMonitor(bounds)) {
+		//If the window is already on a monitor keep the old bounds and stay on monitor
 		__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.info("Launcher.adjustWindowDescriptorBoundsToBeOnMonitor: on monitor.");
-		newBounds = bounds;
+		return bounds;
 	}
 
-	return newBounds;
+	// calculate if the window is on any monitor, and the distance between the top left and the center of the window
+	let monitorAdjustments = this.Monitors.allMonitors.map(monitor => this.getNewBoundsWhenMovedToMonitor(monitor, bounds));
+
+	// Get the closest monitor, the one with minimum distanceMoved
+	let monitorAdjustmentClosest = monitorAdjustments.sort((md1, md2) => md1.distanceMoved - md2.distanceMoved)[0];
+
+	// notify the movement
+	__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.info("Launcher.adjustWindowDescriptorBoundsToBeOnMonitor: not on monitor.  bounds", bounds, "monitor name", monitorAdjustmentClosest.monitor.name, "newBounds", monitorAdjustmentClosest.newBounds);
+
+	// assign bounds
+	return monitorAdjustmentClosest.newBounds;
 };
+
+/**
+ * Calculates windowType for a newly spawned window
+ * windowType can be set or overwritten in many ways. The intention here is to end up with a limited set of
+ * final windowTypes
+ * @export
+ * @param {*} config - Object containing all possible values used to set windowTypes, some of these values may be unset depending on the execution path
+ */
+function getWindowType(config) {
+	const DEFAULT_WINDOW_TYPE = "OpenFinWindow";
+	// All possible windowTypes. Some of these values will be converted to other types
+	const validTypes = ["openfin", "assimilation", "assimilated", "native", "application", "OpenFinWindow", "NativeWindow", "FinsembleNativeWindow", "OpenFinApplication", "CompoundWindow", "StackedWindow"];
+	// If an invalid windowType is given, default and log an error. Note that an empty windowType
+	// is not an error case. This is to let the user know that they may have made a typo setting a type in
+	// the config file. We default to keep Finsemble from breaking, but the user may have intended to launch a
+	// component as a different type.
+	if (config.windowType && !validTypes.includes(config.windowType)) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.error(`Invalid windowType: ${config.windowType}, defaulting to windowType: ${DEFAULT_WINDOW_TYPE}`);
+		return DEFAULT_WINDOW_TYPE;
+	}
+	let ret = config.windowType || DEFAULT_WINDOW_TYPE;
+
+	// We allow several additional windowTypes to be inputted to make the config user-friendly
+	// These windowTypes need to be converted to values Finsemble can process
+	switch (config.windowType) {
+		case "assimilation":
+		case "assimilated":
+			ret = "NativeWindow";
+			break;
+		case "native":
+			ret = "FinsembleNativeWindow";
+			break;
+		case "application":
+			ret = "OpenFinApplication";
+			break;
+		case "openfin":
+			ret = "OpenFinWindow";
+			break;
+		case "StackedWindow":
+			ret = "StackedWindow";
+			break;
+		// If config.windowType is unset, we'll use the DEFAULT_WINDOW_TYPE
+		case "default":
+			break;
+	}
+
+	// Next handle any backward compatibility windowType inputs
+	if (config.native) ret = "NativeWindow"; //Backward Compatibility
+	if (config.type === "openfinApplication") ret = "OpenFinApplication"; //Backward Compatibility
+	if (config.compound) ret = "CompoundWindow";
+	return ret;
+}
+
+function adjustWindowIfInTaskbarSpace(bounds) {
+	let adjustedBounds = this.clone(bounds);
+
+	//Only one adjustment should be necessary if the docked window is now inside of taskbar space,
+	//making anymore than one means we need to find a new monitor
+	let wasAdjusted = false;
+	this.Monitors.allMonitors.forEach(monitor => {
+		// For each monitor, see if the window to be adjusted is currently
+		// 'inside' of the monitor's taskbar space. If so, adjust to be right
+		// below/above the taskbar and recheck isOnAMonitor
+		if (windowBoundsAreInTaskbarSpace(bounds, monitor) && !wasAdjusted) {
+			const taskbar = calculateTaskbarBounds(monitor);
+			const monitorRect = monitor.unclaimedRect || monitor.monitorRect;
+
+			switch (taskbar.edge) {
+				case "top":
+					adjustedBounds.top = monitorRect.top;
+					adjustedBounds.bottom = adjustedBounds.top + adjustedBounds.height;
+					wasAdjusted = true;
+					break;
+				case "bottom":
+					adjustedBounds.top = monitorRect.bottom - adjustedBounds.height;
+					adjustedBounds.bottom = monitorRect.bottom;
+					wasAdjusted = true;
+					break;
+				case "left":
+					adjustedBounds.left = monitorRect.left;
+					adjustedBounds.right = adjustedBounds.left + adjustedBounds.width;
+					wasAdjusted = true;
+					break;
+				case "right":
+					adjustedBounds.left = adjustedBounds.right - adjustedBounds.width;
+					adjustedBounds.right = monitorRect.right;
+					wasAdjusted = true;
+					break;
+				default:
+					break;
+			}
+		}
+	});
+
+	// After adjusting bounds to be on the monitor's new dimensions check if the window is
+	// now on the monitor
+	// If the window can stay on the current monitor with adjusted bounds, there is no need
+	// to determine a new monitor to move to. Return the adjusted bounds
+	if (wasAdjusted && this.isOnAMonitor(adjustedBounds)) {
+		return adjustedBounds;
+	}
+
+	return this.adjustBoundsToBeOnMonitor(bounds);
+}
+
+/**
+ * Takes a window's bounds and a monitor, returns true if the window is in
+ * the monitor's taskbar space, false otherwise.
+ * @param {*} windowBounds
+ * @param {*} monitor
+ */
+function windowBoundsAreInTaskbarSpace(windowBounds, monitor) {
+	const taskbar = calculateTaskbarBounds(monitor);
+
+	if (!taskbar) return false;
+
+	switch (taskbar.edge) {
+		case "top":
+		case "bottom":
+			return windowBounds.top >= taskbar.top && windowBounds.bottom <= taskbar.bottom && windowBounds.left >= taskbar.left && windowBounds.right <= taskbar.right;
+		case "left":
+		case "right":
+			return windowBounds.left >= taskbar.left && windowBounds.right <= taskbar.right && windowBounds.top >= taskbar.top && windowBounds.bottom <= taskbar.bottom;
+		default:
+			return false;
+	}
+}
+
+/**
+ * Given a monitor, will return the Windows taskbar's claimed space.
+ * In electron, this comes with monitor info. In openfin it must be calculated using the differences in
+ * monitor.availableRect and monitor.monitorRect.
+ * @param {*} monitor The monitor to return the taskbar bounds for
+ * @return {*} A bounding box object containing dimensions for the monitor's taskbar (top, bottom, left, right, width, height, and edge)
+ * or undefined if the taskbar doesn't exist (Windows 7 has only one taskbar even in a multi-monitor setup, so this is a plausible scenario)
+ */
+function calculateTaskbarBounds(monitor) {
+	//Electron keeps a representation of the taskbar on each monitor
+	if (fin.container === "Electron" && monitor.taskbar) {
+		return monitor.taskbar;
+	}
+
+	//OpenFin is left to calculate it with monitorRect/availableRect
+	if (monitor.availableRect && monitor.monitorRect) {
+		const usableBounds = monitor.availableRect;
+		const allBounds = monitor.monitorRect;
+
+		//The edge that differs between monitorRect and availableRect is where the toolbar is.
+		//Calculating that edge here
+		const differingEdge = findDifferingDimension(allBounds, usableBounds);
+
+		//If this happens it is not necessarily an error, it depends on the environment. Send it as a verbose message.
+		//If it does happen, and is the cause of an error, it will be logged but out-of-the-way for anyone with standard logging
+		if (!differingEdge) {
+			__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.debug("Utils.calculateTaskbarBounds: Taskbar not found on current monitor: ", monitor);
+		}
+
+		let taskbar = {
+			edge: differingEdge
+		};
+
+		/*
+   * Picturing monitors as coordinate representations, given monitorRect (the entire monitors bounds)
+   * and availableRect (the usable space according to the OS), we can determine where the OS's 'claimed' space/taskbar are.
+   *
+   * e.g.
+   *
+   * This entire square (monitor) is 'monitorRect'
+   * +------------------------------------------+
+   * |                                          |
+   * |                                          |
+   * |                                          |
+   * |                                          |
+   * |                                          |
+   * |                                          |
+   * |               availableRect              |
+   * |                                          |
+   * |                                          |
+   * |                                          |
+   * |                                          |
+   * |                                          |
+   * |                                          |
+   * |                                          |
+   * |                                          |
+   * +------------------------------------------+
+   * |                 Taskbar                  |
+   * +------------------------------------------+
+  		 */
+		if (differingEdge === "top" || differingEdge === "bottom") {
+
+			taskbar.left = allBounds.left;
+			taskbar.right = allBounds.right;
+			taskbar.width = allBounds.width;
+			taskbar.height = allBounds.height - usableBounds.height;
+
+			if (differingEdge === "top") {
+				taskbar.top = allBounds.top;
+				taskbar.bottom = usableBounds.top;
+			} else {
+				taskbar.top = usableBounds.bottom;
+				taskbar.bottom = allBounds.bottom;
+			}
+		} else if (differingEdge === "left" || differingEdge === "right") {
+
+			taskbar.top = allBounds.top;
+			taskbar.bottom = allBounds.bottom;
+			taskbar.width = allBounds.width - usableBounds.width;
+			taskbar.height = allBounds.height;
+
+			if (differingEdge === "left") {
+				taskbar.left = allBounds.left;
+				taskbar.right = usableBounds.left;
+			} else {
+				taskbar.left = usableBounds.right;
+				taskbar.right = allBounds.right;
+			}
+		} else {
+			taskbar = undefined;
+		}
+
+		return taskbar;
+	}
+}
+
+/**
+ * Given two bounding boxes (objects containing all bounds: top, left, right, bottom, width, height) returns
+ * the dimension which differs between the two
+ * @param {*} boundingBox1
+ * @param {*} boundingBox2
+ * @return {string} The string representation of the differing dimension
+ */
+function findDifferingDimension(boundingBox1, boundingBox2) {
+	for (let i = 0; i < Object.keys(boundingBox1).length; i++) {
+		const dimensionName = Object.keys(boundingBox1)[i];
+		if (boundingBox1[dimensionName] !== boundingBox2[dimensionName]) {
+			return dimensionName;
+		}
+	}
+
+	//Return null if no differing dimension found
+	return null;
+}
 
  ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\util.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\util.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
@@ -7767,6 +8021,113 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 /***/ }),
 /* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.WRAPPERS = {
+    /*
+        TODO: For the time being these are just events our windows fire but not OpenFin (this is used in the OF wrapper. Long term we might have to reverse this)
+        TODO: Event naming is inconsistent. Our events should not be camel case to maintain consistency.
+    */
+    EVENTS: ["title-changed", "bringToFront", "setBounds", "alwaysOnTop", "setOpacity"]
+};
+exports.APPLICATION_STATE_CHANNEL = "Finsemble.Application.State";
+//These next four channels are used in service => service manager communication. The SM receives these messages and then pushes out state updates to the rest of the system.
+exports.SERVICE_INITIALIZING_CHANNEL = "Finsemble.ServiceManager.serviceInitializing";
+exports.SERVICE_READY_CHANNEL = "Finsemble.ServiceManager.serviceReady";
+exports.SERVICE_CLOSING_CHANNEL = "Finsemble.ServiceManager.serviceClosing";
+exports.SERVICE_CLOSED_CHANNEL = "Finsemble.ServiceManager.serviceClosed";
+//This channel is where the aggregated state of all services is sent out on.
+exports.SERVICES_STATE_CHANNEL = "Finsemble.State.Services";
+exports.WINDOWSTATE = {
+    NORMAL: 0,
+    MINIMIZED: 1,
+    MAXIMIZED: 2,
+    HIDDEN: 3
+};
+//These channels are to start and stop services dynamically.
+exports.SERVICE_START_CHANNEL = "Finsemble.Service.Start";
+exports.SERVICE_STOP_CHANNEL = "Finsemble.Service.Stop";
+exports.DOCKING = {
+    GROUP_UPDATE: "DockingService.groupUpdate",
+    // For legacy reasons, this is named Workspace, even though it's generated by docking.
+    WORKSPACE_GROUP_UPDATE: "Finsemble.WorkspaceService.groupUpdate",
+};
+// These channels are for interrupting events
+exports.EVENT_INTERRUPT_CHANNEL = "Finsemble.Event.Interrupt";
+exports.INTERRUPTIBLE_EVENTS = ["close-requested", "closed", "close-complete", "_container-close-handlers"];
+exports.REMOTE_FOCUS = "WindowService.remoteFocus";
+exports.WORKSPACE = {
+    CLEAN_SHUTDOWN: "Finsemble.Workspace.cleanShutdown",
+    UPDATE_PUBSUB: "Finsemble.WorkspaceService.update",
+    STORAGE_TOPIC: "finsemble.workspace",
+    CACHE_STORAGE_TOPIC: "finsemble.workspace.cache",
+    ALL_WORKSPACES: "finsemble.allWorkspaces",
+    ACTIVE_WORKSPACE: "activeWorkspace",
+    // When we have the liberty of breaking API's, we should consolidate this topic.
+    LAST_USED_WORKSPACE_TOPIC: "finsemble",
+    LAST_USED_WORKSPACE: "finsemble.lastUsedWorkspace",
+    INITIAL_WORKSPACE_PREFERENCE: "finsemble.initialWorkspace",
+    PUBLISH_REASONS: {
+        INIT: "workspace:initialization",
+        LOAD_DATA_RETRIEVED: "workspace:load:dataRetrieved",
+        LOAD_FINISHED: "workspace:load:finished",
+        WINDOW_REMOVED: "window:remove",
+        WINDOW_ADDED: "window:add",
+        LOAD_STARTED: "workspace:load:start",
+        WORKSPACE_REMOVED: "Workspace:remove",
+        WORKSPACE_RENAMED: "rename",
+        SWITCHTO_TERMINATED: "workspace:switchTo:terminated",
+        NEW_WORKSPACE: "new workspace",
+        SAVE_AS: "APPLICATION LIFECYCLE:WORKSPACE LIFECYCLE:SaveAs:Workspace:Save As",
+    },
+    API_CHANNELS: {
+        NEW_WORKSPACE: "Finsemble.Workspace.NewWorkspace",
+        SAVE: "Finsemble.Workspace.Save",
+        RENAME: "Finsemble.Workspace.Rename",
+        SAVE_AS: "Finsemble.Workspace.SaveAs",
+        SWITCH_TO: "Finsemble.Workspace.SwitchTo",
+        IMPORT: "Finsemble.Workspace.Import",
+        EXPORT: "Finsemble.Workspace.Export",
+        REMOVE: "Finsemble.Workspace.Remove",
+        SAVE_GLOBAL_DATA: "Finsemble.Workspace.SaveGlobalData",
+        SAVE_VIEW_DATA: "Finsemble.Workspace.SaveViewData",
+        GET_GLOBAL_DATA: "Finsemble.Workspace.GetGlobalData",
+        GET_VIEW_DATA: "Finsemble.Workspace.GetViewData",
+        GET_WORKSPACES: "Finsemble.Workspace.GetWorkspaces",
+        GET_WORKSPACE_NAMES: "Finsemble.Workspace.GetWorkspaceNames",
+        SET_WORKSPACE_ORDER: "Finsemble.Workspace.SetWorkspaceOrder",
+        GET_ACTIVE_WORKSPACE: "Finsemble.Workspace.GetActiveWorkspace",
+        SET_ACTIVEWORKSPACE_DIRTY: "Finsemble.Workspace.SetActiveWorkspaceDirty",
+        GET_TEMPLATES: "Finsemble.Workspace.GetTemplates",
+        IMPORT_TEMPLATE: "Finsemble.Workspace.ImportTemplate",
+        EXPORT_TEMPLATE: "Finsemble.Workspace.ExportTemplate",
+        REMOVE_TEMPLATE: "Finsemble.Workspace.RemoveTemplate",
+        SET_WINDOW_STATE: "Finsemble.Workspace.SetWindowData",
+        GET_WINDOW_STATE: "Finsemble.Workspace.GetWindowData",
+        ADD_WINDOW: "WorkspaceService.addWindow",
+        REMOVE_WINDOW: "WorkspaceService.removeWindow",
+    }
+};
+exports.COMPONENT_STATE_STORAGE_TOPIC = "finsemble.componentStateStorage";
+exports.HEARTBEAT_TIMEOUT_CHANNEL = "Finsemble.WindowService.HeartbeatTimeout";
+exports.LAUNCHER_SERVICE = {
+    WINDOW_CLOSED: "LauncherService.WindowClosed"
+};
+exports.DELIVERY_MECHANISM = {
+    PRELOAD: 'preload',
+    INJECTION: 'injection',
+};
+exports.MOVE_REASON = {
+    AERO_KEY: "aero_key",
+    SYSTEM_RESTORED: "system_restored"
+};
+
+
+/***/ }),
+/* 11 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -8211,109 +8572,6 @@ const ConfigUtilInstance = new ConfigUtil();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 11 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.WRAPPERS = {
-    /*
-        TODO: For the time being these are just events our windows fire but not OpenFin (this is used in the OF wrapper. Long term we might have to reverse this)
-        TODO: Event naming is inconsistent. Our events should not be camel case to maintain consistency.
-    */
-    EVENTS: ["title-changed", "bringToFront", "setBounds", "alwaysOnTop", "setOpacity"]
-};
-exports.APPLICATION_STATE_CHANNEL = "Finsemble.Application.State";
-//These next four channels are used in service => service manager communication. The SM receives these messages and then pushes out state updates to the rest of the system.
-exports.SERVICE_INITIALIZING_CHANNEL = "Finsemble.ServiceManager.serviceInitializing";
-exports.SERVICE_READY_CHANNEL = "Finsemble.ServiceManager.serviceReady";
-exports.SERVICE_CLOSING_CHANNEL = "Finsemble.ServiceManager.serviceClosing";
-exports.SERVICE_CLOSED_CHANNEL = "Finsemble.ServiceManager.serviceClosed";
-//This channel is where the aggregated state of all services is sent out on.
-exports.SERVICES_STATE_CHANNEL = "Finsemble.State.Services";
-exports.WINDOWSTATE = {
-    NORMAL: 0,
-    MINIMIZED: 1,
-    MAXIMIZED: 2,
-    HIDDEN: 3
-};
-//These channels are to start and stop services dynamically.
-exports.SERVICE_START_CHANNEL = "Finsemble.Service.Start";
-exports.SERVICE_STOP_CHANNEL = "Finsemble.Service.Stop";
-exports.DOCKING = {
-    GROUP_UPDATE: "DockingService.groupUpdate",
-    // For legacy reasons, this is named Workspace, even though it's generated by docking.
-    WORKSPACE_GROUP_UPDATE: "Finsemble.WorkspaceService.groupUpdate",
-};
-// These channels are for interrupting events
-exports.EVENT_INTERRUPT_CHANNEL = "Finsemble.Event.Interrupt";
-exports.INTERRUPTIBLE_EVENTS = ["close-requested", "closed", "close-complete", "_container-close-handlers"];
-exports.REMOTE_FOCUS = "WindowService.remoteFocus";
-exports.WORKSPACE = {
-    CLEAN_SHUTDOWN: "Finsemble.Workspace.cleanShutdown",
-    UPDATE_PUBSUB: "Finsemble.WorkspaceService.update",
-    STORAGE_TOPIC: "finsemble.workspace",
-    CACHE_STORAGE_TOPIC: "finsemble.workspace.cache",
-    ALL_WORKSPACES: "finsemble.allWorkspaces",
-    ACTIVE_WORKSPACE: "activeWorkspace",
-    // When we have the liberty of breaking API's, we should consolidate this topic.
-    LAST_USED_WORKSPACE_TOPIC: "finsemble",
-    LAST_USED_WORKSPACE: "finsemble.lastUsedWorkspace",
-    INITIAL_WORKSPACE_PREFERENCE: "finsemble.initialWorkspace",
-    PUBLISH_REASONS: {
-        INIT: "workspace:initialization",
-        LOAD_DATA_RETRIEVED: "workspace:load:dataRetrieved",
-        LOAD_FINISHED: "workspace:load:finished",
-        WINDOW_REMOVED: "window:remove",
-        WINDOW_ADDED: "window:add",
-        LOAD_STARTED: "workspace:load:start",
-        WORKSPACE_REMOVED: "Workspace:remove",
-        WORKSPACE_RENAMED: "rename",
-        SWITCHTO_TERMINATED: "workspace:switchTo:terminated",
-        NEW_WORKSPACE: "new workspace",
-        SAVE_AS: "APPLICATION LIFECYCLE:WORKSPACE LIFECYCLE:SaveAs:Workspace:Save As",
-    },
-    API_CHANNELS: {
-        NEW_WORKSPACE: "Finsemble.Workspace.NewWorkspace",
-        SAVE: "Finsemble.Workspace.Save",
-        RENAME: "Finsemble.Workspace.Rename",
-        SAVE_AS: "Finsemble.Workspace.SaveAs",
-        SWITCH_TO: "Finsemble.Workspace.SwitchTo",
-        IMPORT: "Finsemble.Workspace.Import",
-        EXPORT: "Finsemble.Workspace.Export",
-        REMOVE: "Finsemble.Workspace.Remove",
-        SAVE_GLOBAL_DATA: "Finsemble.Workspace.SaveGlobalData",
-        SAVE_VIEW_DATA: "Finsemble.Workspace.SaveViewData",
-        GET_GLOBAL_DATA: "Finsemble.Workspace.GetGlobalData",
-        GET_VIEW_DATA: "Finsemble.Workspace.GetViewData",
-        GET_WORKSPACES: "Finsemble.Workspace.GetWorkspaces",
-        GET_WORKSPACE_NAMES: "Finsemble.Workspace.GetWorkspaceNames",
-        SET_WORKSPACE_ORDER: "Finsemble.Workspace.SetWorkspaceOrder",
-        GET_ACTIVE_WORKSPACE: "Finsemble.Workspace.GetActiveWorkspace",
-        SET_ACTIVEWORKSPACE_DIRTY: "Finsemble.Workspace.SetActiveWorkspaceDirty",
-        GET_TEMPLATES: "Finsemble.Workspace.GetTemplates",
-        IMPORT_TEMPLATE: "Finsemble.Workspace.ImportTemplate",
-        EXPORT_TEMPLATE: "Finsemble.Workspace.ExportTemplate",
-        REMOVE_TEMPLATE: "Finsemble.Workspace.RemoveTemplate",
-        SET_WINDOW_STATE: "Finsemble.Workspace.SetWindowData",
-        GET_WINDOW_STATE: "Finsemble.Workspace.GetWindowData",
-        ADD_WINDOW: "WorkspaceService.addWindow",
-        REMOVE_WINDOW: "WorkspaceService.removeWindow",
-    }
-};
-exports.COMPONENT_STATE_STORAGE_TOPIC = "finsemble.componentStateStorage";
-exports.HEARTBEAT_TIMEOUT_CHANNEL = "Finsemble.WindowService.HeartbeatTimeout";
-exports.LAUNCHER_SERVICE = {
-    WINDOW_CLOSED: "LauncherService.WindowClosed"
-};
-exports.DELIVERY_MECHANISM = {
-    PRELOAD: 'preload',
-    INJECTION: 'injection',
-};
-
-
-/***/ }),
 /* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -8386,6 +8644,12 @@ EventEmitter.prototype._maxListeners = undefined;
 // added to it. This is a useful default which helps finding memory leaks.
 var defaultMaxListeners = 10;
 
+function checkListener(listener) {
+  if (typeof listener !== 'function') {
+    throw new TypeError('The "listener" argument must be of type Function. Received type ' + typeof listener);
+  }
+}
+
 Object.defineProperty(EventEmitter, 'defaultMaxListeners', {
   enumerable: true,
   get: function() {
@@ -8420,14 +8684,14 @@ EventEmitter.prototype.setMaxListeners = function setMaxListeners(n) {
   return this;
 };
 
-function $getMaxListeners(that) {
+function _getMaxListeners(that) {
   if (that._maxListeners === undefined)
     return EventEmitter.defaultMaxListeners;
   return that._maxListeners;
 }
 
 EventEmitter.prototype.getMaxListeners = function getMaxListeners() {
-  return $getMaxListeners(this);
+  return _getMaxListeners(this);
 };
 
 EventEmitter.prototype.emit = function emit(type) {
@@ -8479,9 +8743,7 @@ function _addListener(target, type, listener, prepend) {
   var events;
   var existing;
 
-  if (typeof listener !== 'function') {
-    throw new TypeError('The "listener" argument must be of type Function. Received type ' + typeof listener);
-  }
+  checkListener(listener);
 
   events = target._events;
   if (events === undefined) {
@@ -8518,7 +8780,7 @@ function _addListener(target, type, listener, prepend) {
     }
 
     // Check for listener leak
-    m = $getMaxListeners(target);
+    m = _getMaxListeners(target);
     if (m > 0 && existing.length > m && !existing.warned) {
       existing.warned = true;
       // No error code for this since it is a Warning
@@ -8550,12 +8812,12 @@ EventEmitter.prototype.prependListener =
     };
 
 function onceWrapper() {
-  var args = [];
-  for (var i = 0; i < arguments.length; i++) args.push(arguments[i]);
   if (!this.fired) {
     this.target.removeListener(this.type, this.wrapFn);
     this.fired = true;
-    ReflectApply(this.listener, this.target, args);
+    if (arguments.length === 0)
+      return this.listener.call(this.target);
+    return this.listener.apply(this.target, arguments);
   }
 }
 
@@ -8568,18 +8830,14 @@ function _onceWrap(target, type, listener) {
 }
 
 EventEmitter.prototype.once = function once(type, listener) {
-  if (typeof listener !== 'function') {
-    throw new TypeError('The "listener" argument must be of type Function. Received type ' + typeof listener);
-  }
+  checkListener(listener);
   this.on(type, _onceWrap(this, type, listener));
   return this;
 };
 
 EventEmitter.prototype.prependOnceListener =
     function prependOnceListener(type, listener) {
-      if (typeof listener !== 'function') {
-        throw new TypeError('The "listener" argument must be of type Function. Received type ' + typeof listener);
-      }
+      checkListener(listener);
       this.prependListener(type, _onceWrap(this, type, listener));
       return this;
     };
@@ -8589,9 +8847,7 @@ EventEmitter.prototype.removeListener =
     function removeListener(type, listener) {
       var list, events, position, i, originalListener;
 
-      if (typeof listener !== 'function') {
-        throw new TypeError('The "listener" argument must be of type Function. Received type ' + typeof listener);
-      }
+      checkListener(listener);
 
       events = this._events;
       if (events === undefined)
@@ -8806,7 +9062,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const events_1 = __webpack_require__(12);
 const routerClientInstance_1 = __webpack_require__(5);
 const STARTUP_TIMEOUT_DURATION = 10000;
-const constants_1 = __webpack_require__(11);
+const constants_1 = __webpack_require__(10);
 /**
  * Small class to hold on to dependencies and callbacks. Also emits a timeout event that the startupManager is listening for. When it times out, the startupManager catches the event and generates a message that includes all of the offline clients and services. It then causes this class to emit an  err event that the baseService is listening for. This arrangement is set up for a couple of reasons.
  * 1. I can't use the logger in here because the logger uses the startupManager, and there'd be a circular dependency.
@@ -9266,9 +9522,12 @@ const logger_1 = __webpack_require__(0);
  * @introduction
  * <h2>Config Client</h2>
  *
- * This client provides run-time access to Finsemble's configuration. See the [Configuration tutorial](tutorial-Configuration.html) for a configuration overview.
- * The Config Client functions similar to a global store created with the DistributedStoreClient and offers many of the same methods.
+ * This client provides run-time access to Finsemble's configuration.
+ * The Config Client functions similar to a global store created with the Distributed Store Client and offers many of the same methods.
  * Values modified at runtime are not persisted.
+ *
+ *
+ * See the [Configuration tutorial](tutorial-Configuration.html) for a configuration overview.
  *
  * @hideconstructor
  * @constructor
@@ -9362,13 +9621,11 @@ class ConfigClient extends baseClient_1._BaseClient {
     }
     /**
      * Get a value from the config.
-     * @param {valueParam | String} params - Params object. This can also be a string
-     * @param {String} params.field - The field where the value is stored.
-     * @param {Function} cb -  Will return the value if found.
-     * @returns {any} - The value of the field. If no callback is given and the value is local, this will run synchronous
+     * @param {Function} cb Will return the value if found.
+     * @returns {any} The value of the field. If no callback is given and the value is local, this will run synchronous
      * @example
-     * FSBL.Clients.ConfigClient.getValue({field:'field1'},function(err,value){});
-     * FSBL.Clients.ConfigClient.getValue('field1',function(err,value){});
+     * FSBL.Clients.ConfigClient.getValue({ field:'field1' }, function(err,value){ });
+     * FSBL.Clients.ConfigClient.getValue('field1', function(err,value){ });
      */
     getValue(params, cb = Function.prototype) {
         if (typeof params === "string") {
@@ -9394,13 +9651,12 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
      * Get multiple values from the config.
-    * @param {Object[] | String[]} fields - An array of field objects. If there are no fields provided, the complete configuration manifest are returned.
-     * @param {String} fields[].field - The name of the field
-     * @param {Function} cb -  Will return the value if found.
-     * @returns {Object} - returns an object of with the fields as keys.If no callback is given and the value is local, this will run synchronous
+    * @param {fieldOnlyParam[] | string[]} fields An array of field objects. If there are no fields provided, the complete configuration manifest is returned.
+     * @param {Function} cb Will return the value if found.
+     * @returns {Object} - Returns an object of with the fields as keys. If no callback is given and the value is local, this will run synchronous
      * @example
-     * FSBL.Clients.ConfigClient.getValues([{field:'field1'},{field2:'field2'}],function(err,values){});
-     * FSBL.Clients.ConfigClient.getValues(['field1','field2'],function(err,values){});
+     * FSBL.Clients.ConfigClient.getValues([{ field: 'field1' },{ field2: 'field2' }],function(err,values){ });
+     * FSBL.Clients.ConfigClient.getValues(['field1','field2'], function(err,values){ });
      * FSBL.Clients.ConfigClient.get(null, callback); // returns the complete manifest containing the finsemble property
     */
     getValues(fields, cb = Function.prototype) {
@@ -9426,15 +9682,12 @@ class ConfigClient extends baseClient_1._BaseClient {
     }
     ;
     /**
-     * Set a value in the config. Setting a value will trigger events that you can listen to using addListener
-     * @param {Object} params - Params object
-     * @param {String} params.field - The name of the field where data will be stored
-     * @param {any} params.value - Value to be stored
-     * @param {function} cb optional callback
+     * Set a value in the config. Setting a value will trigger events that you can listen to using <a href="ConfigClient.html#addListener">addListener</a>.
+     * @param {function} cb Optional callback
      * @returns {null}
      *
      * @example
-     * FSBL.Clients.ConfigClient.setValue({field:'field1',value:"new value"});
+     * FSBL.Clients.ConfigClient.setValue({ field:'field1', value:"new value" });
      */
     setValue(params, cb) {
         var data = {
@@ -9448,14 +9701,11 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
      * This will set multiple values in the config.
-     * @param {Object} fields - An Array of field objects
-     * @param {String} fields.field - The name of the field
-     * @param {any} fields.value - Field value
-     * @param {function} cb optional callback
+     * @param {function} cb Optional callback
      * @returns {null}
      *
      * @example
-     * FSBL.Clients.ConfigClient.setValues([{field:'field1',value:"new value"}]);
+     * FSBL.Clients.ConfigClient.setValues([{ field:'field1', value: "new value" }]);
      */
     setValues(fields, cb) {
         if (!fields) {
@@ -9471,11 +9721,10 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
      * Remove a value from the config.
-     * @param {Object | String} params - Either an object or string
-     * @param {String} param.field - The name of the field
-     * @param {Function} cb -  returns an error if there is one
+     * @param {fieldAndValueParam | String} params - Either an object or string
+     * @param {Function} cb -  Returns an error if there is one
      * @example
-     * FSBL.Clients.ConfigClient.removeValue({field:'field1'},function(err,bool){});
+     * FSBL.Clients.ConfigClient.removeValue({ field:'field1' }, function(err,bool){ });
      */
     removeValue(params, cb = Function.prototype) {
         if (params !== undefined) {
@@ -9492,10 +9741,13 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
      * Removes multiple values from the config.
-     * @param {Array.<Object>} params - An Array of field objects
-     * @param {Function} cb -  returns an error if there is one.
+     * @param {fieldAndValueParams} params - An Array of field objects
+     * @param {Function} cb -  Returns an error if there is one.
      * @example
-     * FSBL.Clients.ConfigClient.removeValue({field:'field1'},function(err,bool){});
+     * FSBL.Clients.ConfigClient.removeValues([{
+     * 	field:'field1'
+     * }],
+     * function(err,bool){	});
      */
     removeValues(params, cb = Function.prototype) {
         if (!Array.isArray(params)) {
@@ -9509,19 +9761,17 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
     * Add a listener to the config at either the root config level or field level. If no field is given, the root config level is used. You can also listen for changes to config fields any number of levels deep -- finsemble.configitem.deeperconfigitem.evendeeperconfigitem
-    * @param {Object} params - Params object
-    * @param {String} params.field - The data field to listen for. If this is empty it listen to all changes of the store.
-    * @param {Function} fn -  the function to call when a listener is triggered
-    * @param {Function} cb - callback
+    * @param {Function} fn The function to be called when the observed piece of config is modified.
+    * @param {Function} cb Callback to be invoked after the listener is added.
     * @example
     * var myFunction = function(err,data){};
-    * FSBL.Clients.ConfigClient.addListener({field:'field1'},myFunction,cb);
+    * FSBL.Clients.ConfigClient.addListener({ field:'field1' }, myFunction, cb);
     */
     addListener(params, fn, cb) {
         var field = null;
         if (typeof params === "function") {
             fn = params;
-            params = {};
+            params = { field };
         }
         if (params.field) {
             field = params.field;
@@ -9539,13 +9789,9 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
      *
-    * Add an array of listeners as objects or strings. If using strings, you must provide a function callback.
-    * @param {Object | Array.<Object>} params - Params object
-    * @param {String} params[].field - The data field to listen for.
-    * @param {String} params[].listener - the function to call when a listener is triggered. If this is empty, fn is used.
-    * @param {function} fn -  the function to call when a listener is triggered
-    * @param {function} cb
-    * @todo make the typing proper.
+    * Add an array of listeners as objects or strings. If using strings, you must provide a function callback as the second parameter.
+    * @param {function} fn The function to be called when the observed piece of config is modified.
+    * @param {function} cb Callback to be invoked after the listeners are added.
     * @example
     * var myFunction = function(err,data){}
   * FSBL.Clients.ConfigClient.addListeners(
@@ -9567,7 +9813,7 @@ class ConfigClient extends baseClient_1._BaseClient {
     */
     addListeners(params, fn, cb) {
         if (!Array.isArray(params)) {
-            return this.addListener(params, fn, cb);
+            return this.addListener({ field: params.field }, fn, cb);
         }
         for (var i = 0; i < params.length; i++) {
             var field = null;
@@ -9599,22 +9845,23 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
      * Remove a listener from config. If no field is given, we look for a config root listener
-     * @param {Object} params - Params object
-     * @param {String} [params.field] - The data field
-     * @param {function} [fn] -  the function to remove from the listeners
-     * @param {function} [cb] -  returns true if it was successful in removing the listener.
+     * @param {function} fn The listener to remove.
+     * @param {function} cb Returns true if it was successful in removing the listener.
      *
      * @example
-     * var myFunction = function(err,data){}
-     * FSBL.Clients.ConfigClient.removeListener({field:'field1'},MyFunction,function(bool){});
-     * FSBL.Clients.ConfigClient.removeListener(MyFunction,function(bool){});
+     * var myFunction = function(err,data){ }
+     * FSBL.Clients.ConfigClient.removeListener({
+     * 	field:'field1'
+     * }, MyFunction, function(bool){ });
+     * FSBL.Clients.ConfigClient.removeListener(MyFunction, function(bool){ });
      */
     removeListener(params, fn, cb) {
         var field = null;
+        // The case below is for removing the root level config listener
         if (typeof params === "function") {
             cb = fn;
             fn = params;
-            params = {};
+            params = { field };
         }
         if (params.field) {
             field = params.field;
@@ -9633,20 +9880,21 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
      * Remove an array of listeners from the config
-     * @param {Object | Array.<Object>} params - Params object
-     * @param {String} params.field - The data field to listen for. If this is empty it listen to all changes of the store.
-     * @param {function} params.listener - The listener function
-     * @param {function} [fn] -  the function to remove from the listeners
-     * @param {function} [cb] -  returns true if it was successful in removing the listener.
+     * @param {removeListenersType} params
+     * @param {function} fn The listener to remove
+     * @param {function} cb Returns true if it was successful in removing the listener.
      *
      * @example
      * var myFunction = function(err,data){ }
-     * FSBL.Clients.ConfigClient.removeListeners({field:'field1'},MyFunction,function(bool){});
-     * FSBL.Clients.ConfigClient.removeListeners([{field:'field1',listener:MyFunction}],function(bool){});
-     * FSBL.Clients.ConfigClient.removeListeners(['field1'],MyFunction,function(bool){});
+     * FSBL.Clients.ConfigClient.removeListeners({
+     * 	field: 'field1'
+     * }, MyFunction, function(bool){ });
+     * FSBL.Clients.ConfigClient.removeListeners([{ field:'field1', listener: MyFunction }], function(bool){ });
+     * FSBL.Clients.ConfigClient.removeListeners(['field1'], MyFunction, function(bool) { });
      */
     removeListeners(params, fn, cb) {
         if (!Array.isArray(params)) {
+            // The typecasting below is bad but it prevents build problems. We should tighten the APIs.
             if (typeof params === "function") {
                 this.removeListener({}, params, cb);
             }
@@ -9700,7 +9948,7 @@ class ConfigClient extends baseClient_1._BaseClient {
      * @private
      * @example
      *
-     * FSBL.Clients.ConfigClient.get({ field: "finsemble" },function(err, finsemble) {
+     * FSBL.Clients.ConfigClient.get({ field: "finsemble" }, function(err, finsemble) {
      *		if (!err) {
      *			finsembleConfig = finsemble;
      *		} else {
@@ -9717,9 +9965,9 @@ class ConfigClient extends baseClient_1._BaseClient {
      * FSBL.Clients.ConfigClient.get({}, callback); // alternate form; returns the complete manifest containing the finsemble property
      * FSBL.Clients.ConfigClient.get({ field: "finsemble.components" }, callback);
      * FSBL.Clients.ConfigClient.get({ field: "finsemble.services" }, callback);
-     * FSBL.Clients.ConfigClient.get({ field: "finsemble.components" },callback);
-     * FSBL.Clients.ConfigClient.get({ field: "finsemble.assimilation.whitelist" }, callback);
-     * FSBL.Clients.ConfigClient.get({ field: "runtime.version",callback) }; // returns the manifest's runtime.version property
+     * FSBL.Clients.ConfigClient.get({ field: "finsemble.components" }, callback);
+     * FSBL.Clients.ConfigClient.get({ field: "finsemble.assimilation" }, callback);
+     * FSBL.Clients.ConfigClient.get({ field: "runtime.version", callback) }; // returns the manifest's runtime.version property
      */
     get(params, callback) {
         logger_1.default.system.debug("ConfigClient.Get", params);
@@ -9739,20 +9987,20 @@ class ConfigClient extends baseClient_1._BaseClient {
     }
     ;
     /**
-     * Dynamically set config values within the Finsemble configuration.  New config properties may be set or existing ones modified. Note that configuration changes will not necessarily dynamically modify the components or services that use the corresponding configuration -- it depends if the component or service handles the corresponding change notifications (either though PubSub or the Config's DataStore). Also, these changes do not persist in any config files.)
+     * Dynamically set config values within the Finsemble configuration.  New config properties may be set or existing ones modified. Note that configuration changes will not necessarily dynamically modify the components or services that use the corresponding configuration -- it depends if the component or service handles the corresponding change notifications (either though PubSub or the Config's DataStore). Also, these changes do not persist in any config files.
      *
-     * Special Note: Anytime config is set using this API, the newConfig along with the updated manifest will by published to the PubSub topic "Config.changeNotification".  To get these notifications any component or service can subscribe to the topic. An example is shown below.
+     * <b>Note</b>: Anytime config is set using this API, the newConfig along with the updated manifest will by published to the PubSub topic "Config.changeNotification".  To get these notifications any component or service can subscribe to the topic. An example is shown below.
      *
-     * Special Note: Anytime config is set using this API, the dataStore underlying configuration 'Finsemble-Configuration-Store' will also be updated. To get these dataStore events a listener can be set as shown in the example below. However, any config modifications made directly though the DataStore will not result in corresponding PubSub notifications.
+     * <b>Note</b>: Anytime config is set using this API, the dataStore underlying configuration 'Finsemble-Configuration-Store' will also be updated. To get these dataStore events a listener can be set as shown in the example below. However, any config modifications made directly though the DataStore will not result in corresponding PubSub notifications.
      *
      * @param {object} params
-     * @param {object} params.newConfig provides the configuration properties to add into the existing configuration under manifest.finsemble. This config must match the Finsemble config requirements as described in [Understanding Finsemble's Configuration]{@tutorial Configuration}. It can include importConfig references to dynamically fetch additional configuration files.
-     * @param {boolean} params.overwrite if true then overwrite any preexisting config with new config (can only set to true when running from same origin, not cross-domain); if false then newConfig must not match properties of existing config, including service and component configuration.
-     * @param {boolean} params.replace true specifies any component or service definitions in the new config will place all existing non-system component and service configuration
-     * @param {function} cb callback to be invoked upon task completion.
+     * @param {object} params.newConfig Provides the configuration properties to add into the existing configuration under manifest.finsemble. This config must match the Finsemble config requirements as described in the [Configuration tutorial]{@tutorial Configuration}. It can include importConfig references to dynamically fetch additional configuration files.
+     * @param {boolean} params.overwrite If true then overwrite any preexisting config with new config (can only set to true when running from same origin, not cross-domain); if false then newConfig must not match properties of existing config, including service and component configuration.
+     * @param {boolean} params.replace True specifies any component or service definitions in the new config will place all existing non-system component and service configuration
+     * @param {StandardCallback} callback Callback to be invoked upon task completion.
      * @example
      * // Examples using processAndSet()
-     * FSBL.Clients.ConfigClient.processAndSet({ newConfig: { myNewConfigField: 12345 }, overwrite: false});
+     * FSBL.Clients.ConfigClient.processAndSet({ newConfig: { myNewConfigField: 12345 }, overwrite: false });
      * FSBL.Clients.ConfigClient.processAndSet(
      * {
      *	newConfig: {
@@ -9812,12 +10060,13 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
      * Sets a value on the configStore and persists that value to storage. On application restart, this value will overwrite any application defaults.
-     * @param {Object} params - Params object
-     * @param {String} params.field - The name of the field where data will be stored
-     * @param {any} params.value - Value to be stored
-     * @param {function} callback - callback to be invoked when preferences have been retrieved from the service.
+     * @param {fieldAndValueParam} params
+     * @param {StandardCallback} callback Callback to be invoked when callback to be invoked when preferences have been retrieved from the service.
      * @example
-     * FSBL.Clients.ConfigClient.setPreference({field: "finsemble.initialWorkspace", value: "Workspace 2" }, (err, response) => {
+     * FSBL.Clients.ConfigClient.setPreference({
+     * 	field: "finsemble.initialWorkspace",
+     * 	value: "Workspace 2"
+     * }, (err, response) => {
      * 		//preference has been set
      * });
      */
@@ -9831,10 +10080,10 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
      * Retrieves all of the preferences set for the application.
-     * @param {Object} params - parameters to pass to getPreferences. Optional. Defaults to null and currently ignored.
-     * @param {function} callback - callback to be invoked when preferences have been retrieved from the service.
+     * @param {Object} params Parameters to pass to getPreferences. Optional. Defaults to null and currently ignored.
+     * @param {StandardCallback} callback Callback to be invoked when preferences have been retrieved from the service.
      * @example
-     * FSBL.Clients.ConfigClient.getPreferences((err, preferences)=>{
+     * FSBL.Clients.ConfigClient.getPreferences((err, preferences)=> {
      * 		//use preferences.
      * });
      */
@@ -10134,7 +10383,7 @@ module.exports = v1;
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__configUtil__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__configUtil__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__common_system__);
 /*!
@@ -10151,7 +10400,19 @@ var ConfigClient = null;
 "use strict";
 
 /**
- * @hideConstructor true
+ * @introduction
+ * <h2>Notification Client</h2>
+ *
+ * Finsemble makes use of pop up (toast) notifications for communicating information to the end user in a gentler way than modal dialogs.
+ * Use the Notification API to route messages so that your components can create these notifications.
+ *
+ *
+ * Notifications are called from `FSBL.UserNotification.alert`.
+ *
+ *
+ * See the [Notifications tutorial](tutorial-Notifications.html) for an overview.
+ *
+ * @hideconstructor
  * @constructor
  */
 var UserNotification = function () {
@@ -10182,19 +10443,19 @@ var UserNotification = function () {
 	/**
   * Conditionally alerts the end user using a desktop notification.
   *
-  * @param {string} topic specifies a category for the notification. Topic is currently unused, but in the future it will be used to filter notifications (e.g. applying regEx's defined in config to determine which notifications are displayed). Any topic string can be specified; however "system" is the recommended topic for system notifications applicable both to end uses and to developers. "dev" is the recommended topic for notifications applicable only during development (e.g. a notification that config.json has an illegal value).
-  * @param {string} frequency Either "ALWAYS", "ONCE-SINCE-STARTUP", or "MAX-COUNT" to determine if alert should be displayed. Note, the frequencies are based on the number of notifications emitted from a window (as opposed to system wide.)
-  * @param {string} identifier uniquely identifies this specific notification message. Used when "frequency" is set to "ONCE-SINCE-STARTUP" or "MAX-COUNT"
-  * @param {any} message message to display in the notification. Typically a string. Finsemble's built in templating accepts and object. See src-built-in/components/notification/notification.html.
+  * @param {string} topic Specifies a category for the notification. Topic is currently unused, but in the future it will be used to filter notifications (e.g., applying regEx's defined in config to determine which notifications are displayed). Any topic string can be specified; however "system" is the recommended topic for system notifications applicable both to end uses and to developers. "dev" is the recommended topic for notifications applicable only during development (e.g., a notification that <i>config.json</i> has an illegal value).
+  * @param {string} frequency Either "ALWAYS", "ONCE-SINCE-STARTUP", or "MAX-COUNT" to determine if alert should be displayed. Note, the frequencies are based on the number of notifications emitted from a window (as opposed to system wide).
+  * @param {string} identifier Uniquely identifies this specific notification message. Used when "frequency" is set to "ONCE-SINCE-STARTUP" or "MAX-COUNT".
+  * @param {any} message Message to display in the notification. Typically a string. Finsemble's built in templating accepts and object. See <i>../src-built-in/components/notification/notification.html<i>.
   * @param {object=} params
-  * @param {number} params.maxCount specifies the max number of notifications to display for specified identifier when frequency="MAX-COUNT" (default is 1)
-  * @param {number} params.duration time in milliseconds before auto-dismissing the notification (defaults to 24 hours)
-  * @param {number} params.url the URL for for notification HTML. If not provided then the system default will be used. Defaults to Finsemble's built-in version at "/finsemble/components/system/notification/notification.html".
+  * @param {number} params.maxCount Specifies the max number of notifications to display for specified identifier when frequency="MAX-COUNT" (default is 1).
+  * @param {number} params.duration Time in milliseconds before auto-dismissing the notification (defaults to 24 hours).
+  * @param {number} params.url The URL for for notification HTML. If not provided then the system default will be used. Defaults to Finsemble's built-in version at <i>"../components/system/notification/notification.html"</i>.
   *
   * @example
-  *		FSBL.UserNotification.alert("system", "ONCE-SINCE-STARTUP", "MANIFEST-Error", message);
- *		FSBL.UserNotification.alert("dev", "ALWAYS", "Config-Error", message, { url: notificationURL, duration: 1000 * 5 });
- *		FSBL.UserNotification.alert("dev", "MAX-COUNT", "Transport-Failure", message, { url: notificationURL, maxCount: 2 });
+  * FSBL.UserNotification.alert("system", "ONCE-SINCE-STARTUP", "MANIFEST-Error", message);
+  * FSBL.UserNotification.alert("dev", "ALWAYS", "Config-Error", message, { url: notificationURL, duration: 1000 * 5 });
+  * FSBL.UserNotification.alert("dev", "MAX-COUNT", "Transport-Failure", message, { url: notificationURL, maxCount: 2 });
  */
 
 	this.alert = function (topic, frequency, identifier, message, params) {
@@ -10276,14 +10537,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const validate_1 = __webpack_require__(6);
 const logger_1 = __webpack_require__(0);
 const baseClient_1 = __webpack_require__(7);
-const p_limit_1 = __webpack_require__(36);
-const disentangledUtils_1 = __webpack_require__(23);
+const p_limit_1 = __webpack_require__(37);
+const disentangledUtils_1 = __webpack_require__(22);
 const limit = p_limit_1.default(1);
 /**
  *
  * @introduction
  * <h2>Storage Client</h2>
- * The Storage client handles saving and retrieving data for your application.
+ *
+ * The Storage Client handles saving and retrieving data for your smart desktop.
+ *
+ *
+ *See the <a href=tutorial-storingData.html>Storing Data tutorial</a> for an overview of using the Storage Client.
  * @hideconstructor
  *  @todo add clear method
  * @constructor
@@ -10295,13 +10560,13 @@ class StorageClient extends baseClient_1._BaseClient {
         this.delete = this.remove;
     }
     /**
-     * Define the username for storage (i.e., each user has unique storage)
-     * @param {Object} params - Params object
-     * @param {String} params.user -  user name
-     * @param {function} cb -  callback to be called on success
+     * Define the user name for storage (i.e., each user has unique storage).
+     * @param {Object} params
+     * @param {String} params.user The user name defined for storage.
+     * @param {StandardCallback} cb Callback to be called on success.
      *
      * @example
-     * StorageClient.setUser({ user: "JohnDeere"});
+     * FSBL.Clients.StorageClient.setUser({ user: "JohnDeere"});
      */
     setUser(params, cb) {
         validate_1.default.args(params.user, "string", cb, "function=");
@@ -10315,14 +10580,14 @@ class StorageClient extends baseClient_1._BaseClient {
     }
     ;
     /**
-     * Specifies the data store.  For normal operation this function doesn't have to be invoked -- the default data store is set in configuration.
-     * @param {Object} params - Params object
-     * @param {String} params.topic -  if specified then data store is set only for topic
-     * @param {string} params.dataStore -  identifies the data store (e.g. "localStorage", "redis")
-     * @param {function} cb -  callback to be called on success
+     * Specifies the data store. For normal operation this function doesn't have to be invoked -- the default data store is set in configuration.
+     * @param {Object} params
+     * @param {String} params.topic If specified then data store is set only for topic.
+     * @param {string} params.dataStore Identifies the data store (e.g. "localStorage", "redis").
+     * @param {function} cb Callback to be called on success.
      *
      * @example
-     * StorageClient.setStore({topic:"finsemble", dataStore:"redis"})
+     * FSBL.Clients.StorageClient.setStore({topic:"finsemble", dataStore:"redis"})
      */
     setStore(params, cb) {
         validate_1.default.args(params.topic, "string", params.dataStore, "string=", cb, "function=");
@@ -10338,14 +10603,14 @@ class StorageClient extends baseClient_1._BaseClient {
     ;
     /**
      * Save a key value pair into storage.
-     * @param {Object} params - Params object
-     * @param {String} params.topic -  storage topic for key being stored
-     * @param {String} params.key -  The key to be stored
-     * @param {any} params.value -  The value to be stored
-     * @param {function} cb -  callback to be called on success
+     * @param {Object} params
+     * @param {String} params.topic Storage topic for key being stored.
+     * @param {String} params.key The key to be stored.
+     * @param {any} params.value The value to be stored.
+     * @param {function} cb Callback to be called on success.
      *
      * @example
-     * StorageClient.save({topic:"finsemble", key:"testKey", value:"testValue"})
+     * FSBL.Clients.StorageClient.save({topic:"finsemble", key:"testKey", value:"testValue"})
      */
     save(params, cb) {
         if (typeof params.key !== "string" || typeof params.topic !== "string") {
@@ -10380,12 +10645,13 @@ class StorageClient extends baseClient_1._BaseClient {
     }
     /**
      * Get a value from storage.
-     * @param {Object} params - Params object
-     * @param {String} params.key -  The key to get from storage
-     * @param {function} cb -  callback to be called on success
+     * @param {Object} params
+     * @param {String} params.key The key to get from storage.
+     * @param {String} params.topic The topic that the data is saved under.
+     * @param {function} cb Callback to be called on success.
      *
      * @example
-     * StorageClient.get({topic:"finsemble", key:"testKey"}, function(err, data){
+     * FSBL.Clients.StorageClient.get({ topic:"finsemble", key:"testKey" }, function(err, data) {
      *	var myData = data;
      * });
      */
@@ -10445,13 +10711,13 @@ class StorageClient extends baseClient_1._BaseClient {
     }
     /**
      * Get all keys for the topic.
-     * @param {Object} params - Params object
-     * @param {String} params.topic -  topic for the keys to return
-     * @param {String=} params.keyPrefix -  filter all keys that don't start with this prefix
-     * @param {function} cb -  callback to be called on success
+     * @param {Object} params
+     * @param {String} params.topic Topic for the keys to return.
+     * @param {String=} params.keyPrefix Filter all keys that don't start with this prefix.
+     * @param {function} cb Callback to be called on success.
      *
      * @example
-     * StorageClient.keys({topic:"finsemble", keyPrefix:"test"}, function(err, data){
+     * FSBL.Clients.StorageClient.keys({topic:"finsemble", keyPrefix:"test"}, function(err, data){
      *	var myKeys = data;
      * });
      */
@@ -10477,8 +10743,8 @@ class StorageClient extends baseClient_1._BaseClient {
     }
     /**
      * Get a multiple values from storage based on regex.(coming soon)
-     * @param {Object} params - Params object
-     * @param {function} cb -  callback to be called on success
+     * @param {Object} params
+     * @param {function} cb Callback to be called on success.
      * @private
      * @todo make this work.
      * @example
@@ -10497,10 +10763,11 @@ class StorageClient extends baseClient_1._BaseClient {
     ;
     /**
      * Delete a value from storage.
-     * @param {Object} params - Params object
-     * @param {String} params.key -  The key to get from storage
+     * @param {Object} params
+     * @param {String} params.key The key to get from storage.
+     * @param {String} params.topic The topic that the data is saved under.
      * @example
-     * StorageClient.remove({key:"testKey"})
+     * FSBL.Clients.StorageClient.remove({ key:"testKey" })
      */
     remove(params, cb) {
         const promiseResolver = (resolve, reject) => {
@@ -10530,6 +10797,11 @@ class StorageClient extends baseClient_1._BaseClient {
     remove1(params) {
         return limit(() => this.remove(params));
     }
+    /**
+     * Clears a storage adapter of all data.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     *
+     */
     clearCache(cb) {
         logger_1.default.system.log("StorageClient.clearCache", cb);
         this.routerClient.query("Storage.clearCache", null, function (err, response) {
@@ -10560,6 +10832,297 @@ exports.default = storageClient;
 
 /***/ }),
 /* 22 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const uuid_1 = __webpack_require__(40);
+const get = __webpack_require__(24);
+const pick = __webpack_require__(38);
+const lodash_1 = __webpack_require__(34);
+//Class without deep openfin/system dependencies.
+function guuid() {
+    return uuid_1.v1(); // return global uuid
+}
+exports.guuid = guuid;
+function clone(obj, logFn) {
+    //This has been tested a good amount. Previous to this commit we were using a mix of deepmerge and JSON.parse(JSON.stringify()).
+    //Trying lodash.deepclone made my tests take 2-3s.
+    //JSON.parse everywhere made them take ~ 1s.
+    //Using JSON.parse on arrays and deep merge on objects makes them take 7-900ms.
+    if (Array.isArray(obj)) {
+        return obj.slice();
+    }
+    try {
+        return JSON.parse(JSON.stringify(obj));
+    }
+    catch (e) {
+        logFn("clone error", e);
+        return e;
+    }
+}
+exports.clone = clone;
+;
+function capitalizeFirst(s) {
+    return s.charAt(0).toUpperCase() + s.slice(1);
+}
+exports.capitalizeFirst = capitalizeFirst;
+class MockLogger {
+    constructor({ debug } = { debug: true }) {
+        if (debug) {
+            this.system = console;
+            this.system.debug = console.log;
+        }
+        else {
+            //Suppress everything but errors for tests
+            this.system = {
+                warn: Function.prototype,
+                debug: Function.prototype,
+                log: Function.prototype,
+                info: Function.prototype,
+                error: console.error
+            };
+        }
+    }
+    isLogMessage() { return true; }
+    ;
+    start() { }
+}
+;
+exports.mockLogger = new MockLogger();
+/** Converts a flat array into an array of arrays of length n.
+ *
+ * If the length of the array is not divisble by n, the last
+ * element of the new array will contain the remainder items.
+*/
+function chunkArray(n, arr) {
+    if (n <= 0) {
+        throw new Error("Can't chunk array by number less than 0");
+    }
+    return arr.reduce((prev, curr, index) => {
+        if (index % n === 0) {
+            const chunk = [];
+            for (let i = index; i < index + n; i++) {
+                if (i < arr.length) {
+                    chunk.push(arr[i]);
+                }
+            }
+            prev.push(chunk);
+        }
+        return prev;
+    }, []);
+}
+exports.chunkArray = chunkArray;
+/**
+ * Confirms wether a variable passed to it exists and is a number.
+ * If true, returns the parsed Number, otherwise returns false
+ * @param {string} [num] A string potentially containing a number
+ * @returns False or Number(input)
+ */
+function isNumber(num) {
+    if (!num || Number.isNaN(Number(num))) {
+        return false;
+    }
+    return Number(num);
+}
+exports.isNumber = isNumber;
+;
+/** Returns exactly what's passed to it. Useful for higher-order functions. */
+function identity(arg) {
+    return arg;
+}
+exports.identity = identity;
+/*
+typed-promisify, https://github.com/notenoughneon/typed-promisify
+
+MIT License
+
+Copyright (c) 2016 Emma Kuo
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ */
+// DH 3/11/2019 - I've removed the type-inferring overloads, as they aren't
+// working correctly.
+/**
+ * Wraps a callback accepting function in a promise. The callback must have the type
+ * specified in StandardCallback, and the wrapped function *MUST* call the callback
+ * on all possible code paths.
+ */
+function promisify(f, thisContext) {
+    return function () {
+        let args = Array.prototype.slice.call(arguments);
+        return new Promise((resolve, reject) => {
+            args.push((err, result) => err ? reject(err) : resolve(result));
+            f.apply(thisContext, args);
+        });
+    };
+}
+exports.promisify = promisify;
+/**
+ * Wraps a promsie in logs that fire immediately before and after the execution of the promise. Returns a new promise.
+ *
+ * @param {*} logger A logging function that will log the message. E.g. `Logger.system.debug` or `console.log`.
+ * @param {string} message A message to be logged. Suffixed with "start" and "end", before and after the promise, respectively.
+ * @param {Promise} promise The promise to be wrapped.
+ */
+exports.instrumentPromise = async (logger, message, promise) => {
+    const start = message + " start";
+    const end = message + " end";
+    logger(start);
+    return promise.then(() => logger(end));
+};
+/**
+ * Composes an array of functions together, producing
+ * a new function that is the result of applying each
+ * function from right to left on its arguments.
+ *
+ * @example
+ * const add1 = x => x + 1;
+ * const multiply3 = x => x * 3
+ * const mulityply3Add1 = composeRL(add1, multiply3);
+ * mulityply3Add1(4); // => 13
+*/
+exports.composeRL = (...fns) => fns.reduce((f, g) => (...args) => f(g(...args)));
+/**
+ * getProp utility - an alternative to lodash.get
+ * @author @harish2704, @muffypl, @pi0, @imnnquy
+ * @param {Object} object
+ * @param {String|Array} path
+ * @param {*} defaultVal
+ */
+function getProp(object, path, defaultVal) {
+    const _path = Array.isArray(path)
+        ? path
+        : path.split('.').filter(i => i.length);
+    if (!_path.length) {
+        return object === undefined ? defaultVal : object;
+    }
+    return getProp(object[_path.shift()], _path, defaultVal);
+}
+exports.getProp = getProp;
+function getUniqueName(baseName = "RouterClient") {
+    return `${baseName}-${Math.floor(Math.random() * 100)}-${Math.floor(Math.random() * 10000)}`;
+}
+exports.getUniqueName = getUniqueName;
+function getRandomWindowName(s, uuid) {
+    return `${getUniqueName(s)}-${uuid}`;
+}
+exports.getRandomWindowName = getRandomWindowName;
+/**
+ * Creates a promise that rejcts after the specified time with
+ * the given message.
+ */
+function timeoutPromise(ms, message) {
+    return new Promise((resolve, reject) => {
+        let id = setTimeout(() => {
+            clearTimeout(id);
+            reject(message);
+        }, ms);
+    });
+}
+exports.timeoutPromise = timeoutPromise;
+/**
+ * Wraps a promise in another promise that either rejects after the specified number of miliseconds
+ * or resolves with the result of the promise.
+ */
+function wrapWithTimeout(promise, ms, message) {
+    return Promise.race([
+        promise,
+        timeoutPromise(ms, message),
+    ]);
+}
+exports.wrapWithTimeout = wrapWithTimeout;
+/**
+ * Will determine if a given window is a StackedWindow. Returns true if the window is a
+ * StackedWindow, false otherwise
+ * @param {FinsembleWindow} win The window to check for StackedWindow
+ */
+function isStackedWindow(win) {
+    return win &&
+        ((get(win, "windowIdentifier.windowType")
+            || win.windowType) === "StackedWindow");
+}
+exports.isStackedWindow = isStackedWindow;
+;
+/**
+ * Converts an array into a record where the keys are the result of applying the key function
+ * to each item in the array, and the values are the items.
+ *
+ * @param key Either the key whose value you want to become the new index, or a function
+ * that returns the new index when given the current value.
+ * @param arr An array of values.
+ *
+ * @example
+ * const arr = [{foo: "bar"}, {foo: "bam"}];
+ * toRecord("foo", arr) // => {bar: {foo: "bar"}, {bam: {foo: "bam"}}}
+ *
+ * @example
+ * const arr = [{foo: "bar"}, {foo: "bam"}];
+ * toRecord(x => x.foo.toUpperCase(), arr) // => {BAR: {foo: "bar"}, {BAM: {foo: "bam"}}}
+ */
+function toRecord(key, arr) {
+    const keyFn = typeof key === "string"
+        ? x => x[key]
+        : key;
+    return arr.reduce((prev, curr) => {
+        prev[keyFn(curr)] = curr;
+        return prev;
+    }, {});
+}
+exports.toRecord = toRecord;
+/**
+ * Given an object and array of keys as strings,
+ * returns a new object copied from the first but
+ * with those keys removed.
+ */
+function removeKeys(obj, keys) {
+    if (!obj)
+        return obj;
+    const allKeys = Object.keys(obj);
+    const keepKeys = allKeys.filter(x => !keys.includes(x));
+    return pick(obj, keepKeys);
+}
+exports.removeKeys = removeKeys;
+/**
+ * Deep equal doesn't work properly if the objects aren't exactly equal
+ * We have several places in the code that attach extra parameters to bounds objects
+ * This function will test equality on bounds for the only left, right, top, bottom, width and height
+ * @param {} bounds1
+ * @param {*} bounds2
+ */
+function checkIfBoundsAreEqual(bounds1, bounds2) {
+    if (!bounds1 || !bounds2)
+        return false;
+    const keepKeys = ['left', 'right', 'top', 'bottom', 'width', 'height'];
+    const updatedBounds1 = pick(bounds1, keepKeys);
+    const updatedBounds2 = pick(bounds2, keepKeys);
+    if (lodash_1.isEqual(updatedBounds1, updatedBounds2)) {
+        return true;
+    }
+    return false;
+}
+exports.checkIfBoundsAreEqual = checkIfBoundsAreEqual;
+
+
+/***/ }),
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -11005,278 +11568,945 @@ module.exports = throttle;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
+/* WEBPACK VAR INJECTION */(function(global) {/**
+ * lodash (Custom Build) <https://lodash.com/>
+ * Build: `lodash modularize exports="npm" -o ./`
+ * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+ * Released under MIT license <https://lodash.com/license>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ */
 
-Object.defineProperty(exports, "__esModule", { value: true });
-const uuid_1 = __webpack_require__(39);
-const get = __webpack_require__(28);
-const pick = __webpack_require__(37);
-//Class without deep openfin/system dependencies.
-function guuid() {
-    return uuid_1.v1(); // return global uuid
+/** Used as the `TypeError` message for "Functions" methods. */
+var FUNC_ERROR_TEXT = 'Expected a function';
+
+/** Used to stand-in for `undefined` hash values. */
+var HASH_UNDEFINED = '__lodash_hash_undefined__';
+
+/** Used as references for various `Number` constants. */
+var INFINITY = 1 / 0;
+
+/** `Object#toString` result references. */
+var funcTag = '[object Function]',
+    genTag = '[object GeneratorFunction]',
+    symbolTag = '[object Symbol]';
+
+/** Used to match property names within property paths. */
+var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\\]|\\.)*?\1)\]/,
+    reIsPlainProp = /^\w*$/,
+    reLeadingDot = /^\./,
+    rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|$))/g;
+
+/**
+ * Used to match `RegExp`
+ * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
+ */
+var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
+
+/** Used to match backslashes in property paths. */
+var reEscapeChar = /\\(\\)?/g;
+
+/** Used to detect host constructors (Safari). */
+var reIsHostCtor = /^\[object .+?Constructor\]$/;
+
+/** Detect free variable `global` from Node.js. */
+var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
+
+/** Detect free variable `self`. */
+var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+
+/** Used as a reference to the global object. */
+var root = freeGlobal || freeSelf || Function('return this')();
+
+/**
+ * Gets the value at `key` of `object`.
+ *
+ * @private
+ * @param {Object} [object] The object to query.
+ * @param {string} key The key of the property to get.
+ * @returns {*} Returns the property value.
+ */
+function getValue(object, key) {
+  return object == null ? undefined : object[key];
 }
-exports.guuid = guuid;
-function clone(obj, logFn) {
-    //This has been tested a good amount. Previous to this commit we were using a mix of deepmerge and JSON.parse(JSON.stringify()).
-    //Trying lodash.deepclone made my tests take 2-3s.
-    //JSON.parse everywhere made them take ~ 1s.
-    //Using JSON.parse on arrays and deep merge on objects makes them take 7-900ms.
-    if (Array.isArray(obj)) {
-        return obj.slice();
-    }
+
+/**
+ * Checks if `value` is a host object in IE < 9.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
+ */
+function isHostObject(value) {
+  // Many host objects are `Object` objects that can coerce to strings
+  // despite having improperly defined `toString` methods.
+  var result = false;
+  if (value != null && typeof value.toString != 'function') {
     try {
-        return JSON.parse(JSON.stringify(obj));
-    }
-    catch (e) {
-        logFn("clone error", e);
-        return e;
-    }
+      result = !!(value + '');
+    } catch (e) {}
+  }
+  return result;
 }
-exports.clone = clone;
-;
-function capitalizeFirst(s) {
-    return s.charAt(0).toUpperCase() + s.slice(1);
-}
-exports.capitalizeFirst = capitalizeFirst;
-class MockLogger {
-    constructor({ debug } = { debug: true }) {
-        if (debug) {
-            this.system = console;
-            this.system.debug = console.log;
-        }
-        else {
-            //Suppress everything but errors for tests
-            this.system = {
-                warn: Function.prototype,
-                debug: Function.prototype,
-                log: Function.prototype,
-                info: Function.prototype,
-                error: console.error
-            };
-        }
-    }
-    isLogMessage() { return true; }
-    ;
-    start() { }
-}
-;
-exports.mockLogger = new MockLogger();
-/** Converts a flat array into an array of arrays of length n.
+
+/** Used for built-in method references. */
+var arrayProto = Array.prototype,
+    funcProto = Function.prototype,
+    objectProto = Object.prototype;
+
+/** Used to detect overreaching core-js shims. */
+var coreJsData = root['__core-js_shared__'];
+
+/** Used to detect methods masquerading as native. */
+var maskSrcKey = (function() {
+  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
+  return uid ? ('Symbol(src)_1.' + uid) : '';
+}());
+
+/** Used to resolve the decompiled source of functions. */
+var funcToString = funcProto.toString;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Used to resolve the
+ * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var objectToString = objectProto.toString;
+
+/** Used to detect if a method is native. */
+var reIsNative = RegExp('^' +
+  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
+  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
+);
+
+/** Built-in value references. */
+var Symbol = root.Symbol,
+    splice = arrayProto.splice;
+
+/* Built-in method references that are verified to be native. */
+var Map = getNative(root, 'Map'),
+    nativeCreate = getNative(Object, 'create');
+
+/** Used to convert symbols to primitives and strings. */
+var symbolProto = Symbol ? Symbol.prototype : undefined,
+    symbolToString = symbolProto ? symbolProto.toString : undefined;
+
+/**
+ * Creates a hash object.
  *
- * If the length of the array is not divisble by n, the last
- * element of the new array will contain the remainder items.
-*/
-function chunkArray(n, arr) {
-    if (n <= 0) {
-        throw new Error("Can't chunk array by number less than 0");
-    }
-    return arr.reduce((prev, curr, index) => {
-        if (index % n === 0) {
-            const chunk = [];
-            for (let i = index; i < index + n; i++) {
-                if (i < arr.length) {
-                    chunk.push(arr[i]);
-                }
-            }
-            prev.push(chunk);
-        }
-        return prev;
-    }, []);
-}
-exports.chunkArray = chunkArray;
-/**
- * Confirms wether a variable passed to it exists and is a number.
- * If true, returns the parsed Number, otherwise returns false
- * @param {string} [num] A string potentially containing a number
- * @returns False or Number(input)
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
  */
-function isNumber(num) {
-    if (!num || Number.isNaN(Number(num))) {
-        return false;
-    }
-    return Number(num);
+function Hash(entries) {
+  var index = -1,
+      length = entries ? entries.length : 0;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
 }
-exports.isNumber = isNumber;
-;
-/** Returns exactly what's passed to it. Useful for higher-order functions. */
-function identity(arg) {
-    return arg;
-}
-exports.identity = identity;
-/*
-typed-promisify, https://github.com/notenoughneon/typed-promisify
 
-MIT License
-
-Copyright (c) 2016 Emma Kuo
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
- */
-// DH 3/11/2019 - I've removed the type-inferring overloads, as they aren't
-// working correctly.
 /**
- * Wraps a callback accepting function in a promise. The callback must have the type
- * specified in StandardCallback, and the wrapped function *MUST* call the callback
- * on all possible code paths.
- */
-function promisify(f, thisContext) {
-    return function () {
-        let args = Array.prototype.slice.call(arguments);
-        return new Promise((resolve, reject) => {
-            args.push((err, result) => err ? reject(err) : resolve(result));
-            f.apply(thisContext, args);
-        });
-    };
-}
-exports.promisify = promisify;
-/**
- * Wraps a promsie in logs that fire immediately before and after the execution of the promise. Returns a new promise.
+ * Removes all key-value entries from the hash.
  *
- * @param {*} logger A logging function that will log the message. E.g. `Logger.system.debug` or `console.log`.
- * @param {string} message A message to be logged. Suffixed with "start" and "end", before and after the promise, respectively.
- * @param {Promise} promise The promise to be wrapped.
+ * @private
+ * @name clear
+ * @memberOf Hash
  */
-exports.instrumentPromise = async (logger, message, promise) => {
-    const start = message + " start";
-    const end = message + " end";
-    logger(start);
-    return promise.then(() => logger(end));
-};
+function hashClear() {
+  this.__data__ = nativeCreate ? nativeCreate(null) : {};
+}
+
 /**
- * Composes an array of functions together, producing
- * a new function that is the result of applying each
- * function from right to left on its arguments.
+ * Removes `key` and its value from the hash.
  *
+ * @private
+ * @name delete
+ * @memberOf Hash
+ * @param {Object} hash The hash to modify.
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function hashDelete(key) {
+  return this.has(key) && delete this.__data__[key];
+}
+
+/**
+ * Gets the hash value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf Hash
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function hashGet(key) {
+  var data = this.__data__;
+  if (nativeCreate) {
+    var result = data[key];
+    return result === HASH_UNDEFINED ? undefined : result;
+  }
+  return hasOwnProperty.call(data, key) ? data[key] : undefined;
+}
+
+/**
+ * Checks if a hash value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf Hash
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function hashHas(key) {
+  var data = this.__data__;
+  return nativeCreate ? data[key] !== undefined : hasOwnProperty.call(data, key);
+}
+
+/**
+ * Sets the hash `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf Hash
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the hash instance.
+ */
+function hashSet(key, value) {
+  var data = this.__data__;
+  data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
+  return this;
+}
+
+// Add methods to `Hash`.
+Hash.prototype.clear = hashClear;
+Hash.prototype['delete'] = hashDelete;
+Hash.prototype.get = hashGet;
+Hash.prototype.has = hashHas;
+Hash.prototype.set = hashSet;
+
+/**
+ * Creates an list cache object.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function ListCache(entries) {
+  var index = -1,
+      length = entries ? entries.length : 0;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+/**
+ * Removes all key-value entries from the list cache.
+ *
+ * @private
+ * @name clear
+ * @memberOf ListCache
+ */
+function listCacheClear() {
+  this.__data__ = [];
+}
+
+/**
+ * Removes `key` and its value from the list cache.
+ *
+ * @private
+ * @name delete
+ * @memberOf ListCache
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function listCacheDelete(key) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  if (index < 0) {
+    return false;
+  }
+  var lastIndex = data.length - 1;
+  if (index == lastIndex) {
+    data.pop();
+  } else {
+    splice.call(data, index, 1);
+  }
+  return true;
+}
+
+/**
+ * Gets the list cache value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf ListCache
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function listCacheGet(key) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  return index < 0 ? undefined : data[index][1];
+}
+
+/**
+ * Checks if a list cache value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf ListCache
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function listCacheHas(key) {
+  return assocIndexOf(this.__data__, key) > -1;
+}
+
+/**
+ * Sets the list cache `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf ListCache
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the list cache instance.
+ */
+function listCacheSet(key, value) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  if (index < 0) {
+    data.push([key, value]);
+  } else {
+    data[index][1] = value;
+  }
+  return this;
+}
+
+// Add methods to `ListCache`.
+ListCache.prototype.clear = listCacheClear;
+ListCache.prototype['delete'] = listCacheDelete;
+ListCache.prototype.get = listCacheGet;
+ListCache.prototype.has = listCacheHas;
+ListCache.prototype.set = listCacheSet;
+
+/**
+ * Creates a map cache object to store key-value pairs.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function MapCache(entries) {
+  var index = -1,
+      length = entries ? entries.length : 0;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+/**
+ * Removes all key-value entries from the map.
+ *
+ * @private
+ * @name clear
+ * @memberOf MapCache
+ */
+function mapCacheClear() {
+  this.__data__ = {
+    'hash': new Hash,
+    'map': new (Map || ListCache),
+    'string': new Hash
+  };
+}
+
+/**
+ * Removes `key` and its value from the map.
+ *
+ * @private
+ * @name delete
+ * @memberOf MapCache
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function mapCacheDelete(key) {
+  return getMapData(this, key)['delete'](key);
+}
+
+/**
+ * Gets the map value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf MapCache
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function mapCacheGet(key) {
+  return getMapData(this, key).get(key);
+}
+
+/**
+ * Checks if a map value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf MapCache
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function mapCacheHas(key) {
+  return getMapData(this, key).has(key);
+}
+
+/**
+ * Sets the map `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf MapCache
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the map cache instance.
+ */
+function mapCacheSet(key, value) {
+  getMapData(this, key).set(key, value);
+  return this;
+}
+
+// Add methods to `MapCache`.
+MapCache.prototype.clear = mapCacheClear;
+MapCache.prototype['delete'] = mapCacheDelete;
+MapCache.prototype.get = mapCacheGet;
+MapCache.prototype.has = mapCacheHas;
+MapCache.prototype.set = mapCacheSet;
+
+/**
+ * Gets the index at which the `key` is found in `array` of key-value pairs.
+ *
+ * @private
+ * @param {Array} array The array to inspect.
+ * @param {*} key The key to search for.
+ * @returns {number} Returns the index of the matched value, else `-1`.
+ */
+function assocIndexOf(array, key) {
+  var length = array.length;
+  while (length--) {
+    if (eq(array[length][0], key)) {
+      return length;
+    }
+  }
+  return -1;
+}
+
+/**
+ * The base implementation of `_.get` without support for default values.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {Array|string} path The path of the property to get.
+ * @returns {*} Returns the resolved value.
+ */
+function baseGet(object, path) {
+  path = isKey(path, object) ? [path] : castPath(path);
+
+  var index = 0,
+      length = path.length;
+
+  while (object != null && index < length) {
+    object = object[toKey(path[index++])];
+  }
+  return (index && index == length) ? object : undefined;
+}
+
+/**
+ * The base implementation of `_.isNative` without bad shim checks.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a native function,
+ *  else `false`.
+ */
+function baseIsNative(value) {
+  if (!isObject(value) || isMasked(value)) {
+    return false;
+  }
+  var pattern = (isFunction(value) || isHostObject(value)) ? reIsNative : reIsHostCtor;
+  return pattern.test(toSource(value));
+}
+
+/**
+ * The base implementation of `_.toString` which doesn't convert nullish
+ * values to empty strings.
+ *
+ * @private
+ * @param {*} value The value to process.
+ * @returns {string} Returns the string.
+ */
+function baseToString(value) {
+  // Exit early for strings to avoid a performance hit in some environments.
+  if (typeof value == 'string') {
+    return value;
+  }
+  if (isSymbol(value)) {
+    return symbolToString ? symbolToString.call(value) : '';
+  }
+  var result = (value + '');
+  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+}
+
+/**
+ * Casts `value` to a path array if it's not one.
+ *
+ * @private
+ * @param {*} value The value to inspect.
+ * @returns {Array} Returns the cast property path array.
+ */
+function castPath(value) {
+  return isArray(value) ? value : stringToPath(value);
+}
+
+/**
+ * Gets the data for `map`.
+ *
+ * @private
+ * @param {Object} map The map to query.
+ * @param {string} key The reference key.
+ * @returns {*} Returns the map data.
+ */
+function getMapData(map, key) {
+  var data = map.__data__;
+  return isKeyable(key)
+    ? data[typeof key == 'string' ? 'string' : 'hash']
+    : data.map;
+}
+
+/**
+ * Gets the native function at `key` of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {string} key The key of the method to get.
+ * @returns {*} Returns the function if it's native, else `undefined`.
+ */
+function getNative(object, key) {
+  var value = getValue(object, key);
+  return baseIsNative(value) ? value : undefined;
+}
+
+/**
+ * Checks if `value` is a property name and not a property path.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @param {Object} [object] The object to query keys on.
+ * @returns {boolean} Returns `true` if `value` is a property name, else `false`.
+ */
+function isKey(value, object) {
+  if (isArray(value)) {
+    return false;
+  }
+  var type = typeof value;
+  if (type == 'number' || type == 'symbol' || type == 'boolean' ||
+      value == null || isSymbol(value)) {
+    return true;
+  }
+  return reIsPlainProp.test(value) || !reIsDeepProp.test(value) ||
+    (object != null && value in Object(object));
+}
+
+/**
+ * Checks if `value` is suitable for use as unique object key.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is suitable, else `false`.
+ */
+function isKeyable(value) {
+  var type = typeof value;
+  return (type == 'string' || type == 'number' || type == 'symbol' || type == 'boolean')
+    ? (value !== '__proto__')
+    : (value === null);
+}
+
+/**
+ * Checks if `func` has its source masked.
+ *
+ * @private
+ * @param {Function} func The function to check.
+ * @returns {boolean} Returns `true` if `func` is masked, else `false`.
+ */
+function isMasked(func) {
+  return !!maskSrcKey && (maskSrcKey in func);
+}
+
+/**
+ * Converts `string` to a property path array.
+ *
+ * @private
+ * @param {string} string The string to convert.
+ * @returns {Array} Returns the property path array.
+ */
+var stringToPath = memoize(function(string) {
+  string = toString(string);
+
+  var result = [];
+  if (reLeadingDot.test(string)) {
+    result.push('');
+  }
+  string.replace(rePropName, function(match, number, quote, string) {
+    result.push(quote ? string.replace(reEscapeChar, '$1') : (number || match));
+  });
+  return result;
+});
+
+/**
+ * Converts `value` to a string key if it's not a string or symbol.
+ *
+ * @private
+ * @param {*} value The value to inspect.
+ * @returns {string|symbol} Returns the key.
+ */
+function toKey(value) {
+  if (typeof value == 'string' || isSymbol(value)) {
+    return value;
+  }
+  var result = (value + '');
+  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+}
+
+/**
+ * Converts `func` to its source code.
+ *
+ * @private
+ * @param {Function} func The function to process.
+ * @returns {string} Returns the source code.
+ */
+function toSource(func) {
+  if (func != null) {
+    try {
+      return funcToString.call(func);
+    } catch (e) {}
+    try {
+      return (func + '');
+    } catch (e) {}
+  }
+  return '';
+}
+
+/**
+ * Creates a function that memoizes the result of `func`. If `resolver` is
+ * provided, it determines the cache key for storing the result based on the
+ * arguments provided to the memoized function. By default, the first argument
+ * provided to the memoized function is used as the map cache key. The `func`
+ * is invoked with the `this` binding of the memoized function.
+ *
+ * **Note:** The cache is exposed as the `cache` property on the memoized
+ * function. Its creation may be customized by replacing the `_.memoize.Cache`
+ * constructor with one whose instances implement the
+ * [`Map`](http://ecma-international.org/ecma-262/7.0/#sec-properties-of-the-map-prototype-object)
+ * method interface of `delete`, `get`, `has`, and `set`.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Function
+ * @param {Function} func The function to have its output memoized.
+ * @param {Function} [resolver] The function to resolve the cache key.
+ * @returns {Function} Returns the new memoized function.
  * @example
- * const add1 = x => x + 1;
- * const multiply3 = x => x * 3
- * const mulityply3Add1 = composeRL(add1, multiply3);
- * mulityply3Add1(4); // => 13
-*/
-exports.composeRL = (...fns) => fns.reduce((f, g) => (...args) => f(g(...args)));
-/**
- * getProp utility - an alternative to lodash.get
- * @author @harish2704, @muffypl, @pi0, @imnnquy
- * @param {Object} object
- * @param {String|Array} path
- * @param {*} defaultVal
- */
-function getProp(object, path, defaultVal) {
-    const _path = Array.isArray(path)
-        ? path
-        : path.split('.').filter(i => i.length);
-    if (!_path.length) {
-        return object === undefined ? defaultVal : object;
-    }
-    return getProp(object[_path.shift()], _path, defaultVal);
-}
-exports.getProp = getProp;
-function getUniqueName(baseName = "RouterClient") {
-    return `${baseName}-${Math.floor(Math.random() * 100)}-${Math.floor(Math.random() * 10000)}`;
-}
-exports.getUniqueName = getUniqueName;
-function getRandomWindowName(s, uuid) {
-    return `${getUniqueName(s)}-${uuid}`;
-}
-exports.getRandomWindowName = getRandomWindowName;
-/**
- * Creates a promise that rejcts after the specified time with
- * the given message.
- */
-function timeoutPromise(ms, message) {
-    return new Promise((resolve, reject) => {
-        let id = setTimeout(() => {
-            clearTimeout(id);
-            reject(message);
-        }, ms);
-    });
-}
-exports.timeoutPromise = timeoutPromise;
-/**
- * Wraps a promise in another promise that either rejects after the specified number of miliseconds
- * or resolves with the result of the promise.
- */
-function wrapWithTimeout(promise, ms, message) {
-    return Promise.race([
-        promise,
-        timeoutPromise(ms, message),
-    ]);
-}
-exports.wrapWithTimeout = wrapWithTimeout;
-/**
- * Will determine if a given window is a StackedWindow. Returns true if the window is a
- * StackedWindow, false otherwise
- * @param {FinsembleWindow} win The window to check for StackedWindow
- */
-function isStackedWindow(win) {
-    return win &&
-        ((get(win, "windowIdentifier.windowType")
-            || win.windowType) === "StackedWindow");
-}
-exports.isStackedWindow = isStackedWindow;
-;
-/**
- * Converts an array into a record where the keys are the result of applying the key function
- * to each item in the array, and the values are the items.
  *
- * @param key Either the key whose value you want to become the new index, or a function
- * that returns the new index when given the current value.
- * @param arr An array of values.
+ * var object = { 'a': 1, 'b': 2 };
+ * var other = { 'c': 3, 'd': 4 };
  *
- * @example
- * const arr = [{foo: "bar"}, {foo: "bam"}];
- * toRecord("foo", arr) // => {bar: {foo: "bar"}, {bam: {foo: "bam"}}}
+ * var values = _.memoize(_.values);
+ * values(object);
+ * // => [1, 2]
  *
- * @example
- * const arr = [{foo: "bar"}, {foo: "bam"}];
- * toRecord(x => x.foo.toUpperCase(), arr) // => {BAR: {foo: "bar"}, {BAM: {foo: "bam"}}}
+ * values(other);
+ * // => [3, 4]
+ *
+ * object.a = 2;
+ * values(object);
+ * // => [1, 2]
+ *
+ * // Modify the result cache.
+ * values.cache.set(object, ['a', 'b']);
+ * values(object);
+ * // => ['a', 'b']
+ *
+ * // Replace `_.memoize.Cache`.
+ * _.memoize.Cache = WeakMap;
  */
-function toRecord(key, arr) {
-    const keyFn = typeof key === "string"
-        ? x => x[key]
-        : key;
-    return arr.reduce((prev, curr) => {
-        prev[keyFn(curr)] = curr;
-        return prev;
-    }, {});
-}
-exports.toRecord = toRecord;
-/**
- * Given an object and array of keys as strings,
- * returns a new object copied from the first but
- * with those keys removed.
- */
-function removeKeys(obj, keys) {
-    if (!obj)
-        return obj;
-    const allKeys = Object.keys(obj);
-    const keepKeys = allKeys.filter(x => !keys.includes(x));
-    return pick(obj, keepKeys);
-}
-exports.removeKeys = removeKeys;
+function memoize(func, resolver) {
+  if (typeof func != 'function' || (resolver && typeof resolver != 'function')) {
+    throw new TypeError(FUNC_ERROR_TEXT);
+  }
+  var memoized = function() {
+    var args = arguments,
+        key = resolver ? resolver.apply(this, args) : args[0],
+        cache = memoized.cache;
 
+    if (cache.has(key)) {
+      return cache.get(key);
+    }
+    var result = func.apply(this, args);
+    memoized.cache = cache.set(key, result);
+    return result;
+  };
+  memoized.cache = new (memoize.Cache || MapCache);
+  return memoized;
+}
+
+// Assign cache to `_.memoize`.
+memoize.Cache = MapCache;
+
+/**
+ * Performs a
+ * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+ * comparison between two values to determine if they are equivalent.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to compare.
+ * @param {*} other The other value to compare.
+ * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+ * @example
+ *
+ * var object = { 'a': 1 };
+ * var other = { 'a': 1 };
+ *
+ * _.eq(object, object);
+ * // => true
+ *
+ * _.eq(object, other);
+ * // => false
+ *
+ * _.eq('a', 'a');
+ * // => true
+ *
+ * _.eq('a', Object('a'));
+ * // => false
+ *
+ * _.eq(NaN, NaN);
+ * // => true
+ */
+function eq(value, other) {
+  return value === other || (value !== value && other !== other);
+}
+
+/**
+ * Checks if `value` is classified as an `Array` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an array, else `false`.
+ * @example
+ *
+ * _.isArray([1, 2, 3]);
+ * // => true
+ *
+ * _.isArray(document.body.children);
+ * // => false
+ *
+ * _.isArray('abc');
+ * // => false
+ *
+ * _.isArray(_.noop);
+ * // => false
+ */
+var isArray = Array.isArray;
+
+/**
+ * Checks if `value` is classified as a `Function` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a function, else `false`.
+ * @example
+ *
+ * _.isFunction(_);
+ * // => true
+ *
+ * _.isFunction(/abc/);
+ * // => false
+ */
+function isFunction(value) {
+  // The use of `Object#toString` avoids issues with the `typeof` operator
+  // in Safari 8-9 which returns 'object' for typed array and other constructors.
+  var tag = isObject(value) ? objectToString.call(value) : '';
+  return tag == funcTag || tag == genTag;
+}
+
+/**
+ * Checks if `value` is the
+ * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+ * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+ * @example
+ *
+ * _.isObject({});
+ * // => true
+ *
+ * _.isObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isObject(_.noop);
+ * // => true
+ *
+ * _.isObject(null);
+ * // => false
+ */
+function isObject(value) {
+  var type = typeof value;
+  return !!value && (type == 'object' || type == 'function');
+}
+
+/**
+ * Checks if `value` is object-like. A value is object-like if it's not `null`
+ * and has a `typeof` result of "object".
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+ * @example
+ *
+ * _.isObjectLike({});
+ * // => true
+ *
+ * _.isObjectLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isObjectLike(_.noop);
+ * // => false
+ *
+ * _.isObjectLike(null);
+ * // => false
+ */
+function isObjectLike(value) {
+  return !!value && typeof value == 'object';
+}
+
+/**
+ * Checks if `value` is classified as a `Symbol` primitive or object.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+ * @example
+ *
+ * _.isSymbol(Symbol.iterator);
+ * // => true
+ *
+ * _.isSymbol('abc');
+ * // => false
+ */
+function isSymbol(value) {
+  return typeof value == 'symbol' ||
+    (isObjectLike(value) && objectToString.call(value) == symbolTag);
+}
+
+/**
+ * Converts `value` to a string. An empty string is returned for `null`
+ * and `undefined` values. The sign of `-0` is preserved.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to process.
+ * @returns {string} Returns the string.
+ * @example
+ *
+ * _.toString(null);
+ * // => ''
+ *
+ * _.toString(-0);
+ * // => '-0'
+ *
+ * _.toString([1, 2, 3]);
+ * // => '1,2,3'
+ */
+function toString(value) {
+  return value == null ? '' : baseToString(value);
+}
+
+/**
+ * Gets the value at `path` of `object`. If the resolved value is
+ * `undefined`, the `defaultValue` is returned in its place.
+ *
+ * @static
+ * @memberOf _
+ * @since 3.7.0
+ * @category Object
+ * @param {Object} object The object to query.
+ * @param {Array|string} path The path of the property to get.
+ * @param {*} [defaultValue] The value returned for `undefined` resolved values.
+ * @returns {*} Returns the resolved value.
+ * @example
+ *
+ * var object = { 'a': [{ 'b': { 'c': 3 } }] };
+ *
+ * _.get(object, 'a[0].b.c');
+ * // => 3
+ *
+ * _.get(object, ['a', '0', 'b', 'c']);
+ * // => 3
+ *
+ * _.get(object, 'a.b.c', 'default');
+ * // => 'default'
+ */
+function get(object, path, defaultValue) {
+  var result = object == null ? undefined : baseGet(object, path);
+  return result === undefined ? defaultValue : result;
+}
+
+module.exports = get;
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {/**
@@ -13131,7 +14361,7 @@ module.exports = isEqual;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(13)(module)))
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -13140,7 +14370,7 @@ module.exports = isEqual;
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 
-const deepEqual = __webpack_require__(24);
+const deepEqual = __webpack_require__(25);
 /** Singleton of the System class shared among all instances of Monitors
  * @TODO Refactor to instance member of class.
  */
@@ -13506,12 +14736,12 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__configUtil__ = __webpack_require__(10);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__configUtil__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system__ = __webpack_require__(3);
@@ -14065,7 +15295,7 @@ RouterTransport.addTransport("FinsembleTransport", RouterTransportImplementation
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14075,9 +15305,9 @@ RouterTransport.addTransport("FinsembleTransport", RouterTransportImplementation
 */
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const routerTransport_1 = __webpack_require__(26);
+const routerTransport_1 = __webpack_require__(27);
 const Utils = __webpack_require__(8);
-const configUtil_1 = __webpack_require__(10);
+const configUtil_1 = __webpack_require__(11);
 const validate_1 = __webpack_require__(6); // Finsemble args validator
 const userNotification_1 = __webpack_require__(20);
 const system_1 = __webpack_require__(3);
@@ -14475,7 +15705,6 @@ exports.RouterClientConstructor = function (params) {
         var responderCallback = map[queryMessage.header.channel];
         if (responderCallback === undefined) {
             Logger.system.warn("RouterClient: no query responder define on channel " + queryMessage.header.channel + " incoming from " + queryMessage.header.origin, queryMessage);
-            responderCallback(null, queryMessage); // invoke the callback (no error), queryMessage);
         }
         else {
             if (!queryMessage.header.error) {
@@ -15334,944 +16563,6 @@ exports.RouterClientConstructor = function (params) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 28 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {/**
- * lodash (Custom Build) <https://lodash.com/>
- * Build: `lodash modularize exports="npm" -o ./`
- * Copyright jQuery Foundation and other contributors <https://jquery.org/>
- * Released under MIT license <https://lodash.com/license>
- * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
- * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
- */
-
-/** Used as the `TypeError` message for "Functions" methods. */
-var FUNC_ERROR_TEXT = 'Expected a function';
-
-/** Used to stand-in for `undefined` hash values. */
-var HASH_UNDEFINED = '__lodash_hash_undefined__';
-
-/** Used as references for various `Number` constants. */
-var INFINITY = 1 / 0;
-
-/** `Object#toString` result references. */
-var funcTag = '[object Function]',
-    genTag = '[object GeneratorFunction]',
-    symbolTag = '[object Symbol]';
-
-/** Used to match property names within property paths. */
-var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\\]|\\.)*?\1)\]/,
-    reIsPlainProp = /^\w*$/,
-    reLeadingDot = /^\./,
-    rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|$))/g;
-
-/**
- * Used to match `RegExp`
- * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
- */
-var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
-
-/** Used to match backslashes in property paths. */
-var reEscapeChar = /\\(\\)?/g;
-
-/** Used to detect host constructors (Safari). */
-var reIsHostCtor = /^\[object .+?Constructor\]$/;
-
-/** Detect free variable `global` from Node.js. */
-var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
-
-/** Detect free variable `self`. */
-var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
-
-/** Used as a reference to the global object. */
-var root = freeGlobal || freeSelf || Function('return this')();
-
-/**
- * Gets the value at `key` of `object`.
- *
- * @private
- * @param {Object} [object] The object to query.
- * @param {string} key The key of the property to get.
- * @returns {*} Returns the property value.
- */
-function getValue(object, key) {
-  return object == null ? undefined : object[key];
-}
-
-/**
- * Checks if `value` is a host object in IE < 9.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
- */
-function isHostObject(value) {
-  // Many host objects are `Object` objects that can coerce to strings
-  // despite having improperly defined `toString` methods.
-  var result = false;
-  if (value != null && typeof value.toString != 'function') {
-    try {
-      result = !!(value + '');
-    } catch (e) {}
-  }
-  return result;
-}
-
-/** Used for built-in method references. */
-var arrayProto = Array.prototype,
-    funcProto = Function.prototype,
-    objectProto = Object.prototype;
-
-/** Used to detect overreaching core-js shims. */
-var coreJsData = root['__core-js_shared__'];
-
-/** Used to detect methods masquerading as native. */
-var maskSrcKey = (function() {
-  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
-  return uid ? ('Symbol(src)_1.' + uid) : '';
-}());
-
-/** Used to resolve the decompiled source of functions. */
-var funcToString = funcProto.toString;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * Used to resolve the
- * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
- * of values.
- */
-var objectToString = objectProto.toString;
-
-/** Used to detect if a method is native. */
-var reIsNative = RegExp('^' +
-  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
-  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
-);
-
-/** Built-in value references. */
-var Symbol = root.Symbol,
-    splice = arrayProto.splice;
-
-/* Built-in method references that are verified to be native. */
-var Map = getNative(root, 'Map'),
-    nativeCreate = getNative(Object, 'create');
-
-/** Used to convert symbols to primitives and strings. */
-var symbolProto = Symbol ? Symbol.prototype : undefined,
-    symbolToString = symbolProto ? symbolProto.toString : undefined;
-
-/**
- * Creates a hash object.
- *
- * @private
- * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
- */
-function Hash(entries) {
-  var index = -1,
-      length = entries ? entries.length : 0;
-
-  this.clear();
-  while (++index < length) {
-    var entry = entries[index];
-    this.set(entry[0], entry[1]);
-  }
-}
-
-/**
- * Removes all key-value entries from the hash.
- *
- * @private
- * @name clear
- * @memberOf Hash
- */
-function hashClear() {
-  this.__data__ = nativeCreate ? nativeCreate(null) : {};
-}
-
-/**
- * Removes `key` and its value from the hash.
- *
- * @private
- * @name delete
- * @memberOf Hash
- * @param {Object} hash The hash to modify.
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function hashDelete(key) {
-  return this.has(key) && delete this.__data__[key];
-}
-
-/**
- * Gets the hash value for `key`.
- *
- * @private
- * @name get
- * @memberOf Hash
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function hashGet(key) {
-  var data = this.__data__;
-  if (nativeCreate) {
-    var result = data[key];
-    return result === HASH_UNDEFINED ? undefined : result;
-  }
-  return hasOwnProperty.call(data, key) ? data[key] : undefined;
-}
-
-/**
- * Checks if a hash value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf Hash
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function hashHas(key) {
-  var data = this.__data__;
-  return nativeCreate ? data[key] !== undefined : hasOwnProperty.call(data, key);
-}
-
-/**
- * Sets the hash `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf Hash
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the hash instance.
- */
-function hashSet(key, value) {
-  var data = this.__data__;
-  data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
-  return this;
-}
-
-// Add methods to `Hash`.
-Hash.prototype.clear = hashClear;
-Hash.prototype['delete'] = hashDelete;
-Hash.prototype.get = hashGet;
-Hash.prototype.has = hashHas;
-Hash.prototype.set = hashSet;
-
-/**
- * Creates an list cache object.
- *
- * @private
- * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
- */
-function ListCache(entries) {
-  var index = -1,
-      length = entries ? entries.length : 0;
-
-  this.clear();
-  while (++index < length) {
-    var entry = entries[index];
-    this.set(entry[0], entry[1]);
-  }
-}
-
-/**
- * Removes all key-value entries from the list cache.
- *
- * @private
- * @name clear
- * @memberOf ListCache
- */
-function listCacheClear() {
-  this.__data__ = [];
-}
-
-/**
- * Removes `key` and its value from the list cache.
- *
- * @private
- * @name delete
- * @memberOf ListCache
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function listCacheDelete(key) {
-  var data = this.__data__,
-      index = assocIndexOf(data, key);
-
-  if (index < 0) {
-    return false;
-  }
-  var lastIndex = data.length - 1;
-  if (index == lastIndex) {
-    data.pop();
-  } else {
-    splice.call(data, index, 1);
-  }
-  return true;
-}
-
-/**
- * Gets the list cache value for `key`.
- *
- * @private
- * @name get
- * @memberOf ListCache
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function listCacheGet(key) {
-  var data = this.__data__,
-      index = assocIndexOf(data, key);
-
-  return index < 0 ? undefined : data[index][1];
-}
-
-/**
- * Checks if a list cache value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf ListCache
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function listCacheHas(key) {
-  return assocIndexOf(this.__data__, key) > -1;
-}
-
-/**
- * Sets the list cache `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf ListCache
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the list cache instance.
- */
-function listCacheSet(key, value) {
-  var data = this.__data__,
-      index = assocIndexOf(data, key);
-
-  if (index < 0) {
-    data.push([key, value]);
-  } else {
-    data[index][1] = value;
-  }
-  return this;
-}
-
-// Add methods to `ListCache`.
-ListCache.prototype.clear = listCacheClear;
-ListCache.prototype['delete'] = listCacheDelete;
-ListCache.prototype.get = listCacheGet;
-ListCache.prototype.has = listCacheHas;
-ListCache.prototype.set = listCacheSet;
-
-/**
- * Creates a map cache object to store key-value pairs.
- *
- * @private
- * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
- */
-function MapCache(entries) {
-  var index = -1,
-      length = entries ? entries.length : 0;
-
-  this.clear();
-  while (++index < length) {
-    var entry = entries[index];
-    this.set(entry[0], entry[1]);
-  }
-}
-
-/**
- * Removes all key-value entries from the map.
- *
- * @private
- * @name clear
- * @memberOf MapCache
- */
-function mapCacheClear() {
-  this.__data__ = {
-    'hash': new Hash,
-    'map': new (Map || ListCache),
-    'string': new Hash
-  };
-}
-
-/**
- * Removes `key` and its value from the map.
- *
- * @private
- * @name delete
- * @memberOf MapCache
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function mapCacheDelete(key) {
-  return getMapData(this, key)['delete'](key);
-}
-
-/**
- * Gets the map value for `key`.
- *
- * @private
- * @name get
- * @memberOf MapCache
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function mapCacheGet(key) {
-  return getMapData(this, key).get(key);
-}
-
-/**
- * Checks if a map value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf MapCache
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function mapCacheHas(key) {
-  return getMapData(this, key).has(key);
-}
-
-/**
- * Sets the map `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf MapCache
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the map cache instance.
- */
-function mapCacheSet(key, value) {
-  getMapData(this, key).set(key, value);
-  return this;
-}
-
-// Add methods to `MapCache`.
-MapCache.prototype.clear = mapCacheClear;
-MapCache.prototype['delete'] = mapCacheDelete;
-MapCache.prototype.get = mapCacheGet;
-MapCache.prototype.has = mapCacheHas;
-MapCache.prototype.set = mapCacheSet;
-
-/**
- * Gets the index at which the `key` is found in `array` of key-value pairs.
- *
- * @private
- * @param {Array} array The array to inspect.
- * @param {*} key The key to search for.
- * @returns {number} Returns the index of the matched value, else `-1`.
- */
-function assocIndexOf(array, key) {
-  var length = array.length;
-  while (length--) {
-    if (eq(array[length][0], key)) {
-      return length;
-    }
-  }
-  return -1;
-}
-
-/**
- * The base implementation of `_.get` without support for default values.
- *
- * @private
- * @param {Object} object The object to query.
- * @param {Array|string} path The path of the property to get.
- * @returns {*} Returns the resolved value.
- */
-function baseGet(object, path) {
-  path = isKey(path, object) ? [path] : castPath(path);
-
-  var index = 0,
-      length = path.length;
-
-  while (object != null && index < length) {
-    object = object[toKey(path[index++])];
-  }
-  return (index && index == length) ? object : undefined;
-}
-
-/**
- * The base implementation of `_.isNative` without bad shim checks.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a native function,
- *  else `false`.
- */
-function baseIsNative(value) {
-  if (!isObject(value) || isMasked(value)) {
-    return false;
-  }
-  var pattern = (isFunction(value) || isHostObject(value)) ? reIsNative : reIsHostCtor;
-  return pattern.test(toSource(value));
-}
-
-/**
- * The base implementation of `_.toString` which doesn't convert nullish
- * values to empty strings.
- *
- * @private
- * @param {*} value The value to process.
- * @returns {string} Returns the string.
- */
-function baseToString(value) {
-  // Exit early for strings to avoid a performance hit in some environments.
-  if (typeof value == 'string') {
-    return value;
-  }
-  if (isSymbol(value)) {
-    return symbolToString ? symbolToString.call(value) : '';
-  }
-  var result = (value + '');
-  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
-}
-
-/**
- * Casts `value` to a path array if it's not one.
- *
- * @private
- * @param {*} value The value to inspect.
- * @returns {Array} Returns the cast property path array.
- */
-function castPath(value) {
-  return isArray(value) ? value : stringToPath(value);
-}
-
-/**
- * Gets the data for `map`.
- *
- * @private
- * @param {Object} map The map to query.
- * @param {string} key The reference key.
- * @returns {*} Returns the map data.
- */
-function getMapData(map, key) {
-  var data = map.__data__;
-  return isKeyable(key)
-    ? data[typeof key == 'string' ? 'string' : 'hash']
-    : data.map;
-}
-
-/**
- * Gets the native function at `key` of `object`.
- *
- * @private
- * @param {Object} object The object to query.
- * @param {string} key The key of the method to get.
- * @returns {*} Returns the function if it's native, else `undefined`.
- */
-function getNative(object, key) {
-  var value = getValue(object, key);
-  return baseIsNative(value) ? value : undefined;
-}
-
-/**
- * Checks if `value` is a property name and not a property path.
- *
- * @private
- * @param {*} value The value to check.
- * @param {Object} [object] The object to query keys on.
- * @returns {boolean} Returns `true` if `value` is a property name, else `false`.
- */
-function isKey(value, object) {
-  if (isArray(value)) {
-    return false;
-  }
-  var type = typeof value;
-  if (type == 'number' || type == 'symbol' || type == 'boolean' ||
-      value == null || isSymbol(value)) {
-    return true;
-  }
-  return reIsPlainProp.test(value) || !reIsDeepProp.test(value) ||
-    (object != null && value in Object(object));
-}
-
-/**
- * Checks if `value` is suitable for use as unique object key.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is suitable, else `false`.
- */
-function isKeyable(value) {
-  var type = typeof value;
-  return (type == 'string' || type == 'number' || type == 'symbol' || type == 'boolean')
-    ? (value !== '__proto__')
-    : (value === null);
-}
-
-/**
- * Checks if `func` has its source masked.
- *
- * @private
- * @param {Function} func The function to check.
- * @returns {boolean} Returns `true` if `func` is masked, else `false`.
- */
-function isMasked(func) {
-  return !!maskSrcKey && (maskSrcKey in func);
-}
-
-/**
- * Converts `string` to a property path array.
- *
- * @private
- * @param {string} string The string to convert.
- * @returns {Array} Returns the property path array.
- */
-var stringToPath = memoize(function(string) {
-  string = toString(string);
-
-  var result = [];
-  if (reLeadingDot.test(string)) {
-    result.push('');
-  }
-  string.replace(rePropName, function(match, number, quote, string) {
-    result.push(quote ? string.replace(reEscapeChar, '$1') : (number || match));
-  });
-  return result;
-});
-
-/**
- * Converts `value` to a string key if it's not a string or symbol.
- *
- * @private
- * @param {*} value The value to inspect.
- * @returns {string|symbol} Returns the key.
- */
-function toKey(value) {
-  if (typeof value == 'string' || isSymbol(value)) {
-    return value;
-  }
-  var result = (value + '');
-  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
-}
-
-/**
- * Converts `func` to its source code.
- *
- * @private
- * @param {Function} func The function to process.
- * @returns {string} Returns the source code.
- */
-function toSource(func) {
-  if (func != null) {
-    try {
-      return funcToString.call(func);
-    } catch (e) {}
-    try {
-      return (func + '');
-    } catch (e) {}
-  }
-  return '';
-}
-
-/**
- * Creates a function that memoizes the result of `func`. If `resolver` is
- * provided, it determines the cache key for storing the result based on the
- * arguments provided to the memoized function. By default, the first argument
- * provided to the memoized function is used as the map cache key. The `func`
- * is invoked with the `this` binding of the memoized function.
- *
- * **Note:** The cache is exposed as the `cache` property on the memoized
- * function. Its creation may be customized by replacing the `_.memoize.Cache`
- * constructor with one whose instances implement the
- * [`Map`](http://ecma-international.org/ecma-262/7.0/#sec-properties-of-the-map-prototype-object)
- * method interface of `delete`, `get`, `has`, and `set`.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Function
- * @param {Function} func The function to have its output memoized.
- * @param {Function} [resolver] The function to resolve the cache key.
- * @returns {Function} Returns the new memoized function.
- * @example
- *
- * var object = { 'a': 1, 'b': 2 };
- * var other = { 'c': 3, 'd': 4 };
- *
- * var values = _.memoize(_.values);
- * values(object);
- * // => [1, 2]
- *
- * values(other);
- * // => [3, 4]
- *
- * object.a = 2;
- * values(object);
- * // => [1, 2]
- *
- * // Modify the result cache.
- * values.cache.set(object, ['a', 'b']);
- * values(object);
- * // => ['a', 'b']
- *
- * // Replace `_.memoize.Cache`.
- * _.memoize.Cache = WeakMap;
- */
-function memoize(func, resolver) {
-  if (typeof func != 'function' || (resolver && typeof resolver != 'function')) {
-    throw new TypeError(FUNC_ERROR_TEXT);
-  }
-  var memoized = function() {
-    var args = arguments,
-        key = resolver ? resolver.apply(this, args) : args[0],
-        cache = memoized.cache;
-
-    if (cache.has(key)) {
-      return cache.get(key);
-    }
-    var result = func.apply(this, args);
-    memoized.cache = cache.set(key, result);
-    return result;
-  };
-  memoized.cache = new (memoize.Cache || MapCache);
-  return memoized;
-}
-
-// Assign cache to `_.memoize`.
-memoize.Cache = MapCache;
-
-/**
- * Performs a
- * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
- * comparison between two values to determine if they are equivalent.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to compare.
- * @param {*} other The other value to compare.
- * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
- * @example
- *
- * var object = { 'a': 1 };
- * var other = { 'a': 1 };
- *
- * _.eq(object, object);
- * // => true
- *
- * _.eq(object, other);
- * // => false
- *
- * _.eq('a', 'a');
- * // => true
- *
- * _.eq('a', Object('a'));
- * // => false
- *
- * _.eq(NaN, NaN);
- * // => true
- */
-function eq(value, other) {
-  return value === other || (value !== value && other !== other);
-}
-
-/**
- * Checks if `value` is classified as an `Array` object.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an array, else `false`.
- * @example
- *
- * _.isArray([1, 2, 3]);
- * // => true
- *
- * _.isArray(document.body.children);
- * // => false
- *
- * _.isArray('abc');
- * // => false
- *
- * _.isArray(_.noop);
- * // => false
- */
-var isArray = Array.isArray;
-
-/**
- * Checks if `value` is classified as a `Function` object.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a function, else `false`.
- * @example
- *
- * _.isFunction(_);
- * // => true
- *
- * _.isFunction(/abc/);
- * // => false
- */
-function isFunction(value) {
-  // The use of `Object#toString` avoids issues with the `typeof` operator
-  // in Safari 8-9 which returns 'object' for typed array and other constructors.
-  var tag = isObject(value) ? objectToString.call(value) : '';
-  return tag == funcTag || tag == genTag;
-}
-
-/**
- * Checks if `value` is the
- * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
- * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an object, else `false`.
- * @example
- *
- * _.isObject({});
- * // => true
- *
- * _.isObject([1, 2, 3]);
- * // => true
- *
- * _.isObject(_.noop);
- * // => true
- *
- * _.isObject(null);
- * // => false
- */
-function isObject(value) {
-  var type = typeof value;
-  return !!value && (type == 'object' || type == 'function');
-}
-
-/**
- * Checks if `value` is object-like. A value is object-like if it's not `null`
- * and has a `typeof` result of "object".
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
- * @example
- *
- * _.isObjectLike({});
- * // => true
- *
- * _.isObjectLike([1, 2, 3]);
- * // => true
- *
- * _.isObjectLike(_.noop);
- * // => false
- *
- * _.isObjectLike(null);
- * // => false
- */
-function isObjectLike(value) {
-  return !!value && typeof value == 'object';
-}
-
-/**
- * Checks if `value` is classified as a `Symbol` primitive or object.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
- * @example
- *
- * _.isSymbol(Symbol.iterator);
- * // => true
- *
- * _.isSymbol('abc');
- * // => false
- */
-function isSymbol(value) {
-  return typeof value == 'symbol' ||
-    (isObjectLike(value) && objectToString.call(value) == symbolTag);
-}
-
-/**
- * Converts `value` to a string. An empty string is returned for `null`
- * and `undefined` values. The sign of `-0` is preserved.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to process.
- * @returns {string} Returns the string.
- * @example
- *
- * _.toString(null);
- * // => ''
- *
- * _.toString(-0);
- * // => '-0'
- *
- * _.toString([1, 2, 3]);
- * // => '1,2,3'
- */
-function toString(value) {
-  return value == null ? '' : baseToString(value);
-}
-
-/**
- * Gets the value at `path` of `object`. If the resolved value is
- * `undefined`, the `defaultValue` is returned in its place.
- *
- * @static
- * @memberOf _
- * @since 3.7.0
- * @category Object
- * @param {Object} object The object to query.
- * @param {Array|string} path The path of the property to get.
- * @param {*} [defaultValue] The value returned for `undefined` resolved values.
- * @returns {*} Returns the resolved value.
- * @example
- *
- * var object = { 'a': [{ 'b': { 'c': 3 } }] };
- *
- * _.get(object, 'a[0].b.c');
- * // => 3
- *
- * _.get(object, ['a', '0', 'b', 'c']);
- * // => 3
- *
- * _.get(object, 'a.b.c', 'default');
- * // => 'default'
- */
-function get(object, path, defaultValue) {
-  var result = object == null ? undefined : baseGet(object, path);
-  return result === undefined ? defaultValue : result;
-}
-
-module.exports = get;
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
-
-/***/ }),
 /* 29 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -16607,7 +16898,7 @@ const routerClientInstance_1 = __webpack_require__(5);
 const logger_1 = __webpack_require__(0);
 const async_1 = __webpack_require__(9);
 const system_1 = __webpack_require__(3);
-const Constants = __webpack_require__(11);
+const Constants = __webpack_require__(10);
 const { SERVICE_INITIALIZING_CHANNEL, SERVICE_READY_CHANNEL, SERVICE_CLOSING_CHANNEL, SERVICE_CLOSED_CHANNEL, SERVICE_STOP_CHANNEL } = Constants;
 const defaultBaseServiceParams = {
     startupDependencies: {
@@ -16777,7 +17068,7 @@ class BaseService {
     /**
      * Really only for shutdown right now. Simple array that gets looped through on shutdown.
      * @param {string} listenerType
-     * @param {function} callback
+     * @param {function} callback The callback to be invoked after the method completes successfully.
      */
     addEventListener(listenerType, callback) {
         if (!this.listeners[listenerType]) {
@@ -16786,21 +17077,20 @@ class BaseService {
         this.listeners[listenerType].push(callback);
     }
     /**
-     * When the application sends out a shutdown message, this function is invoked. It iterates through any registered cleanup methods. When all of them have finished (or 10 seconds elapses), it sends a response to the application saying that it's completed cleanup (`shutdownComplete`, below).
+     * When the application sends out a shutdown message, this function is invoked. It iterates through any registered cleanup methods. When all of them have finished, it sends a response to the application saying that it's completed cleanup (`shutdownComplete`, below).
      * @private
     */
     onShutdown(cb) {
         this.addEventListener("onShutdown", cb);
     }
     /**
-     * When the application sends out a shutdown message, this function is invoked. It iterates through any registered cleanup methods. When all of them have finished (or 10 seconds elapses), it sends a response to the application saying that it's completed cleanup (`shutdownComplete`, below).
+     * When the application sends out a shutdown message, this function is invoked. It iterates through any registered cleanup methods. When all of them have finished, it sends a response to the application saying that it's completed cleanup (`shutdownComplete`, below).
      * @private
     */
     handleShutdown(err, message) {
         var self = this;
         function handleShutdownAction(handler, done) {
             let cleanup = async_1.asyncify(handler);
-            cleanup = async_1.timeout(cleanup, 10000); // services may need some time to cleanup (depends on service)
             cleanup(null, done);
         }
         function shutdownComplete(err, data) {
@@ -16884,7 +17174,7 @@ function fixParams(params) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const baseClient_1 = __webpack_require__(7);
-const StoreModel_1 = __webpack_require__(42);
+const StoreModel_1 = __webpack_require__(43);
 /** I'm not sure why we previously deferred requiring StoreModel, but we did.
   * I've tried to stay as true to the original implementation as possible. -- Daniel 12/19/18 */
 let _StoreModel;
@@ -16916,9 +17206,8 @@ function removeGlobalStore(params, cb) {
  * <h2>Distributed Store Client</h2>
  * The Distributed Store Client handles creating, retrieving, and destroying stores. Stores are used to save and retrieve data either locally or globally.
  * This data is not persisted. You can add listeners at multiple levels (store or field), and get the updated data as it's updated in the store.
- * Fields are stored within the store as key/value pair.
+ * Fields are stored within the store as key/value pair. For more information, see the <a href="tutorial-DistributedStore.html">Distributed Store tutorial</a>.
  *
- * For more information, see the [Distributed Store tutorial](tutorial-DistributedStore.html).
 
  * @hideconstructor
  * @constructor
@@ -16936,14 +17225,16 @@ class DistributedStoreClient extends baseClient_1._BaseClient {
         this.ls = localStore;
     }
     /**
-     * Get a store. If no store is set then we'll get the global Finsemble store. If global is not set we'll check local first then we'll check global.
-     * @param {Object} params - Params object
-     * @param {String} params.store -  The namespace of the value
-     * @param {boolean} params.global - If true, indicates the store is global.
+     * Get a store. If no store is set, you will get the global Finsemble store. If global is not set, Finsemble will check local first then check global.
+     * @param {String} params.store The name of the store.
+     * @param {boolean} params.global Whether a store is accessible outside of the component it's created in.
      * @param {function} cb -  Will return the value if found.
      * @returns {StoreModel} - returns the store
      * @example
-     * DistributedStoreClient.getStore({store:'store1'},function(storeObject){});
+     * FSBL.Clients.DistributedStoreClient.getStore({
+     * 	store:'store1'
+     * },
+     * function(error, storeObject){});
      */
     getStore(params, cb) {
         if (params.global) {
@@ -16957,15 +17248,19 @@ class DistributedStoreClient extends baseClient_1._BaseClient {
     ;
     /**
      *Creates a store.
-     * @param params Params object
-     * @param {string} params.store The namespace of to use
-     * @param {any} [params.values] -  Starting values for the store
-     * @param {boolean} params.global If true, indicates the store is global.
-     * @param {boolean} [params.persist] - Should this store persists? THe store must be global to use this flag.
-     * @param {function} cb -  Will return the store on success.
-     * @returns {function} - Callback will receive the store
+     * @param {string} params.store The name of the store.
+     * @param {any} params.values Starting values for the store.
+     * @param {boolean} params.global Whether a store is accessible outside of the component it's created in.
+     * @param {boolean} params.persist Whether to persist the values of the store to storage. The store must be global to use this flag.
+     * @param {function} cb  Will return the store on success.
+     * @returns {function} Callback will receive the store
      * @example
-     * DistributedStoreClient.createStore({store:"store1",global:false,values:{}},function(storeObject){});
+     * FSBL.Clients.DistributedStoreClient.createStore({
+     * 	store:"store1",
+     * 	global:false,
+     * 	values:{}
+     * },
+     * function(error, storeObject){});
      */
     createStore(params, cb = Function.prototype) {
         const promiseResolver = (resolve, reject) => {
@@ -16993,13 +17288,16 @@ class DistributedStoreClient extends baseClient_1._BaseClient {
     }
     ;
     /**
-     * Remove a store . If global is not set and a local store isn't found we'll try to remove the global store
-     * @param {Object} params - Params object
-     * @param {String} params.store -  The namespace of to use
-     * @param {boolean} [params.global] - Is this a global store?
-     * @param {function} cb
+     * Remove a store. If global is not set and a local store isn't found, Finsemble will remove the global store.
+     * @param {String} params.store The name of the store.
+     * @param {boolean} params.global Whether the store you're trying to remove is a global store.
+     * @param {function} cb Callback to be invoked when the store is removed.
      * @example
-     * DistributedStoreClient.removeStore({store:"store1",global:true},function(){});
+     * FSBL.Clients.DistributedStoreClient.removeStore({
+     * 	store:"store1",
+     * 	global:true
+     * },
+     * function(){});
      */
     removeStore(params, cb) {
         if (params.global) {
@@ -17030,7969 +17328,6 @@ exports.default = storeClient;
 
 /***/ }),
 /* 34 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const routerClientInstance_1 = __webpack_require__(5);
-const logger_1 = __webpack_require__(0);
-const distributedStoreClient_1 = __webpack_require__(33);
-const storageClient_1 = __webpack_require__(21);
-const util = __webpack_require__(8);
-const WindowEventManager_1 = __webpack_require__(47);
-const constants = __webpack_require__(11);
-const FinsembleEvent_1 = __webpack_require__(46);
-const system_1 = __webpack_require__(3);
-/** This import syntax helps the compiler infer the types. */
-const clone = __webpack_require__(48);
-distributedStoreClient_1.default.initialize();
-storageClient_1.default.initialize();
-const BOUNDS_SET = "bounds-set";
-const BOUNDS_CHANGING = "bounds-change-request";
-const BOUNDS_CHANGED = "bounds-changed";
-if (!window._FSBLCache)
-    window._FSBLCache = {
-        storeClientReady: false,
-        windowStore: null,
-        windows: {},
-        gettingWindow: [],
-        windowAttempts: {}
-    };
-function retrieveManifestPromise() {
-    return new Promise((resolve, reject) => {
-        system_1.System.Application.getCurrent().getManifest(resolve, reject);
-    });
-}
-class FinsembleWindow {
-    constructor(params) {
-        this.eventlistenerHandlerMap = {};
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // Handlers to generate wrapper events from incoming transmits
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        this.handleWrapStateChange = (err, response) => {
-            let state = response.data.state;
-            if (state !== this.wrapState) {
-                this.wrapState = state;
-                // 5/1/19: JoeC. Eventmanager wasn't throwing ready event, so all ready listeners would never fire
-                if (this.wrapState === "ready") {
-                    this.eventManager.trigger('ready');
-                }
-                this.eventManager.trigger("wrap-state-changed", {
-                    state
-                });
-            }
-        };
-        this.types = {};
-        //todo settle on a proper name for this property.
-        this.wrapState = "initializing";
-        this.componentState = {};
-        this.windowState = FinsembleWindow.WINDOWSTATE.NORMAL;
-        this.type = null;
-        this.windowType = null;
-        this.bounds = {};
-        this.name;
-        this.guid = Date.now() + "_" + Math.random();
-        this.addListener = this.addEventListener;
-        this.removeListener = this.removeEventListener;
-        this.WINDOWSTATE = constants.WINDOWSTATE;
-        this.windowOptions = {};
-        //because we were doing this[i]=params[i] in the constructor jscrambler was creating a reference to "this" above _super_, causing everything to break and it made me cry.
-        this.doConstruction(params);
-        this.eventManager = new WindowEventManager_1.WindowEventManager({ name: this.name });
-        this.TITLE_CHANGED_CHANNEL = "Finsemble." + this.name + ".titleChanged";
-        this.componentKey = util.camelCase("activeWorkspace", this.name, this.name);
-        this.windowKey = util.camelCase("activeWorkspace", this.name);
-        FinsembleWindow.bindFunctions(this);
-        this.setupListeners(this.name);
-        this.listenForEvents();
-    }
-    //allows backwards compatibility.
-    standardizeEventName(event) {
-        switch (event) {
-            //all of these should be deprecated in 3.5ish.
-            case "bounds-set":
-            case "stoppedMoving":
-                return "bounds-change-end";
-            case "startedMoving":
-                return "bounds-change-start";
-            case "bringToFront":
-                return "broughtToFront";
-            case "setParent":
-                return "parent-set";
-            case "clearParent":
-                return "parent-unset";
-        }
-        return event;
-    }
-    _eventHandled(interceptor, guid, canceled = false) {
-        logger_1.default.system.debug("FinsembleWindow._eventHandled public", interceptor.event, this.identifier.windowName, guid, canceled);
-        if (interceptor.delayable)
-            routerClientInstance_1.default.publish(constants.EVENT_INTERRUPT_CHANNEL + "." + guid, { canceled: canceled });
-    }
-    addEventListener(eventName, handler) {
-        logger_1.default.system.info("EVENT TAG. Event listener added", eventName, "on ", this.name);
-        eventName = this.standardizeEventName(eventName);
-        // We send this guid so that Window service can keep track of individual listeners for event interruption.
-        let guid = Date.now() + "_" + Math.random();
-        this.queryWindowService("addEventListener", { eventName: eventName, guid: guid });
-        this.eventManager.listenForRemoteEvent(eventName, handler);
-        let delayable = constants.INTERRUPTIBLE_EVENTS.includes(eventName);
-        let cancelable = constants.INTERRUPTIBLE_EVENTS.includes(eventName);
-        let interceptor = new FinsembleEvent_1.FinsembleEvent({
-            source: this,
-            event: eventName,
-            delayable: delayable,
-            cancelable: cancelable
-        });
-        var internalHandler = (data) => {
-            logger_1.default.system.info("EVENT TAG. Internal event handler", eventName, "on ", this.name);
-            // TODO: need to create event list with properties:
-            interceptor.setData(data);
-            handler(interceptor); // this is where a handler can delay the event
-            if (delayable && interceptor.delayed) { // if delayed, wait for done
-                routerClientInstance_1.default.publish(constants.EVENT_INTERRUPT_CHANNEL + "." + guid, { delayed: true });
-                interceptor.addListener("done", (response) => {
-                    this._eventHandled(interceptor, guid, response.canceled);
-                });
-            }
-            else { // if not delayed, it is done.
-                this._eventHandled(interceptor, guid);
-            }
-        };
-        //We want the final handler that's invoked is
-        this.eventManager.addListener(eventName, internalHandler);
-        if (!this.eventlistenerHandlerMap[eventName]) {
-            this.eventlistenerHandlerMap[eventName] = [];
-        }
-        this.eventlistenerHandlerMap[eventName].push({
-            handler: handler,
-            internalHandler: internalHandler,
-            interceptor: interceptor,
-            guid: guid
-        });
-    }
-    removeEventListener(eventName, handler) {
-        eventName = this.standardizeEventName(eventName);
-        const promiseResolver = async (resolve) => {
-            if (!this.eventlistenerHandlerMap[eventName]) { // trying to remove non-existent handler.
-                logger_1.default.system.debug("trying to remove non-existent handler", eventName);
-                return resolve();
-            }
-            for (var i = this.eventlistenerHandlerMap[eventName].length - 1; i >= 0; i--) {
-                let handlerStoredData = this.eventlistenerHandlerMap[eventName][i];
-                if (handlerStoredData.handler === handler) {
-                    this.eventManager.removeListener(eventName, handlerStoredData.internalHandler);
-                    handlerStoredData.interceptor.removeAllListeners();
-                    routerClientInstance_1.default.publish(constants.EVENT_INTERRUPT_CHANNEL + "." + handlerStoredData.guid, { delayed: false, canceled: false });
-                    await this.queryWindowService("removeEventListener", { eventName: eventName, guid: handlerStoredData.guid });
-                    this.eventlistenerHandlerMap[eventName].splice(i, 1);
-                    resolve();
-                }
-            }
-            resolve();
-        };
-        return new Promise(promiseResolver);
-    }
-    listenForEvents() {
-        this.wrapStateChangeSubscription = routerClientInstance_1.default.subscribe("Finsemble.Component.State." + this.name, this.handleWrapStateChange);
-    }
-    windowServiceChannelName(channelTopic) { let name = this.name || this.windowName; return `WindowService-Request-${channelTopic}`; }
-    eventChannelName(channelTopic) { let name = this.name || this.windowName; return `WindowService-Event-${name}-${channelTopic}`; }
-    listenForBoundsSet() {
-        this.eventManager.listenForRemoteEvents(["bounds-change-start", "bounds-changing", "bounds-change-end"]);
-    }
-    animate(params = {}, callback = Function.prototype) {
-        this.queryWindowService("animate", params, callback);
-    }
-    getWindowStore(cb) {
-        if (window._FSBLCache.windowStore) {
-            return cb(window._FSBLCache.windowStore);
-        }
-        distributedStoreClient_1.default.createStore({ store: "Finsemble-Windows", global: true }, (err, store) => {
-            window._FSBLCache.windowStore = store;
-            cb(store);
-        });
-    }
-    doConstruction(params) {
-        //TODO this is the same as wrap (eventually this should spawn)
-        if (!params.setWindowType && !params.windowType) { //Default WindowType
-            params.windowType = "OpenFinWindow";
-        }
-        if (params.windowType) { //We need to make a specific kind of Window
-            params.setWindowType = params.windowType;
-            delete params.windowType; //Prevent infinite loop
-            let BW = FinsembleWindow; //have to do this because we're mutating the class using static functions and all kinds of bad stuff. This tells the typescript compiler that the FinsembleWindow here is of type any -- basically don't worry about its type.
-            var childClassObject = new BW(params);
-            //childClassObject.windowType = windowType;
-            return childClassObject;
-        } //We are a specific kind of window
-        if (params) {
-            for (var i in params) {
-                this[i] = params[i];
-            }
-        }
-        if (!this.name)
-            this.name = params.windowName;
-        this.windowType = this.setWindowType;
-    }
-    static registerType(name, type) {
-        let BW = FinsembleWindow; //have to do this because we're mutating the class using static functions and all kinds of bad stuff. This tells the typescript compiler that the FinsembleWindow here is of type any -- basically don't worry about its type.
-        if (!BW.types) {
-            BW.types = {};
-        }
-        BW.types[name] = type;
-    }
-    /**
-     * This is used to bind all functions only in FinsembleWindow and not in the child wrappers to the wrappers. Without this binding, the value of "this" in the functions is wrong.
-     * @param {} obj
-     */
-    static bindFunctions(obj) {
-        obj.setParent = obj.setParent.bind(obj);
-        obj.getParent = obj.getParent.bind(obj);
-        obj.eventChannelName = obj.eventChannelName.bind(obj);
-        obj.windowServiceChannelName = obj.windowServiceChannelName.bind(obj);
-        obj.setupListeners = obj.setupListeners.bind(obj);
-        obj.onTitleChanged = obj.onTitleChanged.bind(obj);
-        obj.handleWrapRemoveRequest = obj.handleWrapRemoveRequest.bind(obj);
-        obj.listenForBoundsSet = obj.listenForBoundsSet.bind(obj);
-        obj._eventHandled = obj._eventHandled.bind(obj);
-    }
-    // set up this window's listeners
-    setupListeners(name) {
-        logger_1.default.system.debug("FinsembleWindow parent change notification setup", name);
-        this.TITLE_CHANGED_SUBSCRIPTION = routerClientInstance_1.default.subscribe(this.TITLE_CHANGED_CHANNEL, this.onTitleChanged);
-    }
-    onTitleChanged(err, response) {
-        if (!response || !response.data || typeof response.data !== "string")
-            return;
-        //this.windowOptions.title = response.data;
-        this.eventManager.trigger("title-changed", {
-            title: response.data
-        });
-    }
-    static getInstance(params, cb = Function.prototype) {
-        let myName = system_1.System.Window.getCurrent().name;
-        if (params && params.windowName) {
-            params.name = params.windowName;
-        }
-        params = clone(params); // this function modifies params so clone to be safe
-        if (!params || !params.name)
-            return cb("name is required");
-        params.windowName = params.name;
-        async function promiseResolver(resolve, reject) {
-            //Return early if we already have the wrap cached.
-            if (window._FSBLCache.windows[params.name]) {
-                logger_1.default.system.debug("WRAP LIFECYCLE:", params.name, "Window found in the cache, returning without going to the Launcher");
-                let wrap = window._FSBLCache.windows[params.name];
-                //@exit
-                resolve({ wrap });
-                return cb(null, wrap);
-            }
-            //If we already have all of the information, just call createWrap.
-            if (params.uuid && params.name) {
-                if (!params.windowIdentifier) {
-                    params.windowIdentifier = {
-                        uuid: params.uuid,
-                        name: params.name,
-                        windowName: params.name,
-                        windowType: params.windowType
-                    };
-                }
-                if (params.waitForReady !== false) {
-                    try {
-                        await FinsembleWindow._windowReady(params.windowName); // wait to ensure the window is fully ready in the window service
-                    }
-                    catch (err) {
-                        reject(err);
-                        return cb(err, null);
-                    }
-                }
-                logger_1.default.system.debug("WRAP LIFECYCLE:", params.name, "All information for wrap passed in, creating wrap locally");
-                //Multiple requests for the same window could've come in at once. Right before we create this wrap, we should check that it hasn't been cached while we were waiting for _windowReady to resolve.
-                if (window._FSBLCache.windows[params.name]) {
-                    logger_1.default.system.debug("WRAP LIFECYCLE:", params.name, "Window found in the cache, returning without going to the Launcher");
-                    let wrap = window._FSBLCache.windows[params.name];
-                    //@exit
-                    resolve({ wrap });
-                    return cb(null, wrap);
-                }
-                let { wrap } = await FinsembleWindow._createWrap(params);
-                //@exit
-                resolve({ wrap });
-                return cb(null, wrap);
-            }
-            if (params.waitForReady !== false) {
-                try {
-                    await FinsembleWindow._windowReady(params.windowName); // wait to ensure the window is fully ready in the window service
-                }
-                catch (err) {
-                    reject(err);
-                    return cb(err, null);
-                }
-            }
-            //All we have is a windowName. we send a request to the launcher for more information so that we can construct the proper object. This also the place where
-            routerClientInstance_1.default.query("WindowService-Request-getWindowIdentifier", { windowName: params.name, requester: myName }, onWrapInformationReceived);
-            async function onWrapInformationReceived(err, response) {
-                if (err) {
-                    logger_1.default.system.error(err);
-                    //@exit
-                    reject(err);
-                    return cb(err, null);
-                }
-                if (window._FSBLCache.windows[params.name]) {
-                    let wrap = window._FSBLCache.windows[params.name];
-                    logger_1.default.system.debug("WRAP LIFECYCLE:", params.name, "Information received from launcher, but wrap exists in cache. Returning cached wrap.");
-                    //@exit
-                    resolve({ wrap });
-                    return cb(null, wrap);
-                }
-                let { identifier } = response.data;
-                if (identifier.windowName) {
-                    identifier.name = identifier.windowName;
-                }
-                logger_1.default.system.debug("WRAP LIFECYCLE:", params.name, "Information received from launcher. Creating wrap.");
-                params.retrievedIdentifier = identifier;
-                let { wrap } = await FinsembleWindow._createWrap(params);
-                if (response.data.descriptor) {
-                    wrap.descriptor = response.data.descriptor;
-                }
-                //@exit
-                resolve({ wrap });
-                cb(null, wrap);
-            }
-        }
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Creates a Finsemble WindowWrap
-     * @param {*} params
-     * @param {string} params.name The name of the window
-     * @param {*} [params.retrievedIdentifier] Retrieved window identifier
-     * @param {*} [params.windowIdentifier] The window identifier
-     * @param {boolean} [param.setWindowType] If true, will set the window type
-     */
-    static _createWrap(params) {
-        function promiseResolver(resolve, reject) {
-            let identifier = params.retrievedIdentifier || params.windowIdentifier;
-            let wrap = null;
-            if (typeof window._FSBLCache.windowAttempts[params.name] === "undefined")
-                window._FSBLCache.windowAttempts[params.name] = 0;
-            //OpenfinApplication is essentially just an openfinWindow in its own process. We can wrap it just like a window.
-            if (!params.setWindowType && !identifier.windowType || identifier.windowType === "OpenFinApplication") { //Default WindowType
-                identifier.windowType = "OpenFinWindow";
-            }
-            //Top level keeps important info (e.g., uuid, name, windowType).
-            let paramsForWindow = Object.assign({}, identifier);
-            //Also pull in anything that was passed into the constructor (e.g., windowDescriptor, etc);
-            paramsForWindow = Object.assign(paramsForWindow, params);
-            paramsForWindow.setWindowType = paramsForWindow.windowType;
-            delete paramsForWindow.windowType; //Prevent infinite loop
-            logger_1.default.system.debug("WRAP LIFECYCLE: Placing wrap into the local cache.", identifier.windowName);
-            let BW = FinsembleWindow; //have to do this because we're mutating the class using static functions and all kinds of bad stuff. This tells the typescript compiler that the FinsembleWindow here is of type any -- basically don't worry about its type.
-            window._FSBLCache.windows[identifier.windowName] = new BW(paramsForWindow);
-            wrap = window._FSBLCache.windows[identifier.windowName];
-            wrap.windowType = identifier.windowType;
-            wrap.identifier = identifier;
-            wrap.addEventListener("closed", wrap.handleWrapRemoveRequest);
-            wrap.addEventListener("maximized", () => {
-                wrap.windowState = FinsembleWindow.WINDOWSTATE.MAXIMIZED;
-            });
-            wrap.addEventListener("minimized", () => {
-                wrap.windowState = FinsembleWindow.WINDOWSTATE.MINIMIZED;
-            });
-            wrap.addEventListener("restored", () => {
-                wrap.windowState = FinsembleWindow.WINDOWSTATE.NORMAL;
-            });
-            //Subscribe to parent inside the wrap so if getInstance is called after window creation the parent window will be available.
-            wrap.parentSubscribeID = routerClientInstance_1.default.subscribe(`Finsemble.parentChange.${identifier.windowName}`, (err, message) => {
-                if (err) {
-                    logger_1.default.system.error("FinsembleWindow parent change notification error", err);
-                    resolve({ wrap });
-                }
-                else {
-                    var parentState = message.data || {};
-                    if (parentState.type === "Added") {
-                        logger_1.default.system.debug("FinsembleWindow Parent Notification: window.addedToStack listener", parentState);
-                        wrap.setParent(parentState.stackedWindowIdentifier, () => { resolve({ wrap }); });
-                    }
-                    else if (parentState.type === "Exists") {
-                        logger_1.default.system.debug("FinsembleWindow Parent Notification: Parent already exists, checking if added to wrap", parentState);
-                        wrap.setParentOnWrap(parentState.stackedWindowIdentifier, () => { resolve({ wrap }); });
-                    }
-                    else if (parentState.type === "Removed") {
-                        logger_1.default.system.debug("FinsembleWindow Parent Notification: window.removedFromStack listener", parentState);
-                        wrap.clearParent();
-                        resolve({ wrap });
-                    }
-                    else if (parentState.type) { // if defined but unknown type
-                        logger_1.default.system.error("FinsembleWindow Parent Notification: unknown type", parentState);
-                        resolve({ wrap });
-                    }
-                    else {
-                        resolve({ wrap });
-                    }
-                }
-            });
-        }
-        return new Promise(promiseResolver);
-    }
-    static _getRemoveWrapChannel(name) {
-        return `${system_1.System.Window.getCurrent().name}.removeWrap.${name}`;
-    }
-    // this routine handles the close event, but also called without event from FSBL
-    async handleWrapRemoveRequest(event) {
-        if (event)
-            event.wait();
-        logger_1.default.system.debug("WRAP Destructor. Removing cached window", this.name, "in ", window.name);
-        //wrap is the openfin or stacked window. if the removeListeners function exists, we remove all listeners we added during the lifecycle of that window wrapper.
-        if (this.removeListeners) {
-            this.removeListeners();
-        }
-        // do not move this line of code. The order of execution is important.
-        this.cleanupRouter();
-        //Remove all event listeners.
-        for (let eventName in this.eventlistenerHandlerMap) {
-            console.log("Event name in for loop", eventName);
-            let events = this.eventlistenerHandlerMap[eventName];
-            for (let i = 0; i < events.length; i++) {
-                logger_1.default.system.log("WRAP Destructor. removeEventListener", eventName, this.name, "in", window.name);
-                await this.removeEventListener(eventName, events[i].handler);
-                console.log("Event name listener removed", eventName);
-            }
-        }
-        logger_1.default.system.log("WRAP Destructor. removeEventListener DONE");
-        console.log("handleWrapRemoveRequest name Done!");
-        if (event)
-            event.done();
-        this.eventManager.cleanup();
-        if (this.name !== window.name) {
-            delete window._FSBLCache.windows[this.name];
-            delete window._FSBLCache.windowAttempts[this.name];
-        }
-    }
-    cleanupRouter() {
-        const REMOVE_WRAP_CHANNEL = FinsembleWindow._getRemoveWrapChannel(this.name);
-        routerClientInstance_1.default.removeResponder(REMOVE_WRAP_CHANNEL);
-        if (this.TITLE_CHANGED_SUBSCRIPTION) {
-            routerClientInstance_1.default.unsubscribe(this.TITLE_CHANGED_SUBSCRIPTION);
-        }
-        routerClientInstance_1.default.unsubscribe(this.parentSubscribeID);
-        routerClientInstance_1.default.unsubscribe(this.wrapStateChangeSubscription);
-    }
-    onReady(callback) {
-        if (this.wrapState === "ready") {
-            return callback();
-        }
-        this.eventManager.on("ready", callback);
-    }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Common template for window-function requests to window service -- see public functions
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /**
-     * @param {string} methodName method name (e.g. "minimize", "maximize")
-     * @param {object} params
-     * @param {function=} callback
-     * @memberof FinsembleWindow
-     * @private
-     */
-    queryWindowService(methodName, params, callback = Function.prototype) {
-        const promiseResolver = async (resolve) => {
-            if (typeof params === "function") {
-                callback = params;
-                params = {};
-            }
-            params = params || {};
-            params.windowIdentifier = this.identifier; // add this window's identifier
-            // if Logger debug is enable, then add call stack to query parameters for debugging -- shows where public window requests originated
-            if (logger_1.default.setting().system.Debug) {
-                params.callstack = logger_1.default.callStack(); // add callstack to query for debugging -- shows where public window requests originated
-            }
-            logger_1.default.system.debug("FinsembleWindow.queryWindowService", this.windowServiceChannelName(methodName), params);
-            var responseData = null;
-            routerClientInstance_1.default.query(this.windowServiceChannelName(methodName), params, (err, queryResponseMessage) => {
-                if (err) {
-                    logger_1.default.system.warn(`WindowService.${methodName}: failed`, err);
-                    console.debug(`WindowService.${methodName}: failed`, err);
-                }
-                else {
-                    responseData = queryResponseMessage.data;
-                    logger_1.default.system.debug(`${this.windowServiceChannelName(methodName)} successful`, responseData);
-                    console.debug(`${this.windowServiceChannelName(methodName)} successful`, responseData);
-                }
-                resolve();
-                callback(err, responseData);
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Core Window Functions: can be invoked by any service or component.  Most are sent to the WindowService to be executed.
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Core Public Window Functions: can be invoked by any service or component.  These are sent to the WindowService to be executed.
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    minimize(params, callback) {
-        this.queryWindowService("minimize", params, callback);
-    }
-    maximize(params, callback) {
-        this.queryWindowService("maximize", params, callback);
-    }
-    restore(params, callback) {
-        this.queryWindowService("restore", params, callback);
-    }
-    blur(params = {}, callback = Function.prototype) {
-        this.queryWindowService("blur", params, callback);
-    }
-    focus(params = {}, callback = Function.prototype) {
-        this.queryWindowService("focus", params, callback);
-    }
-    bringToFront(params, callback) {
-        this.queryWindowService("bringToFront", params, callback);
-    }
-    isShowing(params, callback) {
-        this.queryWindowService("isShowing", params, callback);
-    }
-    setBounds(params, callback) {
-        if (typeof params !== "function" && !params.bounds) {
-            let oldParams = params;
-            params = {};
-            params.bounds = oldParams;
-        }
-        this.queryWindowService("setBounds", params, callback);
-    }
-    getBounds(params, callback = Function.prototype) {
-        const promiseResolver = (resolve) => {
-            this.queryWindowService("getBounds", params, (err, bounds) => {
-                resolve({ err, data: bounds });
-                callback(err, bounds);
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    updateOptions(params, callback) {
-        this.queryWindowService("updateOptions", params, callback);
-    }
-    hide(params, callback) {
-        this.queryWindowService("hide", params, callback);
-    }
-    show(params, callback) {
-        this.queryWindowService("show", params, callback);
-    }
-    showAt(params, callback) {
-        this.queryWindowService("showAt", params, callback);
-    }
-    close(params = {}, callback = Function.prototype) {
-        logger_1.default.system.debug("WRAP CLOSE. Public close initiated for", this.name, params);
-        this.queryWindowService("close", params, () => {
-            logger_1.default.system.debug("WRAP CLOSE. Public close initiated for", this.name);
-            callback();
-        });
-    }
-    /**
-     *Register a window with docking. Use this if you don't want to use the full initialization function
-     *
-     * @param {Object} params - can be anything that is passed to docking for window registration. @todo This should be removed soon
-     * @param {Function} cb
-     * @memberof FSBLWindow
-     */
-    registerWithDocking(params, cb) {
-        routerClientInstance_1.default.query("DockingService.registerWindow", {
-            type: this.type,
-            windowType: this.windowType,
-            windowMsg: params,
-            name: this.windowName
-        }, cb);
-    }
-    /**
-     *Unregister a window with docking
-     *
-     * @memberof FSBLWindow
-     */
-    unRegisterWithDocking() {
-        routerClientInstance_1.default.transmit("DockingService.deregisterWindow", { name: this.windowName });
-    }
-    /**
-     *This is if we want to handle the full register/ready state inside of the window
-     register with docking
-     send the message to launcher saying that component is ready
-     *
-     * @memberof FSBLWindow
-     */
-    initializeWindow(params, cb) {
-        this.registerWithDocking(params, () => {
-            routerClientInstance_1.default.publish("Finsemble." + this.windowName + ".componentReady", {
-                name: this.windowName
-            });
-        });
-    }
-    wrapReady() {
-        routerClientInstance_1.default.publish("Finsemble." + this.windowName + ".wrapReady", { name: this.windowName, state: "open" });
-    }
-    setOpacity(params, callback) {
-        this.queryWindowService("setOpacity", params, callback);
-    }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Other BaseClass Function: These are common functions shared across derived classes
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /**
-     * Invoked to indicate an operation (e.g. dragging out of tab region) has started. This signals the Docking service to start tracking the mouse location and invoking tiling behavior as needed. Typically inherited (base function only).
-     * @param {object} params for future use
-     *
-     * @example
-     *	// dragging tab example using tracking and group
-     * 	FinsembleWindow.startTabTileMonitoring();
-     *	// if dragging tab is in a group, then remove it given tracking results will decide what to do with the window
-     * 	FinsembleWindow.Group.getGroupID(this.identifier, function (err, tileGroupId) {
-     * 		if (!err) { // if no error then must be in a tile group
-     *			self.Group.removeWindow(this.identifier);
-     *		}
-     *	});
-     */
-    startTabTileMonitoring(params) {
-        logger_1.default.system.debug("FinsembleWindow.startTabTileMonitoring", params);
-        routerClientInstance_1.default.transmit("TabTile.startTabTile", { params });
-    }
-    /**
-     * Invoked by client originating a dragStart that it has has ended. Typically inherited (base function only).
-     * @param {object} params for future use
-         * @param {function=} callback option callback that support overriding default behavior
-     *
-     * 	FinsembleWindow.stopTabTileMonitoring(params, function(err, results, defaultTabTileAction) {
-     * 		// . . . custom code goes here . . .
-     *		defaultTabTileAction(results); // now take default action or call your own function instead
-     * 	});
-     *
-     */
-    stopTabTileMonitoring(params, callback) {
-        logger_1.default.system.debug("FinsembleWindow.stopTabTileMonitoring", params);
-        routerClientInstance_1.default.query("TabTile.stopTabTile", { params }, function (err, queryResponseMessage) {
-            if (err) {
-                logger_1.default.system.warn("TabTile.stopTabTile: query failed", err);
-            }
-            else {
-                logger_1.default.system.debug("TabTile.stopTabTile results", queryResponseMessage.data);
-            }
-            var stopTabTileResults = queryResponseMessage.data;
-            if (callback) {
-                callback(err, stopTabTileResults, this.defaultStopTrackingAction);
-            }
-            else {
-                this.defaultTabTileAction(stopTabTileResults);
-            }
-        });
-    }
-    /**
-     * Defines default TabTile action for stopTabTileMonitoring.  May be overridden by client -- see example in stopTabTileMonitoring. Typically inherited (base function only).
-     *
-     * @param {any} stopTabTileResults
-     * @memberof FinsembleWindow
-     *
-     * @private
-     */
-    defaultTabTileAction(stopTabTileResults) {
-        let self = this;
-        logger_1.default.system.debug("FinsembleWindow.defaultTabTileAction", stopTabTileResults);
-        switch (stopTabTileResults.stoppedLocation) {
-            case "OutsideWindow":
-                // move window to drop location (since for now assuming only single-tabbed windows)
-                break;
-            case "TabSection":
-                // WindowStack.addWindowToStack(callback) // for when we get to tabbing
-                break;
-            case "InsideWindow":
-                if (stopTabTileResults.tileGroupId) { // if dropped in an existing tile group (which might be the same it was dragging from)
-                    self.Group.addWindow(this.identifier, stopTabTileResults.tileGroupId, stopTabTileResults.dropCoordinates);
-                }
-                else { // if dropped in a separate window outside a tile group
-                    self.Group.createGroup(function (newGroupId) {
-                        // add dragging window to new tile group, but specify the dropped on window as the starting window in the tile group
-                        self.Group.addWindow(this.identifier, newGroupId, stopTabTileResults.dropCoordinates, { startingWindowIdentifier: stopTabTileResults.droppedOnWindowIdentifier });
-                    });
-                }
-                break;
-            default:
-                logger_1.default.system.error("stopTracking returned an unknown stoppedLocation result", stopTabTileResults);
-        }
-    }
-    mergeBounds(bounds) {
-        bounds.right = bounds.left + bounds.width;
-        let newBounds = { left: bounds.left, right: bounds.right, width: bounds.width, top: bounds.top, bottom: bounds.top + bounds.height, height: bounds.height };
-        let defaultBounds = { defaultLeft: bounds.left, defaultWidth: bounds.width, defaultTop: bounds.top, defaultHeight: bounds.height };
-        Object.assign(this.windowOptions, newBounds);
-        Object.assign(this.windowOptions, defaultBounds);
-        this.windowOptions.bounds = newBounds;
-    }
-    startMove(params) {
-        logger_1.default.system.debug("FinsembleWindow.startMove", params);
-        params = params || {};
-        params.windowIdentifier = this.identifier; // add this window's identifier
-        routerClientInstance_1.default.transmit(this.eventChannelName("startedMoving"), {});
-    }
-    stopMove(params) {
-        logger_1.default.system.debug("FinsembleWindow.stopMove", params);
-        params = params || {};
-        params.windowIdentifier = this.identifier; // add this window's identifier
-        routerClientInstance_1.default.transmit(this.eventChannelName("stoppedMoving"), {});
-    }
-    /**
-     * Get Monitor for this window
-     *
-     * @param {function} cb Callback
-     */
-    getMonitor(cb) {
-        routerClientInstance_1.default.query("DockingService.getMonitorForWindow", { windowIdentifier: this.identifier }, (err, message) => message ? cb(message.data) : cb());
-    }
-    /**
-     * Given params, will return the component state. Either the params to search for, or the entire state.
-     *
-     * @param {object} params
-     * @param {string} params.field field
-     *  @param {array} params.fields fields
-     * @param {function} cb Callback
-     */
-    getComponentState(params, cb) {
-        this.queryWindowService("getComponentState", params, cb);
-    }
-    /**
-     * Given params, will return the window state. Either the params to search for, or the entire state.
-     *
-     * @param {object} params
-     * @param {string} params.field field
-     *  @param {array} params.fields fields
-     * @param {function} cb Callback
-     */
-    getWindowState(params, cb) {
-        this.queryWindowService("getWindowState", params, cb);
-    }
-    /**
-     * Given params, will set the component state. Any fields included will be added to the state
-     *
-     * @param {object} params
-     * @param {string} params.field field
-     *  @param {array} params.fields fields
-     * @param {function} cb Callback
-     */
-    setComponentState(params, cb) {
-        this.queryWindowService("setComponentState", params, cb);
-    }
-    /**
-     * Removes one or more specified attributes from either component or window state in storage
-     * for this window.
-     *
-     * In addition to the name of the window, params should include either a `field`
-     * property as a string or a `fields` property as an array of strings.
-     *
-     * @param {object} params
-     * @param {string} [params.field] field
-     * @param {array} [params.fields] fields
-     * @param {function} cb Callback
-     */
-    removeComponentState(params, cb = (e, r) => { }) {
-        this.queryWindowService("removeComponentState", params, cb);
-    }
-    /**
-     * Given params, will set the window state. Any fields included will be added to the state
-     *
-     * @param {object} params
-     * @param {string} params.field field
-     *  @param {array} params.fields fields
-     * @param {function} cb Callback
-     */
-    setWindowState(params, cb) {
-        this.queryWindowService("setWindowState", params, cb);
-    }
-    saveCompleteWindowState(params, cb) {
-        this.queryWindowService("saveCompleteWindowState", params, cb);
-    }
-    /**
-     *Cancels startTabTileMonitoring. Example use is a user "escapes" out of a drag operation.
-     *
-     * @param {object} params for future use
-     * @memberof FinsembleWindow
-     */
-    cancelTabTileMonitoring(params) {
-        logger_1.default.system.debug("FinsembleWindow.cancelTabTileMonitoring", params);
-        routerClientInstance_1.default.transmit("TabTile.cancelTabTile", { params });
-    }
-    /**
-     * Return the parent window's wrapper (e.g. StackedWindow).
-     *
-     */
-    getParent(cb) {
-        if (this.settingParent) {
-            FinsembleWindow.getInstance(this.settingParent, (err, stackWrap) => {
-                cb(null, stackWrap);
-            });
-        }
-        else if (this.parentWindow) {
-            cb(null, this.parentWindow);
-        }
-        else {
-            cb(null, null);
-        }
-    }
-    /**
-     * Sets the parent window (e.g. stackedWindow) and emits "setParent" event to window listeners.
-     *
-     * @param {object} stackedWindowIdentifier identifer of window to set as parent (e.g. stackedWindowIdentifier).
-     *
-     */
-    setParent(stackedWindowIdentifier, cb = Function.prototype) {
-        if (this.settingParent)
-            return this.getParent(cb); //TODO check if the parent is different
-        this.settingParent = stackedWindowIdentifier;
-        if (this.parentWindow && (this.parentWindow.name === stackedWindowIdentifier.windowName)) {
-            logger_1.default.system.debug("FinsembleWindow.setParent already set", stackedWindowIdentifier);
-            this.settingParent = false;
-            cb(null, this.parentWindow);
-        }
-        else {
-            this.queryWindowService("setParent", stackedWindowIdentifier, (err, message) => {
-                logger_1.default.system.debug("FinsembleWindow.setParent", stackedWindowIdentifier);
-                FinsembleWindow.getInstance(stackedWindowIdentifier, (err, wrappedStackedWindow) => {
-                    if (!err) {
-                        logger_1.default.system.debug("FinsembleWindow.setParent wrap success", stackedWindowIdentifier);
-                        this.parentWindow = wrappedStackedWindow;
-                        if (!this.parentWindow.windowType.includes("StackedWindow")) {
-                            logger_1.default.system.error("FinsembleWindow.setParent error", this.parentWindow.name, stackedWindowIdentifier.windowName);
-                        }
-                    }
-                    else {
-                        logger_1.default.system.error("FinsembleWindow.setParent error", err);
-                    }
-                    this.settingParent = false;
-                    this.eventManager.trigger("parent-set", { parentName: this.parentWindow.name });
-                    cb(err, wrappedStackedWindow);
-                });
-            });
-        }
-    }
-    /**
-     * Sets the parent window (e.g. stackedWindow) on a window wrap.
-     * This is for the case where a window already has a parent but it's wrap doesn't know about it.
-     *
-     * @param {object} stackedWindowIdentifier identifer of window to set as parent (e.g. stackedWindowIdentifier).
-     *
-     */
-    setParentOnWrap(stackedWindowIdentifier, cb = Function.prototype) {
-        if (this.parentWindow && (this.parentWindow.name === stackedWindowIdentifier.windowName)) {
-            logger_1.default.system.debug("FinsembleWindow.setParentOnWrap already set", stackedWindowIdentifier);
-            cb(null, this.parentWindow);
-        }
-        else {
-            this.queryWindowService("setParent", stackedWindowIdentifier, (err, message) => {
-                logger_1.default.system.debug("FinsembleWindow.setParentOnWrap", stackedWindowIdentifier);
-                FinsembleWindow.getInstance(stackedWindowIdentifier, (err, wrappedStackedWindow) => {
-                    if (!err) {
-                        logger_1.default.system.debug("FinsembleWindow.setParentOnWrap success getting wrap", stackedWindowIdentifier);
-                        console.debug("FinsembleWindow.setParentOnWrap success getting wrap", this, wrappedStackedWindow);
-                        this.parentWindow = wrappedStackedWindow;
-                        if (this.parentWindow.windowType.includes("StackedWindow") === false) {
-                            logger_1.default.system.error("FinsembleWindow.setParentOnWrap error", this.parentWindow.name, stackedWindowIdentifier.windowName);
-                        }
-                    }
-                    else {
-                        logger_1.default.system.error("FinsembleWindow.setParentOnWrap error", err);
-                    }
-                    cb(err, wrappedStackedWindow);
-                });
-            });
-        }
-    }
-    /**
-     * Clears the parent reference and emits "clearParent" event to window listeners. Used only internally.
-     *
-     * @private
-     *
-     */
-    clearParent() {
-        logger_1.default.system.debug("FinsembleWindow.clearParent", this.parentWindow);
-        this.eventManager.trigger("parent-unset", {
-            parentName: this.parentWindow.name
-        });
-        this.parentWindow = null;
-    }
-    setTitle(title) {
-        logger_1.default.system.debug("Title change", title);
-        routerClientInstance_1.default.publish(this.TITLE_CHANGED_CHANNEL, title);
-    }
-    //todo needs to be a windowService query..
-    getOptions(cb = Function.prototype) {
-        this.queryWindowService("getOptions", {}, cb);
-    }
-    //CANDIDATES FOR REMOVAL
-    //window client adds a callback here. This way, whenever close is called _anywhere_ in the system, it's passed down to the window client and cleanup can happen in the component.
-    listenForClose(cb) {
-        // let listener = (err, response) => {
-        let listener = () => {
-            delete window._FSBLCache.windows[this.name];
-            delete window._FSBLCache.windowAttempts[this.name];
-            //If the window that the wrap belongs to is the one calling close, just call the openfin method. Otherwise, some other window is trying to close it - so we send a message to that window, which will eventually close itself.
-            for (let event in this.eventlistenerHandlerMap) {
-                for (let i = 0; i < this.eventlistenerHandlerMap[event].length; i++) {
-                    this.eventlistenerHandlerMap[event][i].interceptor.removeAllListeners();
-                }
-            }
-            this.eventManager.cleanup();
-            routerClientInstance_1.default.removeListener(`${this.identifier.windowName}.close`, listener);
-            // cb(response.data);
-            cb();
-        };
-        this.eventManager.listenForRemoteEvent("closed", listener);
-    }
-    //TO BE REMOVED WHEN TABBING API IS PUT IN PLACe
-    /**
-     * Handles common housekeeping checks and modifications on params at the beginning of each private window-management function
-     *
-     * @param {string} methodName method name (e.g. "minimize", "maximize")
-     * @param {object} params
-     * @memberof StackedWindow
-     * @private
-     */
-    _privateManagementPreface(methodName, params, callback) {
-        if (typeof params === "function") {
-            logger_1.default.system.error("StackedWindowWrapper.wrapPreface bad params", params);
-        }
-        params = params || {};
-        params.stackedWindowIdentifier = { windowName: this.identifier.windowName, windowType: this.identifier.windowType }; // add this window's identifier
-        logger_1.default.system.debug(`StackedWindow.${methodName}  _privateManagementPreface`, params);
-        return params;
-    }
-    /**
-     * Returns store for stacked window.  Example usage below.
-     *
-     * @memberof StackedWindow
-     *
-     * @example
-     * 		// get the state for one stacked window from the store
-     * 		getStore().getValue({ field: stackedWindowIdentifier.name, function (err, stackedWindowState) {}
-     *			where stackedWindowState is an object with the following properties
-     *				{
-     *					stackedWindowIdentifier: the stacked window identifier
-     *					childWindowIdentifiers: the window identifiers for all children in the stacked window
-     *					visibleWindowIdentifier: the window identifier for the currently visible window
-     *					bounds: the current window bounds/coordinates for the stacked window (i.e. the current bounds of the visible window)
-     *				}
-     */
-    getStore(callback = Function.prototype) {
-        return this.getWindowStore(callback);
-    }
-    /**
-     * Adds window as a child to a stacked window.  Adds to the top of the stack, or if specified to a specific location in the stack;
-     *
-     * @param {object=} params
-         * @param {object} params.stackedWindowIdentifier stacked window to operate on stacked window to operate on
-         * @param {object} params.windowIdentifier window to add
-         * @param {number=} params.position the location in the stack to push the window.  Location 0 is the bottom of the stack. Defaults to the top of stack.
-         * @param {boolean=} params.noSave if true then don't save the store after updating it (will be saved by caller)
-     * @param {function=} callback function(err)
-     * @memberof StackedWindow
-     */
-    addWindow(params, callback = Function.prototype) {
-        params = this._privateManagementPreface("addWindow", params);
-        const promiseResolver = (resolve) => {
-            routerClientInstance_1.default.query("StackedWindow.addWindow", params, (err, queryResponseMessage) => {
-                logger_1.default.system.debug("StackedWindow.addWindow callback", err, queryResponseMessage);
-                callback(err, queryResponseMessage.data);
-                resolve({ err, data: queryResponseMessage.data });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Removes a child window from a stacked window.  If removed window was visible, then the bottom child window (position 0) in stack will be made visible.
-     *
-         * @param {object} params
-    .	 * @param {object} params.stackedWindowIdentifier stacked window to operate on
-     * @param {object} params.windowIdentifier window to remove
-     * @param {boolean=} params.noDocking if true then do not register removed window with docking (the workspace is unaffected)
-     * @param {function=} callback function(err)
-     * @memberof StackedWindow
-     */
-    removeWindow(params, callback = Function.prototype) {
-        params = this._privateManagementPreface("removeWindow", params);
-        const promiseResolver = (resolve) => {
-            routerClientInstance_1.default.query("StackedWindow.removeWindow", params, (err, queryResponseMessage) => {
-                logger_1.default.system.debug("StackedWindow.removeWindow callback", err, queryResponseMessage);
-                callback(err, queryResponseMessage.data);
-                resolve({ err, data: queryResponseMessage.data });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Removes a window from the stack then closes it.  If removed window was visible, then the bottom child window (position 0) in stack will be made visible.
-     *
-         * @param {object} params
-    .	 * @param {object} params.stackedWindowIdentifier stacked window to operate on
-     * @param {object} params.windowIdentifier window to delete
-     * @param {function=} callback function(err)
-     * @memberof StackedWindow
-     */
-    deleteWindow(params, callback = Function.prototype) {
-        params = this._privateManagementPreface("deleteWindow", params);
-        const promiseResolver = (resolve) => {
-            routerClientInstance_1.default.query("StackedWindow.deleteWindow", params, (err, queryResponseMessage) => {
-                logger_1.default.system.debug("StackedWindow.deleteWindow callback", err, queryResponseMessage);
-                callback(err, queryResponseMessage.data);
-                resolve({ err, data: queryResponseMessage.data });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Sets the visible window within the stack.  The previously visible window in stack will be automatically hidden.
-     *
-         * @param {object} params
-    .	 * @param {object} params.stackedWindowIdentifier stacked window to operate on
-     * @param {object} params.windowIdentifier
-     * @param {function=} callback function(err)
-     * @memberof StackedWindow
-     */
-    setVisibleWindow(params, callback = Function.prototype) {
-        params = this._privateManagementPreface("setVisibleWindow", params);
-        const promiseResolver = (resolve) => {
-            routerClientInstance_1.default.query("StackedWindow.setVisibleWindow", params, (err, queryResponseMessage) => {
-                logger_1.default.system.debug("StackedWindow.setVisibleWindow callback", err, queryResponseMessage);
-                callback(err, queryResponseMessage.data);
-                resolve({ err, data: queryResponseMessage.data });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Reorders the stack, but odes not affect visibility
-     *
-         * @param {object} params
-    .	 * @param {object} params.stackedWindowIdentifier stacked window to operate on
-     * @param {array} params.windowIdentifiers array of windowIdentifiers which provides the new order
-     * @param {function=} callback function(err)
-     * @memberof StackedWindow
-     */
-    reorder(params, callback = Function.prototype) {
-        params = this._privateManagementPreface("reorder", params);
-        const promiseResolver = (resolve) => {
-            routerClientInstance_1.default.query("StackedWindow.reorder", params, (err, queryResponseMessage) => {
-                logger_1.default.system.debug("StackedWindow.reorder callback", err, queryResponseMessage);
-                callback(err, queryResponseMessage.data);
-                resolve({ err, data: queryResponseMessage.data });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-}
-FinsembleWindow.WINDOWSTATE = {
-    NORMAL: 0,
-    MINIMIZED: 1,
-    MAXIMIZED: 2,
-    HIDDEN: 3
-};
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// The window wrappers
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/**
- * Async wrap. Given a name/windowName, it will query the launcher for information required to wrap the window. Then it will return an object that can be operated on. Also this creates a cache of all wrapped windows for performance. Our clients wrap the same window often and this was causing excessive messaging to the store and degrading performance.
- * @param {*} params Need only name in most cases. For service and other cases where the window is not part of what the launcher considers active windows, name and uuid are required
- * @param {boolean} params.waitForReady If true, will async await for Finsemble to return ready before continuing to build the instance to return
- * @param {*} cb
- */
-FinsembleWindow.wrap = FinsembleWindow.getInstance;
-/**
- * Method for determining whether the window being wrapped is the startup app's main window (the service manager).
- *
- * @static
- * @memberof FinsembleWindow
- */
-FinsembleWindow.isStartupApplication = async function (windowName) {
-    let isStartupApplication;
-    // Here, we get the application 'manifest'. This will only be returned _if the application was created via the manifest_. In other words, this will only work if we're in the startup app.
-    const manifest = await retrieveManifestPromise()
-        .catch((e) => {
-        // If the application executing FinsembleWindow was created via the API getManifest will
-        // reject with an error. If that happens, we know we're not in the service manager, so we can just assign it to false and move on.
-        isStartupApplication = false;
-    });
-    // If the window that I'm in is the same window as the startup app, I am the service manager.
-    // We cannot wrap the service manager.
-    // No need to do these checks if we're in a window that lives in the startup app.
-    if (manifest) {
-        switch (fin.container) {
-            case "Electron":
-                isStartupApplication = manifest && manifest.startup_app && manifest.startup_app.name === windowName;
-                break;
-            default:
-                // openfin takes the uuid of the startup app as defined in the manifest and assigns it to the name of the main window for the startup app.
-                isStartupApplication = manifest && manifest.startup_app && manifest.startup_app.uuid === windowName;
-        }
-    }
-    return isStartupApplication;
-};
-FinsembleWindow._windowReady = function (windowName) {
-    logger_1.default.system.debug(`windowServiceReady: ${windowName} starting`);
-    let subscribeId;
-    const COMPONENT_STATE_CHANGE_CHANNEL = "Finsemble.Component.State." + windowName;
-    const promiseResolver = async (resolve, reject) => {
-        // Subscribe handler for component state. Once new state is retrieved, resolve out of _windowReady
-        // This is a closure so it easily has access to the promise resolve method.
-        function onComponentStateChanged(err, response) {
-            let state = response.data.state;
-            logger_1.default.system.debug(`windowServiceReady: ${windowName} state change: ${state}`);
-            console.log(`windowServiceReady: ${windowName} state change: ${state}`);
-            switch (state) {
-                // if ready state or any state beyond
-                case "ready":
-                case "reloading":
-                case "closing":
-                    logger_1.default.system.debug(`windowServiceReady: ${windowName} ${state}`);
-                    routerClientInstance_1.default.unsubscribe(subscribeId);
-                    resolve();
-                    break;
-            }
-        }
-        let isStartupApplication = await FinsembleWindow.isStartupApplication(windowName);
-        if (isStartupApplication || windowName.toLowerCase().endsWith("service")) {
-            reject("Cannot Wrap Service Manager or Services");
-        }
-        else {
-            // wait only for components managed by the window service
-            logger_1.default.system.debug(`windowServiceReady: ${windowName} waiting`);
-            subscribeId = routerClientInstance_1.default.subscribe(COMPONENT_STATE_CHANGE_CHANNEL, onComponentStateChanged);
-        }
-    };
-    return new Promise(promiseResolver);
-};
-exports.FinsembleWindow = FinsembleWindow;
-
-
-/***/ }),
-/* 35 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var rng = __webpack_require__(18);
-var bytesToUuid = __webpack_require__(17);
-
-function v4(options, buf, offset) {
-  var i = buf && offset || 0;
-
-  if (typeof(options) == 'string') {
-    buf = options == 'binary' ? new Array(16) : null;
-    options = null;
-  }
-  options = options || {};
-
-  var rnds = options.random || (options.rng || rng)();
-
-  // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
-  rnds[6] = (rnds[6] & 0x0f) | 0x40;
-  rnds[8] = (rnds[8] & 0x3f) | 0x80;
-
-  // Copy bytes to buffer, if provided
-  if (buf) {
-    for (var ii = 0; ii < 16; ++ii) {
-      buf[i + ii] = rnds[ii];
-    }
-  }
-
-  return buf || bytesToUuid(rnds);
-}
-
-module.exports = v4;
-
-
-/***/ }),
-/* 36 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-const pTry = __webpack_require__(38);
-
-const pLimit = concurrency => {
-	if (concurrency < 1) {
-		throw new TypeError('Expected `concurrency` to be a number from 1 and up');
-	}
-
-	const queue = [];
-	let activeCount = 0;
-
-	const next = () => {
-		activeCount--;
-
-		if (queue.length > 0) {
-			queue.shift()();
-		}
-	};
-
-	const run = (fn, resolve, ...args) => {
-		activeCount++;
-
-		const result = pTry(fn, ...args);
-
-		resolve(result);
-
-		result.then(next, next);
-	};
-
-	const enqueue = (fn, resolve, ...args) => {
-		if (activeCount < concurrency) {
-			run(fn, resolve, ...args);
-		} else {
-			queue.push(run.bind(null, fn, resolve, ...args));
-		}
-	};
-
-	const generator = (fn, ...args) => new Promise(resolve => enqueue(fn, resolve, ...args));
-	Object.defineProperties(generator, {
-		activeCount: {
-			get: () => activeCount
-		},
-		pendingCount: {
-			get: () => queue.length
-		}
-	});
-
-	return generator;
-};
-
-module.exports = pLimit;
-module.exports.default = pLimit;
-
-
-/***/ }),
-/* 37 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {/**
- * lodash (Custom Build) <https://lodash.com/>
- * Build: `lodash modularize exports="npm" -o ./`
- * Copyright jQuery Foundation and other contributors <https://jquery.org/>
- * Released under MIT license <https://lodash.com/license>
- * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
- * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
- */
-
-/** Used as references for various `Number` constants. */
-var INFINITY = 1 / 0,
-    MAX_SAFE_INTEGER = 9007199254740991;
-
-/** `Object#toString` result references. */
-var argsTag = '[object Arguments]',
-    funcTag = '[object Function]',
-    genTag = '[object GeneratorFunction]',
-    symbolTag = '[object Symbol]';
-
-/** Detect free variable `global` from Node.js. */
-var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
-
-/** Detect free variable `self`. */
-var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
-
-/** Used as a reference to the global object. */
-var root = freeGlobal || freeSelf || Function('return this')();
-
-/**
- * A faster alternative to `Function#apply`, this function invokes `func`
- * with the `this` binding of `thisArg` and the arguments of `args`.
- *
- * @private
- * @param {Function} func The function to invoke.
- * @param {*} thisArg The `this` binding of `func`.
- * @param {Array} args The arguments to invoke `func` with.
- * @returns {*} Returns the result of `func`.
- */
-function apply(func, thisArg, args) {
-  switch (args.length) {
-    case 0: return func.call(thisArg);
-    case 1: return func.call(thisArg, args[0]);
-    case 2: return func.call(thisArg, args[0], args[1]);
-    case 3: return func.call(thisArg, args[0], args[1], args[2]);
-  }
-  return func.apply(thisArg, args);
-}
-
-/**
- * A specialized version of `_.map` for arrays without support for iteratee
- * shorthands.
- *
- * @private
- * @param {Array} [array] The array to iterate over.
- * @param {Function} iteratee The function invoked per iteration.
- * @returns {Array} Returns the new mapped array.
- */
-function arrayMap(array, iteratee) {
-  var index = -1,
-      length = array ? array.length : 0,
-      result = Array(length);
-
-  while (++index < length) {
-    result[index] = iteratee(array[index], index, array);
-  }
-  return result;
-}
-
-/**
- * Appends the elements of `values` to `array`.
- *
- * @private
- * @param {Array} array The array to modify.
- * @param {Array} values The values to append.
- * @returns {Array} Returns `array`.
- */
-function arrayPush(array, values) {
-  var index = -1,
-      length = values.length,
-      offset = array.length;
-
-  while (++index < length) {
-    array[offset + index] = values[index];
-  }
-  return array;
-}
-
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * Used to resolve the
- * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
- * of values.
- */
-var objectToString = objectProto.toString;
-
-/** Built-in value references. */
-var Symbol = root.Symbol,
-    propertyIsEnumerable = objectProto.propertyIsEnumerable,
-    spreadableSymbol = Symbol ? Symbol.isConcatSpreadable : undefined;
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeMax = Math.max;
-
-/**
- * The base implementation of `_.flatten` with support for restricting flattening.
- *
- * @private
- * @param {Array} array The array to flatten.
- * @param {number} depth The maximum recursion depth.
- * @param {boolean} [predicate=isFlattenable] The function invoked per iteration.
- * @param {boolean} [isStrict] Restrict to values that pass `predicate` checks.
- * @param {Array} [result=[]] The initial result value.
- * @returns {Array} Returns the new flattened array.
- */
-function baseFlatten(array, depth, predicate, isStrict, result) {
-  var index = -1,
-      length = array.length;
-
-  predicate || (predicate = isFlattenable);
-  result || (result = []);
-
-  while (++index < length) {
-    var value = array[index];
-    if (depth > 0 && predicate(value)) {
-      if (depth > 1) {
-        // Recursively flatten arrays (susceptible to call stack limits).
-        baseFlatten(value, depth - 1, predicate, isStrict, result);
-      } else {
-        arrayPush(result, value);
-      }
-    } else if (!isStrict) {
-      result[result.length] = value;
-    }
-  }
-  return result;
-}
-
-/**
- * The base implementation of `_.pick` without support for individual
- * property identifiers.
- *
- * @private
- * @param {Object} object The source object.
- * @param {string[]} props The property identifiers to pick.
- * @returns {Object} Returns the new object.
- */
-function basePick(object, props) {
-  object = Object(object);
-  return basePickBy(object, props, function(value, key) {
-    return key in object;
-  });
-}
-
-/**
- * The base implementation of  `_.pickBy` without support for iteratee shorthands.
- *
- * @private
- * @param {Object} object The source object.
- * @param {string[]} props The property identifiers to pick from.
- * @param {Function} predicate The function invoked per property.
- * @returns {Object} Returns the new object.
- */
-function basePickBy(object, props, predicate) {
-  var index = -1,
-      length = props.length,
-      result = {};
-
-  while (++index < length) {
-    var key = props[index],
-        value = object[key];
-
-    if (predicate(value, key)) {
-      result[key] = value;
-    }
-  }
-  return result;
-}
-
-/**
- * The base implementation of `_.rest` which doesn't validate or coerce arguments.
- *
- * @private
- * @param {Function} func The function to apply a rest parameter to.
- * @param {number} [start=func.length-1] The start position of the rest parameter.
- * @returns {Function} Returns the new function.
- */
-function baseRest(func, start) {
-  start = nativeMax(start === undefined ? (func.length - 1) : start, 0);
-  return function() {
-    var args = arguments,
-        index = -1,
-        length = nativeMax(args.length - start, 0),
-        array = Array(length);
-
-    while (++index < length) {
-      array[index] = args[start + index];
-    }
-    index = -1;
-    var otherArgs = Array(start + 1);
-    while (++index < start) {
-      otherArgs[index] = args[index];
-    }
-    otherArgs[start] = array;
-    return apply(func, this, otherArgs);
-  };
-}
-
-/**
- * Checks if `value` is a flattenable `arguments` object or array.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is flattenable, else `false`.
- */
-function isFlattenable(value) {
-  return isArray(value) || isArguments(value) ||
-    !!(spreadableSymbol && value && value[spreadableSymbol]);
-}
-
-/**
- * Converts `value` to a string key if it's not a string or symbol.
- *
- * @private
- * @param {*} value The value to inspect.
- * @returns {string|symbol} Returns the key.
- */
-function toKey(value) {
-  if (typeof value == 'string' || isSymbol(value)) {
-    return value;
-  }
-  var result = (value + '');
-  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
-}
-
-/**
- * Checks if `value` is likely an `arguments` object.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an `arguments` object,
- *  else `false`.
- * @example
- *
- * _.isArguments(function() { return arguments; }());
- * // => true
- *
- * _.isArguments([1, 2, 3]);
- * // => false
- */
-function isArguments(value) {
-  // Safari 8.1 makes `arguments.callee` enumerable in strict mode.
-  return isArrayLikeObject(value) && hasOwnProperty.call(value, 'callee') &&
-    (!propertyIsEnumerable.call(value, 'callee') || objectToString.call(value) == argsTag);
-}
-
-/**
- * Checks if `value` is classified as an `Array` object.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an array, else `false`.
- * @example
- *
- * _.isArray([1, 2, 3]);
- * // => true
- *
- * _.isArray(document.body.children);
- * // => false
- *
- * _.isArray('abc');
- * // => false
- *
- * _.isArray(_.noop);
- * // => false
- */
-var isArray = Array.isArray;
-
-/**
- * Checks if `value` is array-like. A value is considered array-like if it's
- * not a function and has a `value.length` that's an integer greater than or
- * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
- * @example
- *
- * _.isArrayLike([1, 2, 3]);
- * // => true
- *
- * _.isArrayLike(document.body.children);
- * // => true
- *
- * _.isArrayLike('abc');
- * // => true
- *
- * _.isArrayLike(_.noop);
- * // => false
- */
-function isArrayLike(value) {
-  return value != null && isLength(value.length) && !isFunction(value);
-}
-
-/**
- * This method is like `_.isArrayLike` except that it also checks if `value`
- * is an object.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an array-like object,
- *  else `false`.
- * @example
- *
- * _.isArrayLikeObject([1, 2, 3]);
- * // => true
- *
- * _.isArrayLikeObject(document.body.children);
- * // => true
- *
- * _.isArrayLikeObject('abc');
- * // => false
- *
- * _.isArrayLikeObject(_.noop);
- * // => false
- */
-function isArrayLikeObject(value) {
-  return isObjectLike(value) && isArrayLike(value);
-}
-
-/**
- * Checks if `value` is classified as a `Function` object.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a function, else `false`.
- * @example
- *
- * _.isFunction(_);
- * // => true
- *
- * _.isFunction(/abc/);
- * // => false
- */
-function isFunction(value) {
-  // The use of `Object#toString` avoids issues with the `typeof` operator
-  // in Safari 8-9 which returns 'object' for typed array and other constructors.
-  var tag = isObject(value) ? objectToString.call(value) : '';
-  return tag == funcTag || tag == genTag;
-}
-
-/**
- * Checks if `value` is a valid array-like length.
- *
- * **Note:** This method is loosely based on
- * [`ToLength`](http://ecma-international.org/ecma-262/7.0/#sec-tolength).
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
- * @example
- *
- * _.isLength(3);
- * // => true
- *
- * _.isLength(Number.MIN_VALUE);
- * // => false
- *
- * _.isLength(Infinity);
- * // => false
- *
- * _.isLength('3');
- * // => false
- */
-function isLength(value) {
-  return typeof value == 'number' &&
-    value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
-}
-
-/**
- * Checks if `value` is the
- * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
- * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an object, else `false`.
- * @example
- *
- * _.isObject({});
- * // => true
- *
- * _.isObject([1, 2, 3]);
- * // => true
- *
- * _.isObject(_.noop);
- * // => true
- *
- * _.isObject(null);
- * // => false
- */
-function isObject(value) {
-  var type = typeof value;
-  return !!value && (type == 'object' || type == 'function');
-}
-
-/**
- * Checks if `value` is object-like. A value is object-like if it's not `null`
- * and has a `typeof` result of "object".
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
- * @example
- *
- * _.isObjectLike({});
- * // => true
- *
- * _.isObjectLike([1, 2, 3]);
- * // => true
- *
- * _.isObjectLike(_.noop);
- * // => false
- *
- * _.isObjectLike(null);
- * // => false
- */
-function isObjectLike(value) {
-  return !!value && typeof value == 'object';
-}
-
-/**
- * Checks if `value` is classified as a `Symbol` primitive or object.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
- * @example
- *
- * _.isSymbol(Symbol.iterator);
- * // => true
- *
- * _.isSymbol('abc');
- * // => false
- */
-function isSymbol(value) {
-  return typeof value == 'symbol' ||
-    (isObjectLike(value) && objectToString.call(value) == symbolTag);
-}
-
-/**
- * Creates an object composed of the picked `object` properties.
- *
- * @static
- * @since 0.1.0
- * @memberOf _
- * @category Object
- * @param {Object} object The source object.
- * @param {...(string|string[])} [props] The property identifiers to pick.
- * @returns {Object} Returns the new object.
- * @example
- *
- * var object = { 'a': 1, 'b': '2', 'c': 3 };
- *
- * _.pick(object, ['a', 'c']);
- * // => { 'a': 1, 'c': 3 }
- */
-var pick = baseRest(function(object, props) {
-  return object == null ? {} : basePick(object, arrayMap(baseFlatten(props, 1), toKey));
-});
-
-module.exports = pick;
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
-
-/***/ }),
-/* 38 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-const pTry = (fn, ...arguments_) => new Promise(resolve => {
-	resolve(fn(...arguments_));
-});
-
-module.exports = pTry;
-// TODO: remove this in the next major version
-module.exports.default = pTry;
-
-
-/***/ }),
-/* 39 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var v1 = __webpack_require__(19);
-var v4 = __webpack_require__(35);
-
-var uuid = v4;
-uuid.v1 = v1;
-uuid.v4 = v4;
-
-module.exports = uuid;
-
-
-/***/ }),
-/* 40 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-const baseClient_1 = __webpack_require__(7);
-const windowClient_1 = __webpack_require__(43);
-const util = __webpack_require__(8);
-const validate_1 = __webpack_require__(6); // Finsemble args validator
-const system_1 = __webpack_require__(3);
-const logger_1 = __webpack_require__(0);
-const FinsembleWindow_1 = __webpack_require__(34);
-/** The global `window` object. We cast it to a specific interface here to be
- * explicit about what Finsemble-related properties it may have. */
-const Globals = window;
-/**
- * An object that includes all the potential identifications for a window.
- * For instance, one can try and obtain a reference for a window if some of these values are known.
- *
- * @typedef WindowIdentifier
- * @property {string} [windowName] The name of the physical HTML window, or a reference to a native window that was launched with Assimilation service
- * @property {string} [uuid] Optional uuid of a particular OpenFin application process
- * @property {string} [componentType] The type of component
- * @property {number|string} [monitor] The number of the monitor. Potentially used to disambiguate multiple components with the same name (for searches only)
- */
-/**
- * Finsemble windowDescriptor.
- * The windowDescriptor includes the following values.
- *
- * @typedef WindowDescriptor
- * @property {string} [url] url to load (if HTML5 component).
- * @property {string} [native] The name of the native app (if a native component launched by Assimilation service).
- * @property {string} name The name of the window (sometimes randomly assigned).
- * @property {string} componentType The type of component (from components.json).
- */
-/**
- *
- * A convenient assembly of native JavaScript window, `OpenFin` window and windowDescriptor.
- *
- * @typedef RawWindowResult
- * @property {WindowDescriptor} windowDescriptor The window descriptor.
- * @property {fin.desktop.Window} finWindow The `OpenFin` window.
- * @property {Window} browserWindow The native JavaScript window.
- *
- */
-// A map of related menus that is kept by handleToggle.
-var okayToOpenMenu = {};
-/**
- *
- * @introduction
- * <h2>Launcher Client</h2>
- * The Launcher Client handles spawning windows. It also maintains the list of components which can be spawned.
- *
- *
- *
- * @hideconstructor
- *
- * @constructor
- */
-class LauncherClient extends baseClient_1._BaseClient {
-    constructor(params) {
-        super(params);
-        validate_1.default.args(params, "object=") && params && validate_1.default.args2("params.onReady", params.onReady, "function=");
-        this.windowClient = params.clients.windowClient;
-    }
-    /** @alias LauncherClient# */
-    //var self = this;
-    //BaseClient.call(this, params);
-    /**
-     * Get a list of registered components (those that were entered into *components.json*).
-     *
-     * @param {Function} cb Callback returns an object map of components. Each component object
-     * contains the default config for that component.
-     */
-    getComponentList(cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        const promiseResolver = (resolve) => {
-            this.routerClient.query("Launcher.componentList", {}, function (err, response) {
-                cb(err, response.data);
-                resolve({ err, data: response.data });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Get the component config (i.e. from components.json) for a specific component.
-     *
-     * @param {String} componentType The type of the component.
-     * @param {Function} cb Callback returns the default config (windowDescriptor) for the requested componentType.
-     *
-     */
-    getComponentDefaultConfig(componentType, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        const promiseResolver = (resolve) => {
-            this.routerClient.query("Launcher.componentList", {}, function (err, response) {
-                const data = response.data[componentType];
-                cb(err, data);
-                resolve({ err, data });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Gets monitorInfo (dimensions and position) for a given windowIdentifier or for a specific monitor.
-     * If neither the identifier or monitor are provided then the monitorInfo for the current window is returned.
-     *
-     *
-     * The information returned contains:
-     *
-     * **monitorRect** - The full dimensions for the monitor.
-     *
-     * **availableRect** - The dimensions for the available space on the monitor (less windows toolbars).
-     *
-     * **unclaimedRect** - The dimensions for available monitor space less any space claimed by components (such as the application Toolbar).
-     *
-     * Each of these is supplemented with the following additional members:
-     *
-     * **width** - The width as calculated (right - left).
-     *
-     * **height** - The height as calculated (bottom - top).
-     *
-     * **position** - The position of the monitor, numerically from zero to X. Primary monitor is zero.
-     *
-     * **whichMonitor** - Contains the string "primary" if it is the primary monitor.
-     *
-     * @param  {object} [params]               Parameters
-     * @param  {WindowIdentifier} [params.windowIdentifier] The windowIdentifier to get the monitorInfo. If undefined, then the current window.
-     * @param  {number|string} [params.monitor] If passed then a specific monitor is identified. Valid values are the same as for {@link LauncherClient#spawn}.
-     * @param  {Function} cb Returns a monitorInfo object containing the monitorRect, availableRect and unclaimedRect.
-     */
-    getMonitorInfo(params, cb = Function.prototype) {
-        var self = this;
-        validate_1.default.args(cb, "function=");
-        logger_1.default.system.debug(`MONITOR: launcherClient.getMonitorInfo`);
-        const promiseResolver = (resolve) => {
-            util.getMyWindowIdentifier(function (myWindowIdentifier) {
-                if (!params.windowIdentifier) {
-                    params.windowIdentifier = myWindowIdentifier;
-                }
-                self.routerClient.query("Launcher.getMonitorInfo", params, function (err, response) {
-                    if (cb) {
-                        cb(err, response.data);
-                    }
-                    logger_1.default.system.log(`MONITOR: launcherClient.getMonitorInfo query response data`, response.data);
-                    resolve({ err, data: response.data });
-                });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Gets monitorInfo (dimensions and position) for all monitors. Returns an array of monitorInfo objects. See {@link LauncherClient#getMonitorInfo} for the format of a monitorInfo object.
-     *
-     *
-     *
-     * @param  {Function} cb Returns an array of monitorInfo objects.
-     */
-    getMonitorInfoAll(cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        const promiseResolver = (resolve, reject) => {
-            this.routerClient.query("Launcher.getMonitorInfoAll", {}, function (err, response) {
-                if (err) {
-                    reject({ err });
-                    cb(err);
-                }
-                resolve({ err, data: response.data });
-                cb(err, response.data);
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Registers a component with the launcher service
-     *
-     * @param {object} params -
-     * @param {String} params.componentType - componentType
-     * @param {object} params.manifest - this should be a component manifest
-     * @param  {Function} cb
-     */
-    registerComponent(params, cb = Function.prototype) {
-        const promiseResolver = (resolve) => {
-            this.routerClient.query("LauncherService.registerComponent", params, function (err, response) {
-                if (cb) {
-                    cb(err, response.data);
-                }
-                resolve({ err, data: response.data });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Registers a component with the launcher service
-     *
-     * @param {object} params -
-     * @param {String} params.componentType - componentType
-     * @param  {Function} cb
-     */
-    unRegisterComponent(params, cb = Function.prototype) {
-        if (!params.componentType)
-            return cb("No componentType provided");
-        const promiseResolver = (resolve) => {
-            this.routerClient.query("LauncherService.unRegisterComponent", params, function (err, response) {
-                if (cb) {
-                    cb(err, response.data);
-                }
-                resolve({ err, data: response.data });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * A convenience method for dealing with a common use-case, which is toggling the appearance and disappearance of a child window when a button is pressed, aka drop down menus. Simply call this method from the click handler for your element. Your child window will need to close itself on blur events.
-     * @param {HTMLElement|selector} element The DOM element, or selector, clicked by the end user
-     * @param {windowIdentifier} windowIdentifier Identifies the child window
-     * @param {object} params Parameters to be passed to {@link LauncherClient#showWindow} if the child window is allowed to open
-     */
-    toggleWindowOnClick(element, windowIdentifier, params) {
-        var self = this;
-        var key = windowIdentifier.windowName + ":" + windowIdentifier.uuid;
-        if (!windowIdentifier.windowName)
-            key = windowIdentifier.componentType;
-        //If the element was clicked while the menu was open then return right away. The menu window will receive a blur event and close. This method is dependent on the fact that blur events are processed before click events. If this turns out to be a problem then put this call inside of a setTimeout().
-        if (okayToOpenMenu[key] === false) {
-            okayToOpenMenu[key] = true;
-            return;
-        }
-        var onDisplayed = function (showError, showResponse) {
-            if (!showResponse)
-                return;
-            let finWindow = showResponse.finWindow;
-            var onBlur = function (blurResponse) {
-                okayToOpenMenu[key] = true;
-                self.windowClient.isMouseOverDOMElement(element, function (mouseIsOverElement) {
-                    okayToOpenMenu[key] = !mouseIsOverElement;
-                });
-                finWindow.removeEventListener("blurred", onBlur);
-            };
-            finWindow.addEventListener("blurred", onBlur);
-        };
-        this.showWindow(windowIdentifier, params, onDisplayed);
-    }
-    /**
-     * Displays a window and relocates/resizes it according to the values contained in params.
-     *
-     * @param {WindowIdentifier} windowIdentifier A windowIdentifier. This is an object containing windowName and componentType. If windowName is not given, Finsemble will try to find it by componentType.
-     * @param {object} params Parameters. These are the same as {@link LauncherClient#spawn} with the following exceptions:
-     * @param {any} [params.monitor] Same as spawn() except that null or undefined means the window should not be moved to a different monitor.
-     * @param {number | string} [params.left] Same as spawn() except that null or undefined means the window should not be moved from current horizontal location.
-     * @param {number | string} [params.top] Same as spawn() except that null or undefined means the window should not be moved from current vertical location.
-     * @param {boolean} [params.spawnIfNotFound=false] If true, then spawns a new window if the requested one cannot be found.
-     * *Note, only works if the windowIdentifier contains a componentType.*
-     * @param {boolean} [params.autoFocus] If true, window will focus when first shown.
-     * @param {boolean} [params.slave] Cannot be set for an existing window. Will only go into effect if the window is spawned.
-     * (In other words, only use this in conjunction with spawnIfNotFound).
-     * @param {Function} cb Callback to be invoked after function is completed. Callback contains an object with the following information:
-     * **windowIdentifier** - The {@link WindowIdentifier} for the new window.
-     * **windowDescriptor** - The {@link WindowDescriptor} of the new window.
-     * **finWindow** - An `OpenFin` window referencing the new window.
-     * @example
-     * LauncherClient.showWindow({windowName: "Welcome Component-86-3416-Finsemble", componentType: "Welcome Component"}, {spawnIfNotFound: true});
-     */
-    showWindow(windowIdentifier, params, cb = Function.prototype) {
-        validate_1.default.args(windowIdentifier, "object", params, "object=", cb, "function=");
-        var self = this;
-        if (!params) {
-            params = {};
-        }
-        params = util.clone(params);
-        if (!params.staggerPixels && params.staggerPixels !== 0) {
-            params.staggerPixels = 100;
-        }
-        params.windowIdentifier = windowIdentifier;
-        const promiseResolver = (resolve) => {
-            util.getMyWindowIdentifier(function (myWindowIdentifier) {
-                if (!params.relativeWindow) {
-                    params.relativeWindow = myWindowIdentifier;
-                }
-                self.routerClient.query("Launcher.showWindow", params, async function (err, response) {
-                    if (err) {
-                        resolve({ err });
-                        return cb(err);
-                    }
-                    var newWindowIdentifier = response.data.windowIdentifier;
-                    response.data.windowIdentifier.name = response.data.windowIdentifier.windowName;
-                    let { wrap } = await FinsembleWindow_1.FinsembleWindow.getInstance({ name: newWindowIdentifier.windowName });
-                    response.data.finWindow = wrap;
-                    resolve({ err, data: response.data });
-                    cb(err, response.data);
-                });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Asks the Launcher service to spawn a new component. Any parameter below can also be specified in config/components.json, which will
-     * then operate as the default for that value.
-     *
-     * The launcher parameters mimic CSS window positioning.
-     * For instance, to set a full size window use `left=0`,`top=0`,`right=0`,`bottom=0`.
-     * This is functionally equivalent to: left=0,top=0,width="100%",height="100%"
-     *
-     * @since 2.4.1 Added params.windowType (deprecated params.native), params.path, params.alias, params.argumentsAsQueryString - These are all for launching native apps.
-     * @since 3.7.0 Added "affinity" parameter
-     * @param {function} cb Function invoked after the window is created
-     */
-    spawn(component, params, cb = Function.prototype) {
-        var self = this;
-        validate_1.default.args(component, "string", params, "object=", cb, "function=");
-        if (!params) {
-            params = {};
-        }
-        params = util.clone(params);
-        params.component = component;
-        if (!params.options) {
-            params.options = {};
-        }
-        if (!params.options.customData) {
-            params.options.customData = {};
-        }
-        if (!params.staggerPixels && params.staggerPixels !== 0) {
-            params.staggerPixels = 50;
-        }
-        logger_1.default.system.debug(`Calling Spawn for componentType:${component}`);
-        const promiseResolver = (resolve) => {
-            util.getMyWindowIdentifier(function (windowIdentifier) {
-                params.launchingWindow = windowIdentifier;
-                self.callSpawn(params, (err, response) => {
-                    resolve({ err, response });
-                    cb(err, response);
-                });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Returns an object that provides raw access to a remote window.
-     * It returns an object that contains references to the Finsemble windowDescriptor, to
-     * the `OpenFin` window, and to the native JavaScript (browser) window.
-     *
-     * *This will only work for windows that are launched using the Finsemble Launcher API.*
-     *
-     * As in any browser, you will not be able to manipulate a window that has been launched
-     * cross domain or in a separate physical application (separate process). Caution
-     * should be taken to prevent a window from being closed by the user if you plan on
-     * referencing it directly. Due to these inherent limitations we strongly advise against a
-     * paradigm of directly manipulating remote windows through JavaScript. Instead leverage the
-     * RouterClient to communicate between windows and to use an event based paradigm!
-     *
-     * @param  {object} params Parameters
-     * @param {string} params.windowName The name of the window to access.
-     * @return {RawWindowResult} An object containing windowDescriptor, finWindow, and browserWindow. Or null if window isn't found.
-     * @deprecated Finsemble now uses a splintering agent which disconnects windows from the main launcher.
-     * It becomes impossible to access raw windows. See LauncherClient.getActiveDescriptors() and Util.getFinWindow()
-     * @private
-     */
-    getRawWindow(params) {
-        var launcher = window.opener;
-        if (launcher.name !== "launcherService") {
-            logger_1.default.system.warn("LauncherClient.getNativeWindow: window not opened by Launcher Service");
-        }
-        return launcher.activeWindows.getWindow(params.windowName);
-    }
-    /**
-     * @private
-     */
-    callSpawn(params, cb = Function.prototype) {
-        var self = this;
-        validate_1.default.args(cb, "function=");
-        logger_1.default.perf.debug("CallSpawn", "start", "from spawn to callback", params);
-        const promiseResolver = (resolve) => {
-            function invokeSpawnCallback(error, data) {
-                cb(error, data);
-                resolve({ err: error, data });
-            }
-            self.routerClient.query("Launcher.spawn", params, async function (err, response) {
-                logger_1.default.system.debug("CallSpawn", "Initial launcher callback params", err, response);
-                logger_1.default.perf.debug("CallSpawn", "Initial launcher callback", response);
-                if (err) {
-                    invokeSpawnCallback(err, result);
-                    return logger_1.default.system.error("LauncherClient.callSpawn", err);
-                }
-                response.data.windowIdentifier.name = response.data.windowIdentifier.windowName;
-                var result = response.data;
-                // Add a wrapped finWindow to the response (this can only be done client side)
-                if (result.windowDescriptor.native)
-                    return invokeSpawnCallback(err, result); /// This is way too slow for native windows so we just let this pass through and assume the window is ready.
-                var newWindowIdentifier = result.windowIdentifier;
-                let { wrap } = await FinsembleWindow_1.FinsembleWindow.getInstance({ name: newWindowIdentifier.windowName }); //TODO - replace with FinsembleWindow
-                result.finWindow = wrap;
-                let componentOnlineChannel = "Finsemble." + result.windowIdentifier.windowName + ".componentReady";
-                let subscriberID = self.routerClient.subscribe(componentOnlineChannel, componentOnlineCallback);
-                function componentOnlineCallback(err, response) {
-                    if (err)
-                        return logger_1.default.system.error(err);
-                    //Ignore the initial "uninitialized" state message delivered by subscribe (a second message will contain the actual data)
-                    if (response && Object.keys(response.data).length === 0)
-                        return;
-                    if (params.position === "relative" && (params.groupOnSpawn || params.dockOnSpawn)) {
-                        //If 'params.relativeWindow' is supplied we need to dock to it, otherwise get the parent window (System.Window.getCurrent())
-                        const windowToGroup = params.relativeWindow ? params.relativeWindow.windowName : system_1.System.Window.getCurrent().name;
-                        const windows = [result.windowIdentifier.windowName, windowToGroup]; //TODO - replace with FinsembleWindow
-                        self.routerClient.query("DockingService.groupWindows", {
-                            windows: windows,
-                            isMovable: true,
-                        }, function (error, response) {
-                            logger_1.default.perf.debug("CallSpawn", "stop");
-                            invokeSpawnCallback(err, result);
-                        });
-                    }
-                    else {
-                        logger_1.default.perf.debug("CallSpawn", "stop");
-                        invokeSpawnCallback(err, result);
-                    }
-                    self.routerClient.unsubscribe(subscriberID);
-                }
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Convenience function to get a monitor descriptor for a given windowIdentifier, or for the
-     * current window.
-     *
-     * @param {WindowIdentifier} [windowIdentifier] The window to find the monitor for. Current window if undefined.
-     * @param  {Function} cb Returns a monitor descriptor (optional or use returned Promise)
-     * @returns {Promise} A promise that resolves to a monitor descriptor
-     * @TODO this probably is unnecessary since a client can include util and a developer should be using this.getMonitorInfo which has full support for searching by component. Did Ryan need this?
-     * @private
-     */
-    getMonitor(windowIdentifier, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        const promiseResolver = (resolve) => {
-            util.getMonitor(windowIdentifier, (monitor) => {
-                cb(monitor);
-                resolve(monitor);
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Returns a {@link WindowIdentifier} for the current window
-     *
-     * @param {WindowIdentifier} cb Callback function returns windowIdentifier for this window (optional or use the returned Promise)
-     * @returns {Promise} A promise that resolves to a windowIdentifier
-     */
-    // @TODO, [Terry] calls to launcherClient.myWindowIdentifier or launcherClient.getMyWindowIdentifier()
-    // should be replaced with windowClient.getWindowIdentifier()
-    getMyWindowIdentifier(cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        const promiseResolver = (resolve) => {
-            util.getMyWindowIdentifier((wi) => {
-                cb(wi);
-                resolve(wi);
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-    * Gets the {@link WindowDescriptor} for all open windows.
-    *
-    * *Note: This returns descriptors even if the window is not part of the workspace*.
-    *
-    * @param {function} cb Callback returns an array of windowDescriptors
-    *
-    */
-    getActiveDescriptors(cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        const promiseResolver = (resolve) => {
-            this.routerClient.query("Launcher.getActiveDescriptors", {}, function (err, response) {
-                if (err) {
-                    return logger_1.default.system.error(err);
-                }
-                if (response) {
-                    cb(err, response.data);
-                    resolve({ err, data: response.data });
-                }
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Adds a custom component. Private for now.
-     * @private
-     */
-    addUserDefinedComponent(params, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        const promiseResolver = (resolve) => {
-            this.routerClient.query("Launcher.userDefinedComponentUpdate", {
-                type: "add",
-                name: params.name,
-                url: params.url,
-            }, function (err, response) {
-                cb(err, response.data);
-                resolve({ err, data: response.data });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Adds a custom component. Private for now.
-     * @private
-     */
-    removeUserDefinedComponent(params, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        const promiseResolver = (resolve) => {
-            this.routerClient.query("Launcher.userDefinedComponentUpdate", {
-                type: "remove",
-                name: params.name,
-                url: params.url,
-            }, function (err, response) {
-                cb(err, response.data);
-                resolve({ err, data: response.data });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Gets components that can receive specific data types. Returns an object containing a of ComponentTypes mapped to a list of dataTypes they can receive. This is based on the "advertiseReceivers" property in a component's config.
-     * @param params
-     * @param {Array.<string>} [params.dataTypes] An array of data types. Looks for components that can receive those data types
-     *
-     * @since 2.0
-     *
-     * @example
-     * LauncherClient.getComponentsThatCanReceiveDataTypes({ dataTypes: ['chartiq.chart', 'salesforce.contact']}, function(err, response) {
-     * 	//Response contains: {'chartiq.chart': ['Advanced Chart'], 'salesforce.contact': ['Salesforce Contact']}
-     * })
-     *
-     */
-    getComponentsThatCanReceiveDataTypes(params, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        if (params.dataTypes && !Array.isArray(params.dataTypes)) {
-            params.dataTypes = [params.dataTypes];
-        }
-        validate_1.default.args(params.dataTypes, "array");
-        const promiseResolver = (resolve) => {
-            this.routerClient.query("LauncherService.getComponentsThatCanReceiveDataTypes", params, function (err, response) {
-                cb(err, response.data);
-                resolve({ err, data: response.data });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Brings a windows to front. If no windowList, groupName or componentType is specified, brings all windows to front.
-     * @param params
-     * @param {Array.<string | Object>} [params.windowList] Optional. An array of window names or window identifiers. Not to be used with componentType.
-     * @param {string} [params.groupName] Optional. The name of a window group to bring to front.
-     * @param {string} [params.componentType] Optional. The componentType to bring to front. Not to be used with windowList.
-     *
-     * @since TBD
-     *
-     * @example
-     * LauncherClient.bringWindowsToFront({ windowList: ['AdvancedChart-123-123', 'Symphony-Chat-234-234']}, function(err, response) {
-     *
-     * })
-     *
-     * @private
-     */
-    bringWindowsToFront(params = {}, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        if (params.windowList && !Array.isArray(params.windowList)) {
-            params.windowList = [params.windowList];
-        }
-        if (params.groupName) {
-            validate_1.default.args(params.groupName, "string");
-        }
-        if (params.componentType) {
-            validate_1.default.args(params.componentType, "string");
-        }
-        //Changed to query to allow for async bring to front and to do something when all windows have been brought to front
-        this.routerClient.query("LauncherService.bringWindowsToFront", params, (err, response) => {
-            cb(err, response);
-        });
-        return Promise.resolve();
-    }
-    /**
-     * Minimizes all but a specific list or group of windows. Either groupName or windowList must be specified.
-     * @param params
-     * @param {Array.<string | Object>} [params.windowList] Optional. An array of window names or window identifiers. Not to be used with componentType.
-     * @param {string} [params.groupName] Optional. The name of a window group to hyperFocus.
-     * @param {string} [params.componentType] Optional. The Component Type to hyperFocus. Not to be used with windowList.
-     *
-     * @since TBD
-     * @example
-     * LauncherClient.hyperFocus({ windowList: ['AdvancedChart-123-123', 'Symphony-Chat-234-234']}, function(err, response) {
-     *
-     * })
-     *
-     * @private
-     */
-    hyperFocus(params, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        if (params.windowList && !Array.isArray(params.windowList)) {
-            params.windowList = [params.windowList];
-        }
-        if (!params.windowList && !params.groupName && !params.componentType) {
-            params.windowList = [this.myWindowIdentifier];
-        }
-        if (params.groupName) {
-            validate_1.default.args(params.groupName, "string");
-        }
-        if (params.componentType) {
-            validate_1.default.args(params.componentType, "string");
-        }
-        this.routerClient.transmit("LauncherService.hyperFocus", params);
-        cb();
-        return Promise.resolve();
-    }
-    /**
-     * Minimize windows. If no windowList or groupName is specified, all windows will be minimized.
-     * @param {*} params
-     * @param {Array.<string | Object>} [params.windowList] Optional. An array of window names or window identifiers. Not to be used with componentType.
-     * @param {string} [params.groupName] Optional. The name of a window group to minimize.
-     * @param {string} [params.componentType] Optional. The component type of windows to Minimize. Not to be used with windowList.
-     *
-     * @since TBD
-     * @private
-     */
-    minimizeWindows(params, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        if (params.windowList && !Array.isArray(params.windowList)) {
-            params.windowList = [params.windowList];
-        }
-        if (params.groupName) {
-            validate_1.default.args(params.groupName, "string");
-        }
-        if (params.componentType) {
-            validate_1.default.args(params.componentType, "string");
-        }
-        this.routerClient.transmit("LauncherService.minimizeWindows", params);
-        cb();
-        return Promise.resolve();
-    }
-    /**
-     * Create Window group
-     * @param {*} params
-     * @param {string} [params.groupName] The name of the window group to create
-     * @param {Array.<string | Object>} [params.windowList] An array of window names or window identifiers to add to the group. Optional.
-     * @param {function} cb callback to be called upon group creation
-     *
-     * @since TBD
-     * @private
-     */
-    createWindowGroup(params, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        if (params.windowList && !Array.isArray(params.windowList)) {
-            params.windowList = [params.windowList];
-            delete params.groupName;
-        }
-        validate_1.default.args(params.groupName, "string");
-        const promiseResolver = (resolve) => {
-            if (!params.groupName) {
-                let err = "Invalid Parameters";
-                resolve({ err });
-                cb(err);
-                return;
-            }
-            this.routerClient.query("LauncherService.createWindowGroup", params, function (err, response) {
-                cb(err, response);
-                resolve({ err, data: response });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Add Windows to group
-     * @param {*} params
-     * @param {string} [params.groupName] The name of the window group
-     * @param {Array.<string | Object>} [params.windowList] An array of window names or window identifiers to add to the group.
-     * @param {function} cb callback to be called upon group creation
-     *
-     * @since TBD
-     * @private
-     */
-    addWindowsToGroup(params, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        const promiseResolver = (resolve) => {
-            if (!params.groupName || !params.windowList) {
-                let err = "Invalid Parameters";
-                resolve({ err });
-                cb(err);
-                return;
-            }
-            if (params.windowList && !Array.isArray(params.windowList)) {
-                params.windowList = [params.windowList];
-            }
-            validate_1.default.args(params.groupName, "string");
-            this.routerClient.query("LauncherService.addWindowsToGroup", params, function (err, response) {
-                cb(err, response);
-                resolve({ err, data: response });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Remove Windows from group
-     * @param {*} params
-     * @param {string} [params.groupName] The name of the window group
-     * @param {Array.<string | Object>} [params.windowList] An array of window names or window identifiers to remove from the group.
-     * @param {function} cb callback to be called upon group creation
-     *
-     * @since TBD
-     * @private
-     */
-    removeWindowsFromGroup(params, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        const promiseResolver = (resolve) => {
-            if (!params.groupName || !params.windowList) {
-                let err = "Invalid Parameters";
-                resolve({ err });
-                cb(err);
-                return;
-            }
-            if (params.windowList && !Array.isArray(params.windowList)) {
-                params.windowList = [params.windowList];
-            }
-            this.routerClient.query("LauncherService.removeWindowsFromGroup", params, function (err, response) {
-                cb(err, response);
-                resolve({ err, data: response });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Get Window Groups that a window belongs to. If no windowIdentifier is specified, gets  the groups of the current window.
-     * @param {*} params
-     * @param {WindowIdentifier} [params.windowIdentifier] Optional. If not specified uses current window
-     * @param {*} cb callback with a list of groups
-     *
-     * @since TBD
-     * @private
-     */
-    getGroupsForWindow(params, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        if (typeof params === "function") {
-            cb = params;
-            params = null;
-        }
-        const promiseResolver = (resolve) => {
-            if (!params || !params.windowIdentifier) {
-                this.windowClient.getComponentState({ field: "finsemble:windowGroups" }, function (err, groups) {
-                    resolve({ err, data: groups });
-                    cb(err, groups);
-                });
-                return;
-            }
-            this.routerClient.query("LauncherService.getGroupsForWindow", params, function (err, response) {
-                resolve({ err, data: response.data });
-                cb(err, response.data);
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * @private
-     * @param {*} params
-     * @param {WindowIdentifier} [params.windowIdentifier] Optional. Current window is assumed if not specified.
-     * @param {Array.<string>} [params.groupNames] List of group names to add window to. Groups will be created if they do not exist.
-     * @param {*} cb
-     */
-    addToGroups(params, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        validate_1.default.args(params.groupNames, "array");
-        if (!params.windowIdentifier) {
-            params.windowIdentifier = this.myWindowIdentifier;
-        }
-        const promiseResolver = (resolve) => {
-            this.routerClient.query("LauncherService.addWindowToGroups", params, (err, response) => {
-                cb(err, response);
-                resolve({ err, data: response });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * _createWrap allows us to create a wrap without spawning a window
-     *
-     * @param {Object} params
-     * @param {String} params.name
-     * @param {Function} cb
-     * @memberof LauncherClient
-     * @private
-     */
-    _createWrap(params, cb) {
-        this.routerClient.query("LauncherService.createWrap", params, cb);
-    }
-    /**
-     * @private
-     *
-     * @param {*} cb
-     * @memberof LauncherClient
-     */
-    start(cb) {
-        var self = this;
-        // Get Group Updates (only if we are not in a service)
-        if (typeof Globals.FSBL !== "undefined") {
-            // Get Groups from Component State on Load
-            function subscribeToGroupUpdates() {
-                self.routerClient.subscribe("Finsemble.LauncherService.updateGroups." + self.windowName, function (err, response) {
-                    if (!Array.isArray(response.data))
-                        return; //dont attempt to save the initial responder state.
-                    self.windowClient.setComponentState({ field: "finsemble:windowGroups", value: response.data });
-                });
-            }
-            // cannot add a windowClient dependency here so explicitly wait for windowClient ready (ideally dependency manage could fully handle but maybe later)
-            Globals.FSBL.addEventListener("onReady", function () {
-                self.windowClient.onReady(() => {
-                    self.windowClient.getComponentState({ field: "finsemble:windowGroups" }, function (err, groups) {
-                        if (!err && groups) {
-                            return self.addToGroups({
-                                groupNames: groups,
-                            }, subscribeToGroupUpdates);
-                        }
-                        subscribeToGroupUpdates();
-                    });
-                });
-            });
-        }
-        setInterval(function () {
-            self.routerClient.transmit("Finsemble.heartbeat", { type: "component", windowName: self.windowName, componentType: "finsemble" });
-        }, 1000);
-        // @TODO, [Terry] remove in favor of calls to windowClient.getMyIdentifier()
-        this.getMyWindowIdentifier((identifier) => {
-            self.myWindowIdentifier = identifier;
-            if (cb) {
-                cb();
-            }
-        });
-    }
-}
-function constructInstance(params) {
-    params = params ? params : {};
-    if (!params.windowClient)
-        params.windowClient = windowClient_1.default;
-    return new LauncherClient({
-        clients: params,
-        startupDependencies: {
-            services: ["windowService"],
-        },
-        onReady: function (cb) {
-            logger_1.default.system.debug("launcherClient ready", window.name);
-            logger_1.default.perf.debug("LauncherClientReadyTime", "stop");
-            launcherClient.start(cb);
-        },
-        name: "launcherClient",
-    });
-}
-var launcherClient = constructInstance();
-launcherClient.constructInstance = constructInstance;
-exports.default = launcherClient;
-
-
-/***/ }),
-/* 41 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony export (immutable) */ __webpack_exports__["byString"] = byString;
-/* harmony export (immutable) */ __webpack_exports__["initObject"] = initObject;
-/* harmony export (immutable) */ __webpack_exports__["mapField"] = mapField;
-/* harmony export (immutable) */ __webpack_exports__["checkForObjectChange"] = checkForObjectChange;
-/**
- *
- * This file handles common functionality needed in both the client and service.
- *
- */
-// Get a value from an object using a string. {abc:{123:"value"}} you would do byString(object,"abc.123")
-function byString(o, s) {
-	//Object,String
-	s = s.replace(/\[(\w+)\]/g, ".$1"); // convert indexes to properties
-	s = s.replace(/^\./, ""); // strip a leading dot
-	var a = s.split(".");
-	for (var i = 0, n = a.length; i < a.length; ++i) {
-		// Loop through and find the attribute that matches the string passed in
-		var k = a[i];
-		if (!o) {
-			return null;
-		}
-		if (typeof o === "string") return null; // Reached the end of the chain
-
-		if (k in o) {
-			o = o[k];
-		} else {
-			return null;
-		}
-	}
-	return o;
-}
-//can add values to an object from a string. Must be in `.` form abc.123
-const setPath = (object, path, value) => path.split(".").reduce((o, p) => o[p] = path.split(".").pop() === p ? value : o[p] || {}, object);
-/* harmony export (immutable) */ __webpack_exports__["setPath"] = setPath;
-
-
-// This handles the initial mapping for us. It will crawl through all child objects and map those too. Parent is the current location within the object(`parent.child`). Null is top level. The mapping is all flattened
-function initObject(object, parent, mapping) {
-	var mapLocation;
-
-	if (!parent) {
-		parent = null;
-	}
-
-	if (typeof object !== "object") {
-		mapLocation = parent ? parent + "." + n : n;
-		mapping[mapLocation] = parent;
-		return;
-	}
-
-	for (let n in object) {
-		if (typeof object[n] === "object" && object[n] !== "undefined") {
-			mapLocation = parent ? parent + "." + n : n;
-			mapping[mapLocation] = parent;
-			initObject(object[n], mapLocation, mapping); // If we have another object, map it
-		} else {
-			mapLocation = parent ? parent + "." + n : n;
-			mapping[mapLocation] = parent;
-		}
-	}
-}
-// Will map out a field in an object. So we don't have to loop through the whole thing every time we have a change.
-function mapField(object, s, mapping) {
-	if (mapping[s]) {
-		return;
-	} // If we're already mapped move on.
-	s = s.replace(/\[(\w+)\]/g, ".$1"); // convert indexes to properties
-	s = s.replace(/^\./, ""); // strip a leading dot
-	var a = s.split(".");
-	var currentLocation = s;
-
-	if (!mapping.hasOwnProperty(currentLocation)) {
-		var newString = null;
-		if (a.length > 1) {
-			a.pop();
-			newString = a.join(".");
-		}
-
-		mapping[currentLocation] = newString;
-	}
-
-	var newObject = byString(object, currentLocation);
-	if (newObject === "undefined") {
-		return;
-	} // If the location doesn't exist exit.
-	if (typeof newObject === "object") {
-		for (var key in newObject) {
-			mapField(object, currentLocation + "." + key, mapping); // If we need to ke
-		}
-	}
-}
-// To see if we're replacing an existing field/object with an object/field that would make some of the mapping obsolete.
-function checkForObjectChange(object, field, mapping) {
-	var objectReplacing = byString(object, field);
-	if (objectReplacing === null) {
-		return false;
-	}
-	if (typeof objectReplacing === "object") {
-		// we're replacing an object which requires use to remap at this level.
-		return removeChildMapping(mapping, field);
-	}
-	if (typeof objectReplacing !== "object" && typeof field === "object") {
-		//we're replacing a non object with an object. Need to map out this new object
-		return removeChildMapping(mapping, field);
-	}
-	return null;
-}
-//This will remove an item from mapping and pass back an array so that we can send out notifications
-function removeChildMapping(mapping, field) {
-	var removals = [];
-	for (var map in mapping) {
-		var lookField = field + ".";
-		if (map.includes(lookField)) {
-			removals.push(map);
-			delete mapping[map];
-		}
-	}
-	return removals;
-}
-
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\storeUtils.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\storeUtils.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
-
-/***/ }),
-/* 42 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const async_1 = __webpack_require__(9);
-const storeUtils = __webpack_require__(41);
-const logger_1 = __webpack_require__(0);
-const baseClient_1 = __webpack_require__(7);
-/** The global `window` object. We cast it to a specific interface here to be
- * explicit about what Finsemble-related properties it may have. */
-const Globals = window;
-/**
- *
- * @introduction
- * <h2>Store Model</h2>
- * The Store Model consists of store instances. It handles getters/setters of data.
- * @hideConstructor
- * @class
- */
-class StoreModel extends baseClient_1._BaseClient {
-    constructor(params, routerClient) {
-        super(params);
-        this.values = {};
-        this.listeners = [];
-        this.registeredDispatchListeners = [];
-        this.mapping = {};
-        /** This is the Flux dispatcher. It can be used dispatch actions across stores. These action are not caught inside of the global store service. For more information, you can read the [Flux documentation](https://facebook.github.io/flux/docs/overview.html).
-         *
-         * Example:
-         * ```
-         * store.Dispatcher.register(function(action){
-         * 	if(action.actionType === "ACTION1") {
-         * 		// Do something with the action here.
-         * 	}
-         * })
-         * ```
-         */
-        this.Dispatcher = {
-            register: (fn) => {
-                this.registeredDispatchListeners.push(fn);
-            },
-            dispatch: (data) => {
-                if (this.isGlobal) {
-                    this.routerClient.transmit("storeService.dispatch." + this.name, data);
-                }
-                else {
-                    this.handleDispatchedMessages(null, {
-                        data: data
-                    });
-                }
-            }
-        };
-        /**
-         * Handles all changes coming in from the service.
-         */
-        this.handleChanges = (err, response) => {
-            if (err) {
-                logger_1.default.system.error("DistributedStoreClient", err);
-            }
-            if (!response.data.store) {
-                return;
-            }
-            if (!response.data.field) {
-                response.data.field = null;
-            }
-            var combined = this.name + (response.data.field ? "." + response.data.field : "");
-            var val = response.data.storeData ? response.data.storeData : response.data.value;
-            this.triggerListeners(combined, val);
-        };
-        this.routerClient = routerClient;
-        this.isGlobal = params.global;
-        this.name = params.store ? params.store : "finsemble";
-        if (params.values)
-            this.values = params.values;
-        this.lst = this.listeners;
-        storeUtils.initObject(this.values, null, this.mapping);
-        // Add listeners for global stores. Not needed for local stores as everything happens internally.
-        if (this.isGlobal) {
-            this.routerClient.addListener("storeService.dispatch." + this.name, this.handleDispatchedMessages.bind(this));
-        }
-    }
-    /**
-     * @param {*} err
-     * @param {*} message
-     * @private
-     */
-    handleDispatchedMessages(err, message) {
-        for (var i = 0; i < this.registeredDispatchListeners.length; i++) {
-            this.registeredDispatchListeners[i](message.data);
-        }
-    }
-    ;
-    /**
-     * Set a value in the store. Two events will be triggered with topics of: store and field.
-     * @param {Object} params - Params object
-     * @param {String} params.field - The name of the field where data will be stored
-     * @param {String} params.value - Value to be stored
-     * @param {function} cb callback
-     * @returns {null}
-     *
-     * @example
-     * store.setValue({field:'field1',value:"new value"});
-     */
-    setValue(params, cb) {
-        if (!params.field) {
-            logger_1.default.system.error("DistributedStore.setValue:no field provided", params);
-        }
-        if (!params.hasOwnProperty("value")) {
-            logger_1.default.system.error("DistributedStore.setValue:no value provided", params);
-        }
-        if (this.isGlobal) {
-            var data = {
-                store: this.name,
-                field: params.field,
-                value: params.value
-            };
-            return Globals.distributedStoreClient.routerClient.query("storeService.setValue", data, function (err) {
-                return cb ? cb(err) : null;
-            });
-        }
-        const removals = storeUtils.checkForObjectChange(this.values, params.field, this.mapping);
-        storeUtils.setPath(this.values, params.field, params.value);
-        storeUtils.mapField(this.values, params.field, this.mapping);
-        if (removals) {
-            this.sendRemovals(removals);
-        }
-        this.triggerListeners(this.name, this);
-        this.publishObjectUpdates(params.field, this.mapping);
-        return cb ? cb(null) : null;
-    }
-    ;
-    /**
-     * Handles changes to the store. Will publish from the field that was changed and back.
-     */
-    publishObjectUpdates(startField, mappings) {
-        const currentMapping = mappings;
-        while (startField) {
-            this.triggerListeners(this.name + "." + startField, storeUtils.byString(this.values, startField));
-            startField = currentMapping[startField];
-        }
-    }
-    /**
-     * Send items that are no longer mapped or had their map change. If a value is remapped we'll send out the new value.
-    */
-    sendRemovals(removals) {
-        for (var i = 0; i < removals.length; i++) {
-            this.triggerListeners(this.name + "." + removals[i], storeUtils.byString(this.values, removals[i]));
-        }
-    }
-    /**
-     * This will set multiple values in the store.
-     * @param {Object[]} fields - An Array of field objects
-     * @param {String} fields.field - The name of the field
-     * @param {any} fields.value - Field value
-     * @param {function} cb callback
-     * @example
-     * store.setValues([{field:'field1',value:"new value"}]);
-     */
-    setValues(fields, cb) {
-        if (!fields) {
-            return logger_1.default.system.error("DistributedStore.setValues:no params given");
-        }
-        if (!Array.isArray(fields)) {
-            return logger_1.default.system.error("DistributedStore.setValues:params must be an array");
-        }
-        async_1.each(fields, (field, done) => {
-            this.setValue(field, done);
-        }, (err) => {
-            return cb ? cb(err) : null;
-        });
-    }
-    ;
-    /**
-     * Get a value from the store. If global is not set, we'll check local first then we'll check global.
-     * @param {string|object} params - Params object. This can also be a string
-     * @param {String} params.field - The field where the value is stored.
-     * @param {Function} cb -  Will return the value if found.
-     * @returns {any} - The value of the field. If no callback is given and the value is local, this will run synchronous
-     * @example
-    store.getValue({field:'field1'},function(err,value){});
-    store.getValue('field1',function(err,value){});
-     */
-    getValue(params, cb) {
-        if (typeof params === "string") {
-            params = { field: params };
-        }
-        if (!params.field) {
-            if (!cb) {
-                return "no field provided";
-            }
-            return cb("no field provided");
-        }
-        if (this.isGlobal) {
-            return this.getGlobalValue(params, cb);
-        }
-        var fieldValue = storeUtils.byString(this.values, params.field);
-        if (fieldValue !== undefined) {
-            if (!cb) {
-                return fieldValue;
-            }
-            return cb(null, fieldValue);
-        }
-        if (!cb) {
-            return null;
-        }
-        return cb("couldn't find a value");
-    }
-    ;
-    /**
-     * Get multiple values from the store.
-     * @param {Array.<object>|Array.<String>} fields - An Array of field objects. If there are no fields provided, all values in the store are returned.
-     * @param {Function} [cb] -  Will return the value if found.
-     * @returns {Object} - returns an object of with the fields as keys.If no callback is given and the value is local, this will run synchronous
-     * @example
-     * store.getValues([{field:'field1'},{field:'field2'}],function(err,values){});
-     * store.getValues(['field1','field2'],function(err,values){});
-     */
-    getValues(fields, cb) {
-        if (typeof fields === "function") {
-            cb = fields;
-            if (this.isGlobal) {
-                return this.getGlobalValues(null, cb);
-            }
-            if (!cb) {
-                return this.values;
-            }
-            return cb(null, this.values);
-        }
-        if (!Array.isArray(fields)) {
-            return this.getValue(fields, cb);
-        }
-        if (this.isGlobal) {
-            return this.getGlobalValues(fields, cb);
-        }
-        var values = {};
-        for (var i = 0; i < fields.length; i++) {
-            var item = fields[i];
-            var field = typeof item === "string" ? item : item.field;
-            var combined = this.name + (field ? "." + field : "");
-            var fieldValue = storeUtils.byString(this.values, field);
-            values[field] = fieldValue;
-        }
-        if (!cb) {
-            return values;
-        }
-        return cb(null, values);
-    }
-    ;
-    /**
-     * Get a single value from the global store.
-     */
-    getGlobalValue(params, cb) {
-        Globals.distributedStoreClient.routerClient.query("storeService.getValue", {
-            store: this.name,
-            field: params.field
-        }, (err, response) => {
-            if (err) {
-                return cb(err);
-            }
-            return cb(err, response.data);
-        });
-    }
-    /**
-     * Get values from the global store.
-     */
-    getGlobalValues(params, cb) {
-        Globals.distributedStoreClient.routerClient.query("storeService.getValues", {
-            store: this.name,
-            fields: params
-        }, (err, response) => {
-            if (err) {
-                return cb(err);
-            }
-            return cb(err, response.data);
-        });
-    }
-    /**
-     * Remove a value from the store.
-    * @param {Object | String} params - Either an object or string
-     * @param {String} param.field - The name of the field
-     * @param {Function} cb -  returns an error if there is one
-     * @example
-     * store.removeValue({field:'field1'},function(err,bool){});
-     */
-    removeValue(params, cb) {
-        if (!params.field) {
-            if (params !== undefined) {
-                params = { field: params };
-            }
-            else {
-                return cb("no field provided");
-            }
-        }
-        params.value = null;
-        return this.setValue(params, cb);
-    }
-    ;
-    /**
-     * Removes multiple values from the store.
-     * @param {Object[] | String[]} params - An Array of field objects
-     * @param {String} param[].field - The name of the field
-     * @param {Function} cb -  returns an error if there is one.
-     * @example
-     * store.removeValue({field:'field1'},function(err,bool){});
-     */
-    removeValues(params, cb) {
-        if (!Array.isArray(params)) {
-            return cb("The passed in parameter needs to be an array");
-        }
-        async_1.map(params, this.removeValue, (err, data) => {
-            return cb(err, data);
-        });
-    }
-    ;
-    /**
-     * Destroys the store.
-     * @param {Function} cb -  Will return the value if found.
-     * @example
-     * store.destroy();
-     */
-    destroy(cb) {
-        var params = {
-            store: this.name,
-            global: this.isGlobal,
-        };
-        Globals.distributedStoreClient.removeStore(params, (err, response) => {
-            if (err) {
-                return cb(err);
-            }
-            return cb(null, true);
-        });
-    }
-    ;
-    /**
-     * NOTE: make sure we dont have duplicate router subscribers
-     * @private
-     */
-    changeSub(change) {
-        if (!this.subs)
-            this.subs = [];
-        if (!this.subs[change]) {
-            if (this.isGlobal) {
-                Globals.distributedStoreClient.routerClient.subscribe("storeService" + change, this.handleChanges);
-            }
-            this.subs[change] = true;
-        }
-    }
-    ;
-    /**
-    * Add a listener to the store at either the store or field level. If no field is given, the store level is used. You can also listen to nested object -- field1.nestedField
-    * @param {Object} params - Params object
-    * @param {String} params.field - The data field to listen for. If this is empty it listen to all changes of the store.
-    * @param {Function} fn -  the function to call when a listener is triggered
-    * @param {Function} cb - callback
-    * @example
-    *var myFunction = function(err,data){
-    }
-    * store.addListener({field:'field1'},myFunction,cb);
-
-    */
-    addListener(params, fn, cb) {
-        var field = null;
-        if (typeof params === "function") {
-            fn = params;
-            params = {};
-        }
-        if (params.field) {
-            field = params.field;
-        }
-        var combined = this.name + (field ? "." + field : "");
-        if (this.listeners[combined]) {
-            this.listeners[combined].push(fn);
-        }
-        else {
-            this.listeners[combined] = [fn];
-        }
-        this.changeSub(combined);
-        return cb ? cb() : null;
-    }
-    ;
-    /**
-    * Add an array of listeners as  objects or strings. If using strings, you must provide a function callback.
-    * @param {Object[] | String[]} params - Params object
-    * @param {String} params.field - The data field to listen for.
-    * @param {String} [params.listener] - the function to call when a listener is triggered. If this is empty, fn is used.
-    * @param {function} [fn] -  the function to call when a listener is triggered
-    * @param {function} cb callback
-    * @example
-    *var myFunction = function(err,data){
-
-    }
-    store.addListeners([{field:'field1',listener:myFunction},{field:'field2',listener:myFunction}],null,cb);
-
-    store.addListeners([{field:'field1'},{field:'field2',listener:myFunction}],myFunction,cb);
-
-    store.addListeners(['field1','field2'],myFunction,cb);
-    */
-    addListeners(params, fn, cb) {
-        if (!Array.isArray(params)) {
-            return this.addListener(params, fn, cb);
-        }
-        for (var i = 0; i < params.length; i++) {
-            var field = null;
-            var item = params[i];
-            var ls;
-            if (typeof item === "string") {
-                field = item;
-            }
-            else if (item.field) {
-                field = item.field;
-                ls = params[i].listener;
-            }
-            var combined = this.name + (field ? "." + field : "");
-            if (!ls) {
-                if (fn && typeof fn === "function") {
-                    ls = fn;
-                }
-            }
-            if (this.listeners[combined]) {
-                this.listeners[combined].push(ls);
-            }
-            else {
-                this.listeners[combined] = [ls];
-            }
-            this.changeSub(combined);
-        }
-        return cb ? cb() : null;
-    }
-    ;
-    /**
-     * Remove a listener from  store. If no field is given, we look for a store listener
-     * @param {Object} params - Params object
-     * @param {String} params.field - The data field
-     * @param {function} [fn] -  the function to remove from the listeners
-     * @param {function} [cb] -  returns true if it was successful in removing the listener.
-     *
-     * @example
-     * var myFunction = function(err,data){
-            }
-     * store.removeListener({field:'field1'},MyFunction,function(bool){});
-    StoreCstorelient.removeListener(MyFunction,function(bool){});
-     */
-    removeListener(params, fn, cb) {
-        var field = null;
-        if (typeof params === "function") {
-            cb = fn;
-            fn = params;
-            params = {};
-        }
-        if (params.field) {
-            field = params.field;
-        }
-        var combined = this.name + (field ? "." + field : "");
-        if (this.listeners[combined]) {
-            for (var i = 0; i < this.listeners[combined].length; i++) {
-                if (this.listeners[combined][i] === fn) {
-                    this.listeners[combined].pop(i);
-                    return cb ? cb(null, true) : null;
-                }
-            }
-        }
-        return cb ? cb(null, false) : null;
-    }
-    ;
-    /**
-     * Remove an array of listeners from the store
-     * @param {Object[] | String[]} params - Params object
-     * @param {String} params.field - The data field to listen for. If this is empty it listen to all changes of the store.
-     * @param {String} params.listener - The listener function
-     * @param {function} [fn] -  the function to remove from the listeners
-     * @param {function} [cb] -  returns true if it was successful in removing the listener.
-     *
-     * @example
-     * var myFunction = function(err,data){
-            }
-     * store.removeListeners({field:'field1'},MyFunction,function(bool){});
-    store.removeListeners([{field:'field1',listener:MyFunction}],function(bool){});
-    store.removeListeners(['field1'],MyFunction,function(bool){});
-     */
-    removeListeners(params, fn, cb) {
-        if (!Array.isArray(params)) {
-            if (typeof params === "function") {
-                this.removeListener({}, params, cb);
-            }
-            else if (params.field) {
-                this.removeListener(params, fn, cb);
-            }
-            return cb("missing fields");
-        }
-        var removeCount = 0;
-        for (var i = 0; i < params.length; i++) {
-            var field = null;
-            var item = params[i];
-            var ls;
-            if (typeof item === "string") {
-                field = item;
-            }
-            else if (item.field) {
-                field = item.field;
-                ls = params[i].listener;
-            }
-            var combined = this.name + (field ? "." + field : "");
-            if (!ls) {
-                if (fn && typeof fn === "function") {
-                    ls = fn;
-                }
-                else {
-                    continue;
-                }
-            }
-            for (var j = 0; j < this.listeners[combined].length; j++) {
-                if (this.listeners[combined][j] === ls) {
-                    this.listeners[combined].pop(i);
-                    removeCount++;
-                }
-            }
-        }
-        if (removeCount < params.length) {
-            return cb("All listeners could not be found", false);
-        }
-        return cb ? cb(null, true) : null;
-    }
-    ;
-    // Trigger any function that is listening for changes
-    triggerListeners(listenerKey, data) {
-        if (this.listeners[listenerKey]) {
-            for (var i = 0; i < this.listeners[listenerKey].length; i++) {
-                if (typeof this.listeners[listenerKey][i] === "function") {
-                    logger_1.default.system.debug("DistributedStore.triggerListeners", listenerKey, data);
-                    this.listeners[listenerKey][i](null, { field: listenerKey, value: data });
-                }
-                else {
-                    logger_1.default.system.warn("DistributedStoreClient:triggerListeners: listener is not a function", listenerKey, i, this.listeners[listenerKey][i]);
-                }
-            }
-        }
-    }
-}
-;
-exports.default = StoreModel;
-
-
-/***/ }),
-/* 43 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-const storageClient_1 = __webpack_require__(21);
-const hotkeysClient_1 = __webpack_require__(44);
-const util = __webpack_require__(8);
-const system_1 = __webpack_require__(3);
-const baseClient_1 = __webpack_require__(7);
-const logger_1 = __webpack_require__(0);
-const validate_1 = __webpack_require__(6); // Finsemble args validator
-const FinsembleWindow_1 = __webpack_require__(34);
-const configUtil_1 = __webpack_require__(10);
-const async_1 = __webpack_require__(9);
-const routerClientInstance_1 = __webpack_require__(5);
-const lodashGet = __webpack_require__(28);
-// DH 3/6/2019 - @TODO - All uses of this should be replaced with calls to the WindowStorageManager
-const constants_1 = __webpack_require__(11);
-const configClient_1 = __webpack_require__(15);
-var finsembleWindow;
-/**
- *
- * Helper to see if element has a class.
- * @param {HTMLElement} el
- * @param {String} className
- * @private
- * @return {HTMLElement}
- */
-function hasClass(el, className) {
-    if (el.classList) {
-        return el.classList.contains(className);
-    }
-    return !!el.className.match(new RegExp("(\\s|^)" + className + "(\\s|$)"));
-}
-/**
- * Adds a class to an HTML element
- * @param {HTMLElement} el
- * @param {String} className
- * @private
- */
-function addClass(el, className) {
-    if (el.classList) {
-        el.classList.add(className);
-    }
-    else if (!hasClass(el, className)) {
-        el.className += " " + className;
-    }
-}
-/**
- *
- * Removes class from HTML element
- * @param {HTMLElement} el
- * @param {String} className
- * @private
- */
-function removeClass(el, className) {
-    if (el.classList) {
-        el.classList.remove(className);
-    }
-    else if (hasClass(el, className)) {
-        var reg = new RegExp("(\\s|^)" + className + "(\\s|$)");
-        el.className = el.className.replace(reg, " ");
-    }
-}
-/**
- *
- *@introduction
-  <h2>Window Client</h2>
-  ----------
- * The Window Client is primarily responsible for managing the `windowState` (the window's bounds) and `componentState` (data inside of your component).
- * It also injects the **window title bar** control, which contains controls for minimizing, maximizing, closing, and restoring your window.
- * The reference below is provided in case you'd like to manually trigger events.
- *
- * This is the Window Client API reference.
- * If you're looking for information about the window title bar, please see the [Presentation Component tutorial](tutorial-PresentationComponents.html#window-title-bar) for more information.
- *
- * @hideconstructor
- * @param {object} params
- * @constructor
- * @returns {WindowClient}
- */
-class WindowClient extends baseClient_1._BaseClient {
-    constructor(params) {
-        /** @alias WindowClient# */
-        super(params);
-        /**
-         * Moves the window so that it's centered above the user's mouse.
-         */
-        this.showAtMousePosition = function () {
-            this.routerClient.transmit("DockingService.showAtMousePosition", this.getWindowIdentifier());
-        };
-        validate_1.default.args(params, "object=") && params && validate_1.default.args2("params.onReady", params.onReady, "function=");
-        //We store the options that the window is created with in this property.
-        /**
-        * A copy of the `finWindow`'s options value. This is where we store information like monitorDimensions, initialization information, and any other data that needs to be passed from the parent application into the created window.
-        * @type object
-        */
-        this.options = {};
-        //The hash we use to save data with.
-        this.windowHash = "";
-        //Window's title.
-        this.title = null;
-        //This is the bottom edge of the toolbar. The window's position will be offset by this much.
-        //@todo move this value to a config.
-        this.toolbarBottom = 40;
-        //default value. The window assigns the containers it cares about before starting.
-        this.containers = [];
-        //window state for restoration purposes.
-        this.componentState = {};
-        //This can be either normal, minimized, or maximized.
-        this.windowState = "normal";
-        // This gets set to true if the window has a header
-        this.hasHeader = false;
-        //If true, will send router messages to have docking respond to windows aero snap. Otherwise, will restore from those events when they happen
-        this.enableWindowsAeroSnap = false;
-        this.bindFunctions();
-        /**
-         * Minimizes window along with all windows docked to it.
-         * @param {function} cb Optional callback
-         * @example
-         * FSBL.Clients.WindowClient.minimizeWithDockedWindows();
-         * @private
-         */
-        this.minimizeWithDockedWindows = this.minimize;
-    }
-    /**
-     * @private
-     */
-    bindFunctions() {
-        this.onWindowRestored = this.onWindowRestored.bind(this);
-        this.onWindowMaximized = this.onWindowMaximized.bind(this);
-        this.onWindowBlurred = this.onWindowBlurred.bind(this);
-        this.onWindowFocused = this.onWindowFocused.bind(this);
-        this.onParentSet = this.onParentSet.bind(this);
-        this.onMinimizedRestored = this.onMinimizedRestored.bind(this);
-        this.onWindowMinimized = this.onWindowMinimized.bind(this);
-        this.close = this.close.bind(this);
-        this.getInitialOptions = this.getInitialOptions.bind(this);
-        this.cacheInitialBounds = this.cacheInitialBounds.bind(this);
-    }
-    /**
-     * This function is fired every time the window's bounds change. It saves the window's position.
-     * @param {object} bounds
-     * @private
-     */
-    onWindowRestored() {
-        this.updateHeaderState("Maximize", { hide: false });
-    }
-    /**
-     * @private
-     */
-    onWindowMaximized() {
-        this.updateHeaderState("Maximize", { hide: true });
-    }
-    /**
-     * @private
-     */
-    onWindowBlurred() {
-        if (this.hasHeader) {
-            this.setActive(false);
-        }
-    }
-    /**
-     * @private
-     */
-    onWindowFocused() {
-        if (this.hasHeader) {
-            this.setActive(true);
-        }
-    }
-    /**
-     * @private
-     */
-    onMinimizedRestored() {
-        this.routerClient.transmit("DockingService.windowRestored", finsembleWindow.name);
-        finsembleWindow.removeEventListener("restored", this.onMinimizedRestored);
-    }
-    /**
-     * @private
-     */
-    onWindowMinimized() {
-        this.routerClient.query("DockingService.windowMinimized", { windowName: finsembleWindow.name });
-        finsembleWindow.addEventListener("restored", this.onMinimizedRestored);
-    }
-    /**
-     * Handles the event that fires when the finsemble window's parent is set.
-     * @private
-     * @param evt the event itself, which is ignored.  Any time a parent is set, force a group data update.
-     */
-    onParentSet(evt) {
-        this.requestGroupDataPublish();
-    }
-    /**
-     * Returns a list of the groups this window is in, if any.
-     */
-    getWindowGroups() {
-        return this.windowGroups;
-    }
-    /**
-     * Handler for group updates from the window service.  Stores the groups that this window is in,
-     * if any.
-     * @private
-     * @param err the error, if any
-     * @param res the received updated group data
-     */
-    groupUpdateHandler(err, res) {
-        if (err) {
-            FSBL.Clients.Logger.error(err);
-            return;
-        }
-        this.windowGroups = Object.values(res.data.groupData).
-            filter(group => group.windowNames.includes(this.getWindowNameForDocking()));
-    }
-    ;
-    /**
-     * Requests an updated group data message.
-     * @private
-     */
-    requestGroupDataPublish() {
-        this.routerClient.transmit("DockingService.requestGroupDataPublish");
-    }
-    /**
-     * Closes Window.
-     * @param {object} params
-     * @param {boolean} params.removeFromWorkspace Whether to remove the window from the workspace.
-     * @param {boolean} params.closeWindow Whether to close the window. On shutdown this method is closed, but we let the launcher close the window.
-     * Defaults are to remove the window from the workspace if the user presses the X button, but not if the window is closed via an app-level request (e.g., we need to switch workspaces, so all windows need to close).
-     * @param {function} cb callback
-     * @example
-     * //Close window and remove from workspace (e.g., user closes the window).
-     * FSBL.Clients.WindowClient.close(true);
-     * //Close window and keep in workspace (e.g., application requests that all windows close themselves).
-     * FSBL.Clients.WindowClient.close(false);
-     */
-    close(params, cb = () => { }) {
-        if (!params) {
-            params = { removeFromWorkspace: true, closeWindow: true };
-        }
-        let parentWindow = finsembleWindow.parentWindow;
-        if (params.userInitiated && parentWindow) {
-            return parentWindow.close(params, cb);
-        }
-        else {
-            finsembleWindow.close(params, cb);
-        }
-    }
-    /**
-     * @private
-     * @returns {windowHash}
-     */
-    getWindowHash() {
-        return this.windowHash;
-    }
-    /**
-     * Retrieves the window's title.
-     * @returns {String} title
-     * @example
-     * var windowTitle = FSBL.Clients.WindowClient.getWindowTitle();
-     */
-    getWindowTitle() {
-        return this.title;
-    }
-    /**
-     * This function retrieves the dimensions of the monitor that the window is on. It's currently used in the {@link launcherClient}.
-     * @param {function} callback
-     * @private
-     * @todo  this is bad. The monitor can change if the window is moved. Use util monitor functions instead. Instead, use the util style getMyMonitor, and keep monitor dimensions up to date statically at FSBL level with a listener on launcher (unclaimedRect).
-     */
-    retrieveMonitorDimensions(callback = Function.prototype) {
-        util.getMonitor(null, function (monitorInfo) {
-            finsembleWindow.updateOptions({ options: { monitorDimensions: monitorInfo.monitorRect } });
-            if (callback) {
-                callback(monitorInfo.monitorRect);
-            }
-        });
-    }
-    /**
-     * Listens for changes in the hash and persists the change to the url property, and then saves it.
-     * @private
-     */
-    listenForHashChanges() {
-        //get url on page load.
-        finsembleWindow.updateOptions({ url: window.top.location.href }, () => {
-        });
-        var self = this;
-        //There's no pushState event in the browser. This is a monkey patched solution that allows us to catch hash changes. onhashchange doesn't fire when a site is loaded with a hash (e.g., salesforce).
-        (function (history) {
-            var pushState = history.pushState;
-            history.pushState = function (state) {
-                if (typeof history.onpushstate === "function") {
-                    history.onpushstate({ state: state });
-                }
-                pushState.apply(history, arguments);
-                finsembleWindow.updateOptions({ url: window.top.location.href }, () => {
-                });
-                return;
-            };
-            var replaceState = history.replaceState;
-            history.replaceState = function (state) {
-                if (typeof history.onreplacestate === "function") {
-                    history.onreplacestate({ state: state });
-                }
-                replaceState.apply(history, arguments);
-                finsembleWindow.updateOptions({ url: window.top.location.toString() });
-                storageClient_1.default.save({ topic: constants_1.WORKSPACE.CACHE_STORAGE_TOPIC, key: self.windowHash, value: finsembleWindow.windowOptions });
-                return;
-            };
-        })(window.history);
-        window.addEventListener("hashchange", () => {
-            finsembleWindow.updateOptions({ url: window.top.location.toString() }, () => {
-            });
-        });
-    }
-    ;
-    /**
-     * Gets the options from the window on startup and caches them on the object.
-     * @private
-     * @param {function} callback
-     */
-    getInitialOptions(callback) {
-        if (!this.isInAService) {
-            finsembleWindow.getOptions((err, options) => {
-                //err happens if the window doesn't exist in the windowService (e.g., it's a service that's included the windowClient). This will be revisited in the future, but for now we need to make sure that the system doesn't have errors.
-                if (err)
-                    options = {};
-                finsembleWindow.windowOptions = options;
-                this.options = options;
-                logger_1.default.system.verbose("WindowClient:getting options", options);
-                callback();
-            });
-        }
-        else {
-            this.options = {};
-            callback();
-        }
-    }
-    /**
-     * Gets the bounds for the window on startup and saves them to the workspace.
-     * @private
-     * @param {function} callback
-     */
-    cacheInitialBounds(callback) {
-        this.cacheBounds((bounds) => {
-            try {
-                // TODO: saveCompleteWindowState is related to addToWorkspace, not persistWindowState. This causes workspaces to fail for windows where persistWindowState is not set but addToWorkspace is.
-                if (!finsembleWindow.windowOptions.customData.foreign.components["Window Manager"].persistWindowState) {
-                    return callback();
-                }
-                finsembleWindow.updateOptions({ options: { url: window.top.location.toString() } });
-                //finsembleWindow.saveCompleteWindowState();
-                //this.saveWindowBounds(bounds, false);
-            }
-            catch (e) {
-                logger_1.default.system.warn("customData.foreign.components[\"Window Manager\" is undefined");
-            }
-            callback();
-        });
-    }
-    /**
-     * Sets initial state for the window. This data is modified on subsequent saves.
-     * @param {function} callback
-     * @private
-     */
-    setInitialWindowBounds(callback) {
-        logger_1.default.system.warn("`FSBL.Clients.WindowClient.setInitialWindowBounds is deprecated and will be removed in a future version of finsemble. Use 'getInitialOptions' and 'cacheInitialBounds' instead.");
-        async_1.parallel([
-            this.getInitialOptions,
-            this.cacheInitialBounds
-        ], callback);
-    }
-    /**
-     * Returns windowBounds as of the last save.
-     * @returns {object}
-     * @private
-     */
-    getWindowBounds() {
-        return {
-            top: finsembleWindow.windowOptions.defaultTop,
-            left: finsembleWindow.windowOptions.defaultLeft,
-            width: finsembleWindow.windowOptions.defaultWidth,
-            height: finsembleWindow.windowOptions.defaultHeight
-        };
-    }
-    /**
-     *
-     * Saves the window's state. Rarely called manually, as it's called every time your window moves.
-     * @param {Object} bounds optional param.
-     * @example <caption>The code below is the bulk of our listener for the <code>bounds-changed</code> event from the window. Every time the <code>bounds-changed</code> event is fired (when the window is resized or moved), we save the window's state. The first few lines just prevent the window from being dropped behind the toolbar.</caption>
-     *finWindow.addEventListener('disabled-frame-bounds-changed', function (bounds) {
-     * 	if (bounds.top < 45) {
-     *		finWindow.moveTo(bounds.left, 45);
-     *		return;
-     *	}
-     *	self.saveWindowBounds(bounds);
-     * @private
-     *});
-     */
-    saveWindowBounds(bounds, setActiveWorkspaceDirty) {
-        logger_1.default.system.debug("WINDOW LIFECYCLE:SavingBounds:", bounds, "setActiveWorkspaceDirty", setActiveWorkspaceDirty);
-        if (typeof setActiveWorkspaceDirty === "undefined") {
-            setActiveWorkspaceDirty = false;
-        }
-        validate_1.default.args(bounds, "object") && validate_1.default.args2("bounds.top", bounds.top, "number");
-        if (!bounds) {
-            return;
-        }
-        // openfin looks at defaultTop, terry looks at top. for some reason, when the app started fresh, the window's position was being overwritten. We also were saving the position on `defaultTop`/`defaultLeft`, and the launcherService wasn't looking for that. We may be able to get rid of the first assignment on the left, but I want terry to fully look at this.
-        finsembleWindow.updateOptions({
-            options: {
-                top: Math.round(bounds.top),
-                defaultTop: Math.round(bounds.top),
-                left: Math.round(bounds.left),
-                defaultLeft: Math.round(bounds.left),
-                width: Math.round(bounds.width),
-                defaultWidth: Math.round(bounds.width),
-                height: Math.round(bounds.height),
-                defaultHeight: Math.round(bounds.height)
-            }
-        });
-        try {
-            if (!finsembleWindow.windowOptions.customData.foreign.components["Window Manager"].persistWindowState) {
-                return;
-            }
-        }
-        catch (e) {
-            //prop doesn't exist.
-            return;
-        }
-    }
-    ;
-    /**
-     * Minimizes window.
-     * @param {function} [cb] Optional callback
-     * @example
-     * FSBL.Clients.WindowClient.minimize();
-     */
-    minimize(cb) {
-        this.cacheBounds(function () {
-            finsembleWindow.minimize(null, function (err) {
-                if (!err) {
-                    //self.windowState = "minimized";
-                }
-                else {
-                    logger_1.default.system.error("WindowClient:minimize", err);
-                }
-                if (cb) {
-                    cb(err);
-                }
-            });
-        });
-    }
-    ;
-    /**
-     * Sets whether window is always on top.
-     * @param {function} cb Optional callback
-     * @example
-     * FSBL.Clients.WindowClient.setAlwaysOnTop(true);
-     */
-    setAlwaysOnTop(alwaysOnTop, cb) {
-        finsembleWindow.updateOptions({ options: { alwaysOnTop: alwaysOnTop } }, () => {
-            if (cb)
-                cb();
-        });
-    }
-    /**
-     * Restores window from a maximized or minimized state.
-     * @param {function} cb Optional callback
-     * @example
-     * FSBL.Clients.WindowClient.restore();
-     */
-    restore(cb = (e, r) => { }) {
-        //finsembleWindow.getState((err, windowState) => {
-        finsembleWindow.restore(null, function (err) {
-            if (!err) {
-                //self.windowState = "normal";
-            }
-            else {
-                logger_1.default.system.error("WindowClient:restore", err);
-            }
-            cb(err);
-        });
-    }
-    ;
-    /**
-     * @private
-     */
-    cacheBounds(cb) {
-        this.getBounds((err, bounds) => {
-            if (err) {
-                cb();
-                return console.warn("Get bounds error.", err, "Window may not be registered with the window service");
-            }
-            finsembleWindow.updateOptions({
-                options: {
-                    cachedLeft: bounds.left,
-                    defaultLeft: bounds.left,
-                    cachedTop: bounds.top,
-                    defaultTop: bounds.top,
-                    cachedWidth: bounds.width,
-                    defaultWidth: bounds.width,
-                    cachedHeight: bounds.height,
-                    defaultHeight: bounds.height
-                }
-            });
-            if (cb) {
-                cb(bounds);
-            }
-        });
-    }
-    /**
-     * Maximizes the window. Also takes into account the application toolbar.
-     * @param {function} cb Optional callback
-     * @todo, when fixed components are a thing, make sure that maximize doesn't sit on top of them either.
-     * @example
-     * FSBL.Clients.WindowClient.maximize();
-     */
-    maximize(cb) {
-        this.cacheBounds(function () {
-            finsembleWindow.maximize();
-            //finsembleWindow.windowState = "maximized";
-            return cb();
-        });
-    }
-    /**
-     * FinWindow destructor (more or less). Removes all of the listeners that we added when the window was created.
-     * @private
-     */
-    removeFinWindowEventListeners() {
-        finsembleWindow.removeEventListener("maximized", this.onWindowMaximized);
-        finsembleWindow.removeEventListener("restored", this.onWindowRestored);
-        finsembleWindow.removeEventListener("blurred", this.onWindowBlurred);
-        finsembleWindow.removeEventListener("focused", this.onWindowFocused);
-        finsembleWindow.removeEventListener("close-requested", this.close);
-        finsembleWindow.removeEventListener("minimized", this.onWindowMinimized);
-        finsembleWindow.removeEventListener("parent-set", this.onParentSet);
-    }
-    ;
-    /**
-     * This function injects the header bar into all frameless windows that request it. This should only be used if you've decided not to use the provided <code>WindowClient.start()</code> method.
-     *
-     * **NOTE:** If you are using the finsemble windowTitleBar component, you do not need to call this function.
-     * @private
-     */
-    injectDOM(headerHeight) {
-        //for the aesthetics.
-        if (document.getElementById("FSBLHeader")) {
-            return;
-        }
-        // On slow loading components, the end user might have the opportunity to scroll the page before the window title bar is injected.
-        // This triggers a chromium bug related to elements with position:fixed. Chromium loses track of where that element actually is on
-        // the browser page. Chromium *thinks* the title bar is lower than it actually is, by the amount of pixels scrolled by the user.
-        // The fix is to force the scroll position back to zero before we inject this fixed element.
-        window.scrollTo(0, 0);
-        // Now inject the window title bar
-        var template = document.createElement("div");
-        template.innerHTML = "<div id=\"FSBLHeader\"" + (headerHeight ? " style=height:" + headerHeight : "") + "></div>";
-        document.body.insertBefore(template.firstChild, document.body.firstChild);
-    }
-    ;
-    /**
-     * Injects the windowTitleBar into the window.
-     * @param {function} cb Callback function
-     * @return {object} Reference to a RouterClient.query
-     * @private
-     */
-    injectFSBL(params, cb) {
-        //This flag is set by the launcher service. It tells us if FSBL was injected
-        this.routerClient.query(`WindowService-Request-injectTitleBar`, { config: finsembleWindow.windowOptions, titleComponent: params.component }, (err, response) => {
-            if (params.bodyMarginTop == "auto") {
-                let setHeaderHeight = () => {
-                    let header = document.getElementsByClassName("fsbl-header")[0];
-                    if (!header) { //wait for header to be rendered
-                        return setTimeout(setHeaderHeight, 100);
-                    }
-                    let headerHeight = window.getComputedStyle(header, null).getPropertyValue("height");
-                    document.body.style.marginTop = headerHeight;
-                    if (params.bumpElements && params.bumpElements.bumpBy === "auto") {
-                        params.bumpElements.bumpBy = headerHeight;
-                        this.bumpFixedElements(params.bumpElements);
-                    }
-                };
-                setHeaderHeight();
-            }
-            if (cb) {
-                cb(err, response);
-            }
-        });
-    }
-    ;
-    /**
-     * Given a field, this function retrieves app state. If no params are given you get the full state
-     * @param {object} params
-     * @param {string} [params.field] field
-     * @param {Array.<string>} [params.fields] fields
-     * @param {function} cb Callback
-     * @example <caption>The example below shows how we retrieve data to restore the layout in our charts.</caption>
-     * FSBL.Clients.WindowClient.getComponentState({
-     *	 field: 'myChartLayout',
-     * }, function (err, state) {
-     * 	importLayout(state);
-     * });
-     *
-     * FSBL.Clients.WindowClient.getComponentState({
-     * 		fields: ['myChartLayout', 'chartType'],
-     * }, function (err, state) {
-     * 	var chartType = state['chartType'];
-     * 	var myChartLayout = state['myChartLayout'];
-     * });
-     **/
-    getComponentState(params, cb) {
-        if (!params) {
-            params = {};
-        }
-        if (params.fields && !Array.isArray(params.fields)) {
-            params.fields = [params.fields];
-        }
-        validate_1.default.args(params, "object", cb, "function");
-        if (finsembleWindow) {
-            return finsembleWindow.getComponentState(params, cb);
-        }
-        logger_1.default.system.warn("Attempt to use getComponentState before component is ready or in a service");
-        //if (!finWindow) { finWindow = System.Window.getCurrent(); } //TODO: why are we checking here??
-        if (!params.windowName)
-            params.windowName = window.name; // using FSBL in services causes errors because finsembleWindow does not exist
-        var hash = this.getContainerHash(params.windowName);
-        storageClient_1.default.get({ topic: constants_1.WORKSPACE.CACHE_STORAGE_TOPIC, key: hash }, (err, response) => {
-            if (err) {
-                logger_1.default.system.error("Error retrieving window client's component state.");
-                cb(err);
-                return;
-            }
-            var data = response;
-            if (response && params.field) {
-                this.componentState = data || {};
-                cb(err, data[params.field]);
-            }
-            else if (params.fields) {
-                var respObject = {};
-                for (var i = 0; i < params.fields.length; i++) {
-                    if (data[params.fields[i]]) {
-                        respObject[params.fields[i]] = data[params.fields[i]];
-                    }
-                }
-                return cb(null, respObject);
-            }
-            else if (response) {
-                return cb(null, data);
-            }
-            else {
-                logger_1.default.system.info("WindowClient:getComponentState:error, response, params", err, response, params);
-                cb("Not found", response);
-            }
-        });
-    }
-    ;
-    /**
-     * Given a field, this function sets and persists app state.
-     * @param {object} params
-     * @param {string} [params.field] field
-     * @param {Array.<string>} [params.fields] fields
-     * @param {function} cb Callback
-     * @example <caption>The example below shows how we save our chart layout when it changes.</caption>
-     * var s = stx.exportLayout(true);
-     * //saving layout'
-     * FSBL.Clients.WindowClient.setComponentState({ field: 'myChartLayout', value: s });
-     * FSBL.Clients.WindowClient.setComponentState({ fields: [{field:'myChartLayout', value: s }, {field:'chartType', value: 'mountain'}]);
-     **/
-    setComponentState(params, cb = (e, r) => { }) {
-        validate_1.default.args(params, "object", cb, "function=") && validate_1.default.args2("params.field", params.field, "string");
-        if (finsembleWindow) {
-            return finsembleWindow.setComponentState(params, cb);
-        }
-        // using FSBL in services causes errors because finsembleWindow does not exist
-        if (!params.windowName)
-            params.windowName = window.name;
-        var hash = this.getContainerHash(params.windowName);
-        let fields = params.fields;
-        if (typeof params.field === "undefined") {
-            // If the user hasn't provided field or fields, exit.
-            if (!fields) {
-                return cb({
-                    message: "setComponentState requires a field parameter or a fields parameter. Neither were provided.",
-                    code: "invalid_arguments"
-                });
-            }
-        }
-        else {
-            fields = [{
-                    field: params.field,
-                    value: params.value
-                }];
-        }
-        for (let i = 0; i < fields.length; i++) {
-            let field = fields[i];
-            if (!field.field || !field.value) {
-                continue;
-            }
-            this.componentState[field.field] = field.value;
-        }
-        let _params = {
-            field: params.field || "",
-            value: params.value,
-            windowName: params.windowName
-        };
-        storageClient_1.default.save({ topic: constants_1.WORKSPACE.CACHE_STORAGE_TOPIC, key: hash, value: this.componentState }, function (err, response) {
-            if (cb) {
-                cb(err, response);
-            }
-        });
-    }
-    /**
-     * Given a field, this function removes it from app state.
-     * @param {object} params
-     * @param {string} [params.field] field
-     * @param {Array.<string>} [params.fields] fields
-     * @param {string} [params.windowName] The name of the window to remove component state from
-     * @param {function} [cb] Callback
-     * @example <caption>The example below shows how we remove our chart layout when it no longer needed.</caption>
-     * // remove unused state value
-     * FSBL.Clients.WindowClient.removeComponentState({ field: 'myChartLayout'});
-     * FSBL.Clients.WindowClient.removeComponentState({ fields: [{field:'myChartLayout'}, {field:'chartType'}]);
-     **/
-    async removeComponentState(params, cb = (e, r) => { }) {
-        validate_1.default.args(params, "object", cb, "function=") &&
-            validate_1.default.args2("params.field", params.field, "string");
-        const wrap = finsembleWindow || (await FinsembleWindow_1.FinsembleWindow.getInstance({ name: params.windowName || window.name }));
-        return wrap.removeComponentState(params, cb);
-    }
-    /**
-     * Gets the window name of current window or the parent, if tabbed.
-     */
-    getWindowNameForDocking() {
-        let parent = finsembleWindow.parentWindow;
-        return parent ? parent.name : finsembleWindow.name;
-    }
-    /**
-     * Gets containerHash given a containerId.
-     * @param {string} windowName The name of the window
-     * @returns {string} Hash for the window
-     * @private
-     */
-    getContainerHash(windowName) {
-        return util.camelCase(this.windowHash, windowName);
-    }
-    /**
-     * Forms a group with any window that is touching the border of this window.
-     * @private
-     */
-    formGroup() {
-        let windowName = this.getWindowNameForDocking();
-        this.routerClient.transmit("DockingService.formGroup", { windowName });
-    }
-    /**
-     * This function is critical if you want docking and snapping to work. It transmits a message to the LauncherService, which registers it as a dockable window.
-     *
-     * **NOTE:** If you are using the finsemble windowTitleBar component, you do not need to call this function.
-     * @param {object} params Parameters
-     * @param {function} cb callback
-     *
-     * @example
-     * FSBL.Clients.WindowClient.registerWithDockingManager();
-     * @private
-     */
-    registerWithDockingManager(params, cb) {
-        if (finsembleWindow.parentWindow) {
-            // TABBING TBD: need more orderly startup with state managed from just one place (StackWindowManagerService also controls register/deregister)
-            logger_1.default.system.debug("registerWithDockingManager ignore registration request if has a parent");
-            if (cb)
-                cb(); // return without error because still want component to come up
-        }
-        var windowName = finsembleWindow.name;
-        var uuid = finsembleWindow.uuid;
-        this.startedRegistrationWithDocking = true;
-        this.routerClient.query("DockingService.registerWindow", {
-            name: windowName,
-            uuid: uuid,
-            options: params || {},
-            windowType: "OpenFinWindow"
-        }, () => {
-            this.startedRegistrationWithDocking = false;
-            if (this.deregisterPlease) {
-                this.deregisterWithDockingManager();
-                this.deregisterPlease = false;
-            }
-            logger_1.default.system.debug("WINDOW LIFECYCLE: Docking Registration complete.");
-            if (cb) {
-                cb();
-            }
-        });
-    }
-    /**
-     * This function is critical if you don't want to keep references of windows in the LauncherService after they close. It simply notifies the LauncherService that the window is no longer dockable. It's invoked when the window is closed.
-     * **NOTE:** If you are using the finsemble windowTitleBar component, you do not need to call this function.
-     * @param {boolean} removeFromWorkspace true to remove from workspace
-     * @example
-     * FSBL.Clients.WindowClient.deregisterWithDockingManager();
-     * @private
-     */
-    deregisterWithDockingManager(removeFromWorkspace) {
-        if (this.startedRegistrationWithDocking) {
-            this.deregisterPlease = true;
-        }
-        var windowName = finsembleWindow.name;
-        this.routerClient.transmit("DockingService.deregisterWindow", {
-            name: windowName,
-            userInitiated: removeFromWorkspace
-        });
-    }
-    ;
-    /**
-     * @private
-     */
-    enableHotkeys() {
-        this.enableDevToolsHotkey();
-        this.enableReloadHotkey();
-    }
-    /**
-     * Helper function to display dev-tools if you disable context-menus on your chromium windows. You must call this function if you want the hotkey to work.
-     * @private
-     */
-    enableReloadHotkey() {
-        window.addEventListener("keydown", function (e) {
-            if (e.keyCode === 82 && e.altKey && e.ctrlKey) {
-                system_1.System.clearCache({
-                    cache: true,
-                    cookies: false,
-                    localStorage: false,
-                    appcache: true,
-                    userData: false
-                });
-                window.location.reload();
-            }
-        });
-    }
-    /**
-     * Helper function to display dev-tools if you disable context-menus on your chromium windows. You must call this function if you want the hotkey to work.
-     * @private
-     */
-    enableDevToolsHotkey() {
-        window.addEventListener("keydown", function (e) {
-            if (e.keyCode === 68 && e.altKey && e.ctrlKey) {
-                var application = system_1.System.Application.getCurrent();
-                application.getManifest(function (manifest) {
-                    var uuid = manifest.startup_app.uuid;
-                    var windowName = finsembleWindow.name;
-                    system_1.System.showDeveloperTools(uuid, windowName);
-                }, function (err) {
-                    logger_1.default.system.error("dev-tools", err);
-                });
-            }
-        });
-    }
-    /**
-     * Bumps top-level containers down below the windowTitleBar.
-     * @private
-     */
-    bumpFixedElements(params) {
-        if (!params || !(params.absolute || params.fixed)) {
-            return;
-        }
-        var elems = document.body.getElementsByTagName("*");
-        var len = elems.length;
-        for (var i = 0; i < len; i++) {
-            if (elems[i].id === "FSBLHeader" || elems[i].classList.contains("fsbl-header")) {
-                continue;
-            }
-            var style = window.getComputedStyle(elems[i], null), possibleZeros = ["0", "0px", 0];
-            var topStyle = style.getPropertyValue("top");
-            //only target top-level fixed/absolutely positioned containers.
-            if (params.absolute && elems[i].parentNode === document.body && style.getPropertyValue("position") == "absolute") {
-                if (params.absolute == "all") {
-                    elems[i].style.top = "calc(" + topStyle + " + " + params.bumpBy + ")";
-                }
-                else if (params.absolute == "0Positioned" && possibleZeros.includes(topStyle)) {
-                    elems[i].style.top = params.bumpBy;
-                }
-            }
-            else if (params.fixed && style.getPropertyValue("position") == "fixed") {
-                if (params.fixed == "all") {
-                    elems[i].style.top = "calc(" + topStyle + " + " + params.bumpBy + ")";
-                }
-                else if (params.fixed == "0Positioned" && possibleZeros.includes(topStyle)) {
-                    elems[i].style.top = params.bumpBy;
-                }
-            }
-        }
-    }
-    /**
-     * Forces window to sit on top of other windows.
-     * @example
-     * FSBL.Clients.WindowClient.bringWindowToFront();
-     */
-    bringWindowToFront() {
-        finsembleWindow.isShowing(function (err, isShowing) {
-            if (isShowing) {
-                finsembleWindow.bringToFront({ forceFocus: true }, function (err) {
-                    if (err) {
-                        logger_1.default.system.error("WindowClient.bringWindowToFront: failure:" + err);
-                    }
-                    else {
-                        logger_1.default.system.info("WindowClient.bringWindowToFront: success");
-                    }
-                });
-            }
-        });
-    }
-    /**
-     * The Finsemble Window Title Bar is injected if FSBLHeader: true or FSBLHeader is an object with the same items as the properties of params below as this function is in the component's config. If you want to inject the Finsemble header later, you can do so by calling this function
-     * @param {object} 	[params]
-     * @param {string} [params.component] Component to inject. Default is "windowTitleBar"
-     * @param {object} [params.bumpElements]
-     * @param {boolean|string} [params.bumpElements.fixed] Either false, "all" or "0Positioned". If all, all fixed elements are moved. 0Positioned only moves elements that have top 0. Default is all.
-     * @param {boolean|string} [params.bumpElements.absolute] Either false, "all" or "0Positioned". If all, all fixed elements are moved. 0Positioned only moves elements that have top 0. Only applies to children of the body. Default is all.
-     * @param {string} [params.bumpElements.bumpBy] Sets the amount to bump elements by (e.g. "25px"). Default is "auto" which will measure the height of the injected component when rendered.
-     * @param {string} [params.bodyMarginTop] Sets the body margin (e.g. "25px"). Default is "auto" which will measure the height of the injected component when rendered.
-     * @param {string} [params.forceHeaderHeight] Sets a height on the main FSBLHeader div. Either false or a specified height (e.g. "25px").
-     */
-    injectHeader(params, cb = () => { }) {
-        //FIXME(Terry) windowService should inject directly from a config:
-        // components."*".component.inject|preload="windowTitleBar.js" <-- set the windowTitleBar
-        // components."welcome".component.inject|preload="windowTitleBar.js" <-- override the windowTitleBar
-        // Everything from here down then goes into windowTitleBar.jsx inside FSBLReady()
-        let self = this;
-        if (this.hasHeader)
-            return;
-        this.hasHeader = true;
-        var defaultParams = {
-            component: "windowTitleBar",
-            bumpElements: {
-                fixed: "all",
-                absolute: "all",
-                bumpBy: "auto"
-            },
-            bodyMarginTop: "auto",
-            forceHeaderHeight: false
-        };
-        //this will catch true, false, or undefined.
-        if (typeof params !== "object") {
-            params = defaultParams;
-        }
-        else {
-            params = Object.assign(defaultParams, params);
-        }
-        this.injectDOM(params.forceHeaderHeight);
-        if (params.bumpElements && params.bumpElements.bumpBy !== "auto") {
-            this.bumpFixedElements(params.bumpElements);
-        }
-        if (params.bodyMarginTop && params.bodyMarginTop !== "auto") {
-            document.body.style.marginTop = params.bodyMarginTop;
-        }
-        // initialize but if child of a stacked window then don't register with docking
-        //finsembleWindow.getParent();
-        self.injectFSBL(params, cb);
-    }
-    /**
-     * @private
-     */
-    injectStylesheetOverride() {
-        var node = document.createElement("style");
-        node.type = "text/css";
-        node.appendChild(document.createTextNode(finsembleWindow.windowOptions.customData.cssOverride));
-        document.body.appendChild(node);
-    }
-    /**
-     * If we spawned this openfin app from our parent application, we listen on that application for certain events that might fire _if_ our parent goes down. If the parent goes down, we want to kill its children as well.
-     * @private
-     */
-    checkIfChildApp() {
-        if (finsembleWindow.windowOptions &&
-            finsembleWindow.windowOptions.customData &&
-            finsembleWindow.windowOptions.customData.parentUUID &&
-            finsembleWindow.windowOptions.customData.parentUUID !== system_1.System.Application.getCurrent().uuid) {
-            let parent = system_1.System.Application.wrap(finsembleWindow.windowOptions.customData.parentUUID);
-            parent.addEventListener("crashed", this.close.bind(null, false));
-            parent.addEventListener("initialized", this.close.bind(null, false));
-            parent.addEventListener("out-of-memory", this.close.bind(null, false));
-        }
-    }
-    /**
-     * Prevents the browser's default behavior of loading files/images if they're dropped anywhere in the window.
-     * If a component has a drop area that _doesn't_ preventDefault, the image/file will still be loaded.
-     * This only prevents bad behavior from happening when the user drops an image/file on part of the window that _isn't_ listening for drag/drop events (usually by accident).
-     * @private
-     */
-    preventUnintendedDropEvents() {
-        function preventDefault(e) { e.preventDefault(); }
-        window.addEventListener("dragover", preventDefault, false);
-        window.addEventListener("drop", preventDefault, false);
-    }
-    /**
-    * If the user presses windows key + left or right it causes all kinds of abhorrent behavior. This function captures the hotkeys and essentially prevents the behavior.
-    * @private
-     */
-    rejectWindowsKeyResizes() {
-        let keysDown = {};
-        //Responds to key events here in order to send router messages and determine whether a system-bounds-changed event should occur. Essentially, this is catching actions to allow Finsemble to respond to windows aero snap functionality.
-        const onKeyUp = async (e) => {
-            //If windows aero snap is disabled we check the list of captured keys and what was released to determine if an event needs to
-            //be responded to. Basically, if this is disabled, we see if a Windows Key + Left/Right was released, if so, restore from the windows new bounds
-            //which were set by the OS
-            if (this.enableWindowsAeroSnap) {
-                //If the key being released is the windows key, send a router message to docking
-                if (e.key === "Meta") {
-                    routerClientInstance_1.default.transmit("Finsemble.WindowService.WindowsKey", "up");
-                }
-            }
-            else {
-                let keys = Object.keys(keysDown);
-                //which key was just pressed.
-                let ArrowPressed = e.key === "ArrowLeft" || e.key === "ArrowRight";
-                let WindowsKeyPressed = e.key === "Meta";
-                //Which key was pressed previously.
-                let ArrowIsDown = keys.includes("ArrowLeft") || keys.includes("ArrowRight");
-                let WindowsKeyDown = keys.includes("Meta");
-                //Either we pressed the arrow first or the windows key first. Doesn't matter. Code should still work.
-                if ((ArrowIsDown && WindowsKeyPressed) || (WindowsKeyDown && ArrowPressed)) {
-                    let { data: bounds } = await finsembleWindow.getBounds();
-                    finsembleWindow.setBounds(bounds);
-                }
-                //Key isn't down any more. Delete it if it was down.
-                //Added a timeout to better handle when someone is playing Beethoven's 5th Symphony on key chords.
-                setTimeout(() => delete keysDown[e.key], 50);
-            }
-        };
-        //Store the key on our object.
-        const onKeyDown = (e) => {
-            //If windows aero snap is disabled, add this new key to the list of 'tracked' (held down) keys.
-            if (this.enableWindowsAeroSnap) {
-                //If the key being pressed is the windows key, send a message to docking
-                if (e.key === "Meta") {
-                    routerClientInstance_1.default.transmit("Finsemble.WindowService.WindowsKey", "down");
-                }
-            }
-            else {
-                keysDown[e.key] = true;
-            }
-        };
-        if (FSBL) {
-            hotkeysClient_1.default.onReady(() => {
-                //The browser's keyDown isn't capable of capturing keyChords if the first key pressed is the window's key. So we'll have to create a makeshift keystroke handler.
-                //On keydown, we grab that key. Keyup can fire for different keys, so that's where the work happens.
-                window.addEventListener("keyup", onKeyUp);
-                window.addEventListener("keydown", onKeyDown);
-            });
-        }
-    }
-    /**
-     * Adds listeners to handle hash changes and finWindow listeners.
-     * @private
-     * @param {function} cb
-     */
-    addListeners(cb = Function.prototype) {
-        var self = this;
-        this.listenForHashChanges();
-        this.preventUnintendedDropEvents();
-        this.rejectWindowsKeyResizes();
-        //FinsembleWindow listeners
-        //@todo, make the openfin window trigger an event on the finsemble window, which will emit up. we then use addListener instead of addEventListener
-        finsembleWindow.addListener("setParent", () => {
-            logger_1.default.system.info("WindowClient.setParent deregisterWithDockingManager");
-            this.deregisterWithDockingManager(); // stack takes care of this too but doesn't work at startup or workspace switch so do again here
-        });
-        finsembleWindow.addEventListener("maximized", this.onWindowMaximized);
-        finsembleWindow.addEventListener("minimized", this.onWindowMinimized);
-        finsembleWindow.addEventListener("restored", this.onWindowRestored);
-        // On Blur remove the border from window
-        finsembleWindow.addEventListener("blurred", this.onWindowBlurred);
-        // On focus add a border to the window
-        finsembleWindow.addEventListener("focused", this.onWindowFocused);
-        finsembleWindow.addEventListener("parent-set", this.onParentSet);
-        if (typeof FSBL !== "undefined") {
-            FSBL.onShutdown(() => {
-                logger_1.default.system.info("WINDOW LIFECYCLE:SHUTDOWN: FSBL.onShutdown start");
-                return new Promise((resolve) => {
-                    logger_1.default.system.debug("FSBL.onShutdown");
-                    FSBL.shutdownComplete();
-                    this.close({
-                        removeFromWorkspace: false,
-                        ignoreParent: true,
-                        closeWindow: false
-                    }, resolve);
-                });
-            });
-        }
-        cb();
-    }
-    ;
-    /**
-     * Sends a command to the header. Commands affect the header state,
-     * so that the UI reflects what is going on in the component window.
-     * @param {string} command The state object to set
-     * @param {object} state The new state (merged with existing)
-     * @private
-     */
-    updateHeaderState(command, state) {
-        if (!this.commandChannel) {
-            return;
-        }
-        this.commandChannel(command, state);
-    }
-    /**
-     * Establishes a command channel with a header. The WindowClient can
-     * update header state via this channel.
-     * @param {function} commandChannel A function callback that receives commands
-     */
-    headerCommandChannel(commandChannel) {
-        this.commandChannel = commandChannel;
-    }
-    /**
-     * Ejects the window from the docking group
-     * @private
-     */
-    ejectFromGroup() {
-        let windowName = this.getWindowNameForDocking();
-        routerClientInstance_1.default.query("DockingService.leaveGroup", {
-            name: windowName
-        }, () => { });
-    }
-    /**
-     * This function does two things:
-     *
-     * 1. It sets the window's title in the windowTitleBar component, and
-     * 2. It sets the title in the DOM.
-     *
-     * This is useful if you like to keep the window's title in sync with a piece of data (e.g., a Symbol);
-     * @param {String} title Window title.
-     * @todo Allow HTML or classes to be injected into the title.
-     * @example <caption>The code shows how you would change your window title.</caption>
-     *  FSBL.Clients.WindowClient.setWindowTitle("My Component's New Title");
-     */
-    setWindowTitle(title) {
-        validate_1.default.args(title, "string");
-        this.title = title;
-        //document.title = title;  // causes flickering in chromium 53
-        this.updateHeaderState("Main", { windowTitle: title });
-        finsembleWindow.setTitle(title);
-    }
-    /**
-     * Retrieves data that was set with {@link LauncherClient#spawn}.
-     * @return {object} The data or empty object if no data was set. *Note, this will never return null or undefined.*
-     */
-    getSpawnData() {
-        if (!this.options.customData) {
-            return {};
-        }
-        var spawnData = this.options.customData.spawnData;
-        if (typeof spawnData === "undefined") {
-            return {};
-        }
-        return spawnData;
-    }
-    ;
-    /**
-     * Returns a reference to the current window for the *component*. For most
-     * components this will just return the finWindow, but for a compound component
-     * it will return a CompoundWindow.
-     * @returns {finWindow}
-     */
-    getCurrentWindow() {
-        return system_1.System.Window.getCurrent();
-    }
-    ;
-    /**
-     * For the DOM element that has been passed in, this function returns a bounding box that is relative
-     * to the OpenFin virtual monitor space. That is, it returns the position of the DOM element on the desktop.
-     * @param {HTMLElement|string} element A selector or HTMLElement
-     * @private
-     * @todo convert to use monitor util function and make sure current bounds are correct. For some windows (e.g., toolbars/menus that don't track their own bounds because they don't have drag regions), options.default will represent the data _on spawn_, not the bounds when the function is called.
-     */
-    getDesktopBoundingBox(element) {
-        var el = element;
-        if (typeof (element) === "string") {
-            el = document.querySelector(element);
-        }
-        let box = el.getBoundingClientRect();
-        let boundingBox = {
-            top: this.options.defaultTop - box.top,
-            left: this.options.defaultLeft + box.left,
-            width: box.width,
-            height: box.height,
-            right: 0,
-            bottom: 0
-        };
-        boundingBox.right = boundingBox.left + boundingBox.width;
-        boundingBox.bottom = boundingBox.top + boundingBox.height;
-        return boundingBox;
-    }
-    /**
-     * @private
-     */
-    isPointInBox(point, box) {
-        if (!box.bottom)
-            box.bottom = box.top + box.height;
-        if (!box.right)
-            box.right = box.left + box.width;
-        return (point.x > box.left && point.x < box.right && point.y < box.bottom && point.y > box.top);
-    }
-    ;
-    /**
-     * Returns (via callback) true if the mouse is currently located (hovering) over the requested element.
-     * @param {HTMLElement|string} element The element, or a selector, to check
-     * @param {function} cb A function that returns a boolean
-     * @private
-     */
-    isMouseOverDOMElement(element, cb) {
-        var boundingBox = this.getDesktopBoundingBox(element);
-        system_1.System.getMousePosition((err, position) => {
-            cb(this.isPointInBox(position, boundingBox));
-        });
-    }
-    ;
-    /**
-     * Returns the window identifier for the current component.
-     * @returns {windowIdentifier}
-     */
-    getWindowIdentifier() {
-        var componentType = null;
-        if (this.options && this.options.customData && this.options.customData.component)
-            componentType = this.options.customData.component.type;
-        return {
-            windowName: finsembleWindow ? finsembleWindow.name : window.name,
-            uuid: finsembleWindow ? finsembleWindow.uuid : null,
-            componentType: componentType
-        };
-    }
-    ;
-    /**
-     * Highlights the window as active by creating a border around the window.
-     *
-     * @param {boolean} active  Set to false to turn off activity
-     * @private
-     */
-    setActive(active) {
-        if (active) {
-            addClass(document.documentElement, "desktop-active");
-        }
-        else {
-            removeClass(document.documentElement, "desktop-active");
-        }
-    }
-    ;
-    /**
-     * Returns the bounds for the current window.
-     * @param {function} cb
-     */
-    getBounds(cb) {
-        finsembleWindow.getBounds(function (err, bounds) {
-            cb(err, bounds);
-        });
-    }
-    ;
-    /**
-     * This is used by the Finsemble Window Title Bar when a tab is dragged for tiling or tabbing.
-     * @param {*} params - params.windowIdentifier is required.
-     * @param {*} cb
-     */
-    startTilingOrTabbing(params, cb = Function.prototype) {
-        FSBL.Clients.RouterClient.transmit("DockingService.startTilingOrTabbing", params);
-        cb();
-    }
-    ;
-    /**
-     * This is used to cancel a tabbing or tiling operation.
-     * @param {*} params - put windowIdentifier in params.windowIdentifier. If not provided, must set params.waitForIdentifier true
-     * @param {*} cb
-     */
-    cancelTilingOrTabbing(params, cb = Function.prototype) {
-        console.debug("CancelTilingOrTabbing");
-        routerClientInstance_1.default.transmit("DockingService.cancelTilingOrTabbing", params);
-        cb();
-    }
-    ;
-    /**
-     * This is used to let Finsemble know which window is being dragged. params.windowIdentifier must be the identifier of the tab being dragged. This is only used if the identifier is unknown when startTilingOrTabbing is called.
-     * @param {*} params - windowIdentifier is required
-     * @param {*} cb
-     */
-    sendIdentifierForTilingOrTabbing(params, cb = Function.prototype) {
-        FSBL.Clients.RouterClient.transmit("DockingService.identifierForTilingOrTabbing", params);
-        cb();
-    }
-    ;
-    /**
-     * This function is used by the Finsemble Window Title Bar to end tiling or tabbing.
-     * @param {*} params
-     * @param {object} params.mousePosition Where the pointer is on the screen
-     * @param {number} params.mousePosition.x X position of the pointer
-     * @param {number} params.mousePosition.y Y position of the pointer
-     * @param {boolean} allowDropOnSelf Determines whether a tab can be dropped on the window where the drag originated.
-     * @param {*} cb
-     */
-    stopTilingOrTabbing(params, cb = Function.prototype) {
-        // We both transmit and query because no stack operation should happen until this is done and there are a lot of listeners around.
-        const transmitAndQueryStop = () => {
-            routerClientInstance_1.default.query("DockingService.stopTilingOrTabbing", params, () => {
-                cb();
-            });
-            routerClientInstance_1.default.transmit("DockingService.stopTilingOrTabbing", params);
-        };
-        // Get the mouse position if not passed through for transmit to the router,
-        // If allowDropOnSelf is true, it came from a tab/window drop event. Run the callback.
-        if (!params.mousePosition) {
-            return system_1.System.getMousePosition((err, position) => {
-                params.mousePosition = position;
-                transmitAndQueryStop();
-                if (!params.allowDropOnSelf)
-                    return cb();
-            });
-        }
-        else {
-            transmitAndQueryStop();
-            if (!params.allowDropOnSelf)
-                return cb();
-        }
-    }
-    ;
-    /**
-     * Gets the stackedWindow (if this window is a child of a stacked window).
-     *
-     * If no stacked window then returns null.  But if null and params.create is set, then the stacked window will be automatically created and this window added as the first child.
-     *
-     * (Typically used by Tabbing Presentation component to manage tabs.)
-     *
-     * @param {object=} params
-     * @param {array=} params.create if true and StackedWindow isn't defined, then it will be created
-     * @param {array=} params.windowIdentifiers if creating, then can optionally specify an array of other windowIdentifiers to add to stack on creation (in addition to this window).
-     * @param {function} cb cb(err, stackedWindowIdentifier)
-     *
-     * Typically used by Tabbing Presentation component.
-     *
-     */
-    getStackedWindow(params, cb) {
-        logger_1.default.system.debug("WindowClient.getStackedWindow", params);
-        cb = cb || params;
-        params = params || {};
-        params.windowIdentifiers = params.windowIdentifiers || [];
-        if (!finsembleWindow.parentWindow && params.create) {
-            let onParentSet = (evt) => {
-                let parentName = evt.data.parentName;
-                finsembleWindow.setParent({ windowName: parentName }, (err2, windowWrapper) => {
-                    cb(err2, windowWrapper);
-                });
-                finsembleWindow.removeListener("parent-set", onParentSet);
-            };
-            finsembleWindow.addListener("parent-set", onParentSet);
-            FSBL.Clients.LauncherClient.spawn("StackedWindow", {
-                windowType: "StackedWindow", data: { windowIdentifiers: params.windowIdentifiers }, options: { newStack: true }
-            }, function (err, windowInfo) {
-                logger_1.default.system.debug("WindowClient.getStackedWindow-success", err, windowInfo);
-                if (!err) {
-                    return;
-                }
-                cb(err, null);
-            });
-        }
-        else {
-            finsembleWindow.getParent(cb);
-        }
-    }
-    /**
-     * Private copy of getMonitorInfo from LauncherClient. We have to include it here to avoid a circular reference between LauncherClient and WindowClient.
-     * @private
-     */
-    getMonitorInfo(params, cb) {
-        util.getMyWindowIdentifier((myWindowIdentifier) => {
-            if (!params.windowIdentifier) {
-                params.windowIdentifier = myWindowIdentifier;
-            }
-            this.routerClient.query("Launcher.getMonitorInfo", params, function (err, response) {
-                if (cb) {
-                    cb(err, response.data);
-                }
-            });
-        });
-    }
-    ;
-    /**
-     * Automatically resizes the height of the window to fit the full DOM of the current window..
-     * @param {object} [params]
-     * @param {object} [params.padding]
-     * @param {number} [params.padding.height] How much padding around the DOM to add to the height of the window
-     * @param {number} [params.padding.width] How much padding around the DOM to add to the width of the window
-     * @param {number} [params.maxHeight] Maximum height to make the window
-     * @param {number} [params.maxWidth] Maximum width to make the window
-     * @param {function} cb Optional callback when complete
-     */
-    fitToDOM(params, cb) {
-        var children = document.body.children;
-        var element = document.getElementsByTagName("body")[0], style = window.getComputedStyle(element), marginTop = style.getPropertyValue("margin-top"), marginBottom = style.getPropertyValue("margin-bottom");
-        var margin = parseInt(marginTop, 10) + parseInt(marginBottom, 10);
-        if (isNaN(margin))
-            margin = 0;
-        var newHeight = margin;
-        var newWidth = this.options.width;
-        for (var i = 0; i < children.length; i++) {
-            var child = children[i];
-            newHeight += child.offsetHeight + margin;
-            //elmMargin = parseInt(child.style.marginTop, 10) + parseInt(child.style.marginBottom, 10);
-        }
-        if (typeof (params) === "function") {
-            cb = params;
-            params = null;
-        }
-        if (params && params.padding) {
-            if (params.padding.height) {
-                newHeight += params.padding.height;
-            }
-            if (params.padding.width) {
-                newWidth += params.padding.width;
-            }
-        }
-        if (params && params.maxHeight && newHeight > params.maxHeight) {
-            newHeight = params.maxHeight;
-        }
-        logger_1.default.system.debug("WindowClient.FitToDOM:newHeight", newHeight, params);
-        //@todo, do this statically
-        this.getMonitorInfo({}, (err, monitorInfo) => {
-            //Logger.system.log("updates111 in here");
-            let fixBounds = true;
-            if (newHeight >= monitorInfo.unclaimedRect.height) {
-                newHeight = monitorInfo.unclaimedRect.height;
-                fixBounds = true;
-            }
-            if (newWidth >= monitorInfo.unclaimedRect.width) {
-                newWidth = monitorInfo.unclaimedRect.width;
-                fixBounds = true;
-            }
-            if (fixBounds) {
-                //bounds.x and bounds.y are null on mac. Not sure if they're set on windows, but this manifested itself with an error on macs that didn't resize.
-                logger_1.default.system.debug("WindowClient.FitToDOM:fixBounds", newHeight, newWidth);
-                finsembleWindow.getBounds((err, bounds) => {
-                    bounds.width = newWidth;
-                    bounds.height = newHeight;
-                    finsembleWindow.setBounds({ bounds }, cb);
-                });
-            }
-            else if (cb) {
-                setTimeout(cb, 0);
-            }
-        });
-    }
-    /**
-     * Kicks off all of the necessary methods for the app. It
-     * 1. Injects the header bar into the window.
-     * 2. Sets up listeners to handle close and move requests from the application.
-     * 3. Adds a listener that saves the window's state every time it's moved or resized.
-     * @param {function} callback
-     * See the [windowTitleBar tutorial](tutorial-UIComponents.html#window-title-bar) for more information.
-     * @private
-     */
-    async start(callback = Function.prototype) {
-        validate_1.default.args(callback, "function");
-        const self = this;
-        const finsembleConfig = await configClient_1.default.getValue("finsemble");
-        const deliveryMechanism = finsembleConfig.data["Window Manager"].deliveryMechanism ||
-            constants_1.DELIVERY_MECHANISM.PRELOAD;
-        let customData = null, isCompoundWindow = false, shouldInjectCSS = false, componentSupportsHeader = false;
-        //where we store componentState for the window.
-        this.componentState = {};
-        let getFinsembleWindow = (done) => {
-            FinsembleWindow_1.FinsembleWindow.getInstance({ name: this.finWindow.name, uuid: this.finWindow.uuid }, (err, response) => {
-                logger_1.default.system.debug(`FinsembleWindow.getInstance ${this.finWindow.name}`);
-                if (err == "Cannot Wrap Service Manager or Services") {
-                    this.isInAService = true;
-                    this.windowHash = util.camelCase("activeWorkspace", window.name);
-                    return done();
-                }
-                if (err || !response) {
-                    logger_1.default.system.error("wrap failure", err);
-                }
-                this.finsembleWindow = response;
-                finsembleWindow = this.finsembleWindow;
-                this.windowHash = util.camelCase("activeWorkspace", finsembleWindow.name);
-                this.addListeners();
-                this.routerClient.subscribe("Finsemble.WorkspaceService.groupUpdate", (err, res) => this.groupUpdateHandler(err, res));
-                done();
-            });
-        };
-        /**
-         * @private
-         */
-        getFinsembleWindow(() => {
-            this.retrieveMonitorDimensions();
-            this.getInitialOptions(() => {
-                //The functions above are necessary to finish initializing the windowClient. The functions below are independent of one another.
-                // Note the extra test on the names is to ignore services that are including the windowClient, which needs to be removed
-                if (!finsembleWindow || !finsembleWindow.windowOptions) {
-                    if (!this.isInAService) {
-                        logger_1.default.system.error("Something went wrong attempting to get the current window.");
-                    }
-                    return callback();
-                }
-                customData = finsembleWindow.windowOptions.customData;
-                if (customData) {
-                    isCompoundWindow = lodashGet(customData, 'window.compound', false);
-                    if (customData.cssOverride) {
-                        logger_1.default.system.debug("Window has cssOverride. See local window to inspect object");
-                        shouldInjectCSS = true;
-                    }
-                    componentSupportsHeader = !isCompoundWindow && lodashGet(customData, ['foreign', 'components', 'Window Manager', 'FSBLHeader'], false);
-                }
-                async_1.parallel([
-                    function injectCSS(done) {
-                        if (shouldInjectCSS) {
-                            self.injectStylesheetOverride();
-                        }
-                        done();
-                    },
-                    function injectHeader(done) {
-                        logger_1.default.system.debug('Will attempt to inject header.');
-                        if (componentSupportsHeader && deliveryMechanism === constants_1.DELIVERY_MECHANISM.INJECTION) {
-                            self.injectHeader(customData.foreign.components["Window Manager"].FSBLHeader, done);
-                        }
-                        else {
-                            done();
-                        }
-                    },
-                    function setupAeroSnap(done) {
-                        //Get the 'enableWindowsAeroSnap' variable from the docking config and set this windows instance
-                        configClient_1.default.getValue('finsemble', (err, config) => {
-                            if (err) {
-                                logger_1.default.system.error("Error reading windowService config from finsemble");
-                            }
-                            let aeroSnap = config.services.windowService.config.enableWindowsAeroSnap;
-                            self.enableWindowsAeroSnap = configUtil_1.ConfigUtilInstance.getDefault(config, "config.servicesConfig.docking.enableWindowsAeroSnap", aeroSnap);
-                            done();
-                        });
-                    },
-                    function registerWithDocking(done) {
-                        /**
-                         * Checks the config for a deprecated value or new value under windowService, or dockingService if windowService doesn't exist.
-                         * @param {array || string} deprecatedValues The deprecated value, if its an array, its multiple values to check for
-                         * @param {string} newValue The new value to check for if the deprecated value doesn't exist
-                         * @param {boolean} defaultVal The default value if the prop is not found under both windowService and dockingService
-                         */
-                        const checkDeprecatedAndCompare = (params) => {
-                            //Ex. params.baseString = "customData.foreign.services";
-                            //Ex. params.newPath = "windowService"
-                            //Ex. searchString = "customData.foreign.services.windowService"
-                            let searchString = params.baseString + "." + params.newPath;
-                            //Checks for new path - new properties
-                            let value = configUtil_1.ConfigUtilInstance.getDefault(customData, searchString + "." + params.newValue, null);
-                            // console.log('checked for ', searchString, '.', params.newValue, ' and result is: ', value);
-                            if (value === null) {
-                                searchString = params.baseString + "." + params.oldPath;
-                                //Checks for old path - new properties
-                                value = configUtil_1.ConfigUtilInstance.getDefault(customData, searchString + "." + params.newValue, null);
-                                // console.log('checked for ', searchString, '.', params.newValue, ' and result is: ', value);
-                                if (value === null) {
-                                    if (Array.isArray(params.oldValue)) {
-                                        for (let i = 0; i < params.oldValue.length; i++) {
-                                            let depVal = params.oldValue[i];
-                                            searchString = params.baseString + "." + params.oldPath;
-                                            value = configUtil_1.ConfigUtilInstance.getDefault(customData, searchString + "." + depVal, null);
-                                            // console.log('checked for ', searchString + "." + depVal, ' and result is: ', value);
-                                            if (value !== null)
-                                                break;
-                                        }
-                                    }
-                                    else {
-                                        searchString = params.baseString + "." + params.oldPath;
-                                        //Checks for old path - old properties
-                                        value = configUtil_1.ConfigUtilInstance.getDefault(customData, searchString + "." + params.oldValue, params.default);
-                                        // console.log('checked for ', searchString, '.', params.oldValue, ' and result is: ', value);
-                                    }
-                                }
-                            }
-                            // console.log('returning: ', value)
-                            return value;
-                        };
-                        // Additional function to register any dockable components with docking.
-                        // This will make docking aware of those dockable windows
-                        // and allow control over docking to window edges/moving windows out of claimed space
-                        if (customData && customData.component && customData.component.type !== "service") {
-                            let manageMovement = configUtil_1.ConfigUtilInstance.getDefault(customData, "customData.foreign.services.windowService.manageWindowMovement", false);
-                            if (!manageMovement) {
-                                manageMovement = configUtil_1.ConfigUtilInstance.getDefault(customData, "customData.foreign.services.dockingService.manageWindowMovement", false);
-                            }
-                            let FSBLHeader = configUtil_1.ConfigUtilInstance.getDefault(customData, "customData.foreign.components.Window Manager.FSBLHeader", false);
-                            let isDockable = configUtil_1.ConfigUtilInstance.getDefault(customData, "customData.window.dockable", false);
-                            //If 'manageWindowMovement' wasn't found, we still want to register with docking (and manage window movement) if the component isDockable or has an FSBLHeader
-                            manageMovement = manageMovement || FSBLHeader || isDockable;
-                            //Checks the config for deprecated props 'isArrangable' and 'isArrangeable'. If neither of these is found, will search 'allowAutoArrange'
-                            let autoArrange = checkDeprecatedAndCompare({
-                                baseString: "customData.foreign.services",
-                                newPath: "windowService",
-                                oldPath: "dockingService",
-                                oldValue: ["isArrangable", "isArrangeable"],
-                                newValue: "allowAutoArrange",
-                                default: manageMovement
-                            });
-                            //If the component wants its movement managed (or to be auto-arrangeable) it should register with docking
-                            let shouldRegister = manageMovement || autoArrange;
-                            if (!shouldRegister)
-                                return done();
-                            //Checks the config for deprecated prop 'ignoreSnappingRequests'. If not found, will search 'allowSnapping'.
-                            customData.window.snapping = checkDeprecatedAndCompare({
-                                baseString: "customData.foreign.services",
-                                newPath: "windowService",
-                                oldPath: "dockingService",
-                                oldValue: "ignoreSnappingRequests",
-                                newValue: "allowSnapping",
-                                default: manageMovement
-                            });
-                            //Since 'allowSnapping' is essentially 'if true enable' and 'ignoreSnappingRequests' is essentially 'if true disable' we need to toggle this value depending on what prop was found. The core code still uses 'ignoreSnappingRequests'.
-                            if (customData && customData.foreign && customData.foreign.services) {
-                                let service = customData.foreign.services.windowService !== undefined ? "windowService" : "dockingService";
-                                if (customData.foreign.services[service].ignoreSnappingRequests !== undefined) {
-                                    customData.window.snapping = !customData.foreign.services[service].ignoreSnappingRequests;
-                                }
-                            }
-                            //Checks for an ephemeral component. Ephemeral components don't snap
-                            const ephemeral = configUtil_1.ConfigUtilInstance.getDefault(customData, "customData.window.ephemeral", false);
-                            if (ephemeral && !customData.window.snapping) {
-                                customData.window.snapping = false;
-                            }
-                            //Checks the config for the deprecated prop 'ignoreTilingAndTabbingRequests'. If not found, will search 'allowTiling'.
-                            customData.window.tiling = checkDeprecatedAndCompare({
-                                baseString: "customData.foreign.services",
-                                newPath: "windowService",
-                                oldPath: "dockingService",
-                                oldValue: "ignoreTilingAndTabbingRequests",
-                                newValue: "allowTiling",
-                                default: manageMovement
-                            });
-                            //Checks the config for deprecated prop 'ignoreTilingAndTabbingRequests'. If not found, will search 'allowTabbing'.
-                            customData.window.tabbing = checkDeprecatedAndCompare({
-                                baseString: "customData.foreign.services",
-                                newPath: "windowService",
-                                oldPath: "dockingService",
-                                oldValue: "ignoreTilingAndTabbingRequests",
-                                newValue: "allowTabbing",
-                                default: manageMovement
-                            });
-                            //Since 'allowTiling'/'allowTabbing' is essentially 'if true enable' and 'ignoreTilingAndTabbingRequests' is essentially 'if true disable' we need to toggle this value depending on what prop was found.
-                            if (customData && customData.foreign && customData.foreign.services) {
-                                let service = customData.foreign.services.windowService !== undefined ? "windowService" : "dockingService";
-                                if (customData.foreign.services[service].ignoreTilingAndTabbingRequests !== undefined) {
-                                    customData.window.tiling = !customData.window.tiling;
-                                    customData.window.tabbing = !customData.window.tabbing;
-                                }
-                            }
-                            //Checks the deprecated config prop 'canGroup'. If not found, will search 'allowGrouping'.
-                            customData.window.canGroup = checkDeprecatedAndCompare({
-                                baseString: "customData.foreign.services",
-                                newPath: "windowService",
-                                oldPath: "dockingService",
-                                oldValue: "canGroup",
-                                newValue: "allowGrouping",
-                                default: manageMovement
-                            });
-                            //Checks the config for deprecated prop 'canMinimize'. If not found, will search 'allowMinimize'
-                            customData.window.canMinimize = checkDeprecatedAndCompare({
-                                baseString: "customData.foreign.services",
-                                newPath: "windowService",
-                                oldPath: "dockingService",
-                                oldValue: "canMinimize",
-                                newValue: "allowMinimize",
-                                default: undefined
-                            });
-                            /** The canMinimize and canMaximize config could be one
-                             * of two locations. In a future (4.0) version, we should
-                             * consolidate this to one location.
-                             */
-                            if (customData.window.canMinimize === undefined) {
-                                customData.window.canMinimize = customData.component.canMinimize;
-                                if (customData.window.canMinimize === undefined) {
-                                    customData.window.canMinimize = manageMovement;
-                                }
-                            }
-                            if (customData.window.canMaximize === undefined) {
-                                customData.window.canMaximize = customData.component.canMaximize;
-                                if (customData.window.canMaximize === undefined) {
-                                    customData.window.canMaximize = manageMovement;
-                                }
-                            }
-                            //Determines whether a dockable component should retrieve its state from memory, or start with default (config defined) options every time
-                            customData.window.overwriteStartDocked = configUtil_1.ConfigUtilInstance.getDefault(customData, "customData.foreign.services.workspaceService.global", false);
-                            self.registerWithDockingManager(customData.window, () => {
-                                self.cacheInitialBounds(done);
-                            });
-                        }
-                        else {
-                            return done();
-                        }
-                    }
-                ], (err, results) => callback(err, results));
-            });
-        });
-    }
-    ;
-}
-var windowClient = new WindowClient({
-    startupDependencies: {
-        services: ["storageService", "windowService"]
-    },
-    onReady: function (cb) {
-        windowClient.start(cb);
-    },
-    name: "windowClient"
-});
-exports.default = windowClient;
-
-
-/***/ }),
-/* 44 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-Object.defineProperty(exports, "__esModule", { value: true });
-/*
-Overview of how this works:
--hotkeys are added/removed via methods, passing an array of strings representing keys pressed, a handler method, and (optionally) a callback
-
--When adding a hotkey, a node js event emitter is created on the client side to trigger the hotkey handler, and a router message is sent to the service to register the key combination with the window name on the client side. Multiple hotkeys may be created for the same key combination, so long as they have different handler functions.
-
--When the service detects that all of the keys in the hotkey combination are pressed, it sends a message on the "HotkeyTriggered" channel (the method for this is "ListenForHotkeys") which contains the list of all windows registered with that hotkey combination. The client then reads the list of windows, and checks if it's one of those windows. If it is, it fires off the node js event emitter that was registered for that hotkey.
-
--Removing a hotkey clears the corresponding event emitter, and also sends a router message to the service to remove its window id from the array of windows registered for the hotkey combination - if the window is registered with that hotkey combination multiple times, it will only remove one, allowing other hotkeys on the same window with the same key combination to still be registered.
-
-*/
-const baseClient_1 = __webpack_require__(7);
-const routerClientInstance_1 = __webpack_require__(5);
-const logger_1 = __webpack_require__(0);
-const keyMap = __webpack_require__(45).dictionary;
-/** The global `window` object. We cast it to a specific interface here to be
- * explicit about what Finsemble-related properties it may have. */
-const Globals = window;
-const events_1 = __webpack_require__(12);
-var eventEmitter = new events_1.EventEmitter();
-/**
- * Translates an array representing a key combination, each element of which represents a key, using keyDict, an object containing key-value pairs where the untranslated key representations are the keys, and the translated versions ready to be used by the service are the values.
- *
- * If you'd like to create a keymap for translation, look at the values of the keymaps included in the common folder.
- * @private
- * @param {object} params
- * @param {object} params.keys array representing untranslated key representations
- * @param {object} keyDict
- */
-function translateKeys(params, keyDict = keyMap) {
-    var translatedKeys = [];
-    params.keys.forEach((key) => {
-        if (!(typeof key === "string")) {
-            return logger_1.default.system.error("FSBL.Clients.HotkeyClient - one of the keys passed into a function was not a string: ", key);
-        }
-        key = key.toLowerCase();
-        let mappedKey = keyDict[key];
-        if (mappedKey) {
-            translatedKeys.push(mappedKey);
-        }
-        else {
-            return logger_1.default.system.error(`FSBL.Clients.HotkeyClient - At least one of the key codes does not map to a supported key - registering hotkey unsuccessful. Unsupported keys: ${key}`);
-        }
-    });
-    return translatedKeys;
-}
-// Keystroke capture class taken from ChartIQ charting library
-const Keystroke = function (cb) {
-    this.cb = cb;
-    this.shift = false;
-    this.ctrl = false;
-    this.cmd = false;
-    this.capsLock = false;
-    this.initialize();
-};
-Keystroke.prototype.keyup = function (e) {
-    switch (e.key) {
-        case "Shift":
-            this.shift = false;
-            this.cb({ key: e.key, e: e, keystroke: this });
-            return;
-        case "Control":
-        case "Alt":
-            this.ctrl = false;
-            this.cb({ key: e.key, e: e, keystroke: this });
-            return;
-        case "Meta":
-        case "Win":
-            this.cmd = false;
-            this.cb({ key: e.key, e: e, keystroke: this });
-            return;
-        default:
-            break;
-    }
-    // This is where we handle the keystroke, regardless of whether we captured the key with a down or press event
-    // The exception to this is the arrow keys, which are processed in keydown
-    if (this.key)
-        this.cb({ key: this.key, e: e, keystroke: this });
-};
-Keystroke.prototype.keydown = function (e) {
-    if (this.noKeyCapture)
-        return;
-    this.key = e.key;
-    switch (e.key) {
-        case "Meta":
-        case "Win":
-            this.cmd = true;
-            break;
-        case "Shift":
-            this.shift = true;
-            break;
-        case "Control":
-        case "Alt":
-            this.ctrl = true;
-            break;
-        case "CapsLock":
-            this.capsLock = !this.capsLock;
-            break;
-        case "ArrowUp":
-        case "ArrowDown":
-        case "ArrowLeft":
-        case "ArrowRight":
-        case "Up":
-        case "Down":
-        case "Left":
-        case "Right":
-            // If you hold a key down, then keydown will repeat. These are the keys
-            // that we want to capture repeat action.
-            this.key = null;
-            this.cb({ key: e.key, e: e, keystroke: this });
-            break;
-    }
-};
-Keystroke.prototype.keypress = function (e) {
-    if (this.noKeyCapture)
-        return;
-    var keyCode = e.which;
-    if (keyCode < 32 || keyCode > 222)
-        return; // handled by keydown
-    this.key = e.key;
-};
-/**
- * initializes member functions
- * @memberof CIQ.UI.Keystroke
- */
-Keystroke.prototype.initialize = function () {
-    var self = this;
-    document.addEventListener("keyup", function (e) {
-        self.keyup(e);
-    });
-    document.addEventListener("keydown", function (e) {
-        self.downValue = e.key;
-        self.keydown(e);
-    });
-    document.addEventListener("keypress", function (e) {
-        self.keypress(e);
-    });
-    window.addEventListener("blur", function (e) {
-        self.ctrl = false;
-        self.cb({ key: "Control", e: e, keystroke: self });
-    });
-};
-// Used to keep track of which browser key combinations are registered locally
-var registeredBrowserKeys = [];
-class HotkeyClient extends baseClient_1._BaseClient {
-    constructor(params) {
-        super(params);
-        /**
-         * Automatically unregister all hotkeys when the window containing the client closes
-         * @param {function} cb
-         * @private
-         */
-        this.onClose = (cb) => {
-            this.removeAllHotkeys(cb);
-        };
-        this.keyMap = keyMap;
-        this.listenForHotkeys = this.listenForHotkeys.bind(this);
-        this.routerClient = routerClientInstance_1.default;
-        this.routerClient.onReady(this.listenForHotkeys);
-        //Local hotkeys need to only fire if the window is focused. The object below is a map of handlers passed in by the user.
-        //The keys are the handler, and the value is the wrapped method that checks for focus.
-        this.localListeners = {};
-    }
-    /**
-     *Adds a local hotkey, firing only when the window calling the method is in focus. If you execute this function more than once for the same key combination, both hotkeys will coexist, and would need to be remove separately.
-     * @param {Array.<string>} keyArr Array of strings representing hotkey key combination. We're not very picky about exactly what strings you use - for example "control", "ctrl" and "CTRL" all work for the control key.
-     * @param {function} handler Function to be executed when the hotkey combination is pressed. It is recommended that you define a variable to represent the handler function, as the same function must be passed in order to remove the hotkey.
-     * @param {function} cb Callback to be called after local hotkey is added.
-     * @example
-     * var myFunction = function () {...}
-     * FSBL.Clients.HotkeyClient.addLocalHotkey(["ctrl","shift","s"],myFunction,cb)
-     */
-    addLocalHotkey(keyArr, handler, cb = (err, response) => { }) {
-        logger_1.default.system.info("HotkeyClient.addLocalHotkey");
-        logger_1.default.system.debug("HotkeyClient.addLocalHotkey, keyArr: ", keyArr);
-        let keyString = translateKeys({ keys: keyArr }).sort().toString();
-        //We create a new function that checks focus before invoking the method.
-        //If assimilation wasn't on, we'd want to use window.addEventListener('keydown');
-        let wrap = () => {
-            if (document.hasFocus()) {
-                handler();
-            }
-        };
-        //Keep a reference to the handler so when the dev wants to remove it, we can.
-        if (!this.localListeners[keyString]) {
-            this.localListeners[keyString] = {};
-        }
-        this.localListeners[keyString][handler] = wrap;
-        eventEmitter.addListener(keyString, wrap);
-        this.routerClient.query("hotkeysService.registerGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb);
-    }
-    /**
-     *Adds a local hotkey, firing only when the window calling the method is in focus. If you execute this function more than once for the same key combination, both hotkeys will coexist, and would need to be remove separately.
-     * This function uses browser key capture, so it will work when assimilation is not running
-     * @param {Array} [keyArr] Array of strings representing hotkey key combination. We're not very picky about exactly what strings you use - for example "control", "ctrl" and "CTRL" all work for the control key.
-     * @param {function} [handler] Function to be executed when the hotkey combination is pressed. It is recommended that you define a variable to represent the handler function, as the same function must be passed in order to remove the hotkey.
-     * @param {function} cb Callback to be called after local hotkey is added.
-     * @todo Have addLocalHotkey automatically use this when assimilation is not running. Will eventually replace addLocalHotkey.
-     * @private
-     * @example
-     * var myFunction = function () {...}
-     * FSBL.Clients.HotkeyClient.addBrowserHotkey(["ctrl","shift","s"],myFunction,cb)
-     */
-    addBrowserHotkey(keyArr, handler) {
-        // Lazily create a keystroke handler for this web page if one doesn't already exist
-        if (!this.KeyStroke) {
-            this.KeyStroke = new Keystroke(function (params) {
-                let { key, keystroke } = params;
-                var myKeyArray = [key];
-                if (keystroke.ctrl)
-                    myKeyArray.push("control");
-                if (keystroke.shift)
-                    myKeyArray.push("shift");
-                if (keystroke.alt)
-                    myKeyArray.push("alt");
-                let myKeyString = myKeyArray.sort().toString();
-                registeredBrowserKeys.forEach(function (obj) {
-                    if (obj.keyString === myKeyString)
-                        obj.handler();
-                });
-            });
-        }
-        let keyString = translateKeys({ keys: keyArr }).sort().toString();
-        registeredBrowserKeys.push({ keyString: keyString, handler: handler });
-    }
-    /**
-     *Removes a local hotkey.
-     * @param {Array.<string>} keyArr Array of strings representing hotkey key combination. We're not very picky about exactly what strings you use - for example "control", "ctrl" and "CTRL" all work for the control key.
-     * @param {function} handler Handler registered for the hotkey to be removed.
-     * @param {function} cb Callback to be called after local hotkey is removed.
-     * @example
-     *
-     * FSBL.Clients.HotkeyClient.removeLocalHotkey(["ctrl","shift","s"],myFunction,cb)
-     */
-    removeLocalHotkey(keyArr, handler, cb = (err, response) => { }) {
-        logger_1.default.system.info("HotkeyClient.removeLocalHotkey");
-        logger_1.default.system.debug("HotkeyClient.removeLocalHotkey, keyArr: ", keyArr);
-        let keyString = translateKeys({ keys: keyArr }).sort().toString();
-        let wrap = this.localListeners[keyString][handler];
-        eventEmitter.removeListener(keyString, wrap);
-        this.routerClient.query("hotkeysService.unregisterGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb); //TODO: query
-    }
-    /**
-     *Adds a global hotkey, firing regardless of what window is in focus. If you execute this function more than once for the same key combination, both hotkeys will coexist, and would need to be remove separately.
-     * @param {Array.<string>} keyArr Array of strings representing hotkey key combination. We're not very picky about exactly what strings you use - for example "control", "ctrl" and "CTRL" all work for the control key.
-     * @param {function} handler Function to be executed when the hotkey combination is pressed. It is recommended that you define a variable to represent the handler function, as the same function must be passed in order to remove the hotkey.
-     * @param {function} cb Callback to be called after local hotkey is added.
-     * @example
-     * var myFunction = function () {...}
-     * FSBL.Clients.HotkeyClient.addGlobalHotkey(["ctrl","shift","s"],myFunction,cb)
-     */
-    addGlobalHotkey(keyArr, handler, cb = (err, response) => { }) {
-        logger_1.default.system.info("HotkeyClient.addGlobalHotkey");
-        logger_1.default.system.debug("HotkeyClient.addGlobalHotkey, keyArr: ", keyArr);
-        let keyString = translateKeys({ keys: keyArr }).sort().toString();
-        eventEmitter.addListener(keyString, handler);
-        this.routerClient.query("hotkeysService.registerGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb);
-    }
-    /**
-     *Removes a global hotkey.
-     * @param {Array.<string>} keyArr Array of strings representing hotkey key combination. We're not very picky about exactly what strings you use - for example "control", "ctrl" and "CTRL" all work for the control key.
-     * @param {function} handler Handler registered for the hotkey to be removed.
-     * @param {function} cb Callback to be called after local hotkey is removed.
-     * @example
-     *
-     * FSBL.Clients.HotkeyClient.removeGlobalHotkey(["ctrl","shift","s"],myFunction,cb)
-     */
-    removeGlobalHotkey(keyArr, handler, cb = (err, response) => { }) {
-        logger_1.default.system.info("HotkeyClient.removeGlobalHotkey");
-        logger_1.default.system.debug("HotkeyClient.removeGlobalHotkey, keyArr: ", keyArr);
-        let keyString = translateKeys({ keys: keyArr }).sort().toString();
-        eventEmitter.removeListener(keyString, handler);
-        this.routerClient.query("hotkeysService.unregisterGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb); //TODO: query
-    }
-    /**
-     * Not yet implemented - will return an object that contains all registered Hotkeys
-     */
-    /* getHotkeys() { //TODO: MAKE WORK
-        Logger.system.info("HotkeyClient.getHotkeys");
-        this.routerClient.transmit("hotkeysService.getRegisteredHotkeys", { request: true });
-    } */
-    /**
-     * Handler for "hotkey triggered" messages from the service, called upon client initialization.
-     * @private
-     */
-    listenForHotkeys() {
-        var self = this;
-        this.routerClient.addListener("HotkeyTriggered", function (error, response) {
-            if (error) {
-                console.error("Hotkey Channel Error: " + JSON.stringify(error));
-            }
-            else {
-                if (response.data.windows.includes(self.windowName)) { //if this is one of the windows that the service means to trigger here
-                    eventEmitter.emit(response.data.keys);
-                }
-            }
-        });
-    }
-    /**
-     * Unregister all hotkeys, both locally and service-side.
-     * @param {function} cb Optional callback function
-     *
-     */
-    removeAllHotkeys(cb) {
-        eventEmitter.removeAllListeners();
-        this.routerClient.query("hotkeysService.removeAllHotkeysForWindow", { windowName: this.windowName }, cb);
-    }
-}
-var hotkeyClient = new HotkeyClient({
-    startupDependencies: {
-        services: ["hotkeysService"]
-    },
-    onReady: function (cb) {
-        if (cb) {
-            cb();
-        }
-    },
-    name: "hotkeyClient"
-});
-// @TODO - use proper exports instead of global scope.
-Globals.Keystroke = Keystroke;
-exports.default = hotkeyClient;
-
-
-/***/ }),
-/* 45 */
-/***/ (function(module, exports) {
-
-module.exports = {"dictionary":{"0":"0","1":"1","2":"2","3":"3","4":"4","5":"5","6":"6","7":"7","8":"8","9":"9","backspace":"backspace","bs":"backspace","bksp":"backspace","tab":"tab","escape":"escape","esc":"escape","clear":"clear","enter":"enter","return":"enter","shift":"shift","shft":"shift","lshift":"shift","lshft":"shift","left shift":"shift","leftshift":"shift","rshift":"shift","rshft":"shift","right shift":"shift","rightshift":"shift","control":"control","ctrl":"control","alt":"alt","alternate":"alt","pause":"pause","caps lock":"caps lock","capslock":"caps lock","spacebar":"spacebar","space":"spacebar","space bar":"space","page up":"page up","pgup":"page up","pg up":"page up","page down":"page down","pgdn":"page down","pg dn":"page down","end":"end","home":"home","left arrow":"left arrow","left":"left arrow","up arrow":"up arrow","up":"up arrow","right arrow":"right arrow","right":"right arrow","down arrow":"down arrow","down":"down arrow","select":"select","slct":"select","print":"print","prnt":"print","execute":"execute","print screen":"print screen","printscreen":"print screen","print scrn":"print screen","printscrn":"print screen","prnt scrn":"print screen","prntscrn":"print screen","prt scrn":"print screen","prtscrn":"print screen","prt scn":"print screen","prtscn":"print screen","prt scr":"print screen","prtscr":"print screen","prt sc":"print screen","prtsc":"print screen","pr sc":"print screen","prsc":"print screen","insert":"insert","ins":"insert","delete":"delete","del":"delete","help":"help","a":"a","b":"b","c":"c","d":"d","e":"e","f":"f","g":"g","h":"h","i":"i","j":"j","k":"k","l":"l","m":"m","n":"n","o":"o","p":"p","q":"q","r":"r","s":"s","t":"t","u":"u","v":"v","w":"w","x":"x","y":"y","z":"z","windows":"windows","left windows":"windows","right windows":"windows","applications":"applications","computer sleep":"computer sleep","sleep":"computer sleep","numpad 0":"0","numpad 1":"1","numpad 2":"2","numpad 3":"3","numpad 4":"4","numpad 5":"5","numpad 6":"6","numpad 7":"7","numpad 8":"8","numpad 9":"9","f1":"f1","fn1":"f1","function 1":"f1","f2":"f2","fn2":"f2","function 2":"f2","f3":"f3","fn3":"f3","function 3":"f3","f4":"f4","fn4":"f4","function 4":"f4","f5":"f5","fn5":"f5","function 5":"f5","f6":"f6","fn6":"f6","function 6":"f6","f7":"f7","fn7":"f7","function 7":"f7","f8":"f8","fn8":"f8","function 8":"f8","f9":"f9","fn9":"f9","function 9":"f9","f10":"f10","fn10":"f10","function 10":"f10","f11":"f11","fn11":"f11","function 11":"f11","f12":"f12","fn12":"f12","function 12":"f12","f13":"f13","fn":"f13","function 13":"f13","f14":"f14","fn14":"f14","function 14":"f14","f15":"f15","fn15":"f15","function 15":"f15","f16":"f16","fn16":"f16","function 16":"f16","num lock":"num lock","numlock":"num lock","number lock":"num lock","numeric lock":"num lock","scroll lock":"scroll lock","sclk":"scroll lock","scrlk":"scroll lock","slk":"scroll lock","menu":"menu","*":"*","+":"+","-":"-","/":"/",";":";","=":"=",",":",","_":"-",".":".","`":"`","[":"[","]":"]","'":"'"},"assimilationMap":{"1":"lmb","2":"rmb","4":"mmb","8":"backspace","9":"tab","13":"enter","16":"shift","17":"control","18":"alt","19":"pause","20":"caps lock","27":"escape","32":"spacebar","33":"page up","34":"page down","35":"end","36":"home","37":"left arrow","38":"up arrow","39":"right arrow","40":"down arrow","41":"select","42":"print","43":"execute","44":"print screen","45":"insert","46":"delete","47":"help","48":"0","49":"1","50":"2","51":"3","52":"4","53":"5","54":"6","55":"7","56":"8","57":"9","65":"a","66":"b","67":"c","68":"d","69":"e","70":"f","71":"g","72":"h","73":"i","74":"j","75":"k","76":"l","77":"m","78":"n","79":"o","80":"p","81":"q","82":"r","83":"s","84":"t","85":"u","86":"v","87":"w","88":"x","89":"y","90":"z","91":"windows","92":"windows","93":"applications","95":"computer sleep","96":"0","97":"1","98":"2","99":"3","100":"4","101":"5","102":"6","103":"7","104":"8","105":"9","106":"*","107":"+","109":"-","111":"/","112":"f1","113":"f2","114":"f3","115":"f4","116":"f5","117":"f6","118":"f7","119":"f8","120":"f9","121":"f10","122":"f11","123":"f12","124":"f13","125":"f14","126":"f15","127":"f16","144":"num lock","145":"scroll lock","160":"shift","161":"shift","162":"control","163":"control","164":"alt","165":"alt","186":";","187":"=","188":",","189":"-","190":".","191":"/","192":"`","219":"[","220":"\\","221":"]","222":"\\","223":"'","//note, backtick and apostrophe":"are reversed on uk and us keyboards"}}
-
-/***/ }),
-/* 46 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const events_1 = __webpack_require__(12);
-/**
- * Notes:
- * Client calls finsembleWindow.addEventListener("event", handler)
- *
- * hander gets called with handler(FinsembleEvent)
- *
- * in the handler:
- function handler(e) {
-    if (e.delayable) {
-        e.wait();
-        function myStuff() {
-            //my stuff here
-            if (cancel && e.cancelable) {
-                e.cancel();
-            } else {
-                e.done();
-            }
-        }
-    }
-}
- *
- *
- *
- */
-/**
- * This object is passed to event handlers so they can interrupt events. This is used in conjunction with the implementation of add/remove event listeners in BaseWindow and FinsembleWindow
- */
-class FinsembleEvent extends events_1.EventEmitter {
-    constructor(params) {
-        super();
-        this.cancelable = false;
-        this.delayable = false;
-        this.delayed = false;
-        if (params.event)
-            this.event = params.event;
-        if (params.cancelable)
-            this.cancelable = true;
-        if (params.data)
-            this.data = params.data;
-        if (params.delayable)
-            this.delayable = true;
-    }
-    wait() {
-        if (this.delayable)
-            this.delayed = true;
-    }
-    cancel() {
-        if (this.cancelable) {
-            this.emit("done", {
-                canceled: true
-            });
-        }
-    }
-    done() {
-        this.emit("done", {
-            canceled: false
-        });
-    }
-    setData(data) {
-        this.data = data;
-    }
-}
-exports.FinsembleEvent = FinsembleEvent;
-
-
-/***/ }),
-/* 47 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const routerClientInstance_1 = __webpack_require__(5);
-const logger_1 = __webpack_require__(0);
-const events_1 = __webpack_require__(12);
-class WindowEventManager extends events_1.EventEmitter {
-    /**
-    * Array of events that we're subscribed to remotely. When receiving a remote event, the event manager will emit a local event.
-    * @type {WindowEventName[]}
-    * @memberof WindowEventManager
-    */
-    constructor(params) {
-        super();
-        this.windowName = params.name;
-        this.remoteEventSubscriptions = {};
-        //array of events we're listening for. to prevent multiple router listeners for the same event.
-        this.listeningFor = [];
-        this.setMaxListeners(25);
-    }
-    _addListener(event, listener) {
-        super.addListener(event, listener);
-    }
-    /**
-     * Disconnects all router listeners. Removes all listeners added to the event emitter.
-     * @memberof WindowEventManager
-     */
-    cleanup() {
-        logger_1.default.system.info("WindowEventManager.cleanup", this.windowName);
-        //removes listeners added to the event emitter.
-        this.removeAllListeners();
-        //removes listeners added to the RouterClient.
-        let eventSubscriptions = Object.keys(this.remoteEventSubscriptions);
-        logger_1.default.system.info("WRAP CLOSE. WindowEventManager.cleanup. Removing router subscriptions", this.windowName, eventSubscriptions);
-        eventSubscriptions.forEach(channelName => {
-            let handlers = this.remoteEventSubscriptions[channelName];
-            handlers.forEach(handler => {
-                routerClientInstance_1.default.removeListener(channelName, handler);
-            });
-        });
-    }
-    /**
-     * Single point of entry to the eventEmitter's `emit` method. This will be called when the router listener is fired in response to an event happening somewhere else in the system. Could also be triggered by an event fired from the underlying wrapper.
-     *
-     * @private
-     * @param {WindowEventName} eventName
-     * @param {WindowEvent | BoundsChangeEvent} data
-     * @memberof WindowEventManager
-     */
-    emitLocalEvent(eventName, data) {
-        logger_1.default.system.info("WindowEventManager.emitLocalEvent. Emitting Event", this.windowName, eventName, data);
-        this.emit(eventName, data);
-    }
-    /**
-     * Returns router channel name for a given window event + window name combination.
-     *
-     * @param {WindowEventName} eventName
-     * @returns {string}
-     * @memberof WindowEventManager
-     */
-    getChannelName(eventName) {
-        return `WindowService-Event-${this.windowName}-${eventName}`;
-    }
-    /**
-     * Adds a router listener for remote events if we are not already listening for that event. If the optional handler is passed in, will add a local event listener to be triggered the next time the event fires.
-     *
-     * @param {WindowEventName} eventName
-     * @param {Function} [handler]
-     * @memberof WindowEventManager
-     */
-    listenForRemoteEvent(eventName, handler) {
-        logger_1.default.system.debug("WindowEventManager.listenForRemoteEvent", this.windowName, eventName);
-        let channelName = this.getChannelName(eventName);
-        const remoteEventHandler = (err, response) => {
-            logger_1.default.system.debug("WindowEventManager. Received remote event", this.windowName, eventName);
-            if (err) {
-                throw new Error(err);
-            }
-            //todo need to accommodate wrap-state-changed events in here...maybe?
-            let data = { eventName, name: this.windowName };
-            if (eventName.includes("bounds") || eventName.includes("parent")) {
-                //bounds events need to push out more data than just name/eventName. ...response.data will destructure the object and copy them into this new object.
-                data = Object.assign({ eventName }, response.data);
-            }
-            if (!response.originatedHere()) {
-                logger_1.default.system.debug("WindowEventManager. Received remote event emitted", this.windowName, eventName, data);
-                this.emitLocalEvent(eventName, data);
-            }
-        };
-        //We only want one router listener per event. Otherwise, we'll emit the same event multiple times.
-        if (!this.listeningFor.includes(eventName)) {
-            this.listeningFor.push(eventName);
-            logger_1.default.system.debug("WindowEventManager.listenForRemoteEvent. Adding listener to the router", this.windowName, eventName);
-            //When the remote event is triggered, emit an event locally.
-            routerClientInstance_1.default.addListener(channelName, remoteEventHandler);
-            //If a handler is passed in, listen locally for the event to be thrown.
-            logger_1.default.system.debug("WindowEventManager.listenForRemoteEvent. Handler included, adding listener to local event emitter", this.windowName, eventName);
-            this.rememberRouterChannelForLaterRemoval(channelName, remoteEventHandler);
-        }
-    }
-    /**
-     * Convenience function to allow wrap to receive multiple remote events. Dev would then need to add a handler for each event that they care about. May not be useful.
-     *
-     * @param {WindowEventName[]} eventList
-     * @memberof WindowEventManager
-     */
-    listenForRemoteEvents(eventList) {
-        //verbose because each event will be logged in listenForRemoteEvent.
-        logger_1.default.system.verbose("WindowEventManager.listenForRemoteEvents. Listen for remote events", this.windowName, eventList);
-        eventList.forEach(eventName => {
-            this.listenForRemoteEvent(eventName);
-        });
-    }
-    /**
-     * Broadcasts an event to any event manager listening for this event.
-     *
-     * @param {WindowEventName} eventName
-     * @param {WindowEvent | BoundsChangeEvent} data
-     * @memberof WindowEventManager
-     */
-    transmitRemoteEvent(eventName, data) {
-        logger_1.default.system.debug("WindowEventManager.transmitRemoteEvent. Transmitting event to public wrappers", eventName, data);
-        let channelName = this.getChannelName(eventName);
-        routerClientInstance_1.default.transmit(channelName, data, { suppressWarnings: true });
-    }
-    /**
- * Used by the window implementations in the window service. This method will emit an event up to the local process, and transmit an event out to the rest of the system.
- * @private
- * @param {WindowEventName[]} eventName
- * @param {WindowEvent | BoundsChangeEvent} data
- * @memberof WindowEventManager
- */
-    trigger(eventName, data) {
-        logger_1.default.system.info("WindowEventManager.trigger. Event triggered. Event will be emitted locally and transmitted to public wrappers. Window Name", this.windowName, "Event name", eventName, "Event data", data);
-        //If we have data, annotate it. Otherwise, create a generic window event.
-        if (data) {
-            data.name = this.windowName;
-            data.eventName = eventName;
-        }
-        else {
-            data = {
-                name: this.windowName,
-                eventName: eventName
-            };
-        }
-        this.emitLocalEvent(eventName, data);
-        this.transmitRemoteEvent(eventName, data);
-    }
-    ;
-    /**
- * Currently we cannot have a special routerClient for every object. So this method will keep track of channel/listener combinations so we can cleanup when the wrap calls cleanup.
- *
- * @param {*} eventName
- * @param {*} handler
- * @memberof WindowEventManager
- */
-    rememberRouterChannelForLaterRemoval(channelName, handler) {
-        logger_1.default.system.debug("WindowEventManager.rememberRouterChannelForLaterRemoval.", channelName);
-        if (!this.remoteEventSubscriptions[channelName]) {
-            this.remoteEventSubscriptions[channelName] = [];
-        }
-        this.remoteEventSubscriptions[channelName].push(handler);
-    }
-    ;
-}
-exports.WindowEventManager = WindowEventManager;
-
-
-/***/ }),
-/* 48 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global, module) {/**
- * lodash (Custom Build) <https://lodash.com/>
- * Build: `lodash modularize exports="npm" -o ./`
- * Copyright jQuery Foundation and other contributors <https://jquery.org/>
- * Released under MIT license <https://lodash.com/license>
- * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
- * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
- */
-
-/** Used as the size to enable large array optimizations. */
-var LARGE_ARRAY_SIZE = 200;
-
-/** Used to stand-in for `undefined` hash values. */
-var HASH_UNDEFINED = '__lodash_hash_undefined__';
-
-/** Used as references for various `Number` constants. */
-var MAX_SAFE_INTEGER = 9007199254740991;
-
-/** `Object#toString` result references. */
-var argsTag = '[object Arguments]',
-    arrayTag = '[object Array]',
-    boolTag = '[object Boolean]',
-    dateTag = '[object Date]',
-    errorTag = '[object Error]',
-    funcTag = '[object Function]',
-    genTag = '[object GeneratorFunction]',
-    mapTag = '[object Map]',
-    numberTag = '[object Number]',
-    objectTag = '[object Object]',
-    promiseTag = '[object Promise]',
-    regexpTag = '[object RegExp]',
-    setTag = '[object Set]',
-    stringTag = '[object String]',
-    symbolTag = '[object Symbol]',
-    weakMapTag = '[object WeakMap]';
-
-var arrayBufferTag = '[object ArrayBuffer]',
-    dataViewTag = '[object DataView]',
-    float32Tag = '[object Float32Array]',
-    float64Tag = '[object Float64Array]',
-    int8Tag = '[object Int8Array]',
-    int16Tag = '[object Int16Array]',
-    int32Tag = '[object Int32Array]',
-    uint8Tag = '[object Uint8Array]',
-    uint8ClampedTag = '[object Uint8ClampedArray]',
-    uint16Tag = '[object Uint16Array]',
-    uint32Tag = '[object Uint32Array]';
-
-/**
- * Used to match `RegExp`
- * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
- */
-var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
-
-/** Used to match `RegExp` flags from their coerced string values. */
-var reFlags = /\w*$/;
-
-/** Used to detect host constructors (Safari). */
-var reIsHostCtor = /^\[object .+?Constructor\]$/;
-
-/** Used to detect unsigned integer values. */
-var reIsUint = /^(?:0|[1-9]\d*)$/;
-
-/** Used to identify `toStringTag` values supported by `_.clone`. */
-var cloneableTags = {};
-cloneableTags[argsTag] = cloneableTags[arrayTag] =
-cloneableTags[arrayBufferTag] = cloneableTags[dataViewTag] =
-cloneableTags[boolTag] = cloneableTags[dateTag] =
-cloneableTags[float32Tag] = cloneableTags[float64Tag] =
-cloneableTags[int8Tag] = cloneableTags[int16Tag] =
-cloneableTags[int32Tag] = cloneableTags[mapTag] =
-cloneableTags[numberTag] = cloneableTags[objectTag] =
-cloneableTags[regexpTag] = cloneableTags[setTag] =
-cloneableTags[stringTag] = cloneableTags[symbolTag] =
-cloneableTags[uint8Tag] = cloneableTags[uint8ClampedTag] =
-cloneableTags[uint16Tag] = cloneableTags[uint32Tag] = true;
-cloneableTags[errorTag] = cloneableTags[funcTag] =
-cloneableTags[weakMapTag] = false;
-
-/** Detect free variable `global` from Node.js. */
-var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
-
-/** Detect free variable `self`. */
-var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
-
-/** Used as a reference to the global object. */
-var root = freeGlobal || freeSelf || Function('return this')();
-
-/** Detect free variable `exports`. */
-var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
-
-/** Detect free variable `module`. */
-var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
-
-/** Detect the popular CommonJS extension `module.exports`. */
-var moduleExports = freeModule && freeModule.exports === freeExports;
-
-/**
- * Adds the key-value `pair` to `map`.
- *
- * @private
- * @param {Object} map The map to modify.
- * @param {Array} pair The key-value pair to add.
- * @returns {Object} Returns `map`.
- */
-function addMapEntry(map, pair) {
-  // Don't return `map.set` because it's not chainable in IE 11.
-  map.set(pair[0], pair[1]);
-  return map;
-}
-
-/**
- * Adds `value` to `set`.
- *
- * @private
- * @param {Object} set The set to modify.
- * @param {*} value The value to add.
- * @returns {Object} Returns `set`.
- */
-function addSetEntry(set, value) {
-  // Don't return `set.add` because it's not chainable in IE 11.
-  set.add(value);
-  return set;
-}
-
-/**
- * A specialized version of `_.forEach` for arrays without support for
- * iteratee shorthands.
- *
- * @private
- * @param {Array} [array] The array to iterate over.
- * @param {Function} iteratee The function invoked per iteration.
- * @returns {Array} Returns `array`.
- */
-function arrayEach(array, iteratee) {
-  var index = -1,
-      length = array ? array.length : 0;
-
-  while (++index < length) {
-    if (iteratee(array[index], index, array) === false) {
-      break;
-    }
-  }
-  return array;
-}
-
-/**
- * Appends the elements of `values` to `array`.
- *
- * @private
- * @param {Array} array The array to modify.
- * @param {Array} values The values to append.
- * @returns {Array} Returns `array`.
- */
-function arrayPush(array, values) {
-  var index = -1,
-      length = values.length,
-      offset = array.length;
-
-  while (++index < length) {
-    array[offset + index] = values[index];
-  }
-  return array;
-}
-
-/**
- * A specialized version of `_.reduce` for arrays without support for
- * iteratee shorthands.
- *
- * @private
- * @param {Array} [array] The array to iterate over.
- * @param {Function} iteratee The function invoked per iteration.
- * @param {*} [accumulator] The initial value.
- * @param {boolean} [initAccum] Specify using the first element of `array` as
- *  the initial value.
- * @returns {*} Returns the accumulated value.
- */
-function arrayReduce(array, iteratee, accumulator, initAccum) {
-  var index = -1,
-      length = array ? array.length : 0;
-
-  if (initAccum && length) {
-    accumulator = array[++index];
-  }
-  while (++index < length) {
-    accumulator = iteratee(accumulator, array[index], index, array);
-  }
-  return accumulator;
-}
-
-/**
- * The base implementation of `_.times` without support for iteratee shorthands
- * or max array length checks.
- *
- * @private
- * @param {number} n The number of times to invoke `iteratee`.
- * @param {Function} iteratee The function invoked per iteration.
- * @returns {Array} Returns the array of results.
- */
-function baseTimes(n, iteratee) {
-  var index = -1,
-      result = Array(n);
-
-  while (++index < n) {
-    result[index] = iteratee(index);
-  }
-  return result;
-}
-
-/**
- * Gets the value at `key` of `object`.
- *
- * @private
- * @param {Object} [object] The object to query.
- * @param {string} key The key of the property to get.
- * @returns {*} Returns the property value.
- */
-function getValue(object, key) {
-  return object == null ? undefined : object[key];
-}
-
-/**
- * Checks if `value` is a host object in IE < 9.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
- */
-function isHostObject(value) {
-  // Many host objects are `Object` objects that can coerce to strings
-  // despite having improperly defined `toString` methods.
-  var result = false;
-  if (value != null && typeof value.toString != 'function') {
-    try {
-      result = !!(value + '');
-    } catch (e) {}
-  }
-  return result;
-}
-
-/**
- * Converts `map` to its key-value pairs.
- *
- * @private
- * @param {Object} map The map to convert.
- * @returns {Array} Returns the key-value pairs.
- */
-function mapToArray(map) {
-  var index = -1,
-      result = Array(map.size);
-
-  map.forEach(function(value, key) {
-    result[++index] = [key, value];
-  });
-  return result;
-}
-
-/**
- * Creates a unary function that invokes `func` with its argument transformed.
- *
- * @private
- * @param {Function} func The function to wrap.
- * @param {Function} transform The argument transform.
- * @returns {Function} Returns the new function.
- */
-function overArg(func, transform) {
-  return function(arg) {
-    return func(transform(arg));
-  };
-}
-
-/**
- * Converts `set` to an array of its values.
- *
- * @private
- * @param {Object} set The set to convert.
- * @returns {Array} Returns the values.
- */
-function setToArray(set) {
-  var index = -1,
-      result = Array(set.size);
-
-  set.forEach(function(value) {
-    result[++index] = value;
-  });
-  return result;
-}
-
-/** Used for built-in method references. */
-var arrayProto = Array.prototype,
-    funcProto = Function.prototype,
-    objectProto = Object.prototype;
-
-/** Used to detect overreaching core-js shims. */
-var coreJsData = root['__core-js_shared__'];
-
-/** Used to detect methods masquerading as native. */
-var maskSrcKey = (function() {
-  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
-  return uid ? ('Symbol(src)_1.' + uid) : '';
-}());
-
-/** Used to resolve the decompiled source of functions. */
-var funcToString = funcProto.toString;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * Used to resolve the
- * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
- * of values.
- */
-var objectToString = objectProto.toString;
-
-/** Used to detect if a method is native. */
-var reIsNative = RegExp('^' +
-  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
-  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
-);
-
-/** Built-in value references. */
-var Buffer = moduleExports ? root.Buffer : undefined,
-    Symbol = root.Symbol,
-    Uint8Array = root.Uint8Array,
-    getPrototype = overArg(Object.getPrototypeOf, Object),
-    objectCreate = Object.create,
-    propertyIsEnumerable = objectProto.propertyIsEnumerable,
-    splice = arrayProto.splice;
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeGetSymbols = Object.getOwnPropertySymbols,
-    nativeIsBuffer = Buffer ? Buffer.isBuffer : undefined,
-    nativeKeys = overArg(Object.keys, Object);
-
-/* Built-in method references that are verified to be native. */
-var DataView = getNative(root, 'DataView'),
-    Map = getNative(root, 'Map'),
-    Promise = getNative(root, 'Promise'),
-    Set = getNative(root, 'Set'),
-    WeakMap = getNative(root, 'WeakMap'),
-    nativeCreate = getNative(Object, 'create');
-
-/** Used to detect maps, sets, and weakmaps. */
-var dataViewCtorString = toSource(DataView),
-    mapCtorString = toSource(Map),
-    promiseCtorString = toSource(Promise),
-    setCtorString = toSource(Set),
-    weakMapCtorString = toSource(WeakMap);
-
-/** Used to convert symbols to primitives and strings. */
-var symbolProto = Symbol ? Symbol.prototype : undefined,
-    symbolValueOf = symbolProto ? symbolProto.valueOf : undefined;
-
-/**
- * Creates a hash object.
- *
- * @private
- * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
- */
-function Hash(entries) {
-  var index = -1,
-      length = entries ? entries.length : 0;
-
-  this.clear();
-  while (++index < length) {
-    var entry = entries[index];
-    this.set(entry[0], entry[1]);
-  }
-}
-
-/**
- * Removes all key-value entries from the hash.
- *
- * @private
- * @name clear
- * @memberOf Hash
- */
-function hashClear() {
-  this.__data__ = nativeCreate ? nativeCreate(null) : {};
-}
-
-/**
- * Removes `key` and its value from the hash.
- *
- * @private
- * @name delete
- * @memberOf Hash
- * @param {Object} hash The hash to modify.
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function hashDelete(key) {
-  return this.has(key) && delete this.__data__[key];
-}
-
-/**
- * Gets the hash value for `key`.
- *
- * @private
- * @name get
- * @memberOf Hash
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function hashGet(key) {
-  var data = this.__data__;
-  if (nativeCreate) {
-    var result = data[key];
-    return result === HASH_UNDEFINED ? undefined : result;
-  }
-  return hasOwnProperty.call(data, key) ? data[key] : undefined;
-}
-
-/**
- * Checks if a hash value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf Hash
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function hashHas(key) {
-  var data = this.__data__;
-  return nativeCreate ? data[key] !== undefined : hasOwnProperty.call(data, key);
-}
-
-/**
- * Sets the hash `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf Hash
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the hash instance.
- */
-function hashSet(key, value) {
-  var data = this.__data__;
-  data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
-  return this;
-}
-
-// Add methods to `Hash`.
-Hash.prototype.clear = hashClear;
-Hash.prototype['delete'] = hashDelete;
-Hash.prototype.get = hashGet;
-Hash.prototype.has = hashHas;
-Hash.prototype.set = hashSet;
-
-/**
- * Creates an list cache object.
- *
- * @private
- * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
- */
-function ListCache(entries) {
-  var index = -1,
-      length = entries ? entries.length : 0;
-
-  this.clear();
-  while (++index < length) {
-    var entry = entries[index];
-    this.set(entry[0], entry[1]);
-  }
-}
-
-/**
- * Removes all key-value entries from the list cache.
- *
- * @private
- * @name clear
- * @memberOf ListCache
- */
-function listCacheClear() {
-  this.__data__ = [];
-}
-
-/**
- * Removes `key` and its value from the list cache.
- *
- * @private
- * @name delete
- * @memberOf ListCache
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function listCacheDelete(key) {
-  var data = this.__data__,
-      index = assocIndexOf(data, key);
-
-  if (index < 0) {
-    return false;
-  }
-  var lastIndex = data.length - 1;
-  if (index == lastIndex) {
-    data.pop();
-  } else {
-    splice.call(data, index, 1);
-  }
-  return true;
-}
-
-/**
- * Gets the list cache value for `key`.
- *
- * @private
- * @name get
- * @memberOf ListCache
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function listCacheGet(key) {
-  var data = this.__data__,
-      index = assocIndexOf(data, key);
-
-  return index < 0 ? undefined : data[index][1];
-}
-
-/**
- * Checks if a list cache value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf ListCache
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function listCacheHas(key) {
-  return assocIndexOf(this.__data__, key) > -1;
-}
-
-/**
- * Sets the list cache `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf ListCache
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the list cache instance.
- */
-function listCacheSet(key, value) {
-  var data = this.__data__,
-      index = assocIndexOf(data, key);
-
-  if (index < 0) {
-    data.push([key, value]);
-  } else {
-    data[index][1] = value;
-  }
-  return this;
-}
-
-// Add methods to `ListCache`.
-ListCache.prototype.clear = listCacheClear;
-ListCache.prototype['delete'] = listCacheDelete;
-ListCache.prototype.get = listCacheGet;
-ListCache.prototype.has = listCacheHas;
-ListCache.prototype.set = listCacheSet;
-
-/**
- * Creates a map cache object to store key-value pairs.
- *
- * @private
- * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
- */
-function MapCache(entries) {
-  var index = -1,
-      length = entries ? entries.length : 0;
-
-  this.clear();
-  while (++index < length) {
-    var entry = entries[index];
-    this.set(entry[0], entry[1]);
-  }
-}
-
-/**
- * Removes all key-value entries from the map.
- *
- * @private
- * @name clear
- * @memberOf MapCache
- */
-function mapCacheClear() {
-  this.__data__ = {
-    'hash': new Hash,
-    'map': new (Map || ListCache),
-    'string': new Hash
-  };
-}
-
-/**
- * Removes `key` and its value from the map.
- *
- * @private
- * @name delete
- * @memberOf MapCache
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function mapCacheDelete(key) {
-  return getMapData(this, key)['delete'](key);
-}
-
-/**
- * Gets the map value for `key`.
- *
- * @private
- * @name get
- * @memberOf MapCache
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function mapCacheGet(key) {
-  return getMapData(this, key).get(key);
-}
-
-/**
- * Checks if a map value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf MapCache
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function mapCacheHas(key) {
-  return getMapData(this, key).has(key);
-}
-
-/**
- * Sets the map `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf MapCache
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the map cache instance.
- */
-function mapCacheSet(key, value) {
-  getMapData(this, key).set(key, value);
-  return this;
-}
-
-// Add methods to `MapCache`.
-MapCache.prototype.clear = mapCacheClear;
-MapCache.prototype['delete'] = mapCacheDelete;
-MapCache.prototype.get = mapCacheGet;
-MapCache.prototype.has = mapCacheHas;
-MapCache.prototype.set = mapCacheSet;
-
-/**
- * Creates a stack cache object to store key-value pairs.
- *
- * @private
- * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
- */
-function Stack(entries) {
-  this.__data__ = new ListCache(entries);
-}
-
-/**
- * Removes all key-value entries from the stack.
- *
- * @private
- * @name clear
- * @memberOf Stack
- */
-function stackClear() {
-  this.__data__ = new ListCache;
-}
-
-/**
- * Removes `key` and its value from the stack.
- *
- * @private
- * @name delete
- * @memberOf Stack
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function stackDelete(key) {
-  return this.__data__['delete'](key);
-}
-
-/**
- * Gets the stack value for `key`.
- *
- * @private
- * @name get
- * @memberOf Stack
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function stackGet(key) {
-  return this.__data__.get(key);
-}
-
-/**
- * Checks if a stack value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf Stack
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function stackHas(key) {
-  return this.__data__.has(key);
-}
-
-/**
- * Sets the stack `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf Stack
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the stack cache instance.
- */
-function stackSet(key, value) {
-  var cache = this.__data__;
-  if (cache instanceof ListCache) {
-    var pairs = cache.__data__;
-    if (!Map || (pairs.length < LARGE_ARRAY_SIZE - 1)) {
-      pairs.push([key, value]);
-      return this;
-    }
-    cache = this.__data__ = new MapCache(pairs);
-  }
-  cache.set(key, value);
-  return this;
-}
-
-// Add methods to `Stack`.
-Stack.prototype.clear = stackClear;
-Stack.prototype['delete'] = stackDelete;
-Stack.prototype.get = stackGet;
-Stack.prototype.has = stackHas;
-Stack.prototype.set = stackSet;
-
-/**
- * Creates an array of the enumerable property names of the array-like `value`.
- *
- * @private
- * @param {*} value The value to query.
- * @param {boolean} inherited Specify returning inherited property names.
- * @returns {Array} Returns the array of property names.
- */
-function arrayLikeKeys(value, inherited) {
-  // Safari 8.1 makes `arguments.callee` enumerable in strict mode.
-  // Safari 9 makes `arguments.length` enumerable in strict mode.
-  var result = (isArray(value) || isArguments(value))
-    ? baseTimes(value.length, String)
-    : [];
-
-  var length = result.length,
-      skipIndexes = !!length;
-
-  for (var key in value) {
-    if ((inherited || hasOwnProperty.call(value, key)) &&
-        !(skipIndexes && (key == 'length' || isIndex(key, length)))) {
-      result.push(key);
-    }
-  }
-  return result;
-}
-
-/**
- * Assigns `value` to `key` of `object` if the existing value is not equivalent
- * using [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
- * for equality comparisons.
- *
- * @private
- * @param {Object} object The object to modify.
- * @param {string} key The key of the property to assign.
- * @param {*} value The value to assign.
- */
-function assignValue(object, key, value) {
-  var objValue = object[key];
-  if (!(hasOwnProperty.call(object, key) && eq(objValue, value)) ||
-      (value === undefined && !(key in object))) {
-    object[key] = value;
-  }
-}
-
-/**
- * Gets the index at which the `key` is found in `array` of key-value pairs.
- *
- * @private
- * @param {Array} array The array to inspect.
- * @param {*} key The key to search for.
- * @returns {number} Returns the index of the matched value, else `-1`.
- */
-function assocIndexOf(array, key) {
-  var length = array.length;
-  while (length--) {
-    if (eq(array[length][0], key)) {
-      return length;
-    }
-  }
-  return -1;
-}
-
-/**
- * The base implementation of `_.assign` without support for multiple sources
- * or `customizer` functions.
- *
- * @private
- * @param {Object} object The destination object.
- * @param {Object} source The source object.
- * @returns {Object} Returns `object`.
- */
-function baseAssign(object, source) {
-  return object && copyObject(source, keys(source), object);
-}
-
-/**
- * The base implementation of `_.clone` and `_.cloneDeep` which tracks
- * traversed objects.
- *
- * @private
- * @param {*} value The value to clone.
- * @param {boolean} [isDeep] Specify a deep clone.
- * @param {boolean} [isFull] Specify a clone including symbols.
- * @param {Function} [customizer] The function to customize cloning.
- * @param {string} [key] The key of `value`.
- * @param {Object} [object] The parent object of `value`.
- * @param {Object} [stack] Tracks traversed objects and their clone counterparts.
- * @returns {*} Returns the cloned value.
- */
-function baseClone(value, isDeep, isFull, customizer, key, object, stack) {
-  var result;
-  if (customizer) {
-    result = object ? customizer(value, key, object, stack) : customizer(value);
-  }
-  if (result !== undefined) {
-    return result;
-  }
-  if (!isObject(value)) {
-    return value;
-  }
-  var isArr = isArray(value);
-  if (isArr) {
-    result = initCloneArray(value);
-    if (!isDeep) {
-      return copyArray(value, result);
-    }
-  } else {
-    var tag = getTag(value),
-        isFunc = tag == funcTag || tag == genTag;
-
-    if (isBuffer(value)) {
-      return cloneBuffer(value, isDeep);
-    }
-    if (tag == objectTag || tag == argsTag || (isFunc && !object)) {
-      if (isHostObject(value)) {
-        return object ? value : {};
-      }
-      result = initCloneObject(isFunc ? {} : value);
-      if (!isDeep) {
-        return copySymbols(value, baseAssign(result, value));
-      }
-    } else {
-      if (!cloneableTags[tag]) {
-        return object ? value : {};
-      }
-      result = initCloneByTag(value, tag, baseClone, isDeep);
-    }
-  }
-  // Check for circular references and return its corresponding clone.
-  stack || (stack = new Stack);
-  var stacked = stack.get(value);
-  if (stacked) {
-    return stacked;
-  }
-  stack.set(value, result);
-
-  if (!isArr) {
-    var props = isFull ? getAllKeys(value) : keys(value);
-  }
-  arrayEach(props || value, function(subValue, key) {
-    if (props) {
-      key = subValue;
-      subValue = value[key];
-    }
-    // Recursively populate clone (susceptible to call stack limits).
-    assignValue(result, key, baseClone(subValue, isDeep, isFull, customizer, key, value, stack));
-  });
-  return result;
-}
-
-/**
- * The base implementation of `_.create` without support for assigning
- * properties to the created object.
- *
- * @private
- * @param {Object} prototype The object to inherit from.
- * @returns {Object} Returns the new object.
- */
-function baseCreate(proto) {
-  return isObject(proto) ? objectCreate(proto) : {};
-}
-
-/**
- * The base implementation of `getAllKeys` and `getAllKeysIn` which uses
- * `keysFunc` and `symbolsFunc` to get the enumerable property names and
- * symbols of `object`.
- *
- * @private
- * @param {Object} object The object to query.
- * @param {Function} keysFunc The function to get the keys of `object`.
- * @param {Function} symbolsFunc The function to get the symbols of `object`.
- * @returns {Array} Returns the array of property names and symbols.
- */
-function baseGetAllKeys(object, keysFunc, symbolsFunc) {
-  var result = keysFunc(object);
-  return isArray(object) ? result : arrayPush(result, symbolsFunc(object));
-}
-
-/**
- * The base implementation of `getTag`.
- *
- * @private
- * @param {*} value The value to query.
- * @returns {string} Returns the `toStringTag`.
- */
-function baseGetTag(value) {
-  return objectToString.call(value);
-}
-
-/**
- * The base implementation of `_.isNative` without bad shim checks.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a native function,
- *  else `false`.
- */
-function baseIsNative(value) {
-  if (!isObject(value) || isMasked(value)) {
-    return false;
-  }
-  var pattern = (isFunction(value) || isHostObject(value)) ? reIsNative : reIsHostCtor;
-  return pattern.test(toSource(value));
-}
-
-/**
- * The base implementation of `_.keys` which doesn't treat sparse arrays as dense.
- *
- * @private
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of property names.
- */
-function baseKeys(object) {
-  if (!isPrototype(object)) {
-    return nativeKeys(object);
-  }
-  var result = [];
-  for (var key in Object(object)) {
-    if (hasOwnProperty.call(object, key) && key != 'constructor') {
-      result.push(key);
-    }
-  }
-  return result;
-}
-
-/**
- * Creates a clone of  `buffer`.
- *
- * @private
- * @param {Buffer} buffer The buffer to clone.
- * @param {boolean} [isDeep] Specify a deep clone.
- * @returns {Buffer} Returns the cloned buffer.
- */
-function cloneBuffer(buffer, isDeep) {
-  if (isDeep) {
-    return buffer.slice();
-  }
-  var result = new buffer.constructor(buffer.length);
-  buffer.copy(result);
-  return result;
-}
-
-/**
- * Creates a clone of `arrayBuffer`.
- *
- * @private
- * @param {ArrayBuffer} arrayBuffer The array buffer to clone.
- * @returns {ArrayBuffer} Returns the cloned array buffer.
- */
-function cloneArrayBuffer(arrayBuffer) {
-  var result = new arrayBuffer.constructor(arrayBuffer.byteLength);
-  new Uint8Array(result).set(new Uint8Array(arrayBuffer));
-  return result;
-}
-
-/**
- * Creates a clone of `dataView`.
- *
- * @private
- * @param {Object} dataView The data view to clone.
- * @param {boolean} [isDeep] Specify a deep clone.
- * @returns {Object} Returns the cloned data view.
- */
-function cloneDataView(dataView, isDeep) {
-  var buffer = isDeep ? cloneArrayBuffer(dataView.buffer) : dataView.buffer;
-  return new dataView.constructor(buffer, dataView.byteOffset, dataView.byteLength);
-}
-
-/**
- * Creates a clone of `map`.
- *
- * @private
- * @param {Object} map The map to clone.
- * @param {Function} cloneFunc The function to clone values.
- * @param {boolean} [isDeep] Specify a deep clone.
- * @returns {Object} Returns the cloned map.
- */
-function cloneMap(map, isDeep, cloneFunc) {
-  var array = isDeep ? cloneFunc(mapToArray(map), true) : mapToArray(map);
-  return arrayReduce(array, addMapEntry, new map.constructor);
-}
-
-/**
- * Creates a clone of `regexp`.
- *
- * @private
- * @param {Object} regexp The regexp to clone.
- * @returns {Object} Returns the cloned regexp.
- */
-function cloneRegExp(regexp) {
-  var result = new regexp.constructor(regexp.source, reFlags.exec(regexp));
-  result.lastIndex = regexp.lastIndex;
-  return result;
-}
-
-/**
- * Creates a clone of `set`.
- *
- * @private
- * @param {Object} set The set to clone.
- * @param {Function} cloneFunc The function to clone values.
- * @param {boolean} [isDeep] Specify a deep clone.
- * @returns {Object} Returns the cloned set.
- */
-function cloneSet(set, isDeep, cloneFunc) {
-  var array = isDeep ? cloneFunc(setToArray(set), true) : setToArray(set);
-  return arrayReduce(array, addSetEntry, new set.constructor);
-}
-
-/**
- * Creates a clone of the `symbol` object.
- *
- * @private
- * @param {Object} symbol The symbol object to clone.
- * @returns {Object} Returns the cloned symbol object.
- */
-function cloneSymbol(symbol) {
-  return symbolValueOf ? Object(symbolValueOf.call(symbol)) : {};
-}
-
-/**
- * Creates a clone of `typedArray`.
- *
- * @private
- * @param {Object} typedArray The typed array to clone.
- * @param {boolean} [isDeep] Specify a deep clone.
- * @returns {Object} Returns the cloned typed array.
- */
-function cloneTypedArray(typedArray, isDeep) {
-  var buffer = isDeep ? cloneArrayBuffer(typedArray.buffer) : typedArray.buffer;
-  return new typedArray.constructor(buffer, typedArray.byteOffset, typedArray.length);
-}
-
-/**
- * Copies the values of `source` to `array`.
- *
- * @private
- * @param {Array} source The array to copy values from.
- * @param {Array} [array=[]] The array to copy values to.
- * @returns {Array} Returns `array`.
- */
-function copyArray(source, array) {
-  var index = -1,
-      length = source.length;
-
-  array || (array = Array(length));
-  while (++index < length) {
-    array[index] = source[index];
-  }
-  return array;
-}
-
-/**
- * Copies properties of `source` to `object`.
- *
- * @private
- * @param {Object} source The object to copy properties from.
- * @param {Array} props The property identifiers to copy.
- * @param {Object} [object={}] The object to copy properties to.
- * @param {Function} [customizer] The function to customize copied values.
- * @returns {Object} Returns `object`.
- */
-function copyObject(source, props, object, customizer) {
-  object || (object = {});
-
-  var index = -1,
-      length = props.length;
-
-  while (++index < length) {
-    var key = props[index];
-
-    var newValue = customizer
-      ? customizer(object[key], source[key], key, object, source)
-      : undefined;
-
-    assignValue(object, key, newValue === undefined ? source[key] : newValue);
-  }
-  return object;
-}
-
-/**
- * Copies own symbol properties of `source` to `object`.
- *
- * @private
- * @param {Object} source The object to copy symbols from.
- * @param {Object} [object={}] The object to copy symbols to.
- * @returns {Object} Returns `object`.
- */
-function copySymbols(source, object) {
-  return copyObject(source, getSymbols(source), object);
-}
-
-/**
- * Creates an array of own enumerable property names and symbols of `object`.
- *
- * @private
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of property names and symbols.
- */
-function getAllKeys(object) {
-  return baseGetAllKeys(object, keys, getSymbols);
-}
-
-/**
- * Gets the data for `map`.
- *
- * @private
- * @param {Object} map The map to query.
- * @param {string} key The reference key.
- * @returns {*} Returns the map data.
- */
-function getMapData(map, key) {
-  var data = map.__data__;
-  return isKeyable(key)
-    ? data[typeof key == 'string' ? 'string' : 'hash']
-    : data.map;
-}
-
-/**
- * Gets the native function at `key` of `object`.
- *
- * @private
- * @param {Object} object The object to query.
- * @param {string} key The key of the method to get.
- * @returns {*} Returns the function if it's native, else `undefined`.
- */
-function getNative(object, key) {
-  var value = getValue(object, key);
-  return baseIsNative(value) ? value : undefined;
-}
-
-/**
- * Creates an array of the own enumerable symbol properties of `object`.
- *
- * @private
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of symbols.
- */
-var getSymbols = nativeGetSymbols ? overArg(nativeGetSymbols, Object) : stubArray;
-
-/**
- * Gets the `toStringTag` of `value`.
- *
- * @private
- * @param {*} value The value to query.
- * @returns {string} Returns the `toStringTag`.
- */
-var getTag = baseGetTag;
-
-// Fallback for data views, maps, sets, and weak maps in IE 11,
-// for data views in Edge < 14, and promises in Node.js.
-if ((DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag) ||
-    (Map && getTag(new Map) != mapTag) ||
-    (Promise && getTag(Promise.resolve()) != promiseTag) ||
-    (Set && getTag(new Set) != setTag) ||
-    (WeakMap && getTag(new WeakMap) != weakMapTag)) {
-  getTag = function(value) {
-    var result = objectToString.call(value),
-        Ctor = result == objectTag ? value.constructor : undefined,
-        ctorString = Ctor ? toSource(Ctor) : undefined;
-
-    if (ctorString) {
-      switch (ctorString) {
-        case dataViewCtorString: return dataViewTag;
-        case mapCtorString: return mapTag;
-        case promiseCtorString: return promiseTag;
-        case setCtorString: return setTag;
-        case weakMapCtorString: return weakMapTag;
-      }
-    }
-    return result;
-  };
-}
-
-/**
- * Initializes an array clone.
- *
- * @private
- * @param {Array} array The array to clone.
- * @returns {Array} Returns the initialized clone.
- */
-function initCloneArray(array) {
-  var length = array.length,
-      result = array.constructor(length);
-
-  // Add properties assigned by `RegExp#exec`.
-  if (length && typeof array[0] == 'string' && hasOwnProperty.call(array, 'index')) {
-    result.index = array.index;
-    result.input = array.input;
-  }
-  return result;
-}
-
-/**
- * Initializes an object clone.
- *
- * @private
- * @param {Object} object The object to clone.
- * @returns {Object} Returns the initialized clone.
- */
-function initCloneObject(object) {
-  return (typeof object.constructor == 'function' && !isPrototype(object))
-    ? baseCreate(getPrototype(object))
-    : {};
-}
-
-/**
- * Initializes an object clone based on its `toStringTag`.
- *
- * **Note:** This function only supports cloning values with tags of
- * `Boolean`, `Date`, `Error`, `Number`, `RegExp`, or `String`.
- *
- * @private
- * @param {Object} object The object to clone.
- * @param {string} tag The `toStringTag` of the object to clone.
- * @param {Function} cloneFunc The function to clone values.
- * @param {boolean} [isDeep] Specify a deep clone.
- * @returns {Object} Returns the initialized clone.
- */
-function initCloneByTag(object, tag, cloneFunc, isDeep) {
-  var Ctor = object.constructor;
-  switch (tag) {
-    case arrayBufferTag:
-      return cloneArrayBuffer(object);
-
-    case boolTag:
-    case dateTag:
-      return new Ctor(+object);
-
-    case dataViewTag:
-      return cloneDataView(object, isDeep);
-
-    case float32Tag: case float64Tag:
-    case int8Tag: case int16Tag: case int32Tag:
-    case uint8Tag: case uint8ClampedTag: case uint16Tag: case uint32Tag:
-      return cloneTypedArray(object, isDeep);
-
-    case mapTag:
-      return cloneMap(object, isDeep, cloneFunc);
-
-    case numberTag:
-    case stringTag:
-      return new Ctor(object);
-
-    case regexpTag:
-      return cloneRegExp(object);
-
-    case setTag:
-      return cloneSet(object, isDeep, cloneFunc);
-
-    case symbolTag:
-      return cloneSymbol(object);
-  }
-}
-
-/**
- * Checks if `value` is a valid array-like index.
- *
- * @private
- * @param {*} value The value to check.
- * @param {number} [length=MAX_SAFE_INTEGER] The upper bounds of a valid index.
- * @returns {boolean} Returns `true` if `value` is a valid index, else `false`.
- */
-function isIndex(value, length) {
-  length = length == null ? MAX_SAFE_INTEGER : length;
-  return !!length &&
-    (typeof value == 'number' || reIsUint.test(value)) &&
-    (value > -1 && value % 1 == 0 && value < length);
-}
-
-/**
- * Checks if `value` is suitable for use as unique object key.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is suitable, else `false`.
- */
-function isKeyable(value) {
-  var type = typeof value;
-  return (type == 'string' || type == 'number' || type == 'symbol' || type == 'boolean')
-    ? (value !== '__proto__')
-    : (value === null);
-}
-
-/**
- * Checks if `func` has its source masked.
- *
- * @private
- * @param {Function} func The function to check.
- * @returns {boolean} Returns `true` if `func` is masked, else `false`.
- */
-function isMasked(func) {
-  return !!maskSrcKey && (maskSrcKey in func);
-}
-
-/**
- * Checks if `value` is likely a prototype object.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a prototype, else `false`.
- */
-function isPrototype(value) {
-  var Ctor = value && value.constructor,
-      proto = (typeof Ctor == 'function' && Ctor.prototype) || objectProto;
-
-  return value === proto;
-}
-
-/**
- * Converts `func` to its source code.
- *
- * @private
- * @param {Function} func The function to process.
- * @returns {string} Returns the source code.
- */
-function toSource(func) {
-  if (func != null) {
-    try {
-      return funcToString.call(func);
-    } catch (e) {}
-    try {
-      return (func + '');
-    } catch (e) {}
-  }
-  return '';
-}
-
-/**
- * This method is like `_.clone` except that it recursively clones `value`.
- *
- * @static
- * @memberOf _
- * @since 1.0.0
- * @category Lang
- * @param {*} value The value to recursively clone.
- * @returns {*} Returns the deep cloned value.
- * @see _.clone
- * @example
- *
- * var objects = [{ 'a': 1 }, { 'b': 2 }];
- *
- * var deep = _.cloneDeep(objects);
- * console.log(deep[0] === objects[0]);
- * // => false
- */
-function cloneDeep(value) {
-  return baseClone(value, true, true);
-}
-
-/**
- * Performs a
- * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
- * comparison between two values to determine if they are equivalent.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to compare.
- * @param {*} other The other value to compare.
- * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
- * @example
- *
- * var object = { 'a': 1 };
- * var other = { 'a': 1 };
- *
- * _.eq(object, object);
- * // => true
- *
- * _.eq(object, other);
- * // => false
- *
- * _.eq('a', 'a');
- * // => true
- *
- * _.eq('a', Object('a'));
- * // => false
- *
- * _.eq(NaN, NaN);
- * // => true
- */
-function eq(value, other) {
-  return value === other || (value !== value && other !== other);
-}
-
-/**
- * Checks if `value` is likely an `arguments` object.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an `arguments` object,
- *  else `false`.
- * @example
- *
- * _.isArguments(function() { return arguments; }());
- * // => true
- *
- * _.isArguments([1, 2, 3]);
- * // => false
- */
-function isArguments(value) {
-  // Safari 8.1 makes `arguments.callee` enumerable in strict mode.
-  return isArrayLikeObject(value) && hasOwnProperty.call(value, 'callee') &&
-    (!propertyIsEnumerable.call(value, 'callee') || objectToString.call(value) == argsTag);
-}
-
-/**
- * Checks if `value` is classified as an `Array` object.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an array, else `false`.
- * @example
- *
- * _.isArray([1, 2, 3]);
- * // => true
- *
- * _.isArray(document.body.children);
- * // => false
- *
- * _.isArray('abc');
- * // => false
- *
- * _.isArray(_.noop);
- * // => false
- */
-var isArray = Array.isArray;
-
-/**
- * Checks if `value` is array-like. A value is considered array-like if it's
- * not a function and has a `value.length` that's an integer greater than or
- * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
- * @example
- *
- * _.isArrayLike([1, 2, 3]);
- * // => true
- *
- * _.isArrayLike(document.body.children);
- * // => true
- *
- * _.isArrayLike('abc');
- * // => true
- *
- * _.isArrayLike(_.noop);
- * // => false
- */
-function isArrayLike(value) {
-  return value != null && isLength(value.length) && !isFunction(value);
-}
-
-/**
- * This method is like `_.isArrayLike` except that it also checks if `value`
- * is an object.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an array-like object,
- *  else `false`.
- * @example
- *
- * _.isArrayLikeObject([1, 2, 3]);
- * // => true
- *
- * _.isArrayLikeObject(document.body.children);
- * // => true
- *
- * _.isArrayLikeObject('abc');
- * // => false
- *
- * _.isArrayLikeObject(_.noop);
- * // => false
- */
-function isArrayLikeObject(value) {
-  return isObjectLike(value) && isArrayLike(value);
-}
-
-/**
- * Checks if `value` is a buffer.
- *
- * @static
- * @memberOf _
- * @since 4.3.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a buffer, else `false`.
- * @example
- *
- * _.isBuffer(new Buffer(2));
- * // => true
- *
- * _.isBuffer(new Uint8Array(2));
- * // => false
- */
-var isBuffer = nativeIsBuffer || stubFalse;
-
-/**
- * Checks if `value` is classified as a `Function` object.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a function, else `false`.
- * @example
- *
- * _.isFunction(_);
- * // => true
- *
- * _.isFunction(/abc/);
- * // => false
- */
-function isFunction(value) {
-  // The use of `Object#toString` avoids issues with the `typeof` operator
-  // in Safari 8-9 which returns 'object' for typed array and other constructors.
-  var tag = isObject(value) ? objectToString.call(value) : '';
-  return tag == funcTag || tag == genTag;
-}
-
-/**
- * Checks if `value` is a valid array-like length.
- *
- * **Note:** This method is loosely based on
- * [`ToLength`](http://ecma-international.org/ecma-262/7.0/#sec-tolength).
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
- * @example
- *
- * _.isLength(3);
- * // => true
- *
- * _.isLength(Number.MIN_VALUE);
- * // => false
- *
- * _.isLength(Infinity);
- * // => false
- *
- * _.isLength('3');
- * // => false
- */
-function isLength(value) {
-  return typeof value == 'number' &&
-    value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
-}
-
-/**
- * Checks if `value` is the
- * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
- * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an object, else `false`.
- * @example
- *
- * _.isObject({});
- * // => true
- *
- * _.isObject([1, 2, 3]);
- * // => true
- *
- * _.isObject(_.noop);
- * // => true
- *
- * _.isObject(null);
- * // => false
- */
-function isObject(value) {
-  var type = typeof value;
-  return !!value && (type == 'object' || type == 'function');
-}
-
-/**
- * Checks if `value` is object-like. A value is object-like if it's not `null`
- * and has a `typeof` result of "object".
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
- * @example
- *
- * _.isObjectLike({});
- * // => true
- *
- * _.isObjectLike([1, 2, 3]);
- * // => true
- *
- * _.isObjectLike(_.noop);
- * // => false
- *
- * _.isObjectLike(null);
- * // => false
- */
-function isObjectLike(value) {
-  return !!value && typeof value == 'object';
-}
-
-/**
- * Creates an array of the own enumerable property names of `object`.
- *
- * **Note:** Non-object values are coerced to objects. See the
- * [ES spec](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
- * for more details.
- *
- * @static
- * @since 0.1.0
- * @memberOf _
- * @category Object
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of property names.
- * @example
- *
- * function Foo() {
- *   this.a = 1;
- *   this.b = 2;
- * }
- *
- * Foo.prototype.c = 3;
- *
- * _.keys(new Foo);
- * // => ['a', 'b'] (iteration order is not guaranteed)
- *
- * _.keys('hi');
- * // => ['0', '1']
- */
-function keys(object) {
-  return isArrayLike(object) ? arrayLikeKeys(object) : baseKeys(object);
-}
-
-/**
- * This method returns a new empty array.
- *
- * @static
- * @memberOf _
- * @since 4.13.0
- * @category Util
- * @returns {Array} Returns the new empty array.
- * @example
- *
- * var arrays = _.times(2, _.stubArray);
- *
- * console.log(arrays);
- * // => [[], []]
- *
- * console.log(arrays[0] === arrays[1]);
- * // => false
- */
-function stubArray() {
-  return [];
-}
-
-/**
- * This method returns `false`.
- *
- * @static
- * @memberOf _
- * @since 4.13.0
- * @category Util
- * @returns {boolean} Returns `false`.
- * @example
- *
- * _.times(2, _.stubFalse);
- * // => [false, false]
- */
-function stubFalse() {
-  return false;
-}
-
-module.exports = cloneDeep;
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(13)(module)))
-
-/***/ }),
-/* 49 */,
-/* 50 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-Object.defineProperty(exports, "__esModule", { value: true });
-const baseClient_1 = __webpack_require__(7);
-const Util = __webpack_require__(8);
-const validate_1 = __webpack_require__(6);
-const logger_1 = __webpack_require__(0);
-const constants_1 = __webpack_require__(11);
-/**
- * @introduction
- * <h2>Workspace Client</h2>
- * ----------
- * The Workspace Client manages all calls to load, save, rename, and delete workspaces. For an overview, please read the [Workspace tutorial](tutorial-Workspaces.html).
- *
- * @hideConstructor true
- * @constructor
- * @summary You don't need to ever invoke the constructor. This is done for you when WindowClient is added to the FSBL object.
- */
-class WorkspaceClient extends baseClient_1._BaseClient {
-    constructor(params) {
-        super(params);
-        /**
-            * List of all workspaces within the application.
-            * @type {Array.<Object>}
-            */
-        this.workspaces = [];
-        //Backward Compatibility
-        this.setWorkspaces = this.setWorkspaceOrder;
-        /**
-         * @private
-         */
-        this.createNewWorkspace = this.createWorkspace; //Backward Compatibility
-        this.getWorkspaceDefinition = this.export; //Backward Compatibility
-        this.addWorkspaceDefinition = this.import; //Backward Compatibility
-        this.saveWorkspaceTemplateToConfigFile = this.exportToFile;
-        validate_1.default.args(params, "object=") && params && validate_1.default.args2("params.onReady", params.onReady, "function=");
-    }
-    // Helper function to handle response from service
-    _serviceResponseHandler(err, response, resolve, reject, cb = Function.prototype) {
-        if (err) {
-            reject(new Error(err));
-            return cb(err);
-        }
-        if (!response)
-            response = { data: null };
-        resolve(response.data);
-        cb(null, response.data);
-    }
-    /// CORE SAVE API - Currently Private. Eventually these will handle all saves. Workspace will just be a data provider.
-    /**
-     * Saves Data Globally to the Active Workspace (e.g. ComponentState, WindowList etc.)
-     * @param {object} params
-     * @param {string} params.field
-     * @param {object} params.value
-     * @param {FinsembleCallbackFunction} cb
-     */
-    saveGlobalData(params, cb) {
-        logger_1.default.system.debug("WorkspaceClient.saveGlobalData", params);
-        const saveGlobalDataPromiseResolver = (resolve, reject) => {
-            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SAVE_GLOBAL_DATA, params, (err, response) => {
-                this._serviceResponseHandler(err, response, resolve, reject, cb);
-            });
-        };
-        return new Promise(saveGlobalDataPromiseResolver);
-    }
-    /**
-     * Saves View Specific Data (e.g. ComponentState, WindowList etc.) to the Currently Active Workspace View or all Views
-     * When a window state changes, on
-     * @param {object} params
-     * @param {string} params.field
-     * @param {object} params.value
-     * @param {boolean} params.saveToAllViews
-     * @param {FinsembleCallbackFunction} cb
-     */
-    saveViewData(params, cb) {
-        logger_1.default.system.debug("WorkspaceClient.saveViewData", params);
-        const saveViewDataPromiseResolver = (resolve, reject) => {
-            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SAVE_VIEW_DATA, params, (err, response) => {
-                this._serviceResponseHandler(err, response, resolve, reject, cb);
-            });
-        };
-        return new Promise(saveViewDataPromiseResolver);
-    }
-    // This is unnecessary. Window Service should call SaveGlobalData, saveViewData
-    /**
-     * Adds window to active workspace.
-     * @private
-     * @param {object} params
-     * @param {string} params.name Window name
-     * @param {function} cb Callback
-     */
-    addWindow(params, cb = Function.prototype) {
-        validate_1.default.args(params, "object", cb, "function=") && params && validate_1.default.args2("params.name", params.name, "string");
-        this.routerClient.query("WorkspaceService.addWindow", params, (err, response) => {
-            logger_1.default.system.log(`WORKSPACE LIFECYCLE: Window added:WorkspaceClient.addWindow: Name (${params.name})`);
-            cb(err, response);
-        });
-    }
-    /**
-     * Removes window from active workspace.
-     * @private
-     * @param {object} params
-     * @param {string} params.name Window name
-     * @param {function} cb Callback
-     * @example <caption>This method removes a window from a workspace. It is rarely called by the developer. It is called when a window that is using the window manager is closed. That way, the next time the app is loaded, that window is not spawned.</caption>
-     * FSBL.Clients.WorkspaceClient.removeWindow({name:windowName}, function(err, response){
-     * 	//do something after removing the window.
-     * });
-     */
-    removeWindow(params, cb = Function.prototype) {
-        validate_1.default.args(params, "object", cb, "function=") && validate_1.default.args2("params.name", params.name, "string");
-        this.routerClient.query("WorkspaceService.removeWindow", params, (err, response) => {
-            if (err) {
-                return logger_1.default.system.error(err);
-            }
-            logger_1.default.system.log(`WORKSPACE LIFECYCLE:WorkspaceClient.removeWindow:Window removed: Name (${params.name})`);
-            if (response) {
-                cb(err, response.data);
-            }
-            else {
-                cb(err, null);
-            }
-        });
-    }
-    // Window Related Workspace Functions. Eventually these need to move to the Window Service
-    /**
-     * AutoArranges windows.
-     * @param {object} params Parameters
-     * @param {string} params.monitor Same options as {@link LauncherClient#showWindow}. Default is monitor of calling window.
-     * @param {function} cb Callback
-     * @example
-     * FSBL.Clients.WorkspaceClient.autoArrange(function(err, response){
-     * 		//do something after the auto-arrange, maybe make all of the windows flash or notify the user that their monitor is now tidy.
-     * });
-     */
-    autoArrange(params, cb = Function.prototype) {
-        validate_1.default.args(params, "object", cb, "function=");
-        params = params ? params : {};
-        Util.getMyWindowIdentifier((myWindowIdentifier) => {
-            FSBL.Clients.LauncherClient.getMonitorInfo({
-                windowIdentifier: myWindowIdentifier
-            }, (err, dimensions) => {
-                params.monitorDimensions = dimensions.unclaimedRect;
-                params.monitorDimensions.name = dimensions.name;
-                this.routerClient.query("DockingService.autoArrange", params, cb);
-            });
-        });
-    }
-    /**
-     * Minimizes all windows.
-     * @param {object} params
-     * @param {string} 	[params.monitor="all"] Same options as {@link LauncherClient#showWindow} except that "all" will work for all monitors. Defaults to all.
-     * @param {function} cb Callback.
-     * @example
-     * FSBL.Clients.WorkspaceClient.bringWindowsToFront();
-     */
-    minimizeAll(params, cb = Function.prototype) {
-        validate_1.default.args(params, "object", cb, "function=");
-        params = params ? params : { monitor: "all" };
-        Util.getMyWindowIdentifier((myWindowIdentifier) => {
-            if (!params.windowIdentifier) {
-                params.windowIdentifier = myWindowIdentifier;
-            }
-            this.routerClient.query("WorkspaceService.minimizeAll", params, cb);
-        });
-    }
-    /**
-     * Brings all windows to the front.
-     * @param {object} params
-     * @param {string} 	params.monitor Same options as {@link LauncherClient#showWindow} except that "all" will work for all monitors. Defaults to the monitor for the current window.
-     * @param {function} cb Callback.
-     * @example
-     * FSBL.Clients.WorkspaceClient.bringWindowsToFront();
-     */
-    bringWindowsToFront(params, cb = Function.prototype) {
-        validate_1.default.args(params, "object", cb, "function=");
-        params = params ? params : { monitor: "all" };
-        Util.getMyWindowIdentifier((myWindowIdentifier) => {
-            if (!params.windowIdentifier) {
-                params.windowIdentifier = myWindowIdentifier;
-            }
-            this.routerClient.query("WorkspaceService.bringWindowsToFront", params, cb);
-        });
-    }
-    /**
-     * Gets the currently active workspace.
-     * @param {function} cb Callback
-     * @example <caption>This function is useful for setting the initial state of a menu or dialog. It is used in the toolbar component to set the initial state.</caption>
-     *
-     * FSBL.Clients.WorkspaceClient.getActiveWorkspace((err, response) => {
-     * 	//setState is a React component method.
-     * 	self.setState({
-     * 		workspaces: response
-     * 	});
-     * });
-     */
-    async getActiveWorkspace(cb) {
-        logger_1.default.system.debug("WorkspaceClient.getActiveWorkspace");
-        const result = (await this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.GET_ACTIVE_WORKSPACE, {})).response;
-        this.activeWorkspace = result.data;
-        if (result.data.err) {
-            if (cb)
-                cb(result.data.err);
-            throw new Error(result.data.err);
-        }
-        if (cb)
-            cb(null, result);
-        return result;
-    }
-    /**
-     * Returns the list of saved workspaces.
-     * @param {function} cb Callback
-     * @example <caption>This function is useful for setting the initial state of a menu or dialog.</caption>
-     *
-     * FSBL.Clients.WorkspaceClient.getActiveWorkspace((err, response) => {
-     * 	//setState is a React component method.
-     * 	self.setState({
-     * 		workspaces: response
-     * 	});
-     * });
-     */
-    getWorkspaces(cb) {
-        validate_1.default.args(cb, "function=");
-        logger_1.default.system.debug("WorkspaceClient.getWorkspaces");
-        const getWorkspacesPromiseResolver = (resolve, reject) => {
-            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.GET_WORKSPACES, {}, (err, response) => {
-                this._serviceResponseHandler(err, response, resolve, reject, cb);
-            });
-        };
-        return new Promise(getWorkspacesPromiseResolver);
-    }
-    /**
-     * @private
-     *
-     * @param {*} params
-     * @param {*} cb
-     * @returns
-     * @memberof WorkspaceClient
-     */
-    setWorkspaceOrder(params, cb) {
-        let { workspaces } = params;
-        validate_1.default.args(cb, "function");
-        logger_1.default.system.debug("WorkspaceClient.setWorkspaceOrder", params);
-        const setWorkspaceOrderPromiseResolver = (resolve, reject) => {
-            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SET_WORKSPACE_ORDER, params.workspaces || params, (err, response) => {
-                this._serviceResponseHandler(err, response, resolve, reject, cb);
-            });
-        };
-        return new Promise(setWorkspaceOrderPromiseResolver);
-    }
-    /**
-     * Removes a workspace. Either the workspace object or its name must be provided.
-     * @param {object} params
-     * @param {Object} 	params.workspace Workspace
-     * @param {string} 	params.name Workspace Name
-     * @param {function} cb Callback to fire after 'Finsemble.WorkspaceService.update' is transmitted.
-     * @example <caption>This function removes 'My Workspace' from the main menu and the default storage tied to the application.</caption>
-     * FSBL.Clients.WorkspaceClient.remove({
-     * 	name: 'My Workspace'
-     * }, function(err, response) {
-     * 	//You typically won't do anything here. If you'd like to do something when a workspace change happens, we suggest listening on the `Finsemble.WorkspaceService.update` channel.
-     * });
-     */
-    remove(params, cb = Function.prototype) {
-        validate_1.default.args(params, "object", cb, "function=") && !(params.name || params.workspace) && validate_1.default.args2("params.name", params.name, "string");
-        logger_1.default.system.debug("WorkspaceClient.remove", params);
-        const removePromiseResolver = (resolve, reject) => {
-            if (!params.name) {
-                params.name = params.workspace.name;
-                // we dont need to send workspace objects over the router if not needed.
-                delete params.workspace;
-            }
-            // Cannot remove active workspace.
-            if (params.name === this.activeWorkspace.name) {
-                logger_1.default.system.error("APPLICATION LIFECYCLE:  Cannot remove active workspace: WorkspaceClient.remove:attempt to remove active workspace name:" + this.activeWorkspace.name);
-                let err = "Cannot remove active workspace";
-                return this._serviceResponseHandler(err, null, resolve, reject, cb);
-            }
-            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.REMOVE, params, (err, response) => {
-                this._serviceResponseHandler(err, response, resolve, reject, cb);
-            });
-        };
-        return new Promise(removePromiseResolver);
-    }
-    /**
-     * Renames the workspace with the provided name. Also removes all references in storage to the old workspace's name.
-     * @param {object} params
-     * @param {string} params.oldName Name of workspace to rename.
-     * @param {string} params.newName What to rename the workspace to.
-     * @param {boolean} params.removeOldWorkspace Whether to remove references to old workspace after renaming.
-     * @param {boolean} params.overwriteExisting Whether to overwrite an existing workspace.
-     * @param {function} cb Callback
-     * @example <caption>This method is used to rename workspaces. It is used in the main Menu component.</caption>
-     * FSBL.Clients.WorkspaceClient.rename({
-     * 	oldName: 'My Workspace',
-     * 	newName: 'The best workspace',
-     * 	removeOldWorkspace: true,
-     * }, function(err, response){
-     * 	//Do something.
-     * });
-     */
-    rename(params, cb = Function.prototype) {
-        validate_1.default.args(params, "object", cb, "function=") && validate_1.default.args2("params.oldName", params.oldName, "string", "params.newName", params.newName, "string");
-        logger_1.default.system.debug("WorkspaceClient.rename", params);
-        const renamePromiseResolver = (resolve, reject) => {
-            if (!params.overwriteExisting && this.workspaceExists(params.newName)) {
-                let err = "Workspace Already Exists";
-                return this._serviceResponseHandler(err, null, resolve, reject, cb);
-            }
-            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.RENAME, params, (err, response) => {
-                this._serviceResponseHandler(err, response, resolve, reject, cb);
-            });
-        };
-        return new Promise(renamePromiseResolver);
-    }
-    /**
-     * Makes a clone (i.e. copy) of the workspace.  The active workspace is not affected.
-     * @private
-     * @param {object} params
-     * @param {string} params.name Name of workspace to clone.
-     * @param {string} params.newName Name of workspace to clone.
-     * @param {function} cb cb(err,response) with response set to the name of the cloned workspace if no error
-     * @example <caption>This method is used to clone workspaces. </caption>
-     * FSBL.Clients.WorkspaceClient.clone({
-     * 	name: 'The best workspace'
-     * }, function(err, response){
-     * 	//Do something.
-     * });
-     */
-    // Keeping for backward compatibility
-    clone(params, cb = Function.prototype) {
-        validate_1.default.args(params, "object", cb, "function=") && validate_1.default.args2("params.name", params.name, "string");
-        delete params.name;
-        if (!params.newName) {
-            params.newName = params.name + "_clone";
-        }
-        params.removeOldWorkspace = false;
-        return this.rename({
-            removeOldWorkspace: false,
-            newName: params.newName,
-            oldName: params.name
-        }, cb);
-    }
-    ;
-    /**
-     * Saves the currently saved workspace. Changes to the <code>activeWorkspace</code> are made on every change automatically.
-     * @param {function} cb Callback
-     * @example <caption>This function persists the currently active workspace.</caption>
-     * FSBL.Clients.WorkspaceClient.save(function(err, response){
-     * 	//Do something.
-     * });
-     */
-    save(cb = Function.prototype) {
-        logger_1.default.system.debug("WorkspaceClient.save");
-        const savePromiseResolver = (resolve, reject) => {
-            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SAVE, {}, (err, response) => {
-                this._serviceResponseHandler(err, response, resolve, reject, cb);
-            });
-        };
-        return new Promise(savePromiseResolver);
-    }
-    /**
-     * Helper that tells us whether a workspace with this name exists.
-     * @private
-     */
-    workspaceExists(workspaceName) {
-        validate_1.default.args(workspaceName, "string");
-        for (var i = 0; i < this.workspaces.length; i++) {
-            if (workspaceName === this.workspaces[i].name) {
-                return true;
-            }
-        }
-        return false;
-    }
-    /**
-     *
-     * Saves the currently active workspace with the provided name.
-     * @param {object} params
-     * @param {string} params.name new name to save workspace under.
-     * @param {string} params.force Whether to overwrite a workspace already saved with the provided name.
-     * @param {function} cb Callback
-     * @example <caption>This function persists the currently active workspace with the provided name.</caption>
-     * FSBL.Clients.WorkspaceClient.saveAs({
-     * 	name: 'My Workspace',
-     * }, function(err, response){
-     * 	//Do something.
-     * });
-     */
-    saveAs(params, cb = Function.prototype) {
-        validate_1.default.args(params, "object", cb, "function=") && validate_1.default.args2("params.name", params.name, "string");
-        logger_1.default.system.debug("WorkspaceClient.saveAs", params);
-        const saveAsPromiseResolver = (resolve, reject) => {
-            if (!params.force && this.workspaceExists(params.name)) {
-                return this._serviceResponseHandler("Workspace Already Exists", null, resolve, reject, cb);
-            }
-            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SAVE_AS, params, (err, response) => {
-                this._serviceResponseHandler(err, response, resolve, reject, cb);
-            });
-        };
-        return new Promise(saveAsPromiseResolver);
-    }
-    /**
-     * Switches to a workspace.
-     * @param {object} params
-     * @param {string} 	params.name Workspace Name
-     * @param {function} cb Callback
-     * @example <caption>This function loads the workspace 'My Workspace' from the storage tied to the application.</caption>
-     * FSBL.Clients.WorkspaceClient.switchTo({
-     * 	name: 'My Workspace',
-     * }, function(err, response){
-     * 	//Do something.
-     * });
-     */
-    async switchTo(params, cb = Function.prototype) {
-        validate_1.default.args(params, "object", cb, "function") && validate_1.default.args2("params.name", params.name, "string");
-        logger_1.default.system.debug("WorkspaceClient.switchTo", params);
-        const result = await this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SWITCH_TO, params);
-        if (result.err) {
-            cb(result.err, null);
-            throw new Error(result.err);
-        }
-        cb(result);
-        return result;
-    }
-    /**
-     * @private
-     * ALPHA - Subject to breaking change in coming minor releases.
-     * Sets the stored state of a given window in the active workspace. `state` may include
-     * keys for `windowData`, `componentState`, or both; the state of each key will be completely
-     * overwritten by the provided state. If the update results in dirtying change, the active
-     * workspace will be marked dirty (or, if autosave is on, persisted directly to storage).
-     */
-    async _setWindowState(params) {
-        logger_1.default.system.debug("WorkspaceClient.setWindowData", params);
-        return this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SET_WINDOW_STATE, params);
-    }
-    /**
-     * @private
-     * ALPHA - Subject to breaking change in coming minor releases.
-     * Retrieves the given window from storage, retrieving the requested state variables
-     * (`"componentState"` and/or `"windowData"`).
-     */
-    async _getWindowState(params) {
-        logger_1.default.system.debug("WorkspaceClient.getWindowData", params);
-        return this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.GET_WINDOW_STATE, params);
-    }
-    /**
-     * Checks to see if the workspace is dirty. If it's already dirty, the window doesn't need to compare its state to the saved state.
-     * @param {Function} Callback cb(err,response) with response set to true if dirty and false otherwise (when no error)
-     * @example <caption>This function will let you know if the activeWorkspace is dirty.</caption>
-     * FSBL.Clients.WorkspaceClient.isWorkspaceDirty(function(err, response){
-     * 		//Do something like prompt the user if they'd like to save the currently loaded workspace before switching.
-     * });
-     */
-    isWorkspaceDirty(cb) {
-        validate_1.default.args(cb, "function");
-        logger_1.default.system.debug("WorkspaceClient.isWorkspaceDirty");
-        const isWorkspaceDirtyPromiseResolver = (resolve, reject) => {
-            this._serviceResponseHandler(null, { data: this.activeWorkspace.isDirty }, resolve, reject, cb);
-        };
-        return new Promise(isWorkspaceDirtyPromiseResolver);
-    }
-    /**
-     * Creates a new workspace, returning a promise for the final name of
-     * the new workspace as a string. After creation, if "switchAfterCreation" is true,
-     * the new workspace becomes the active workspace.
-     *
-     * If the requested name already exists, a new workspace will be created
-     * with the form "[name] (1)" (or "[name] (2)", etc.)
-     *
-     * @param {String} workspaceName Name for new workspace.
-     * @param {Object} params Optional params
-     * @param {boolean} params.switchAfterCreation Whether to switch to the new workspace after creating it.
-     * @param {Function} cb cb(err,response) With response, set to new workspace object if no error.
-     * @example <caption>This function creates the workspace 'My Workspace'.</caption>
-     * FSBL.Clients.WorkspaceClient.createWorkspace(function(err, response){
-     *		if (!err) {}
-     *			//Do something like notify the user that the workspace has been created.
-     *		}
-     * });
-     */
-    async createWorkspace(workspaceName, params, cb = (err, result) => { }) {
-        logger_1.default.system.log(`WorkspaceClient: Creating Workspace Request for name "${workspaceName}"`);
-        const finalName = (await this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.NEW_WORKSPACE, { workspaceName })).response.data;
-        if (params.switchAfterCreation !== false) {
-            await this.switchTo({ name: finalName });
-        }
-        const result = { workspaceName: finalName };
-        cb(null, result);
-        return result;
-    }
-    /**
-     * Gets a workspace definition in JSON form.
-     *
-     * @param {object} params
-     * @param {string} params.workspaceName the workspace name
-     * @param {function} cb callback(error,workspaceDefinition)
-     */
-    export(params, cb) {
-        validate_1.default.args(params, "object", cb, "function") && validate_1.default.args2("params.workspaceName", params.workspaceName, "string");
-        logger_1.default.system.debug("WorkspaceClient.export", params);
-        const exportPromiseResolver = (resolve, reject) => {
-            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.EXPORT, params, (err, response) => {
-                let workspaceExport = {};
-                workspaceExport[params.workspaceName] = response.data;
-                this._serviceResponseHandler(err, { data: workspaceExport }, resolve, reject, cb);
-            });
-        };
-        return new Promise(exportPromiseResolver);
-    }
-    /**
-     * Adds a workspace definition to the list of available workspaces.
-     *
-     * @param {object} params
-     * @param {object} params.workspaceJSONDefinition JSON for workspace definition
-     * @param {function=} cb cb(err) where the operation was successful if !err; otherwise, err carries diagnostics
-     *
-     */
-    async import(params, cb) {
-        validate_1.default.args(params, "object", cb, "function=") && validate_1.default.args2("params.workspaceJSONDefinition", params.workspaceJSONDefinition, "object");
-        logger_1.default.system.debug("WorkspaceClient.import", params);
-        const result = (await this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.IMPORT, params)).response.data;
-        if (result.err) {
-            cb(result.err);
-            throw new Error(result.err);
-        }
-        if (cb)
-            cb(null, result);
-        return result;
-    }
-    /**
-     * Saves one mor more template defintions in a selected file. Note the
-     * end user is prompted to identify file location during this save
-     * operation. The file can optionally be imported during config
-     * initialization (see importConfig) although this requires administration
-     * support on the configuration/server side. The file can also be read
-     * using readWorkspaceTemplateFromConfigFile();
-     *
-     * @param {object} params
-     * @param {object} params.workspaceTemplateDefinition legal template definition returned by either
-     * getWorkspaceTemplateDefinition() or convertWorkspaceDefinitionToTemplate()
-     * @private
-     */
-    exportToFile(params) {
-        // TODO: Make it possible to export both workspaces and templates.
-        logger_1.default.system.info("workspaceClient.saveWorkspaceTemplateToConfigFile", params);
-        validate_1.default.args(params, "object") && validate_1.default.args2("params.workspaceTemplateDefinition", params.workspaceTemplateDefinition, "object");
-        var workspaceTemplateDefinition = params.workspaceTemplateDefinition;
-        if (typeof workspaceTemplateDefinition === "object") {
-            var templateName = Object.keys(workspaceTemplateDefinition)[0];
-            if (templateName && workspaceTemplateDefinition[templateName].templateDefinitionFlag) { // confirm the object is a template definition
-                var exportConfig = { workspaceTemplates: workspaceTemplateDefinition };
-                FSBL.ConfigUtils.promptAndSaveJSONToLocalFile("workspaceConfig-" + templateName, exportConfig);
-            }
-            else {
-                logger_1.default.system.error("workspaceClient.saveWorkspaceTemplateToConfigFile. Input is not a legal template");
-            }
-        }
-        else {
-            logger_1.default.system.error("workspaceClient.saveWorkspaceTemplateToConfigFile: Input is not a legal object");
-        }
-    }
-    /**
-     * Initializes listeners and sets default data on the WorkspaceClient object.
-     * @private
-     */
-    async start(cb) {
-        /**
-         * Initializes the workspace's state.
-         */
-        this.routerClient.subscribe("Finsemble.WorkspaceService.update", (err, response) => {
-            logger_1.default.system.debug("workspaceClient init subscribe response", err, response);
-            if (err) {
-                logger_1.default.system.error(err);
-                return;
-            }
-            this.activeWorkspace = response.data.activeWorkspace;
-            this.workspaces = response.data.workspaces;
-            if (cb) {
-                cb();
-            }
-        });
-    }
-}
-var workspaceClient = new WorkspaceClient({
-    startupDependencies: {
-        services: ["workspaceService"],
-        clients: []
-    },
-    onReady: (cb) => {
-        workspaceClient.start(cb);
-    },
-    name: "workspaceClient"
-});
-exports.default = workspaceClient;
-
-
-/***/ }),
-/* 51 */,
-/* 52 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {var __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -42112,6 +34447,8050 @@ exports.default = workspaceClient;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(13)(module)))
 
 /***/ }),
+/* 35 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const routerClientInstance_1 = __webpack_require__(5);
+const logger_1 = __webpack_require__(0);
+const distributedStoreClient_1 = __webpack_require__(33);
+const storageClient_1 = __webpack_require__(21);
+const util = __webpack_require__(8);
+const WindowEventManager_1 = __webpack_require__(48);
+const constants = __webpack_require__(10);
+const FinsembleEvent_1 = __webpack_require__(47);
+const system_1 = __webpack_require__(3);
+/** This import syntax helps the compiler infer the types. */
+const clone = __webpack_require__(49);
+distributedStoreClient_1.default.initialize();
+storageClient_1.default.initialize();
+const BOUNDS_SET = "bounds-set";
+const BOUNDS_CHANGING = "bounds-change-request";
+const BOUNDS_CHANGED = "bounds-changed";
+if (!window._FSBLCache)
+    window._FSBLCache = {
+        storeClientReady: false,
+        windowStore: null,
+        windows: {},
+        gettingWindow: [],
+        windowAttempts: {}
+    };
+function retrieveManifestPromise() {
+    return new Promise((resolve, reject) => {
+        system_1.System.Application.getCurrent().getManifest(resolve, reject);
+    });
+}
+class FinsembleWindow {
+    constructor(params) {
+        this.eventlistenerHandlerMap = {};
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Handlers to generate wrapper events from incoming transmits
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        this.handleWrapStateChange = (err, response) => {
+            let state = response.data.state;
+            if (state !== this.wrapState) {
+                this.wrapState = state;
+                // 5/1/19: JoeC. Eventmanager wasn't throwing ready event, so all ready listeners would never fire
+                if (this.wrapState === "ready") {
+                    this.eventManager.emit('ready');
+                }
+                this.eventManager.emit("wrap-state-changed", {
+                    state
+                });
+            }
+        };
+        this.types = {};
+        //todo settle on a proper name for this property.
+        this.wrapState = "initializing";
+        this.componentState = {};
+        this.windowState = FinsembleWindow.WINDOWSTATE.NORMAL;
+        this.type = null;
+        this.windowType = null;
+        this.bounds = {};
+        this.name;
+        this.guid = Date.now() + "_" + Math.random();
+        this.addListener = this.addEventListener;
+        this.removeListener = this.removeEventListener;
+        this.WINDOWSTATE = constants.WINDOWSTATE;
+        this.windowOptions = {};
+        //because we were doing this[i]=params[i] in the constructor jscrambler was creating a reference to "this" above _super_, causing everything to break and it made me cry.
+        this.doConstruction(params);
+        this.eventManager = new WindowEventManager_1.WindowEventManager({ name: this.name });
+        this.TITLE_CHANGED_CHANNEL = "Finsemble." + this.name + ".titleChanged";
+        this.componentKey = util.camelCase("activeWorkspace", this.name, this.name);
+        this.windowKey = util.camelCase("activeWorkspace", this.name);
+        FinsembleWindow.bindFunctions(this);
+        this.setupListeners(this.name);
+        this.listenForEvents();
+    }
+    //allows backwards compatibility.
+    standardizeEventName(event) {
+        switch (event) {
+            //all of these should be deprecated in 3.5ish.
+            case "bounds-set":
+            case "stoppedMoving":
+                return "bounds-change-end";
+            case "startedMoving":
+                return "bounds-change-start";
+            case "bringToFront":
+                return "broughtToFront";
+            case "setParent":
+                return "parent-set";
+            case "clearParent":
+                return "parent-unset";
+        }
+        return event;
+    }
+    _eventHandled(interceptor, guid, canceled = false) {
+        logger_1.default.system.debug("FinsembleWindow._eventHandled public", interceptor.event, this.identifier.windowName, guid, canceled);
+        if (interceptor.delayable)
+            routerClientInstance_1.default.publish(constants.EVENT_INTERRUPT_CHANNEL + "." + guid, { canceled: canceled });
+    }
+    addEventListener(eventName, handler) {
+        logger_1.default.system.info("EVENT TAG. Event listener added", eventName, "on ", this.name);
+        eventName = this.standardizeEventName(eventName);
+        // We send this guid so that Window service can keep track of individual listeners for event interruption.
+        let guid = Date.now() + "_" + Math.random();
+        this.queryWindowService("addEventListener", { eventName: eventName, guid: guid });
+        this.eventManager.listenForRemoteEvent(eventName, handler);
+        let delayable = constants.INTERRUPTIBLE_EVENTS.includes(eventName);
+        let cancelable = constants.INTERRUPTIBLE_EVENTS.includes(eventName);
+        let interceptor = new FinsembleEvent_1.FinsembleEvent({
+            source: this,
+            event: eventName,
+            delayable: delayable,
+            cancelable: cancelable
+        });
+        var internalHandler = (data) => {
+            logger_1.default.system.info("EVENT TAG. Internal event handler", eventName, "on ", this.name);
+            // TODO: need to create event list with properties:
+            interceptor.setData(data);
+            handler(interceptor); // this is where a handler can delay the event
+            if (delayable && interceptor.delayed) { // if delayed, wait for done
+                routerClientInstance_1.default.publish(constants.EVENT_INTERRUPT_CHANNEL + "." + guid, { delayed: true });
+                interceptor.addListener("done", (response) => {
+                    this._eventHandled(interceptor, guid, response.canceled);
+                });
+            }
+            else { // if not delayed, it is done.
+                this._eventHandled(interceptor, guid);
+            }
+        };
+        //We want the final handler that's invoked is
+        this.eventManager.addListener(eventName, internalHandler);
+        if (!this.eventlistenerHandlerMap[eventName]) {
+            this.eventlistenerHandlerMap[eventName] = [];
+        }
+        this.eventlistenerHandlerMap[eventName].push({
+            handler: handler,
+            internalHandler: internalHandler,
+            interceptor: interceptor,
+            guid: guid
+        });
+    }
+    removeEventListener(eventName, handler) {
+        eventName = this.standardizeEventName(eventName);
+        const promiseResolver = async (resolve) => {
+            if (!this.eventlistenerHandlerMap[eventName]) { // trying to remove non-existent handler.
+                logger_1.default.system.debug("trying to remove non-existent handler", eventName);
+                return resolve();
+            }
+            for (var i = this.eventlistenerHandlerMap[eventName].length - 1; i >= 0; i--) {
+                let handlerStoredData = this.eventlistenerHandlerMap[eventName][i];
+                if (handlerStoredData.handler === handler) {
+                    this.eventManager.removeListener(eventName, handlerStoredData.internalHandler);
+                    handlerStoredData.interceptor.removeAllListeners();
+                    routerClientInstance_1.default.publish(constants.EVENT_INTERRUPT_CHANNEL + "." + handlerStoredData.guid, { delayed: false, canceled: false });
+                    await this.queryWindowService("removeEventListener", { eventName: eventName, guid: handlerStoredData.guid });
+                    this.eventlistenerHandlerMap[eventName].splice(i, 1);
+                    return resolve();
+                }
+            }
+            resolve();
+        };
+        return new Promise(promiseResolver);
+    }
+    listenForEvents() {
+        this.wrapStateChangeSubscription = routerClientInstance_1.default.subscribe("Finsemble.Component.State." + this.name, this.handleWrapStateChange);
+    }
+    windowServiceChannelName(channelTopic) { let name = this.name || this.windowName; return `WindowService-Request-${channelTopic}`; }
+    eventChannelName(channelTopic) { let name = this.name || this.windowName; return `WindowService-Event-${name}-${channelTopic}`; }
+    listenForBoundsSet() {
+        this.eventManager.listenForRemoteEvents(["bounds-change-start", "bounds-changing", "bounds-change-end"]);
+    }
+    animate(params = {}, callback = Function.prototype) {
+        this.queryWindowService("animate", params, callback);
+    }
+    getWindowStore(cb) {
+        if (window._FSBLCache.windowStore) {
+            return cb(window._FSBLCache.windowStore);
+        }
+        distributedStoreClient_1.default.createStore({ store: "Finsemble-Windows", global: true }, (err, store) => {
+            window._FSBLCache.windowStore = store;
+            cb(store);
+        });
+    }
+    doConstruction(params) {
+        //TODO this is the same as wrap (eventually this should spawn)
+        if (!params.setWindowType && !params.windowType) { //Default WindowType
+            params.windowType = "OpenFinWindow";
+        }
+        if (params.windowType) { //We need to make a specific kind of Window
+            params.setWindowType = params.windowType;
+            delete params.windowType; //Prevent infinite loop
+            let BW = FinsembleWindow; //have to do this because we're mutating the class using static functions and all kinds of bad stuff. This tells the typescript compiler that the FinsembleWindow here is of type any -- basically don't worry about its type.
+            var childClassObject = new BW(params);
+            //childClassObject.windowType = windowType;
+            return childClassObject;
+        } //We are a specific kind of window
+        if (params) {
+            for (var i in params) {
+                this[i] = params[i];
+            }
+        }
+        if (!this.name)
+            this.name = params.windowName;
+        this.windowType = this.setWindowType;
+    }
+    static registerType(name, type) {
+        let BW = FinsembleWindow; //have to do this because we're mutating the class using static functions and all kinds of bad stuff. This tells the typescript compiler that the FinsembleWindow here is of type any -- basically don't worry about its type.
+        if (!BW.types) {
+            BW.types = {};
+        }
+        BW.types[name] = type;
+    }
+    /**
+     * This is used to bind all functions only in FinsembleWindow and not in the child wrappers to the wrappers. Without this binding, the value of "this" in the functions is wrong.
+     * @param {} obj
+     */
+    static bindFunctions(obj) {
+        obj.setParent = obj.setParent.bind(obj);
+        obj.getParent = obj.getParent.bind(obj);
+        obj.eventChannelName = obj.eventChannelName.bind(obj);
+        obj.windowServiceChannelName = obj.windowServiceChannelName.bind(obj);
+        obj.setupListeners = obj.setupListeners.bind(obj);
+        obj.onTitleChanged = obj.onTitleChanged.bind(obj);
+        obj.handleWrapRemoveRequest = obj.handleWrapRemoveRequest.bind(obj);
+        obj.listenForBoundsSet = obj.listenForBoundsSet.bind(obj);
+        obj._eventHandled = obj._eventHandled.bind(obj);
+    }
+    // set up this window's listeners
+    setupListeners(name) {
+        logger_1.default.system.debug("FinsembleWindow parent change notification setup", name);
+        this.TITLE_CHANGED_SUBSCRIPTION = routerClientInstance_1.default.subscribe(this.TITLE_CHANGED_CHANNEL, this.onTitleChanged);
+    }
+    onTitleChanged(err, response) {
+        if (!response || !response.data || typeof response.data !== "string")
+            return;
+        //this.windowOptions.title = response.data;
+        this.eventManager.trigger("title-changed", {
+            title: response.data
+        });
+    }
+    static getInstance(params, cb = Function.prototype) {
+        let myName = system_1.System.Window.getCurrent().name;
+        if (params && params.windowName) {
+            params.name = params.windowName;
+        }
+        params = clone(params); // this function modifies params so clone to be safe
+        if (!params || !params.name)
+            return cb("name is required");
+        params.windowName = params.name;
+        async function promiseResolver(resolve, reject) {
+            //Return early if we already have the wrap cached.
+            if (window._FSBLCache.windows[params.name]) {
+                logger_1.default.system.debug("WRAP LIFECYCLE:", params.name, "Window found in the cache, returning without going to the Launcher");
+                let wrap = window._FSBLCache.windows[params.name];
+                //@exit
+                resolve({ wrap });
+                return cb(null, wrap);
+            }
+            //If we already have all of the information, just call createWrap.
+            if (params.uuid && params.name) {
+                if (!params.windowIdentifier) {
+                    params.windowIdentifier = {
+                        uuid: params.uuid,
+                        name: params.name,
+                        windowName: params.name,
+                        windowType: params.windowType
+                    };
+                }
+                if (params.waitForReady !== false) {
+                    try {
+                        await FinsembleWindow._windowReady(params.windowName); // wait to ensure the window is fully ready in the window service
+                    }
+                    catch (err) {
+                        reject(err);
+                        return cb(err, null);
+                    }
+                }
+                logger_1.default.system.debug("WRAP LIFECYCLE:", params.name, "All information for wrap passed in, creating wrap locally");
+                //Multiple requests for the same window could've come in at once. Right before we create this wrap, we should check that it hasn't been cached while we were waiting for _windowReady to resolve.
+                if (window._FSBLCache.windows[params.name]) {
+                    logger_1.default.system.debug("WRAP LIFECYCLE:", params.name, "Window found in the cache, returning without going to the Launcher");
+                    let wrap = window._FSBLCache.windows[params.name];
+                    //@exit
+                    resolve({ wrap });
+                    return cb(null, wrap);
+                }
+                let { wrap } = await FinsembleWindow._createWrap(params);
+                //@exit
+                resolve({ wrap });
+                return cb(null, wrap);
+            }
+            if (params.waitForReady !== false) {
+                try {
+                    await FinsembleWindow._windowReady(params.windowName); // wait to ensure the window is fully ready in the window service
+                }
+                catch (err) {
+                    reject(err);
+                    return cb(err, null);
+                }
+            }
+            //All we have is a windowName. we send a request to the launcher for more information so that we can construct the proper object. This also the place where
+            routerClientInstance_1.default.query("WindowService-Request-getWindowIdentifier", { windowName: params.name, requester: myName }, onWrapInformationReceived);
+            async function onWrapInformationReceived(err, response) {
+                if (err) {
+                    logger_1.default.system.error(err);
+                    //@exit
+                    reject(err);
+                    return cb(err, null);
+                }
+                if (window._FSBLCache.windows[params.name]) {
+                    let wrap = window._FSBLCache.windows[params.name];
+                    logger_1.default.system.debug("WRAP LIFECYCLE:", params.name, "Information received from launcher, but wrap exists in cache. Returning cached wrap.");
+                    //@exit
+                    resolve({ wrap });
+                    return cb(null, wrap);
+                }
+                let { identifier } = response.data;
+                if (identifier.windowName) {
+                    identifier.name = identifier.windowName;
+                }
+                logger_1.default.system.debug("WRAP LIFECYCLE:", params.name, "Information received from launcher. Creating wrap.");
+                params.retrievedIdentifier = identifier;
+                let { wrap } = await FinsembleWindow._createWrap(params);
+                if (response.data.descriptor) {
+                    wrap.descriptor = response.data.descriptor;
+                }
+                //@exit
+                resolve({ wrap });
+                cb(null, wrap);
+            }
+        }
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Creates a Finsemble WindowWrap
+     * @param {*} params
+     * @param {string} params.name The name of the window
+     * @param {*} [params.retrievedIdentifier] Retrieved window identifier
+     * @param {*} [params.windowIdentifier] The window identifier
+     * @param {boolean} [param.setWindowType] If true, will set the window type
+     */
+    static _createWrap(params) {
+        function promiseResolver(resolve, reject) {
+            let identifier = params.retrievedIdentifier || params.windowIdentifier;
+            let wrap = null;
+            if (typeof window._FSBLCache.windowAttempts[params.name] === "undefined")
+                window._FSBLCache.windowAttempts[params.name] = 0;
+            //OpenfinApplication is essentially just an openfinWindow in its own process. We can wrap it just like a window.
+            if (!params.setWindowType && !identifier.windowType || identifier.windowType === "OpenFinApplication") { //Default WindowType
+                identifier.windowType = "OpenFinWindow";
+            }
+            //Top level keeps important info (e.g., uuid, name, windowType).
+            let paramsForWindow = Object.assign({}, identifier);
+            //Also pull in anything that was passed into the constructor (e.g., windowDescriptor, etc);
+            paramsForWindow = Object.assign(paramsForWindow, params);
+            paramsForWindow.setWindowType = paramsForWindow.windowType;
+            delete paramsForWindow.windowType; //Prevent infinite loop
+            logger_1.default.system.debug("WRAP LIFECYCLE: Placing wrap into the local cache.", identifier.windowName);
+            let BW = FinsembleWindow; //have to do this because we're mutating the class using static functions and all kinds of bad stuff. This tells the typescript compiler that the FinsembleWindow here is of type any -- basically don't worry about its type.
+            window._FSBLCache.windows[identifier.windowName] = new BW(paramsForWindow);
+            wrap = window._FSBLCache.windows[identifier.windowName];
+            wrap.windowType = identifier.windowType;
+            wrap.identifier = identifier;
+            wrap.addEventListener("closed", wrap.handleWrapRemoveRequest);
+            wrap.addEventListener("maximized", () => {
+                wrap.windowState = FinsembleWindow.WINDOWSTATE.MAXIMIZED;
+            });
+            wrap.addEventListener("minimized", () => {
+                wrap.windowState = FinsembleWindow.WINDOWSTATE.MINIMIZED;
+            });
+            wrap.addEventListener("restored", () => {
+                wrap.windowState = FinsembleWindow.WINDOWSTATE.NORMAL;
+            });
+            //Subscribe to parent inside the wrap so if getInstance is called after window creation the parent window will be available.
+            wrap.parentSubscribeID = routerClientInstance_1.default.subscribe(`Finsemble.parentChange.${identifier.windowName}`, (err, message) => {
+                if (err) {
+                    logger_1.default.system.error("FinsembleWindow parent change notification error", err);
+                    resolve({ wrap });
+                }
+                else {
+                    var parentState = message.data || {};
+                    if (parentState.type === "Added") {
+                        logger_1.default.system.debug("FinsembleWindow Parent Notification: window.addedToStack listener", parentState);
+                        wrap.setParent(parentState.stackedWindowIdentifier, () => { resolve({ wrap }); });
+                    }
+                    else if (parentState.type === "Exists") {
+                        logger_1.default.system.debug("FinsembleWindow Parent Notification: Parent already exists, checking if added to wrap", parentState);
+                        wrap.setParentOnWrap(parentState.stackedWindowIdentifier, () => { resolve({ wrap }); });
+                    }
+                    else if (parentState.type === "Removed") {
+                        logger_1.default.system.debug("FinsembleWindow Parent Notification: window.removedFromStack listener", parentState);
+                        wrap.clearParent();
+                        resolve({ wrap });
+                    }
+                    else if (parentState.type) { // if defined but unknown type
+                        logger_1.default.system.error("FinsembleWindow Parent Notification: unknown type", parentState);
+                        resolve({ wrap });
+                    }
+                    else {
+                        resolve({ wrap });
+                    }
+                }
+            });
+        }
+        return new Promise(promiseResolver);
+    }
+    static _getRemoveWrapChannel(name) {
+        return `${system_1.System.Window.getCurrent().name}.removeWrap.${name}`;
+    }
+    // this routine handles the close event, but also called without event from FSBL
+    async handleWrapRemoveRequest(event) {
+        if (event)
+            event.wait();
+        logger_1.default.system.debug("WRAP Destructor. Removing cached window", this.name, "in ", window.name);
+        //wrap is the openfin or stacked window. if the removeListeners function exists, we remove all listeners we added during the lifecycle of that window wrapper.
+        if (this.removeListeners) {
+            this.removeListeners();
+        }
+        // do not move this line of code. The order of execution is important.
+        this.cleanupRouter();
+        //Remove all event listeners.
+        for (let eventName in this.eventlistenerHandlerMap) {
+            console.log("Event name in for loop", eventName);
+            let events = this.eventlistenerHandlerMap[eventName];
+            for (let i = 0; i < events.length; i++) {
+                logger_1.default.system.log("WRAP Destructor. removeEventListener", eventName, this.name, "in", window.name);
+                await this.removeEventListener(eventName, events[i].handler);
+                console.log("Event name listener removed", eventName);
+            }
+        }
+        logger_1.default.system.log("WRAP Destructor. removeEventListener DONE");
+        console.log("handleWrapRemoveRequest name Done!");
+        if (event)
+            event.done();
+        this.eventManager.cleanup();
+        if (this.name !== window.name) {
+            delete window._FSBLCache.windows[this.name];
+            delete window._FSBLCache.windowAttempts[this.name];
+        }
+    }
+    cleanupRouter() {
+        const REMOVE_WRAP_CHANNEL = FinsembleWindow._getRemoveWrapChannel(this.name);
+        routerClientInstance_1.default.removeResponder(REMOVE_WRAP_CHANNEL);
+        if (this.TITLE_CHANGED_SUBSCRIPTION) {
+            routerClientInstance_1.default.unsubscribe(this.TITLE_CHANGED_SUBSCRIPTION);
+        }
+        routerClientInstance_1.default.unsubscribe(this.parentSubscribeID);
+        routerClientInstance_1.default.unsubscribe(this.wrapStateChangeSubscription);
+    }
+    onReady(callback) {
+        if (this.wrapState === "ready") {
+            return callback();
+        }
+        this.eventManager.on("ready", callback);
+    }
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Common template for window-function requests to window service -- see public functions
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /**
+     * @param {string} methodName method name (e.g. "minimize", "maximize")
+     * @param {object} params
+     * @param {function=} callback
+     * @memberof FinsembleWindow
+     * @private
+     */
+    queryWindowService(methodName, params, callback = Function.prototype) {
+        const promiseResolver = async (resolve) => {
+            if (typeof params === "function") {
+                callback = params;
+                params = {};
+            }
+            params = params || {};
+            params.windowIdentifier = this.identifier; // add this window's identifier
+            // if Logger debug is enable, then add call stack to query parameters for debugging -- shows where public window requests originated
+            if (logger_1.default.setting().system.Debug) {
+                params.callstack = logger_1.default.callStack(); // add callstack to query for debugging -- shows where public window requests originated
+            }
+            logger_1.default.system.debug("FinsembleWindow.queryWindowService", this.windowServiceChannelName(methodName), params);
+            var responseData = null;
+            routerClientInstance_1.default.query(this.windowServiceChannelName(methodName), params, (err, queryResponseMessage) => {
+                if (err) {
+                    logger_1.default.system.warn(`WindowService.${methodName}: failed`, err);
+                    console.debug(`WindowService.${methodName}: failed`, err);
+                }
+                else {
+                    responseData = queryResponseMessage.data;
+                    logger_1.default.system.debug(`${this.windowServiceChannelName(methodName)} successful`, responseData);
+                    console.debug(`${this.windowServiceChannelName(methodName)} successful`, responseData);
+                }
+                resolve();
+                callback(err, responseData);
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Core Window Functions: can be invoked by any service or component.  Most are sent to the WindowService to be executed.
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Core Public Window Functions: can be invoked by any service or component.  These are sent to the WindowService to be executed.
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    minimize(params, callback) {
+        this.queryWindowService("minimize", params, callback);
+    }
+    maximize(params, callback) {
+        this.queryWindowService("maximize", params, callback);
+    }
+    restore(params, callback) {
+        this.queryWindowService("restore", params, callback);
+    }
+    blur(params = {}, callback = Function.prototype) {
+        this.queryWindowService("blur", params, callback);
+    }
+    focus(params = {}, callback = Function.prototype) {
+        this.queryWindowService("focus", params, callback);
+    }
+    bringToFront(params, callback) {
+        this.queryWindowService("bringToFront", params, callback);
+    }
+    isShowing(params, callback) {
+        this.queryWindowService("isShowing", params, callback);
+    }
+    setBounds(params, callback) {
+        if (typeof params !== "function" && !params.bounds) {
+            let oldParams = params;
+            params = {};
+            params.bounds = oldParams;
+        }
+        this.queryWindowService("setBounds", params, callback);
+    }
+    getBounds(params, callback = Function.prototype) {
+        const promiseResolver = (resolve) => {
+            this.queryWindowService("getBounds", params, (err, bounds) => {
+                resolve({ err, data: bounds });
+                callback(err, bounds);
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    updateOptions(params, callback) {
+        this.queryWindowService("updateOptions", params, callback);
+    }
+    hide(params, callback) {
+        this.queryWindowService("hide", params, callback);
+    }
+    show(params, callback) {
+        this.queryWindowService("show", params, callback);
+    }
+    showAt(params, callback) {
+        this.queryWindowService("showAt", params, callback);
+    }
+    close(params = {}, callback = Function.prototype) {
+        logger_1.default.system.debug("WRAP CLOSE. Public close initiated for", this.name, params);
+        this.queryWindowService("close", params, () => {
+            logger_1.default.system.debug("WRAP CLOSE. Public close initiated for", this.name);
+            callback();
+        });
+    }
+    /**
+     *Register a window with docking. Use this if you don't want to use the full initialization function
+     *
+     * @param {Object} params - can be anything that is passed to docking for window registration. @todo This should be removed soon
+     * @param {Function} cb
+     * @memberof FSBLWindow
+     */
+    registerWithDocking(params, cb) {
+        routerClientInstance_1.default.query("DockingService.registerWindow", {
+            type: this.type,
+            windowType: this.windowType,
+            windowMsg: params,
+            name: this.windowName
+        }, cb);
+    }
+    /**
+     *Unregister a window with docking
+     *
+     * @memberof FSBLWindow
+     */
+    unRegisterWithDocking() {
+        routerClientInstance_1.default.transmit("DockingService.deregisterWindow", { name: this.windowName });
+    }
+    /**
+     *This is if we want to handle the full register/ready state inside of the window
+     register with docking
+     send the message to launcher saying that component is ready
+     *
+     * @memberof FSBLWindow
+     */
+    initializeWindow({ manageWindowMovement, identifer }, cb = Function.prototype) {
+        const publishComponentReady = () => {
+            routerClientInstance_1.default.publish("Finsemble." + this.windowName + ".componentReady", {
+                name: this.windowName
+            });
+            cb();
+        };
+        /** DH 12/13/2019 - While windows can opt out of grouping, etc. by setting
+         * manageWindowMovement to false, we still need to perform the right initialization
+         * handshake so Finsemble is aware of the window. Otherwise, Finsemble won't perform spawn
+         * callbacks and the workspace won't close correctly.
+        */
+        if (manageWindowMovement) {
+            this.registerWithDocking(identifer, publishComponentReady);
+        }
+        else {
+            publishComponentReady();
+        }
+    }
+    wrapReady() {
+        routerClientInstance_1.default.publish("Finsemble." + this.windowName + ".wrapReady", { name: this.windowName, state: "open" });
+    }
+    setOpacity(params, callback) {
+        this.queryWindowService("setOpacity", params, callback);
+    }
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Other BaseClass Function: These are common functions shared across derived classes
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /**
+     * Invoked to indicate an operation (e.g. dragging out of tab region) has started. This signals the Docking service to start tracking the mouse location and invoking tiling behavior as needed. Typically inherited (base function only).
+     * @param {object} params for future use
+     *
+     * @example
+     *	// dragging tab example using tracking and group
+     * 	FinsembleWindow.startTabTileMonitoring();
+     *	// if dragging tab is in a group, then remove it given tracking results will decide what to do with the window
+     * 	FinsembleWindow.Group.getGroupID(this.identifier, function (err, tileGroupId) {
+     * 		if (!err) { // if no error then must be in a tile group
+     *			self.Group.removeWindow(this.identifier);
+     *		}
+     *	});
+     */
+    startTabTileMonitoring(params) {
+        logger_1.default.system.debug("FinsembleWindow.startTabTileMonitoring", params);
+        routerClientInstance_1.default.transmit("TabTile.startTabTile", { params });
+    }
+    /**
+     * Invoked by client originating a dragStart that it has has ended. Typically inherited (base function only).
+     * @param {object} params for future use
+         * @param {function=} callback option callback that support overriding default behavior
+     *
+     * 	FinsembleWindow.stopTabTileMonitoring(params, function(err, results, defaultTabTileAction) {
+     * 		// . . . custom code goes here . . .
+     *		defaultTabTileAction(results); // now take default action or call your own function instead
+     * 	});
+     *
+     */
+    stopTabTileMonitoring(params, callback) {
+        logger_1.default.system.debug("FinsembleWindow.stopTabTileMonitoring", params);
+        routerClientInstance_1.default.query("TabTile.stopTabTile", { params }, function (err, queryResponseMessage) {
+            if (err) {
+                logger_1.default.system.warn("TabTile.stopTabTile: query failed", err);
+            }
+            else {
+                logger_1.default.system.debug("TabTile.stopTabTile results", queryResponseMessage.data);
+            }
+            var stopTabTileResults = queryResponseMessage.data;
+            if (callback) {
+                callback(err, stopTabTileResults, this.defaultStopTrackingAction);
+            }
+            else {
+                this.defaultTabTileAction(stopTabTileResults);
+            }
+        });
+    }
+    /**
+     * Defines default TabTile action for stopTabTileMonitoring.  May be overridden by client -- see example in stopTabTileMonitoring. Typically inherited (base function only).
+     *
+     * @param {any} stopTabTileResults
+     * @memberof FinsembleWindow
+     *
+     * @private
+     */
+    defaultTabTileAction(stopTabTileResults) {
+        let self = this;
+        logger_1.default.system.debug("FinsembleWindow.defaultTabTileAction", stopTabTileResults);
+        switch (stopTabTileResults.stoppedLocation) {
+            case "OutsideWindow":
+                // move window to drop location (since for now assuming only single-tabbed windows)
+                break;
+            case "TabSection":
+                // WindowStack.addWindowToStack(callback) // for when we get to tabbing
+                break;
+            case "InsideWindow":
+                if (stopTabTileResults.tileGroupId) { // if dropped in an existing tile group (which might be the same it was dragging from)
+                    self.Group.addWindow(this.identifier, stopTabTileResults.tileGroupId, stopTabTileResults.dropCoordinates);
+                }
+                else { // if dropped in a separate window outside a tile group
+                    self.Group.createGroup(function (newGroupId) {
+                        // add dragging window to new tile group, but specify the dropped on window as the starting window in the tile group
+                        self.Group.addWindow(this.identifier, newGroupId, stopTabTileResults.dropCoordinates, { startingWindowIdentifier: stopTabTileResults.droppedOnWindowIdentifier });
+                    });
+                }
+                break;
+            default:
+                logger_1.default.system.error("stopTracking returned an unknown stoppedLocation result", stopTabTileResults);
+        }
+    }
+    mergeBounds(bounds) {
+        bounds.right = bounds.left + bounds.width;
+        let newBounds = { left: bounds.left, right: bounds.right, width: bounds.width, top: bounds.top, bottom: bounds.top + bounds.height, height: bounds.height };
+        let defaultBounds = { defaultLeft: bounds.left, defaultWidth: bounds.width, defaultTop: bounds.top, defaultHeight: bounds.height };
+        Object.assign(this.windowOptions, newBounds);
+        Object.assign(this.windowOptions, defaultBounds);
+        this.windowOptions.bounds = newBounds;
+    }
+    startMove(params) {
+        logger_1.default.system.debug("FinsembleWindow.startMove", params);
+        params = params || {};
+        params.windowIdentifier = this.identifier; // add this window's identifier
+        routerClientInstance_1.default.transmit(this.eventChannelName("startedMoving"), {});
+    }
+    stopMove(params) {
+        logger_1.default.system.debug("FinsembleWindow.stopMove", params);
+        params = params || {};
+        params.windowIdentifier = this.identifier; // add this window's identifier
+        routerClientInstance_1.default.transmit(this.eventChannelName("stoppedMoving"), {});
+    }
+    /**
+     * Get Monitor for this window
+     *
+     * @param {function} cb Callback
+     */
+    getMonitor(cb) {
+        routerClientInstance_1.default.query("DockingService.getMonitorForWindow", { windowIdentifier: this.identifier }, (err, message) => message ? cb(message.data) : cb());
+    }
+    /**
+     * Given params, will return the component state. Either the params to search for, or the entire state.
+     *
+     * @param {object} params
+     * @param {string} params.field field
+     *  @param {array} params.fields fields
+     * @param {function} cb Callback
+     */
+    getComponentState(params, cb) {
+        this.queryWindowService("getComponentState", params, cb);
+    }
+    /**
+     * Given params, will return the window state. Either the params to search for, or the entire state.
+     *
+     * @param {object} params
+     * @param {string} params.field field
+     *  @param {array} params.fields fields
+     * @param {function} cb Callback
+     */
+    getWindowState(params, cb) {
+        this.queryWindowService("getWindowState", params, cb);
+    }
+    /**
+     * Given params, will set the component state. Any fields included will be added to the state
+     *
+     * @param {object} params
+     * @param {string} params.field field
+     *  @param {array} params.fields fields
+     * @param {function} cb Callback
+     */
+    setComponentState(params, cb) {
+        this.queryWindowService("setComponentState", params, cb);
+    }
+    /**
+     * Removes one or more specified attributes from either component or window state in storage
+     * for this window.
+     *
+     * In addition to the name of the window, params should include either a `field`
+     * property as a string or a `fields` property as an array of strings.
+     *
+     * @param {object} params
+     * @param {string} [params.field] field
+     * @param {array} [params.fields] fields
+     * @param {function} cb Callback
+     */
+    removeComponentState(params, cb = (e, r) => { }) {
+        this.queryWindowService("removeComponentState", params, cb);
+    }
+    /**
+     * Given params, will set the window state. Any fields included will be added to the state
+     *
+     * @param {object} params
+     * @param {string} params.field field
+     *  @param {array} params.fields fields
+     * @param {function} cb Callback
+     */
+    setWindowState(params, cb) {
+        this.queryWindowService("setWindowState", params, cb);
+    }
+    saveCompleteWindowState(params, cb) {
+        this.queryWindowService("saveCompleteWindowState", params, cb);
+    }
+    /**
+     *Cancels startTabTileMonitoring. Example use is a user "escapes" out of a drag operation.
+     *
+     * @param {object} params for future use
+     * @memberof FinsembleWindow
+     */
+    cancelTabTileMonitoring(params) {
+        logger_1.default.system.debug("FinsembleWindow.cancelTabTileMonitoring", params);
+        routerClientInstance_1.default.transmit("TabTile.cancelTabTile", { params });
+    }
+    /**
+     * Return the parent window's wrapper (e.g. StackedWindow).
+     *
+     */
+    getParent(cb) {
+        if (this.settingParent) {
+            FinsembleWindow.getInstance(this.settingParent, (err, stackWrap) => {
+                cb(null, stackWrap);
+            });
+        }
+        else if (this.parentWindow) {
+            cb(null, this.parentWindow);
+        }
+        else {
+            cb(null, null);
+        }
+    }
+    /**
+     * Sets the parent window (e.g. stackedWindow) and emits "setParent" event to window listeners.
+     *
+     * @param {object} stackedWindowIdentifier identifer of window to set as parent (e.g. stackedWindowIdentifier).
+     *
+     */
+    setParent(stackedWindowIdentifier, cb = Function.prototype) {
+        if (this.settingParent)
+            return this.getParent(cb); //TODO check if the parent is different
+        this.settingParent = stackedWindowIdentifier;
+        if (this.parentWindow && (this.parentWindow.name === stackedWindowIdentifier.windowName)) {
+            logger_1.default.system.debug("FinsembleWindow.setParent already set", stackedWindowIdentifier);
+            this.settingParent = false;
+            cb(null, this.parentWindow);
+        }
+        else {
+            this.queryWindowService("setParent", stackedWindowIdentifier, (err, message) => {
+                logger_1.default.system.debug("FinsembleWindow.setParent", stackedWindowIdentifier);
+                FinsembleWindow.getInstance(stackedWindowIdentifier, (err, wrappedStackedWindow) => {
+                    if (!err) {
+                        logger_1.default.system.debug("FinsembleWindow.setParent wrap success", stackedWindowIdentifier);
+                        this.parentWindow = wrappedStackedWindow;
+                        if (!this.parentWindow.windowType.includes("StackedWindow")) {
+                            logger_1.default.system.error("FinsembleWindow.setParent error", this.parentWindow.name, stackedWindowIdentifier.windowName);
+                        }
+                    }
+                    else {
+                        logger_1.default.system.error("FinsembleWindow.setParent error", err);
+                    }
+                    this.settingParent = false;
+                    this.eventManager.trigger("parent-set", { parentName: this.parentWindow.name });
+                    cb(err, wrappedStackedWindow);
+                });
+            });
+        }
+    }
+    /**
+     * Sets the parent window (e.g. stackedWindow) on a window wrap.
+     * This is for the case where a window already has a parent but it's wrap doesn't know about it.
+     *
+     * @param {object} stackedWindowIdentifier identifer of window to set as parent (e.g. stackedWindowIdentifier).
+     *
+     */
+    setParentOnWrap(stackedWindowIdentifier, cb = Function.prototype) {
+        if (this.parentWindow && (this.parentWindow.name === stackedWindowIdentifier.windowName)) {
+            logger_1.default.system.debug("FinsembleWindow.setParentOnWrap already set", stackedWindowIdentifier);
+            cb(null, this.parentWindow);
+        }
+        else {
+            this.queryWindowService("setParent", stackedWindowIdentifier, (err, message) => {
+                logger_1.default.system.debug("FinsembleWindow.setParentOnWrap", stackedWindowIdentifier);
+                FinsembleWindow.getInstance(stackedWindowIdentifier, (err, wrappedStackedWindow) => {
+                    if (!err) {
+                        logger_1.default.system.debug("FinsembleWindow.setParentOnWrap success getting wrap", stackedWindowIdentifier);
+                        console.debug("FinsembleWindow.setParentOnWrap success getting wrap", this, wrappedStackedWindow);
+                        this.parentWindow = wrappedStackedWindow;
+                        if (this.parentWindow.windowType.includes("StackedWindow") === false) {
+                            logger_1.default.system.error("FinsembleWindow.setParentOnWrap error", this.parentWindow.name, stackedWindowIdentifier.windowName);
+                        }
+                    }
+                    else {
+                        logger_1.default.system.error("FinsembleWindow.setParentOnWrap error", err);
+                    }
+                    cb(err, wrappedStackedWindow);
+                });
+            });
+        }
+    }
+    /**
+     * Clears the parent reference and emits "clearParent" event to window listeners. Used only internally.
+     *
+     * @private
+     *
+     */
+    clearParent() {
+        logger_1.default.system.debug("FinsembleWindow.clearParent", this.parentWindow);
+        this.eventManager.trigger("parent-unset", {
+            parentName: this.parentWindow.name
+        });
+        this.parentWindow = null;
+    }
+    setTitle(title) {
+        logger_1.default.system.debug("Title change", title);
+        routerClientInstance_1.default.publish(this.TITLE_CHANGED_CHANNEL, title);
+    }
+    //todo needs to be a windowService query..
+    getOptions(cb = Function.prototype) {
+        this.queryWindowService("getOptions", {}, cb);
+    }
+    //CANDIDATES FOR REMOVAL
+    //window client adds a callback here. This way, whenever close is called _anywhere_ in the system, it's passed down to the window client and cleanup can happen in the component.
+    listenForClose(cb) {
+        // let listener = (err, response) => {
+        let listener = () => {
+            delete window._FSBLCache.windows[this.name];
+            delete window._FSBLCache.windowAttempts[this.name];
+            //If the window that the wrap belongs to is the one calling close, just call the openfin method. Otherwise, some other window is trying to close it - so we send a message to that window, which will eventually close itself.
+            for (let event in this.eventlistenerHandlerMap) {
+                for (let i = 0; i < this.eventlistenerHandlerMap[event].length; i++) {
+                    this.eventlistenerHandlerMap[event][i].interceptor.removeAllListeners();
+                }
+            }
+            this.eventManager.cleanup();
+            routerClientInstance_1.default.removeListener(`${this.identifier.windowName}.close`, listener);
+            // cb(response.data);
+            cb();
+        };
+        this.eventManager.listenForRemoteEvent("closed", listener);
+    }
+    //TO BE REMOVED WHEN TABBING API IS PUT IN PLACe
+    /**
+     * Handles common housekeeping checks and modifications on params at the beginning of each private window-management function
+     *
+     * @param {string} methodName method name (e.g. "minimize", "maximize")
+     * @param {object} params
+     * @memberof StackedWindow
+     * @private
+     */
+    _privateManagementPreface(methodName, params, callback) {
+        if (typeof params === "function") {
+            logger_1.default.system.error("StackedWindowWrapper.wrapPreface bad params", params);
+        }
+        params = params || {};
+        params.stackedWindowIdentifier = { windowName: this.identifier.windowName, windowType: this.identifier.windowType }; // add this window's identifier
+        logger_1.default.system.debug(`StackedWindow.${methodName}  _privateManagementPreface`, params);
+        return params;
+    }
+    /**
+     * Returns store for stacked window.  Example usage below.
+     *
+     * @memberof StackedWindow
+     *
+     * @example
+     * 		// get the state for one stacked window from the store
+     * 		getStore().getValue({ field: stackedWindowIdentifier.name, function (err, stackedWindowState) {}
+     *			where stackedWindowState is an object with the following properties
+     *				{
+     *					stackedWindowIdentifier: the stacked window identifier
+     *					childWindowIdentifiers: the window identifiers for all children in the stacked window
+     *					visibleWindowIdentifier: the window identifier for the currently visible window
+     *					bounds: the current window bounds/coordinates for the stacked window (i.e. the current bounds of the visible window)
+     *				}
+     */
+    getStore(callback = Function.prototype) {
+        return this.getWindowStore(callback);
+    }
+    /**
+     * Adds window as a child to a stacked window.  Adds to the top of the stack, or if specified to a specific location in the stack;
+     *
+     * @param {object=} params
+         * @param {object} params.stackedWindowIdentifier stacked window to operate on stacked window to operate on
+         * @param {object} params.windowIdentifier window to add
+         * @param {number=} params.position the location in the stack to push the window.  Location 0 is the bottom of the stack. Defaults to the top of stack.
+         * @param {boolean=} params.noSave if true then don't save the store after updating it (will be saved by caller)
+     * @param {function=} callback function(err)
+     * @memberof StackedWindow
+     */
+    addWindow(params, callback = Function.prototype) {
+        params = this._privateManagementPreface("addWindow", params);
+        const promiseResolver = (resolve) => {
+            routerClientInstance_1.default.query("StackedWindow.addWindow", params, (err, queryResponseMessage) => {
+                logger_1.default.system.debug("StackedWindow.addWindow callback", err, queryResponseMessage);
+                callback(err, queryResponseMessage.data);
+                resolve({ err, data: queryResponseMessage.data });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Removes a child window from a stacked window.  If removed window was visible, then the bottom child window (position 0) in stack will be made visible.
+     *
+         * @param {object} params
+    .	 * @param {object} params.stackedWindowIdentifier stacked window to operate on
+     * @param {object} params.windowIdentifier window to remove
+     * @param {boolean=} params.noDocking if true then do not register removed window with docking (the workspace is unaffected)
+     * @param {function=} callback function(err)
+     * @memberof StackedWindow
+     */
+    removeWindow(params, callback = Function.prototype) {
+        params = this._privateManagementPreface("removeWindow", params);
+        const promiseResolver = (resolve) => {
+            routerClientInstance_1.default.query("StackedWindow.removeWindow", params, (err, queryResponseMessage) => {
+                logger_1.default.system.debug("StackedWindow.removeWindow callback", err, queryResponseMessage);
+                callback(err, queryResponseMessage.data);
+                resolve({ err, data: queryResponseMessage.data });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Removes a window from the stack then closes it.  If removed window was visible, then the bottom child window (position 0) in stack will be made visible.
+     *
+         * @param {object} params
+    .	 * @param {object} params.stackedWindowIdentifier stacked window to operate on
+     * @param {object} params.windowIdentifier window to delete
+     * @param {function=} callback function(err)
+     * @memberof StackedWindow
+     */
+    deleteWindow(params, callback = Function.prototype) {
+        params = this._privateManagementPreface("deleteWindow", params);
+        const promiseResolver = (resolve) => {
+            routerClientInstance_1.default.query("StackedWindow.deleteWindow", params, (err, queryResponseMessage) => {
+                logger_1.default.system.debug("StackedWindow.deleteWindow callback", err, queryResponseMessage);
+                callback(err, queryResponseMessage.data);
+                resolve({ err, data: queryResponseMessage.data });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Sets the visible window within the stack.  The previously visible window in stack will be automatically hidden.
+     *
+         * @param {object} params
+    .	 * @param {object} params.stackedWindowIdentifier stacked window to operate on
+     * @param {object} params.windowIdentifier
+     * @param {function=} callback function(err)
+     * @memberof StackedWindow
+     */
+    setVisibleWindow(params, callback = Function.prototype) {
+        params = this._privateManagementPreface("setVisibleWindow", params);
+        const promiseResolver = (resolve) => {
+            routerClientInstance_1.default.query("StackedWindow.setVisibleWindow", params, (err, queryResponseMessage) => {
+                logger_1.default.system.debug("StackedWindow.setVisibleWindow callback", err, queryResponseMessage);
+                callback(err, queryResponseMessage.data);
+                resolve({ err, data: queryResponseMessage.data });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Reorders the stack, but odes not affect visibility
+     *
+         * @param {object} params
+    .	 * @param {object} params.stackedWindowIdentifier stacked window to operate on
+     * @param {array} params.windowIdentifiers array of windowIdentifiers which provides the new order
+     * @param {function=} callback function(err)
+     * @memberof StackedWindow
+     */
+    reorder(params, callback = Function.prototype) {
+        params = this._privateManagementPreface("reorder", params);
+        const promiseResolver = (resolve) => {
+            routerClientInstance_1.default.query("StackedWindow.reorder", params, (err, queryResponseMessage) => {
+                logger_1.default.system.debug("StackedWindow.reorder callback", err, queryResponseMessage);
+                callback(err, queryResponseMessage.data);
+                resolve({ err, data: queryResponseMessage.data });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+}
+FinsembleWindow.WINDOWSTATE = {
+    NORMAL: 0,
+    MINIMIZED: 1,
+    MAXIMIZED: 2,
+    HIDDEN: 3
+};
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// The window wrappers
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+ * Async wrap. Given a name/windowName, it will query the launcher for information required to wrap the window. Then it will return an object that can be operated on. Also this creates a cache of all wrapped windows for performance. Our clients wrap the same window often and this was causing excessive messaging to the store and degrading performance.
+ * @param {*} params Need only name in most cases. For service and other cases where the window is not part of what the launcher considers active windows, name and uuid are required
+ * @param {boolean} params.waitForReady If true, will async await for Finsemble to return ready before continuing to build the instance to return
+ * @param {*} cb
+ */
+FinsembleWindow.wrap = FinsembleWindow.getInstance;
+/**
+ * Method for determining whether the window being wrapped is the startup app's main window (the service manager).
+ *
+ * @static
+ * @memberof FinsembleWindow
+ */
+FinsembleWindow.isStartupApplication = async function (windowName) {
+    let isStartupApplication;
+    // Here, we get the application 'manifest'. This will only be returned _if the application was created via the manifest_. In other words, this will only work if we're in the startup app.
+    const manifest = await retrieveManifestPromise()
+        .catch((e) => {
+        // If the application executing FinsembleWindow was created via the API getManifest will
+        // reject with an error. If that happens, we know we're not in the service manager, so we can just assign it to false and move on.
+        isStartupApplication = false;
+    });
+    // If the window that I'm in is the same window as the startup app, I am the service manager.
+    // We cannot wrap the service manager.
+    // No need to do these checks if we're in a window that lives in the startup app.
+    if (manifest) {
+        switch (fin.container) {
+            case "Electron":
+                isStartupApplication = manifest && manifest.startup_app && manifest.startup_app.name === windowName;
+                break;
+            default:
+                // openfin takes the uuid of the startup app as defined in the manifest and assigns it to the name of the main window for the startup app.
+                isStartupApplication = manifest && manifest.startup_app && manifest.startup_app.uuid === windowName;
+        }
+    }
+    return isStartupApplication;
+};
+FinsembleWindow._windowReady = function (windowName) {
+    logger_1.default.system.debug(`windowServiceReady: ${windowName} starting`);
+    let subscribeId;
+    const COMPONENT_STATE_CHANGE_CHANNEL = "Finsemble.Component.State." + windowName;
+    const promiseResolver = async (resolve, reject) => {
+        // Subscribe handler for component state. Once new state is retrieved, resolve out of _windowReady
+        // This is a closure so it easily has access to the promise resolve method.
+        function onComponentStateChanged(err, response) {
+            let state = response.data.state;
+            logger_1.default.system.debug(`windowServiceReady: ${windowName} state change: ${state}`);
+            console.log(`windowServiceReady: ${windowName} state change: ${state}`);
+            switch (state) {
+                // if ready state or any state beyond
+                case "ready":
+                case "reloading":
+                case "closing":
+                    logger_1.default.system.debug(`windowServiceReady: ${windowName} ${state}`);
+                    routerClientInstance_1.default.unsubscribe(subscribeId);
+                    resolve();
+                    break;
+            }
+        }
+        let isStartupApplication = await FinsembleWindow.isStartupApplication(windowName);
+        if (isStartupApplication || windowName.toLowerCase().endsWith("service")) {
+            reject("Cannot Wrap Service Manager or Services");
+        }
+        else {
+            // wait only for components managed by the window service
+            logger_1.default.system.debug(`windowServiceReady: ${windowName} waiting`);
+            subscribeId = routerClientInstance_1.default.subscribe(COMPONENT_STATE_CHANGE_CHANNEL, onComponentStateChanged);
+        }
+    };
+    return new Promise(promiseResolver);
+};
+exports.FinsembleWindow = FinsembleWindow;
+
+
+/***/ }),
+/* 36 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var rng = __webpack_require__(18);
+var bytesToUuid = __webpack_require__(17);
+
+function v4(options, buf, offset) {
+  var i = buf && offset || 0;
+
+  if (typeof(options) == 'string') {
+    buf = options == 'binary' ? new Array(16) : null;
+    options = null;
+  }
+  options = options || {};
+
+  var rnds = options.random || (options.rng || rng)();
+
+  // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
+  rnds[6] = (rnds[6] & 0x0f) | 0x40;
+  rnds[8] = (rnds[8] & 0x3f) | 0x80;
+
+  // Copy bytes to buffer, if provided
+  if (buf) {
+    for (var ii = 0; ii < 16; ++ii) {
+      buf[i + ii] = rnds[ii];
+    }
+  }
+
+  return buf || bytesToUuid(rnds);
+}
+
+module.exports = v4;
+
+
+/***/ }),
+/* 37 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+const pTry = __webpack_require__(39);
+
+const pLimit = concurrency => {
+	if (concurrency < 1) {
+		throw new TypeError('Expected `concurrency` to be a number from 1 and up');
+	}
+
+	const queue = [];
+	let activeCount = 0;
+
+	const next = () => {
+		activeCount--;
+
+		if (queue.length > 0) {
+			queue.shift()();
+		}
+	};
+
+	const run = (fn, resolve, ...args) => {
+		activeCount++;
+
+		const result = pTry(fn, ...args);
+
+		resolve(result);
+
+		result.then(next, next);
+	};
+
+	const enqueue = (fn, resolve, ...args) => {
+		if (activeCount < concurrency) {
+			run(fn, resolve, ...args);
+		} else {
+			queue.push(run.bind(null, fn, resolve, ...args));
+		}
+	};
+
+	const generator = (fn, ...args) => new Promise(resolve => enqueue(fn, resolve, ...args));
+	Object.defineProperties(generator, {
+		activeCount: {
+			get: () => activeCount
+		},
+		pendingCount: {
+			get: () => queue.length
+		}
+	});
+
+	return generator;
+};
+
+module.exports = pLimit;
+module.exports.default = pLimit;
+
+
+/***/ }),
+/* 38 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {/**
+ * lodash (Custom Build) <https://lodash.com/>
+ * Build: `lodash modularize exports="npm" -o ./`
+ * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+ * Released under MIT license <https://lodash.com/license>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ */
+
+/** Used as references for various `Number` constants. */
+var INFINITY = 1 / 0,
+    MAX_SAFE_INTEGER = 9007199254740991;
+
+/** `Object#toString` result references. */
+var argsTag = '[object Arguments]',
+    funcTag = '[object Function]',
+    genTag = '[object GeneratorFunction]',
+    symbolTag = '[object Symbol]';
+
+/** Detect free variable `global` from Node.js. */
+var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
+
+/** Detect free variable `self`. */
+var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+
+/** Used as a reference to the global object. */
+var root = freeGlobal || freeSelf || Function('return this')();
+
+/**
+ * A faster alternative to `Function#apply`, this function invokes `func`
+ * with the `this` binding of `thisArg` and the arguments of `args`.
+ *
+ * @private
+ * @param {Function} func The function to invoke.
+ * @param {*} thisArg The `this` binding of `func`.
+ * @param {Array} args The arguments to invoke `func` with.
+ * @returns {*} Returns the result of `func`.
+ */
+function apply(func, thisArg, args) {
+  switch (args.length) {
+    case 0: return func.call(thisArg);
+    case 1: return func.call(thisArg, args[0]);
+    case 2: return func.call(thisArg, args[0], args[1]);
+    case 3: return func.call(thisArg, args[0], args[1], args[2]);
+  }
+  return func.apply(thisArg, args);
+}
+
+/**
+ * A specialized version of `_.map` for arrays without support for iteratee
+ * shorthands.
+ *
+ * @private
+ * @param {Array} [array] The array to iterate over.
+ * @param {Function} iteratee The function invoked per iteration.
+ * @returns {Array} Returns the new mapped array.
+ */
+function arrayMap(array, iteratee) {
+  var index = -1,
+      length = array ? array.length : 0,
+      result = Array(length);
+
+  while (++index < length) {
+    result[index] = iteratee(array[index], index, array);
+  }
+  return result;
+}
+
+/**
+ * Appends the elements of `values` to `array`.
+ *
+ * @private
+ * @param {Array} array The array to modify.
+ * @param {Array} values The values to append.
+ * @returns {Array} Returns `array`.
+ */
+function arrayPush(array, values) {
+  var index = -1,
+      length = values.length,
+      offset = array.length;
+
+  while (++index < length) {
+    array[offset + index] = values[index];
+  }
+  return array;
+}
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Used to resolve the
+ * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var objectToString = objectProto.toString;
+
+/** Built-in value references. */
+var Symbol = root.Symbol,
+    propertyIsEnumerable = objectProto.propertyIsEnumerable,
+    spreadableSymbol = Symbol ? Symbol.isConcatSpreadable : undefined;
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeMax = Math.max;
+
+/**
+ * The base implementation of `_.flatten` with support for restricting flattening.
+ *
+ * @private
+ * @param {Array} array The array to flatten.
+ * @param {number} depth The maximum recursion depth.
+ * @param {boolean} [predicate=isFlattenable] The function invoked per iteration.
+ * @param {boolean} [isStrict] Restrict to values that pass `predicate` checks.
+ * @param {Array} [result=[]] The initial result value.
+ * @returns {Array} Returns the new flattened array.
+ */
+function baseFlatten(array, depth, predicate, isStrict, result) {
+  var index = -1,
+      length = array.length;
+
+  predicate || (predicate = isFlattenable);
+  result || (result = []);
+
+  while (++index < length) {
+    var value = array[index];
+    if (depth > 0 && predicate(value)) {
+      if (depth > 1) {
+        // Recursively flatten arrays (susceptible to call stack limits).
+        baseFlatten(value, depth - 1, predicate, isStrict, result);
+      } else {
+        arrayPush(result, value);
+      }
+    } else if (!isStrict) {
+      result[result.length] = value;
+    }
+  }
+  return result;
+}
+
+/**
+ * The base implementation of `_.pick` without support for individual
+ * property identifiers.
+ *
+ * @private
+ * @param {Object} object The source object.
+ * @param {string[]} props The property identifiers to pick.
+ * @returns {Object} Returns the new object.
+ */
+function basePick(object, props) {
+  object = Object(object);
+  return basePickBy(object, props, function(value, key) {
+    return key in object;
+  });
+}
+
+/**
+ * The base implementation of  `_.pickBy` without support for iteratee shorthands.
+ *
+ * @private
+ * @param {Object} object The source object.
+ * @param {string[]} props The property identifiers to pick from.
+ * @param {Function} predicate The function invoked per property.
+ * @returns {Object} Returns the new object.
+ */
+function basePickBy(object, props, predicate) {
+  var index = -1,
+      length = props.length,
+      result = {};
+
+  while (++index < length) {
+    var key = props[index],
+        value = object[key];
+
+    if (predicate(value, key)) {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
+/**
+ * The base implementation of `_.rest` which doesn't validate or coerce arguments.
+ *
+ * @private
+ * @param {Function} func The function to apply a rest parameter to.
+ * @param {number} [start=func.length-1] The start position of the rest parameter.
+ * @returns {Function} Returns the new function.
+ */
+function baseRest(func, start) {
+  start = nativeMax(start === undefined ? (func.length - 1) : start, 0);
+  return function() {
+    var args = arguments,
+        index = -1,
+        length = nativeMax(args.length - start, 0),
+        array = Array(length);
+
+    while (++index < length) {
+      array[index] = args[start + index];
+    }
+    index = -1;
+    var otherArgs = Array(start + 1);
+    while (++index < start) {
+      otherArgs[index] = args[index];
+    }
+    otherArgs[start] = array;
+    return apply(func, this, otherArgs);
+  };
+}
+
+/**
+ * Checks if `value` is a flattenable `arguments` object or array.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is flattenable, else `false`.
+ */
+function isFlattenable(value) {
+  return isArray(value) || isArguments(value) ||
+    !!(spreadableSymbol && value && value[spreadableSymbol]);
+}
+
+/**
+ * Converts `value` to a string key if it's not a string or symbol.
+ *
+ * @private
+ * @param {*} value The value to inspect.
+ * @returns {string|symbol} Returns the key.
+ */
+function toKey(value) {
+  if (typeof value == 'string' || isSymbol(value)) {
+    return value;
+  }
+  var result = (value + '');
+  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+}
+
+/**
+ * Checks if `value` is likely an `arguments` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an `arguments` object,
+ *  else `false`.
+ * @example
+ *
+ * _.isArguments(function() { return arguments; }());
+ * // => true
+ *
+ * _.isArguments([1, 2, 3]);
+ * // => false
+ */
+function isArguments(value) {
+  // Safari 8.1 makes `arguments.callee` enumerable in strict mode.
+  return isArrayLikeObject(value) && hasOwnProperty.call(value, 'callee') &&
+    (!propertyIsEnumerable.call(value, 'callee') || objectToString.call(value) == argsTag);
+}
+
+/**
+ * Checks if `value` is classified as an `Array` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an array, else `false`.
+ * @example
+ *
+ * _.isArray([1, 2, 3]);
+ * // => true
+ *
+ * _.isArray(document.body.children);
+ * // => false
+ *
+ * _.isArray('abc');
+ * // => false
+ *
+ * _.isArray(_.noop);
+ * // => false
+ */
+var isArray = Array.isArray;
+
+/**
+ * Checks if `value` is array-like. A value is considered array-like if it's
+ * not a function and has a `value.length` that's an integer greater than or
+ * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
+ * @example
+ *
+ * _.isArrayLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isArrayLike(document.body.children);
+ * // => true
+ *
+ * _.isArrayLike('abc');
+ * // => true
+ *
+ * _.isArrayLike(_.noop);
+ * // => false
+ */
+function isArrayLike(value) {
+  return value != null && isLength(value.length) && !isFunction(value);
+}
+
+/**
+ * This method is like `_.isArrayLike` except that it also checks if `value`
+ * is an object.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an array-like object,
+ *  else `false`.
+ * @example
+ *
+ * _.isArrayLikeObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isArrayLikeObject(document.body.children);
+ * // => true
+ *
+ * _.isArrayLikeObject('abc');
+ * // => false
+ *
+ * _.isArrayLikeObject(_.noop);
+ * // => false
+ */
+function isArrayLikeObject(value) {
+  return isObjectLike(value) && isArrayLike(value);
+}
+
+/**
+ * Checks if `value` is classified as a `Function` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a function, else `false`.
+ * @example
+ *
+ * _.isFunction(_);
+ * // => true
+ *
+ * _.isFunction(/abc/);
+ * // => false
+ */
+function isFunction(value) {
+  // The use of `Object#toString` avoids issues with the `typeof` operator
+  // in Safari 8-9 which returns 'object' for typed array and other constructors.
+  var tag = isObject(value) ? objectToString.call(value) : '';
+  return tag == funcTag || tag == genTag;
+}
+
+/**
+ * Checks if `value` is a valid array-like length.
+ *
+ * **Note:** This method is loosely based on
+ * [`ToLength`](http://ecma-international.org/ecma-262/7.0/#sec-tolength).
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
+ * @example
+ *
+ * _.isLength(3);
+ * // => true
+ *
+ * _.isLength(Number.MIN_VALUE);
+ * // => false
+ *
+ * _.isLength(Infinity);
+ * // => false
+ *
+ * _.isLength('3');
+ * // => false
+ */
+function isLength(value) {
+  return typeof value == 'number' &&
+    value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
+}
+
+/**
+ * Checks if `value` is the
+ * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+ * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+ * @example
+ *
+ * _.isObject({});
+ * // => true
+ *
+ * _.isObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isObject(_.noop);
+ * // => true
+ *
+ * _.isObject(null);
+ * // => false
+ */
+function isObject(value) {
+  var type = typeof value;
+  return !!value && (type == 'object' || type == 'function');
+}
+
+/**
+ * Checks if `value` is object-like. A value is object-like if it's not `null`
+ * and has a `typeof` result of "object".
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+ * @example
+ *
+ * _.isObjectLike({});
+ * // => true
+ *
+ * _.isObjectLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isObjectLike(_.noop);
+ * // => false
+ *
+ * _.isObjectLike(null);
+ * // => false
+ */
+function isObjectLike(value) {
+  return !!value && typeof value == 'object';
+}
+
+/**
+ * Checks if `value` is classified as a `Symbol` primitive or object.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+ * @example
+ *
+ * _.isSymbol(Symbol.iterator);
+ * // => true
+ *
+ * _.isSymbol('abc');
+ * // => false
+ */
+function isSymbol(value) {
+  return typeof value == 'symbol' ||
+    (isObjectLike(value) && objectToString.call(value) == symbolTag);
+}
+
+/**
+ * Creates an object composed of the picked `object` properties.
+ *
+ * @static
+ * @since 0.1.0
+ * @memberOf _
+ * @category Object
+ * @param {Object} object The source object.
+ * @param {...(string|string[])} [props] The property identifiers to pick.
+ * @returns {Object} Returns the new object.
+ * @example
+ *
+ * var object = { 'a': 1, 'b': '2', 'c': 3 };
+ *
+ * _.pick(object, ['a', 'c']);
+ * // => { 'a': 1, 'c': 3 }
+ */
+var pick = baseRest(function(object, props) {
+  return object == null ? {} : basePick(object, arrayMap(baseFlatten(props, 1), toKey));
+});
+
+module.exports = pick;
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+
+/***/ }),
+/* 39 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+const pTry = (fn, ...arguments_) => new Promise(resolve => {
+	resolve(fn(...arguments_));
+});
+
+module.exports = pTry;
+// TODO: remove this in the next major version
+module.exports.default = pTry;
+
+
+/***/ }),
+/* 40 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var v1 = __webpack_require__(19);
+var v4 = __webpack_require__(36);
+
+var uuid = v4;
+uuid.v1 = v1;
+uuid.v4 = v4;
+
+module.exports = uuid;
+
+
+/***/ }),
+/* 41 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+const baseClient_1 = __webpack_require__(7);
+const windowClient_1 = __webpack_require__(44);
+const util = __webpack_require__(8);
+const validate_1 = __webpack_require__(6); // Finsemble args validator
+const system_1 = __webpack_require__(3);
+const logger_1 = __webpack_require__(0);
+const FinsembleWindow_1 = __webpack_require__(35);
+/** The global `window` object. We cast it to a specific interface here to be
+ * explicit about what Finsemble-related properties it may have. */
+const Globals = window;
+/**
+ * An object that includes all the potential identifications for a window.
+ * For instance, one can try and obtain a reference for a window if some of these values are known.
+ *
+ * @typedef WindowIdentifier
+ * @property {string} [windowName] The name of the physical HTML window, or a reference to a native window that was launched with Assimilation service
+ * @property {string} [uuid] Optional uuid of a particular OpenFin application process
+ * @property {string} [componentType] The type of component
+ * @property {number|string} [monitor] The number of the monitor. Potentially used to disambiguate multiple components with the same name (for searches only)
+ */
+/**
+ * Finsemble windowDescriptor.
+ * The windowDescriptor includes the following values.
+ *
+ * @typedef WindowDescriptor
+ * @property {string} [url] url to load (if HTML5 component).
+ * @property {string} [native] The name of the native app (if a native component launched by Assimilation service).
+ * @property {string} name The name of the window (sometimes randomly assigned).
+ * @property {string} componentType The type of component (from <i>components.json</i>).
+ */
+/**
+ *
+ * A convenient assembly of native JavaScript window, `OpenFin` window and windowDescriptor.
+ *
+ * @typedef RawWindowResult
+ * @property {WindowDescriptor} windowDescriptor The window descriptor.
+ * @property {fin.desktop.Window} finWindow The `OpenFin` window.
+ * @property {Window} browserWindow The native JavaScript window.
+ *
+ */
+// A map of related menus that is kept by handleToggle.
+var okayToOpenMenu = {};
+/**
+ *
+ * @introduction
+ * <h2>Launcher Client</h2>
+ *
+ * The Launcher Client handles spawning windows of all kinds.
+ * Finsemble provides the architecture to launch, resize, and reposition any component, whether native, modern, or third-party.
+ *
+ *
+ * The Launcher API has capabilities to customize your end user's experience.
+ * This includes CSS-like positioning and a fully display-aware positioning that deals with idiosyncrasies such as monitors with different scaling resolutions.
+ *
+ *
+ * CSS provides higher level abstractions that aid in laying out an application that is composed of constituent parts.
+ * Finsemble has borrowed CSS’s positioning paradigm and applied it to the task of laying out windows on the desktop.
+ * This CSS-style positioning allows windows to be positioned on the `left`, `right`, `top`, or `bottom` of the end user’s screen for instance; we also developed new positions, such as `adjacent`, which allows a child window to spawn adjacent to their parent.
+ * Components can be positioned and sized by percentage, relative to the monitor or to each other (nested windows).
+ *
+ *
+ * The Launcher Client frequently uses the parameters <code>windowName</code> and <code>componentType</code>. [Learn more about them here](tutorial-ComponentTypesAndWindowNames.html).
+ *
+ *
+ *
+ * @hideconstructor
+ * @constructor
+ */
+class LauncherClient extends baseClient_1._BaseClient {
+    constructor(params) {
+        super(params);
+        validate_1.default.args(params, "object=") && params && validate_1.default.args2("params.onReady", params.onReady, "function=");
+        this.windowClient = params.clients.windowClient;
+    }
+    /** @alias LauncherClient# */
+    /**
+     * Get a list of registered components (those that were entered into <i>components.json</i>).
+     *
+     * @param {Function} cb Callback returns an object map of components. Each component object
+     * contains the default config for that component.
+     */
+    getComponentList(cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        const promiseResolver = (resolve) => {
+            this.routerClient.query("Launcher.componentList", {}, function (err, response) {
+                cb(err, response.data);
+                resolve({ err, data: response.data });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Get the component config (from <i>components.json</i>) for a specific component.
+     *
+     * @param {String} componentType The type of the component.
+     * @param {Function} cb Callback returns the default config (windowDescriptor) for the requested componentType.
+     *
+     */
+    getComponentDefaultConfig(componentType, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        const promiseResolver = (resolve) => {
+            this.routerClient.query("Launcher.componentList", {}, function (err, response) {
+                const data = response.data[componentType];
+                cb(err, data);
+                resolve({ err, data });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Gets monitor information for a given windowIdentifier or for a specific monitor.
+     * If neither the identifier or monitor are provided then the monitorInfo for the current window is returned.
+     *
+     *
+     * The information returned contains:
+     *
+     * **monitorRect** - The full dimensions for the monitor. <br>
+     * **availableRect** - The dimensions for the available space on the monitor (less the Windows task bar). <br>
+     * **unclaimedRect** - The dimensions for available monitor space less any space claimed by components (such as the Toolbar). <br>
+     *
+     * Each of these is supplemented with the following additional members:
+     *
+     * **width** - The width as calculated (right - left). <br>
+     * **height** - The height as calculated (bottom - top). <br>
+     * **position** - The position of the monitor, numerically from zero to X. Primary monitor is zero. <br>
+     * **whichMonitor** - Contains the string "primary" if it is the primary monitor.
+     *
+     * @param  {WindowIdentifier} params.windowIdentifier The windowIdentifier to get the monitorInfo. If undefined, then the current window.
+     * @param  {number|string} params.monitor If passed then a specific monitor is identified. Valid values include:
+     *
+     * <b>"mine"</b> - Place the window on the same monitor as the calling window.
+     *
+     * Integer value from 0-n (0 being the primary monitor).
+     *
+     * <b>"primary"</b> indicates the user's primary monitor.
+     *
+     * <b>"all"</b> - Put a copy of the component on all monitors.
+     * @param  {Function} cb Returns a monitorInfo object containing the monitorRect, availableRect and unclaimedRect.
+     */
+    getMonitorInfo(params, cb = Function.prototype) {
+        var self = this;
+        validate_1.default.args(cb, "function=");
+        logger_1.default.system.debug(`MONITOR: launcherClient.getMonitorInfo`);
+        const promiseResolver = (resolve) => {
+            util.getMyWindowIdentifier(function (myWindowIdentifier) {
+                if (!params.windowIdentifier) {
+                    params.windowIdentifier = myWindowIdentifier;
+                }
+                self.routerClient.query("Launcher.getMonitorInfo", params, function (err, response) {
+                    if (cb) {
+                        cb(err, response.data);
+                    }
+                    logger_1.default.system.log(`MONITOR: launcherClient.getMonitorInfo query response data`, response.data);
+                    resolve({ err, data: response.data });
+                });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Gets monitorInfo (dimensions and position) for all monitors. Returns an array of monitorInfo objects. See <a href="LauncherClient.html#getMonitorInfo">LauncherClient#getMonitorInfo</a> for the format of a monitorInfo object.
+     *
+     *
+     *
+     * @param  {Function} cb Returns an array of monitorInfo objects.
+     */
+    getMonitorInfoAll(cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        const promiseResolver = (resolve, reject) => {
+            this.routerClient.query("Launcher.getMonitorInfoAll", {}, function (err, response) {
+                if (err) {
+                    reject({ err });
+                    cb(err);
+                }
+                resolve({ err, data: response.data });
+                cb(err, response.data);
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Registers a component with the Launcher Service. This method registers a given component in a component manifest, making it available to an app launcher component.
+     *
+     * @param {String} params.componentType The key of the component in the component's config.
+     * @param {object} params.manifest This should be a component manifest, i.e., a component configuration file like <i>components.json</i>.
+     * @param {Function} cb The callback to be invoked after the method completes successfully.
+     */
+    registerComponent(params, cb = Function.prototype) {
+        const promiseResolver = (resolve) => {
+            this.routerClient.query("LauncherService.registerComponent", params, function (err, response) {
+                if (cb) {
+                    cb(err, response.data);
+                }
+                resolve({ err, data: response.data });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Unregisters a component with the Launcher Service.
+     *
+     * @param {String} params.componentType The key of the component in the component's config.
+     * @param  {Function} cb
+     */
+    unRegisterComponent(params, cb = Function.prototype) {
+        if (!params.componentType)
+            return cb("No componentType provided");
+        const promiseResolver = (resolve) => {
+            this.routerClient.query("LauncherService.unRegisterComponent", params, function (err, response) {
+                if (cb) {
+                    cb(err, response.data);
+                }
+                resolve({ err, data: response.data });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * A convenience method for dealing with a common use-case, which is toggling the appearance and disappearance of a child window when a button is pressed, aka drop down menus. Simply call this method from the click handler for your element. Your child window will need to close itself on blur events.
+     * @param {HTMLElement|selector} element The DOM element, or selector, clicked by the end user.
+     * @param {windowIdentifier} windowIdentifier Identifies the child window
+     * @param {object} params Parameters to be passed to {@link LauncherClient#showWindow} if the child window is allowed to open
+     */
+    toggleWindowOnClick(element, windowIdentifier, params) {
+        var self = this;
+        var key = windowIdentifier.windowName + ":" + windowIdentifier.uuid;
+        if (!windowIdentifier.windowName)
+            key = windowIdentifier.componentType;
+        //If the element was clicked while the menu was open then return right away. The menu window will receive a blur event and close. This method is dependent on the fact that blur events are processed before click events. If this turns out to be a problem then put this call inside of a setTimeout().
+        if (okayToOpenMenu[key] === false) {
+            okayToOpenMenu[key] = true;
+            return;
+        }
+        var onDisplayed = function (showError, showResponse) {
+            if (!showResponse)
+                return;
+            let finWindow = showResponse.finWindow;
+            var onBlur = function (blurResponse) {
+                okayToOpenMenu[key] = true;
+                self.windowClient.isMouseOverDOMElement(element, function (mouseIsOverElement) {
+                    okayToOpenMenu[key] = !mouseIsOverElement;
+                });
+                finWindow.removeEventListener("blurred", onBlur);
+            };
+            finWindow.addEventListener("blurred", onBlur);
+        };
+        this.showWindow(windowIdentifier, params, onDisplayed);
+    }
+    /**
+     * Displays a window and relocates/resizes it according to the values contained in params.
+     *
+     * @param {WindowIdentifier} windowIdentifier A windowIdentifier. This is an object containing windowName and componentType. If windowName is not given, Finsemble will try to find it by componentType.
+     * @param {object} params Parameters. These are the same as {@link LauncherClient#spawn} with the following exceptions:
+     * @param {any} [params.monitor] Same as spawn() except that null or undefined means the window should not be moved to a different monitor.
+     * @param {number | string} [params.left] Same as spawn() except that null or undefined means the window should not be moved from current horizontal location.
+     * @param {number | string} [params.top] Same as spawn() except that null or undefined means the window should not be moved from current vertical location.
+     * @param {boolean} [params.spawnIfNotFound=false] If true, then spawns a new window if the requested one cannot be found.
+     * *Note, only works if the windowIdentifier contains a componentType.*
+     * @param {boolean} [params.autoFocus] If true, window will focus when first shown.
+     * @param {boolean} [params.slave] Cannot be set for an existing window. Will only go into effect if the window is spawned.
+     * (In other words, only use this in conjunction with spawnIfNotFound).
+     * @param {Function} cb Callback to be invoked after function is completed. Callback contains an object with the following information:
+     * <b>windowIdentifier</b> - The {@link WindowIdentifier} for the new window.
+     * <b>windowDescriptor</b> - The {@link WindowDescriptor} of the new window.
+     * <b>finWindow</b> - An `OpenFin` window referencing the new window.
+     * @example
+     * FSBL.Clients.LauncherClient.showWindow({windowName: "Welcome Component-86-3416-Finsemble", componentType: "Welcome Component"}, {spawnIfNotFound: true});
+     */
+    showWindow(windowIdentifier, params, cb = Function.prototype) {
+        validate_1.default.args(windowIdentifier, "object", params, "object=", cb, "function=");
+        var self = this;
+        if (!params) {
+            params = {};
+        }
+        params = util.clone(params);
+        if (!params.staggerPixels && params.staggerPixels !== 0) {
+            params.staggerPixels = 100;
+        }
+        params.windowIdentifier = windowIdentifier;
+        const promiseResolver = (resolve) => {
+            util.getMyWindowIdentifier(function (myWindowIdentifier) {
+                if (!params.relativeWindow) {
+                    params.relativeWindow = myWindowIdentifier;
+                }
+                self.routerClient.query("Launcher.showWindow", params, async function (err, response) {
+                    if (err) {
+                        resolve({ err });
+                        return cb(err);
+                    }
+                    var newWindowIdentifier = response.data.windowIdentifier;
+                    response.data.windowIdentifier.name = response.data.windowIdentifier.windowName;
+                    let { wrap } = await FinsembleWindow_1.FinsembleWindow.getInstance({ name: newWindowIdentifier.windowName });
+                    response.data.finWindow = wrap;
+                    resolve({ err, data: response.data });
+                    cb(err, response.data);
+                });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Asks the Launcher service to spawn a new component. Any parameter below can also be specified in <i>../config/components.json</i>, which will
+     * then operate as the default for that value.
+     *
+     * The launcher parameters mimic CSS window positioning.
+     * For instance, to set a full size window use `left=0`,`top=0`,`right=0`,`bottom=0`.
+     * This is functionally equivalent to: left=0,top=0,width="100%",height="100%"
+     *
+     * @since 2.4.1 Added params.windowType (deprecated params.native), params.path, params.alias, params.argumentsAsQueryString - These are all for launching native apps.
+     * @since 3.7.0 Added "affinity" parameter
+     * @param {function} cb Function invoked after the window is created
+     */
+    spawn(component, params, cb = Function.prototype) {
+        var self = this;
+        validate_1.default.args(component, "string", params, "object=", cb, "function=");
+        if (!params) {
+            params = {};
+        }
+        params = util.clone(params);
+        params.component = component;
+        if (!params.options) {
+            params.options = {};
+        }
+        if (!params.options.customData) {
+            params.options.customData = {};
+        }
+        if (!params.staggerPixels && params.staggerPixels !== 0) {
+            params.staggerPixels = 50;
+        }
+        logger_1.default.system.debug(`Calling Spawn for componentType:${component}`);
+        const promiseResolver = (resolve) => {
+            util.getMyWindowIdentifier(function (windowIdentifier) {
+                params.launchingWindow = windowIdentifier;
+                self.callSpawn(params, (err, response) => {
+                    resolve({ err, response });
+                    cb(err, response);
+                });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Returns an object that provides raw access to a remote window.
+     * It returns an object that contains references to the Finsemble windowDescriptor, to
+     * the `OpenFin` window, and to the native JavaScript (browser) window.
+     *
+     * *This will only work for windows that are launched using the Finsemble Launcher API.*
+     *
+     * As in any browser, you will not be able to manipulate a window that has been launched
+     * cross domain or in a separate physical application (separate process). Caution
+     * should be taken to prevent a window from being closed by the user if you plan on
+     * referencing it directly. Due to these inherent limitations we strongly advise against a
+     * paradigm of directly manipulating remote windows through JavaScript. Instead leverage the
+     * RouterClient to communicate between windows and to use an event based paradigm!
+     *
+     * @param  {object} params Parameters
+     * @param {string} params.windowName The name of the window to access.
+     * @return {RawWindowResult} An object containing windowDescriptor, finWindow, and browserWindow. Or null if window isn't found.
+     * @deprecated Finsemble now uses a splintering agent which disconnects windows from the main launcher.
+     * It becomes impossible to access raw windows. See LauncherClient.getActiveDescriptors() and Util.getFinWindow()
+     * @private
+     */
+    getRawWindow(params) {
+        var launcher = window.opener;
+        if (launcher.name !== "launcherService") {
+            logger_1.default.system.warn("LauncherClient.getNativeWindow: window not opened by Launcher Service");
+        }
+        return launcher.activeWindows.getWindow(params.windowName);
+    }
+    /**
+     * @private
+     */
+    callSpawn(params, cb = Function.prototype) {
+        var self = this;
+        validate_1.default.args(cb, "function=");
+        logger_1.default.perf.debug("CallSpawn", "start", "from spawn to callback", params);
+        const promiseResolver = (resolve) => {
+            function invokeSpawnCallback(error, data) {
+                cb(error, data);
+                resolve({ err: error, data });
+            }
+            self.routerClient.query("Launcher.spawn", params, async function (err, response) {
+                logger_1.default.system.debug("CallSpawn", "Initial launcher callback params", err, response);
+                logger_1.default.perf.debug("CallSpawn", "Initial launcher callback", response);
+                if (err) {
+                    invokeSpawnCallback(err, result);
+                    return logger_1.default.system.error("LauncherClient.callSpawn", err);
+                }
+                response.data.windowIdentifier.name = response.data.windowIdentifier.windowName;
+                var result = response.data;
+                // Add a wrapped finWindow to the response (this can only be done client side)
+                if (result.windowDescriptor.native)
+                    return invokeSpawnCallback(err, result); /// This is way too slow for native windows so we just let this pass through and assume the window is ready.
+                var newWindowIdentifier = result.windowIdentifier;
+                let { wrap } = await FinsembleWindow_1.FinsembleWindow.getInstance({ name: newWindowIdentifier.windowName }); //TODO - replace with FinsembleWindow
+                result.finWindow = wrap;
+                let componentOnlineChannel = "Finsemble." + result.windowIdentifier.windowName + ".componentReady";
+                let subscriberID = self.routerClient.subscribe(componentOnlineChannel, componentOnlineCallback);
+                function componentOnlineCallback(err, response) {
+                    if (err)
+                        return logger_1.default.system.error(err);
+                    //Ignore the initial "uninitialized" state message delivered by subscribe (a second message will contain the actual data)
+                    if (response && Object.keys(response.data).length === 0)
+                        return;
+                    if (params.position === "relative" && (params.groupOnSpawn || params.dockOnSpawn)) {
+                        //If 'params.relativeWindow' is supplied we need to dock to it, otherwise get the parent window (System.Window.getCurrent())
+                        const windowToGroup = params.relativeWindow ? params.relativeWindow.windowName : system_1.System.Window.getCurrent().name;
+                        const windows = [result.windowIdentifier.windowName, windowToGroup]; //TODO - replace with FinsembleWindow
+                        self.routerClient.query("DockingService.groupWindows", {
+                            windows: windows,
+                            isMovable: true,
+                        }, function (error, response) {
+                            logger_1.default.perf.debug("CallSpawn", "stop");
+                            invokeSpawnCallback(err, result);
+                        });
+                    }
+                    else {
+                        logger_1.default.perf.debug("CallSpawn", "stop");
+                        invokeSpawnCallback(err, result);
+                    }
+                    self.routerClient.unsubscribe(subscriberID);
+                }
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Convenience function to get a monitor descriptor for a given windowIdentifier, or for the
+     * current window.
+     *
+     * @param {WindowIdentifier} [windowIdentifier] The window to find the monitor for. Current window if undefined.
+     * @param  {Function} cb Returns a monitor descriptor (optional or use returned Promise)
+     * @returns {Promise} A promise that resolves to a monitor descriptor
+     * @TODO this probably is unnecessary since a client can include util and a developer should be using this.getMonitorInfo which has full support for searching by component. Did Ryan need this?
+     * @private
+     */
+    getMonitor(windowIdentifier, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        const promiseResolver = (resolve) => {
+            util.getMonitor(windowIdentifier, (monitor) => {
+                cb(monitor);
+                resolve(monitor);
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Returns a windowIdentifier for the current window.
+     *
+     * @param {WindowIdentifier} cb Callback function returns windowIdentifier for this window (optional or use the returned Promise)
+     * @returns {Promise} A promise that resolves to a windowIdentifier
+     */
+    // @TODO, [Terry] calls to launcherClient.myWindowIdentifier or launcherClient.getMyWindowIdentifier()
+    // should be replaced with windowClient.getWindowIdentifier()
+    getMyWindowIdentifier(cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        const promiseResolver = (resolve) => {
+            util.getMyWindowIdentifier((wi) => {
+                cb(wi);
+                resolve(wi);
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+    * Gets the windowDescriptor for all open windows.
+    *
+    * <b>Note:</b> This returns descriptors even if the window is not part of the workspace.
+    *
+    * @param {StandardCallback} cb Callback returns an array of windowDescriptors.
+    *
+    */
+    getActiveDescriptors(cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        const promiseResolver = (resolve) => {
+            this.routerClient.query("Launcher.getActiveDescriptors", {}, function (err, response) {
+                if (err) {
+                    return logger_1.default.system.error(err);
+                }
+                if (response) {
+                    cb(err, response.data);
+                    resolve({ err, data: response.data });
+                }
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Adds a custom component. Private for now.
+     * @private
+     */
+    addUserDefinedComponent(params, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        const promiseResolver = (resolve) => {
+            this.routerClient.query("Launcher.userDefinedComponentUpdate", {
+                type: "add",
+                name: params.name,
+                url: params.url,
+            }, function (err, response) {
+                cb(err, response.data);
+                resolve({ err, data: response.data });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Adds a custom component. Private for now.
+     * @private
+     */
+    removeUserDefinedComponent(params, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        const promiseResolver = (resolve) => {
+            this.routerClient.query("Launcher.userDefinedComponentUpdate", {
+                type: "remove",
+                name: params.name,
+                url: params.url,
+            }, function (err, response) {
+                cb(err, response.data);
+                resolve({ err, data: response.data });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Gets components that can receive specific data types. Returns an object containing componentTypes mapped to a list of dataTypes they can receive. This is based on the "advertiseReceivers" property in a component's config.
+     * @param {Array.<string>} params.dataTypes An array of data types. Looks for components that can receive those data types.
+     * @param {Function} cb The callback to be invoked after the method completes successfully.
+     *
+     * @since 2.0
+     *
+     * @example
+     * FSBL.Client.LauncherClient.getComponentsThatCanReceiveDataTypes({ dataTypes: ['chartiq.chart', 'salesforce.contact']}, function(err, response) {
+     * 	//Response contains: {'chartiq.chart': ['Advanced Chart'], 'salesforce.contact': ['Salesforce Contact']}
+     * })
+     *
+     */
+    getComponentsThatCanReceiveDataTypes(params, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        if (params.dataTypes && !Array.isArray(params.dataTypes)) {
+            params.dataTypes = [params.dataTypes];
+        }
+        validate_1.default.args(params.dataTypes, "array");
+        const promiseResolver = (resolve) => {
+            this.routerClient.query("LauncherService.getComponentsThatCanReceiveDataTypes", params, function (err, response) {
+                cb(err, response.data);
+                resolve({ err, data: response.data });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Brings a windows to front. If no windowList, groupName or componentType is specified, brings all windows to front.
+     * @param params
+     * @param {Array.<string | Object>} [params.windowList] Optional. An array An array of window names or window identifiers. Not to be used with componentType.
+     * @param {string} [params.groupName] Optional. The name of a window group to bring to front.
+     * @param {string} [params.componentType] Optional. The componentType to bring to front. Not to be used with windowList.
+     *
+     * @since TBD
+     *
+     * @example
+     * LauncherClient.bringWindowsToFront({ windowList: ['AdvancedChart-123-123', 'Symphony-Chat-234-234']}, function(err, response) {
+     *
+     * })
+     *
+     * @private
+     */
+    bringWindowsToFront(params = {}, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        if (params.windowList && !Array.isArray(params.windowList)) {
+            params.windowList = [params.windowList];
+        }
+        if (params.groupName) {
+            validate_1.default.args(params.groupName, "string");
+        }
+        if (params.componentType) {
+            validate_1.default.args(params.componentType, "string");
+        }
+        //Changed to query to allow for async bring to front and to do something when all windows have been brought to front
+        this.routerClient.query("LauncherService.bringWindowsToFront", params, (err, response) => {
+            cb(err, response);
+        });
+        return Promise.resolve();
+    }
+    /**
+     * Minimizes all but a specific list or group of windows. Either groupName or windowList must be specified.
+     * @param params
+     * @param {Array.<string | Object>} [params.windowList] Optional. An array of window names or window identifiers. Not to be used with componentType.
+     * @param {string} [params.groupName] Optional. The name of a window group to hyperFocus.
+     * @param {string} [params.componentType] Optional. The Component Type to hyperFocus. Not to be used with windowList.
+     *
+     * @since TBD
+     * @example
+     * LauncherClient.hyperFocus({ windowList: ['AdvancedChart-123-123', 'Symphony-Chat-234-234']}, function(err, response) {
+     *
+     * })
+     *
+     * @private
+     */
+    hyperFocus(params, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        if (params.windowList && !Array.isArray(params.windowList)) {
+            params.windowList = [params.windowList];
+        }
+        if (!params.windowList && !params.groupName && !params.componentType) {
+            params.windowList = [this.myWindowIdentifier];
+        }
+        if (params.groupName) {
+            validate_1.default.args(params.groupName, "string");
+        }
+        if (params.componentType) {
+            validate_1.default.args(params.componentType, "string");
+        }
+        this.routerClient.transmit("LauncherService.hyperFocus", params);
+        cb();
+        return Promise.resolve();
+    }
+    /**
+     * Minimize windows. If no windowList or groupName is specified, all windows will be minimized.
+     * @param {*} params
+     * @param {Array.<string | Object>} [params.windowList] Optional. An array of window names or window identifiers. Not to be used with componentType.
+     * @param {string} [params.groupName] Optional. The name of a window group to minimize.
+     * @param {string} [params.componentType] Optional. The component type of windows to Minimize. Not to be used with windowList.
+     *
+     * @since TBD
+     * @private
+     */
+    minimizeWindows(params, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        if (params.windowList && !Array.isArray(params.windowList)) {
+            params.windowList = [params.windowList];
+        }
+        if (params.groupName) {
+            validate_1.default.args(params.groupName, "string");
+        }
+        if (params.componentType) {
+            validate_1.default.args(params.componentType, "string");
+        }
+        this.routerClient.transmit("LauncherService.minimizeWindows", params);
+        cb();
+        return Promise.resolve();
+    }
+    /**
+     * Create Window group
+     * @param {*} params
+     * @param {string} [params.groupName] The name of the window group to create
+     * @param {Array.<string | Object>} [params.windowList] An array of window names or window identifiers to add to the group. Optional.
+     * @param {function} cb callback to be called upon group creation
+     *
+     * @since TBD
+     * @private
+     */
+    createWindowGroup(params, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        if (params.windowList && !Array.isArray(params.windowList)) {
+            params.windowList = [params.windowList];
+            delete params.groupName;
+        }
+        validate_1.default.args(params.groupName, "string");
+        const promiseResolver = (resolve) => {
+            if (!params.groupName) {
+                let err = "Invalid Parameters";
+                resolve({ err });
+                cb(err);
+                return;
+            }
+            this.routerClient.query("LauncherService.createWindowGroup", params, function (err, response) {
+                cb(err, response);
+                resolve({ err, data: response });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Add Windows to group
+     * @param {*} params
+     * @param {string} [params.groupName] The name of the window group
+     * @param {Array.<string | Object>} [params.windowList] An array of window names or window identifiers to add to the group.
+     * @param {function} cb callback to be called upon group creation
+     *
+     * @since TBD
+     * @private
+     */
+    addWindowsToGroup(params, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        const promiseResolver = (resolve) => {
+            if (!params.groupName || !params.windowList) {
+                let err = "Invalid Parameters";
+                resolve({ err });
+                cb(err);
+                return;
+            }
+            if (params.windowList && !Array.isArray(params.windowList)) {
+                params.windowList = [params.windowList];
+            }
+            validate_1.default.args(params.groupName, "string");
+            this.routerClient.query("LauncherService.addWindowsToGroup", params, function (err, response) {
+                cb(err, response);
+                resolve({ err, data: response });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Remove Windows from group
+     * @param {*} params
+     * @param {string} [params.groupName] The name of the window group
+     * @param {Array.<string | Object>} [params.windowList] An array of window names or window identifiers to remove from the group.
+     * @param {function} cb callback to be called upon group creation
+     *
+     * @since TBD
+     * @private
+     */
+    removeWindowsFromGroup(params, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        const promiseResolver = (resolve) => {
+            if (!params.groupName || !params.windowList) {
+                let err = "Invalid Parameters";
+                resolve({ err });
+                cb(err);
+                return;
+            }
+            if (params.windowList && !Array.isArray(params.windowList)) {
+                params.windowList = [params.windowList];
+            }
+            this.routerClient.query("LauncherService.removeWindowsFromGroup", params, function (err, response) {
+                cb(err, response);
+                resolve({ err, data: response });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Get Window Groups that a window belongs to. If no windowIdentifier is specified, gets  the groups of the current window.
+     * @param {*} params
+     * @param {WindowIdentifier} [params.windowIdentifier] Optional. If not specified uses current window
+     * @param {*} cb callback with a list of groups
+     *
+     * @since TBD
+     * @private
+     */
+    getGroupsForWindow(params, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        if (typeof params === "function") {
+            cb = params;
+            params = null;
+        }
+        const promiseResolver = (resolve) => {
+            if (!params || !params.windowIdentifier) {
+                this.windowClient.getComponentState({ field: "finsemble:windowGroups" }, function (err, groups) {
+                    resolve({ err, data: groups });
+                    cb(err, groups);
+                });
+                return;
+            }
+            this.routerClient.query("LauncherService.getGroupsForWindow", params, function (err, response) {
+                resolve({ err, data: response.data });
+                cb(err, response.data);
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * @private
+     * @param {*} params
+     * @param {WindowIdentifier} [params.windowIdentifier] Optional. Current window is assumed if not specified.
+     * @param {Array.<string>} [params.groupNames] List of group names to add window to. Groups will be created if they do not exist.
+     * @param {*} cb
+     */
+    addToGroups(params, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        validate_1.default.args(params.groupNames, "array");
+        if (!params.windowIdentifier) {
+            params.windowIdentifier = this.myWindowIdentifier;
+        }
+        const promiseResolver = (resolve) => {
+            this.routerClient.query("LauncherService.addWindowToGroups", params, (err, response) => {
+                cb(err, response);
+                resolve({ err, data: response });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * _createWrap allows us to create a wrap without spawning a window
+     *
+     * @param {Object} params
+     * @param {String} params.name
+     * @param {Function} cb
+     * @memberof LauncherClient
+     * @private
+     */
+    _createWrap(params, cb) {
+        this.routerClient.query("LauncherService.createWrap", params, cb);
+    }
+    /**
+     * @private
+     *
+     * @param {*} cb
+     * @memberof LauncherClient
+     */
+    start(cb) {
+        var self = this;
+        // Get Group Updates (only if we are not in a service)
+        if (typeof Globals.FSBL !== "undefined") {
+            // Get Groups from Component State on Load
+            function subscribeToGroupUpdates() {
+                self.routerClient.subscribe("Finsemble.LauncherService.updateGroups." + self.windowName, function (err, response) {
+                    if (!Array.isArray(response.data))
+                        return; //dont attempt to save the initial responder state.
+                    self.windowClient.setComponentState({ field: "finsemble:windowGroups", value: response.data });
+                });
+            }
+            // cannot add a windowClient dependency here so explicitly wait for windowClient ready (ideally dependency manage could fully handle but maybe later)
+            Globals.FSBL.addEventListener("onReady", function () {
+                self.windowClient.onReady(() => {
+                    self.windowClient.getComponentState({ field: "finsemble:windowGroups" }, function (err, groups) {
+                        if (!err && groups) {
+                            return self.addToGroups({
+                                groupNames: groups,
+                            }, subscribeToGroupUpdates);
+                        }
+                        subscribeToGroupUpdates();
+                    });
+                });
+            });
+        }
+        setInterval(function () {
+            self.routerClient.transmit("Finsemble.heartbeat", { type: "component", windowName: self.windowName, componentType: "finsemble" });
+        }, 1000);
+        // @TODO, [Terry] remove in favor of calls to windowClient.getMyIdentifier()
+        this.getMyWindowIdentifier((identifier) => {
+            self.myWindowIdentifier = identifier;
+            if (cb) {
+                cb();
+            }
+        });
+    }
+}
+function constructInstance(params) {
+    params = params ? params : {};
+    if (!params.windowClient)
+        params.windowClient = windowClient_1.default;
+    return new LauncherClient({
+        clients: params,
+        startupDependencies: {
+            services: ["windowService"],
+        },
+        onReady: function (cb) {
+            logger_1.default.system.debug("launcherClient ready", window.name);
+            logger_1.default.perf.debug("LauncherClientReadyTime", "stop");
+            launcherClient.start(cb);
+        },
+        name: "launcherClient",
+    });
+}
+var launcherClient = constructInstance();
+launcherClient.constructInstance = constructInstance;
+exports.default = launcherClient;
+
+
+/***/ }),
+/* 42 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony export (immutable) */ __webpack_exports__["byString"] = byString;
+/* harmony export (immutable) */ __webpack_exports__["initObject"] = initObject;
+/* harmony export (immutable) */ __webpack_exports__["mapField"] = mapField;
+/* harmony export (immutable) */ __webpack_exports__["checkForObjectChange"] = checkForObjectChange;
+/**
+ *
+ * This file handles common functionality needed in both the client and service.
+ *
+ */
+// Get a value from an object using a string. {abc:{123:"value"}} you would do byString(object,"abc.123")
+function byString(o, s) {
+	//Object,String
+	s = s.replace(/\[(\w+)\]/g, ".$1"); // convert indexes to properties
+	s = s.replace(/^\./, ""); // strip a leading dot
+	var a = s.split(".");
+	for (var i = 0, n = a.length; i < a.length; ++i) {
+		// Loop through and find the attribute that matches the string passed in
+		var k = a[i];
+		if (!o) {
+			return null;
+		}
+		if (typeof o === "string") return null; // Reached the end of the chain
+
+		if (k in o) {
+			o = o[k];
+		} else {
+			return null;
+		}
+	}
+	return o;
+}
+//can add values to an object from a string. Must be in `.` form abc.123
+const setPath = (object, path, value) => path.split(".").reduce((o, p) => o[p] = path.split(".").pop() === p ? value : o[p] || {}, object);
+/* harmony export (immutable) */ __webpack_exports__["setPath"] = setPath;
+
+
+// This handles the initial mapping for us. It will crawl through all child objects and map those too. Parent is the current location within the object(`parent.child`). Null is top level. The mapping is all flattened
+function initObject(object, parent, mapping) {
+	var mapLocation;
+
+	if (!parent) {
+		parent = null;
+	}
+
+	if (typeof object !== "object") {
+		mapLocation = parent ? parent + "." + n : n;
+		mapping[mapLocation] = parent;
+		return;
+	}
+
+	for (let n in object) {
+		if (typeof object[n] === "object" && object[n] !== "undefined") {
+			mapLocation = parent ? parent + "." + n : n;
+			mapping[mapLocation] = parent;
+			initObject(object[n], mapLocation, mapping); // If we have another object, map it
+		} else {
+			mapLocation = parent ? parent + "." + n : n;
+			mapping[mapLocation] = parent;
+		}
+	}
+}
+// Will map out a field in an object. So we don't have to loop through the whole thing every time we have a change.
+function mapField(object, s, mapping) {
+	if (mapping[s]) {
+		return;
+	} // If we're already mapped move on.
+	s = s.replace(/\[(\w+)\]/g, ".$1"); // convert indexes to properties
+	s = s.replace(/^\./, ""); // strip a leading dot
+	var a = s.split(".");
+	var currentLocation = s;
+
+	if (!mapping.hasOwnProperty(currentLocation)) {
+		var newString = null;
+		if (a.length > 1) {
+			a.pop();
+			newString = a.join(".");
+		}
+
+		mapping[currentLocation] = newString;
+	}
+
+	var newObject = byString(object, currentLocation);
+	if (newObject === "undefined") {
+		return;
+	} // If the location doesn't exist exit.
+	if (typeof newObject === "object") {
+		for (var key in newObject) {
+			mapField(object, currentLocation + "." + key, mapping); // If we need to ke
+		}
+	}
+}
+// To see if we're replacing an existing field/object with an object/field that would make some of the mapping obsolete.
+function checkForObjectChange(object, field, mapping) {
+	var objectReplacing = byString(object, field);
+	if (objectReplacing === null) {
+		return false;
+	}
+	if (typeof objectReplacing === "object") {
+		// we're replacing an object which requires use to remap at this level.
+		return removeChildMapping(mapping, field);
+	}
+	if (typeof objectReplacing !== "object" && typeof field === "object") {
+		//we're replacing a non object with an object. Need to map out this new object
+		return removeChildMapping(mapping, field);
+	}
+	return null;
+}
+//This will remove an item from mapping and pass back an array so that we can send out notifications
+function removeChildMapping(mapping, field) {
+	var removals = [];
+	for (var map in mapping) {
+		var lookField = field + ".";
+		if (map.includes(lookField)) {
+			removals.push(map);
+			delete mapping[map];
+		}
+	}
+	return removals;
+}
+
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\storeUtils.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\storeUtils.js"); } } })();
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
+
+/***/ }),
+/* 43 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const async_1 = __webpack_require__(9);
+const storeUtils = __webpack_require__(42);
+const logger_1 = __webpack_require__(0);
+const baseClient_1 = __webpack_require__(7);
+/** The global `window` object. We cast it to a specific interface here to be
+ * explicit about what Finsemble-related properties it may have. */
+const Globals = window;
+class StoreModel extends baseClient_1._BaseClient {
+    constructor(params, routerClient) {
+        super(params);
+        this.values = {};
+        this.listeners = [];
+        this.registeredDispatchListeners = [];
+        this.mapping = {};
+        /** This is the Flux dispatcher. It can be used dispatch actions across stores. These action are not caught inside of the global store service. For more information, you can read the [Flux documentation](https://facebook.github.io/flux/docs/overview.html).
+         *
+         * Example:
+         * ```
+         * store.Dispatcher.register(function(action){
+         * 	if(action.actionType === "ACTION1") {
+         * 		// Do something with the action here.
+         * 	}
+         * })
+         * ```
+         */
+        this.Dispatcher = {
+            register: (fn) => {
+                this.registeredDispatchListeners.push(fn);
+            },
+            dispatch: (data) => {
+                if (this.isGlobal) {
+                    this.routerClient.transmit("storeService.dispatch." + this.name, data);
+                }
+                else {
+                    this.handleDispatchedMessages(null, {
+                        data: data
+                    });
+                }
+            }
+        };
+        /**
+         * Handles all changes coming in from the service.
+         */
+        this.handleChanges = (err, response) => {
+            if (err) {
+                logger_1.default.system.error("DistributedStoreClient", err);
+            }
+            if (!response.data.store) {
+                return;
+            }
+            if (!response.data.field) {
+                response.data.field = null;
+            }
+            var combined = this.name + (response.data.field ? "." + response.data.field : "");
+            var val = response.data.storeData ? response.data.storeData : response.data.value;
+            this.triggerListeners(combined, val);
+        };
+        this.routerClient = routerClient;
+        this.isGlobal = params.global;
+        this.name = params.store ? params.store : "finsemble";
+        if (params.values)
+            this.values = params.values;
+        this.lst = this.listeners;
+        storeUtils.initObject(this.values, null, this.mapping);
+        // Add listeners for global stores. Not needed for local stores as everything happens internally.
+        if (this.isGlobal) {
+            this.routerClient.addListener("storeService.dispatch." + this.name, this.handleDispatchedMessages.bind(this));
+        }
+    }
+    /**
+     * @param {*} err
+     * @param {*} message
+     * @private
+     */
+    handleDispatchedMessages(err, message) {
+        for (var i = 0; i < this.registeredDispatchListeners.length; i++) {
+            this.registeredDispatchListeners[i](message.data);
+        }
+    }
+    ;
+    /**
+     * Set a value in the store. Two events will be triggered with topics of: store and field.
+     * @param {String} params.field The name of the field where data will be stored
+     * @param {String} params.value Value to be stored
+     * @param {function} cb callback
+     * @returns {null}
+     *
+     * @example
+     * store.setValue({ field:'field1', value:"new value" });
+     */
+    setValue(params, cb) {
+        if (!params.field) {
+            logger_1.default.system.error("DistributedStore.setValue:no field provided", params);
+        }
+        if (!params.hasOwnProperty("value")) {
+            logger_1.default.system.error("DistributedStore.setValue:no value provided", params);
+        }
+        if (this.isGlobal) {
+            var data = {
+                store: this.name,
+                field: params.field,
+                value: params.value
+            };
+            return Globals.distributedStoreClient.routerClient.query("storeService.setValue", data, function (err) {
+                return cb ? cb(err) : null;
+            });
+        }
+        const removals = storeUtils.checkForObjectChange(this.values, params.field, this.mapping);
+        storeUtils.setPath(this.values, params.field, params.value);
+        storeUtils.mapField(this.values, params.field, this.mapping);
+        if (removals) {
+            this.sendRemovals(removals);
+        }
+        this.triggerListeners(this.name, this);
+        this.publishObjectUpdates(params.field, this.mapping);
+        return cb ? cb(null) : null;
+    }
+    ;
+    /**
+     * Handles changes to the store. Will publish from the field that was changed and back.
+     */
+    publishObjectUpdates(startField, mappings) {
+        const currentMapping = mappings;
+        while (startField) {
+            this.triggerListeners(this.name + "." + startField, storeUtils.byString(this.values, startField));
+            startField = currentMapping[startField];
+        }
+    }
+    /**
+     * Send items that are no longer mapped or had their map change. If a value is remapped we'll send out the new value.
+    */
+    sendRemovals(removals) {
+        for (var i = 0; i < removals.length; i++) {
+            this.triggerListeners(this.name + "." + removals[i], storeUtils.byString(this.values, removals[i]));
+        }
+    }
+    /**
+     * This will set multiple values in the store.
+     * @param {function} cb callback
+     * @param {Array<setValuesParam>} fields An array where each element is like the object below.
+     * @example
+     * store.setValues([{ field:'field1', value:"new value" }]);
+     */
+    setValues(fields, cb) {
+        if (!fields) {
+            return logger_1.default.system.error("DistributedStore.setValues:no params given");
+        }
+        if (!Array.isArray(fields)) {
+            return logger_1.default.system.error("DistributedStore.setValues:params must be an array");
+        }
+        async_1.each(fields, (field, done) => {
+            this.setValue(field, done);
+        }, (err) => {
+            return cb ? cb(err) : null;
+        });
+    }
+    ;
+    /**
+     * Get a value from the store. If global is not set, we'll check local first then we'll check global. Returns the value of the field. If no callback is given and the value is local, this will run synchronously.
+     * @param {String} params.field The field where the value is stored.
+     * @param {StandardCallback} cb Will return the value if found.
+     * @returns {any} The value of the field. If no callback is given and the value is local, this will run synchronous
+     * @example
+     * store.getValue({ field: 'field1' }, function(err,value){});
+     * store.getValue('field1', function(err,value){});
+     */
+    getValue(params, cb) {
+        if (typeof params === "string") {
+            params = { field: params };
+        }
+        if (!params.field) {
+            if (!cb) {
+                return "no field provided";
+            }
+            return cb("no field provided");
+        }
+        if (this.isGlobal) {
+            return this.getGlobalValue(params, cb);
+        }
+        var fieldValue = storeUtils.byString(this.values, params.field);
+        if (fieldValue !== undefined) {
+            if (!cb) {
+                return fieldValue;
+            }
+            return cb(null, fieldValue);
+        }
+        if (!cb) {
+            return null;
+        }
+        return cb("couldn't find a value");
+    }
+    ;
+    /**
+     * Get multiple values from the store. Returns an object of with the fields as keys.If no callback is given and the value is local, this will run synchronously. Returns an object of with the fields as keys.If no callback is given and the value is local, this will run synchronous
+     * @param {Array.<object>|Array.<String>} fields An Array of field objects. If there are no fields provided, all values in the store are returned.
+     * @param {string} fields.field The field where the value is stored.
+     * @param {Function} [cb] Will return the value if found.
+     * @returns {Object} - returns an object of with the fields as keys.If no callback is given and the value is local, this will run synchronous
+     * @example
+     * store.getValues([{ field:'field1' }, { field:'field2' }], function(err,values){});
+     * store.getValues(['field1', 'field2'], function(err,values){});
+     */
+    getValues(fields, cb) {
+        if (typeof fields === "function") {
+            cb = fields;
+            if (this.isGlobal) {
+                return this.getGlobalValues(null, cb);
+            }
+            if (!cb) {
+                return this.values;
+            }
+            return cb(null, this.values);
+        }
+        if (!Array.isArray(fields)) {
+            return this.getValue(fields, cb);
+        }
+        if (this.isGlobal) {
+            return this.getGlobalValues(fields, cb);
+        }
+        var values = {};
+        for (var i = 0; i < fields.length; i++) {
+            var item = fields[i];
+            var field = typeof item === "string" ? item : item.field;
+            var combined = this.name + (field ? "." + field : "");
+            var fieldValue = storeUtils.byString(this.values, field);
+            values[field] = fieldValue;
+        }
+        if (!cb) {
+            return values;
+        }
+        return cb(null, values);
+    }
+    ;
+    /**
+     * Get a single value from the global store.
+     */
+    getGlobalValue(params, cb) {
+        Globals.distributedStoreClient.routerClient.query("storeService.getValue", {
+            store: this.name,
+            field: params.field
+        }, (err, response) => {
+            if (err) {
+                return cb(err);
+            }
+            return cb(err, response.data);
+        });
+    }
+    /**
+     * Get values from the global store.
+     */
+    getGlobalValues(params, cb) {
+        Globals.distributedStoreClient.routerClient.query("storeService.getValues", {
+            store: this.name,
+            fields: params
+        }, (err, response) => {
+            if (err) {
+                return cb(err);
+            }
+            return cb(err, response.data);
+        });
+    }
+    /**
+     * Remove a value from the store.
+    * @param {Object | String} params - Either an object (`{ field: string }`) or string
+     * @param {String} param.field The name of the field
+     * @param {Function} cb returns an error if there is one
+     * @todo this function needs some help. The first should be 'if(typeof params === "string");.
+     * @example
+     * store.removeValue({ field: 'field1' }, function(err,bool){});
+     */
+    removeValue(params, cb) {
+        if (!params.field) {
+            if (params !== undefined) {
+                params = { field: params };
+            }
+            else {
+                return cb("no field provided");
+            }
+        }
+        params.value = null;
+        return this.setValue(params, cb);
+    }
+    ;
+    /**
+     * Removes multiple values from the store.
+     * @param {Object[] | String[]} params - An Array of field objects
+     * @param {String} params.field - The name of the field
+     * @param {Function} cb -  returns an error if there is one.
+     * @example
+     * store.removeValues([{ field: 'field1' }], function(err,bool){});
+     */
+    removeValues(params, cb) {
+        if (!Array.isArray(params)) {
+            return cb("The passed in parameter needs to be an array");
+        }
+        async_1.map(params, this.removeValue, (err, data) => {
+            return cb(err, data);
+        });
+    }
+    ;
+    /**
+     * Destroys the store.
+     * @param {Function} cb Function to be invoked after the store is destroyed.
+     * @example
+     * store.destroy();
+     */
+    destroy(cb) {
+        var params = {
+            store: this.name,
+            global: this.isGlobal,
+        };
+        Globals.distributedStoreClient.removeStore(params, (err, response) => {
+            if (err) {
+                return cb(err);
+            }
+            return cb(null, true);
+        });
+    }
+    ;
+    /**
+     * NOTE: make sure we dont have duplicate router subscribers
+     * @private
+     */
+    changeSub(change) {
+        if (!this.subs)
+            this.subs = [];
+        if (!this.subs[change]) {
+            if (this.isGlobal) {
+                Globals.distributedStoreClient.routerClient.subscribe("storeService" + change, this.handleChanges);
+            }
+            this.subs[change] = true;
+        }
+    }
+    ;
+    /**
+    * Add a listener to the store at either the store or field level. If no field is given, the store level is used. You can also listen to nested object (e.g., field1.nestedField).
+      * @param {String} params.field The piece of data that you want to listen on. If this is empty it listens to all changes of the store.
+    * @param {Function} fn the function to call when the data changes
+    * @param {Function} cb callback to be invoked
+    * @example
+    * var myFunction = function(err,data) {
+    * }
+    * store.addListener({ field:'field1' }, myFunction, cb);
+    */
+    addListener(params, fn, cb) {
+        var field = null;
+        if (typeof params === "function") {
+            fn = params;
+            params = {};
+        }
+        if (params.field) {
+            field = params.field;
+        }
+        var combined = this.name + (field ? "." + field : "");
+        if (this.listeners[combined]) {
+            this.listeners[combined].push(fn);
+        }
+        else {
+            this.listeners[combined] = [fn];
+        }
+        this.changeSub(combined);
+        return cb ? cb() : null;
+    }
+    ;
+    /**
+    * Add an array of listeners as  objects or strings. If using strings, you must provide a function callback.
+    * @param {String} params.field The piece of data that you want listen on. If this is empty it listen to all changes of the store.
+    * @param {String} params.listener The function to call when the piece of data is modified. If this is empty, fn is used.
+    * @param {function} fn The function to call when the piece of data is modified.
+    * @param {function} cb callback to be invoked when the listeners are added.
+    * @example
+    * var myFunction = function(err,data){
+    * }
+    * store.addListeners([{
+    * 	field: 'field1',
+    * 	listener: myFunction
+    * },
+    * {
+    * 	field:'field2',
+    * 	listener: myFunction
+    * }],
+    * null, cb);
+    * store.addListeners([{ field: 'field1' },{ field: 'field2', listener: myFunction }], myFunction, cb);
+    * store.addListeners(['field1','field2'], myFunction, cb);
+    */
+    addListeners(params, fn, cb) {
+        if (!Array.isArray(params)) {
+            return this.addListener(params, fn, cb);
+        }
+        for (var i = 0; i < params.length; i++) {
+            var field = null;
+            var item = params[i];
+            var ls;
+            if (typeof item === "string") {
+                field = item;
+            }
+            else if (item.field) {
+                field = item.field;
+                ls = params[i].listener;
+            }
+            var combined = this.name + (field ? "." + field : "");
+            if (!ls) {
+                if (fn && typeof fn === "function") {
+                    ls = fn;
+                }
+            }
+            if (this.listeners[combined]) {
+                this.listeners[combined].push(ls);
+            }
+            else {
+                this.listeners[combined] = [ls];
+            }
+            this.changeSub(combined);
+        }
+        return cb ? cb() : null;
+    }
+    ;
+    /**
+     * Remove a listener from store. If no field is given, we look for a store listener
+     * @param {String} params.field - The data field with the listener that you want to remove.
+     * @param {function} fn The handler passed into `addListener` or `addListeners`.
+     * @param {function} cb returns true if it was successful in removing the listener.
+     *
+     * @example
+     * var myFunction = function(err,data){}
+     * store.removeListener({ field: 'field1' }, MyFunction, function(bool){});
+     * store.removeListener(MyFunction, function(bool){});
+     */
+    removeListener(params, fn, cb) {
+        var field = null;
+        if (typeof params === "function") {
+            cb = fn;
+            fn = params;
+            params = {};
+        }
+        if (params.field) {
+            field = params.field;
+        }
+        var combined = this.name + (field ? "." + field : "");
+        if (this.listeners[combined]) {
+            for (var i = 0; i < this.listeners[combined].length; i++) {
+                if (this.listeners[combined][i] === fn) {
+                    this.listeners[combined].pop(i);
+                    return cb ? cb(null, true) : null;
+                }
+            }
+        }
+        return cb ? cb(null, false) : null;
+    }
+    ;
+    /**
+     * Remove an array of listeners from the store
+     * @param {String} params.field The data field with the listener that you want to remove.
+     * @param {String} params.listener The handler passed into `addListener` or `addListeners`.
+     * @param {function} fn The handler passed into `addListener` or `addListeners`.
+     * @param {function} cb returns true if it was successful in removing the listener.
+     *
+     * @example
+     * var myFunction = function(err,data){}
+     * store.removeListeners({ field: 'field1' }, MyFunction, function(bool){});
+     * store.removeListeners([{ field: 'field1', listener: MyFunction}], function(bool){});
+     * store.removeListeners(['field1'], MyFunction, function(bool){});
+     */
+    removeListeners(params, fn, cb) {
+        if (!Array.isArray(params)) {
+            if (typeof params === "function") {
+                this.removeListener({}, params, cb);
+            }
+            else if (params.field) {
+                this.removeListener(params, fn, cb);
+            }
+            return cb("missing fields");
+        }
+        var removeCount = 0;
+        for (var i = 0; i < params.length; i++) {
+            var field = null;
+            var item = params[i];
+            var ls;
+            if (typeof item === "string") {
+                field = item;
+            }
+            else if (item.field) {
+                field = item.field;
+                ls = params[i].listener;
+            }
+            var combined = this.name + (field ? "." + field : "");
+            if (!ls) {
+                if (fn && typeof fn === "function") {
+                    ls = fn;
+                }
+                else {
+                    continue;
+                }
+            }
+            for (var j = 0; j < this.listeners[combined].length; j++) {
+                if (this.listeners[combined][j] === ls) {
+                    this.listeners[combined].pop(i);
+                    removeCount++;
+                }
+            }
+        }
+        if (removeCount < params.length) {
+            return cb("All listeners could not be found", false);
+        }
+        return cb ? cb(null, true) : null;
+    }
+    ;
+    // Trigger any function that is listening for changes
+    triggerListeners(listenerKey, data) {
+        if (this.listeners[listenerKey]) {
+            for (var i = 0; i < this.listeners[listenerKey].length; i++) {
+                if (typeof this.listeners[listenerKey][i] === "function") {
+                    logger_1.default.system.debug("DistributedStore.triggerListeners", listenerKey, data);
+                    this.listeners[listenerKey][i](null, { field: listenerKey, value: data });
+                }
+                else {
+                    logger_1.default.system.warn("DistributedStoreClient:triggerListeners: listener is not a function", listenerKey, i, this.listeners[listenerKey][i]);
+                }
+            }
+        }
+    }
+}
+;
+exports.default = StoreModel;
+
+
+/***/ }),
+/* 44 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+const storageClient_1 = __webpack_require__(21);
+const hotkeysClient_1 = __webpack_require__(45);
+const util = __webpack_require__(8);
+const system_1 = __webpack_require__(3);
+const baseClient_1 = __webpack_require__(7);
+const logger_1 = __webpack_require__(0);
+const validate_1 = __webpack_require__(6); // Finsemble args validator
+const FinsembleWindow_1 = __webpack_require__(35);
+const configUtil_1 = __webpack_require__(11);
+const async_1 = __webpack_require__(9);
+const routerClientInstance_1 = __webpack_require__(5);
+const lodashGet = __webpack_require__(24);
+// DH 3/6/2019 - @TODO - All uses of this should be replaced with calls to the WindowStorageManager
+const constants_1 = __webpack_require__(10);
+const configClient_1 = __webpack_require__(15);
+var finsembleWindow;
+/**
+ *
+ * Helper to see if element has a class.
+ * @param {HTMLElement} el
+ * @param {String} className
+ * @private
+ * @return {HTMLElement}
+ */
+function hasClass(el, className) {
+    if (el.classList) {
+        return el.classList.contains(className);
+    }
+    return !!el.className.match(new RegExp("(\\s|^)" + className + "(\\s|$)"));
+}
+/**
+ * Adds a class to an HTML element
+ * @param {HTMLElement} el
+ * @param {String} className
+ * @private
+ */
+function addClass(el, className) {
+    if (el.classList) {
+        el.classList.add(className);
+    }
+    else if (!hasClass(el, className)) {
+        el.className += " " + className;
+    }
+}
+/**
+ *
+ * Removes class from HTML element
+ * @param {HTMLElement} el
+ * @param {String} className
+ * @private
+ */
+function removeClass(el, className) {
+    if (el.classList) {
+        el.classList.remove(className);
+    }
+    else if (hasClass(el, className)) {
+        var reg = new RegExp("(\\s|^)" + className + "(\\s|$)");
+        el.className = el.className.replace(reg, " ");
+    }
+}
+/**
+ *
+ *@introduction
+  <h2>Window Client</h2>
+  ----------
+ * The Window Client is primarily responsible for managing the `windowState` (the window's bounds) and `componentState` (data inside of your component).
+ * The reference below is provided in case you'd like to manually trigger events.
+ *
+ * The Window Client also injects the window title bar control, which contains controls for minimizing, maximizing, closing, and restoring your window. For information about the window title bar, please see the [UI Component tutorial](tutorial-UIComponents.html#window-title-bar).
+ *
+ * @hideconstructor
+ * @param {object} params
+ * @constructor
+ * @returns {WindowClient}
+ */
+class WindowClient extends baseClient_1._BaseClient {
+    constructor(params) {
+        /** @alias WindowClient# */
+        super(params);
+        /**
+         * Moves the window so that it's centered above the user's mouse.
+         */
+        this.showAtMousePosition = function () {
+            this.routerClient.transmit("DockingService.showAtMousePosition", this.getWindowIdentifier());
+        };
+        validate_1.default.args(params, "object=") && params && validate_1.default.args2("params.onReady", params.onReady, "function=");
+        //We store the options that the window is created with in this property.
+        /**
+        * A copy of the `finWindow`'s options value. This is where we store information like monitorDimensions, initialization information, and any other data that needs to be passed from the parent application into the created window.
+        * @type object
+        */
+        this.options = {};
+        //The hash we use to save data with.
+        this.windowHash = "";
+        //Window's title.
+        this.title = null;
+        //This is the bottom edge of the toolbar. The window's position will be offset by this much.
+        //@todo move this value to a config.
+        this.toolbarBottom = 40;
+        //default value. The window assigns the containers it cares about before starting.
+        this.containers = [];
+        //window state for restoration purposes.
+        this.componentState = {};
+        //This can be either normal, minimized, or maximized.
+        this.windowState = "normal";
+        // This gets set to true if the window has a header
+        this.hasHeader = false;
+        //If true, will send router messages to have docking respond to windows aero snap. Otherwise, will restore from those events when they happen
+        this.enableWindowsAeroSnap = false;
+        this.bindFunctions();
+        /**
+         * Minimizes window along with all windows docked to it.
+         * @param {function} cb to be invoked after the method completes successfully.
+         * @example
+         * FSBL.Clients.WindowClient.minimizeWithDockedWindows();
+         * @private
+         */
+        this.minimizeWithDockedWindows = this.minimize;
+    }
+    /**
+     * @private
+     */
+    bindFunctions() {
+        this.onWindowRestored = this.onWindowRestored.bind(this);
+        this.onWindowMaximized = this.onWindowMaximized.bind(this);
+        this.onWindowBlurred = this.onWindowBlurred.bind(this);
+        this.onWindowFocused = this.onWindowFocused.bind(this);
+        this.onParentSet = this.onParentSet.bind(this);
+        this.onMinimizedRestored = this.onMinimizedRestored.bind(this);
+        this.onWindowMinimized = this.onWindowMinimized.bind(this);
+        this.close = this.close.bind(this);
+        this.getInitialOptions = this.getInitialOptions.bind(this);
+        this.cacheInitialBounds = this.cacheInitialBounds.bind(this);
+        this._setHeaderHeight = this._setHeaderHeight.bind(this);
+    }
+    /**
+     * This function is fired every time the window's bounds change. It saves the window's position.
+     * @param {object} bounds
+     * @private
+     */
+    onWindowRestored() {
+        this.updateHeaderState("Maximize", { hide: false });
+    }
+    /**
+     * @private
+     */
+    onWindowMaximized() {
+        this.updateHeaderState("Maximize", { hide: true });
+    }
+    /**
+     * @private
+     */
+    onWindowBlurred() {
+        if (this.hasHeader) {
+            this.setActive(false);
+        }
+    }
+    /**
+     * @private
+     */
+    onWindowFocused() {
+        if (this.hasHeader) {
+            this.setActive(true);
+        }
+    }
+    /**
+     * @private
+     */
+    onMinimizedRestored() {
+        this.routerClient.transmit("DockingService.windowRestored", finsembleWindow.name);
+        finsembleWindow.removeEventListener("restored", this.onMinimizedRestored);
+    }
+    /**
+     * @private
+     */
+    onWindowMinimized() {
+        this.routerClient.query("DockingService.windowMinimized", { windowName: finsembleWindow.name });
+        finsembleWindow.addEventListener("restored", this.onMinimizedRestored);
+    }
+    /**
+     * Handles the event that fires when the finsemble window's parent is set.
+     * @private
+     * @param evt the event itself, which is ignored.  Any time a parent is set, force a group data update.
+     */
+    onParentSet(evt) {
+        this.requestGroupDataPublish();
+    }
+    /**
+     * Returns a list of the groups this window is in, if any.
+     */
+    getWindowGroups() {
+        return this.windowGroups;
+    }
+    /**
+     * Handler for group updates from the window service.  Stores the groups that this window is in,
+     * if any.
+     * @private
+     * @param err the error, if any
+     * @param res the received updated group data
+     */
+    groupUpdateHandler(err, res) {
+        if (err) {
+            FSBL.Clients.Logger.error(err);
+            return;
+        }
+        this.windowGroups = Object.values(res.data.groupData).
+            filter(group => group.windowNames.includes(this.getWindowNameForDocking()));
+    }
+    ;
+    /**
+     * Requests an updated group data message.
+     * @private
+     */
+    requestGroupDataPublish() {
+        this.routerClient.transmit("DockingService.requestGroupDataPublish");
+    }
+    /**
+     * Closes window. Defaults are to remove the window from the workspace if the user presses the X button, but not if the window is closed via an app-level request (e.g., switching workspaces, so all windows need to close).
+     * @param {object} params
+     * @param {boolean} params.removeFromWorkspace Whether to remove the window from the workspace.
+     * @param {boolean} params.closeWindow Whether to close the window. On shutdown this method is called, but the Window Service actually closes the window.
+     * @param {boolean} params.userInitiated Whether the user clicked the X, or if the system asked the window to close.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example
+     * //Close window and remove from workspace (e.g., user closes the window).
+     * FSBL.Clients.WindowClient.close({ removeFromWorkspace: true, closeWindow: true });
+     * //Close window and keep in workspace (e.g., application requests that all windows close themselves).
+     * FSBL.Clients.WindowClient.close({ removeFromWorkspace: false, closeWindow: false });
+     */
+    close(params, cb = () => { }) {
+        if (!params) {
+            params = { removeFromWorkspace: true, closeWindow: true };
+        }
+        let parentWindow = finsembleWindow.parentWindow;
+        if (params.userInitiated && parentWindow) {
+            return parentWindow.close(params, cb);
+        }
+        else {
+            finsembleWindow.close(params, cb);
+        }
+    }
+    /**
+     * @private
+     * @returns {windowHash}
+     */
+    getWindowHash() {
+        return this.windowHash;
+    }
+    /**
+     * Retrieves the window's title.
+     * @returns {String} title
+     * @example
+     * var windowTitle = FSBL.Clients.WindowClient.getWindowTitle();
+     */
+    getWindowTitle() {
+        return this.title;
+    }
+    /**
+     * This function retrieves the dimensions of the monitor that the window is on. It's currently used in the {@link launcherClient}.
+     * @param {function} callback
+     * @private
+     * @todo  this is bad. The monitor can change if the window is moved. Use util monitor functions instead. Instead, use the util style getMyMonitor, and keep monitor dimensions up to date statically at FSBL level with a listener on launcher (unclaimedRect).
+     */
+    retrieveMonitorDimensions(callback = Function.prototype) {
+        util.getMonitor(null, function (monitorInfo) {
+            finsembleWindow.updateOptions({ options: { monitorDimensions: monitorInfo.monitorRect } });
+            if (callback) {
+                callback(monitorInfo.monitorRect);
+            }
+        });
+    }
+    /**
+     * Listens for changes in the hash and persists the change to the url property, and then saves it.
+     * @private
+     */
+    listenForHashChanges() {
+        //get url on page load.
+        finsembleWindow.updateOptions({ url: window.top.location.href }, () => {
+        });
+        var self = this;
+        //There's no pushState event in the browser. This is a monkey patched solution that allows us to catch hash changes. onhashchange doesn't fire when a site is loaded with a hash (e.g., salesforce).
+        (function (history) {
+            var pushState = history.pushState;
+            history.pushState = function (state) {
+                if (typeof history.onpushstate === "function") {
+                    history.onpushstate({ state: state });
+                }
+                pushState.apply(history, arguments);
+                finsembleWindow.updateOptions({ url: window.top.location.href }, () => {
+                });
+                return;
+            };
+            var replaceState = history.replaceState;
+            history.replaceState = function (state) {
+                if (typeof history.onreplacestate === "function") {
+                    history.onreplacestate({ state: state });
+                }
+                replaceState.apply(history, arguments);
+                finsembleWindow.updateOptions({ url: window.top.location.toString() });
+                storageClient_1.default.save({ topic: constants_1.WORKSPACE.CACHE_STORAGE_TOPIC, key: self.windowHash, value: finsembleWindow.windowOptions });
+                return;
+            };
+        })(window.history);
+        window.addEventListener("hashchange", () => {
+            finsembleWindow.updateOptions({ url: window.top.location.toString() }, () => {
+            });
+        });
+    }
+    ;
+    /**
+     * Gets the options from the window on startup and caches them on the object.
+     * @private
+     * @param {function} callback
+     */
+    getInitialOptions(callback) {
+        if (!this.isInAService) {
+            finsembleWindow.getOptions((err, options) => {
+                //err happens if the window doesn't exist in the windowService (e.g., it's a service that's included the windowClient). This will be revisited in the future, but for now we need to make sure that the system doesn't have errors.
+                if (err)
+                    options = {};
+                finsembleWindow.windowOptions = options;
+                this.options = options;
+                logger_1.default.system.verbose("WindowClient:getting options", options);
+                callback();
+            });
+        }
+        else {
+            this.options = {};
+            callback();
+        }
+    }
+    /**
+     * Gets the bounds for the window on startup and saves them to the workspace.
+     * @private
+     * @param {function} callback
+     */
+    cacheInitialBounds(callback) {
+        this.cacheBounds((bounds) => {
+            try {
+                // TODO: saveCompleteWindowState is related to addToWorkspace, not persistWindowState. This causes workspaces to fail for windows where persistWindowState is not set but addToWorkspace is.
+                if (!finsembleWindow.windowOptions.customData.foreign.components["Window Manager"].persistWindowState) {
+                    return callback();
+                }
+                finsembleWindow.updateOptions({ options: { url: window.top.location.toString() } });
+                //finsembleWindow.saveCompleteWindowState();
+                //this.saveWindowBounds(bounds, false);
+            }
+            catch (e) {
+                logger_1.default.system.warn("customData.foreign.components[\"Window Manager\" is undefined");
+            }
+            callback();
+        });
+    }
+    /**
+     * Sets initial state for the window. This data is modified on subsequent saves.
+     * @param {function} callback
+     * @private
+     */
+    setInitialWindowBounds(callback) {
+        logger_1.default.system.warn("`FSBL.Clients.WindowClient.setInitialWindowBounds is deprecated and will be removed in a future version of finsemble. Use 'getInitialOptions' and 'cacheInitialBounds' instead.");
+        async_1.parallel([
+            this.getInitialOptions,
+            this.cacheInitialBounds
+        ], callback);
+    }
+    /**
+     * Returns windowBounds as of the last save.
+     * @returns {object}
+     * @private
+     */
+    getWindowBounds() {
+        return {
+            top: finsembleWindow.windowOptions.defaultTop,
+            left: finsembleWindow.windowOptions.defaultLeft,
+            width: finsembleWindow.windowOptions.defaultWidth,
+            height: finsembleWindow.windowOptions.defaultHeight
+        };
+    }
+    /**
+     *
+     * Saves the window's state. Rarely called manually, as it's called every time your window moves.
+     * @param {Object} bounds optional param.
+     * @example <caption>The code below is the bulk of our listener for the <code>bounds-changed</code> event from the window. Every time the <code>bounds-changed</code> event is fired (when the window is resized or moved), we save the window's state. The first few lines just prevent the window from being dropped behind the toolbar.</caption>
+     *finWindow.addEventListener('disabled-frame-bounds-changed', function (bounds) {
+     * 	if (bounds.top < 45) {
+     *		finWindow.moveTo(bounds.left, 45);
+     *		return;
+     *	}
+     *	self.saveWindowBounds(bounds);
+     * @private
+     *});
+     */
+    saveWindowBounds(bounds, setActiveWorkspaceDirty) {
+        logger_1.default.system.debug("WINDOW LIFECYCLE:SavingBounds:", bounds, "setActiveWorkspaceDirty", setActiveWorkspaceDirty);
+        if (typeof setActiveWorkspaceDirty === "undefined") {
+            setActiveWorkspaceDirty = false;
+        }
+        validate_1.default.args(bounds, "object") && validate_1.default.args2("bounds.top", bounds.top, "number");
+        if (!bounds) {
+            return;
+        }
+        // openfin looks at defaultTop, terry looks at top. for some reason, when the app started fresh, the window's position was being overwritten. We also were saving the position on `defaultTop`/`defaultLeft`, and the launcherService wasn't looking for that. We may be able to get rid of the first assignment on the left, but I want terry to fully look at this.
+        finsembleWindow.updateOptions({
+            options: {
+                top: Math.round(bounds.top),
+                defaultTop: Math.round(bounds.top),
+                left: Math.round(bounds.left),
+                defaultLeft: Math.round(bounds.left),
+                width: Math.round(bounds.width),
+                defaultWidth: Math.round(bounds.width),
+                height: Math.round(bounds.height),
+                defaultHeight: Math.round(bounds.height)
+            }
+        });
+        try {
+            if (!finsembleWindow.windowOptions.customData.foreign.components["Window Manager"].persistWindowState) {
+                return;
+            }
+        }
+        catch (e) {
+            //prop doesn't exist.
+            return;
+        }
+    }
+    ;
+    /**
+     * Minimizes window.
+     * @param {function} cb Optional callback to be invoked after the method completes successfully.
+     * @example
+     * FSBL.Clients.WindowClient.minimize();
+     */
+    minimize(cb) {
+        this.cacheBounds(function () {
+            finsembleWindow.minimize(null, function (err) {
+                if (!err) {
+                    //self.windowState = "minimized";
+                }
+                else {
+                    logger_1.default.system.error("WindowClient:minimize", err);
+                }
+                if (cb) {
+                    cb(err);
+                }
+            });
+        });
+    }
+    ;
+    /**
+     * Sets whether window is always on top. By default, this is false.
+     * @param {function} cb Optional callback to be invoked after the method completes successfully.
+     * @example
+     * FSBL.Clients.WindowClient.setAlwaysOnTop(true);
+     */
+    setAlwaysOnTop(alwaysOnTop, cb) {
+        finsembleWindow.updateOptions({ options: { alwaysOnTop: alwaysOnTop } }, () => {
+            if (cb)
+                cb();
+        });
+    }
+    /**
+     * Restores window from a maximized or minimized state.
+     * @param {function} cb Optional callback to be invoked after the method completes successfully.
+     * @example
+     * FSBL.Clients.WindowClient.restore();
+     */
+    restore(cb = (e, r) => { }) {
+        //finsembleWindow.getState((err, windowState) => {
+        finsembleWindow.restore(null, function (err) {
+            if (!err) {
+                //self.windowState = "normal";
+            }
+            else {
+                logger_1.default.system.error("WindowClient:restore", err);
+            }
+            cb(err);
+        });
+    }
+    ;
+    /**
+     * @private
+     */
+    cacheBounds(cb) {
+        this.getBounds((err, bounds) => {
+            if (err) {
+                cb();
+                return console.warn("Get bounds error.", err, "Window may not be registered with the window service");
+            }
+            finsembleWindow.updateOptions({
+                options: {
+                    cachedLeft: bounds.left,
+                    defaultLeft: bounds.left,
+                    cachedTop: bounds.top,
+                    defaultTop: bounds.top,
+                    cachedWidth: bounds.width,
+                    defaultWidth: bounds.width,
+                    cachedHeight: bounds.height,
+                    defaultHeight: bounds.height
+                }
+            });
+            if (cb) {
+                cb(bounds);
+            }
+        });
+    }
+    /**
+     * Maximizes the window taking into account any claimed space on the monitor.
+     * @param {function} cb Optional callback to be invoked after the method completes successfully.
+     * @example
+     * FSBL.Clients.WindowClient.maximize();
+     */
+    maximize(cb) {
+        this.cacheBounds(function () {
+            finsembleWindow.maximize();
+            //finsembleWindow.windowState = "maximized";
+            return cb();
+        });
+    }
+    /**
+     * FinWindow destructor (more or less). Removes all of the listeners that we added when the window was created.
+     * @private
+     */
+    removeFinWindowEventListeners() {
+        finsembleWindow.removeEventListener("maximized", this.onWindowMaximized);
+        finsembleWindow.removeEventListener("restored", this.onWindowRestored);
+        finsembleWindow.removeEventListener("blurred", this.onWindowBlurred);
+        finsembleWindow.removeEventListener("focused", this.onWindowFocused);
+        finsembleWindow.removeEventListener("close-requested", this.close);
+        finsembleWindow.removeEventListener("minimized", this.onWindowMinimized);
+        finsembleWindow.removeEventListener("parent-set", this.onParentSet);
+    }
+    ;
+    /**
+     * This function injects the header bar into all frameless windows that request it. This should only be used if you've decided not to use the provided <code>WindowClient.start()</code> method.
+     *
+     * **NOTE:** If you are using the Finsemble winndow title bar component, you do not need to call this function.
+     * @private
+     */
+    injectDOM(headerHeight) {
+        //for the aesthetics.
+        if (document.getElementById("FSBLHeader")) {
+            return;
+        }
+        // On slow loading components, the end user might have the opportunity to scroll the page before the window title bar is injected.
+        // This triggers a chromium bug related to elements with position:fixed. Chromium loses track of where that element actually is on
+        // the browser page. Chromium *thinks* the title bar is lower than it actually is, by the amount of pixels scrolled by the user.
+        // The fix is to force the scroll position back to zero before we inject this fixed element.
+        window.scrollTo(0, 0);
+        // Now inject the window title bar
+        var template = document.createElement("div");
+        template.innerHTML = "<div id=\"FSBLHeader\"" + (headerHeight ? " style=height:" + headerHeight : "") + "></div>";
+        document.body.insertBefore(template.firstChild, document.body.firstChild);
+    }
+    ;
+    /**
+     * Injects the windowTitleBar into the window.
+     * @param {function} cb Callback function
+     * @return {object} Reference to a RouterClient.query
+     * @private
+     */
+    injectFSBL(params, cb) {
+        //This flag is set by the launcher service. It tells us if FSBL was injected
+        this.routerClient.query(`WindowService-Request-injectTitleBar`, { config: finsembleWindow.windowOptions, titleComponent: params.component }, (err, response) => {
+            if (params.bodyMarginTop === "auto") {
+                this._setHeaderHeight(params);
+            }
+            else {
+                this.bumpFixedElements(params.bumpElements);
+                if (params.bodyMarginTop) {
+                    document.body.style.marginTop = params.bodyMarginTop;
+                }
+            }
+            if (cb) {
+                cb(err, response);
+            }
+        });
+    }
+    ;
+    /**
+     * Given a field, this function retrieves app state. If no params are given, the full state is returned.
+     * @param {string} params.field Field to retrieve.
+     * @param {Array.<string>} params.fields Fields to retrieve.
+     * @param {string} params.windowName Window whose component state you are retreiving. If null, the default is to the calling window.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example <caption>The example below shows how we retrieve data to restore the layout in our charts.</caption>
+     * FSBL.Clients.WindowClient.getComponentState({
+     *	 field: 'myChartLayout',
+     * }, function (err, state) {
+     * 	importLayout(state);
+     * });
+     *
+     * FSBL.Clients.WindowClient.getComponentState({
+     * 		fields: ['myChartLayout', 'chartType'],
+     * }, function (err, state) {
+     * 	var chartType = state['chartType'];
+     * 	var myChartLayout = state['myChartLayout'];
+     * });
+     **/
+    getComponentState(params, cb) {
+        if (!params) {
+            params = {};
+        }
+        if (params.fields && !Array.isArray(params.fields)) {
+            params.fields = [params.fields];
+        }
+        validate_1.default.args(params, "object", cb, "function");
+        if (finsembleWindow) {
+            return finsembleWindow.getComponentState(params, cb);
+        }
+        logger_1.default.system.warn("Attempt to use getComponentState before component is ready or in a service");
+        //if (!finWindow) { finWindow = System.Window.getCurrent(); } //TODO: why are we checking here??
+        if (!params.windowName)
+            params.windowName = window.name; // using FSBL in services causes errors because finsembleWindow does not exist
+        var hash = this.getContainerHash(params.windowName);
+        storageClient_1.default.get({ topic: constants_1.WORKSPACE.CACHE_STORAGE_TOPIC, key: hash }, (err, response) => {
+            if (err) {
+                logger_1.default.system.error("Error retrieving window client's component state.");
+                cb(err);
+                return;
+            }
+            var data = response;
+            if (response && params.field) {
+                this.componentState = data || {};
+                cb(err, data[params.field]);
+            }
+            else if (params.fields) {
+                var respObject = {};
+                for (var i = 0; i < params.fields.length; i++) {
+                    if (data[params.fields[i]]) {
+                        respObject[params.fields[i]] = data[params.fields[i]];
+                    }
+                }
+                return cb(null, respObject);
+            }
+            else if (response) {
+                return cb(null, data);
+            }
+            else {
+                logger_1.default.system.info("WindowClient:getComponentState:error, response, params", err, response, params);
+                cb("Not found", response);
+            }
+        });
+    }
+    ;
+    /**
+     * Given a field, this function sets and persists app state.
+     * @param {object} params
+     * @param {string} params.field field
+     * @param {Array.<string>} params.fields fields
+     * @param {string} params.windowName Name of the component whose state you are setting. Defaults to the calling window.
+     * @param {any} params.value Value of the data being saved
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example <caption>The example below shows how we save our chart layout when it changes.</caption>
+     * var s = stx.exportLayout(true);
+     * //saving layout'
+     * FSBL.Clients.WindowClient.setComponentState({ field: 'myChartLayout', value: s });
+     * FSBL.Clients.WindowClient.setComponentState({ fields: [{field:'myChartLayout', value: s }, {field:'chartType', value: 'mountain'}]);
+     **/
+    setComponentState(params, cb = (e, r) => { }) {
+        validate_1.default.args(params, "object", cb, "function=") && validate_1.default.args2("params.field", params.field, "string");
+        if (finsembleWindow) {
+            return finsembleWindow.setComponentState(params, cb);
+        }
+        // using FSBL in services causes errors because finsembleWindow does not exist
+        if (!params.windowName)
+            params.windowName = window.name;
+        var hash = this.getContainerHash(params.windowName);
+        let fields = params.fields;
+        if (typeof params.field === "undefined") {
+            // If the user hasn't provided field or fields, exit.
+            if (!fields) {
+                return cb({
+                    message: "setComponentState requires a field parameter or a fields parameter. Neither were provided.",
+                    code: "invalid_arguments"
+                });
+            }
+        }
+        else {
+            fields = [{
+                    field: params.field,
+                    value: params.value
+                }];
+        }
+        for (let i = 0; i < fields.length; i++) {
+            let field = fields[i];
+            if (!field.field || !field.value) {
+                continue;
+            }
+            this.componentState[field.field] = field.value;
+        }
+        let _params = {
+            field: params.field || "",
+            value: params.value,
+            windowName: params.windowName
+        };
+        storageClient_1.default.save({ topic: constants_1.WORKSPACE.CACHE_STORAGE_TOPIC, key: hash, value: this.componentState }, function (err, response) {
+            if (cb) {
+                cb(err, response);
+            }
+        });
+    }
+    /**
+     * Given a field, this function removes it from app state.
+     * @param {object} params
+     * @param {string} params.field field
+     * @param {Array.<string>} params.fields fields
+     * @param {string} params.windowName The name of the window to remove component state from
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example <caption>The example below shows how we would remove our chart layout when it no longer needed.</caption>
+     * // remove unused state value
+     * FSBL.Clients.WindowClient.removeComponentState({ field: 'myChartLayout'});
+     * FSBL.Clients.WindowClient.removeComponentState({ fields: [{field:'myChartLayout'}, {field:'chartType'}]);
+     **/
+    async removeComponentState(params, cb = (e, r) => { }) {
+        validate_1.default.args(params, "object", cb, "function=") &&
+            validate_1.default.args2("params.field", params.field, "string");
+        const wrap = finsembleWindow || (await FinsembleWindow_1.FinsembleWindow.getInstance({ name: params.windowName || window.name }));
+        return wrap.removeComponentState(params, cb);
+    }
+    /**
+     * Gets the window name of current window or the parent, if tabbed. The code that manages window movement will not see a child window if it's part of a stacked window. This function will return the window name that the Window Service cares about for window movement.
+     */
+    getWindowNameForDocking() {
+        let parent = finsembleWindow.parentWindow;
+        return parent ? parent.name : finsembleWindow.name;
+    }
+    /**
+     * Gets containerHash given a containerId.
+     * @param {string} windowName The name of the window
+     * @returns {string} Hash for the window
+     * @private
+     */
+    getContainerHash(windowName) {
+        return util.camelCase(this.windowHash, windowName);
+    }
+    /**
+     * Forms a group with any window that is touching the border of this window.
+     * @private
+     */
+    formGroup() {
+        let windowName = this.getWindowNameForDocking();
+        this.routerClient.transmit("DockingService.formGroup", { windowName });
+    }
+    /**
+     * This function is critical if you want docking and snapping to work. It transmits a message to the LauncherService, which registers it as a dockable window.
+     *
+     * **NOTE:** If you are using the finsemble windowTitleBar component, you do not need to call this function.
+     * @param {object} params Parameters
+     * @param {function} cb callback
+     *
+     * @example
+     * FSBL.Clients.WindowClient.registerWithDockingManager();
+     * @private
+     */
+    registerWithDockingManager(params, cb) {
+        if (finsembleWindow.parentWindow) {
+            // TABBING TBD: need more orderly startup with state managed from just one place (StackWindowManagerService also controls register/deregister)
+            logger_1.default.system.debug("registerWithDockingManager ignore registration request if has a parent");
+            if (cb)
+                cb(); // return without error because still want component to come up
+        }
+        var windowName = finsembleWindow.name;
+        var uuid = finsembleWindow.uuid;
+        this.startedRegistrationWithDocking = true;
+        this.routerClient.query("DockingService.registerWindow", {
+            name: windowName,
+            uuid: uuid,
+            options: params || {},
+            windowType: "OpenFinWindow"
+        }, () => {
+            this.startedRegistrationWithDocking = false;
+            if (this.deregisterPlease) {
+                this.deregisterWithDockingManager();
+                this.deregisterPlease = false;
+            }
+            logger_1.default.system.debug("WINDOW LIFECYCLE: Docking Registration complete.");
+            if (cb) {
+                cb();
+            }
+        });
+    }
+    /**
+     * This function is critical if you don't want to keep references of windows in the LauncherService after they close. It simply notifies the LauncherService that the window is no longer dockable. It's invoked when the window is closed.
+     * **NOTE:** If you are using the finsemble windowTitleBar component, you do not need to call this function.
+     * @param {boolean} removeFromWorkspace true to remove from workspace
+     * @example
+     * FSBL.Clients.WindowClient.deregisterWithDockingManager();
+     * @private
+     */
+    deregisterWithDockingManager(removeFromWorkspace) {
+        if (this.startedRegistrationWithDocking) {
+            this.deregisterPlease = true;
+        }
+        var windowName = finsembleWindow.name;
+        this.routerClient.transmit("DockingService.deregisterWindow", {
+            name: windowName,
+            userInitiated: removeFromWorkspace
+        });
+    }
+    ;
+    /**
+     * @private
+     */
+    enableHotkeys() {
+        this.enableDevToolsHotkey();
+        this.enableReloadHotkey();
+    }
+    /**
+     * Helper function to display dev-tools if you disable context-menus on your chromium windows. You must call this function if you want the hotkey to work.
+     * @private
+     */
+    enableReloadHotkey() {
+        window.addEventListener("keydown", function (e) {
+            if (e.keyCode === 82 && e.altKey && e.ctrlKey) {
+                system_1.System.clearCache({
+                    cache: true,
+                    cookies: false,
+                    localStorage: false,
+                    appcache: true,
+                    userData: false
+                });
+                window.location.reload();
+            }
+        });
+    }
+    /**
+     * Helper function to display dev-tools if you disable context-menus on your chromium windows. You must call this function if you want the hotkey to work.
+     * @private
+     */
+    enableDevToolsHotkey() {
+        window.addEventListener("keydown", function (e) {
+            if (e.keyCode === 68 && e.altKey && e.ctrlKey) {
+                var application = system_1.System.Application.getCurrent();
+                application.getManifest(function (manifest) {
+                    var uuid = manifest.startup_app.uuid;
+                    var windowName = finsembleWindow.name;
+                    system_1.System.showDeveloperTools(uuid, windowName);
+                }, function (err) {
+                    logger_1.default.system.error("dev-tools", err);
+                });
+            }
+        });
+    }
+    /**
+     * Bumps top-level containers down below the windowTitleBar.
+     * @private
+     */
+    bumpFixedElements(params) {
+        // don't start pushing stuff down until page is ready. This is needed for preloaded titlebars because they can happen before the page is ready.
+        if (document.readyState !== "complete") {
+            return setTimeout(() => { this.bumpFixedElements(params); }, 100);
+        }
+        if (!params)
+            return;
+        let { absolute, fixed, bumpBy } = params;
+        if (!(absolute || fixed))
+            return;
+        const headerNode = document.getElementById("FSBLHeader");
+        // If the header node hasn't rendered, wait for 100 ms and try again
+        if (!headerNode || headerNode.children.length === 0 || !headerNode.children[0].clientHeight) {
+            return setTimeout(() => {
+                this.bumpFixedElements(params);
+            }, 100);
+        }
+        if (bumpBy === "auto") {
+            // auto is "0px" because there is now a margin-top of 25px in the windowTitleBar component.
+            // If auto is anything greater than 0px, elements will be positioned 25 + titlebar height.
+            // We don't want a double bump. So, auto is 0.
+            bumpBy = "0px";
+        }
+        else if (new String(bumpBy).indexOf("px") === -1) {
+            bumpBy = bumpBy + "px";
+        }
+        var elems = document.body.getElementsByTagName("*");
+        var len = elems.length;
+        for (var i = 0; i < len; i++) {
+            if (elems[i].id === "FSBLHeader" || elems[i].classList.contains("fsbl-header")) {
+                continue;
+            }
+            var style = window.getComputedStyle(elems[i], null), possibleZeros = ["0", "0px", 0];
+            var topStyle = style.getPropertyValue("top");
+            //only target top-level fixed/absolutely positioned containers.
+            if (absolute && elems[i].parentNode === document.body && style.getPropertyValue("position") == "absolute") {
+                if (absolute == "all") {
+                    elems[i].style.top = "calc(" + topStyle + " + " + bumpBy + ")";
+                }
+                else if (absolute == "0Positioned" && possibleZeros.includes(topStyle)) {
+                    elems[i].style.top = bumpBy;
+                }
+            }
+            if (fixed && style.getPropertyValue("position") == "fixed") {
+                if (fixed == "all") {
+                    elems[i].style.top = "calc(" + topStyle + " + " + bumpBy + ")";
+                }
+                else if (fixed == "0Positioned" && possibleZeros.includes(topStyle)) {
+                    elems[i].style.top = bumpBy;
+                }
+            }
+        }
+    }
+    /**
+     * Brings the window to the top of all other windows.
+     * @example
+     * FSBL.Clients.WindowClient.bringWindowToFront();
+     */
+    bringWindowToFront() {
+        finsembleWindow.isShowing(function (err, isShowing) {
+            if (isShowing) {
+                finsembleWindow.bringToFront({ forceFocus: true }, function (err) {
+                    if (err) {
+                        logger_1.default.system.error("WindowClient.bringWindowToFront: failure:" + err);
+                    }
+                    else {
+                        logger_1.default.system.info("WindowClient.bringWindowToFront: success");
+                    }
+                });
+            }
+        });
+    }
+    /**
+     * The Finsemble window title bar is injected if either FSBLHeader: true or FSBLHeader is an object with the same items as the properties of params below are in the component's config. If you want to inject the window title bar later, you can do so by calling this function.
+     * @depcrate the union boolean type and only accept types of InjectHeaderParams.
+     */
+    injectHeader(params, cb = () => { }) {
+        //FIXME(Terry) windowService should inject directly from a config:
+        // components."*".component.inject|preload="windowTitleBar.js" <-- set the windowTitleBar
+        // components."welcome".component.inject|preload="windowTitleBar.js" <-- override the windowTitleBar
+        // Everything from here down then goes into windowTitleBar.jsx inside FSBLReady()
+        let self = this;
+        if (this.hasHeader)
+            return;
+        this.hasHeader = true;
+        var defaultParams = {
+            component: "windowTitleBar",
+            bumpElements: {
+                fixed: "all",
+                absolute: "all",
+                bumpBy: "auto"
+            },
+            bodyMarginTop: "auto",
+            forceHeaderHeight: false
+        };
+        //this will catch true, false, or undefined.
+        if (typeof params !== "object") {
+            params = defaultParams;
+        }
+        else {
+            params = Object.assign(defaultParams, params);
+        }
+        this.injectDOM(params.forceHeaderHeight);
+        // initialize but if child of a stacked window then don't register with docking
+        //finsembleWindow.getParent();
+        self.injectFSBL(params, cb);
+    }
+    /**
+     * @private
+     */
+    injectStylesheetOverride() {
+        var node = document.createElement("style");
+        node.type = "text/css";
+        node.appendChild(document.createTextNode(finsembleWindow.windowOptions.customData.cssOverride));
+        document.body.appendChild(node);
+    }
+    /**
+     * If we spawned this openfin app from our parent application, we listen on that application for certain events that might fire _if_ our parent goes down. If the parent goes down, we want to kill its children as well.
+     * @private
+     */
+    checkIfChildApp() {
+        if (finsembleWindow.windowOptions &&
+            finsembleWindow.windowOptions.customData &&
+            finsembleWindow.windowOptions.customData.parentUUID &&
+            finsembleWindow.windowOptions.customData.parentUUID !== system_1.System.Application.getCurrent().uuid) {
+            let parent = system_1.System.Application.wrap(finsembleWindow.windowOptions.customData.parentUUID);
+            parent.addEventListener("crashed", this.close.bind(null, false));
+            parent.addEventListener("initialized", this.close.bind(null, false));
+            parent.addEventListener("out-of-memory", this.close.bind(null, false));
+        }
+    }
+    /**
+     * Prevents the browser's default behavior of loading files/images if they're dropped anywhere in the window.
+     * If a component has a drop area that _doesn't_ preventDefault, the image/file will still be loaded.
+     * This only prevents bad behavior from happening when the user drops an image/file on part of the window that _isn't_ listening for drag/drop events (usually by accident).
+     * @private
+     */
+    preventUnintendedDropEvents() {
+        function preventDefault(e) { e.preventDefault(); }
+        window.addEventListener("dragover", preventDefault, false);
+        window.addEventListener("drop", preventDefault, false);
+    }
+    /**
+    * If the user presses windows key + left or right it causes all kinds of abhorrent behavior. This function captures the hotkeys and essentially prevents the behavior.
+    * @private
+     */
+    rejectWindowsKeyResizes() {
+        // Responds to key events here in order to send router messages and determine whether a system-bounds-changed event should occur.
+        // Essentially, this is catching actions to allow Finsemble to respond to windows aero snap functionality.
+        // While true resize will be disabled which will prevent disable aerosnap from working. This flag will only be true while the windows key is down.
+        let preventResize = false;
+        const onKeyUp = async (e) => {
+            //aero snap enabled case, windows key released
+            if (this.enableWindowsAeroSnap) {
+                //If the key being released is the windows key, send a router message to docking
+                if (e.key === "Meta") {
+                    routerClientInstance_1.default.transmit("Finsemble.WindowService.WindowsKey", "up");
+                }
+            }
+            else {
+                // When aerosnap is disabled and the windows key released, windows will be able to be resized.
+                // Otherwise users would not be able to manually resize windows.
+                if (e.key === 'Meta' && preventResize) {
+                    preventResize = false;
+                    fin.desktop.Window.getCurrent().updateOptions({
+                        resizable: true
+                    });
+                }
+            }
+        };
+        const onKeyDown = (e) => {
+            // aero snap enabled case, windows key down
+            if (this.enableWindowsAeroSnap) {
+                //If the key being pressed is the windows key, send a message to docking
+                if (e.key === "Meta") {
+                    routerClientInstance_1.default.transmit("Finsemble.WindowService.WindowsKey", "down");
+                }
+            }
+            else {
+                // When aero snap is disabled and the windows key is down, disable resize on windows to prevent aerosnap from working.
+                if (e.key === 'Meta') {
+                    preventResize = true;
+                    fin.desktop.Window.getCurrent().updateOptions({
+                        resizable: false
+                    });
+                }
+            }
+        };
+        if (FSBL) {
+            hotkeysClient_1.default.onReady(() => {
+                //The browser's keyDown isn't capable of capturing keyChords if the first key pressed is the window's key. So we'll have to create a makeshift keystroke handler.
+                //On keydown, we grab that key. Keyup can fire for different keys, so that's where the work happens.
+                window.addEventListener("keyup", onKeyUp);
+                window.addEventListener("keydown", onKeyDown);
+            });
+        }
+    }
+    /**
+     * Adds listeners to handle hash changes and finWindow listeners.
+     * @private
+     * @param {function} cb
+     */
+    addListeners(cb = Function.prototype) {
+        var self = this;
+        this.listenForHashChanges();
+        this.preventUnintendedDropEvents();
+        this.rejectWindowsKeyResizes();
+        //FinsembleWindow listeners
+        //@todo, make the openfin window trigger an event on the finsemble window, which will emit up. we then use addListener instead of addEventListener
+        finsembleWindow.addListener("setParent", () => {
+            logger_1.default.system.info("WindowClient.setParent deregisterWithDockingManager");
+            this.deregisterWithDockingManager(); // stack takes care of this too but doesn't work at startup or workspace switch so do again here
+        });
+        finsembleWindow.addEventListener("maximized", this.onWindowMaximized);
+        finsembleWindow.addEventListener("minimized", this.onWindowMinimized);
+        finsembleWindow.addEventListener("restored", this.onWindowRestored);
+        // On Blur remove the border from window
+        finsembleWindow.addEventListener("blurred", this.onWindowBlurred);
+        // On focus add a border to the window
+        finsembleWindow.addEventListener("focused", this.onWindowFocused);
+        finsembleWindow.addEventListener("parent-set", this.onParentSet);
+        if (typeof FSBL !== "undefined") {
+            FSBL.onShutdown(() => {
+                logger_1.default.system.info("WINDOW LIFECYCLE:SHUTDOWN: FSBL.onShutdown start");
+                return new Promise((resolve) => {
+                    logger_1.default.system.debug("FSBL.onShutdown");
+                    FSBL.shutdownComplete();
+                    this.close({
+                        removeFromWorkspace: false,
+                        ignoreParent: true,
+                        closeWindow: false
+                    }, resolve);
+                });
+            });
+        }
+        cb();
+    }
+    ;
+    /**
+     * Sends a command to the header. Commands affect the header state,
+     * so that the UI reflects what is going on in the component window.
+     * @param {string} command The state object to set
+     * @param {object} state The new state (merged with existing)
+     * @private
+     */
+    updateHeaderState(command, state) {
+        if (!this.commandChannel) {
+            return;
+        }
+        this.commandChannel(command, state);
+    }
+    /**
+     * Establishes a command channel with the <a href="tutorial-UIComponents.html#window-title-bar-aka-the-fsblheader">Finsemble window title bar component</a>. The Window Client can
+     * update the title bar's state via this channel.
+     * @param {function} commandChannel A function callback that receives commands.
+     */
+    headerCommandChannel(commandChannel) {
+        this.commandChannel = commandChannel;
+    }
+    /**
+     * Ejects the window from the docking group
+     * @private
+     */
+    ejectFromGroup() {
+        let windowName = this.getWindowNameForDocking();
+        routerClientInstance_1.default.query("DockingService.leaveGroup", {
+            name: windowName
+        }, () => { });
+    }
+    /**
+     * This function sets the window's title in the windowTitleBar component, and in the DOM's title element.
+     * This is useful if you like to keep the window's title in sync with a piece of data (e.g., a Symbol).
+     * @param {String} title Window title.
+     * @todo Allow HTML or classes to be injected into the title.
+     * @example <caption>The code shows how you would change your window title.</caption>
+     *  FSBL.Clients.WindowClient.setWindowTitle("My Component's New Title");
+     */
+    setWindowTitle(title) {
+        validate_1.default.args(title, "string");
+        this.title = title;
+        //document.title = title;  // causes flickering in chromium 53
+        this.updateHeaderState("Main", { windowTitle: title });
+        finsembleWindow.setTitle(title);
+    }
+    /**
+     * Retrieves data that was set with <a href="LauncherClient.html#spawn">LauncherClient.spawn</a>.
+     * @return {object} The data or empty object if no data was set. *Note, this will never return null or undefined.*
+     */
+    getSpawnData() {
+        if (!this.options.customData) {
+            return {};
+        }
+        var spawnData = this.options.customData.spawnData;
+        if (typeof spawnData === "undefined") {
+            return {};
+        }
+        return spawnData;
+    }
+    ;
+    /**
+     * Returns a reference to the current window for the component.
+     * @returns {finWindow}
+     */
+    getCurrentWindow() {
+        return system_1.System.Window.getCurrent();
+    }
+    ;
+    /**
+     * For the DOM element that has been passed in, this function returns a bounding box that is relative
+     * to the OpenFin virtual monitor space. That is, it returns the position of the DOM element on the desktop.
+     * @param {HTMLElement|string} element A selector or HTMLElement
+     * @private
+     * @todo convert to use monitor util function and make sure current bounds are correct. For some windows (e.g., toolbars/menus that don't track their own bounds because they don't have drag regions), options.default will represent the data _on spawn_, not the bounds when the function is called.
+     */
+    getDesktopBoundingBox(element) {
+        var el = element;
+        if (typeof (element) === "string") {
+            el = document.querySelector(element);
+        }
+        let box = el.getBoundingClientRect();
+        let boundingBox = {
+            top: this.options.defaultTop - box.top,
+            left: this.options.defaultLeft + box.left,
+            width: box.width,
+            height: box.height,
+            right: 0,
+            bottom: 0
+        };
+        boundingBox.right = boundingBox.left + boundingBox.width;
+        boundingBox.bottom = boundingBox.top + boundingBox.height;
+        return boundingBox;
+    }
+    /**
+     * @private
+     */
+    isPointInBox(point, box) {
+        if (!box.bottom)
+            box.bottom = box.top + box.height;
+        if (!box.right)
+            box.right = box.left + box.width;
+        return (point.x > box.left && point.x < box.right && point.y < box.bottom && point.y > box.top);
+    }
+    ;
+    /**
+     * Returns (via callback) true if the mouse is currently located (hovering) over the requested element.
+     * @param {HTMLElement|string} element The element, or a selector, to check
+     * @param {function} cb A function that returns a boolean
+     * @private
+     */
+    isMouseOverDOMElement(element, cb) {
+        var boundingBox = this.getDesktopBoundingBox(element);
+        system_1.System.getMousePosition((err, position) => {
+            cb(this.isPointInBox(position, boundingBox));
+        });
+    }
+    ;
+    /**
+     * Returns the window identifier for the current component.
+     * @returns {windowIdentifier}
+     */
+    getWindowIdentifier() {
+        var componentType = null;
+        if (this.options && this.options.customData && this.options.customData.component)
+            componentType = this.options.customData.component.type;
+        return {
+            windowName: finsembleWindow ? finsembleWindow.name : window.name,
+            uuid: finsembleWindow ? finsembleWindow.uuid : null,
+            componentType: componentType
+        };
+    }
+    ;
+    /**
+     * Highlights the window as active by creating a border around the window.
+     *
+     * @param {boolean} active  Set to false to turn off activity
+     * @private
+     */
+    setActive(active) {
+        if (active) {
+            addClass(document.documentElement, "desktop-active");
+        }
+        else {
+            removeClass(document.documentElement, "desktop-active");
+        }
+    }
+    ;
+    /**
+     * Returns the bounds for the current window.
+     * @param {StandardCallback} cb The callback to be invoked after the method completes successfully.
+     */
+    getBounds(cb) {
+        finsembleWindow.getBounds(function (err, bounds) {
+            cb(err, bounds);
+        });
+    }
+    ;
+    /**
+     * This is used by the Finsemble window title bar when a tab is dragged for tiling or tabbing.
+     * @param {*} params - <code>params.windowIdentifier</code> is required.
+     * @param {*} cb The callback to be invoked after the method completes successfully.
+     */
+    startTilingOrTabbing(params, cb = Function.prototype) {
+        FSBL.Clients.RouterClient.transmit("DockingService.startTilingOrTabbing", params);
+        cb();
+    }
+    ;
+    /**
+     * This is used to cancel a tabbing or tiling operation.
+     * @param {*} params - Put <code>windowIdentifier</code> in <code>params.windowIdentifier</code>. If not provided, must set <code>params.waitForIdentifier</code> true.
+     * @param {*} cb - The callback to be invoked after the method completes successfully.
+     */
+    cancelTilingOrTabbing(params, cb = Function.prototype) {
+        console.debug("CancelTilingOrTabbing");
+        routerClientInstance_1.default.transmit("DockingService.cancelTilingOrTabbing", params);
+        cb();
+    }
+    ;
+    /**
+     * This is used to let Finsemble know which window is being dragged. <code>params.windowIdentifier</code> must be the identifier of the tab being dragged. This is only used if the identifier is unknown when <code>startTilingOrTabbing</code> is called.
+     * @param {*} params - The <code>windowIdentifier</code> is required.
+     * @param {*} cb - The callback to be invoked after the method completes successfully.
+     */
+    sendIdentifierForTilingOrTabbing(params, cb = Function.prototype) {
+        FSBL.Clients.RouterClient.transmit("DockingService.identifierForTilingOrTabbing", params);
+        cb();
+    }
+    ;
+    /**
+     * This function is used by the Finsemble window title bar to end tiling or tabbing.
+     * @param {*} params
+     * @param {object} params.mousePosition Where the pointer is on the screen
+     * @param {number} params.mousePosition.x X position of the pointer
+     * @param {number} params.mousePosition.y Y position of the pointer
+     * @param {boolean} params.allowDropOnSelf Determines whether a tab can be dropped on the window where the drag originated.
+     * @param {*} cb - The callback to be invoked after the method completes successfully.
+     */
+    stopTilingOrTabbing(params, cb = Function.prototype) {
+        // We both transmit and query because no stack operation should happen until this is done and there are a lot of listeners around.
+        const transmitAndQueryStop = () => {
+            routerClientInstance_1.default.query("DockingService.stopTilingOrTabbing", params, () => {
+                cb();
+            });
+            routerClientInstance_1.default.transmit("DockingService.stopTilingOrTabbing", params);
+        };
+        // Get the mouse position if not passed through for transmit to the router,
+        // If allowDropOnSelf is true, it came from a tab/window drop event. Run the callback.
+        if (!params.mousePosition) {
+            return system_1.System.getMousePosition((err, position) => {
+                params.mousePosition = position;
+                transmitAndQueryStop();
+                if (!params.allowDropOnSelf)
+                    return cb();
+            });
+        }
+        else {
+            transmitAndQueryStop();
+            if (!params.allowDropOnSelf)
+                return cb();
+        }
+    }
+    ;
+    /**
+     * Gets the stackedWindow (if this window is a child of a stacked window).
+     *
+     * If the calling window is not part of a stacked window, the stacked window identifier will be returend null -- unless params.create is true. In this case, a stacked window will be created and the calling window will be set as the first child
+     *
+     * (Typically used by Tabbing Presentation component to manage tabs.)
+     *
+     * @param {object=} params
+     * @param {array=} params.create if true and StackedWindow isn't defined, then it will be created
+     * @param {array=} params.windowIdentifiers if creating, then can optionally specify an array of other windowIdentifiers to add to stack on creation (in addition to this window).
+     * @param {function} cb cb(err, stackedWindowIdentifier)
+     *
+     * Typically used by Tabbing Presentation component.
+     */
+    getStackedWindow(params, cb) {
+        logger_1.default.system.debug("WindowClient.getStackedWindow", params);
+        cb = cb || params;
+        params = params || {};
+        params.windowIdentifiers = params.windowIdentifiers || [];
+        if (!finsembleWindow.parentWindow && params.create) {
+            let onParentSet = (evt) => {
+                let parentName = evt.data.parentName;
+                finsembleWindow.setParent({ windowName: parentName }, (err2, windowWrapper) => {
+                    cb(err2, windowWrapper);
+                });
+                finsembleWindow.removeListener("parent-set", onParentSet);
+            };
+            finsembleWindow.addListener("parent-set", onParentSet);
+            FSBL.Clients.LauncherClient.spawn("StackedWindow", {
+                windowType: "StackedWindow", data: { windowIdentifiers: params.windowIdentifiers }, options: { newStack: true }
+            }, function (err, windowInfo) {
+                logger_1.default.system.debug("WindowClient.getStackedWindow-success", err, windowInfo);
+                if (!err) {
+                    return;
+                }
+                cb(err, null);
+            });
+        }
+        else {
+            finsembleWindow.getParent(cb);
+        }
+    }
+    /**
+     * Private copy of getMonitorInfo from LauncherClient. We have to include it here to avoid a circular reference between LauncherClient and WindowClient.
+     * @private
+     */
+    getMonitorInfo(params, cb) {
+        util.getMyWindowIdentifier((myWindowIdentifier) => {
+            if (!params.windowIdentifier) {
+                params.windowIdentifier = myWindowIdentifier;
+            }
+            this.routerClient.query("Launcher.getMonitorInfo", params, function (err, response) {
+                if (cb) {
+                    cb(err, response.data);
+                }
+            });
+        });
+    }
+    ;
+    /**
+     * Automatically resizes the height of the window to fit the full DOM of the current window.
+     * @param {object} params.padding
+     * @param {number} params.padding.height How much padding around the DOM to add to the height of the window.
+     * @param {number} params.padding.width How much padding around the DOM to add to the width of the window.
+     * @param {number} params.maxHeight Maximum height to make the window.
+     * @param {number} params.maxWidth Maximum width to make the window.
+     * @param {function} cb Optional callback to be invoked after the method completes successfully.
+     */
+    fitToDOM(params, cb) {
+        var children = document.body.children;
+        var element = document.getElementsByTagName("body")[0], style = window.getComputedStyle(element), marginTop = style.getPropertyValue("margin-top"), marginBottom = style.getPropertyValue("margin-bottom");
+        var margin = parseInt(marginTop, 10) + parseInt(marginBottom, 10);
+        if (isNaN(margin))
+            margin = 0;
+        var newHeight = margin;
+        var newWidth = this.options.width;
+        for (var i = 0; i < children.length; i++) {
+            var child = children[i];
+            newHeight += child.offsetHeight + margin;
+            //elmMargin = parseInt(child.style.marginTop, 10) + parseInt(child.style.marginBottom, 10);
+        }
+        if (typeof (params) === "function") {
+            cb = params;
+            params = null;
+        }
+        if (params && params.padding) {
+            if (params.padding.height) {
+                newHeight += params.padding.height;
+            }
+            if (params.padding.width) {
+                newWidth += params.padding.width;
+            }
+        }
+        if (params && params.maxHeight && newHeight > params.maxHeight) {
+            newHeight = params.maxHeight;
+        }
+        logger_1.default.system.debug("WindowClient.FitToDOM:newHeight", newHeight, params);
+        //@todo, do this statically
+        this.getMonitorInfo({}, (err, monitorInfo) => {
+            //Logger.system.log("updates111 in here");
+            // if this method is called while monitors are being received from the operating system, it's
+            // possible that there are no monitors.And monitor info is undefined.If that happens, and we
+            // don't gate below, we can throw exceptions, and never call the callback to fitToDOM.
+            if (monitorInfo) {
+                if (newHeight >= monitorInfo.unclaimedRect.height) {
+                    newHeight = monitorInfo.unclaimedRect.height;
+                }
+                if (newWidth >= monitorInfo.unclaimedRect.width) {
+                    newWidth = monitorInfo.unclaimedRect.width;
+                }
+            }
+            //bounds.x and bounds.y are null on mac. Not sure if they're set on windows, but this manifested itself with an error on macs that didn't resize.
+            logger_1.default.system.debug("WindowClient.FitToDOM:fixBounds", newHeight, newWidth);
+            finsembleWindow.getBounds((err, bounds) => {
+                bounds.width = newWidth;
+                bounds.height = newHeight;
+                finsembleWindow.setBounds({ bounds }, cb);
+            });
+        });
+    }
+    /**
+     * This makes sure that the implementation of bumping is the same for injection vs preload.
+     *
+     * @private
+     * @memberof WindowClient
+     */
+    _setHeaderHeight(config) {
+        let header = document.getElementsByClassName("fsbl-header")[0];
+        if (!header) { //wait for header to be rendered
+            return setTimeout(() => { this._setHeaderHeight(config); }, 100);
+        }
+        let headerHeight = window.getComputedStyle(header, null).getPropertyValue("height");
+        document.body.style.marginTop = headerHeight;
+        if (config.bumpElements && config.bumpElements.bumpBy === "auto") {
+            config.bumpElements.bumpBy = headerHeight;
+        }
+        this.bumpFixedElements(config.bumpElements);
+    }
+    /**
+     * @private
+     */
+    _deriveInjectHeaderParams(componentConfig) {
+        const defaultInjectHeaderParams = {
+            component: "windowTitleBar",
+            bumpElements: {
+                fixed: "all",
+                absolute: "all",
+                bumpBy: "auto"
+            },
+            bodyMarginTop: "auto",
+            forceHeaderHeight: false
+        };
+        let injectHeaderParams = componentConfig;
+        // this will catch true, false, or undefined.
+        if (typeof injectHeaderParams !== "object") {
+            injectHeaderParams = defaultInjectHeaderParams;
+        }
+        else {
+            injectHeaderParams = Object.assign(defaultInjectHeaderParams, injectHeaderParams);
+        }
+        return injectHeaderParams;
+    }
+    /**
+     * Kicks off all of the necessary methods for the app. It
+     * 1. Injects the header bar into the window.
+     * 2. Sets up listeners to handle close and move requests from the application.
+     * 3. Adds a listener that saves the window's state every time it's moved or resized.
+     * @param {function} callback
+     * See the [windowTitleBar tutorial](tutorial-UIComponents.html#window-title-bar) for more information.
+     * @private
+     */
+    async start(callback = Function.prototype) {
+        validate_1.default.args(callback, "function");
+        const self = this;
+        const finsembleConfig = await configClient_1.default.getValue("finsemble");
+        const deliveryMechanism = finsembleConfig.data["Window Manager"].deliveryMechanism ||
+            constants_1.DELIVERY_MECHANISM.PRELOAD;
+        let customData = null, isCompoundWindow = false, shouldInjectCSS = false, componentSupportsHeader = false;
+        //where we store componentState for the window.
+        this.componentState = {};
+        let getFinsembleWindow = (done) => {
+            FinsembleWindow_1.FinsembleWindow.getInstance({ name: this.finWindow.name, uuid: this.finWindow.uuid }, (err, response) => {
+                logger_1.default.system.debug(`FinsembleWindow.getInstance ${this.finWindow.name}`);
+                if (err == "Cannot Wrap Service Manager or Services") {
+                    this.isInAService = true;
+                    this.windowHash = util.camelCase("activeWorkspace", window.name);
+                    return done();
+                }
+                if (err || !response) {
+                    logger_1.default.system.error("wrap failure", err);
+                }
+                this.finsembleWindow = response;
+                finsembleWindow = this.finsembleWindow;
+                this.windowHash = util.camelCase("activeWorkspace", finsembleWindow.name);
+                this.addListeners();
+                this.routerClient.subscribe("Finsemble.WorkspaceService.groupUpdate", (err, res) => this.groupUpdateHandler(err, res));
+                done();
+            });
+        };
+        /**
+         * @private
+         */
+        getFinsembleWindow(() => {
+            this.retrieveMonitorDimensions();
+            this.getInitialOptions(() => {
+                //The functions above are necessary to finish initializing the windowClient. The functions below are independent of one another.
+                // Note the extra test on the names is to ignore services that are including the windowClient, which needs to be removed
+                if (!finsembleWindow || !finsembleWindow.windowOptions) {
+                    if (!this.isInAService) {
+                        logger_1.default.system.error("Something went wrong attempting to get the current window.");
+                    }
+                    return callback();
+                }
+                customData = finsembleWindow.windowOptions.customData;
+                if (customData) {
+                    isCompoundWindow = lodashGet(customData, 'window.compound', false);
+                    if (customData.cssOverride) {
+                        logger_1.default.system.debug("Window has cssOverride. See local window to inspect object");
+                        shouldInjectCSS = true;
+                    }
+                    componentSupportsHeader = !isCompoundWindow && lodashGet(customData, ['foreign', 'components', 'Window Manager', 'FSBLHeader'], false);
+                }
+                async_1.parallel([
+                    function injectCSS(done) {
+                        if (shouldInjectCSS) {
+                            self.injectStylesheetOverride();
+                        }
+                        done();
+                    },
+                    function injectHeader(done) {
+                        logger_1.default.system.debug('Will attempt to inject header.');
+                        if (componentSupportsHeader) {
+                            const injectHeaderConfig = self._deriveInjectHeaderParams(customData.foreign.components["Window Manager"].FSBLHeader);
+                            if (deliveryMechanism === constants_1.DELIVERY_MECHANISM.INJECTION) {
+                                self.injectHeader(injectHeaderConfig, done);
+                            }
+                            else {
+                                if (injectHeaderConfig.bodyMarginTop === "auto") {
+                                    self._setHeaderHeight(injectHeaderConfig);
+                                }
+                                else {
+                                    self.bumpFixedElements(injectHeaderConfig.bumpElements);
+                                    if (injectHeaderConfig.bodyMarginTop) {
+                                        document.body.style.marginTop = injectHeaderConfig.bodyMarginTop;
+                                    }
+                                }
+                                done();
+                            }
+                        }
+                        else {
+                            // Window doesn't support header injection (i.e. dialogModal, toolbar, searchMenu, etc)
+                            // so we don't need to inject header and bump window content's fixed elements
+                            done();
+                        }
+                    },
+                    function setupAeroSnap(done) {
+                        //Get the 'enableWindowsAeroSnap' variable from the docking config and set this windows instance
+                        configClient_1.default.getValue('finsemble', (err, config) => {
+                            if (err) {
+                                logger_1.default.system.error("Error reading windowService config from finsemble");
+                            }
+                            let aeroSnap = config.services.windowService.config.enableWindowsAeroSnap;
+                            self.enableWindowsAeroSnap = configUtil_1.ConfigUtilInstance.getDefault(config, "config.servicesConfig.docking.enableWindowsAeroSnap", aeroSnap);
+                            done();
+                        });
+                    },
+                    function registerWithDocking(done) {
+                        /**
+                         * Checks the config for a deprecated value or new value under windowService, or dockingService if windowService doesn't exist.
+                         * @param {array || string} deprecatedValues The deprecated value, if its an array, its multiple values to check for
+                         * @param {string} newValue The new value to check for if the deprecated value doesn't exist
+                         * @param {boolean} defaultVal The default value if the prop is not found under both windowService and dockingService
+                         */
+                        const checkDeprecatedAndCompare = (params) => {
+                            //Ex. params.baseString = "customData.foreign.services";
+                            //Ex. params.newPath = "windowService"
+                            //Ex. searchString = "customData.foreign.services.windowService"
+                            let searchString = params.baseString + "." + params.newPath;
+                            //Checks for new path - new properties
+                            let value = configUtil_1.ConfigUtilInstance.getDefault(customData, searchString + "." + params.newValue, null);
+                            if (value === null) {
+                                searchString = params.baseString + "." + params.oldPath;
+                                //Checks for old path - new properties
+                                value = configUtil_1.ConfigUtilInstance.getDefault(customData, searchString + "." + params.newValue, null);
+                                // console.log('checked for ', searchString, '.', params.newValue, ' and result is: ', value);
+                                if (value === null) {
+                                    if (Array.isArray(params.oldValue)) {
+                                        for (let i = 0; i < params.oldValue.length; i++) {
+                                            let depVal = params.oldValue[i];
+                                            searchString = params.baseString + "." + params.oldPath;
+                                            value = configUtil_1.ConfigUtilInstance.getDefault(customData, searchString + "." + depVal, null);
+                                            // console.log('checked for ', searchString + "." + depVal, ' and result is: ', value);
+                                            if (value !== null) {
+                                                logger_1.default.system.warn(`${params.baseString}.${params.oldPath}.${depVal} has been deprecated in favor of ${params.baseString}.${params.newPath}.${params.newValue}`);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    else {
+                                        searchString = params.baseString + "." + params.oldPath;
+                                        //Checks for old path - old properties
+                                        value = configUtil_1.ConfigUtilInstance.getDefault(customData, searchString + "." + params.oldValue, params.default);
+                                        // console.log('checked for ', searchString, '.', params.oldValue, ' and result is: ', value);
+                                        if (value) {
+                                            logger_1.default.system.warn(`${params.baseString}.${params.oldPath}.${params.oldValue} has been deprecated in favor of ${params.baseString}.${params.newPath}.${params.newValue}`);
+                                        }
+                                    }
+                                }
+                                else {
+                                    logger_1.default.system.warn(`${params.baseString}.${params.oldPath}.${params.newValue} has been deprecated in favor of ${params.baseString}.${params.newPath}.${params.newValue}`);
+                                }
+                            }
+                            return value;
+                        };
+                        // Additional function to register any dockable components with docking.
+                        // This will make docking aware of those dockable windows
+                        // and allow control over docking to window edges/moving windows out of claimed space
+                        if (customData && customData.component && customData.component.type !== "service") {
+                            let manageMovement = configUtil_1.ConfigUtilInstance.getDefault(customData, "customData.foreign.services.windowService.manageWindowMovement", false);
+                            if (!manageMovement) {
+                                manageMovement = configUtil_1.ConfigUtilInstance.getDefault(customData, "customData.foreign.services.dockingService.manageWindowMovement", false);
+                            }
+                            let FSBLHeader = configUtil_1.ConfigUtilInstance.getDefault(customData, "customData.foreign.components.Window Manager.FSBLHeader", false);
+                            let isDockable = configUtil_1.ConfigUtilInstance.getDefault(customData, "customData.window.dockable", false);
+                            //If 'manageWindowMovement' wasn't found, we still want to register with docking (and manage window movement) if the component isDockable or has an FSBLHeader
+                            manageMovement = manageMovement || FSBLHeader || isDockable;
+                            //Checks the config for deprecated props 'isArrangable' and 'isArrangeable'. If neither of these is found, will search 'allowAutoArrange'
+                            let autoArrange = checkDeprecatedAndCompare({
+                                baseString: "customData.foreign.services",
+                                newPath: "windowService",
+                                oldPath: "dockingService",
+                                oldValue: ["isArrangable", "isArrangeable"],
+                                newValue: "allowAutoArrange",
+                                default: manageMovement
+                            });
+                            //If the component wants its movement managed (or to be auto-arrangeable) it should register with docking
+                            let shouldRegister = manageMovement || autoArrange;
+                            if (!shouldRegister)
+                                return done();
+                            //Consolidated auto arrange properties and add to window as 'allowAutoArrange'
+                            customData.window.allowAutoArrange = autoArrange;
+                            //Checks the config for deprecated prop 'ignoreSnappingRequests'. If not found, will search 'allowSnapping'.
+                            customData.window.snapping = checkDeprecatedAndCompare({
+                                baseString: "customData.foreign.services",
+                                newPath: "windowService",
+                                oldPath: "dockingService",
+                                oldValue: "ignoreSnappingRequests",
+                                newValue: "allowSnapping",
+                                default: manageMovement
+                            });
+                            //Since 'allowSnapping' is essentially 'if true enable' and 'ignoreSnappingRequests' is essentially 'if true disable' we need to toggle this value depending on what prop was found. The core code still uses 'ignoreSnappingRequests'.
+                            if (customData && customData.foreign && customData.foreign.services) {
+                                let service = customData.foreign.services.windowService !== undefined ? "windowService" : "dockingService";
+                                if (customData.foreign.services[service].ignoreSnappingRequests !== undefined) {
+                                    customData.window.snapping = !customData.foreign.services[service].ignoreSnappingRequests;
+                                }
+                            }
+                            //Checks for an ephemeral component. Ephemeral components don't snap
+                            const ephemeral = configUtil_1.ConfigUtilInstance.getDefault(customData, "customData.window.ephemeral", false);
+                            if (ephemeral && !customData.window.snapping) {
+                                customData.window.snapping = false;
+                            }
+                            //Checks the config for the deprecated prop 'ignoreTilingAndTabbingRequests'. If not found, will search 'allowTiling'.
+                            customData.window.tiling = checkDeprecatedAndCompare({
+                                baseString: "customData.foreign.services",
+                                newPath: "windowService",
+                                oldPath: "dockingService",
+                                oldValue: "ignoreTilingAndTabbingRequests",
+                                newValue: "allowTiling",
+                                default: manageMovement
+                            });
+                            //Checks the config for deprecated prop 'ignoreTilingAndTabbingRequests'. If not found, will search 'allowTabbing'.
+                            customData.window.tabbing = checkDeprecatedAndCompare({
+                                baseString: "customData.foreign.services",
+                                newPath: "windowService",
+                                oldPath: "dockingService",
+                                oldValue: "ignoreTilingAndTabbingRequests",
+                                newValue: "allowTabbing",
+                                default: manageMovement
+                            });
+                            //Since 'allowTiling'/'allowTabbing' is essentially 'if true enable' and 'ignoreTilingAndTabbingRequests' is essentially 'if true disable' we need to toggle this value depending on what prop was found.
+                            if (customData && customData.foreign && customData.foreign.services) {
+                                let service = customData.foreign.services.windowService !== undefined ? "windowService" : "dockingService";
+                                if (customData.foreign.services[service].ignoreTilingAndTabbingRequests !== undefined) {
+                                    customData.window.tiling = !customData.window.tiling;
+                                    customData.window.tabbing = !customData.window.tabbing;
+                                }
+                            }
+                            //Checks the deprecated config prop 'canGroup'. If not found, will search 'allowGrouping'.
+                            customData.window.canGroup = checkDeprecatedAndCompare({
+                                baseString: "customData.foreign.services",
+                                newPath: "windowService",
+                                oldPath: "dockingService",
+                                oldValue: "canGroup",
+                                newValue: "allowGrouping",
+                                default: manageMovement
+                            });
+                            //Checks the config for deprecated prop 'canMinimize'. If not found, will search 'allowMinimize'
+                            customData.window.canMinimize = checkDeprecatedAndCompare({
+                                baseString: "customData.foreign.services",
+                                newPath: "windowService",
+                                oldPath: "dockingService",
+                                oldValue: "canMinimize",
+                                newValue: "allowMinimize",
+                                default: undefined
+                            });
+                            /** The canMinimize and canMaximize config could be one
+                             * of two locations. In a future (4.0) version, we should
+                             * consolidate this to one location.
+                             */
+                            if (customData.window.canMinimize === undefined) {
+                                customData.window.canMinimize = customData.component.canMinimize;
+                                if (customData.window.canMinimize === undefined) {
+                                    customData.window.canMinimize = manageMovement;
+                                }
+                            }
+                            if (customData.window.canMaximize === undefined) {
+                                customData.window.canMaximize = customData.component.canMaximize;
+                                if (customData.window.canMaximize === undefined) {
+                                    customData.window.canMaximize = manageMovement;
+                                }
+                            }
+                            //Determines whether a dockable component should retrieve its state from memory, or start with default (config defined) options every time
+                            customData.window.overwriteStartDocked = configUtil_1.ConfigUtilInstance.getDefault(customData, "customData.foreign.services.workspaceService.global", false);
+                            self.registerWithDockingManager(customData.window, () => {
+                                self.cacheInitialBounds(done);
+                            });
+                        }
+                        else {
+                            return done();
+                        }
+                    }
+                ], (err, results) => callback(err, results));
+            });
+        });
+    }
+    ;
+}
+var windowClient = new WindowClient({
+    startupDependencies: {
+        services: ["storageService", "windowService"]
+    },
+    onReady: function (cb) {
+        windowClient.start(cb);
+    },
+    name: "windowClient"
+});
+exports.default = windowClient;
+
+
+/***/ }),
+/* 45 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+Object.defineProperty(exports, "__esModule", { value: true });
+/*
+Overview of how this works:
+-hotkeys are added/removed via methods, passing an array of strings representing keys pressed, a handler method, and (optionally) a callback
+
+-When adding a hotkey, a node js event emitter is created on the client side to trigger the hotkey handler, and a router message is sent to the service to register the key combination with the window name on the client side. Multiple hotkeys may be created for the same key combination, so long as they have different handler functions.
+
+-When the service detects that all of the keys in the hotkey combination are pressed, it sends a message on the "HotkeyTriggered" channel (the method for this is "ListenForHotkeys") which contains the list of all windows registered with that hotkey combination. The client then reads the list of windows, and checks if it's one of those windows. If it is, it fires off the node js event emitter that was registered for that hotkey.
+
+-Removing a hotkey clears the corresponding event emitter, and also sends a router message to the service to remove its window id from the array of windows registered for the hotkey combination - if the window is registered with that hotkey combination multiple times, it will only remove one, allowing other hotkeys on the same window with the same key combination to still be registered.
+
+*/
+const baseClient_1 = __webpack_require__(7);
+const routerClientInstance_1 = __webpack_require__(5);
+const logger_1 = __webpack_require__(0);
+const keyMap = __webpack_require__(46).dictionary;
+/** The global `window` object. We cast it to a specific interface here to be
+ * explicit about what Finsemble-related properties it may have. */
+const Globals = window;
+const events_1 = __webpack_require__(12);
+var eventEmitter = new events_1.EventEmitter();
+/**
+ * Translates an array representing a key combination, each element of which represents a key, using keyDict, an object containing key-value pairs where the untranslated key representations are the keys, and the translated versions ready to be used by the service are the values.
+ *
+ * If you'd like to create a keymap for translation, look at the values of the keymaps included in the common folder.
+ * @private
+ * @param {object} params
+ * @param {object} params.keys array representing untranslated key representations
+ * @param {object} keyDict
+ */
+function translateKeys(params, keyDict = keyMap) {
+    var translatedKeys = [];
+    params.keys.forEach((key) => {
+        if (!(typeof key === "string")) {
+            return logger_1.default.system.error("FSBL.Clients.HotkeyClient - one of the keys passed into a function was not a string: ", key);
+        }
+        key = key.toLowerCase();
+        let mappedKey = keyDict[key];
+        if (mappedKey) {
+            translatedKeys.push(mappedKey);
+        }
+        else {
+            return logger_1.default.system.error(`FSBL.Clients.HotkeyClient - At least one of the key codes does not map to a supported key - registering hotkey unsuccessful. Unsupported keys: ${key}`);
+        }
+    });
+    return translatedKeys;
+}
+// Keystroke capture class taken from ChartIQ charting library
+const Keystroke = function (cb) {
+    this.cb = cb;
+    this.shift = false;
+    this.ctrl = false;
+    this.cmd = false;
+    this.capsLock = false;
+    this.initialize();
+};
+Keystroke.prototype.keyup = function (e) {
+    switch (e.key) {
+        case "Shift":
+            this.shift = false;
+            this.cb({ key: e.key, e: e, keystroke: this });
+            return;
+        case "Control":
+        case "Alt":
+            this.ctrl = false;
+            this.cb({ key: e.key, e: e, keystroke: this });
+            return;
+        case "Meta":
+        case "Win":
+            this.cmd = false;
+            this.cb({ key: e.key, e: e, keystroke: this });
+            return;
+        default:
+            break;
+    }
+    // This is where we handle the keystroke, regardless of whether we captured the key with a down or press event
+    // The exception to this is the arrow keys, which are processed in keydown
+    if (this.key)
+        this.cb({ key: this.key, e: e, keystroke: this });
+};
+Keystroke.prototype.keydown = function (e) {
+    if (this.noKeyCapture)
+        return;
+    this.key = e.key;
+    switch (e.key) {
+        case "Meta":
+        case "Win":
+            this.cmd = true;
+            break;
+        case "Shift":
+            this.shift = true;
+            break;
+        case "Control":
+        case "Alt":
+            this.ctrl = true;
+            break;
+        case "CapsLock":
+            this.capsLock = !this.capsLock;
+            break;
+        case "ArrowUp":
+        case "ArrowDown":
+        case "ArrowLeft":
+        case "ArrowRight":
+        case "Up":
+        case "Down":
+        case "Left":
+        case "Right":
+            // If you hold a key down, then keydown will repeat. These are the keys
+            // that we want to capture repeat action.
+            this.key = null;
+            this.cb({ key: e.key, e: e, keystroke: this });
+            break;
+    }
+};
+Keystroke.prototype.keypress = function (e) {
+    if (this.noKeyCapture)
+        return;
+    var keyCode = e.which;
+    if (keyCode < 32 || keyCode > 222)
+        return; // handled by keydown
+    this.key = e.key;
+};
+/**
+ * initializes member functions
+ * @memberof CIQ.UI.Keystroke
+ */
+Keystroke.prototype.initialize = function () {
+    var self = this;
+    document.addEventListener("keyup", function (e) {
+        self.keyup(e);
+    });
+    document.addEventListener("keydown", function (e) {
+        self.downValue = e.key;
+        self.keydown(e);
+    });
+    document.addEventListener("keypress", function (e) {
+        self.keypress(e);
+    });
+    window.addEventListener("blur", function (e) {
+        self.ctrl = false;
+        self.cb({ key: "Control", e: e, keystroke: self });
+    });
+};
+// Used to keep track of which browser key combinations are registered locally
+var registeredBrowserKeys = [];
+class HotkeyClient extends baseClient_1._BaseClient {
+    constructor(params) {
+        super(params);
+        /**
+         * Automatically unregister all hotkeys when the window containing the client closes
+         * @param {function} cb
+         * @private
+         */
+        this.onClose = (cb) => {
+            this.removeAllHotkeys(cb);
+        };
+        this.keyMap = keyMap;
+        this.listenForHotkeys = this.listenForHotkeys.bind(this);
+        this.routerClient = routerClientInstance_1.default;
+        this.routerClient.onReady(this.listenForHotkeys);
+        //Local hotkeys need to only fire if the window is focused. The object below is a map of handlers passed in by the user.
+        //The keys are the handler, and the value is the wrapped method that checks for focus.
+        this.localListeners = {};
+    }
+    /**
+     *Adds a local hotkey which fires only when the window calling the method is in focus. If you execute this function more than once for the same key combination, both hotkeys will coexist, and would need to be removed separately.
+     * @param {Array.<string>} keyArr Array of strings representing hotkey key combination.
+     * @param {function} handler Function to be executed when the hotkey combination is pressed. It is recommended that you define a variable to represent the handler function, as the same function must be passed in order to remove the hotkey.
+     * @param {StandardCallback} cb Callback to be called after local hotkey is added.
+     * @example
+     * var myFunction = function () {...}
+     * FSBL.Clients.HotkeyClient.addLocalHotkey(["ctrl", "shift", "s"], myFunction, cb)
+     */
+    addLocalHotkey(keyArr, handler, cb = (err, response) => { }) {
+        logger_1.default.system.info("HotkeyClient.addLocalHotkey");
+        logger_1.default.system.debug("HotkeyClient.addLocalHotkey, keyArr: ", keyArr);
+        let keyString = translateKeys({ keys: keyArr }).sort().toString();
+        //We create a new function that checks focus before invoking the method.
+        //If assimilation wasn't on, we'd want to use window.addEventListener('keydown');
+        let wrap = () => {
+            if (document.hasFocus()) {
+                handler();
+            }
+        };
+        //Keep a reference to the handler so when the dev wants to remove it, we can.
+        if (!this.localListeners[keyString]) {
+            this.localListeners[keyString] = {};
+        }
+        this.localListeners[keyString][handler] = wrap;
+        eventEmitter.addListener(keyString, wrap);
+        this.routerClient.query("hotkeysService.registerGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb);
+    }
+    /**
+     *Adds a local hotkey, firing only when the window calling the method is in focus. If you execute this function more than once for the same key combination, both hotkeys will coexist, and would need to be remove separately.
+     * This function uses browser key capture, so it will work when assimilation is not running
+     * @param {Array} [keyArr] Array of strings representing hotkey key combination.
+     * @param {function} [handler] Function to be executed when the hotkey combination is pressed. It is recommended that you define a variable to represent the handler function, as the same function must be passed in order to remove the hotkey.
+     * @param {function} cb Callback to be called after local hotkey is added.
+     * @todo Have addLocalHotkey automatically use this when assimilation is not running. Will eventually replace addLocalHotkey.
+     * @private
+     * @example
+     * var myFunction = function () {...}
+     * FSBL.Clients.HotkeyClient.addBrowserHotkey(["ctrl","shift","s"],myFunction,cb)
+     */
+    addBrowserHotkey(keyArr, handler) {
+        // Lazily create a keystroke handler for this web page if one doesn't already exist
+        if (!this.KeyStroke) {
+            this.KeyStroke = new Keystroke(function (params) {
+                let { key, keystroke } = params;
+                var myKeyArray = [key];
+                if (keystroke.ctrl)
+                    myKeyArray.push("control");
+                if (keystroke.shift)
+                    myKeyArray.push("shift");
+                if (keystroke.alt)
+                    myKeyArray.push("alt");
+                let myKeyString = myKeyArray.sort().toString();
+                registeredBrowserKeys.forEach(function (obj) {
+                    if (obj.keyString === myKeyString)
+                        obj.handler();
+                });
+            });
+        }
+        let keyString = translateKeys({ keys: keyArr }).sort().toString();
+        registeredBrowserKeys.push({ keyString: keyString, handler: handler });
+    }
+    /**
+     *Removes a local hotkey.
+     * @param {Array.<string>} keyArr Array of strings representing hotkey key combination.
+     * @param {function} handler Handler registered for the hotkey to be removed.
+     * @param {StandardCallback} cb Callback to be called after local hotkey is removed.
+     * @example
+     *
+     * FSBL.Clients.HotkeyClient.removeLocalHotkey(["ctrl", "shift", "s"], myFunction, cb)
+     */
+    removeLocalHotkey(keyArr, handler, cb = (err, response) => { }) {
+        logger_1.default.system.info("HotkeyClient.removeLocalHotkey");
+        logger_1.default.system.debug("HotkeyClient.removeLocalHotkey, keyArr: ", keyArr);
+        let keyString = translateKeys({ keys: keyArr }).sort().toString();
+        let wrap = this.localListeners[keyString][handler];
+        eventEmitter.removeListener(keyString, wrap);
+        this.routerClient.query("hotkeysService.unregisterGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb); //TODO: query
+    }
+    /**
+     *Adds a global hotkey which fires regardless of what window is in focus. If you execute this function more than once for the same key combination, both hotkeys will coexist, and would need to be removed separately.
+     * @param {Array.<string>} keyArr Array of strings representing a hotkey key combination.
+     * @param {function} handler Function to be executed when the hotkey combination is pressed. It is recommended that you define a variable to represent the handler function, as the same function must be passed in order to remove the hotkey.
+     * @param {StandardCallback} cb Callback to be called after local hotkey is added.
+     * @example
+     * var myFunction = function () {...}
+     * FSBL.Clients.HotkeyClient.addGlobalHotkey(["ctrl", "shift", "s"], myFunction, cb)
+     */
+    addGlobalHotkey(keyArr, handler, cb = (err, response) => { }) {
+        logger_1.default.system.info("HotkeyClient.addGlobalHotkey");
+        logger_1.default.system.debug("HotkeyClient.addGlobalHotkey, keyArr: ", keyArr);
+        let keyString = translateKeys({ keys: keyArr }).sort().toString();
+        eventEmitter.addListener(keyString, handler);
+        this.routerClient.query("hotkeysService.registerGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb);
+    }
+    /**
+     *Removes a global hotkey.
+     * @param {Array.<string>} keyArr Array of strings representing hotkey key combination.
+     * @param {function} handler Handler registered for the hotkey to be removed.
+     * @param {StandardCallback} cb Callback to be called after local hotkey is removed.
+     * @example
+     *
+     * FSBL.Clients.HotkeyClient.removeGlobalHotkey(["ctrl", "shift", "s"], myFunction, cb)
+     */
+    removeGlobalHotkey(keyArr, handler, cb = (err, response) => { }) {
+        logger_1.default.system.info("HotkeyClient.removeGlobalHotkey");
+        logger_1.default.system.debug("HotkeyClient.removeGlobalHotkey, keyArr: ", keyArr);
+        let keyString = translateKeys({ keys: keyArr }).sort().toString();
+        eventEmitter.removeListener(keyString, handler);
+        this.routerClient.query("hotkeysService.unregisterGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb); //TODO: query
+    }
+    /**
+     * Not yet implemented - will return an object that contains all registered Hotkeys
+     */
+    /* getHotkeys() { //TODO: MAKE WORK
+        Logger.system.info("HotkeyClient.getHotkeys");
+        this.routerClient.transmit("hotkeysService.getRegisteredHotkeys", { request: true });
+    } */
+    /**
+     * Handler for "hotkey triggered" messages from the service, called upon client initialization.
+     * @private
+     */
+    listenForHotkeys() {
+        var self = this;
+        this.routerClient.addListener("HotkeyTriggered", function (error, response) {
+            if (error) {
+                console.error("Hotkey Channel Error: " + JSON.stringify(error));
+            }
+            else {
+                if (response.data.windows.includes(self.windowName)) { //if this is one of the windows that the service means to trigger here
+                    eventEmitter.emit(response.data.keys);
+                }
+            }
+        });
+    }
+    /**
+     * Unregister all hotkeys, both locally and service-side.
+     * @param {StandardCallback} cb Optional callback function
+     *
+     */
+    removeAllHotkeys(cb) {
+        eventEmitter.removeAllListeners();
+        this.routerClient.query("hotkeysService.removeAllHotkeysForWindow", { windowName: this.windowName }, cb);
+    }
+}
+var hotkeyClient = new HotkeyClient({
+    startupDependencies: {
+        services: ["hotkeysService"]
+    },
+    onReady: function (cb) {
+        if (cb) {
+            cb();
+        }
+    },
+    name: "hotkeyClient"
+});
+// @TODO - use proper exports instead of global scope.
+Globals.Keystroke = Keystroke;
+exports.default = hotkeyClient;
+
+
+/***/ }),
+/* 46 */
+/***/ (function(module, exports) {
+
+module.exports = {"dictionary":{"0":"0","1":"1","2":"2","3":"3","4":"4","5":"5","6":"6","7":"7","8":"8","9":"9","backspace":"backspace","bs":"backspace","bksp":"backspace","tab":"tab","escape":"escape","esc":"escape","clear":"clear","enter":"enter","return":"enter","shift":"shift","shft":"shift","lshift":"shift","lshft":"shift","left shift":"shift","leftshift":"shift","rshift":"shift","rshft":"shift","right shift":"shift","rightshift":"shift","control":"control","ctrl":"control","alt":"alt","alternate":"alt","pause":"pause","caps lock":"caps lock","capslock":"caps lock","spacebar":"spacebar","space":"spacebar","space bar":"space","page up":"page up","pgup":"page up","pg up":"page up","page down":"page down","pgdn":"page down","pg dn":"page down","end":"end","home":"home","left arrow":"left arrow","left":"left arrow","up arrow":"up arrow","up":"up arrow","right arrow":"right arrow","right":"right arrow","down arrow":"down arrow","down":"down arrow","select":"select","slct":"select","print":"print","prnt":"print","execute":"execute","print screen":"print screen","printscreen":"print screen","print scrn":"print screen","printscrn":"print screen","prnt scrn":"print screen","prntscrn":"print screen","prt scrn":"print screen","prtscrn":"print screen","prt scn":"print screen","prtscn":"print screen","prt scr":"print screen","prtscr":"print screen","prt sc":"print screen","prtsc":"print screen","pr sc":"print screen","prsc":"print screen","insert":"insert","ins":"insert","delete":"delete","del":"delete","help":"help","a":"a","b":"b","c":"c","d":"d","e":"e","f":"f","g":"g","h":"h","i":"i","j":"j","k":"k","l":"l","m":"m","n":"n","o":"o","p":"p","q":"q","r":"r","s":"s","t":"t","u":"u","v":"v","w":"w","x":"x","y":"y","z":"z","windows":"windows","left windows":"windows","right windows":"windows","applications":"applications","computer sleep":"computer sleep","sleep":"computer sleep","numpad 0":"0","numpad 1":"1","numpad 2":"2","numpad 3":"3","numpad 4":"4","numpad 5":"5","numpad 6":"6","numpad 7":"7","numpad 8":"8","numpad 9":"9","f1":"f1","fn1":"f1","function 1":"f1","f2":"f2","fn2":"f2","function 2":"f2","f3":"f3","fn3":"f3","function 3":"f3","f4":"f4","fn4":"f4","function 4":"f4","f5":"f5","fn5":"f5","function 5":"f5","f6":"f6","fn6":"f6","function 6":"f6","f7":"f7","fn7":"f7","function 7":"f7","f8":"f8","fn8":"f8","function 8":"f8","f9":"f9","fn9":"f9","function 9":"f9","f10":"f10","fn10":"f10","function 10":"f10","f11":"f11","fn11":"f11","function 11":"f11","f12":"f12","fn12":"f12","function 12":"f12","f13":"f13","fn":"f13","function 13":"f13","f14":"f14","fn14":"f14","function 14":"f14","f15":"f15","fn15":"f15","function 15":"f15","f16":"f16","fn16":"f16","function 16":"f16","num lock":"num lock","numlock":"num lock","number lock":"num lock","numeric lock":"num lock","scroll lock":"scroll lock","sclk":"scroll lock","scrlk":"scroll lock","slk":"scroll lock","menu":"menu","*":"*","+":"+","-":"-","/":"/",";":";","=":"=",",":",","_":"-",".":".","`":"`","[":"[","]":"]","'":"'"},"assimilationMap":{"1":"lmb","2":"rmb","4":"mmb","8":"backspace","9":"tab","13":"enter","16":"shift","17":"control","18":"alt","19":"pause","20":"caps lock","27":"escape","32":"spacebar","33":"page up","34":"page down","35":"end","36":"home","37":"left arrow","38":"up arrow","39":"right arrow","40":"down arrow","41":"select","42":"print","43":"execute","44":"print screen","45":"insert","46":"delete","47":"help","48":"0","49":"1","50":"2","51":"3","52":"4","53":"5","54":"6","55":"7","56":"8","57":"9","65":"a","66":"b","67":"c","68":"d","69":"e","70":"f","71":"g","72":"h","73":"i","74":"j","75":"k","76":"l","77":"m","78":"n","79":"o","80":"p","81":"q","82":"r","83":"s","84":"t","85":"u","86":"v","87":"w","88":"x","89":"y","90":"z","91":"windows","92":"windows","93":"applications","95":"computer sleep","96":"0","97":"1","98":"2","99":"3","100":"4","101":"5","102":"6","103":"7","104":"8","105":"9","106":"*","107":"+","109":"-","111":"/","112":"f1","113":"f2","114":"f3","115":"f4","116":"f5","117":"f6","118":"f7","119":"f8","120":"f9","121":"f10","122":"f11","123":"f12","124":"f13","125":"f14","126":"f15","127":"f16","144":"num lock","145":"scroll lock","160":"shift","161":"shift","162":"control","163":"control","164":"alt","165":"alt","186":";","187":"=","188":",","189":"-","190":".","191":"/","192":"`","219":"[","220":"\\","221":"]","222":"\\","223":"'","//note, backtick and apostrophe":"are reversed on uk and us keyboards"}}
+
+/***/ }),
+/* 47 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const events_1 = __webpack_require__(12);
+/**
+ * Notes:
+ * Client calls finsembleWindow.addEventListener("event", handler)
+ *
+ * hander gets called with handler(FinsembleEvent)
+ *
+ * in the handler:
+ function handler(e) {
+    if (e.delayable) {
+        e.wait();
+        function myStuff() {
+            //my stuff here
+            if (cancel && e.cancelable) {
+                e.cancel();
+            } else {
+                e.done();
+            }
+        }
+    }
+}
+ *
+ *
+ *
+ */
+/**
+ * This object is passed to event handlers so they can interrupt events. This is used in conjunction with the implementation of add/remove event listeners in BaseWindow and FinsembleWindow
+ */
+class FinsembleEvent extends events_1.EventEmitter {
+    constructor(params) {
+        super();
+        this.cancelable = false;
+        this.delayable = false;
+        this.delayed = false;
+        if (params.event)
+            this.event = params.event;
+        if (params.cancelable)
+            this.cancelable = true;
+        if (params.data)
+            this.data = params.data;
+        if (params.delayable)
+            this.delayable = true;
+    }
+    wait() {
+        if (this.delayable)
+            this.delayed = true;
+    }
+    cancel() {
+        if (this.cancelable) {
+            this.emit("done", {
+                canceled: true
+            });
+        }
+    }
+    done() {
+        this.emit("done", {
+            canceled: false
+        });
+    }
+    setData(data) {
+        this.data = data;
+    }
+}
+exports.FinsembleEvent = FinsembleEvent;
+
+
+/***/ }),
+/* 48 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const routerClientInstance_1 = __webpack_require__(5);
+const logger_1 = __webpack_require__(0);
+const events_1 = __webpack_require__(12);
+class WindowEventManager extends events_1.EventEmitter {
+    /**
+    * Array of events that we're subscribed to remotely. When receiving a remote event, the event manager will emit a local event.
+    * @type {WindowEventName[]}
+    * @memberof WindowEventManager
+    */
+    constructor(params) {
+        super();
+        this.windowName = params.name;
+        this.remoteEventSubscriptions = {};
+        //array of events we're listening for. to prevent multiple router listeners for the same event.
+        this.listeningFor = [];
+        this.setMaxListeners(25);
+    }
+    _addListener(event, listener) {
+        super.addListener(event, listener);
+    }
+    /**
+     * Disconnects all router listeners. Removes all listeners added to the event emitter.
+     * @memberof WindowEventManager
+     */
+    cleanup() {
+        logger_1.default.system.info("WindowEventManager.cleanup", this.windowName);
+        //removes listeners added to the event emitter.
+        this.removeAllListeners();
+        //removes listeners added to the RouterClient.
+        let eventSubscriptions = Object.keys(this.remoteEventSubscriptions);
+        logger_1.default.system.info("WRAP CLOSE. WindowEventManager.cleanup. Removing router subscriptions", this.windowName, eventSubscriptions);
+        eventSubscriptions.forEach(channelName => {
+            let handlers = this.remoteEventSubscriptions[channelName];
+            handlers.forEach(handler => {
+                routerClientInstance_1.default.removeListener(channelName, handler);
+            });
+        });
+    }
+    /**
+     * Single point of entry to the eventEmitter's `emit` method. This will be called when the router listener is fired in response to an event happening somewhere else in the system. Could also be triggered by an event fired from the underlying wrapper.
+     *
+     * @private
+     * @param {WindowEventName} eventName
+     * @param {WindowEvent | BoundsChangeEvent} data
+     * @memberof WindowEventManager
+     */
+    emitLocalEvent(eventName, data) {
+        logger_1.default.system.info("WindowEventManager.emitLocalEvent. Emitting Event", this.windowName, eventName, data);
+        this.emit(eventName, data);
+    }
+    /**
+     * Returns router channel name for a given window event + window name combination.
+     *
+     * @param {WindowEventName} eventName
+     * @returns {string}
+     * @memberof WindowEventManager
+     */
+    getChannelName(eventName) {
+        return `WindowService-Event-${this.windowName}-${eventName}`;
+    }
+    /**
+     * Adds a router listener for remote events if we are not already listening for that event. If the optional handler is passed in, will add a local event listener to be triggered the next time the event fires.
+     *
+     * @param {WindowEventName} eventName
+     * @param {Function} [handler]
+     * @memberof WindowEventManager
+     */
+    listenForRemoteEvent(eventName, handler) {
+        logger_1.default.system.debug("WindowEventManager.listenForRemoteEvent", this.windowName, eventName);
+        let channelName = this.getChannelName(eventName);
+        const remoteEventHandler = (err, response) => {
+            logger_1.default.system.debug("WindowEventManager. Received remote event", this.windowName, eventName);
+            if (err) {
+                throw new Error(err);
+            }
+            //todo need to accommodate wrap-state-changed events in here...maybe?
+            let data = { eventName, name: this.windowName };
+            if (eventName.includes("bounds") || eventName.includes("parent")) {
+                //bounds events need to push out more data than just name/eventName. ...response.data will destructure the object and copy them into this new object.
+                data = Object.assign({ eventName }, response.data);
+            }
+            if (!response.originatedHere()) {
+                logger_1.default.system.debug("WindowEventManager. Received remote event emitted", this.windowName, eventName, data);
+                this.emitLocalEvent(eventName, data);
+            }
+        };
+        //We only want one router listener per event. Otherwise, we'll emit the same event multiple times.
+        if (!this.listeningFor.includes(eventName)) {
+            this.listeningFor.push(eventName);
+            logger_1.default.system.debug("WindowEventManager.listenForRemoteEvent. Adding listener to the router", this.windowName, eventName);
+            //When the remote event is triggered, emit an event locally.
+            routerClientInstance_1.default.addListener(channelName, remoteEventHandler);
+            //If a handler is passed in, listen locally for the event to be thrown.
+            logger_1.default.system.debug("WindowEventManager.listenForRemoteEvent. Handler included, adding listener to local event emitter", this.windowName, eventName);
+            this.rememberRouterChannelForLaterRemoval(channelName, remoteEventHandler);
+        }
+    }
+    /**
+     * Convenience function to allow wrap to receive multiple remote events. Dev would then need to add a handler for each event that they care about. May not be useful.
+     *
+     * @param {WindowEventName[]} eventList
+     * @memberof WindowEventManager
+     */
+    listenForRemoteEvents(eventList) {
+        //verbose because each event will be logged in listenForRemoteEvent.
+        logger_1.default.system.verbose("WindowEventManager.listenForRemoteEvents. Listen for remote events", this.windowName, eventList);
+        eventList.forEach(eventName => {
+            this.listenForRemoteEvent(eventName);
+        });
+    }
+    /**
+     * Broadcasts an event to any event manager listening for this event.
+     *
+     * @param {WindowEventName} eventName
+     * @param {WindowEvent | BoundsChangeEvent} data
+     * @memberof WindowEventManager
+     */
+    transmitRemoteEvent(eventName, data) {
+        logger_1.default.system.debug("WindowEventManager.transmitRemoteEvent. Transmitting event to public wrappers", eventName, data);
+        let channelName = this.getChannelName(eventName);
+        routerClientInstance_1.default.transmit(channelName, data, { suppressWarnings: true });
+    }
+    /**
+ * Used by the window implementations in the window service. This method will emit an event up to the local process, and transmit an event out to the rest of the system.
+ * @private
+ * @param {WindowEventName[]} eventName
+ * @param {WindowEvent | BoundsChangeEvent} data
+ * @memberof WindowEventManager
+ */
+    trigger(eventName, data) {
+        logger_1.default.system.info("WindowEventManager.trigger. Event triggered. Event will be emitted locally and transmitted to public wrappers. Window Name", this.windowName, "Event name", eventName, "Event data", data);
+        //If we have data, annotate it. Otherwise, create a generic window event.
+        if (data) {
+            data.name = this.windowName;
+            data.eventName = eventName;
+        }
+        else {
+            data = {
+                name: this.windowName,
+                eventName: eventName
+            };
+        }
+        this.emitLocalEvent(eventName, data);
+        this.transmitRemoteEvent(eventName, data);
+    }
+    ;
+    /**
+ * Currently we cannot have a special routerClient for every object. So this method will keep track of channel/listener combinations so we can cleanup when the wrap calls cleanup.
+ *
+ * @param {*} eventName
+ * @param {*} handler
+ * @memberof WindowEventManager
+ */
+    rememberRouterChannelForLaterRemoval(channelName, handler) {
+        logger_1.default.system.debug("WindowEventManager.rememberRouterChannelForLaterRemoval.", channelName);
+        if (!this.remoteEventSubscriptions[channelName]) {
+            this.remoteEventSubscriptions[channelName] = [];
+        }
+        this.remoteEventSubscriptions[channelName].push(handler);
+    }
+    ;
+}
+exports.WindowEventManager = WindowEventManager;
+
+
+/***/ }),
+/* 49 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global, module) {/**
+ * lodash (Custom Build) <https://lodash.com/>
+ * Build: `lodash modularize exports="npm" -o ./`
+ * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+ * Released under MIT license <https://lodash.com/license>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ */
+
+/** Used as the size to enable large array optimizations. */
+var LARGE_ARRAY_SIZE = 200;
+
+/** Used to stand-in for `undefined` hash values. */
+var HASH_UNDEFINED = '__lodash_hash_undefined__';
+
+/** Used as references for various `Number` constants. */
+var MAX_SAFE_INTEGER = 9007199254740991;
+
+/** `Object#toString` result references. */
+var argsTag = '[object Arguments]',
+    arrayTag = '[object Array]',
+    boolTag = '[object Boolean]',
+    dateTag = '[object Date]',
+    errorTag = '[object Error]',
+    funcTag = '[object Function]',
+    genTag = '[object GeneratorFunction]',
+    mapTag = '[object Map]',
+    numberTag = '[object Number]',
+    objectTag = '[object Object]',
+    promiseTag = '[object Promise]',
+    regexpTag = '[object RegExp]',
+    setTag = '[object Set]',
+    stringTag = '[object String]',
+    symbolTag = '[object Symbol]',
+    weakMapTag = '[object WeakMap]';
+
+var arrayBufferTag = '[object ArrayBuffer]',
+    dataViewTag = '[object DataView]',
+    float32Tag = '[object Float32Array]',
+    float64Tag = '[object Float64Array]',
+    int8Tag = '[object Int8Array]',
+    int16Tag = '[object Int16Array]',
+    int32Tag = '[object Int32Array]',
+    uint8Tag = '[object Uint8Array]',
+    uint8ClampedTag = '[object Uint8ClampedArray]',
+    uint16Tag = '[object Uint16Array]',
+    uint32Tag = '[object Uint32Array]';
+
+/**
+ * Used to match `RegExp`
+ * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
+ */
+var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
+
+/** Used to match `RegExp` flags from their coerced string values. */
+var reFlags = /\w*$/;
+
+/** Used to detect host constructors (Safari). */
+var reIsHostCtor = /^\[object .+?Constructor\]$/;
+
+/** Used to detect unsigned integer values. */
+var reIsUint = /^(?:0|[1-9]\d*)$/;
+
+/** Used to identify `toStringTag` values supported by `_.clone`. */
+var cloneableTags = {};
+cloneableTags[argsTag] = cloneableTags[arrayTag] =
+cloneableTags[arrayBufferTag] = cloneableTags[dataViewTag] =
+cloneableTags[boolTag] = cloneableTags[dateTag] =
+cloneableTags[float32Tag] = cloneableTags[float64Tag] =
+cloneableTags[int8Tag] = cloneableTags[int16Tag] =
+cloneableTags[int32Tag] = cloneableTags[mapTag] =
+cloneableTags[numberTag] = cloneableTags[objectTag] =
+cloneableTags[regexpTag] = cloneableTags[setTag] =
+cloneableTags[stringTag] = cloneableTags[symbolTag] =
+cloneableTags[uint8Tag] = cloneableTags[uint8ClampedTag] =
+cloneableTags[uint16Tag] = cloneableTags[uint32Tag] = true;
+cloneableTags[errorTag] = cloneableTags[funcTag] =
+cloneableTags[weakMapTag] = false;
+
+/** Detect free variable `global` from Node.js. */
+var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
+
+/** Detect free variable `self`. */
+var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+
+/** Used as a reference to the global object. */
+var root = freeGlobal || freeSelf || Function('return this')();
+
+/** Detect free variable `exports`. */
+var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
+
+/** Detect free variable `module`. */
+var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
+
+/** Detect the popular CommonJS extension `module.exports`. */
+var moduleExports = freeModule && freeModule.exports === freeExports;
+
+/**
+ * Adds the key-value `pair` to `map`.
+ *
+ * @private
+ * @param {Object} map The map to modify.
+ * @param {Array} pair The key-value pair to add.
+ * @returns {Object} Returns `map`.
+ */
+function addMapEntry(map, pair) {
+  // Don't return `map.set` because it's not chainable in IE 11.
+  map.set(pair[0], pair[1]);
+  return map;
+}
+
+/**
+ * Adds `value` to `set`.
+ *
+ * @private
+ * @param {Object} set The set to modify.
+ * @param {*} value The value to add.
+ * @returns {Object} Returns `set`.
+ */
+function addSetEntry(set, value) {
+  // Don't return `set.add` because it's not chainable in IE 11.
+  set.add(value);
+  return set;
+}
+
+/**
+ * A specialized version of `_.forEach` for arrays without support for
+ * iteratee shorthands.
+ *
+ * @private
+ * @param {Array} [array] The array to iterate over.
+ * @param {Function} iteratee The function invoked per iteration.
+ * @returns {Array} Returns `array`.
+ */
+function arrayEach(array, iteratee) {
+  var index = -1,
+      length = array ? array.length : 0;
+
+  while (++index < length) {
+    if (iteratee(array[index], index, array) === false) {
+      break;
+    }
+  }
+  return array;
+}
+
+/**
+ * Appends the elements of `values` to `array`.
+ *
+ * @private
+ * @param {Array} array The array to modify.
+ * @param {Array} values The values to append.
+ * @returns {Array} Returns `array`.
+ */
+function arrayPush(array, values) {
+  var index = -1,
+      length = values.length,
+      offset = array.length;
+
+  while (++index < length) {
+    array[offset + index] = values[index];
+  }
+  return array;
+}
+
+/**
+ * A specialized version of `_.reduce` for arrays without support for
+ * iteratee shorthands.
+ *
+ * @private
+ * @param {Array} [array] The array to iterate over.
+ * @param {Function} iteratee The function invoked per iteration.
+ * @param {*} [accumulator] The initial value.
+ * @param {boolean} [initAccum] Specify using the first element of `array` as
+ *  the initial value.
+ * @returns {*} Returns the accumulated value.
+ */
+function arrayReduce(array, iteratee, accumulator, initAccum) {
+  var index = -1,
+      length = array ? array.length : 0;
+
+  if (initAccum && length) {
+    accumulator = array[++index];
+  }
+  while (++index < length) {
+    accumulator = iteratee(accumulator, array[index], index, array);
+  }
+  return accumulator;
+}
+
+/**
+ * The base implementation of `_.times` without support for iteratee shorthands
+ * or max array length checks.
+ *
+ * @private
+ * @param {number} n The number of times to invoke `iteratee`.
+ * @param {Function} iteratee The function invoked per iteration.
+ * @returns {Array} Returns the array of results.
+ */
+function baseTimes(n, iteratee) {
+  var index = -1,
+      result = Array(n);
+
+  while (++index < n) {
+    result[index] = iteratee(index);
+  }
+  return result;
+}
+
+/**
+ * Gets the value at `key` of `object`.
+ *
+ * @private
+ * @param {Object} [object] The object to query.
+ * @param {string} key The key of the property to get.
+ * @returns {*} Returns the property value.
+ */
+function getValue(object, key) {
+  return object == null ? undefined : object[key];
+}
+
+/**
+ * Checks if `value` is a host object in IE < 9.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
+ */
+function isHostObject(value) {
+  // Many host objects are `Object` objects that can coerce to strings
+  // despite having improperly defined `toString` methods.
+  var result = false;
+  if (value != null && typeof value.toString != 'function') {
+    try {
+      result = !!(value + '');
+    } catch (e) {}
+  }
+  return result;
+}
+
+/**
+ * Converts `map` to its key-value pairs.
+ *
+ * @private
+ * @param {Object} map The map to convert.
+ * @returns {Array} Returns the key-value pairs.
+ */
+function mapToArray(map) {
+  var index = -1,
+      result = Array(map.size);
+
+  map.forEach(function(value, key) {
+    result[++index] = [key, value];
+  });
+  return result;
+}
+
+/**
+ * Creates a unary function that invokes `func` with its argument transformed.
+ *
+ * @private
+ * @param {Function} func The function to wrap.
+ * @param {Function} transform The argument transform.
+ * @returns {Function} Returns the new function.
+ */
+function overArg(func, transform) {
+  return function(arg) {
+    return func(transform(arg));
+  };
+}
+
+/**
+ * Converts `set` to an array of its values.
+ *
+ * @private
+ * @param {Object} set The set to convert.
+ * @returns {Array} Returns the values.
+ */
+function setToArray(set) {
+  var index = -1,
+      result = Array(set.size);
+
+  set.forEach(function(value) {
+    result[++index] = value;
+  });
+  return result;
+}
+
+/** Used for built-in method references. */
+var arrayProto = Array.prototype,
+    funcProto = Function.prototype,
+    objectProto = Object.prototype;
+
+/** Used to detect overreaching core-js shims. */
+var coreJsData = root['__core-js_shared__'];
+
+/** Used to detect methods masquerading as native. */
+var maskSrcKey = (function() {
+  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
+  return uid ? ('Symbol(src)_1.' + uid) : '';
+}());
+
+/** Used to resolve the decompiled source of functions. */
+var funcToString = funcProto.toString;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Used to resolve the
+ * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var objectToString = objectProto.toString;
+
+/** Used to detect if a method is native. */
+var reIsNative = RegExp('^' +
+  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
+  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
+);
+
+/** Built-in value references. */
+var Buffer = moduleExports ? root.Buffer : undefined,
+    Symbol = root.Symbol,
+    Uint8Array = root.Uint8Array,
+    getPrototype = overArg(Object.getPrototypeOf, Object),
+    objectCreate = Object.create,
+    propertyIsEnumerable = objectProto.propertyIsEnumerable,
+    splice = arrayProto.splice;
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeGetSymbols = Object.getOwnPropertySymbols,
+    nativeIsBuffer = Buffer ? Buffer.isBuffer : undefined,
+    nativeKeys = overArg(Object.keys, Object);
+
+/* Built-in method references that are verified to be native. */
+var DataView = getNative(root, 'DataView'),
+    Map = getNative(root, 'Map'),
+    Promise = getNative(root, 'Promise'),
+    Set = getNative(root, 'Set'),
+    WeakMap = getNative(root, 'WeakMap'),
+    nativeCreate = getNative(Object, 'create');
+
+/** Used to detect maps, sets, and weakmaps. */
+var dataViewCtorString = toSource(DataView),
+    mapCtorString = toSource(Map),
+    promiseCtorString = toSource(Promise),
+    setCtorString = toSource(Set),
+    weakMapCtorString = toSource(WeakMap);
+
+/** Used to convert symbols to primitives and strings. */
+var symbolProto = Symbol ? Symbol.prototype : undefined,
+    symbolValueOf = symbolProto ? symbolProto.valueOf : undefined;
+
+/**
+ * Creates a hash object.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function Hash(entries) {
+  var index = -1,
+      length = entries ? entries.length : 0;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+/**
+ * Removes all key-value entries from the hash.
+ *
+ * @private
+ * @name clear
+ * @memberOf Hash
+ */
+function hashClear() {
+  this.__data__ = nativeCreate ? nativeCreate(null) : {};
+}
+
+/**
+ * Removes `key` and its value from the hash.
+ *
+ * @private
+ * @name delete
+ * @memberOf Hash
+ * @param {Object} hash The hash to modify.
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function hashDelete(key) {
+  return this.has(key) && delete this.__data__[key];
+}
+
+/**
+ * Gets the hash value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf Hash
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function hashGet(key) {
+  var data = this.__data__;
+  if (nativeCreate) {
+    var result = data[key];
+    return result === HASH_UNDEFINED ? undefined : result;
+  }
+  return hasOwnProperty.call(data, key) ? data[key] : undefined;
+}
+
+/**
+ * Checks if a hash value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf Hash
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function hashHas(key) {
+  var data = this.__data__;
+  return nativeCreate ? data[key] !== undefined : hasOwnProperty.call(data, key);
+}
+
+/**
+ * Sets the hash `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf Hash
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the hash instance.
+ */
+function hashSet(key, value) {
+  var data = this.__data__;
+  data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
+  return this;
+}
+
+// Add methods to `Hash`.
+Hash.prototype.clear = hashClear;
+Hash.prototype['delete'] = hashDelete;
+Hash.prototype.get = hashGet;
+Hash.prototype.has = hashHas;
+Hash.prototype.set = hashSet;
+
+/**
+ * Creates an list cache object.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function ListCache(entries) {
+  var index = -1,
+      length = entries ? entries.length : 0;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+/**
+ * Removes all key-value entries from the list cache.
+ *
+ * @private
+ * @name clear
+ * @memberOf ListCache
+ */
+function listCacheClear() {
+  this.__data__ = [];
+}
+
+/**
+ * Removes `key` and its value from the list cache.
+ *
+ * @private
+ * @name delete
+ * @memberOf ListCache
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function listCacheDelete(key) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  if (index < 0) {
+    return false;
+  }
+  var lastIndex = data.length - 1;
+  if (index == lastIndex) {
+    data.pop();
+  } else {
+    splice.call(data, index, 1);
+  }
+  return true;
+}
+
+/**
+ * Gets the list cache value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf ListCache
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function listCacheGet(key) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  return index < 0 ? undefined : data[index][1];
+}
+
+/**
+ * Checks if a list cache value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf ListCache
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function listCacheHas(key) {
+  return assocIndexOf(this.__data__, key) > -1;
+}
+
+/**
+ * Sets the list cache `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf ListCache
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the list cache instance.
+ */
+function listCacheSet(key, value) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  if (index < 0) {
+    data.push([key, value]);
+  } else {
+    data[index][1] = value;
+  }
+  return this;
+}
+
+// Add methods to `ListCache`.
+ListCache.prototype.clear = listCacheClear;
+ListCache.prototype['delete'] = listCacheDelete;
+ListCache.prototype.get = listCacheGet;
+ListCache.prototype.has = listCacheHas;
+ListCache.prototype.set = listCacheSet;
+
+/**
+ * Creates a map cache object to store key-value pairs.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function MapCache(entries) {
+  var index = -1,
+      length = entries ? entries.length : 0;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+/**
+ * Removes all key-value entries from the map.
+ *
+ * @private
+ * @name clear
+ * @memberOf MapCache
+ */
+function mapCacheClear() {
+  this.__data__ = {
+    'hash': new Hash,
+    'map': new (Map || ListCache),
+    'string': new Hash
+  };
+}
+
+/**
+ * Removes `key` and its value from the map.
+ *
+ * @private
+ * @name delete
+ * @memberOf MapCache
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function mapCacheDelete(key) {
+  return getMapData(this, key)['delete'](key);
+}
+
+/**
+ * Gets the map value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf MapCache
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function mapCacheGet(key) {
+  return getMapData(this, key).get(key);
+}
+
+/**
+ * Checks if a map value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf MapCache
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function mapCacheHas(key) {
+  return getMapData(this, key).has(key);
+}
+
+/**
+ * Sets the map `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf MapCache
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the map cache instance.
+ */
+function mapCacheSet(key, value) {
+  getMapData(this, key).set(key, value);
+  return this;
+}
+
+// Add methods to `MapCache`.
+MapCache.prototype.clear = mapCacheClear;
+MapCache.prototype['delete'] = mapCacheDelete;
+MapCache.prototype.get = mapCacheGet;
+MapCache.prototype.has = mapCacheHas;
+MapCache.prototype.set = mapCacheSet;
+
+/**
+ * Creates a stack cache object to store key-value pairs.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function Stack(entries) {
+  this.__data__ = new ListCache(entries);
+}
+
+/**
+ * Removes all key-value entries from the stack.
+ *
+ * @private
+ * @name clear
+ * @memberOf Stack
+ */
+function stackClear() {
+  this.__data__ = new ListCache;
+}
+
+/**
+ * Removes `key` and its value from the stack.
+ *
+ * @private
+ * @name delete
+ * @memberOf Stack
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function stackDelete(key) {
+  return this.__data__['delete'](key);
+}
+
+/**
+ * Gets the stack value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf Stack
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function stackGet(key) {
+  return this.__data__.get(key);
+}
+
+/**
+ * Checks if a stack value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf Stack
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function stackHas(key) {
+  return this.__data__.has(key);
+}
+
+/**
+ * Sets the stack `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf Stack
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the stack cache instance.
+ */
+function stackSet(key, value) {
+  var cache = this.__data__;
+  if (cache instanceof ListCache) {
+    var pairs = cache.__data__;
+    if (!Map || (pairs.length < LARGE_ARRAY_SIZE - 1)) {
+      pairs.push([key, value]);
+      return this;
+    }
+    cache = this.__data__ = new MapCache(pairs);
+  }
+  cache.set(key, value);
+  return this;
+}
+
+// Add methods to `Stack`.
+Stack.prototype.clear = stackClear;
+Stack.prototype['delete'] = stackDelete;
+Stack.prototype.get = stackGet;
+Stack.prototype.has = stackHas;
+Stack.prototype.set = stackSet;
+
+/**
+ * Creates an array of the enumerable property names of the array-like `value`.
+ *
+ * @private
+ * @param {*} value The value to query.
+ * @param {boolean} inherited Specify returning inherited property names.
+ * @returns {Array} Returns the array of property names.
+ */
+function arrayLikeKeys(value, inherited) {
+  // Safari 8.1 makes `arguments.callee` enumerable in strict mode.
+  // Safari 9 makes `arguments.length` enumerable in strict mode.
+  var result = (isArray(value) || isArguments(value))
+    ? baseTimes(value.length, String)
+    : [];
+
+  var length = result.length,
+      skipIndexes = !!length;
+
+  for (var key in value) {
+    if ((inherited || hasOwnProperty.call(value, key)) &&
+        !(skipIndexes && (key == 'length' || isIndex(key, length)))) {
+      result.push(key);
+    }
+  }
+  return result;
+}
+
+/**
+ * Assigns `value` to `key` of `object` if the existing value is not equivalent
+ * using [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+ * for equality comparisons.
+ *
+ * @private
+ * @param {Object} object The object to modify.
+ * @param {string} key The key of the property to assign.
+ * @param {*} value The value to assign.
+ */
+function assignValue(object, key, value) {
+  var objValue = object[key];
+  if (!(hasOwnProperty.call(object, key) && eq(objValue, value)) ||
+      (value === undefined && !(key in object))) {
+    object[key] = value;
+  }
+}
+
+/**
+ * Gets the index at which the `key` is found in `array` of key-value pairs.
+ *
+ * @private
+ * @param {Array} array The array to inspect.
+ * @param {*} key The key to search for.
+ * @returns {number} Returns the index of the matched value, else `-1`.
+ */
+function assocIndexOf(array, key) {
+  var length = array.length;
+  while (length--) {
+    if (eq(array[length][0], key)) {
+      return length;
+    }
+  }
+  return -1;
+}
+
+/**
+ * The base implementation of `_.assign` without support for multiple sources
+ * or `customizer` functions.
+ *
+ * @private
+ * @param {Object} object The destination object.
+ * @param {Object} source The source object.
+ * @returns {Object} Returns `object`.
+ */
+function baseAssign(object, source) {
+  return object && copyObject(source, keys(source), object);
+}
+
+/**
+ * The base implementation of `_.clone` and `_.cloneDeep` which tracks
+ * traversed objects.
+ *
+ * @private
+ * @param {*} value The value to clone.
+ * @param {boolean} [isDeep] Specify a deep clone.
+ * @param {boolean} [isFull] Specify a clone including symbols.
+ * @param {Function} [customizer] The function to customize cloning.
+ * @param {string} [key] The key of `value`.
+ * @param {Object} [object] The parent object of `value`.
+ * @param {Object} [stack] Tracks traversed objects and their clone counterparts.
+ * @returns {*} Returns the cloned value.
+ */
+function baseClone(value, isDeep, isFull, customizer, key, object, stack) {
+  var result;
+  if (customizer) {
+    result = object ? customizer(value, key, object, stack) : customizer(value);
+  }
+  if (result !== undefined) {
+    return result;
+  }
+  if (!isObject(value)) {
+    return value;
+  }
+  var isArr = isArray(value);
+  if (isArr) {
+    result = initCloneArray(value);
+    if (!isDeep) {
+      return copyArray(value, result);
+    }
+  } else {
+    var tag = getTag(value),
+        isFunc = tag == funcTag || tag == genTag;
+
+    if (isBuffer(value)) {
+      return cloneBuffer(value, isDeep);
+    }
+    if (tag == objectTag || tag == argsTag || (isFunc && !object)) {
+      if (isHostObject(value)) {
+        return object ? value : {};
+      }
+      result = initCloneObject(isFunc ? {} : value);
+      if (!isDeep) {
+        return copySymbols(value, baseAssign(result, value));
+      }
+    } else {
+      if (!cloneableTags[tag]) {
+        return object ? value : {};
+      }
+      result = initCloneByTag(value, tag, baseClone, isDeep);
+    }
+  }
+  // Check for circular references and return its corresponding clone.
+  stack || (stack = new Stack);
+  var stacked = stack.get(value);
+  if (stacked) {
+    return stacked;
+  }
+  stack.set(value, result);
+
+  if (!isArr) {
+    var props = isFull ? getAllKeys(value) : keys(value);
+  }
+  arrayEach(props || value, function(subValue, key) {
+    if (props) {
+      key = subValue;
+      subValue = value[key];
+    }
+    // Recursively populate clone (susceptible to call stack limits).
+    assignValue(result, key, baseClone(subValue, isDeep, isFull, customizer, key, value, stack));
+  });
+  return result;
+}
+
+/**
+ * The base implementation of `_.create` without support for assigning
+ * properties to the created object.
+ *
+ * @private
+ * @param {Object} prototype The object to inherit from.
+ * @returns {Object} Returns the new object.
+ */
+function baseCreate(proto) {
+  return isObject(proto) ? objectCreate(proto) : {};
+}
+
+/**
+ * The base implementation of `getAllKeys` and `getAllKeysIn` which uses
+ * `keysFunc` and `symbolsFunc` to get the enumerable property names and
+ * symbols of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {Function} keysFunc The function to get the keys of `object`.
+ * @param {Function} symbolsFunc The function to get the symbols of `object`.
+ * @returns {Array} Returns the array of property names and symbols.
+ */
+function baseGetAllKeys(object, keysFunc, symbolsFunc) {
+  var result = keysFunc(object);
+  return isArray(object) ? result : arrayPush(result, symbolsFunc(object));
+}
+
+/**
+ * The base implementation of `getTag`.
+ *
+ * @private
+ * @param {*} value The value to query.
+ * @returns {string} Returns the `toStringTag`.
+ */
+function baseGetTag(value) {
+  return objectToString.call(value);
+}
+
+/**
+ * The base implementation of `_.isNative` without bad shim checks.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a native function,
+ *  else `false`.
+ */
+function baseIsNative(value) {
+  if (!isObject(value) || isMasked(value)) {
+    return false;
+  }
+  var pattern = (isFunction(value) || isHostObject(value)) ? reIsNative : reIsHostCtor;
+  return pattern.test(toSource(value));
+}
+
+/**
+ * The base implementation of `_.keys` which doesn't treat sparse arrays as dense.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of property names.
+ */
+function baseKeys(object) {
+  if (!isPrototype(object)) {
+    return nativeKeys(object);
+  }
+  var result = [];
+  for (var key in Object(object)) {
+    if (hasOwnProperty.call(object, key) && key != 'constructor') {
+      result.push(key);
+    }
+  }
+  return result;
+}
+
+/**
+ * Creates a clone of  `buffer`.
+ *
+ * @private
+ * @param {Buffer} buffer The buffer to clone.
+ * @param {boolean} [isDeep] Specify a deep clone.
+ * @returns {Buffer} Returns the cloned buffer.
+ */
+function cloneBuffer(buffer, isDeep) {
+  if (isDeep) {
+    return buffer.slice();
+  }
+  var result = new buffer.constructor(buffer.length);
+  buffer.copy(result);
+  return result;
+}
+
+/**
+ * Creates a clone of `arrayBuffer`.
+ *
+ * @private
+ * @param {ArrayBuffer} arrayBuffer The array buffer to clone.
+ * @returns {ArrayBuffer} Returns the cloned array buffer.
+ */
+function cloneArrayBuffer(arrayBuffer) {
+  var result = new arrayBuffer.constructor(arrayBuffer.byteLength);
+  new Uint8Array(result).set(new Uint8Array(arrayBuffer));
+  return result;
+}
+
+/**
+ * Creates a clone of `dataView`.
+ *
+ * @private
+ * @param {Object} dataView The data view to clone.
+ * @param {boolean} [isDeep] Specify a deep clone.
+ * @returns {Object} Returns the cloned data view.
+ */
+function cloneDataView(dataView, isDeep) {
+  var buffer = isDeep ? cloneArrayBuffer(dataView.buffer) : dataView.buffer;
+  return new dataView.constructor(buffer, dataView.byteOffset, dataView.byteLength);
+}
+
+/**
+ * Creates a clone of `map`.
+ *
+ * @private
+ * @param {Object} map The map to clone.
+ * @param {Function} cloneFunc The function to clone values.
+ * @param {boolean} [isDeep] Specify a deep clone.
+ * @returns {Object} Returns the cloned map.
+ */
+function cloneMap(map, isDeep, cloneFunc) {
+  var array = isDeep ? cloneFunc(mapToArray(map), true) : mapToArray(map);
+  return arrayReduce(array, addMapEntry, new map.constructor);
+}
+
+/**
+ * Creates a clone of `regexp`.
+ *
+ * @private
+ * @param {Object} regexp The regexp to clone.
+ * @returns {Object} Returns the cloned regexp.
+ */
+function cloneRegExp(regexp) {
+  var result = new regexp.constructor(regexp.source, reFlags.exec(regexp));
+  result.lastIndex = regexp.lastIndex;
+  return result;
+}
+
+/**
+ * Creates a clone of `set`.
+ *
+ * @private
+ * @param {Object} set The set to clone.
+ * @param {Function} cloneFunc The function to clone values.
+ * @param {boolean} [isDeep] Specify a deep clone.
+ * @returns {Object} Returns the cloned set.
+ */
+function cloneSet(set, isDeep, cloneFunc) {
+  var array = isDeep ? cloneFunc(setToArray(set), true) : setToArray(set);
+  return arrayReduce(array, addSetEntry, new set.constructor);
+}
+
+/**
+ * Creates a clone of the `symbol` object.
+ *
+ * @private
+ * @param {Object} symbol The symbol object to clone.
+ * @returns {Object} Returns the cloned symbol object.
+ */
+function cloneSymbol(symbol) {
+  return symbolValueOf ? Object(symbolValueOf.call(symbol)) : {};
+}
+
+/**
+ * Creates a clone of `typedArray`.
+ *
+ * @private
+ * @param {Object} typedArray The typed array to clone.
+ * @param {boolean} [isDeep] Specify a deep clone.
+ * @returns {Object} Returns the cloned typed array.
+ */
+function cloneTypedArray(typedArray, isDeep) {
+  var buffer = isDeep ? cloneArrayBuffer(typedArray.buffer) : typedArray.buffer;
+  return new typedArray.constructor(buffer, typedArray.byteOffset, typedArray.length);
+}
+
+/**
+ * Copies the values of `source` to `array`.
+ *
+ * @private
+ * @param {Array} source The array to copy values from.
+ * @param {Array} [array=[]] The array to copy values to.
+ * @returns {Array} Returns `array`.
+ */
+function copyArray(source, array) {
+  var index = -1,
+      length = source.length;
+
+  array || (array = Array(length));
+  while (++index < length) {
+    array[index] = source[index];
+  }
+  return array;
+}
+
+/**
+ * Copies properties of `source` to `object`.
+ *
+ * @private
+ * @param {Object} source The object to copy properties from.
+ * @param {Array} props The property identifiers to copy.
+ * @param {Object} [object={}] The object to copy properties to.
+ * @param {Function} [customizer] The function to customize copied values.
+ * @returns {Object} Returns `object`.
+ */
+function copyObject(source, props, object, customizer) {
+  object || (object = {});
+
+  var index = -1,
+      length = props.length;
+
+  while (++index < length) {
+    var key = props[index];
+
+    var newValue = customizer
+      ? customizer(object[key], source[key], key, object, source)
+      : undefined;
+
+    assignValue(object, key, newValue === undefined ? source[key] : newValue);
+  }
+  return object;
+}
+
+/**
+ * Copies own symbol properties of `source` to `object`.
+ *
+ * @private
+ * @param {Object} source The object to copy symbols from.
+ * @param {Object} [object={}] The object to copy symbols to.
+ * @returns {Object} Returns `object`.
+ */
+function copySymbols(source, object) {
+  return copyObject(source, getSymbols(source), object);
+}
+
+/**
+ * Creates an array of own enumerable property names and symbols of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of property names and symbols.
+ */
+function getAllKeys(object) {
+  return baseGetAllKeys(object, keys, getSymbols);
+}
+
+/**
+ * Gets the data for `map`.
+ *
+ * @private
+ * @param {Object} map The map to query.
+ * @param {string} key The reference key.
+ * @returns {*} Returns the map data.
+ */
+function getMapData(map, key) {
+  var data = map.__data__;
+  return isKeyable(key)
+    ? data[typeof key == 'string' ? 'string' : 'hash']
+    : data.map;
+}
+
+/**
+ * Gets the native function at `key` of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {string} key The key of the method to get.
+ * @returns {*} Returns the function if it's native, else `undefined`.
+ */
+function getNative(object, key) {
+  var value = getValue(object, key);
+  return baseIsNative(value) ? value : undefined;
+}
+
+/**
+ * Creates an array of the own enumerable symbol properties of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of symbols.
+ */
+var getSymbols = nativeGetSymbols ? overArg(nativeGetSymbols, Object) : stubArray;
+
+/**
+ * Gets the `toStringTag` of `value`.
+ *
+ * @private
+ * @param {*} value The value to query.
+ * @returns {string} Returns the `toStringTag`.
+ */
+var getTag = baseGetTag;
+
+// Fallback for data views, maps, sets, and weak maps in IE 11,
+// for data views in Edge < 14, and promises in Node.js.
+if ((DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag) ||
+    (Map && getTag(new Map) != mapTag) ||
+    (Promise && getTag(Promise.resolve()) != promiseTag) ||
+    (Set && getTag(new Set) != setTag) ||
+    (WeakMap && getTag(new WeakMap) != weakMapTag)) {
+  getTag = function(value) {
+    var result = objectToString.call(value),
+        Ctor = result == objectTag ? value.constructor : undefined,
+        ctorString = Ctor ? toSource(Ctor) : undefined;
+
+    if (ctorString) {
+      switch (ctorString) {
+        case dataViewCtorString: return dataViewTag;
+        case mapCtorString: return mapTag;
+        case promiseCtorString: return promiseTag;
+        case setCtorString: return setTag;
+        case weakMapCtorString: return weakMapTag;
+      }
+    }
+    return result;
+  };
+}
+
+/**
+ * Initializes an array clone.
+ *
+ * @private
+ * @param {Array} array The array to clone.
+ * @returns {Array} Returns the initialized clone.
+ */
+function initCloneArray(array) {
+  var length = array.length,
+      result = array.constructor(length);
+
+  // Add properties assigned by `RegExp#exec`.
+  if (length && typeof array[0] == 'string' && hasOwnProperty.call(array, 'index')) {
+    result.index = array.index;
+    result.input = array.input;
+  }
+  return result;
+}
+
+/**
+ * Initializes an object clone.
+ *
+ * @private
+ * @param {Object} object The object to clone.
+ * @returns {Object} Returns the initialized clone.
+ */
+function initCloneObject(object) {
+  return (typeof object.constructor == 'function' && !isPrototype(object))
+    ? baseCreate(getPrototype(object))
+    : {};
+}
+
+/**
+ * Initializes an object clone based on its `toStringTag`.
+ *
+ * **Note:** This function only supports cloning values with tags of
+ * `Boolean`, `Date`, `Error`, `Number`, `RegExp`, or `String`.
+ *
+ * @private
+ * @param {Object} object The object to clone.
+ * @param {string} tag The `toStringTag` of the object to clone.
+ * @param {Function} cloneFunc The function to clone values.
+ * @param {boolean} [isDeep] Specify a deep clone.
+ * @returns {Object} Returns the initialized clone.
+ */
+function initCloneByTag(object, tag, cloneFunc, isDeep) {
+  var Ctor = object.constructor;
+  switch (tag) {
+    case arrayBufferTag:
+      return cloneArrayBuffer(object);
+
+    case boolTag:
+    case dateTag:
+      return new Ctor(+object);
+
+    case dataViewTag:
+      return cloneDataView(object, isDeep);
+
+    case float32Tag: case float64Tag:
+    case int8Tag: case int16Tag: case int32Tag:
+    case uint8Tag: case uint8ClampedTag: case uint16Tag: case uint32Tag:
+      return cloneTypedArray(object, isDeep);
+
+    case mapTag:
+      return cloneMap(object, isDeep, cloneFunc);
+
+    case numberTag:
+    case stringTag:
+      return new Ctor(object);
+
+    case regexpTag:
+      return cloneRegExp(object);
+
+    case setTag:
+      return cloneSet(object, isDeep, cloneFunc);
+
+    case symbolTag:
+      return cloneSymbol(object);
+  }
+}
+
+/**
+ * Checks if `value` is a valid array-like index.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @param {number} [length=MAX_SAFE_INTEGER] The upper bounds of a valid index.
+ * @returns {boolean} Returns `true` if `value` is a valid index, else `false`.
+ */
+function isIndex(value, length) {
+  length = length == null ? MAX_SAFE_INTEGER : length;
+  return !!length &&
+    (typeof value == 'number' || reIsUint.test(value)) &&
+    (value > -1 && value % 1 == 0 && value < length);
+}
+
+/**
+ * Checks if `value` is suitable for use as unique object key.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is suitable, else `false`.
+ */
+function isKeyable(value) {
+  var type = typeof value;
+  return (type == 'string' || type == 'number' || type == 'symbol' || type == 'boolean')
+    ? (value !== '__proto__')
+    : (value === null);
+}
+
+/**
+ * Checks if `func` has its source masked.
+ *
+ * @private
+ * @param {Function} func The function to check.
+ * @returns {boolean} Returns `true` if `func` is masked, else `false`.
+ */
+function isMasked(func) {
+  return !!maskSrcKey && (maskSrcKey in func);
+}
+
+/**
+ * Checks if `value` is likely a prototype object.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a prototype, else `false`.
+ */
+function isPrototype(value) {
+  var Ctor = value && value.constructor,
+      proto = (typeof Ctor == 'function' && Ctor.prototype) || objectProto;
+
+  return value === proto;
+}
+
+/**
+ * Converts `func` to its source code.
+ *
+ * @private
+ * @param {Function} func The function to process.
+ * @returns {string} Returns the source code.
+ */
+function toSource(func) {
+  if (func != null) {
+    try {
+      return funcToString.call(func);
+    } catch (e) {}
+    try {
+      return (func + '');
+    } catch (e) {}
+  }
+  return '';
+}
+
+/**
+ * This method is like `_.clone` except that it recursively clones `value`.
+ *
+ * @static
+ * @memberOf _
+ * @since 1.0.0
+ * @category Lang
+ * @param {*} value The value to recursively clone.
+ * @returns {*} Returns the deep cloned value.
+ * @see _.clone
+ * @example
+ *
+ * var objects = [{ 'a': 1 }, { 'b': 2 }];
+ *
+ * var deep = _.cloneDeep(objects);
+ * console.log(deep[0] === objects[0]);
+ * // => false
+ */
+function cloneDeep(value) {
+  return baseClone(value, true, true);
+}
+
+/**
+ * Performs a
+ * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+ * comparison between two values to determine if they are equivalent.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to compare.
+ * @param {*} other The other value to compare.
+ * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+ * @example
+ *
+ * var object = { 'a': 1 };
+ * var other = { 'a': 1 };
+ *
+ * _.eq(object, object);
+ * // => true
+ *
+ * _.eq(object, other);
+ * // => false
+ *
+ * _.eq('a', 'a');
+ * // => true
+ *
+ * _.eq('a', Object('a'));
+ * // => false
+ *
+ * _.eq(NaN, NaN);
+ * // => true
+ */
+function eq(value, other) {
+  return value === other || (value !== value && other !== other);
+}
+
+/**
+ * Checks if `value` is likely an `arguments` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an `arguments` object,
+ *  else `false`.
+ * @example
+ *
+ * _.isArguments(function() { return arguments; }());
+ * // => true
+ *
+ * _.isArguments([1, 2, 3]);
+ * // => false
+ */
+function isArguments(value) {
+  // Safari 8.1 makes `arguments.callee` enumerable in strict mode.
+  return isArrayLikeObject(value) && hasOwnProperty.call(value, 'callee') &&
+    (!propertyIsEnumerable.call(value, 'callee') || objectToString.call(value) == argsTag);
+}
+
+/**
+ * Checks if `value` is classified as an `Array` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an array, else `false`.
+ * @example
+ *
+ * _.isArray([1, 2, 3]);
+ * // => true
+ *
+ * _.isArray(document.body.children);
+ * // => false
+ *
+ * _.isArray('abc');
+ * // => false
+ *
+ * _.isArray(_.noop);
+ * // => false
+ */
+var isArray = Array.isArray;
+
+/**
+ * Checks if `value` is array-like. A value is considered array-like if it's
+ * not a function and has a `value.length` that's an integer greater than or
+ * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
+ * @example
+ *
+ * _.isArrayLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isArrayLike(document.body.children);
+ * // => true
+ *
+ * _.isArrayLike('abc');
+ * // => true
+ *
+ * _.isArrayLike(_.noop);
+ * // => false
+ */
+function isArrayLike(value) {
+  return value != null && isLength(value.length) && !isFunction(value);
+}
+
+/**
+ * This method is like `_.isArrayLike` except that it also checks if `value`
+ * is an object.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an array-like object,
+ *  else `false`.
+ * @example
+ *
+ * _.isArrayLikeObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isArrayLikeObject(document.body.children);
+ * // => true
+ *
+ * _.isArrayLikeObject('abc');
+ * // => false
+ *
+ * _.isArrayLikeObject(_.noop);
+ * // => false
+ */
+function isArrayLikeObject(value) {
+  return isObjectLike(value) && isArrayLike(value);
+}
+
+/**
+ * Checks if `value` is a buffer.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.3.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a buffer, else `false`.
+ * @example
+ *
+ * _.isBuffer(new Buffer(2));
+ * // => true
+ *
+ * _.isBuffer(new Uint8Array(2));
+ * // => false
+ */
+var isBuffer = nativeIsBuffer || stubFalse;
+
+/**
+ * Checks if `value` is classified as a `Function` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a function, else `false`.
+ * @example
+ *
+ * _.isFunction(_);
+ * // => true
+ *
+ * _.isFunction(/abc/);
+ * // => false
+ */
+function isFunction(value) {
+  // The use of `Object#toString` avoids issues with the `typeof` operator
+  // in Safari 8-9 which returns 'object' for typed array and other constructors.
+  var tag = isObject(value) ? objectToString.call(value) : '';
+  return tag == funcTag || tag == genTag;
+}
+
+/**
+ * Checks if `value` is a valid array-like length.
+ *
+ * **Note:** This method is loosely based on
+ * [`ToLength`](http://ecma-international.org/ecma-262/7.0/#sec-tolength).
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
+ * @example
+ *
+ * _.isLength(3);
+ * // => true
+ *
+ * _.isLength(Number.MIN_VALUE);
+ * // => false
+ *
+ * _.isLength(Infinity);
+ * // => false
+ *
+ * _.isLength('3');
+ * // => false
+ */
+function isLength(value) {
+  return typeof value == 'number' &&
+    value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
+}
+
+/**
+ * Checks if `value` is the
+ * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+ * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+ * @example
+ *
+ * _.isObject({});
+ * // => true
+ *
+ * _.isObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isObject(_.noop);
+ * // => true
+ *
+ * _.isObject(null);
+ * // => false
+ */
+function isObject(value) {
+  var type = typeof value;
+  return !!value && (type == 'object' || type == 'function');
+}
+
+/**
+ * Checks if `value` is object-like. A value is object-like if it's not `null`
+ * and has a `typeof` result of "object".
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+ * @example
+ *
+ * _.isObjectLike({});
+ * // => true
+ *
+ * _.isObjectLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isObjectLike(_.noop);
+ * // => false
+ *
+ * _.isObjectLike(null);
+ * // => false
+ */
+function isObjectLike(value) {
+  return !!value && typeof value == 'object';
+}
+
+/**
+ * Creates an array of the own enumerable property names of `object`.
+ *
+ * **Note:** Non-object values are coerced to objects. See the
+ * [ES spec](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
+ * for more details.
+ *
+ * @static
+ * @since 0.1.0
+ * @memberOf _
+ * @category Object
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of property names.
+ * @example
+ *
+ * function Foo() {
+ *   this.a = 1;
+ *   this.b = 2;
+ * }
+ *
+ * Foo.prototype.c = 3;
+ *
+ * _.keys(new Foo);
+ * // => ['a', 'b'] (iteration order is not guaranteed)
+ *
+ * _.keys('hi');
+ * // => ['0', '1']
+ */
+function keys(object) {
+  return isArrayLike(object) ? arrayLikeKeys(object) : baseKeys(object);
+}
+
+/**
+ * This method returns a new empty array.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.13.0
+ * @category Util
+ * @returns {Array} Returns the new empty array.
+ * @example
+ *
+ * var arrays = _.times(2, _.stubArray);
+ *
+ * console.log(arrays);
+ * // => [[], []]
+ *
+ * console.log(arrays[0] === arrays[1]);
+ * // => false
+ */
+function stubArray() {
+  return [];
+}
+
+/**
+ * This method returns `false`.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.13.0
+ * @category Util
+ * @returns {boolean} Returns `false`.
+ * @example
+ *
+ * _.times(2, _.stubFalse);
+ * // => [false, false]
+ */
+function stubFalse() {
+  return false;
+}
+
+module.exports = cloneDeep;
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(13)(module)))
+
+/***/ }),
+/* 50 */,
+/* 51 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+Object.defineProperty(exports, "__esModule", { value: true });
+const baseClient_1 = __webpack_require__(7);
+const Util = __webpack_require__(8);
+const validate_1 = __webpack_require__(6);
+const logger_1 = __webpack_require__(0);
+const constants_1 = __webpack_require__(10);
+/**
+ * @introduction
+ * <h2>Workspace Client</h2>
+ * ----------
+ * The Workspace Client manages all calls to load, save, rename, and delete workspaces.
+ *
+ *
+ * The Workspace Client uses the <code>windowIdentifier</code> parameter. <a href="tutorial-ComponentTypesAndWindowNames.html">Learn more about them here</a>.
+ *
+ *
+ * See the <a href=tutorial-Workspaces.html>Workspace tutorial</a> for an overview of using the Workspace Client.
+ *
+ * @hideConstructor true
+ * @constructor
+ * @summary You don't need to ever invoke the constructor. This is done for you when WindowClient is added to the FSBL object.
+ */
+class WorkspaceClient extends baseClient_1._BaseClient {
+    constructor(params) {
+        super(params);
+        /**
+            * List of all workspaces within the application.
+            * @type {Array.<Object>}
+            */
+        this.workspaces = [];
+        //Backward Compatibility
+        this.setWorkspaces = this.setWorkspaceOrder;
+        /**
+         * @private
+         */
+        this.createNewWorkspace = this.createWorkspace; //Backward Compatibility
+        this.getWorkspaceDefinition = this.export; //Backward Compatibility
+        this.addWorkspaceDefinition = this.import; //Backward Compatibility
+        this.saveWorkspaceTemplateToConfigFile = this.exportToFile;
+        validate_1.default.args(params, "object=") && params && validate_1.default.args2("params.onReady", params.onReady, "function=");
+    }
+    // Helper function to handle response from service
+    _serviceResponseHandler(err, response, resolve, reject, cb = Function.prototype) {
+        if (err) {
+            reject(new Error(err));
+            return cb(err);
+        }
+        if (!response)
+            response = { data: null };
+        resolve(response.data);
+        cb(null, response.data);
+    }
+    /// CORE SAVE API - Currently Private. Eventually these will handle all saves. Workspace will just be a data provider.
+    /**
+     * Saves Data Globally to the Active Workspace (e.g. ComponentState, WindowList etc.)
+     * @param {object} params
+     * @param {string} params.field
+     * @param {object} params.value
+     * @param {FinsembleCallbackFunction} cb
+     */
+    saveGlobalData(params, cb) {
+        logger_1.default.system.debug("WorkspaceClient.saveGlobalData", params);
+        const saveGlobalDataPromiseResolver = (resolve, reject) => {
+            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SAVE_GLOBAL_DATA, params, (err, response) => {
+                this._serviceResponseHandler(err, response, resolve, reject, cb);
+            });
+        };
+        return new Promise(saveGlobalDataPromiseResolver);
+    }
+    /**
+     * Saves View Specific Data (e.g. ComponentState, WindowList etc.) to the Currently Active Workspace View or all Views
+     * When a window state changes, on
+     * @param {object} params
+     * @param {string} params.field
+     * @param {object} params.value
+     * @param {boolean} params.saveToAllViews
+     * @param {FinsembleCallbackFunction} cb
+     */
+    saveViewData(params, cb) {
+        logger_1.default.system.debug("WorkspaceClient.saveViewData", params);
+        const saveViewDataPromiseResolver = (resolve, reject) => {
+            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SAVE_VIEW_DATA, params, (err, response) => {
+                this._serviceResponseHandler(err, response, resolve, reject, cb);
+            });
+        };
+        return new Promise(saveViewDataPromiseResolver);
+    }
+    // This is unnecessary. Window Service should call SaveGlobalData, saveViewData
+    /**
+     * Adds window to active workspace.
+     * @private
+     * @param {object} params
+     * @param {string} params.name Window name
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     */
+    addWindow(params, cb = Function.prototype) {
+        validate_1.default.args(params, "object", cb, "function=") && params && validate_1.default.args2("params.name", params.name, "string");
+        this.routerClient.query("WorkspaceService.addWindow", params, (err, response) => {
+            logger_1.default.system.log(`WORKSPACE LIFECYCLE: Window added:WorkspaceClient.addWindow: Name (${params.name})`);
+            cb(err, response);
+        });
+    }
+    /**
+     * Removes window from active workspace.
+     * @private
+     * @param {object} params
+     * @param {string} params.name Window name
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example <caption>This method removes a window from a workspace. It is rarely called by the developer. It is called when a window that is using the window manager is closed. That way, the next time the app is loaded, that window is not spawned.</caption>
+     * FSBL.Clients.WorkspaceClient.removeWindow({ name:windowName }, function(err, response) {
+     * 	//do something after removing the window.
+     * });
+     */
+    removeWindow(params, cb = Function.prototype) {
+        validate_1.default.args(params, "object", cb, "function=") && validate_1.default.args2("params.name", params.name, "string");
+        this.routerClient.query("WorkspaceService.removeWindow", params, (err, response) => {
+            if (err) {
+                return logger_1.default.system.error(err);
+            }
+            logger_1.default.system.log(`WORKSPACE LIFECYCLE:WorkspaceClient.removeWindow:Window removed: Name (${params.name})`);
+            if (response) {
+                cb(err, response.data);
+            }
+            else {
+                cb(err, null);
+            }
+        });
+    }
+    // Window Related Workspace Functions. Eventually these need to move to the Window Service
+    /**
+     * Auto arranges all windows on the user's screen.
+     * @param {object} params Parameters
+     * });
+     * @param {string} params.monitor Same options as <a href="LauncherClient.html#showWindow">LauncherClient.showWindow</a>. Default is monitor of calling window.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example
+     * FSBL.Clients.WorkspaceClient.autoArrange(function(err, response) {
+     * 		//do something after the auto-arrange, maybe make all of the windows flash or notify the user that their monitor is now tidy.
+     * });
+     */
+    autoArrange(params, cb = Function.prototype) {
+        validate_1.default.args(params, "object", cb, "function=");
+        params = params ? params : {};
+        Util.getMyWindowIdentifier((myWindowIdentifier) => {
+            FSBL.Clients.LauncherClient.getMonitorInfo({
+                windowIdentifier: myWindowIdentifier
+            }, (err, dimensions) => {
+                params.monitorDimensions = dimensions.unclaimedRect;
+                params.monitorDimensions.name = dimensions.name;
+                this.routerClient.query("DockingService.autoArrange", params, cb);
+            });
+        });
+    }
+    /**
+     * Minimizes all windows.
+     * @param {object} params
+     * @param {string} 	[params.monitor="all"] Same options as <a href="LauncherClient.html#showWindow">LauncherClient.showWindow</a> except that "all" will work for all monitors. Defaults to all.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example
+     * FSBL.Clients.WorkspaceClient.bringWindowsToFront();
+     */
+    minimizeAll(params, cb = Function.prototype) {
+        validate_1.default.args(params, "object", cb, "function=");
+        params = params ? params : { monitor: "all" };
+        Util.getMyWindowIdentifier((myWindowIdentifier) => {
+            if (!params.windowIdentifier) {
+                params.windowIdentifier = myWindowIdentifier;
+            }
+            this.routerClient.query("WorkspaceService.minimizeAll", params, cb);
+        });
+    }
+    /**
+     * Brings all windows to the front.
+     * @param {object} params
+     * @param {string} 	params.monitor Same options as <a href="LauncherClient.html#showWindow">LauncherClient.showWindow</a> except that "all" will work for all monitors. Defaults to the monitor for the current window.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example
+     * FSBL.Clients.WorkspaceClient.bringWindowsToFront();
+     */
+    bringWindowsToFront(params, cb = Function.prototype) {
+        validate_1.default.args(params, "object", cb, "function=");
+        params = params ? params : { monitor: "all" };
+        Util.getMyWindowIdentifier((myWindowIdentifier) => {
+            if (!params.windowIdentifier) {
+                params.windowIdentifier = myWindowIdentifier;
+            }
+            this.routerClient.query("WorkspaceService.bringWindowsToFront", params, cb);
+        });
+    }
+    /**
+     * Gets the currently active workspace.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example <caption>This function is useful for setting the initial state of a menu or dialog. It is used in the toolbar component to set the initial state.</caption>
+     *
+     * FSBL.Clients.WorkspaceClient.getActiveWorkspace((err, response) => {
+     * 	// do something with the response.
+     * });
+     */
+    async getActiveWorkspace(cb) {
+        logger_1.default.system.debug("WorkspaceClient.getActiveWorkspace");
+        const result = (await this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.GET_ACTIVE_WORKSPACE, {})).response;
+        this.activeWorkspace = result.data;
+        if (result.data.err) {
+            if (cb)
+                cb(result.data.err);
+            throw new Error(result.data.err);
+        }
+        if (cb)
+            cb(null, result);
+        return result;
+    }
+    /**
+     * Returns the list of saved workspaces.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example <caption>This function is useful for setting the initial state of a menu or dialog.</caption>
+     *
+     * FSBL.Clients.WorkspaceClient.getActiveWorkspace((err, response) => {
+     * 	//setState is a React component method.
+     * 	self.setState({
+     * 		workspaces: response
+     * 	});
+     * });
+     */
+    getWorkspaces(cb) {
+        validate_1.default.args(cb, "function=");
+        logger_1.default.system.debug("WorkspaceClient.getWorkspaces");
+        const getWorkspacesPromiseResolver = (resolve, reject) => {
+            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.GET_WORKSPACES, {}, (err, response) => {
+                this._serviceResponseHandler(err, response, resolve, reject, cb);
+            });
+        };
+        return new Promise(getWorkspacesPromiseResolver);
+    }
+    /**
+     * @private
+     *
+     * @param {*} params
+     * @param {*} cb
+     * @returns
+     * @memberof WorkspaceClient
+     */
+    setWorkspaceOrder(params, cb) {
+        let { workspaces } = params;
+        validate_1.default.args(cb, "function");
+        logger_1.default.system.debug("WorkspaceClient.setWorkspaceOrder", params);
+        const setWorkspaceOrderPromiseResolver = (resolve, reject) => {
+            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SET_WORKSPACE_ORDER, params.workspaces || params, (err, response) => {
+                this._serviceResponseHandler(err, response, resolve, reject, cb);
+            });
+        };
+        return new Promise(setWorkspaceOrderPromiseResolver);
+    }
+    /**
+     * Removes a workspace. Either the workspace object or its name must be provided.
+     * @param {object} params
+     * @param {Object} 	params.workspace Workspace
+     * @param {string} 	params.workspace.name Workspace Name
+     * @param {string} 	params.name Workspace Name
+     * @param {function} cb Callback to fire after 'Finsemble.WorkspaceService.update' is transmitted.
+     * @example <caption>This function removes 'My Workspace' from the main menu and the default storage tied to the application.</caption>
+     * FSBL.Clients.WorkspaceClient.remove({
+     * 	name: 'My Workspace'
+     * }, function(err, response) {
+     * 	//You typically won't do anything here. If you'd like to do something when a workspace change happens, we suggest listening on the `Finsemble.WorkspaceService.update` channel.
+     * });
+     */
+    remove(params, cb = Function.prototype) {
+        validate_1.default.args(params, "object", cb, "function=") && !(params.name || params.workspace) && validate_1.default.args2("params.name", params.name, "string");
+        logger_1.default.system.debug("WorkspaceClient.remove", params);
+        const removePromiseResolver = (resolve, reject) => {
+            if (!params.name) {
+                params.name = params.workspace.name;
+                // we dont need to send workspace objects over the router if not needed.
+                delete params.workspace;
+            }
+            // Cannot remove active workspace.
+            if (params.name === this.activeWorkspace.name) {
+                logger_1.default.system.error("APPLICATION LIFECYCLE:  Cannot remove active workspace: WorkspaceClient.remove:attempt to remove active workspace name:" + this.activeWorkspace.name);
+                let err = "Cannot remove active workspace";
+                return this._serviceResponseHandler(err, null, resolve, reject, cb);
+            }
+            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.REMOVE, params, (err, response) => {
+                this._serviceResponseHandler(err, response, resolve, reject, cb);
+            });
+        };
+        return new Promise(removePromiseResolver);
+    }
+    /**
+     * Renames the workspace with the provided name. Also removes all references in storage to the old workspace's name.
+     * @param {object} params
+     * @param {string} params.oldName Name of workspace to rename.
+     * @param {string} params.newName What to rename the workspace to.
+     * @param {boolean} params.removeOldWorkspace Whether to remove references to old workspace after renaming.
+     * @param {boolean} params.overwriteExisting Whether to overwrite an existing workspace.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example <caption>This method is used to rename workspaces. It is used in the main Menu component.</caption>
+     * FSBL.Clients.WorkspaceClient.rename({
+     * 	oldName: 'My Workspace',
+     * 	newName: 'The best workspace',
+     * 	removeOldWorkspace: true,
+     * }, function(err, response) {
+     * 	//Do something.
+     * });
+     */
+    rename(params, cb = Function.prototype) {
+        validate_1.default.args(params, "object", cb, "function=") && validate_1.default.args2("params.oldName", params.oldName, "string", "params.newName", params.newName, "string");
+        logger_1.default.system.debug("WorkspaceClient.rename", params);
+        const renamePromiseResolver = (resolve, reject) => {
+            if (!params.overwriteExisting && this.workspaceExists(params.newName)) {
+                let err = "Workspace Already Exists";
+                return this._serviceResponseHandler(err, null, resolve, reject, cb);
+            }
+            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.RENAME, params, (err, response) => {
+                this._serviceResponseHandler(err, response, resolve, reject, cb);
+            });
+        };
+        return new Promise(renamePromiseResolver);
+    }
+    /**
+     * Makes a clone (i.e. copy) of the workspace.  The active workspace is not affected.
+     * @private
+     * @param {object} params
+     * @param {string} params.name Name of workspace to clone.
+     * @param {string} params.newName Name of workspace to clone.
+     * @param {function} cb cb(err,response) with response set to the name of the cloned workspace if no error
+     * @example <caption>This method is used to clone workspaces. </caption>
+     * FSBL.Clients.WorkspaceClient.clone({
+     * 	name: 'The best workspace'
+     * }, function(err, response) {
+     * 	//Do something.
+     * });
+     */
+    // Keeping for backward compatibility
+    clone(params, cb = Function.prototype) {
+        validate_1.default.args(params, "object", cb, "function=") && validate_1.default.args2("params.name", params.name, "string");
+        delete params.name;
+        if (!params.newName) {
+            params.newName = params.name + "_clone";
+        }
+        params.removeOldWorkspace = false;
+        return this.rename({
+            removeOldWorkspace: false,
+            newName: params.newName,
+            oldName: params.name
+        }, cb);
+    }
+    ;
+    /**
+     * Saves the currently saved workspace. Changes to the <code>activeWorkspace</code> are made on every change automatically.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example <caption>This function persists the currently active workspace.</caption>
+     * FSBL.Clients.WorkspaceClient.save(function(err, response) {
+     * 	//Do something.
+     * });
+     */
+    save(cb = Function.prototype) {
+        logger_1.default.system.debug("WorkspaceClient.save");
+        const savePromiseResolver = (resolve, reject) => {
+            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SAVE, {}, (err, response) => {
+                this._serviceResponseHandler(err, response, resolve, reject, cb);
+            });
+        };
+        return new Promise(savePromiseResolver);
+    }
+    /**
+     * Helper that tells us whether a workspace with this name exists.
+     * @private
+     */
+    workspaceExists(workspaceName) {
+        validate_1.default.args(workspaceName, "string");
+        for (var i = 0; i < this.workspaces.length; i++) {
+            if (workspaceName === this.workspaces[i].name) {
+                return true;
+            }
+        }
+        return false;
+    }
+    /**
+     *
+     * Saves the currently active workspace with the provided name.
+     * @param {object} params
+     * @param {string} params.name The new name you want to save the workspace under.
+     * @param {string} params.force Whether to overwrite a workspace already saved with the provided name.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example <caption>This function persists the currently active workspace with the provided name.</caption>
+     * FSBL.Clients.WorkspaceClient.saveAs({
+     * 	name: 'My Workspace',
+     * }, function(err, response) {
+     * 	//Do something.
+     * });
+     */
+    saveAs(params, cb = Function.prototype) {
+        validate_1.default.args(params, "object", cb, "function=") && validate_1.default.args2("params.name", params.name, "string");
+        logger_1.default.system.debug("WorkspaceClient.saveAs", params);
+        const saveAsPromiseResolver = (resolve, reject) => {
+            if (!params.force && this.workspaceExists(params.name)) {
+                return this._serviceResponseHandler("Workspace Already Exists", null, resolve, reject, cb);
+            }
+            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SAVE_AS, params, (err, response) => {
+                this._serviceResponseHandler(err, response, resolve, reject, cb);
+            });
+        };
+        return new Promise(saveAsPromiseResolver);
+    }
+    /**
+     * Switches to a workspace.
+     * @param {object} params
+     * @param {string} 	params.name The name of the workspace you want to switch to.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example <caption>This function loads the workspace 'My Workspace' from the storage tied to the application.</caption>
+     * FSBL.Clients.WorkspaceClient.switchTo({
+     * 	name: 'My Workspace',
+     * }, function(err, response) {
+     * 	//Do something.
+     * });
+     */
+    async switchTo(params, cb = Function.prototype) {
+        validate_1.default.args(params, "object", cb, "function") && validate_1.default.args2("params.name", params.name, "string");
+        logger_1.default.system.debug("WorkspaceClient.switchTo", params);
+        const result = await this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SWITCH_TO, params);
+        if (result.err) {
+            cb(result.err, null);
+            throw new Error(result.err);
+        }
+        cb(result);
+        return result;
+    }
+    /**
+     * @private
+     * ALPHA - Subject to breaking change in coming minor releases.
+     * Sets the stored state of a given window in the active workspace. `state` may include
+     * keys for `windowData`, `componentState`, or both; the state of each key will be completely
+     * overwritten by the provided state. If the update results in dirtying change, the active
+     * workspace will be marked dirty (or, if autosave is on, persisted directly to storage).
+     */
+    async _setWindowState(params) {
+        logger_1.default.system.debug("WorkspaceClient.setWindowData", params);
+        return this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SET_WINDOW_STATE, params);
+    }
+    /**
+     * @private
+     * ALPHA - Subject to breaking change in coming minor releases.
+     * Retrieves the given window from storage, retrieving the requested state variables
+     * (`"componentState"` and/or `"windowData"`).
+     */
+    async _getWindowState(params) {
+        logger_1.default.system.debug("WorkspaceClient.getWindowData", params);
+        return this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.GET_WINDOW_STATE, params);
+    }
+    /**
+     * Checks to see if the workspace is dirty, i.e., if its state has been changed since the last save. If it's already dirty, the window doesn't need to compare its state to the saved state.
+     *
+     * @param {Function} cb <code>cb(err,response)</code> with response set to true if dirty and false otherwise (when no error).
+     *
+     * @example <caption>This function will let you know if the <code>activeWorkspace</code> is dirty.</caption>
+     * FSBL.Clients.WorkspaceClient.isWorkspaceDirty(function(err, response) {
+     * 		//Do something like prompt the user if they'd like to save the currently loaded workspace before switching.
+     * });
+     */
+    isWorkspaceDirty(cb) {
+        validate_1.default.args(cb, "function");
+        logger_1.default.system.debug("WorkspaceClient.isWorkspaceDirty");
+        const isWorkspaceDirtyPromiseResolver = (resolve, reject) => {
+            this._serviceResponseHandler(null, { data: this.activeWorkspace.isDirty }, resolve, reject, cb);
+        };
+        return new Promise(isWorkspaceDirtyPromiseResolver);
+    }
+    /**
+     * Creates a new workspace, returning a promise for the final name of
+     * the new workspace as a string. After creation, if "switchAfterCreation" is true,
+     * the new workspace becomes the active workspace.
+     *
+     * If the requested name already exists, a new workspace will be created
+     * with the form "[name] (1)" (or "[name] (2)", etc.)
+     *
+     * @param {String} workspaceName Name for new workspace.
+     * @param {Object} params Optional params
+     * @param {boolean} params.switchAfterCreation Whether to switch to the new workspace after creating it.
+     * @param {Function} cb <code>cb(err,response)</code> With response, set to new workspace object if no error.
+     * @example <caption>This function creates the workspace 'My Workspace'.</caption>
+     * FSBL.Clients.WorkspaceClient.createWorkspace(function(err, response) {
+     *		if (!err) {}
+     *			//Do something like notify the user that the workspace has been created.
+     *		}
+     * });
+     */
+    async createWorkspace(workspaceName, params, cb = (err, result) => { }) {
+        logger_1.default.system.log(`WorkspaceClient: Creating Workspace Request for name "${workspaceName}"`);
+        const finalName = (await this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.NEW_WORKSPACE, { workspaceName })).response.data;
+        if (params.switchAfterCreation !== false) {
+            await this.switchTo({ name: finalName });
+        }
+        const result = { workspaceName: finalName };
+        cb(null, result);
+        return result;
+    }
+    /**
+     * Gets a workspace definition in JSON form.
+     *
+     * @param {object} params
+     * @param {string} params.workspaceName The name of the workspace you want to export.
+     * @param {function} cb <code>callback(error, workspaceDefinition)</code>
+     * @example <caption>FSBL.Clients.WorkspaceClient.export({'workspaceName:': 'linker'}, function(err, worskpaceDefinition) {
+     *
+     * //do something with the workspace definition
+     * })'; </caption>
+     */
+    export(params, cb) {
+        validate_1.default.args(params, "object", cb, "function") && validate_1.default.args2("params.workspaceName", params.workspaceName, "string");
+        logger_1.default.system.debug("WorkspaceClient.export", params);
+        const exportPromiseResolver = (resolve, reject) => {
+            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.EXPORT, params, (err, response) => {
+                let workspaceExport = {};
+                workspaceExport[params.workspaceName] = response.data;
+                this._serviceResponseHandler(err, { data: workspaceExport }, resolve, reject, cb);
+            });
+        };
+        return new Promise(exportPromiseResolver);
+    }
+    /**
+     * Adds a workspace definition to the list of available workspaces.
+     *
+     * @param {object} params
+     * @param {object} params.workspaceJSONDefinition JSON for workspace definition
+     * @param {boolean} params.force Whether to overwrite any workspace of the same name that already exists
+     * @param {function=} cb <code>cb(err)</code> where the operation was successful if !err; otherwise, err carries diagnostics
+     *
+     */
+    async import(params, cb) {
+        validate_1.default.args(params, "object", cb, "function=") && validate_1.default.args2("params.workspaceJSONDefinition", params.workspaceJSONDefinition, "object");
+        logger_1.default.system.debug("WorkspaceClient.import", params);
+        const result = (await this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.IMPORT, params)).response.data;
+        if (result && result.err) {
+            cb(result.err);
+            throw new Error(result.err);
+        }
+        if (cb)
+            cb(null, result);
+        return result;
+    }
+    /**
+     * Saves one mor more template defintions in a selected file. Note the
+     * end user is prompted to identify file location during this save
+     * operation. The file can optionally be imported during config
+     * initialization (see importConfig) although this requires administration
+     * support on the configuration/server side. The file can also be read
+     * using readWorkspaceTemplateFromConfigFile();
+     *
+     * @param {object} params
+     * @param {object} params.workspaceTemplateDefinition legal template definition returned by either
+     * getWorkspaceTemplateDefinition() or convertWorkspaceDefinitionToTemplate()
+     * @private
+     */
+    exportToFile(params) {
+        // TODO: Make it possible to export both workspaces and templates.
+        logger_1.default.system.info("workspaceClient.saveWorkspaceTemplateToConfigFile", params);
+        validate_1.default.args(params, "object") && validate_1.default.args2("params.workspaceTemplateDefinition", params.workspaceTemplateDefinition, "object");
+        var workspaceTemplateDefinition = params.workspaceTemplateDefinition;
+        if (typeof workspaceTemplateDefinition === "object") {
+            var templateName = Object.keys(workspaceTemplateDefinition)[0];
+            if (templateName && workspaceTemplateDefinition[templateName].templateDefinitionFlag) { // confirm the object is a template definition
+                var exportConfig = { workspaceTemplates: workspaceTemplateDefinition };
+                FSBL.ConfigUtils.promptAndSaveJSONToLocalFile("workspaceConfig-" + templateName, exportConfig);
+            }
+            else {
+                logger_1.default.system.error("workspaceClient.saveWorkspaceTemplateToConfigFile. Input is not a legal template");
+            }
+        }
+        else {
+            logger_1.default.system.error("workspaceClient.saveWorkspaceTemplateToConfigFile: Input is not a legal object");
+        }
+    }
+    /**
+     * Initializes listeners and sets default data on the WorkspaceClient object.
+     * @private
+     */
+    async start(cb) {
+        /**
+         * Initializes the workspace's state.
+         */
+        this.routerClient.subscribe("Finsemble.WorkspaceService.update", (err, response) => {
+            logger_1.default.system.debug("workspaceClient init subscribe response", err, response);
+            if (err) {
+                logger_1.default.system.error(err);
+                return;
+            }
+            this.activeWorkspace = response.data.activeWorkspace;
+            this.workspaces = response.data.workspaces;
+            if (cb) {
+                cb();
+            }
+        });
+    }
+}
+var workspaceClient = new WorkspaceClient({
+    startupDependencies: {
+        services: ["workspaceService"],
+        clients: []
+    },
+    onReady: (cb) => {
+        workspaceClient.start(cb);
+    },
+    name: "workspaceClient"
+});
+exports.default = workspaceClient;
+
+
+/***/ }),
+/* 52 */,
 /* 53 */,
 /* 54 */,
 /* 55 */,
@@ -42147,7 +42526,8 @@ exports.default = workspaceClient;
 /* 85 */,
 /* 86 */,
 /* 87 */,
-/* 88 */
+/* 88 */,
+/* 89 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -42162,12 +42542,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_async___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_async__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_configClient__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_configClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__clients_configClient__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__clients_launcherClient__ = __webpack_require__(40);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__clients_launcherClient__ = __webpack_require__(41);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__clients_launcherClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5__clients_launcherClient__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_monitorsAndScaling__ = __webpack_require__(25);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_configUtil__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_monitorsAndScaling__ = __webpack_require__(26);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_configUtil__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__common_userNotification__ = __webpack_require__(20);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__common_window_FinsembleWindow__ = __webpack_require__(34);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__common_window_FinsembleWindow__ = __webpack_require__(35);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__common_window_FinsembleWindow___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9__common_window_FinsembleWindow__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10__clients_logger__);
@@ -42176,15 +42556,20 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__common_system__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_12__common_system__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__common_util__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__assimilationWindowManager__ = __webpack_require__(154);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__helper__ = __webpack_require__(155);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__AssimilationSocketConnection__ = __webpack_require__(151);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14_lodash_get__ = __webpack_require__(24);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14_lodash_get___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_14_lodash_get__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__assimilationWindowManager__ = __webpack_require__(155);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__helper__ = __webpack_require__(156);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_17__AssimilationSocketConnection__ = __webpack_require__(152);
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 /*!
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 *
 * Configs are set in finsemble.servicesConfig.assimilation
 */
+
 
 
 
@@ -42269,8 +42654,6 @@ class AssimilationService extends __WEBPACK_IMPORTED_MODULE_1__baseService__["Ba
 			});
 		});
 
-		__WEBPACK_IMPORTED_MODULE_13__common_util__["Monitors"].on("monitors-changed", () => this.ws && this.ws.getMonitorInfo());
-
 		this.start();
 	}
 
@@ -42289,11 +42672,45 @@ class AssimilationService extends __WEBPACK_IMPORTED_MODULE_1__baseService__["Ba
   * Setup our listeners within the service
   */
 	createRouterEndpoints() {
+		//Requests updated window bounds from assimilation
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addListener("Assimilation.getWinBounds", (err, message) => {
+			const msg = {
+				"ref": message.data.ref,
+				"topic": "getBounds",
+				"uuid": message.data.uuid
+			};
+			this.assimilationWindowManager.sendSocketMessage(JSON.stringify(msg));
+		});
+		//sends updated monitor info
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addResponder("Assimilation.setMonitorInfo", (err, message) => {
+			let errorObject;
+			if (this.ws) {
+				try {
+					this.ws.setMonitorInfo(message.data);
+				} catch (error) {
+					errorObject = {
+						code: "assimilation_setMonitorInfo_failed",
+						errorMessage: error.message
+					};
+				}
+			} else {
+				errorObject = {
+					code: "assimilation_missing_socket_connection",
+					errorMessage: "Assimilation socket connection does not exist, cannot set Monitor Info"
+				};
+			}
+			if (errorObject) {
+				message.sendQueryResponse(errorObject, null);
+			} else {
+				message.sendQueryResponse(null, null);
+			}
+		});
 		//set a window to top
 		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addResponder("Assimilation.alwaysOnTop", (err, message) => {
 			this.assimilationWindowManager.alwaysOnTop(message);
 			message.sendQueryResponse(null, null);
 		});
+
 		//move a window
 		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addResponder("Assimilation.moveWindow", (err, message) => {
 			this.assimilationWindowManager.moveWindow(message.data, this.ws);
@@ -42334,10 +42751,6 @@ class AssimilationService extends __WEBPACK_IMPORTED_MODULE_1__baseService__["Ba
 		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addResponder("Assimilation.closeWindow", (err, message) => {
 			this.assimilationWindowManager.closeWindow(message);
 		});
-		//handle shutdown here.
-		/*RouterClient.addListener("LauncherService.shutdownRequest", (err, message) => {
-  	this.assimilationWindowManager.closeAllWindows();
-  });*/
 		/**
   	 *
   	 * This is for java. Java will send us a handle and then we'll try to hook it and add it to our active windows.
@@ -42366,17 +42779,7 @@ class AssimilationService extends __WEBPACK_IMPORTED_MODULE_1__baseService__["Ba
    *
    */
 		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addResponder("Assimilation.spawnNative", (err, message) => {
-			let params = message.data;
-
-			if (message.data.isWPF || params.customData && params.customData.window && Boolean(params.customData.window.argumentsAsQueryString)) {
-				params = Object.assign(params, this.getArgumentsWPF(message));
-				// spawnDefaultViewer causes assimilation to use shell exec instead of createProcess so that it can auto execute the system viewer for a specific filetype (e.g. a URL or JAR)
-				params.spawnDefaultViewer = true;
-			}
-
-			this.constructPath(params);
-
-			this.spawnAsset(params, function () {
+			this.spawnAsset(this.constructNativeWindowParams(message), function () {
 				message.sendQueryResponse(err, true);
 			});
 		});
@@ -42417,6 +42820,44 @@ class AssimilationService extends __WEBPACK_IMPORTED_MODULE_1__baseService__["Ba
 				}
 			}
 		});
+	}
+
+	/**
+  * Returns boolean indicating whether the title bar should be hidden for native apps.
+  * @private
+  * @param {boolean} isWPF indicates whether the app should be treated as a WPF component
+  * @param {object} params the parameters used to spawn the component
+  */
+	shouldHideTitleBar(isWPF, params) {
+		//always hide the title bar of WPF components
+		if (isWPF) {
+			return true;
+		}
+		//if this component has a custom config value for hiding the title bar, use that
+		//otherwise, return the global config value
+		return __WEBPACK_IMPORTED_MODULE_14_lodash_get___default()(params, "customData.foreign.services.assimilationService.hideTitleBar", this.assimilationHelper.manifest.hideTitleBars);
+	}
+
+	/**
+  * Constructs all of the parameters necessary for creation of a native window.
+  * @private
+  * @param {*} message the message received requesting the creation of a native window
+  */
+	constructNativeWindowParams(message) {
+		let params = message.data;
+		const isWPF = params.isWPF || __WEBPACK_IMPORTED_MODULE_14_lodash_get___default()(params, "customData.window.argumentsAsQueryString");
+
+		params.hideTitleBar = this.shouldHideTitleBar(isWPF, params);
+
+		if (isWPF) {
+			params = _extends({ params }, this.getArgumentsWPF(message));
+			// spawnDefaultViewer causes assimilation to use shell exec instead of createProcess so
+			// that it can auto execute the system viewer for a specific filetype (e.g. a URL or JAR)
+			params.spawnDefaultViewer = true;
+		}
+
+		this.constructPath(params);
+		return params;
 	}
 
 	getArgumentsWPF(message) {
@@ -42465,9 +42906,6 @@ class AssimilationService extends __WEBPACK_IMPORTED_MODULE_1__baseService__["Ba
 			params.path = params.customData.window.path;
 			params.alias = params.customData.window.alias;
 		}
-
-		params.noFloatingTitle = true;
-		params.hideTitleBar = true;
 
 		this.configCache[params.name] = params;
 		return params;
@@ -42544,8 +42982,8 @@ class AssimilationService extends __WEBPACK_IMPORTED_MODULE_1__baseService__["Ba
 				}
 				self.assimilationManifest = Object.assign(defaultAssimilation, servicesConfigAssimilation || betaAssimilation);
 				self.appAssets = fullManifest.appAssets;
-				self.assimilationHelper = new __WEBPACK_IMPORTED_MODULE_15__helper__["a" /* default */]({ appAssets: fullManifest.appAssets, manifest: self.assimilationManifest });
-				self.assimilationWindowManager = new __WEBPACK_IMPORTED_MODULE_14__assimilationWindowManager__["a" /* default */](self.assimilationHelper);
+				self.assimilationHelper = new __WEBPACK_IMPORTED_MODULE_16__helper__["a" /* default */]({ appAssets: fullManifest.appAssets, manifest: self.assimilationManifest });
+				self.assimilationWindowManager = new __WEBPACK_IMPORTED_MODULE_15__assimilationWindowManager__["a" /* default */](self.assimilationHelper);
 				return done(err);
 			});
 		}], function (err) {
@@ -42587,12 +43025,9 @@ class AssimilationService extends __WEBPACK_IMPORTED_MODULE_1__baseService__["Ba
 				notify("assimilationService-bad-version", "This version of Finsemble requires assimilation version >= 3.6.0. Check your manifest.");
 				return cb();
 			}
-			// tell the window manager about tabs
-			let windowManagerConfig = self.fullManifest.finsemble["Window Manager"];
-			this.assimilationWindowManager.setShowTabs(windowManagerConfig ? windowManagerConfig.showTabs && windowManagerConfig.showNativeTabs : false);
-			this.assimilationWindowManager.setFloatingTitlebar(windowManagerConfig && windowManagerConfig.floatingTitlebarComponent ? windowManagerConfig.floatingTitlebarComponent : "floatingTitlebar");
 
-			// Not sure what this is.
+			this.assimilationWindowManager.setFloatingTitlebar(__WEBPACK_IMPORTED_MODULE_14_lodash_get___default()(self.fullManifest, "finsemble.Window Manager.floatingTitlebarComponent", "floatingTitlebar"));
+
 			__WEBPACK_IMPORTED_MODULE_11__clients_distributedStoreClient___default.a.createStore({
 				store: "Finsemble-Windows",
 				global: true
@@ -42624,7 +43059,7 @@ class AssimilationService extends __WEBPACK_IMPORTED_MODULE_1__baseService__["Ba
 		if (this.assimilationManifest.port) {
 			this.port = this.assimilationManifest.port;
 		}
-		this.ws = new __WEBPACK_IMPORTED_MODULE_16__AssimilationSocketConnection__["a" /* default */](this.assimilationManifest, this.assimilationWindowManager);
+		this.ws = new __WEBPACK_IMPORTED_MODULE_17__AssimilationSocketConnection__["a" /* default */](this.assimilationManifest, this.assimilationWindowManager);
 		this.ws.connect(this.onSocketConnected.bind(this));
 	}
 
@@ -42681,7 +43116,6 @@ window.AssimilationService = serviceInstance;
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 89 */,
 /* 90 */,
 /* 91 */,
 /* 92 */,
@@ -42743,24 +43177,25 @@ window.AssimilationService = serviceInstance;
 /* 148 */,
 /* 149 */,
 /* 150 */,
-/* 151 */
+/* 151 */,
+/* 152 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__SocketConnection__ = __webpack_require__(152);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__SocketConnection__ = __webpack_require__(153);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_launcherClient__ = __webpack_require__(40);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_launcherClient__ = __webpack_require__(41);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_launcherClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_launcherClient__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_system__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__common_system__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_uuid_v4__ = __webpack_require__(35);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_uuid_v4__ = __webpack_require__(36);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_uuid_v4___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_uuid_v4__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_constants__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_constants__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_constants___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6__common_constants__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_lodash_get__ = __webpack_require__(28);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_lodash_get__ = __webpack_require__(24);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_lodash_get___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_lodash_get__);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
@@ -42816,9 +43251,43 @@ class AssimilationSocketConnection extends __WEBPACK_IMPORTED_MODULE_0__SocketCo
 		this.addListener("socketClosed", this.onSocketClosed.bind(this));
 		this.addListener("socketOpen", this.onSocketOpened.bind(this));
 		this.addListener("closeWindow", this.onCloseWindow.bind(this)); // Assimilation responses the action done
+		this.addListener("getBounds", this.onGetBoundsReturned.bind(this));
+		this.addListener("hookWindow", this.onWindowHooked.bind(this));
 	}
+
 	/**
-  *onNewApp is called once an application has been spawned. THis allows us to link the window handle with the information from the launcher service
+  * Responds to request for bounds from the system
+  * @param {*} msg 
+  */
+	onGetBoundsReturned(msg) {
+		__WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.verbose("APPLICATION LIFECYCLE:Assimilation:onGetBoundsReturned", msg.ref, msg);
+		__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.transmit(`${msg.ref}-Assimilation.boundsUpdate`, msg);
+	}
+
+	/**
+  * onWindowHooked is called once an application is successfully hooked with assimilation
+  * If the window requires setting alwaysOnTop, this will take care of making that call
+  *
+  * @param {*} msg
+  * @memberof AssimilationSocketConnection
+  */
+	onWindowHooked(msg) {
+		const win = this.assimilationWindowManager.getWindowByUUID(msg.uuid);
+
+		// If the window is found and alwaysOnTop is true, we need to call to assimilation
+		// to make sure that state is honored
+		if (win && win.descriptor && win.descriptor.alwaysOnTop) {
+			this.assimilationWindowManager.alwaysOnTop({
+				data: {
+					alwaysonTop: win.descriptor.alwaysOnTop,
+					key: msg.uuid
+				}
+			});
+		}
+	}
+
+	/**
+  *onNewApp is called once an application has been spawned. This allows us to link the window handle with the information from the launcher service
   *
   * @param {*} msg
   * @returns
@@ -42961,7 +43430,7 @@ class AssimilationSocketConnection extends __WEBPACK_IMPORTED_MODULE_0__SocketCo
    * get out of sync. To prevent that, assimilation sends every
    * focus event here, which forwards it to the window service
    * to handle correctly.
-     * 
+     *
      * 6/25/2019 - messageData might not include the name FSBL has,
      * so we prefer `win.name` if it's there. This speaks to a larger
      * issue where Finsemble isn't aware of a window's handle, leading
@@ -43298,6 +43767,18 @@ class AssimilationSocketConnection extends __WEBPACK_IMPORTED_MODULE_0__SocketCo
 			}));
 		});
 	}
+	/**
+ *Send the updated monitor info to assimilation. We use this to calculate scaling.
+ *
+ * @memberof AssimilationSocketConnection
+ */
+	setMonitorInfo(monitorInfo) {
+		__WEBPACK_IMPORTED_MODULE_4__clients_logger___default.a.system.debug("APPLICATION LIFECYCLE:Assimilation:setMonitorInfo");
+		this.send(JSON.stringify({ //Send our monitor info so we can move applications out of the claimed space.
+			topic: "monitorInfo",
+			data: monitorInfo
+		}));
+	}
 }
 /* harmony export (immutable) */ __webpack_exports__["a"] = AssimilationSocketConnection;
 
@@ -43306,7 +43787,7 @@ class AssimilationSocketConnection extends __WEBPACK_IMPORTED_MODULE_0__SocketCo
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 152 */
+/* 153 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -43403,7 +43884,7 @@ class SocketConnection extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitte
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 153 */
+/* 154 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -43625,25 +44106,25 @@ class AssimilationMovingWindow {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 154 */
+/* 155 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_uuid_v4__ = __webpack_require__(35);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_uuid_v4__ = __webpack_require__(36);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_uuid_v4___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_uuid_v4__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_launcherClient__ = __webpack_require__(40);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_launcherClient__ = __webpack_require__(41);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_launcherClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_launcherClient__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__clients_workspaceClient__ = __webpack_require__(50);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__clients_workspaceClient__ = __webpack_require__(51);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__clients_workspaceClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__clients_workspaceClient__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_lodash__ = __webpack_require__(52);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_lodash__ = __webpack_require__(34);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_lodash___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_lodash__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__common_window_FinsembleWindow__ = __webpack_require__(34);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__common_window_FinsembleWindow__ = __webpack_require__(35);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__common_window_FinsembleWindow___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5__common_window_FinsembleWindow__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_system__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6__common_system__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__assimilationMovingWindow__ = __webpack_require__(153);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__assimilationMovingWindow__ = __webpack_require__(154);
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 
@@ -43669,7 +44150,6 @@ class AssimilationWindowManager {
 		this.awaitingAssimilationSpawn = {}; //This is a list of windows
 		this.awaitingOpenFinSpawn = {}; //This is a list of windows
 		this.allWindows = {}; //This is a list of all windows on the system (OS level). These may not be hooked.
-		this.showTabs = false;
 		this.movingWindow = null;
 		this.floatingTitlebar = null;
 		this.updateActiveWindowHeartbeats();
@@ -43783,7 +44263,7 @@ class AssimilationWindowManager {
 		};
 		return __WEBPACK_IMPORTED_MODULE_5__common_window_FinsembleWindow__["FinsembleWindow"].getInstance(identifier, (() => {
 			var _ref = _asyncToGenerator(function* (err, windowWrap) {
-				windowWrap.hideTitleBar = true;
+				windowWrap.descriptor.hideTitleBar = true;
 				windowWrap.uuid = parseInt(windowResponse.windowHandle, 10).toString(16);
 				_this.activeWindows[windowWrap.uuid] = windowWrap;
 				let bounds = yield windowWrap.getBounds();
@@ -43805,44 +44285,33 @@ class AssimilationWindowManager {
   * @memberof AssimilationWindowManager
   */
 	handleSpawnComplete(windowObject, bounds) {
-		// Users can opt a window out of participating in Fsbl's window management by setting this field to false
-		// (however, we to default to true). In that case, we can just exit early.
-		if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_4_lodash__["get"])(windowObject, "descriptor.customData.foreign.services.windowService.manageWindowMovement", true)) {
-			return;
-		}
-
 		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("Assimilation.AssimilationWindowManager.handleSpawnComplete:", windowObject, bounds);
 
 		if (!windowObject) return __WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("no window reference found");
 
-		if (bounds) {
-			// bounds are null for windowLess components
-			var canHook = this.assimilationHelper.canHookWindow(windowObject);
-			if (!canHook) {
-				// If we're not hooking this window return
-				return;
-			}
-			//Set bounds call can occur before the window is ready
-			windowObject.location = bounds;
+		// Users can opt a window out of participating in Fsbl's window management by setting this field to false
+		// (however, we to default to true).
+		const manageWindowMovement = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_4_lodash__["get"])(windowObject, "descriptor.customData.foreign.services.windowService.manageWindowMovement", true);
 
-			//Any router calls regarding updated window should only happen once the window is ready
-			windowObject.onReady(() => {
-				/**
-     * JC 7/22/19 - Assimilated windows now come up hidden, once the window is hooked
-     * show is called. Windows OS can't find a windows shadow when a window is hidden
-     * which causes gaps in windows that were saved auto-arranged. This is solved
-     * by setting the bounds after showing the window.
-     */
-				windowObject.show();
+		if (bounds && manageWindowMovement) {
+			// bounds are null for windowLess components
+			const canHook = this.assimilationHelper.canHookWindow(windowObject);
+			if (canHook) {
+				//Set bounds call can occur before the window is ready
+				windowObject.location = bounds;
 				windowObject.setBounds({ bounds });
 
-				/**
-     * DH 5/1/2019 We're not sure what this line does.
-     * @TODO Test, and document or remove.
-     */
-				RouterClient.transmit(windowObject.name + ".endMovement");
-			});
+				//Any router calls regarding updated window should only happen once the window is ready
+				windowObject.onReady(() => {
+					/**
+      * DH 5/1/2019 We're not sure what this line does.
+      * @TODO Test, and document or remove.
+      */
+					RouterClient.transmit(windowObject.name + ".endMovement");
+				});
+			}
 		}
+
 		this.registerWindow(windowObject, windowObject, this);
 	}
 	/**
@@ -44021,6 +44490,7 @@ class AssimilationWindowManager {
 
 		if (win.windowLess) {
 			RouterClient.transmit(`Finsemble.Assimilation.close.${win.windowName}`, {});
+			win.queryResponder = message.sendQueryResponse;
 			/** DH 5/17/2019
     * To our knowledge, this is only ever called when the workspace closes.
     * Therefore, it's safe to pass in false for `removeFromWorkspace`
@@ -44111,6 +44581,12 @@ class AssimilationWindowManager {
 			this.showWindow(message);
 		}
 
+		// 'bringToFront' is just an action that toggles alwaysOnTop on then off again. If the window
+		// is already alwaysOnTop, there is no need to do anything (we also don't want to toggle it off)
+		if (win.descriptor.alwaysOnTop) {
+			return;
+		}
+
 		this.sendSocketMessage(this.assimilationHelper.prepareAction({
 			topic: "bringToFront",
 			uuid: message.data.key,
@@ -44170,12 +44646,23 @@ class AssimilationWindowManager {
   * @memberof AssimilationWindowManager
   */
 	alwaysOnTop(message) {
+		let currentWindow;
+
+		if (message.data.name && !message.data.key) {
+			currentWindow = this.getWindowByName(message.data.name);
+		} else {
+			currentWindow = this.getWindowByUUID(message.data.key);
+		}
+
 		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("Assimilation.AssimilationWindowManager.alwaysOnTop:", message);
 		this.sendSocketMessage(this.assimilationHelper.prepareAction({
 			topic: "alwaysOnTop",
-			uuid: message.data.key,
+			uuid: message.data.key || currentWindow.uuid,
 			alwaysOnTop: message.data.alwaysonTop
 		}));
+		if (currentWindow.descriptor && currentWindow.descriptor.alwaysOnTop !== message.data.alwaysonTop) {
+			currentWindow.updateOptions({ alwaysOnTop: message.data.alwaysonTop }, Function.prototype);
+		}
 	}
 
 	/**
@@ -44274,15 +44761,12 @@ class AssimilationWindowManager {
 		//When the wrap is available in the launcher, register the window with docking.
 		let wrapReadyChannel = "Finsemble." + windowObject.windowName + ".wrapReady";
 		let wrapReadyCallback = (err, response) => {
-			if (windowMsg.location) {
-				// This registers the window with docking.
-				windowObject.initializeWindow(identifier, function () {});
-			}
+			windowObject.initializeWindow({ identifier, manageWindowMovement: Boolean(windowMsg.location) });
 			if (!(response.data && response.data.name === identifier.name)) return;
 			if (response.data.state === "closed") return;
 			if (windowObject.descriptor.isWPF) {
 				RouterClient.transmit(windowMsg.name + ".onSpawned", identifier);
-			} else if (this.getShowTabs() && !windowObject.hideTitleBar && fin.container !== "Electron") {
+			} else if (!windowObject.descriptor.hideTitleBar && fin.container !== "Electron") {
 				__WEBPACK_IMPORTED_MODULE_2__clients_launcherClient___default.a.spawn(this.getFloatingTitlebar(), {
 					options: {
 						autoShow: false
@@ -44391,26 +44875,6 @@ class AssimilationWindowManager {
 	}
 
 	/**
-  *Set the show tabs flag
-  *
-  * @param {*} val
-  * @memberof AssimilationWindowManager
-  */
-	setShowTabs(val) {
-		this.showTabs = val;
-	}
-
-	/**
-  *get the show tabs flag
-  *
-  * @returns
-  * @memberof AssimilationWindowManager
-  */
-	getShowTabs() {
-		return this.showTabs;
-	}
-
-	/**
   *set the floating header component.@todo this should be in the launcher
   *
   * @param {*} val
@@ -44460,6 +44924,7 @@ class AssimilationWindowManager {
 			path: windowObject.descriptor.generatedPath || windowObject.descriptor.path, // This is the full path to the application
 			arguments: windowObject.descriptor.generatedArguments || windowObject.descriptor.arguments, // This is command line arguments of the application
 			autoShow: windowObject.descriptor.hasOwnProperty("autoShow") ? windowObject.descriptor.autoShow : true, //Should we show this window automatically?
+			alwaysOnTop: windowObject.descriptor.hasOwnProperty("alwaysOnTop") ? windowObject.descriptor.alwaysOnTop : false,
 			spawnDefaultViewer: windowObject.descriptor.hasOwnProperty("spawnDefaultViewer") ? windowObject.descriptor.spawnDefaultViewer : false,
 			ref: ref, //A reference number so that this can come back and be referenced in other calls
 			spawnUUID: ref, //@todo remove this
@@ -44580,11 +45045,11 @@ class AssimilationWindowManager {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 155 */
+/* 156 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_uuid_v4__ = __webpack_require__(35);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_uuid_v4__ = __webpack_require__(36);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_uuid_v4___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_uuid_v4__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
@@ -44762,7 +45227,6 @@ class AssimilationHelper {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 156 */,
 /* 157 */,
 /* 158 */,
 /* 159 */,
@@ -44783,10 +45247,11 @@ class AssimilationHelper {
 /* 174 */,
 /* 175 */,
 /* 176 */,
-/* 177 */
+/* 177 */,
+/* 178 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(88);
+module.exports = __webpack_require__(89);
 
 
 /***/ })

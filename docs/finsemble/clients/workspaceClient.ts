@@ -18,7 +18,13 @@ import { StateType, CompleteWindowState } from "../common/windowStorageManager";
  * @introduction
  * <h2>Workspace Client</h2>
  * ----------
- * The Workspace Client manages all calls to load, save, rename, and delete workspaces. For an overview, please read the [Workspace tutorial](tutorial-Workspaces.html).
+ * The Workspace Client manages all calls to load, save, rename, and delete workspaces.
+ *
+ *
+ * The Workspace Client uses the <code>windowIdentifier</code> parameter. <a href="tutorial-ComponentTypesAndWindowNames.html">Learn more about them here</a>.
+ *
+ *
+ * See the <a href=tutorial-Workspaces.html>Workspace tutorial</a> for an overview of using the Workspace Client.
  *
  * @hideConstructor true
  * @constructor
@@ -96,7 +102,7 @@ class WorkspaceClient extends _BaseClient {
 	 * @private
 	 * @param {object} params
 	 * @param {string} params.name Window name
-	 * @param {function} cb Callback
+	 * @param {function} cb The callback to be invoked after the method completes successfully.
 	 */
 	addWindow(params: FinsembleWindowData, cb = Function.prototype) {
 		Validate.args(params, "object", cb, "function=") && params && (Validate.args2 as any)("params.name", params.name, "string");
@@ -111,9 +117,9 @@ class WorkspaceClient extends _BaseClient {
 	 * @private
 	 * @param {object} params
 	 * @param {string} params.name Window name
-	 * @param {function} cb Callback
+	 * @param {function} cb The callback to be invoked after the method completes successfully.
 	 * @example <caption>This method removes a window from a workspace. It is rarely called by the developer. It is called when a window that is using the window manager is closed. That way, the next time the app is loaded, that window is not spawned.</caption>
-	 * FSBL.Clients.WorkspaceClient.removeWindow({name:windowName}, function(err, response){
+	 * FSBL.Clients.WorkspaceClient.removeWindow({ name:windowName }, function(err, response) {
 	 * 	//do something after removing the window.
 	 * });
 	 */
@@ -137,12 +143,13 @@ class WorkspaceClient extends _BaseClient {
 
 	// Window Related Workspace Functions. Eventually these need to move to the Window Service
 	/**
-	 * AutoArranges windows.
+	 * Auto arranges all windows on the user's screen.
 	 * @param {object} params Parameters
-	 * @param {string} params.monitor Same options as {@link LauncherClient#showWindow}. Default is monitor of calling window.
-	 * @param {function} cb Callback
+	 * });
+	 * @param {string} params.monitor Same options as <a href="LauncherClient.html#showWindow">LauncherClient.showWindow</a>. Default is monitor of calling window.
+	 * @param {function} cb The callback to be invoked after the method completes successfully.
 	 * @example
-	 * FSBL.Clients.WorkspaceClient.autoArrange(function(err, response){
+	 * FSBL.Clients.WorkspaceClient.autoArrange(function(err, response) {
 	 * 		//do something after the auto-arrange, maybe make all of the windows flash or notify the user that their monitor is now tidy.
 	 * });
 	 */
@@ -166,8 +173,8 @@ class WorkspaceClient extends _BaseClient {
 	/**
 	 * Minimizes all windows.
 	 * @param {object} params
-	 * @param {string} 	[params.monitor="all"] Same options as {@link LauncherClient#showWindow} except that "all" will work for all monitors. Defaults to all.
-	 * @param {function} cb Callback.
+	 * @param {string} 	[params.monitor="all"] Same options as <a href="LauncherClient.html#showWindow">LauncherClient.showWindow</a> except that "all" will work for all monitors. Defaults to all.
+	 * @param {function} cb The callback to be invoked after the method completes successfully.
 	 * @example
 	 * FSBL.Clients.WorkspaceClient.bringWindowsToFront();
 	 */
@@ -188,8 +195,8 @@ class WorkspaceClient extends _BaseClient {
 	/**
 	 * Brings all windows to the front.
 	 * @param {object} params
-	 * @param {string} 	params.monitor Same options as {@link LauncherClient#showWindow} except that "all" will work for all monitors. Defaults to the monitor for the current window.
-	 * @param {function} cb Callback.
+	 * @param {string} 	params.monitor Same options as <a href="LauncherClient.html#showWindow">LauncherClient.showWindow</a> except that "all" will work for all monitors. Defaults to the monitor for the current window.
+	 * @param {function} cb The callback to be invoked after the method completes successfully.
 	 * @example
 	 * FSBL.Clients.WorkspaceClient.bringWindowsToFront();
 	 */
@@ -209,14 +216,11 @@ class WorkspaceClient extends _BaseClient {
 
 	/**
 	 * Gets the currently active workspace.
-	 * @param {function} cb Callback
+	 * @param {function} cb The callback to be invoked after the method completes successfully.
 	 * @example <caption>This function is useful for setting the initial state of a menu or dialog. It is used in the toolbar component to set the initial state.</caption>
 	 *
 	 * FSBL.Clients.WorkspaceClient.getActiveWorkspace((err, response) => {
-	 * 	//setState is a React component method.
-	 * 	self.setState({
-	 * 		workspaces: response
-	 * 	});
+	 * 	// do something with the response.
 	 * });
 	 */
 	async getActiveWorkspace(cb?: StandardCallback): Promise<{ data: Workspace }> {
@@ -234,7 +238,7 @@ class WorkspaceClient extends _BaseClient {
 
 	/**
 	 * Returns the list of saved workspaces.
-	 * @param {function} cb Callback
+	 * @param {function} cb The callback to be invoked after the method completes successfully.
 	 * @example <caption>This function is useful for setting the initial state of a menu or dialog.</caption>
 	 *
 	 * FSBL.Clients.WorkspaceClient.getActiveWorkspace((err, response) => {
@@ -281,6 +285,7 @@ class WorkspaceClient extends _BaseClient {
 	 * Removes a workspace. Either the workspace object or its name must be provided.
 	 * @param {object} params
 	 * @param {Object} 	params.workspace Workspace
+	 * @param {string} 	params.workspace.name Workspace Name
 	 * @param {string} 	params.name Workspace Name
 	 * @param {function} cb Callback to fire after 'Finsemble.WorkspaceService.update' is transmitted.
 	 * @example <caption>This function removes 'My Workspace' from the main menu and the default storage tied to the application.</caption>
@@ -322,13 +327,13 @@ class WorkspaceClient extends _BaseClient {
 	 * @param {string} params.newName What to rename the workspace to.
 	 * @param {boolean} params.removeOldWorkspace Whether to remove references to old workspace after renaming.
 	 * @param {boolean} params.overwriteExisting Whether to overwrite an existing workspace.
-	 * @param {function} cb Callback
+	 * @param {function} cb The callback to be invoked after the method completes successfully.
 	 * @example <caption>This method is used to rename workspaces. It is used in the main Menu component.</caption>
 	 * FSBL.Clients.WorkspaceClient.rename({
 	 * 	oldName: 'My Workspace',
 	 * 	newName: 'The best workspace',
 	 * 	removeOldWorkspace: true,
-	 * }, function(err, response){
+	 * }, function(err, response) {
 	 * 	//Do something.
 	 * });
 	 */
@@ -363,7 +368,7 @@ class WorkspaceClient extends _BaseClient {
 	 * @example <caption>This method is used to clone workspaces. </caption>
 	 * FSBL.Clients.WorkspaceClient.clone({
 	 * 	name: 'The best workspace'
-	 * }, function(err, response){
+	 * }, function(err, response) {
 	 * 	//Do something.
 	 * });
 	 */
@@ -386,9 +391,9 @@ class WorkspaceClient extends _BaseClient {
 
 	/**
 	 * Saves the currently saved workspace. Changes to the <code>activeWorkspace</code> are made on every change automatically.
-	 * @param {function} cb Callback
+	 * @param {function} cb The callback to be invoked after the method completes successfully.
 	 * @example <caption>This function persists the currently active workspace.</caption>
-	 * FSBL.Clients.WorkspaceClient.save(function(err, response){
+	 * FSBL.Clients.WorkspaceClient.save(function(err, response) {
 	 * 	//Do something.
 	 * });
 	 */
@@ -420,13 +425,13 @@ class WorkspaceClient extends _BaseClient {
 	 *
 	 * Saves the currently active workspace with the provided name.
 	 * @param {object} params
-	 * @param {string} params.name new name to save workspace under.
+	 * @param {string} params.name The new name you want to save the workspace under.
 	 * @param {string} params.force Whether to overwrite a workspace already saved with the provided name.
-	 * @param {function} cb Callback
+	 * @param {function} cb The callback to be invoked after the method completes successfully.
 	 * @example <caption>This function persists the currently active workspace with the provided name.</caption>
 	 * FSBL.Clients.WorkspaceClient.saveAs({
 	 * 	name: 'My Workspace',
-	 * }, function(err, response){
+	 * }, function(err, response) {
 	 * 	//Do something.
 	 * });
 	 */
@@ -450,12 +455,12 @@ class WorkspaceClient extends _BaseClient {
 	/**
 	 * Switches to a workspace.
 	 * @param {object} params
-	 * @param {string} 	params.name Workspace Name
-	 * @param {function} cb Callback
+	 * @param {string} 	params.name The name of the workspace you want to switch to.
+	 * @param {function} cb The callback to be invoked after the method completes successfully.
 	 * @example <caption>This function loads the workspace 'My Workspace' from the storage tied to the application.</caption>
 	 * FSBL.Clients.WorkspaceClient.switchTo({
 	 * 	name: 'My Workspace',
-	 * }, function(err, response){
+	 * }, function(err, response) {
 	 * 	//Do something.
 	 * });
 	 */
@@ -498,10 +503,12 @@ class WorkspaceClient extends _BaseClient {
 	}
 
 	/**
-	 * Checks to see if the workspace is dirty. If it's already dirty, the window doesn't need to compare its state to the saved state.
-	 * @param {Function} Callback cb(err,response) with response set to true if dirty and false otherwise (when no error)
-	 * @example <caption>This function will let you know if the activeWorkspace is dirty.</caption>
-	 * FSBL.Clients.WorkspaceClient.isWorkspaceDirty(function(err, response){
+	 * Checks to see if the workspace is dirty, i.e., if its state has been changed since the last save. If it's already dirty, the window doesn't need to compare its state to the saved state.
+	 *
+	 * @param {Function} cb <code>cb(err,response)</code> with response set to true if dirty and false otherwise (when no error).
+	 *
+	 * @example <caption>This function will let you know if the <code>activeWorkspace</code> is dirty.</caption>
+	 * FSBL.Clients.WorkspaceClient.isWorkspaceDirty(function(err, response) {
 	 * 		//Do something like prompt the user if they'd like to save the currently loaded workspace before switching.
 	 * });
 	 */
@@ -525,9 +532,9 @@ class WorkspaceClient extends _BaseClient {
 	 * @param {String} workspaceName Name for new workspace.
 	 * @param {Object} params Optional params
 	 * @param {boolean} params.switchAfterCreation Whether to switch to the new workspace after creating it.
-	 * @param {Function} cb cb(err,response) With response, set to new workspace object if no error.
+	 * @param {Function} cb <code>cb(err,response)</code> With response, set to new workspace object if no error.
 	 * @example <caption>This function creates the workspace 'My Workspace'.</caption>
-	 * FSBL.Clients.WorkspaceClient.createWorkspace(function(err, response){
+	 * FSBL.Clients.WorkspaceClient.createWorkspace(function(err, response) {
 	 *		if (!err) {}
 	 *			//Do something like notify the user that the workspace has been created.
 	 *		}
@@ -557,8 +564,12 @@ class WorkspaceClient extends _BaseClient {
 	 * Gets a workspace definition in JSON form.
 	 *
 	 * @param {object} params
-	 * @param {string} params.workspaceName the workspace name
-	 * @param {function} cb callback(error,workspaceDefinition)
+	 * @param {string} params.workspaceName The name of the workspace you want to export.
+	 * @param {function} cb <code>callback(error, workspaceDefinition)</code>
+	 * @example <caption>FSBL.Clients.WorkspaceClient.export({'workspaceName:': 'linker'}, function(err, worskpaceDefinition) {
+	 *
+	 * //do something with the workspace definition
+	 * })'; </caption>
 	 */
 	export(params: {
 		workspaceName: string
@@ -581,7 +592,8 @@ class WorkspaceClient extends _BaseClient {
 	 *
 	 * @param {object} params
 	 * @param {object} params.workspaceJSONDefinition JSON for workspace definition
-	 * @param {function=} cb cb(err) where the operation was successful if !err; otherwise, err carries diagnostics
+	 * @param {boolean} params.force Whether to overwrite any workspace of the same name that already exists
+	 * @param {function=} cb <code>cb(err)</code> where the operation was successful if !err; otherwise, err carries diagnostics
 	 *
 	 */
 	async import(params: {
@@ -591,7 +603,7 @@ class WorkspaceClient extends _BaseClient {
 		Validate.args(params, "object", cb, "function=") && (Validate.args2 as any)("params.workspaceJSONDefinition", params.workspaceJSONDefinition, "object");
 		Logger.system.debug("WorkspaceClient.import", params);
 		const result: Record<string, string> = (await this.routerClient.query(WORKSPACE.API_CHANNELS.IMPORT, params)).response.data;
-		if (result.err) {
+		if (result && result.err) {
 			cb(result.err);
 			throw new Error(result.err)
 		}

@@ -184,7 +184,7 @@ export class FinsembleWindow {
 					RouterClient.publish(constants.EVENT_INTERRUPT_CHANNEL + "." + handlerStoredData.guid, { delayed: false, canceled: false });
 					await this.queryWindowService("removeEventListener", { eventName: eventName, guid: handlerStoredData.guid });
 					this.eventlistenerHandlerMap[eventName].splice(i, 1);
-					resolve();
+					return resolve();
 				}
 			}
 			resolve();
@@ -609,9 +609,9 @@ export class FinsembleWindow {
 			this.wrapState = state;
 			// 5/1/19: JoeC. Eventmanager wasn't throwing ready event, so all ready listeners would never fire
 			if (this.wrapState === "ready") {
-				this.eventManager.trigger('ready');
+				this.eventManager.emit('ready');
 			}
-			this.eventManager.trigger("wrap-state-changed", {
+			this.eventManager.emit("wrap-state-changed", {
 				state
 			});
 		}
@@ -782,13 +782,25 @@ export class FinsembleWindow {
 	 *
 	 * @memberof FSBLWindow
 	 */
-	initializeWindow(params, cb) {
-		this.registerWithDocking(params, () => {
+	initializeWindow({ manageWindowMovement, identifer }, cb = Function.prototype) {
+		const publishComponentReady = () => {
 			RouterClient.publish("Finsemble." + this.windowName + ".componentReady", { // signal workspace and launcher service that component is ready
 				name: this.windowName
 			});
-		});
+			cb();
+		};
+		/** DH 12/13/2019 - While windows can opt out of grouping, etc. by setting
+		 * manageWindowMovement to false, we still need to perform the right initialization
+		 * handshake so Finsemble is aware of the window. Otherwise, Finsemble won't perform spawn
+		 * callbacks and the workspace won't close correctly.
+		*/
+		if (manageWindowMovement) {
+			this.registerWithDocking(identifer, publishComponentReady);
+		} else {
+			publishComponentReady();
+		}
 	}
+
 	wrapReady() {
 		RouterClient.publish("Finsemble." + this.windowName + ".wrapReady", { name: this.windowName, state: "open" });
 	}

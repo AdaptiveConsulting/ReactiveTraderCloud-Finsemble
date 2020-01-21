@@ -100,7 +100,7 @@ type WindowTypes =
 	"OpenFinWindow" | "openfin"
 	| "NativeWindow" | "assimilation" | "assimilated"
 	| "native" | "FinsembleNativeWindow"
-	| "application" | "OpenFinApplication";
+	| "application" | "OpenFinApplication" | "StackedWindow";
 
 /** The parameters passed to Launcher.Spawn.
  *
@@ -118,17 +118,17 @@ export type SpawnParams = {
 	 */
 	alias?: string;
 	/**
-	 * Set a process affinity flag. This allows windows to grouped together under a single process (a.k.a. Application). This flag is only available when running on Electron via e2o.
+	 * Set a process affinity flag. This allows windows to grouped together under a single process (a.k.a. Application). This flag is only available when your container is Electron.
 	 */
 	affinity?: string;
 
 	/**
 	 * Used when windowType is "native" or "assimilation". Specifies the arguments to be sent to the application. This is used in conjunction with path.
-	 * Arguments should be separated by spaces: `--arg1 foo --arg2 bar` _except_ when `params.argumentsAsQueryString` is true, in which case set this parameter to be single string in URI format: `arg=1&arg=2`"
+	 * Arguments should be separated by spaces: `--arg1 foo --arg2 bar` except when `params.argumentsAsQueryString` is true, in which case set this parameter to be single string in URI format: `arg=1&arg=2`"
 	 */
 	arguments?: any;
 	/**
-	 * For native applications launched by URI: 1) the string is passed as the "arguments" parameter if appended as a query string; and 2) the automatically generated arguments described in "path" above are appended to the query string
+	 * For native applications launched by URI: 1) the string is passed as the "arguments" parameter if appended as a query string; and 2) the automatically generated arguments described in "path" are appended to the query string
 	 */
 	argumentsAsQueryString?: boolean;
 	/**
@@ -165,15 +165,15 @@ export type SpawnParams = {
 	dockedHeight?: number;
 	/**
 	 * Indicates that this window is ephemeral.
-	 * An ephemeral window is a dialog, menu or other window that is temporarily displayed but usually hidden.
+	 * An ephemeral window is a dialog, menu, or other window that is temporarily displayed but usually hidden.
 	 * Ephemeral windows automatically have the following settings assigned: resizable: false, showTaskbarIcon: false, alwaysOnTop: true.
-	 * *Note, use `options:{autoShow: false}` to prevent an ephemeral widow from showing automatically.*
+	 * <b>Note</b>: Use `options:{autoShow: false}` to prevent an ephemeral widow from showing automatically.
 	 *
 	 */
 	ephemeral?: boolean;
 
 	/**
-	 * If true will attempt to make the window no have parts outside the monitor boundary.
+	 * If true, will attempt to make the window have no edges outside the monitor boundary.
 	 */
 	forceOntoMonitor?: boolean;
 	/**
@@ -183,10 +183,14 @@ export type SpawnParams = {
 	groupOnSpawn?: boolean;
 	/**
 	 * Which monitor to place the new window.
-	 * **"mine"** - Place the window on the same monitor as the calling window.
-	 * A numeric value of monitor (where primary is zero).
-	 * **"primary"**,**"next"** and **"previous"** indicate a specific monitor.
-	 * **"all"** - Put a copy of the component on all monitors
+	 *
+	 * <b>"mine"</b> - Place the window on the same monitor as the calling window.
+	 *
+	 * Integer value from 0-n (0 being the primary monitor).
+	 *
+	 * <b>"primary"</b> indicates the user's primary monitor.
+	 *
+	 * <b>"all"</b> - Put a copy of the component on all monitors.
 	 *
 	 */
 	monitor?: number | "mine" | "primary" | "next" | "previous" | "all";
@@ -205,11 +209,11 @@ export type SpawnParams = {
 	options?: any;
 	/**
 	 * Used when windowType is "native" or "assimilation". Specifies the path to the application. The path can be:
-	 * The name of an exe that is on the system path (i.e. notepad.exe).
-	 * The full path to an executable on the user's machine (i.e. C:\Program Files\app.exe)
-	 * A system installed uri (i.e. myuri://myapp).
+	 * The name of an exe that is on the system path (e.g., <i>notepad.exe</i>).
+	 * The full path to an executable on the user's machine (e.g., <i>C:\Program Files\app.exe</i>).
+	 * A system installed URI (e.g., <i>myuri://myapp</i>).
 	 *
-	 * When windowType is "native" then additional arguments will be automatically appended to the path or the uri. These arguments can be captured by the native application
+	 * When windowType is "native" then additional arguments will be automatically appended to the path or the URI. These arguments can be captured by the native application
 	 * in order to tie it to Finsemble's window tracking. When building an application with finsemble.dll, this is handled automatically. Those arguments are:
 	 *
 	 * **uuid** - A generated UUID that uniquely identifies this window.
@@ -237,7 +241,7 @@ export type SpawnParams = {
 	/**
 	 * Defines a "viewport" for the spawn, with one of the following values:
 	 *
-	 * **"unclaimed"** (the default) Positioned based on the monitor space excluding space "claimed" by other components (such as toolbars).
+	 * <b>"unclaimed"</b> (the default) Positioned based on the monitor space excluding space "claimed" by other components (such as toolbars).
 	 * For instance, `top:0` will place the new component directly below the toolbar.
 	 *
 	 * **"available"** Positioned according to the coordinates available on the monitor itself, less space claimed by the operating system (such as the windows toolbar).
@@ -269,11 +273,11 @@ export type SpawnParams = {
 	/**
 	 * Optional. Describes which type of component to spawn.
 	 *
-	 * **openfin** - A normal HTML window.
+	 * <b>openfin</b> - A normal HTML window.
 	 *
 	 * **assimilation** - A window that is managed by the Finsemble assimilation process (usually a native window without source code access). Requires "path" to be specified, which may be the name of an executable on the system path, a system file path or system installed URI.
 	 *
-	 * **native** - A native window that has implemented finsemble.dll. Requires "path" to be specified. For more information(tutorial-RPCService.html).
+	 * **native** - A native window that has implemented finsemble.dll. Requires "path" to be specified.
 	 *
 	 * **application** - A standalone application. This launch a component in its own browser process (splintered, giving it dedicated CPU and memory).
 	 * This can also point to a standalone web application (such as from a third party).
@@ -306,32 +310,37 @@ export type SpawnParams = {
 	launchingWindow?: any;
 	/**
 	 * Optional data to pass to the opening window.
-	 * If set, then the spawned window can use {@link WindowClient#getSpawnData} to retrieve the data.
+	 * If set, then the spawned window can use <a href="WindowClient.html#getSpawnData">WindowClient#getSpawnData</a> to retrieve the data.
 	 */
 	data?: any,
 	/**
 	 * A pixel value representing the distance from the left edge of the viewport as defined by "position".
 	 * A percentage value may also be used, representing the percentage distance from the left edge of the viewport relative to the viewport's width.
 	 *
-	 * **"adjacent"** will snap to the right edge of the spawning or relative window.
+	 * <b>"adjacent"</b> will snap to the right edge of the spawning or relative window.
 	 *
-	 * **"center"** will center the window
+	 * <b>"center"</b> will center the window
 	 *
 	 * If neither left nor right are provided, then the default will be to stagger the window based on the last spawned window.
-	 * *Note - the staggering algorithm has a timing element that is optimized based on user testing.*
 	 *
 	 */
 	left?: number | string;
 	/**
-	* Same as left except related to the right of the viewport.
+	 * A pixel value representing the distance from the right edge of the viewport as defined by "position".
+	 * A percentage value may also be used, representing the percentage distance from the right edge of the viewport relative to the viewport's width.
+	 *
   */
 	right?: number | string;
 	/**
-	 * Same as left except related to the top of the viewport.
+	 * A pixel value representing the distance from the right edge of the viewport as defined by "position".
+	 * A percentage value may also be used, representing the percentage distance from the bottom edge of the viewport relative to the viewport's width.
+	 *
 	 */
 	top?: number | string;
 	/**
-	 * Same as left except related to the bottom of the viewport.
+	 * A pixel value representing the distance from the top edge of the viewport as defined by "position".
+	 * A percentage value may also be used, representing the percentage distance from the top edge of the viewport relative to the viewport's height.
+	 *
 	 */
 	bottom?: number | string;
 	/**
@@ -381,6 +390,7 @@ export class Launcher {
 	lastOpenedMap: object;
 	lastAdjustedMap: object;
 	persistURL: boolean;
+	persistPath: boolean;
 	shuttingDown: boolean;
 	monitors: any;
 	shutdownList: any;
@@ -411,6 +421,9 @@ export class Launcher {
 
 		//Whether to persist URL changes on the component.
 		this.persistURL = false;
+		// Whether to persist the component's path (the path to the component in the OS). Default to true.
+		this.persistPath = true;
+
 		//When we're shutting down, we ignore spawn requests. This gets set to true.
 		this.shuttingDown = false;
 		//Local copy of monitors, this will prevent us from having to fetch them every time
@@ -1250,7 +1263,7 @@ export class Launcher {
 					// which monitor to start up....for one the Workspace service doesn't have a bounds after wrapper cleanup.  Short-term solution is
 					// on error then set monitor[0] as the previousMonitor.
 					params.previousWindow._getBounds((err, bounds) => {
-						// bounds are undefined for Windowless WPF Components 
+						// bounds are undefined for Windowless WPF Components
 						if (!err && bounds !== undefined) {
 							params.previousWindowBounds = bounds;
 							util.Monitors.getMonitorFromScaledXY(bounds.left, bounds.top, (monitor) => {
@@ -1477,6 +1490,7 @@ export class Launcher {
 	/*
 	A helper for pulling out the default config for url persistence
 	*/
+	// @todo This code doesn't appear to be used. Consider deleting it.
 	getGlobalURLPersistence() {
 		return this.appConfig.finsemble.servicesConfig && this.appConfig.finsemble.servicesConfig.launcher &&
 			this.appConfig.finsemble.servicesConfig.launcher.hasOwnProperty("persistURL") ?
@@ -1946,7 +1960,6 @@ export class Launcher {
 		message.sendQueryResponse(null, "success");
 	}
 
-
 	/**
 	 *
 	 * @param {*} response
@@ -1970,13 +1983,53 @@ export class Launcher {
 	}
 
 	/**
+	 * Force-kill/close a window if it is in a pending state (i.e. spawn didn't complete); otherwise do nothing.
+	 * @param {*} windowIdentifier of window to force kill
+	 */
+	forceKillWindowIfPending(windowIdentifier: any): Promise<{ err: string }> {
+		const promiseResolver = async (resolve) => {
+			try {
+				Logger.system.warn("forceKillWindowIfPending", windowIdentifier.name, windowIdentifier);
+
+				// if window is pending because spawn never completed, then remove it and continue;
+				if (this.pendingWindows[windowIdentifier.name]) {
+					Logger.system.warn("forceKillWindowIfPending removing from pending", windowIdentifier.name);
+					delete this.pendingWindows[windowIdentifier.name];
+
+					// the window might not be there so best effort only.
+					windowIdentifier.waitForReady = false;
+
+					const { wrap: windowToKill } = await FinsembleWindowInternal.getInstance(windowIdentifier);
+
+					windowToKill._close({ force: true }, (err, result) => {
+						Logger.system.warn("forceKillWindowIfPending -- window closed", windowIdentifier.name, err, result);
+						resolve({ err });
+					});
+				} else {
+					Logger.system.warn("forceKillWindowIfPending is not pending", windowIdentifier.name);
+					resolve({ err: "window is not pending" });
+				}
+			} catch (err) {
+				const errorMessage = `forceKillWindowIfPending caught error: ${err}`;
+				Logger.system.warn(errorMessage);
+				resolve({ err: errorMessage });
+			}
+		};
+		return new Promise(promiseResolver);
+	}
+
+	/**
 	 *
 	 * @private
 	 */
 	async finishSpawn(defaultComponentConfig, windowDescriptor, params, objectReceivedOnSpawn) {
 		let component = defaultComponentConfig.component.type;
 		if (params.slave) {
-			util.getFinWindow(windowDescriptor, (finWindow) => {
+			const slaveIdentifier = {
+				windowName: windowDescriptor.name,
+				uuid: windowDescriptor.uuid
+			}
+			util.getFinWindow(slaveIdentifier, (finWindow) => {
 				self.makeSlave(finWindow, {
 					windowName: params.previousWindow.name,
 					uuid: params.previousWindow.uuid
@@ -2214,8 +2267,9 @@ export class Launcher {
 			windowName = event;
 		}
 
+		Logger.system.info("Launcher.remove: windowName", windowName);
+
 		if (!windowName) return;
-		Logger.system.info("remove windowName", windowName);
 		//this block is for legacy support. all calls to remove in the Launcher pass in the windowDescriptor. The old functionality was to pass in a window name.
 		if (typeof windowName !== "string") {
 			let descriptor = JSON.parse(JSON.stringify(windowName));
@@ -2224,12 +2278,12 @@ export class Launcher {
 		var activeWindow = activeWindows.getWindow(windowName);
 
 		if (!activeWindow) {
-			Logger.system.warn("Active Window not found", windowName);
+			Logger.system.warn("Launcher.remove: Active Window not found", windowName);
 			return;
 		}
 		//This is the only place in the application where we remove close listeners. In versions of 8.X, Openfin had a bug where if you remove one closed listener, all closed listeners would be removed.
 		activeWindow.removeEventListener("closed", self.remove);
-		Logger.system.debug("this.remove", activeWindow);
+		Logger.system.debug("Launcher.remove: this.remove", activeWindow);
 
 		if (activeWindow.windowDescriptor && activeWindow.windowDescriptor.claimMonitorSpace) { // stacked windows will have these properties
 			self.getMonitorInfoAll(function (monitors) {
@@ -2602,12 +2656,14 @@ export class Launcher {
 	 */
 	shutdownComponents(done) {
 		// assume done if everybody doesn't close within alloted time so dependencies can close and shutdownList can continue.
+		let shutdownTimeout = this.finsembleConfig.shutdownTimeout ? this.finsembleConfig.shutdownTimeout - 2000 : 8000;
+		shutdownTimeout = Math.max(shutdownTimeout, 0); // prevent this from going negative if someone sets a very low shutdownTimeout.
 		var myTimeout = setTimeout(() => {
 			done();
-		}, (this.finsembleConfig.shutdownTimeout || 10000) - 2000);
+		}, shutdownTimeout);
 
 		asyncForEach(activeWindows.windows, (win, callback) => {
-			(win as BaseWindow)._close({ removeFromWorkspace: false, ignoreParent: true }, callback);
+			(win as BaseWindow).close({ removeFromWorkspace: false, ignoreParent: true }, callback);
 		}, () => {
 			// make sure done doesn't get called back twice
 			clearTimeout(myTimeout);
@@ -2823,14 +2879,15 @@ export class Launcher {
 			baseDescriptor.url = params.url;
 		}
 
-		if (params.windowType === "openfin") params.windowType = "OpenFinWindow"; // Config friendly naming
-		if (params.windowType === "assimilation") params.windowType = "NativeWindow"; // Config friendly naming
-		if (params.windowType === "assimilated") params.windowType = "NativeWindow"; // Config friendly naming
-		if (params.windowType === "native") params.windowType = "FinsembleNativeWindow"; // Config friendly naming
-		if (params.windowType === "application") params.windowType = "OpenFinApplication"; // Config friendly naming
-		if (params.native) params.windowType = "NativeWindow"; //Backward Compatibility
-		if (baseDescriptor.type === "openfinApplication") params.windowType = "OpenFinApplication"; //Backward Compatibility
-		if (!params.windowType) params.windowType = "OpenFinWindow";
+		// Construct an object of values that may be used to calculate the windowType
+		const winConfig = {
+			windowType: params.windowType,
+			native: params.native,
+			compound: baseDescriptor.compound,
+			type: baseDescriptor.type
+		}
+		
+		params.windowType = (util.getWindowType(winConfig) as WindowTypes);		
 		baseDescriptor.windowType = params.windowType;
 
 		Logger.system.debug("Launcher.spawn 5", component, params);
@@ -2873,6 +2930,8 @@ export class Launcher {
 		//[Ryan] the logic should sit in the workspace client( although I think we actually do it in the window client right now)
 		if (params.spawnedByWorkspaceService) {
 			let persistURL = ConfigUtil.getDefault(config.foreign, "foreign.services.workspace.persistURL", this.persistURL);
+			let persistPath = ConfigUtil.getDefault(config.foreign, "foreign.services.workspace.persistPath", this.persistPath);
+
 			/** DH 3/11/2019
 			 * We store the fact that a component had its URL swapped with the unknown component URL
 			 * on the windowDescriptor itself. Therefore, if that prop is true, we need to swap the
@@ -2880,8 +2939,11 @@ export class Launcher {
 			 * (where we have access to the component's config), regardless of where the persistURL
 			 * logic lands.*/
 			const isUnknownComponent = get(params, "options.customData.component.isUnknownComponent");
-			if ((isUnknownComponent || !persistURL) && config.window) {//revert the url to what is passed in from components.
+			if (!persistURL || isUnknownComponent) {
 				windowDescriptor.url = config.window.url;
+			}
+			if (!persistPath || isUnknownComponent) {
+				windowDescriptor.path = config.window.path;
 			}
 		}
 		if (self.isWindowNameAlreadyUsed(windowDescriptor.name)) {

@@ -525,11 +525,7 @@
 				"left": 0,
 				"right": 0,
 				"position": "available",
-				"autoShow": true,
-				"dockable": [
-					"top",
-					"bottom"
-				],
+				"dockable": ["top", "bottom"],
 				"maxHeight": 39,
 				"minHeight": 39,
 				"minWidth": 300,
@@ -684,34 +680,6 @@
 					},
 					"Toolbar": {
 						"iconClass": "UserPreferences"
-					}
-				}
-			}
-		},
-		"Process Monitor": {
-			"window": {
-				"url": "$applicationRoot/components/processMonitor/processMonitor.html",
-				"affinity": "workspaceComponents",
-				"width": 600,
-				"height": 700
-			},
-			"component": {
-				"category": "system"
-			},
-			"foreign": {
-				"services": {
-					"dockingService": {
-						"isArrangable": true
-					}
-				},
-				"components": {
-					"App Launcher": {
-						"launchableByUser": true
-					},
-					"Window Manager": {
-						"FSBLHeader": true,
-						"persistWindowState": true,
-						"title": "Process Monitor"
 					}
 				}
 			}

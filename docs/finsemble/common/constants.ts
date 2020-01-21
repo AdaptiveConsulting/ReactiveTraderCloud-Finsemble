@@ -99,3 +99,8 @@ export const DELIVERY_MECHANISM = {
 	PRELOAD: 'preload',
 	INJECTION: 'injection',
 };
+
+export const MOVE_REASON = {
+	AERO_KEY: "aero_key", 
+	SYSTEM_RESTORED: "system_restored"
+};

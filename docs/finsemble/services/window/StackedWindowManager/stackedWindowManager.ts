@@ -286,6 +286,7 @@ class StackedWindowManager implements StackedWindowManagement {
 		this.setupInterfaceListener("saveWindowOptions", this.saveWindowStateToStore);
 		this.setupInterfaceListener("setBounds", this.setBounds);
 		this.setupInterfaceListener("getBounds", this.getBounds);
+		this.setupInterfaceListener("getBoundsFromSystem", this.getBoundsFromSystem);
 		this.setupInterfaceListener("startMove", this.startMove);
 		this.setupInterfaceListener("stopMove", this.stopMove);
 		// this.setupInterfaceListener("updateOptions", this.updateOptions);
@@ -314,17 +315,6 @@ class StackedWindowManager implements StackedWindowManagement {
 			}
 		});
 
-		RouterClient.addListener("LauncherService.shutdownRequest", this.onLauncherShutdown);
-
-	}
-
-	onLauncherShutdown() {
-		let stacks = Object.keys(this.storeCache);
-		//Launcher needs to know that each stack is closed. We don't actually do anything here, because there's no cleanup needed. The individual windows will take care of their own shutdown sequence. So we just immediately tell launcher that we're all good.
-		stacks.forEach(async stackName => {
-			await this.closeStackedWindow({ stackedWindowIdentifier: stackName, removeFromWorkspace: false });
-			RouterClient.transmit("LauncherService.shutdownResponse", { waitForMe: false, name: stackName });
-		});
 	}
 
 	async visibleChildEventHandler(stackedWindowName, stackWrap, eventObject) {
@@ -701,8 +691,8 @@ class StackedWindowManager implements StackedWindowManagement {
 						while (thisStackRecord.childWindowIdentifiers.length > 0) {
 							// the currently visible window is closed one at a time to support orderly close, which might require UI interaction
 							await this.deleteWindow({
-								noCloseStack: true, 
-								waitChildClose: params.waitChildClose, 
+								noCloseStack: true,
+								waitChildClose: params.waitChildClose,
 								stackedWindowIdentifier,
 								windowIdentifier: thisStackRecord.visibleWindowIdentifier,
 								removeFromWorkspace,
@@ -880,11 +870,11 @@ class StackedWindowManager implements StackedWindowManagement {
 				await this.removeWindow(params);
 				let { wrap } = await FinsembleWindow.getInstance(params.windowIdentifier);
 				wrap.close({
-					/* 
+					/*
 					 * If the close event is sent from the system (i.e. user is closing a stacked window from the taskbar), tell the wrapper to not show the error
 					 * when attempting to close that window (because the window is already closed from the system).
-					 * For now we're still calling this function even if it's a system close because we need some way to close a slacked window from the 
-					 * taskbar. We can also change the event name we pass into "this.setupSystemListener" in case of a system close in the openfinWindowWrapper file from 
+					 * For now we're still calling this function even if it's a system close because we need some way to close a slacked window from the
+					 * taskbar. We can also change the event name we pass into "this.setupSystemListener" in case of a system close in the openfinWindowWrapper file from
 					 * 'closed' to 'system-closed' so we don't have to close twice. But we decided it's a big change and we should go with a less risky approach in this bug fixing PR.
 					 */
 					suppressError: params.fromSystem,
@@ -1219,6 +1209,42 @@ class StackedWindowManager implements StackedWindowManagement {
 
 		callback(err);
 	}
+
+	// stacked window getBoundsFromSystem (invoked remotely through stacked window wrapper)
+	getBoundsFromSystem(params, callback = Function.prototype) {		
+		Logger.system.debug("StackedWindowManager.getBoundsFromSystem", params);
+		const thisStackRecord = this.storeCache[params.stackedWindowIdentifier.windowName];
+		// if operating on StackedWindow then operation should apply to the visible window
+		if (this.operatingDirectlyOnStackedWindow(params)) {
+			
+			if (thisStackRecord) {
+				params.windowIdentifier = thisStackRecord.visibleWindowIdentifier;
+			} else {
+				Logger.system.warn("ignoring command because StackedWindow undefined (probably okay due to its recent close)", params);
+				return callback("undefined window");
+			}
+		}
+
+		if (this.isShowing(params)) {
+			const visibleWindow = this.childWindow[params.windowIdentifier.windowName];
+			if (!visibleWindow) {
+				let err = `stackedWindowManager: cannot find child window ${params.windowIdentifier.windowName}`;
+				Logger.system.error(err);
+				callback(err);
+				return;
+			}
+			params.invokedByParent = true; // prevents wrapper function from recalling parent (causing a loop)
+			visibleWindow._getBoundsFromSystem(params, (err, bounds) => { // invoke function on active window's wrapper
+				if (err) {
+					bounds = thisStackRecord.bounds;
+				}
+				callback(err, bounds);
+			});
+		} else if (!this.operatingDirectlyOnStackedWindow(params)) {
+			Logger.system.error(`StackedWindowManager Warning: getBoundsFromSystem received for hidden window ${params.windowIdentifier.windowName}`);
+			callback("getBounds on hidden window");
+		}
+	};
 
 	// stacked window getBounds (invoked remotely through stacked window wrapper)
 	getBounds(params, callback = Function.prototype) {

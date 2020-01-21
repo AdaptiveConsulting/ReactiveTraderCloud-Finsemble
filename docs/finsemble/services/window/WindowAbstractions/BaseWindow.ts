@@ -41,11 +41,17 @@ if (!window._FSBLCache) window._FSBLCache = {
 	windowAttempts: {}
 };
 export type componentMutateParams = {
+	/** Field to save. */
 	field?: string,
+	/** Fields to save. */
 	fields?: { field: string }[],
+	/** Key to store the data under. */
 	key?: string,
+	/** Whether the data is componentState or windowState. */
 	stateVar?: "componentState" | "windowState",
+	/** Topic that the data is stored under. */
 	topic?: string,
+	/** Value to save. */
 	value?: any
 };
 export class BaseWindow extends EventEmitter {
@@ -434,6 +440,7 @@ export class BaseWindow extends EventEmitter {
 		if (state && state !== this.wrapState && state !== "closed") {
 			this.wrapState = state;
 			this.eventManager.trigger(state as WindowEventName);
+			this.eventManager.trigger("wrap-state-changed", { state });
 		}
 	}
 
@@ -796,7 +803,7 @@ export class BaseWindow extends EventEmitter {
 	// Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
 	// If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
 	_setBounds(params, cb = Function.prototype) {
-		Logger.system.debug("BaseWindow._setBounds", params);
+		Logger.system.verbose("BaseWindow._setBounds", params);
 		params = params || {};
 		let bounds = params.bounds;
 		//Get the bounds that we have stored locally. If we have them, we compare later. If the bounds have changed, we emit the bounds-set method. Otherwise, we don't emit that event.
@@ -810,7 +817,7 @@ export class BaseWindow extends EventEmitter {
 			// if parent defined and not circular loop, invoke parent functionality.  Parent result passed back to caller
 			params.windowIdentifier = this.identifier; // add this window's identifier for parent invocation
 			this.parentWindow._setBounds(params, function (err, result) {
-				Logger.system.debug("BaseWindow._setBounds parent", result);
+				Logger.system.verbose("BaseWindow._setBounds parent", result);
 				cb(err, { shouldContinue: false });
 			});
 		} else {
@@ -821,13 +828,30 @@ export class BaseWindow extends EventEmitter {
 	// Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
 	// If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
 	_getBounds(params, cb) {
-		Logger.system.debug("BaseWindow._getBounds", params);
+		Logger.system.verbose("BaseWindow._getBounds", params);
 		params = params || {};
 		if (!params.invokedByParent && this.parentWindow) {
 			// if parent defined and not circular loop, invoke parent functionality.  Parent result passed back to caller
 			params.windowIdentifier = this.identifier; // add this window's identifier for parent invocation
 			this.parentWindow._getBounds(params, function (err, bounds) {
-				Logger.system.debug("BaseWindow._getBounds parent", bounds);
+				Logger.system.verbose("BaseWindow._getBounds parent", bounds);
+				cb(err, bounds);  // shouldContinue not defined in return value, but implicitly false
+			});
+		} else {
+			cb(null, { shouldContinue: true }); // if should continue, bounds will be calculated by derived class
+		}
+	}
+
+	// Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+	// If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
+	_getBoundsFromSystem(params, cb) {
+		Logger.system.debug("BaseWindow._getBoundsFromSystem", params);
+		params = params || {};
+		if (!params.invokedByParent && this.parentWindow) {
+			// if parent defined and not circular loop, invoke parent functionality.  Parent result passed back to caller
+			params.windowIdentifier = this.identifier; // add this window's identifier for parent invocation
+			this.parentWindow._getBoundsFromSystem(params, function (err, bounds) {
+				Logger.system.verbose("BaseWindow._getBoundsFromSystem parent", bounds);
 				cb(err, bounds);  // shouldContinue not defined in return value, but implicitly false
 			});
 		} else {
