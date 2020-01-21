@@ -1,6 +1,7 @@
 import { v1 as uuidv1 } from "uuid";
 import * as get from "lodash.get";
 import * as pick from "lodash.pick";
+import { isEqual as deepEqual } from "lodash";
 
 //Class without deep openfin/system dependencies.
 export function guuid() {
@@ -87,7 +88,7 @@ export function isNumber(num: string) {
 		return false;
 	}
 
- 	return Number(num);
+	return Number(num);
 };
 
 /** Returns exactly what's passed to it. Useful for higher-order functions. */
@@ -263,4 +264,23 @@ export function removeKeys(obj, keys: string[]) {
 	const allKeys = Object.keys(obj);
 	const keepKeys = allKeys.filter(x => !keys.includes(x));
 	return pick(obj, keepKeys);
+}
+
+/**
+ * Deep equal doesn't work properly if the objects aren't exactly equal
+ * We have several places in the code that attach extra parameters to bounds objects
+ * This function will test equality on bounds for the only left, right, top, bottom, width and height
+ * @param {} bounds1 
+ * @param {*} bounds2 
+ */
+export function checkIfBoundsAreEqual(bounds1, bounds2) {
+	if (!bounds1 || !bounds2) return false;
+	const keepKeys = ['left', 'right', 'top', 'bottom', 'width', 'height'];
+	const updatedBounds1 = pick(bounds1, keepKeys);
+	const updatedBounds2 = pick(bounds2, keepKeys);
+	if (deepEqual(updatedBounds1, updatedBounds2)) {
+		return true;
+	}
+	return false;
+
 }

@@ -134,6 +134,15 @@ export class System {
 		return window.addEventListener("FSBLready", cb);
 	}
 
+	/**
+	 * Performs handshake with FEA to indicate the primary application started successfully
+	 */
+	static startupApplicationHandshake() {
+		if (fin.desktop.System.startupApplicationHandshake) {
+			fin.desktop.System.startupApplicationHandshake();
+		}
+	}
+
 	// This is not overriding or pointing to Openfin. This is the pattern used to close applications.
 	static closeApplication(app, cb = Function.prototype) {
 		const promiseResolver = (resolve) => {
@@ -169,6 +178,10 @@ export class System {
 			}, terminateAndResolve);
 		}
 		return new Promise(promiseResolver);
+	}
+
+	static isElectron() {
+		return fin.container === 'Electron';
 	}
 
 }

@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "http://localhost:3375/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 184);
+/******/ 	return __webpack_require__(__webpack_require__.s = 185);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -85,7 +85,7 @@ var CONSOLE_DEFAULT_LOG_SETTING = { Error: true, Warn: true, Info: true, Log: tr
 const MAX_LOG_MESSAGE_SIZE = 50000;
 const OVER_LOG_SIZE_LIMIT_MESSAGE = `Log argument greater than ${MAX_LOG_MESSAGE_SIZE / 1000}KB. Check local Console to see output of the object.`;
 const MAX_QUEUE_SIZE = 5 * 1000; // maximum logger queue size; plenty of space although shouldn't need much since continuously sending to logger if working correctly;
-const throttle = __webpack_require__(22);
+const throttle = __webpack_require__(23);
 const system_1 = __webpack_require__(3);
 const localLogger_1 = __webpack_require__(16);
 /**
@@ -475,9 +475,9 @@ exports.LoggerConstructor = function (dependencies) {
         }
     };
     /**
-     * Log a dev verbose message (an extra level of verbose-debug output)
+     * Log a dev verbose message (an extra level of verbose-debug output).
      *
-     * @param {Array.<any>} messageParm message parameter of any type that can be stringified (e.g. string, object)
+     * @param {any} message parameter of any type that can be stringified (e.g. string, object)
      *
      * @example
      *
@@ -1120,6 +1120,14 @@ class System {
         }
         return window.addEventListener("FSBLready", cb);
     }
+    /**
+     * Performs handshake with FEA to indicate the primary application started successfully
+     */
+    static startupApplicationHandshake() {
+        if (fin.desktop.System.startupApplicationHandshake) {
+            fin.desktop.System.startupApplicationHandshake();
+        }
+    }
     // This is not overriding or pointing to Openfin. This is the pattern used to close applications.
     static closeApplication(app, cb = Function.prototype) {
         const promiseResolver = (resolve) => {
@@ -1155,6 +1163,9 @@ class System {
             }, terminateAndResolve);
         };
         return new Promise(promiseResolver);
+    }
+    static isElectron() {
+        return fin.container === 'Electron';
     }
 }
 exports.System = System;
@@ -1199,7 +1210,7 @@ module.exports = g;
 * All rights reserved.
 */
 Object.defineProperty(exports, "__esModule", { value: true });
-const routerClientConstructor_1 = __webpack_require__(27);
+const routerClientConstructor_1 = __webpack_require__(28);
 const logger_1 = __webpack_require__(0);
 let RCConstructor = routerClientConstructor_1.RouterClientConstructor;
 /** The logger needs a router client, and the router client needs a logger.
@@ -1724,10 +1735,13 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (immutable) */ __webpack_exports__["injectJS"] = injectJS;
 /* harmony export (immutable) */ __webpack_exports__["openSharedData"] = openSharedData;
 /* harmony export (immutable) */ __webpack_exports__["getNewBoundsWhenMovedToMonitor"] = getNewBoundsWhenMovedToMonitor;
+/* harmony export (immutable) */ __webpack_exports__["isOnAMonitor"] = isOnAMonitor;
 /* harmony export (immutable) */ __webpack_exports__["adjustBoundsToBeOnMonitor"] = adjustBoundsToBeOnMonitor;
+/* harmony export (immutable) */ __webpack_exports__["getWindowType"] = getWindowType;
+/* harmony export (immutable) */ __webpack_exports__["adjustWindowIfInTaskbarSpace"] = adjustWindowIfInTaskbarSpace;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__system__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__ = __webpack_require__(25);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__ = __webpack_require__(26);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_logger__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1__ = __webpack_require__(19);
@@ -2377,7 +2391,7 @@ function getNewBoundsWhenMovedToMonitor(monitor, bounds) {
 	let monitorRect = monitor.unclaimedRect || monitor.availableRect || monitor.monitorRect;
 
 	// Placeholder for new bounds
-	let newBounds = Object.create(bounds);
+	let newBounds = clone(bounds);
 
 	// adjust vertical offset from monitor by moving top down or bottom up
 	if (bounds.top < monitorRect.top) {
@@ -2418,18 +2432,13 @@ function getNewBoundsWhenMovedToMonitor(monitor, bounds) {
 };
 
 /**
- * Takes a window's bounds and makes sure it's on a monitor. If the window isn't on a monitor, we determine the closest monitor
- * based on the distance from the top-left corner of the window to the center of the monitor, and then pull the monitor along that line
- * until the window is on the edge of the monitor
- * @param {*} currentBounds
- * @returns the new bounds for the window. which are different from currentBounds only if the window needs to be relocated
+ * Given bounds of a window, will check all monitors against those bounds
+ * Will return true if it is completely on a single monitor, false otherwise
+ * @param {*} bounds
+ * @returns True if the supplied bounds are entirely within a single monitor, false otherwise
  */
-function adjustBoundsToBeOnMonitor(bounds) {
-	let newBounds = Object.create(bounds);
-
-	// Determine if on a monitor, and if not, pull top-left corner directly toward center of monitor until it completely onscreen
-	let isOnAMonitor = this.Monitors.allMonitors.some(monitor => {
-
+function isOnAMonitor(bounds) {
+	return this.Monitors.allMonitors.some(monitor => {
 		/*
    * 8/26/19 Joe: This used to only use the monitorRect (the entirety of monitor's dimensions)
    * Switched it to use the unclaimedRect. If window is inside of claimed space, then its
@@ -2438,33 +2447,278 @@ function adjustBoundsToBeOnMonitor(bounds) {
    */
 		let monitorRect = monitor.unclaimedRect || monitor.monitorRect;
 
-		// Check to see tf it's to the right of the left side of the monitor,
-		// to the left of the right side, etc.basically is it within the monitor's bounds.
-		let isOnMonitor = bounds.left >= monitorRect.left && bounds.left <= monitorRect.right && bounds.right >= monitorRect.left && bounds.right <= monitorRect.right && bounds.top >= monitorRect.top && bounds.top <= monitorRect.bottom && bounds.bottom >= monitorRect.top && bounds.bottom <= monitorRect.bottom;
-
-		return isOnMonitor;
+		return bounds.left >= monitorRect.left && bounds.left <= monitorRect.right && bounds.right >= monitorRect.left && bounds.right <= monitorRect.right && bounds.top >= monitorRect.top && bounds.top <= monitorRect.bottom && bounds.bottom >= monitorRect.top && bounds.bottom <= monitorRect.bottom;
 	});
+}
 
-	if (!isOnAMonitor) {
-
-		// calculate if the window is on any monitor, and the distance between the top left and the center of the window
-		let monitorAdjustments = this.Monitors.allMonitors.map(monitor => this.getNewBoundsWhenMovedToMonitor(monitor, bounds));
-
-		// Get the closest monitor, the one with minimum distanceMoved
-		let monitorAdjustmentClosest = monitorAdjustments.sort((md1, md2) => md1.distanceMoved - md2.distanceMoved)[0];
-
-		// notify the movement
-		__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.info("Launcher.adjustWindowDescriptorBoundsToBeOnMonitor: not on monitor.  bounds", bounds, "monitor name", monitorAdjustmentClosest.monitor.name, "newBounds", monitorAdjustmentClosest.newBounds);
-
-		// assign bounds
-		newBounds = monitorAdjustmentClosest.newBounds;
-	} else {
+/**
+ * Takes a window's bounds and makes sure it's on a monitor. If the window is just off the monitor, bounds will be adjusted to be on the monitor it was on and then the check will occur again. If the window isn't on a monitor (or runs off of a monitor), we determine the closest monitor
+ * based on the distance from the top-left corner of the window to the center of the monitor, and then pull the monitor along that line
+ * until the window is on the edge of the monitor
+ * @param {*} currentBounds
+ * @returns the new bounds for the window. which are different from currentBounds only if the window needs to be relocated
+ */
+function adjustBoundsToBeOnMonitor(bounds) {
+	if (this.isOnAMonitor(bounds)) {
+		//If the window is already on a monitor keep the old bounds and stay on monitor
 		__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.info("Launcher.adjustWindowDescriptorBoundsToBeOnMonitor: on monitor.");
-		newBounds = bounds;
+		return bounds;
 	}
 
-	return newBounds;
+	// calculate if the window is on any monitor, and the distance between the top left and the center of the window
+	let monitorAdjustments = this.Monitors.allMonitors.map(monitor => this.getNewBoundsWhenMovedToMonitor(monitor, bounds));
+
+	// Get the closest monitor, the one with minimum distanceMoved
+	let monitorAdjustmentClosest = monitorAdjustments.sort((md1, md2) => md1.distanceMoved - md2.distanceMoved)[0];
+
+	// notify the movement
+	__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.info("Launcher.adjustWindowDescriptorBoundsToBeOnMonitor: not on monitor.  bounds", bounds, "monitor name", monitorAdjustmentClosest.monitor.name, "newBounds", monitorAdjustmentClosest.newBounds);
+
+	// assign bounds
+	return monitorAdjustmentClosest.newBounds;
 };
+
+/**
+ * Calculates windowType for a newly spawned window
+ * windowType can be set or overwritten in many ways. The intention here is to end up with a limited set of
+ * final windowTypes
+ * @export
+ * @param {*} config - Object containing all possible values used to set windowTypes, some of these values may be unset depending on the execution path
+ */
+function getWindowType(config) {
+	const DEFAULT_WINDOW_TYPE = "OpenFinWindow";
+	// All possible windowTypes. Some of these values will be converted to other types
+	const validTypes = ["openfin", "assimilation", "assimilated", "native", "application", "OpenFinWindow", "NativeWindow", "FinsembleNativeWindow", "OpenFinApplication", "CompoundWindow", "StackedWindow"];
+	// If an invalid windowType is given, default and log an error. Note that an empty windowType
+	// is not an error case. This is to let the user know that they may have made a typo setting a type in
+	// the config file. We default to keep Finsemble from breaking, but the user may have intended to launch a
+	// component as a different type.
+	if (config.windowType && !validTypes.includes(config.windowType)) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.error(`Invalid windowType: ${config.windowType}, defaulting to windowType: ${DEFAULT_WINDOW_TYPE}`);
+		return DEFAULT_WINDOW_TYPE;
+	}
+	let ret = config.windowType || DEFAULT_WINDOW_TYPE;
+
+	// We allow several additional windowTypes to be inputted to make the config user-friendly
+	// These windowTypes need to be converted to values Finsemble can process
+	switch (config.windowType) {
+		case "assimilation":
+		case "assimilated":
+			ret = "NativeWindow";
+			break;
+		case "native":
+			ret = "FinsembleNativeWindow";
+			break;
+		case "application":
+			ret = "OpenFinApplication";
+			break;
+		case "openfin":
+			ret = "OpenFinWindow";
+			break;
+		case "StackedWindow":
+			ret = "StackedWindow";
+			break;
+		// If config.windowType is unset, we'll use the DEFAULT_WINDOW_TYPE
+		case "default":
+			break;
+	}
+
+	// Next handle any backward compatibility windowType inputs
+	if (config.native) ret = "NativeWindow"; //Backward Compatibility
+	if (config.type === "openfinApplication") ret = "OpenFinApplication"; //Backward Compatibility
+	if (config.compound) ret = "CompoundWindow";
+	return ret;
+}
+
+function adjustWindowIfInTaskbarSpace(bounds) {
+	let adjustedBounds = this.clone(bounds);
+
+	//Only one adjustment should be necessary if the docked window is now inside of taskbar space,
+	//making anymore than one means we need to find a new monitor
+	let wasAdjusted = false;
+	this.Monitors.allMonitors.forEach(monitor => {
+		// For each monitor, see if the window to be adjusted is currently
+		// 'inside' of the monitor's taskbar space. If so, adjust to be right
+		// below/above the taskbar and recheck isOnAMonitor
+		if (windowBoundsAreInTaskbarSpace(bounds, monitor) && !wasAdjusted) {
+			const taskbar = calculateTaskbarBounds(monitor);
+			const monitorRect = monitor.unclaimedRect || monitor.monitorRect;
+
+			switch (taskbar.edge) {
+				case "top":
+					adjustedBounds.top = monitorRect.top;
+					adjustedBounds.bottom = adjustedBounds.top + adjustedBounds.height;
+					wasAdjusted = true;
+					break;
+				case "bottom":
+					adjustedBounds.top = monitorRect.bottom - adjustedBounds.height;
+					adjustedBounds.bottom = monitorRect.bottom;
+					wasAdjusted = true;
+					break;
+				case "left":
+					adjustedBounds.left = monitorRect.left;
+					adjustedBounds.right = adjustedBounds.left + adjustedBounds.width;
+					wasAdjusted = true;
+					break;
+				case "right":
+					adjustedBounds.left = adjustedBounds.right - adjustedBounds.width;
+					adjustedBounds.right = monitorRect.right;
+					wasAdjusted = true;
+					break;
+				default:
+					break;
+			}
+		}
+	});
+
+	// After adjusting bounds to be on the monitor's new dimensions check if the window is
+	// now on the monitor
+	// If the window can stay on the current monitor with adjusted bounds, there is no need
+	// to determine a new monitor to move to. Return the adjusted bounds
+	if (wasAdjusted && this.isOnAMonitor(adjustedBounds)) {
+		return adjustedBounds;
+	}
+
+	return this.adjustBoundsToBeOnMonitor(bounds);
+}
+
+/**
+ * Takes a window's bounds and a monitor, returns true if the window is in
+ * the monitor's taskbar space, false otherwise.
+ * @param {*} windowBounds
+ * @param {*} monitor
+ */
+function windowBoundsAreInTaskbarSpace(windowBounds, monitor) {
+	const taskbar = calculateTaskbarBounds(monitor);
+
+	if (!taskbar) return false;
+
+	switch (taskbar.edge) {
+		case "top":
+		case "bottom":
+			return windowBounds.top >= taskbar.top && windowBounds.bottom <= taskbar.bottom && windowBounds.left >= taskbar.left && windowBounds.right <= taskbar.right;
+		case "left":
+		case "right":
+			return windowBounds.left >= taskbar.left && windowBounds.right <= taskbar.right && windowBounds.top >= taskbar.top && windowBounds.bottom <= taskbar.bottom;
+		default:
+			return false;
+	}
+}
+
+/**
+ * Given a monitor, will return the Windows taskbar's claimed space.
+ * In electron, this comes with monitor info. In openfin it must be calculated using the differences in
+ * monitor.availableRect and monitor.monitorRect.
+ * @param {*} monitor The monitor to return the taskbar bounds for
+ * @return {*} A bounding box object containing dimensions for the monitor's taskbar (top, bottom, left, right, width, height, and edge)
+ * or undefined if the taskbar doesn't exist (Windows 7 has only one taskbar even in a multi-monitor setup, so this is a plausible scenario)
+ */
+function calculateTaskbarBounds(monitor) {
+	//Electron keeps a representation of the taskbar on each monitor
+	if (fin.container === "Electron" && monitor.taskbar) {
+		return monitor.taskbar;
+	}
+
+	//OpenFin is left to calculate it with monitorRect/availableRect
+	if (monitor.availableRect && monitor.monitorRect) {
+		const usableBounds = monitor.availableRect;
+		const allBounds = monitor.monitorRect;
+
+		//The edge that differs between monitorRect and availableRect is where the toolbar is.
+		//Calculating that edge here
+		const differingEdge = findDifferingDimension(allBounds, usableBounds);
+
+		//If this happens it is not necessarily an error, it depends on the environment. Send it as a verbose message.
+		//If it does happen, and is the cause of an error, it will be logged but out-of-the-way for anyone with standard logging
+		if (!differingEdge) {
+			__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.debug("Utils.calculateTaskbarBounds: Taskbar not found on current monitor: ", monitor);
+		}
+
+		let taskbar = {
+			edge: differingEdge
+		};
+
+		/*
+   * Picturing monitors as coordinate representations, given monitorRect (the entire monitors bounds)
+   * and availableRect (the usable space according to the OS), we can determine where the OS's 'claimed' space/taskbar are.
+   *
+   * e.g.
+   *
+   * This entire square (monitor) is 'monitorRect'
+   * +------------------------------------------+
+   * |                                          |
+   * |                                          |
+   * |                                          |
+   * |                                          |
+   * |                                          |
+   * |                                          |
+   * |               availableRect              |
+   * |                                          |
+   * |                                          |
+   * |                                          |
+   * |                                          |
+   * |                                          |
+   * |                                          |
+   * |                                          |
+   * |                                          |
+   * +------------------------------------------+
+   * |                 Taskbar                  |
+   * +------------------------------------------+
+  		 */
+		if (differingEdge === "top" || differingEdge === "bottom") {
+
+			taskbar.left = allBounds.left;
+			taskbar.right = allBounds.right;
+			taskbar.width = allBounds.width;
+			taskbar.height = allBounds.height - usableBounds.height;
+
+			if (differingEdge === "top") {
+				taskbar.top = allBounds.top;
+				taskbar.bottom = usableBounds.top;
+			} else {
+				taskbar.top = usableBounds.bottom;
+				taskbar.bottom = allBounds.bottom;
+			}
+		} else if (differingEdge === "left" || differingEdge === "right") {
+
+			taskbar.top = allBounds.top;
+			taskbar.bottom = allBounds.bottom;
+			taskbar.width = allBounds.width - usableBounds.width;
+			taskbar.height = allBounds.height;
+
+			if (differingEdge === "left") {
+				taskbar.left = allBounds.left;
+				taskbar.right = usableBounds.left;
+			} else {
+				taskbar.left = usableBounds.right;
+				taskbar.right = allBounds.right;
+			}
+		} else {
+			taskbar = undefined;
+		}
+
+		return taskbar;
+	}
+}
+
+/**
+ * Given two bounding boxes (objects containing all bounds: top, left, right, bottom, width, height) returns
+ * the dimension which differs between the two
+ * @param {*} boundingBox1
+ * @param {*} boundingBox2
+ * @return {string} The string representation of the differing dimension
+ */
+function findDifferingDimension(boundingBox1, boundingBox2) {
+	for (let i = 0; i < Object.keys(boundingBox1).length; i++) {
+		const dimensionName = Object.keys(boundingBox1)[i];
+		if (boundingBox1[dimensionName] !== boundingBox2[dimensionName]) {
+			return dimensionName;
+		}
+	}
+
+	//Return null if no differing dimension found
+	return null;
+}
 
  ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\util.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\util.js"); } } })();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
@@ -7767,6 +8021,113 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 /***/ }),
 /* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.WRAPPERS = {
+    /*
+        TODO: For the time being these are just events our windows fire but not OpenFin (this is used in the OF wrapper. Long term we might have to reverse this)
+        TODO: Event naming is inconsistent. Our events should not be camel case to maintain consistency.
+    */
+    EVENTS: ["title-changed", "bringToFront", "setBounds", "alwaysOnTop", "setOpacity"]
+};
+exports.APPLICATION_STATE_CHANNEL = "Finsemble.Application.State";
+//These next four channels are used in service => service manager communication. The SM receives these messages and then pushes out state updates to the rest of the system.
+exports.SERVICE_INITIALIZING_CHANNEL = "Finsemble.ServiceManager.serviceInitializing";
+exports.SERVICE_READY_CHANNEL = "Finsemble.ServiceManager.serviceReady";
+exports.SERVICE_CLOSING_CHANNEL = "Finsemble.ServiceManager.serviceClosing";
+exports.SERVICE_CLOSED_CHANNEL = "Finsemble.ServiceManager.serviceClosed";
+//This channel is where the aggregated state of all services is sent out on.
+exports.SERVICES_STATE_CHANNEL = "Finsemble.State.Services";
+exports.WINDOWSTATE = {
+    NORMAL: 0,
+    MINIMIZED: 1,
+    MAXIMIZED: 2,
+    HIDDEN: 3
+};
+//These channels are to start and stop services dynamically.
+exports.SERVICE_START_CHANNEL = "Finsemble.Service.Start";
+exports.SERVICE_STOP_CHANNEL = "Finsemble.Service.Stop";
+exports.DOCKING = {
+    GROUP_UPDATE: "DockingService.groupUpdate",
+    // For legacy reasons, this is named Workspace, even though it's generated by docking.
+    WORKSPACE_GROUP_UPDATE: "Finsemble.WorkspaceService.groupUpdate",
+};
+// These channels are for interrupting events
+exports.EVENT_INTERRUPT_CHANNEL = "Finsemble.Event.Interrupt";
+exports.INTERRUPTIBLE_EVENTS = ["close-requested", "closed", "close-complete", "_container-close-handlers"];
+exports.REMOTE_FOCUS = "WindowService.remoteFocus";
+exports.WORKSPACE = {
+    CLEAN_SHUTDOWN: "Finsemble.Workspace.cleanShutdown",
+    UPDATE_PUBSUB: "Finsemble.WorkspaceService.update",
+    STORAGE_TOPIC: "finsemble.workspace",
+    CACHE_STORAGE_TOPIC: "finsemble.workspace.cache",
+    ALL_WORKSPACES: "finsemble.allWorkspaces",
+    ACTIVE_WORKSPACE: "activeWorkspace",
+    // When we have the liberty of breaking API's, we should consolidate this topic.
+    LAST_USED_WORKSPACE_TOPIC: "finsemble",
+    LAST_USED_WORKSPACE: "finsemble.lastUsedWorkspace",
+    INITIAL_WORKSPACE_PREFERENCE: "finsemble.initialWorkspace",
+    PUBLISH_REASONS: {
+        INIT: "workspace:initialization",
+        LOAD_DATA_RETRIEVED: "workspace:load:dataRetrieved",
+        LOAD_FINISHED: "workspace:load:finished",
+        WINDOW_REMOVED: "window:remove",
+        WINDOW_ADDED: "window:add",
+        LOAD_STARTED: "workspace:load:start",
+        WORKSPACE_REMOVED: "Workspace:remove",
+        WORKSPACE_RENAMED: "rename",
+        SWITCHTO_TERMINATED: "workspace:switchTo:terminated",
+        NEW_WORKSPACE: "new workspace",
+        SAVE_AS: "APPLICATION LIFECYCLE:WORKSPACE LIFECYCLE:SaveAs:Workspace:Save As",
+    },
+    API_CHANNELS: {
+        NEW_WORKSPACE: "Finsemble.Workspace.NewWorkspace",
+        SAVE: "Finsemble.Workspace.Save",
+        RENAME: "Finsemble.Workspace.Rename",
+        SAVE_AS: "Finsemble.Workspace.SaveAs",
+        SWITCH_TO: "Finsemble.Workspace.SwitchTo",
+        IMPORT: "Finsemble.Workspace.Import",
+        EXPORT: "Finsemble.Workspace.Export",
+        REMOVE: "Finsemble.Workspace.Remove",
+        SAVE_GLOBAL_DATA: "Finsemble.Workspace.SaveGlobalData",
+        SAVE_VIEW_DATA: "Finsemble.Workspace.SaveViewData",
+        GET_GLOBAL_DATA: "Finsemble.Workspace.GetGlobalData",
+        GET_VIEW_DATA: "Finsemble.Workspace.GetViewData",
+        GET_WORKSPACES: "Finsemble.Workspace.GetWorkspaces",
+        GET_WORKSPACE_NAMES: "Finsemble.Workspace.GetWorkspaceNames",
+        SET_WORKSPACE_ORDER: "Finsemble.Workspace.SetWorkspaceOrder",
+        GET_ACTIVE_WORKSPACE: "Finsemble.Workspace.GetActiveWorkspace",
+        SET_ACTIVEWORKSPACE_DIRTY: "Finsemble.Workspace.SetActiveWorkspaceDirty",
+        GET_TEMPLATES: "Finsemble.Workspace.GetTemplates",
+        IMPORT_TEMPLATE: "Finsemble.Workspace.ImportTemplate",
+        EXPORT_TEMPLATE: "Finsemble.Workspace.ExportTemplate",
+        REMOVE_TEMPLATE: "Finsemble.Workspace.RemoveTemplate",
+        SET_WINDOW_STATE: "Finsemble.Workspace.SetWindowData",
+        GET_WINDOW_STATE: "Finsemble.Workspace.GetWindowData",
+        ADD_WINDOW: "WorkspaceService.addWindow",
+        REMOVE_WINDOW: "WorkspaceService.removeWindow",
+    }
+};
+exports.COMPONENT_STATE_STORAGE_TOPIC = "finsemble.componentStateStorage";
+exports.HEARTBEAT_TIMEOUT_CHANNEL = "Finsemble.WindowService.HeartbeatTimeout";
+exports.LAUNCHER_SERVICE = {
+    WINDOW_CLOSED: "LauncherService.WindowClosed"
+};
+exports.DELIVERY_MECHANISM = {
+    PRELOAD: 'preload',
+    INJECTION: 'injection',
+};
+exports.MOVE_REASON = {
+    AERO_KEY: "aero_key",
+    SYSTEM_RESTORED: "system_restored"
+};
+
+
+/***/ }),
+/* 11 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -8211,109 +8572,6 @@ const ConfigUtilInstance = new ConfigUtil();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 11 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.WRAPPERS = {
-    /*
-        TODO: For the time being these are just events our windows fire but not OpenFin (this is used in the OF wrapper. Long term we might have to reverse this)
-        TODO: Event naming is inconsistent. Our events should not be camel case to maintain consistency.
-    */
-    EVENTS: ["title-changed", "bringToFront", "setBounds", "alwaysOnTop", "setOpacity"]
-};
-exports.APPLICATION_STATE_CHANNEL = "Finsemble.Application.State";
-//These next four channels are used in service => service manager communication. The SM receives these messages and then pushes out state updates to the rest of the system.
-exports.SERVICE_INITIALIZING_CHANNEL = "Finsemble.ServiceManager.serviceInitializing";
-exports.SERVICE_READY_CHANNEL = "Finsemble.ServiceManager.serviceReady";
-exports.SERVICE_CLOSING_CHANNEL = "Finsemble.ServiceManager.serviceClosing";
-exports.SERVICE_CLOSED_CHANNEL = "Finsemble.ServiceManager.serviceClosed";
-//This channel is where the aggregated state of all services is sent out on.
-exports.SERVICES_STATE_CHANNEL = "Finsemble.State.Services";
-exports.WINDOWSTATE = {
-    NORMAL: 0,
-    MINIMIZED: 1,
-    MAXIMIZED: 2,
-    HIDDEN: 3
-};
-//These channels are to start and stop services dynamically.
-exports.SERVICE_START_CHANNEL = "Finsemble.Service.Start";
-exports.SERVICE_STOP_CHANNEL = "Finsemble.Service.Stop";
-exports.DOCKING = {
-    GROUP_UPDATE: "DockingService.groupUpdate",
-    // For legacy reasons, this is named Workspace, even though it's generated by docking.
-    WORKSPACE_GROUP_UPDATE: "Finsemble.WorkspaceService.groupUpdate",
-};
-// These channels are for interrupting events
-exports.EVENT_INTERRUPT_CHANNEL = "Finsemble.Event.Interrupt";
-exports.INTERRUPTIBLE_EVENTS = ["close-requested", "closed", "close-complete", "_container-close-handlers"];
-exports.REMOTE_FOCUS = "WindowService.remoteFocus";
-exports.WORKSPACE = {
-    CLEAN_SHUTDOWN: "Finsemble.Workspace.cleanShutdown",
-    UPDATE_PUBSUB: "Finsemble.WorkspaceService.update",
-    STORAGE_TOPIC: "finsemble.workspace",
-    CACHE_STORAGE_TOPIC: "finsemble.workspace.cache",
-    ALL_WORKSPACES: "finsemble.allWorkspaces",
-    ACTIVE_WORKSPACE: "activeWorkspace",
-    // When we have the liberty of breaking API's, we should consolidate this topic.
-    LAST_USED_WORKSPACE_TOPIC: "finsemble",
-    LAST_USED_WORKSPACE: "finsemble.lastUsedWorkspace",
-    INITIAL_WORKSPACE_PREFERENCE: "finsemble.initialWorkspace",
-    PUBLISH_REASONS: {
-        INIT: "workspace:initialization",
-        LOAD_DATA_RETRIEVED: "workspace:load:dataRetrieved",
-        LOAD_FINISHED: "workspace:load:finished",
-        WINDOW_REMOVED: "window:remove",
-        WINDOW_ADDED: "window:add",
-        LOAD_STARTED: "workspace:load:start",
-        WORKSPACE_REMOVED: "Workspace:remove",
-        WORKSPACE_RENAMED: "rename",
-        SWITCHTO_TERMINATED: "workspace:switchTo:terminated",
-        NEW_WORKSPACE: "new workspace",
-        SAVE_AS: "APPLICATION LIFECYCLE:WORKSPACE LIFECYCLE:SaveAs:Workspace:Save As",
-    },
-    API_CHANNELS: {
-        NEW_WORKSPACE: "Finsemble.Workspace.NewWorkspace",
-        SAVE: "Finsemble.Workspace.Save",
-        RENAME: "Finsemble.Workspace.Rename",
-        SAVE_AS: "Finsemble.Workspace.SaveAs",
-        SWITCH_TO: "Finsemble.Workspace.SwitchTo",
-        IMPORT: "Finsemble.Workspace.Import",
-        EXPORT: "Finsemble.Workspace.Export",
-        REMOVE: "Finsemble.Workspace.Remove",
-        SAVE_GLOBAL_DATA: "Finsemble.Workspace.SaveGlobalData",
-        SAVE_VIEW_DATA: "Finsemble.Workspace.SaveViewData",
-        GET_GLOBAL_DATA: "Finsemble.Workspace.GetGlobalData",
-        GET_VIEW_DATA: "Finsemble.Workspace.GetViewData",
-        GET_WORKSPACES: "Finsemble.Workspace.GetWorkspaces",
-        GET_WORKSPACE_NAMES: "Finsemble.Workspace.GetWorkspaceNames",
-        SET_WORKSPACE_ORDER: "Finsemble.Workspace.SetWorkspaceOrder",
-        GET_ACTIVE_WORKSPACE: "Finsemble.Workspace.GetActiveWorkspace",
-        SET_ACTIVEWORKSPACE_DIRTY: "Finsemble.Workspace.SetActiveWorkspaceDirty",
-        GET_TEMPLATES: "Finsemble.Workspace.GetTemplates",
-        IMPORT_TEMPLATE: "Finsemble.Workspace.ImportTemplate",
-        EXPORT_TEMPLATE: "Finsemble.Workspace.ExportTemplate",
-        REMOVE_TEMPLATE: "Finsemble.Workspace.RemoveTemplate",
-        SET_WINDOW_STATE: "Finsemble.Workspace.SetWindowData",
-        GET_WINDOW_STATE: "Finsemble.Workspace.GetWindowData",
-        ADD_WINDOW: "WorkspaceService.addWindow",
-        REMOVE_WINDOW: "WorkspaceService.removeWindow",
-    }
-};
-exports.COMPONENT_STATE_STORAGE_TOPIC = "finsemble.componentStateStorage";
-exports.HEARTBEAT_TIMEOUT_CHANNEL = "Finsemble.WindowService.HeartbeatTimeout";
-exports.LAUNCHER_SERVICE = {
-    WINDOW_CLOSED: "LauncherService.WindowClosed"
-};
-exports.DELIVERY_MECHANISM = {
-    PRELOAD: 'preload',
-    INJECTION: 'injection',
-};
-
-
-/***/ }),
 /* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -8386,6 +8644,12 @@ EventEmitter.prototype._maxListeners = undefined;
 // added to it. This is a useful default which helps finding memory leaks.
 var defaultMaxListeners = 10;
 
+function checkListener(listener) {
+  if (typeof listener !== 'function') {
+    throw new TypeError('The "listener" argument must be of type Function. Received type ' + typeof listener);
+  }
+}
+
 Object.defineProperty(EventEmitter, 'defaultMaxListeners', {
   enumerable: true,
   get: function() {
@@ -8420,14 +8684,14 @@ EventEmitter.prototype.setMaxListeners = function setMaxListeners(n) {
   return this;
 };
 
-function $getMaxListeners(that) {
+function _getMaxListeners(that) {
   if (that._maxListeners === undefined)
     return EventEmitter.defaultMaxListeners;
   return that._maxListeners;
 }
 
 EventEmitter.prototype.getMaxListeners = function getMaxListeners() {
-  return $getMaxListeners(this);
+  return _getMaxListeners(this);
 };
 
 EventEmitter.prototype.emit = function emit(type) {
@@ -8479,9 +8743,7 @@ function _addListener(target, type, listener, prepend) {
   var events;
   var existing;
 
-  if (typeof listener !== 'function') {
-    throw new TypeError('The "listener" argument must be of type Function. Received type ' + typeof listener);
-  }
+  checkListener(listener);
 
   events = target._events;
   if (events === undefined) {
@@ -8518,7 +8780,7 @@ function _addListener(target, type, listener, prepend) {
     }
 
     // Check for listener leak
-    m = $getMaxListeners(target);
+    m = _getMaxListeners(target);
     if (m > 0 && existing.length > m && !existing.warned) {
       existing.warned = true;
       // No error code for this since it is a Warning
@@ -8550,12 +8812,12 @@ EventEmitter.prototype.prependListener =
     };
 
 function onceWrapper() {
-  var args = [];
-  for (var i = 0; i < arguments.length; i++) args.push(arguments[i]);
   if (!this.fired) {
     this.target.removeListener(this.type, this.wrapFn);
     this.fired = true;
-    ReflectApply(this.listener, this.target, args);
+    if (arguments.length === 0)
+      return this.listener.call(this.target);
+    return this.listener.apply(this.target, arguments);
   }
 }
 
@@ -8568,18 +8830,14 @@ function _onceWrap(target, type, listener) {
 }
 
 EventEmitter.prototype.once = function once(type, listener) {
-  if (typeof listener !== 'function') {
-    throw new TypeError('The "listener" argument must be of type Function. Received type ' + typeof listener);
-  }
+  checkListener(listener);
   this.on(type, _onceWrap(this, type, listener));
   return this;
 };
 
 EventEmitter.prototype.prependOnceListener =
     function prependOnceListener(type, listener) {
-      if (typeof listener !== 'function') {
-        throw new TypeError('The "listener" argument must be of type Function. Received type ' + typeof listener);
-      }
+      checkListener(listener);
       this.prependListener(type, _onceWrap(this, type, listener));
       return this;
     };
@@ -8589,9 +8847,7 @@ EventEmitter.prototype.removeListener =
     function removeListener(type, listener) {
       var list, events, position, i, originalListener;
 
-      if (typeof listener !== 'function') {
-        throw new TypeError('The "listener" argument must be of type Function. Received type ' + typeof listener);
-      }
+      checkListener(listener);
 
       events = this._events;
       if (events === undefined)
@@ -8806,7 +9062,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const events_1 = __webpack_require__(12);
 const routerClientInstance_1 = __webpack_require__(5);
 const STARTUP_TIMEOUT_DURATION = 10000;
-const constants_1 = __webpack_require__(11);
+const constants_1 = __webpack_require__(10);
 /**
  * Small class to hold on to dependencies and callbacks. Also emits a timeout event that the startupManager is listening for. When it times out, the startupManager catches the event and generates a message that includes all of the offline clients and services. It then causes this class to emit an  err event that the baseService is listening for. This arrangement is set up for a couple of reasons.
  * 1. I can't use the logger in here because the logger uses the startupManager, and there'd be a circular dependency.
@@ -9266,9 +9522,12 @@ const logger_1 = __webpack_require__(0);
  * @introduction
  * <h2>Config Client</h2>
  *
- * This client provides run-time access to Finsemble's configuration. See the [Configuration tutorial](tutorial-Configuration.html) for a configuration overview.
- * The Config Client functions similar to a global store created with the DistributedStoreClient and offers many of the same methods.
+ * This client provides run-time access to Finsemble's configuration.
+ * The Config Client functions similar to a global store created with the Distributed Store Client and offers many of the same methods.
  * Values modified at runtime are not persisted.
+ *
+ *
+ * See the [Configuration tutorial](tutorial-Configuration.html) for a configuration overview.
  *
  * @hideconstructor
  * @constructor
@@ -9362,13 +9621,11 @@ class ConfigClient extends baseClient_1._BaseClient {
     }
     /**
      * Get a value from the config.
-     * @param {valueParam | String} params - Params object. This can also be a string
-     * @param {String} params.field - The field where the value is stored.
-     * @param {Function} cb -  Will return the value if found.
-     * @returns {any} - The value of the field. If no callback is given and the value is local, this will run synchronous
+     * @param {Function} cb Will return the value if found.
+     * @returns {any} The value of the field. If no callback is given and the value is local, this will run synchronous
      * @example
-     * FSBL.Clients.ConfigClient.getValue({field:'field1'},function(err,value){});
-     * FSBL.Clients.ConfigClient.getValue('field1',function(err,value){});
+     * FSBL.Clients.ConfigClient.getValue({ field:'field1' }, function(err,value){ });
+     * FSBL.Clients.ConfigClient.getValue('field1', function(err,value){ });
      */
     getValue(params, cb = Function.prototype) {
         if (typeof params === "string") {
@@ -9394,13 +9651,12 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
      * Get multiple values from the config.
-    * @param {Object[] | String[]} fields - An array of field objects. If there are no fields provided, the complete configuration manifest are returned.
-     * @param {String} fields[].field - The name of the field
-     * @param {Function} cb -  Will return the value if found.
-     * @returns {Object} - returns an object of with the fields as keys.If no callback is given and the value is local, this will run synchronous
+    * @param {fieldOnlyParam[] | string[]} fields An array of field objects. If there are no fields provided, the complete configuration manifest is returned.
+     * @param {Function} cb Will return the value if found.
+     * @returns {Object} - Returns an object of with the fields as keys. If no callback is given and the value is local, this will run synchronous
      * @example
-     * FSBL.Clients.ConfigClient.getValues([{field:'field1'},{field2:'field2'}],function(err,values){});
-     * FSBL.Clients.ConfigClient.getValues(['field1','field2'],function(err,values){});
+     * FSBL.Clients.ConfigClient.getValues([{ field: 'field1' },{ field2: 'field2' }],function(err,values){ });
+     * FSBL.Clients.ConfigClient.getValues(['field1','field2'], function(err,values){ });
      * FSBL.Clients.ConfigClient.get(null, callback); // returns the complete manifest containing the finsemble property
     */
     getValues(fields, cb = Function.prototype) {
@@ -9426,15 +9682,12 @@ class ConfigClient extends baseClient_1._BaseClient {
     }
     ;
     /**
-     * Set a value in the config. Setting a value will trigger events that you can listen to using addListener
-     * @param {Object} params - Params object
-     * @param {String} params.field - The name of the field where data will be stored
-     * @param {any} params.value - Value to be stored
-     * @param {function} cb optional callback
+     * Set a value in the config. Setting a value will trigger events that you can listen to using <a href="ConfigClient.html#addListener">addListener</a>.
+     * @param {function} cb Optional callback
      * @returns {null}
      *
      * @example
-     * FSBL.Clients.ConfigClient.setValue({field:'field1',value:"new value"});
+     * FSBL.Clients.ConfigClient.setValue({ field:'field1', value:"new value" });
      */
     setValue(params, cb) {
         var data = {
@@ -9448,14 +9701,11 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
      * This will set multiple values in the config.
-     * @param {Object} fields - An Array of field objects
-     * @param {String} fields.field - The name of the field
-     * @param {any} fields.value - Field value
-     * @param {function} cb optional callback
+     * @param {function} cb Optional callback
      * @returns {null}
      *
      * @example
-     * FSBL.Clients.ConfigClient.setValues([{field:'field1',value:"new value"}]);
+     * FSBL.Clients.ConfigClient.setValues([{ field:'field1', value: "new value" }]);
      */
     setValues(fields, cb) {
         if (!fields) {
@@ -9471,11 +9721,10 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
      * Remove a value from the config.
-     * @param {Object | String} params - Either an object or string
-     * @param {String} param.field - The name of the field
-     * @param {Function} cb -  returns an error if there is one
+     * @param {fieldAndValueParam | String} params - Either an object or string
+     * @param {Function} cb -  Returns an error if there is one
      * @example
-     * FSBL.Clients.ConfigClient.removeValue({field:'field1'},function(err,bool){});
+     * FSBL.Clients.ConfigClient.removeValue({ field:'field1' }, function(err,bool){ });
      */
     removeValue(params, cb = Function.prototype) {
         if (params !== undefined) {
@@ -9492,10 +9741,13 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
      * Removes multiple values from the config.
-     * @param {Array.<Object>} params - An Array of field objects
-     * @param {Function} cb -  returns an error if there is one.
+     * @param {fieldAndValueParams} params - An Array of field objects
+     * @param {Function} cb -  Returns an error if there is one.
      * @example
-     * FSBL.Clients.ConfigClient.removeValue({field:'field1'},function(err,bool){});
+     * FSBL.Clients.ConfigClient.removeValues([{
+     * 	field:'field1'
+     * }],
+     * function(err,bool){	});
      */
     removeValues(params, cb = Function.prototype) {
         if (!Array.isArray(params)) {
@@ -9509,19 +9761,17 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
     * Add a listener to the config at either the root config level or field level. If no field is given, the root config level is used. You can also listen for changes to config fields any number of levels deep -- finsemble.configitem.deeperconfigitem.evendeeperconfigitem
-    * @param {Object} params - Params object
-    * @param {String} params.field - The data field to listen for. If this is empty it listen to all changes of the store.
-    * @param {Function} fn -  the function to call when a listener is triggered
-    * @param {Function} cb - callback
+    * @param {Function} fn The function to be called when the observed piece of config is modified.
+    * @param {Function} cb Callback to be invoked after the listener is added.
     * @example
     * var myFunction = function(err,data){};
-    * FSBL.Clients.ConfigClient.addListener({field:'field1'},myFunction,cb);
+    * FSBL.Clients.ConfigClient.addListener({ field:'field1' }, myFunction, cb);
     */
     addListener(params, fn, cb) {
         var field = null;
         if (typeof params === "function") {
             fn = params;
-            params = {};
+            params = { field };
         }
         if (params.field) {
             field = params.field;
@@ -9539,13 +9789,9 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
      *
-    * Add an array of listeners as objects or strings. If using strings, you must provide a function callback.
-    * @param {Object | Array.<Object>} params - Params object
-    * @param {String} params[].field - The data field to listen for.
-    * @param {String} params[].listener - the function to call when a listener is triggered. If this is empty, fn is used.
-    * @param {function} fn -  the function to call when a listener is triggered
-    * @param {function} cb
-    * @todo make the typing proper.
+    * Add an array of listeners as objects or strings. If using strings, you must provide a function callback as the second parameter.
+    * @param {function} fn The function to be called when the observed piece of config is modified.
+    * @param {function} cb Callback to be invoked after the listeners are added.
     * @example
     * var myFunction = function(err,data){}
   * FSBL.Clients.ConfigClient.addListeners(
@@ -9567,7 +9813,7 @@ class ConfigClient extends baseClient_1._BaseClient {
     */
     addListeners(params, fn, cb) {
         if (!Array.isArray(params)) {
-            return this.addListener(params, fn, cb);
+            return this.addListener({ field: params.field }, fn, cb);
         }
         for (var i = 0; i < params.length; i++) {
             var field = null;
@@ -9599,22 +9845,23 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
      * Remove a listener from config. If no field is given, we look for a config root listener
-     * @param {Object} params - Params object
-     * @param {String} [params.field] - The data field
-     * @param {function} [fn] -  the function to remove from the listeners
-     * @param {function} [cb] -  returns true if it was successful in removing the listener.
+     * @param {function} fn The listener to remove.
+     * @param {function} cb Returns true if it was successful in removing the listener.
      *
      * @example
-     * var myFunction = function(err,data){}
-     * FSBL.Clients.ConfigClient.removeListener({field:'field1'},MyFunction,function(bool){});
-     * FSBL.Clients.ConfigClient.removeListener(MyFunction,function(bool){});
+     * var myFunction = function(err,data){ }
+     * FSBL.Clients.ConfigClient.removeListener({
+     * 	field:'field1'
+     * }, MyFunction, function(bool){ });
+     * FSBL.Clients.ConfigClient.removeListener(MyFunction, function(bool){ });
      */
     removeListener(params, fn, cb) {
         var field = null;
+        // The case below is for removing the root level config listener
         if (typeof params === "function") {
             cb = fn;
             fn = params;
-            params = {};
+            params = { field };
         }
         if (params.field) {
             field = params.field;
@@ -9633,20 +9880,21 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
      * Remove an array of listeners from the config
-     * @param {Object | Array.<Object>} params - Params object
-     * @param {String} params.field - The data field to listen for. If this is empty it listen to all changes of the store.
-     * @param {function} params.listener - The listener function
-     * @param {function} [fn] -  the function to remove from the listeners
-     * @param {function} [cb] -  returns true if it was successful in removing the listener.
+     * @param {removeListenersType} params
+     * @param {function} fn The listener to remove
+     * @param {function} cb Returns true if it was successful in removing the listener.
      *
      * @example
      * var myFunction = function(err,data){ }
-     * FSBL.Clients.ConfigClient.removeListeners({field:'field1'},MyFunction,function(bool){});
-     * FSBL.Clients.ConfigClient.removeListeners([{field:'field1',listener:MyFunction}],function(bool){});
-     * FSBL.Clients.ConfigClient.removeListeners(['field1'],MyFunction,function(bool){});
+     * FSBL.Clients.ConfigClient.removeListeners({
+     * 	field: 'field1'
+     * }, MyFunction, function(bool){ });
+     * FSBL.Clients.ConfigClient.removeListeners([{ field:'field1', listener: MyFunction }], function(bool){ });
+     * FSBL.Clients.ConfigClient.removeListeners(['field1'], MyFunction, function(bool) { });
      */
     removeListeners(params, fn, cb) {
         if (!Array.isArray(params)) {
+            // The typecasting below is bad but it prevents build problems. We should tighten the APIs.
             if (typeof params === "function") {
                 this.removeListener({}, params, cb);
             }
@@ -9700,7 +9948,7 @@ class ConfigClient extends baseClient_1._BaseClient {
      * @private
      * @example
      *
-     * FSBL.Clients.ConfigClient.get({ field: "finsemble" },function(err, finsemble) {
+     * FSBL.Clients.ConfigClient.get({ field: "finsemble" }, function(err, finsemble) {
      *		if (!err) {
      *			finsembleConfig = finsemble;
      *		} else {
@@ -9717,9 +9965,9 @@ class ConfigClient extends baseClient_1._BaseClient {
      * FSBL.Clients.ConfigClient.get({}, callback); // alternate form; returns the complete manifest containing the finsemble property
      * FSBL.Clients.ConfigClient.get({ field: "finsemble.components" }, callback);
      * FSBL.Clients.ConfigClient.get({ field: "finsemble.services" }, callback);
-     * FSBL.Clients.ConfigClient.get({ field: "finsemble.components" },callback);
-     * FSBL.Clients.ConfigClient.get({ field: "finsemble.assimilation.whitelist" }, callback);
-     * FSBL.Clients.ConfigClient.get({ field: "runtime.version",callback) }; // returns the manifest's runtime.version property
+     * FSBL.Clients.ConfigClient.get({ field: "finsemble.components" }, callback);
+     * FSBL.Clients.ConfigClient.get({ field: "finsemble.assimilation" }, callback);
+     * FSBL.Clients.ConfigClient.get({ field: "runtime.version", callback) }; // returns the manifest's runtime.version property
      */
     get(params, callback) {
         logger_1.default.system.debug("ConfigClient.Get", params);
@@ -9739,20 +9987,20 @@ class ConfigClient extends baseClient_1._BaseClient {
     }
     ;
     /**
-     * Dynamically set config values within the Finsemble configuration.  New config properties may be set or existing ones modified. Note that configuration changes will not necessarily dynamically modify the components or services that use the corresponding configuration -- it depends if the component or service handles the corresponding change notifications (either though PubSub or the Config's DataStore). Also, these changes do not persist in any config files.)
+     * Dynamically set config values within the Finsemble configuration.  New config properties may be set or existing ones modified. Note that configuration changes will not necessarily dynamically modify the components or services that use the corresponding configuration -- it depends if the component or service handles the corresponding change notifications (either though PubSub or the Config's DataStore). Also, these changes do not persist in any config files.
      *
-     * Special Note: Anytime config is set using this API, the newConfig along with the updated manifest will by published to the PubSub topic "Config.changeNotification".  To get these notifications any component or service can subscribe to the topic. An example is shown below.
+     * <b>Note</b>: Anytime config is set using this API, the newConfig along with the updated manifest will by published to the PubSub topic "Config.changeNotification".  To get these notifications any component or service can subscribe to the topic. An example is shown below.
      *
-     * Special Note: Anytime config is set using this API, the dataStore underlying configuration 'Finsemble-Configuration-Store' will also be updated. To get these dataStore events a listener can be set as shown in the example below. However, any config modifications made directly though the DataStore will not result in corresponding PubSub notifications.
+     * <b>Note</b>: Anytime config is set using this API, the dataStore underlying configuration 'Finsemble-Configuration-Store' will also be updated. To get these dataStore events a listener can be set as shown in the example below. However, any config modifications made directly though the DataStore will not result in corresponding PubSub notifications.
      *
      * @param {object} params
-     * @param {object} params.newConfig provides the configuration properties to add into the existing configuration under manifest.finsemble. This config must match the Finsemble config requirements as described in [Understanding Finsemble's Configuration]{@tutorial Configuration}. It can include importConfig references to dynamically fetch additional configuration files.
-     * @param {boolean} params.overwrite if true then overwrite any preexisting config with new config (can only set to true when running from same origin, not cross-domain); if false then newConfig must not match properties of existing config, including service and component configuration.
-     * @param {boolean} params.replace true specifies any component or service definitions in the new config will place all existing non-system component and service configuration
-     * @param {function} cb callback to be invoked upon task completion.
+     * @param {object} params.newConfig Provides the configuration properties to add into the existing configuration under manifest.finsemble. This config must match the Finsemble config requirements as described in the [Configuration tutorial]{@tutorial Configuration}. It can include importConfig references to dynamically fetch additional configuration files.
+     * @param {boolean} params.overwrite If true then overwrite any preexisting config with new config (can only set to true when running from same origin, not cross-domain); if false then newConfig must not match properties of existing config, including service and component configuration.
+     * @param {boolean} params.replace True specifies any component or service definitions in the new config will place all existing non-system component and service configuration
+     * @param {StandardCallback} callback Callback to be invoked upon task completion.
      * @example
      * // Examples using processAndSet()
-     * FSBL.Clients.ConfigClient.processAndSet({ newConfig: { myNewConfigField: 12345 }, overwrite: false});
+     * FSBL.Clients.ConfigClient.processAndSet({ newConfig: { myNewConfigField: 12345 }, overwrite: false });
      * FSBL.Clients.ConfigClient.processAndSet(
      * {
      *	newConfig: {
@@ -9812,12 +10060,13 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
      * Sets a value on the configStore and persists that value to storage. On application restart, this value will overwrite any application defaults.
-     * @param {Object} params - Params object
-     * @param {String} params.field - The name of the field where data will be stored
-     * @param {any} params.value - Value to be stored
-     * @param {function} callback - callback to be invoked when preferences have been retrieved from the service.
+     * @param {fieldAndValueParam} params
+     * @param {StandardCallback} callback Callback to be invoked when callback to be invoked when preferences have been retrieved from the service.
      * @example
-     * FSBL.Clients.ConfigClient.setPreference({field: "finsemble.initialWorkspace", value: "Workspace 2" }, (err, response) => {
+     * FSBL.Clients.ConfigClient.setPreference({
+     * 	field: "finsemble.initialWorkspace",
+     * 	value: "Workspace 2"
+     * }, (err, response) => {
      * 		//preference has been set
      * });
      */
@@ -9831,10 +10080,10 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
      * Retrieves all of the preferences set for the application.
-     * @param {Object} params - parameters to pass to getPreferences. Optional. Defaults to null and currently ignored.
-     * @param {function} callback - callback to be invoked when preferences have been retrieved from the service.
+     * @param {Object} params Parameters to pass to getPreferences. Optional. Defaults to null and currently ignored.
+     * @param {StandardCallback} callback Callback to be invoked when preferences have been retrieved from the service.
      * @example
-     * FSBL.Clients.ConfigClient.getPreferences((err, preferences)=>{
+     * FSBL.Clients.ConfigClient.getPreferences((err, preferences)=> {
      * 		//use preferences.
      * });
      */
@@ -10134,7 +10383,7 @@ module.exports = v1;
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__configUtil__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__configUtil__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__common_system__);
 /*!
@@ -10151,7 +10400,19 @@ var ConfigClient = null;
 "use strict";
 
 /**
- * @hideConstructor true
+ * @introduction
+ * <h2>Notification Client</h2>
+ *
+ * Finsemble makes use of pop up (toast) notifications for communicating information to the end user in a gentler way than modal dialogs.
+ * Use the Notification API to route messages so that your components can create these notifications.
+ *
+ *
+ * Notifications are called from `FSBL.UserNotification.alert`.
+ *
+ *
+ * See the [Notifications tutorial](tutorial-Notifications.html) for an overview.
+ *
+ * @hideconstructor
  * @constructor
  */
 var UserNotification = function () {
@@ -10182,19 +10443,19 @@ var UserNotification = function () {
 	/**
   * Conditionally alerts the end user using a desktop notification.
   *
-  * @param {string} topic specifies a category for the notification. Topic is currently unused, but in the future it will be used to filter notifications (e.g. applying regEx's defined in config to determine which notifications are displayed). Any topic string can be specified; however "system" is the recommended topic for system notifications applicable both to end uses and to developers. "dev" is the recommended topic for notifications applicable only during development (e.g. a notification that config.json has an illegal value).
-  * @param {string} frequency Either "ALWAYS", "ONCE-SINCE-STARTUP", or "MAX-COUNT" to determine if alert should be displayed. Note, the frequencies are based on the number of notifications emitted from a window (as opposed to system wide.)
-  * @param {string} identifier uniquely identifies this specific notification message. Used when "frequency" is set to "ONCE-SINCE-STARTUP" or "MAX-COUNT"
-  * @param {any} message message to display in the notification. Typically a string. Finsemble's built in templating accepts and object. See src-built-in/components/notification/notification.html.
+  * @param {string} topic Specifies a category for the notification. Topic is currently unused, but in the future it will be used to filter notifications (e.g., applying regEx's defined in config to determine which notifications are displayed). Any topic string can be specified; however "system" is the recommended topic for system notifications applicable both to end uses and to developers. "dev" is the recommended topic for notifications applicable only during development (e.g., a notification that <i>config.json</i> has an illegal value).
+  * @param {string} frequency Either "ALWAYS", "ONCE-SINCE-STARTUP", or "MAX-COUNT" to determine if alert should be displayed. Note, the frequencies are based on the number of notifications emitted from a window (as opposed to system wide).
+  * @param {string} identifier Uniquely identifies this specific notification message. Used when "frequency" is set to "ONCE-SINCE-STARTUP" or "MAX-COUNT".
+  * @param {any} message Message to display in the notification. Typically a string. Finsemble's built in templating accepts and object. See <i>../src-built-in/components/notification/notification.html<i>.
   * @param {object=} params
-  * @param {number} params.maxCount specifies the max number of notifications to display for specified identifier when frequency="MAX-COUNT" (default is 1)
-  * @param {number} params.duration time in milliseconds before auto-dismissing the notification (defaults to 24 hours)
-  * @param {number} params.url the URL for for notification HTML. If not provided then the system default will be used. Defaults to Finsemble's built-in version at "/finsemble/components/system/notification/notification.html".
+  * @param {number} params.maxCount Specifies the max number of notifications to display for specified identifier when frequency="MAX-COUNT" (default is 1).
+  * @param {number} params.duration Time in milliseconds before auto-dismissing the notification (defaults to 24 hours).
+  * @param {number} params.url The URL for for notification HTML. If not provided then the system default will be used. Defaults to Finsemble's built-in version at <i>"../components/system/notification/notification.html"</i>.
   *
   * @example
-  *		FSBL.UserNotification.alert("system", "ONCE-SINCE-STARTUP", "MANIFEST-Error", message);
- *		FSBL.UserNotification.alert("dev", "ALWAYS", "Config-Error", message, { url: notificationURL, duration: 1000 * 5 });
- *		FSBL.UserNotification.alert("dev", "MAX-COUNT", "Transport-Failure", message, { url: notificationURL, maxCount: 2 });
+  * FSBL.UserNotification.alert("system", "ONCE-SINCE-STARTUP", "MANIFEST-Error", message);
+  * FSBL.UserNotification.alert("dev", "ALWAYS", "Config-Error", message, { url: notificationURL, duration: 1000 * 5 });
+  * FSBL.UserNotification.alert("dev", "MAX-COUNT", "Transport-Failure", message, { url: notificationURL, maxCount: 2 });
  */
 
 	this.alert = function (topic, frequency, identifier, message, params) {
@@ -10264,7 +10525,8 @@ var UserNotification = function () {
 
 /***/ }),
 /* 21 */,
-/* 22 */
+/* 22 */,
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -10710,8 +10972,945 @@ module.exports = throttle;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
-/* 23 */,
 /* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {/**
+ * lodash (Custom Build) <https://lodash.com/>
+ * Build: `lodash modularize exports="npm" -o ./`
+ * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+ * Released under MIT license <https://lodash.com/license>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ */
+
+/** Used as the `TypeError` message for "Functions" methods. */
+var FUNC_ERROR_TEXT = 'Expected a function';
+
+/** Used to stand-in for `undefined` hash values. */
+var HASH_UNDEFINED = '__lodash_hash_undefined__';
+
+/** Used as references for various `Number` constants. */
+var INFINITY = 1 / 0;
+
+/** `Object#toString` result references. */
+var funcTag = '[object Function]',
+    genTag = '[object GeneratorFunction]',
+    symbolTag = '[object Symbol]';
+
+/** Used to match property names within property paths. */
+var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\\]|\\.)*?\1)\]/,
+    reIsPlainProp = /^\w*$/,
+    reLeadingDot = /^\./,
+    rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|$))/g;
+
+/**
+ * Used to match `RegExp`
+ * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
+ */
+var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
+
+/** Used to match backslashes in property paths. */
+var reEscapeChar = /\\(\\)?/g;
+
+/** Used to detect host constructors (Safari). */
+var reIsHostCtor = /^\[object .+?Constructor\]$/;
+
+/** Detect free variable `global` from Node.js. */
+var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
+
+/** Detect free variable `self`. */
+var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+
+/** Used as a reference to the global object. */
+var root = freeGlobal || freeSelf || Function('return this')();
+
+/**
+ * Gets the value at `key` of `object`.
+ *
+ * @private
+ * @param {Object} [object] The object to query.
+ * @param {string} key The key of the property to get.
+ * @returns {*} Returns the property value.
+ */
+function getValue(object, key) {
+  return object == null ? undefined : object[key];
+}
+
+/**
+ * Checks if `value` is a host object in IE < 9.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
+ */
+function isHostObject(value) {
+  // Many host objects are `Object` objects that can coerce to strings
+  // despite having improperly defined `toString` methods.
+  var result = false;
+  if (value != null && typeof value.toString != 'function') {
+    try {
+      result = !!(value + '');
+    } catch (e) {}
+  }
+  return result;
+}
+
+/** Used for built-in method references. */
+var arrayProto = Array.prototype,
+    funcProto = Function.prototype,
+    objectProto = Object.prototype;
+
+/** Used to detect overreaching core-js shims. */
+var coreJsData = root['__core-js_shared__'];
+
+/** Used to detect methods masquerading as native. */
+var maskSrcKey = (function() {
+  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
+  return uid ? ('Symbol(src)_1.' + uid) : '';
+}());
+
+/** Used to resolve the decompiled source of functions. */
+var funcToString = funcProto.toString;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Used to resolve the
+ * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var objectToString = objectProto.toString;
+
+/** Used to detect if a method is native. */
+var reIsNative = RegExp('^' +
+  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
+  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
+);
+
+/** Built-in value references. */
+var Symbol = root.Symbol,
+    splice = arrayProto.splice;
+
+/* Built-in method references that are verified to be native. */
+var Map = getNative(root, 'Map'),
+    nativeCreate = getNative(Object, 'create');
+
+/** Used to convert symbols to primitives and strings. */
+var symbolProto = Symbol ? Symbol.prototype : undefined,
+    symbolToString = symbolProto ? symbolProto.toString : undefined;
+
+/**
+ * Creates a hash object.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function Hash(entries) {
+  var index = -1,
+      length = entries ? entries.length : 0;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+/**
+ * Removes all key-value entries from the hash.
+ *
+ * @private
+ * @name clear
+ * @memberOf Hash
+ */
+function hashClear() {
+  this.__data__ = nativeCreate ? nativeCreate(null) : {};
+}
+
+/**
+ * Removes `key` and its value from the hash.
+ *
+ * @private
+ * @name delete
+ * @memberOf Hash
+ * @param {Object} hash The hash to modify.
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function hashDelete(key) {
+  return this.has(key) && delete this.__data__[key];
+}
+
+/**
+ * Gets the hash value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf Hash
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function hashGet(key) {
+  var data = this.__data__;
+  if (nativeCreate) {
+    var result = data[key];
+    return result === HASH_UNDEFINED ? undefined : result;
+  }
+  return hasOwnProperty.call(data, key) ? data[key] : undefined;
+}
+
+/**
+ * Checks if a hash value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf Hash
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function hashHas(key) {
+  var data = this.__data__;
+  return nativeCreate ? data[key] !== undefined : hasOwnProperty.call(data, key);
+}
+
+/**
+ * Sets the hash `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf Hash
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the hash instance.
+ */
+function hashSet(key, value) {
+  var data = this.__data__;
+  data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
+  return this;
+}
+
+// Add methods to `Hash`.
+Hash.prototype.clear = hashClear;
+Hash.prototype['delete'] = hashDelete;
+Hash.prototype.get = hashGet;
+Hash.prototype.has = hashHas;
+Hash.prototype.set = hashSet;
+
+/**
+ * Creates an list cache object.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function ListCache(entries) {
+  var index = -1,
+      length = entries ? entries.length : 0;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+/**
+ * Removes all key-value entries from the list cache.
+ *
+ * @private
+ * @name clear
+ * @memberOf ListCache
+ */
+function listCacheClear() {
+  this.__data__ = [];
+}
+
+/**
+ * Removes `key` and its value from the list cache.
+ *
+ * @private
+ * @name delete
+ * @memberOf ListCache
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function listCacheDelete(key) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  if (index < 0) {
+    return false;
+  }
+  var lastIndex = data.length - 1;
+  if (index == lastIndex) {
+    data.pop();
+  } else {
+    splice.call(data, index, 1);
+  }
+  return true;
+}
+
+/**
+ * Gets the list cache value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf ListCache
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function listCacheGet(key) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  return index < 0 ? undefined : data[index][1];
+}
+
+/**
+ * Checks if a list cache value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf ListCache
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function listCacheHas(key) {
+  return assocIndexOf(this.__data__, key) > -1;
+}
+
+/**
+ * Sets the list cache `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf ListCache
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the list cache instance.
+ */
+function listCacheSet(key, value) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  if (index < 0) {
+    data.push([key, value]);
+  } else {
+    data[index][1] = value;
+  }
+  return this;
+}
+
+// Add methods to `ListCache`.
+ListCache.prototype.clear = listCacheClear;
+ListCache.prototype['delete'] = listCacheDelete;
+ListCache.prototype.get = listCacheGet;
+ListCache.prototype.has = listCacheHas;
+ListCache.prototype.set = listCacheSet;
+
+/**
+ * Creates a map cache object to store key-value pairs.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function MapCache(entries) {
+  var index = -1,
+      length = entries ? entries.length : 0;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+/**
+ * Removes all key-value entries from the map.
+ *
+ * @private
+ * @name clear
+ * @memberOf MapCache
+ */
+function mapCacheClear() {
+  this.__data__ = {
+    'hash': new Hash,
+    'map': new (Map || ListCache),
+    'string': new Hash
+  };
+}
+
+/**
+ * Removes `key` and its value from the map.
+ *
+ * @private
+ * @name delete
+ * @memberOf MapCache
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function mapCacheDelete(key) {
+  return getMapData(this, key)['delete'](key);
+}
+
+/**
+ * Gets the map value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf MapCache
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function mapCacheGet(key) {
+  return getMapData(this, key).get(key);
+}
+
+/**
+ * Checks if a map value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf MapCache
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function mapCacheHas(key) {
+  return getMapData(this, key).has(key);
+}
+
+/**
+ * Sets the map `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf MapCache
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the map cache instance.
+ */
+function mapCacheSet(key, value) {
+  getMapData(this, key).set(key, value);
+  return this;
+}
+
+// Add methods to `MapCache`.
+MapCache.prototype.clear = mapCacheClear;
+MapCache.prototype['delete'] = mapCacheDelete;
+MapCache.prototype.get = mapCacheGet;
+MapCache.prototype.has = mapCacheHas;
+MapCache.prototype.set = mapCacheSet;
+
+/**
+ * Gets the index at which the `key` is found in `array` of key-value pairs.
+ *
+ * @private
+ * @param {Array} array The array to inspect.
+ * @param {*} key The key to search for.
+ * @returns {number} Returns the index of the matched value, else `-1`.
+ */
+function assocIndexOf(array, key) {
+  var length = array.length;
+  while (length--) {
+    if (eq(array[length][0], key)) {
+      return length;
+    }
+  }
+  return -1;
+}
+
+/**
+ * The base implementation of `_.get` without support for default values.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {Array|string} path The path of the property to get.
+ * @returns {*} Returns the resolved value.
+ */
+function baseGet(object, path) {
+  path = isKey(path, object) ? [path] : castPath(path);
+
+  var index = 0,
+      length = path.length;
+
+  while (object != null && index < length) {
+    object = object[toKey(path[index++])];
+  }
+  return (index && index == length) ? object : undefined;
+}
+
+/**
+ * The base implementation of `_.isNative` without bad shim checks.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a native function,
+ *  else `false`.
+ */
+function baseIsNative(value) {
+  if (!isObject(value) || isMasked(value)) {
+    return false;
+  }
+  var pattern = (isFunction(value) || isHostObject(value)) ? reIsNative : reIsHostCtor;
+  return pattern.test(toSource(value));
+}
+
+/**
+ * The base implementation of `_.toString` which doesn't convert nullish
+ * values to empty strings.
+ *
+ * @private
+ * @param {*} value The value to process.
+ * @returns {string} Returns the string.
+ */
+function baseToString(value) {
+  // Exit early for strings to avoid a performance hit in some environments.
+  if (typeof value == 'string') {
+    return value;
+  }
+  if (isSymbol(value)) {
+    return symbolToString ? symbolToString.call(value) : '';
+  }
+  var result = (value + '');
+  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+}
+
+/**
+ * Casts `value` to a path array if it's not one.
+ *
+ * @private
+ * @param {*} value The value to inspect.
+ * @returns {Array} Returns the cast property path array.
+ */
+function castPath(value) {
+  return isArray(value) ? value : stringToPath(value);
+}
+
+/**
+ * Gets the data for `map`.
+ *
+ * @private
+ * @param {Object} map The map to query.
+ * @param {string} key The reference key.
+ * @returns {*} Returns the map data.
+ */
+function getMapData(map, key) {
+  var data = map.__data__;
+  return isKeyable(key)
+    ? data[typeof key == 'string' ? 'string' : 'hash']
+    : data.map;
+}
+
+/**
+ * Gets the native function at `key` of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {string} key The key of the method to get.
+ * @returns {*} Returns the function if it's native, else `undefined`.
+ */
+function getNative(object, key) {
+  var value = getValue(object, key);
+  return baseIsNative(value) ? value : undefined;
+}
+
+/**
+ * Checks if `value` is a property name and not a property path.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @param {Object} [object] The object to query keys on.
+ * @returns {boolean} Returns `true` if `value` is a property name, else `false`.
+ */
+function isKey(value, object) {
+  if (isArray(value)) {
+    return false;
+  }
+  var type = typeof value;
+  if (type == 'number' || type == 'symbol' || type == 'boolean' ||
+      value == null || isSymbol(value)) {
+    return true;
+  }
+  return reIsPlainProp.test(value) || !reIsDeepProp.test(value) ||
+    (object != null && value in Object(object));
+}
+
+/**
+ * Checks if `value` is suitable for use as unique object key.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is suitable, else `false`.
+ */
+function isKeyable(value) {
+  var type = typeof value;
+  return (type == 'string' || type == 'number' || type == 'symbol' || type == 'boolean')
+    ? (value !== '__proto__')
+    : (value === null);
+}
+
+/**
+ * Checks if `func` has its source masked.
+ *
+ * @private
+ * @param {Function} func The function to check.
+ * @returns {boolean} Returns `true` if `func` is masked, else `false`.
+ */
+function isMasked(func) {
+  return !!maskSrcKey && (maskSrcKey in func);
+}
+
+/**
+ * Converts `string` to a property path array.
+ *
+ * @private
+ * @param {string} string The string to convert.
+ * @returns {Array} Returns the property path array.
+ */
+var stringToPath = memoize(function(string) {
+  string = toString(string);
+
+  var result = [];
+  if (reLeadingDot.test(string)) {
+    result.push('');
+  }
+  string.replace(rePropName, function(match, number, quote, string) {
+    result.push(quote ? string.replace(reEscapeChar, '$1') : (number || match));
+  });
+  return result;
+});
+
+/**
+ * Converts `value` to a string key if it's not a string or symbol.
+ *
+ * @private
+ * @param {*} value The value to inspect.
+ * @returns {string|symbol} Returns the key.
+ */
+function toKey(value) {
+  if (typeof value == 'string' || isSymbol(value)) {
+    return value;
+  }
+  var result = (value + '');
+  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+}
+
+/**
+ * Converts `func` to its source code.
+ *
+ * @private
+ * @param {Function} func The function to process.
+ * @returns {string} Returns the source code.
+ */
+function toSource(func) {
+  if (func != null) {
+    try {
+      return funcToString.call(func);
+    } catch (e) {}
+    try {
+      return (func + '');
+    } catch (e) {}
+  }
+  return '';
+}
+
+/**
+ * Creates a function that memoizes the result of `func`. If `resolver` is
+ * provided, it determines the cache key for storing the result based on the
+ * arguments provided to the memoized function. By default, the first argument
+ * provided to the memoized function is used as the map cache key. The `func`
+ * is invoked with the `this` binding of the memoized function.
+ *
+ * **Note:** The cache is exposed as the `cache` property on the memoized
+ * function. Its creation may be customized by replacing the `_.memoize.Cache`
+ * constructor with one whose instances implement the
+ * [`Map`](http://ecma-international.org/ecma-262/7.0/#sec-properties-of-the-map-prototype-object)
+ * method interface of `delete`, `get`, `has`, and `set`.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Function
+ * @param {Function} func The function to have its output memoized.
+ * @param {Function} [resolver] The function to resolve the cache key.
+ * @returns {Function} Returns the new memoized function.
+ * @example
+ *
+ * var object = { 'a': 1, 'b': 2 };
+ * var other = { 'c': 3, 'd': 4 };
+ *
+ * var values = _.memoize(_.values);
+ * values(object);
+ * // => [1, 2]
+ *
+ * values(other);
+ * // => [3, 4]
+ *
+ * object.a = 2;
+ * values(object);
+ * // => [1, 2]
+ *
+ * // Modify the result cache.
+ * values.cache.set(object, ['a', 'b']);
+ * values(object);
+ * // => ['a', 'b']
+ *
+ * // Replace `_.memoize.Cache`.
+ * _.memoize.Cache = WeakMap;
+ */
+function memoize(func, resolver) {
+  if (typeof func != 'function' || (resolver && typeof resolver != 'function')) {
+    throw new TypeError(FUNC_ERROR_TEXT);
+  }
+  var memoized = function() {
+    var args = arguments,
+        key = resolver ? resolver.apply(this, args) : args[0],
+        cache = memoized.cache;
+
+    if (cache.has(key)) {
+      return cache.get(key);
+    }
+    var result = func.apply(this, args);
+    memoized.cache = cache.set(key, result);
+    return result;
+  };
+  memoized.cache = new (memoize.Cache || MapCache);
+  return memoized;
+}
+
+// Assign cache to `_.memoize`.
+memoize.Cache = MapCache;
+
+/**
+ * Performs a
+ * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+ * comparison between two values to determine if they are equivalent.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to compare.
+ * @param {*} other The other value to compare.
+ * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+ * @example
+ *
+ * var object = { 'a': 1 };
+ * var other = { 'a': 1 };
+ *
+ * _.eq(object, object);
+ * // => true
+ *
+ * _.eq(object, other);
+ * // => false
+ *
+ * _.eq('a', 'a');
+ * // => true
+ *
+ * _.eq('a', Object('a'));
+ * // => false
+ *
+ * _.eq(NaN, NaN);
+ * // => true
+ */
+function eq(value, other) {
+  return value === other || (value !== value && other !== other);
+}
+
+/**
+ * Checks if `value` is classified as an `Array` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an array, else `false`.
+ * @example
+ *
+ * _.isArray([1, 2, 3]);
+ * // => true
+ *
+ * _.isArray(document.body.children);
+ * // => false
+ *
+ * _.isArray('abc');
+ * // => false
+ *
+ * _.isArray(_.noop);
+ * // => false
+ */
+var isArray = Array.isArray;
+
+/**
+ * Checks if `value` is classified as a `Function` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a function, else `false`.
+ * @example
+ *
+ * _.isFunction(_);
+ * // => true
+ *
+ * _.isFunction(/abc/);
+ * // => false
+ */
+function isFunction(value) {
+  // The use of `Object#toString` avoids issues with the `typeof` operator
+  // in Safari 8-9 which returns 'object' for typed array and other constructors.
+  var tag = isObject(value) ? objectToString.call(value) : '';
+  return tag == funcTag || tag == genTag;
+}
+
+/**
+ * Checks if `value` is the
+ * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+ * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+ * @example
+ *
+ * _.isObject({});
+ * // => true
+ *
+ * _.isObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isObject(_.noop);
+ * // => true
+ *
+ * _.isObject(null);
+ * // => false
+ */
+function isObject(value) {
+  var type = typeof value;
+  return !!value && (type == 'object' || type == 'function');
+}
+
+/**
+ * Checks if `value` is object-like. A value is object-like if it's not `null`
+ * and has a `typeof` result of "object".
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+ * @example
+ *
+ * _.isObjectLike({});
+ * // => true
+ *
+ * _.isObjectLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isObjectLike(_.noop);
+ * // => false
+ *
+ * _.isObjectLike(null);
+ * // => false
+ */
+function isObjectLike(value) {
+  return !!value && typeof value == 'object';
+}
+
+/**
+ * Checks if `value` is classified as a `Symbol` primitive or object.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+ * @example
+ *
+ * _.isSymbol(Symbol.iterator);
+ * // => true
+ *
+ * _.isSymbol('abc');
+ * // => false
+ */
+function isSymbol(value) {
+  return typeof value == 'symbol' ||
+    (isObjectLike(value) && objectToString.call(value) == symbolTag);
+}
+
+/**
+ * Converts `value` to a string. An empty string is returned for `null`
+ * and `undefined` values. The sign of `-0` is preserved.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to process.
+ * @returns {string} Returns the string.
+ * @example
+ *
+ * _.toString(null);
+ * // => ''
+ *
+ * _.toString(-0);
+ * // => '-0'
+ *
+ * _.toString([1, 2, 3]);
+ * // => '1,2,3'
+ */
+function toString(value) {
+  return value == null ? '' : baseToString(value);
+}
+
+/**
+ * Gets the value at `path` of `object`. If the resolved value is
+ * `undefined`, the `defaultValue` is returned in its place.
+ *
+ * @static
+ * @memberOf _
+ * @since 3.7.0
+ * @category Object
+ * @param {Object} object The object to query.
+ * @param {Array|string} path The path of the property to get.
+ * @param {*} [defaultValue] The value returned for `undefined` resolved values.
+ * @returns {*} Returns the resolved value.
+ * @example
+ *
+ * var object = { 'a': [{ 'b': { 'c': 3 } }] };
+ *
+ * _.get(object, 'a[0].b.c');
+ * // => 3
+ *
+ * _.get(object, ['a', '0', 'b', 'c']);
+ * // => 3
+ *
+ * _.get(object, 'a.b.c', 'default');
+ * // => 'default'
+ */
+function get(object, path, defaultValue) {
+  var result = object == null ? undefined : baseGet(object, path);
+  return result === undefined ? defaultValue : result;
+}
+
+module.exports = get;
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+
+/***/ }),
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {/**
@@ -12566,7 +13765,7 @@ module.exports = isEqual;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(13)(module)))
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -12575,7 +13774,7 @@ module.exports = isEqual;
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 
-const deepEqual = __webpack_require__(24);
+const deepEqual = __webpack_require__(25);
 /** Singleton of the System class shared among all instances of Monitors
  * @TODO Refactor to instance member of class.
  */
@@ -12941,12 +14140,12 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__configUtil__ = __webpack_require__(10);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__configUtil__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system__ = __webpack_require__(3);
@@ -13500,7 +14699,7 @@ RouterTransport.addTransport("FinsembleTransport", RouterTransportImplementation
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13510,9 +14709,9 @@ RouterTransport.addTransport("FinsembleTransport", RouterTransportImplementation
 */
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const routerTransport_1 = __webpack_require__(26);
+const routerTransport_1 = __webpack_require__(27);
 const Utils = __webpack_require__(8);
-const configUtil_1 = __webpack_require__(10);
+const configUtil_1 = __webpack_require__(11);
 const validate_1 = __webpack_require__(6); // Finsemble args validator
 const userNotification_1 = __webpack_require__(20);
 const system_1 = __webpack_require__(3);
@@ -13910,7 +15109,6 @@ exports.RouterClientConstructor = function (params) {
         var responderCallback = map[queryMessage.header.channel];
         if (responderCallback === undefined) {
             Logger.system.warn("RouterClient: no query responder define on channel " + queryMessage.header.channel + " incoming from " + queryMessage.header.origin, queryMessage);
-            responderCallback(null, queryMessage); // invoke the callback (no error), queryMessage);
         }
         else {
             if (!queryMessage.header.error) {
@@ -14769,944 +15967,6 @@ exports.RouterClientConstructor = function (params) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 28 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {/**
- * lodash (Custom Build) <https://lodash.com/>
- * Build: `lodash modularize exports="npm" -o ./`
- * Copyright jQuery Foundation and other contributors <https://jquery.org/>
- * Released under MIT license <https://lodash.com/license>
- * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
- * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
- */
-
-/** Used as the `TypeError` message for "Functions" methods. */
-var FUNC_ERROR_TEXT = 'Expected a function';
-
-/** Used to stand-in for `undefined` hash values. */
-var HASH_UNDEFINED = '__lodash_hash_undefined__';
-
-/** Used as references for various `Number` constants. */
-var INFINITY = 1 / 0;
-
-/** `Object#toString` result references. */
-var funcTag = '[object Function]',
-    genTag = '[object GeneratorFunction]',
-    symbolTag = '[object Symbol]';
-
-/** Used to match property names within property paths. */
-var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\\]|\\.)*?\1)\]/,
-    reIsPlainProp = /^\w*$/,
-    reLeadingDot = /^\./,
-    rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|$))/g;
-
-/**
- * Used to match `RegExp`
- * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
- */
-var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
-
-/** Used to match backslashes in property paths. */
-var reEscapeChar = /\\(\\)?/g;
-
-/** Used to detect host constructors (Safari). */
-var reIsHostCtor = /^\[object .+?Constructor\]$/;
-
-/** Detect free variable `global` from Node.js. */
-var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
-
-/** Detect free variable `self`. */
-var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
-
-/** Used as a reference to the global object. */
-var root = freeGlobal || freeSelf || Function('return this')();
-
-/**
- * Gets the value at `key` of `object`.
- *
- * @private
- * @param {Object} [object] The object to query.
- * @param {string} key The key of the property to get.
- * @returns {*} Returns the property value.
- */
-function getValue(object, key) {
-  return object == null ? undefined : object[key];
-}
-
-/**
- * Checks if `value` is a host object in IE < 9.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
- */
-function isHostObject(value) {
-  // Many host objects are `Object` objects that can coerce to strings
-  // despite having improperly defined `toString` methods.
-  var result = false;
-  if (value != null && typeof value.toString != 'function') {
-    try {
-      result = !!(value + '');
-    } catch (e) {}
-  }
-  return result;
-}
-
-/** Used for built-in method references. */
-var arrayProto = Array.prototype,
-    funcProto = Function.prototype,
-    objectProto = Object.prototype;
-
-/** Used to detect overreaching core-js shims. */
-var coreJsData = root['__core-js_shared__'];
-
-/** Used to detect methods masquerading as native. */
-var maskSrcKey = (function() {
-  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
-  return uid ? ('Symbol(src)_1.' + uid) : '';
-}());
-
-/** Used to resolve the decompiled source of functions. */
-var funcToString = funcProto.toString;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * Used to resolve the
- * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
- * of values.
- */
-var objectToString = objectProto.toString;
-
-/** Used to detect if a method is native. */
-var reIsNative = RegExp('^' +
-  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
-  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
-);
-
-/** Built-in value references. */
-var Symbol = root.Symbol,
-    splice = arrayProto.splice;
-
-/* Built-in method references that are verified to be native. */
-var Map = getNative(root, 'Map'),
-    nativeCreate = getNative(Object, 'create');
-
-/** Used to convert symbols to primitives and strings. */
-var symbolProto = Symbol ? Symbol.prototype : undefined,
-    symbolToString = symbolProto ? symbolProto.toString : undefined;
-
-/**
- * Creates a hash object.
- *
- * @private
- * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
- */
-function Hash(entries) {
-  var index = -1,
-      length = entries ? entries.length : 0;
-
-  this.clear();
-  while (++index < length) {
-    var entry = entries[index];
-    this.set(entry[0], entry[1]);
-  }
-}
-
-/**
- * Removes all key-value entries from the hash.
- *
- * @private
- * @name clear
- * @memberOf Hash
- */
-function hashClear() {
-  this.__data__ = nativeCreate ? nativeCreate(null) : {};
-}
-
-/**
- * Removes `key` and its value from the hash.
- *
- * @private
- * @name delete
- * @memberOf Hash
- * @param {Object} hash The hash to modify.
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function hashDelete(key) {
-  return this.has(key) && delete this.__data__[key];
-}
-
-/**
- * Gets the hash value for `key`.
- *
- * @private
- * @name get
- * @memberOf Hash
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function hashGet(key) {
-  var data = this.__data__;
-  if (nativeCreate) {
-    var result = data[key];
-    return result === HASH_UNDEFINED ? undefined : result;
-  }
-  return hasOwnProperty.call(data, key) ? data[key] : undefined;
-}
-
-/**
- * Checks if a hash value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf Hash
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function hashHas(key) {
-  var data = this.__data__;
-  return nativeCreate ? data[key] !== undefined : hasOwnProperty.call(data, key);
-}
-
-/**
- * Sets the hash `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf Hash
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the hash instance.
- */
-function hashSet(key, value) {
-  var data = this.__data__;
-  data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
-  return this;
-}
-
-// Add methods to `Hash`.
-Hash.prototype.clear = hashClear;
-Hash.prototype['delete'] = hashDelete;
-Hash.prototype.get = hashGet;
-Hash.prototype.has = hashHas;
-Hash.prototype.set = hashSet;
-
-/**
- * Creates an list cache object.
- *
- * @private
- * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
- */
-function ListCache(entries) {
-  var index = -1,
-      length = entries ? entries.length : 0;
-
-  this.clear();
-  while (++index < length) {
-    var entry = entries[index];
-    this.set(entry[0], entry[1]);
-  }
-}
-
-/**
- * Removes all key-value entries from the list cache.
- *
- * @private
- * @name clear
- * @memberOf ListCache
- */
-function listCacheClear() {
-  this.__data__ = [];
-}
-
-/**
- * Removes `key` and its value from the list cache.
- *
- * @private
- * @name delete
- * @memberOf ListCache
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function listCacheDelete(key) {
-  var data = this.__data__,
-      index = assocIndexOf(data, key);
-
-  if (index < 0) {
-    return false;
-  }
-  var lastIndex = data.length - 1;
-  if (index == lastIndex) {
-    data.pop();
-  } else {
-    splice.call(data, index, 1);
-  }
-  return true;
-}
-
-/**
- * Gets the list cache value for `key`.
- *
- * @private
- * @name get
- * @memberOf ListCache
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function listCacheGet(key) {
-  var data = this.__data__,
-      index = assocIndexOf(data, key);
-
-  return index < 0 ? undefined : data[index][1];
-}
-
-/**
- * Checks if a list cache value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf ListCache
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function listCacheHas(key) {
-  return assocIndexOf(this.__data__, key) > -1;
-}
-
-/**
- * Sets the list cache `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf ListCache
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the list cache instance.
- */
-function listCacheSet(key, value) {
-  var data = this.__data__,
-      index = assocIndexOf(data, key);
-
-  if (index < 0) {
-    data.push([key, value]);
-  } else {
-    data[index][1] = value;
-  }
-  return this;
-}
-
-// Add methods to `ListCache`.
-ListCache.prototype.clear = listCacheClear;
-ListCache.prototype['delete'] = listCacheDelete;
-ListCache.prototype.get = listCacheGet;
-ListCache.prototype.has = listCacheHas;
-ListCache.prototype.set = listCacheSet;
-
-/**
- * Creates a map cache object to store key-value pairs.
- *
- * @private
- * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
- */
-function MapCache(entries) {
-  var index = -1,
-      length = entries ? entries.length : 0;
-
-  this.clear();
-  while (++index < length) {
-    var entry = entries[index];
-    this.set(entry[0], entry[1]);
-  }
-}
-
-/**
- * Removes all key-value entries from the map.
- *
- * @private
- * @name clear
- * @memberOf MapCache
- */
-function mapCacheClear() {
-  this.__data__ = {
-    'hash': new Hash,
-    'map': new (Map || ListCache),
-    'string': new Hash
-  };
-}
-
-/**
- * Removes `key` and its value from the map.
- *
- * @private
- * @name delete
- * @memberOf MapCache
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function mapCacheDelete(key) {
-  return getMapData(this, key)['delete'](key);
-}
-
-/**
- * Gets the map value for `key`.
- *
- * @private
- * @name get
- * @memberOf MapCache
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function mapCacheGet(key) {
-  return getMapData(this, key).get(key);
-}
-
-/**
- * Checks if a map value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf MapCache
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function mapCacheHas(key) {
-  return getMapData(this, key).has(key);
-}
-
-/**
- * Sets the map `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf MapCache
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the map cache instance.
- */
-function mapCacheSet(key, value) {
-  getMapData(this, key).set(key, value);
-  return this;
-}
-
-// Add methods to `MapCache`.
-MapCache.prototype.clear = mapCacheClear;
-MapCache.prototype['delete'] = mapCacheDelete;
-MapCache.prototype.get = mapCacheGet;
-MapCache.prototype.has = mapCacheHas;
-MapCache.prototype.set = mapCacheSet;
-
-/**
- * Gets the index at which the `key` is found in `array` of key-value pairs.
- *
- * @private
- * @param {Array} array The array to inspect.
- * @param {*} key The key to search for.
- * @returns {number} Returns the index of the matched value, else `-1`.
- */
-function assocIndexOf(array, key) {
-  var length = array.length;
-  while (length--) {
-    if (eq(array[length][0], key)) {
-      return length;
-    }
-  }
-  return -1;
-}
-
-/**
- * The base implementation of `_.get` without support for default values.
- *
- * @private
- * @param {Object} object The object to query.
- * @param {Array|string} path The path of the property to get.
- * @returns {*} Returns the resolved value.
- */
-function baseGet(object, path) {
-  path = isKey(path, object) ? [path] : castPath(path);
-
-  var index = 0,
-      length = path.length;
-
-  while (object != null && index < length) {
-    object = object[toKey(path[index++])];
-  }
-  return (index && index == length) ? object : undefined;
-}
-
-/**
- * The base implementation of `_.isNative` without bad shim checks.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a native function,
- *  else `false`.
- */
-function baseIsNative(value) {
-  if (!isObject(value) || isMasked(value)) {
-    return false;
-  }
-  var pattern = (isFunction(value) || isHostObject(value)) ? reIsNative : reIsHostCtor;
-  return pattern.test(toSource(value));
-}
-
-/**
- * The base implementation of `_.toString` which doesn't convert nullish
- * values to empty strings.
- *
- * @private
- * @param {*} value The value to process.
- * @returns {string} Returns the string.
- */
-function baseToString(value) {
-  // Exit early for strings to avoid a performance hit in some environments.
-  if (typeof value == 'string') {
-    return value;
-  }
-  if (isSymbol(value)) {
-    return symbolToString ? symbolToString.call(value) : '';
-  }
-  var result = (value + '');
-  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
-}
-
-/**
- * Casts `value` to a path array if it's not one.
- *
- * @private
- * @param {*} value The value to inspect.
- * @returns {Array} Returns the cast property path array.
- */
-function castPath(value) {
-  return isArray(value) ? value : stringToPath(value);
-}
-
-/**
- * Gets the data for `map`.
- *
- * @private
- * @param {Object} map The map to query.
- * @param {string} key The reference key.
- * @returns {*} Returns the map data.
- */
-function getMapData(map, key) {
-  var data = map.__data__;
-  return isKeyable(key)
-    ? data[typeof key == 'string' ? 'string' : 'hash']
-    : data.map;
-}
-
-/**
- * Gets the native function at `key` of `object`.
- *
- * @private
- * @param {Object} object The object to query.
- * @param {string} key The key of the method to get.
- * @returns {*} Returns the function if it's native, else `undefined`.
- */
-function getNative(object, key) {
-  var value = getValue(object, key);
-  return baseIsNative(value) ? value : undefined;
-}
-
-/**
- * Checks if `value` is a property name and not a property path.
- *
- * @private
- * @param {*} value The value to check.
- * @param {Object} [object] The object to query keys on.
- * @returns {boolean} Returns `true` if `value` is a property name, else `false`.
- */
-function isKey(value, object) {
-  if (isArray(value)) {
-    return false;
-  }
-  var type = typeof value;
-  if (type == 'number' || type == 'symbol' || type == 'boolean' ||
-      value == null || isSymbol(value)) {
-    return true;
-  }
-  return reIsPlainProp.test(value) || !reIsDeepProp.test(value) ||
-    (object != null && value in Object(object));
-}
-
-/**
- * Checks if `value` is suitable for use as unique object key.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is suitable, else `false`.
- */
-function isKeyable(value) {
-  var type = typeof value;
-  return (type == 'string' || type == 'number' || type == 'symbol' || type == 'boolean')
-    ? (value !== '__proto__')
-    : (value === null);
-}
-
-/**
- * Checks if `func` has its source masked.
- *
- * @private
- * @param {Function} func The function to check.
- * @returns {boolean} Returns `true` if `func` is masked, else `false`.
- */
-function isMasked(func) {
-  return !!maskSrcKey && (maskSrcKey in func);
-}
-
-/**
- * Converts `string` to a property path array.
- *
- * @private
- * @param {string} string The string to convert.
- * @returns {Array} Returns the property path array.
- */
-var stringToPath = memoize(function(string) {
-  string = toString(string);
-
-  var result = [];
-  if (reLeadingDot.test(string)) {
-    result.push('');
-  }
-  string.replace(rePropName, function(match, number, quote, string) {
-    result.push(quote ? string.replace(reEscapeChar, '$1') : (number || match));
-  });
-  return result;
-});
-
-/**
- * Converts `value` to a string key if it's not a string or symbol.
- *
- * @private
- * @param {*} value The value to inspect.
- * @returns {string|symbol} Returns the key.
- */
-function toKey(value) {
-  if (typeof value == 'string' || isSymbol(value)) {
-    return value;
-  }
-  var result = (value + '');
-  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
-}
-
-/**
- * Converts `func` to its source code.
- *
- * @private
- * @param {Function} func The function to process.
- * @returns {string} Returns the source code.
- */
-function toSource(func) {
-  if (func != null) {
-    try {
-      return funcToString.call(func);
-    } catch (e) {}
-    try {
-      return (func + '');
-    } catch (e) {}
-  }
-  return '';
-}
-
-/**
- * Creates a function that memoizes the result of `func`. If `resolver` is
- * provided, it determines the cache key for storing the result based on the
- * arguments provided to the memoized function. By default, the first argument
- * provided to the memoized function is used as the map cache key. The `func`
- * is invoked with the `this` binding of the memoized function.
- *
- * **Note:** The cache is exposed as the `cache` property on the memoized
- * function. Its creation may be customized by replacing the `_.memoize.Cache`
- * constructor with one whose instances implement the
- * [`Map`](http://ecma-international.org/ecma-262/7.0/#sec-properties-of-the-map-prototype-object)
- * method interface of `delete`, `get`, `has`, and `set`.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Function
- * @param {Function} func The function to have its output memoized.
- * @param {Function} [resolver] The function to resolve the cache key.
- * @returns {Function} Returns the new memoized function.
- * @example
- *
- * var object = { 'a': 1, 'b': 2 };
- * var other = { 'c': 3, 'd': 4 };
- *
- * var values = _.memoize(_.values);
- * values(object);
- * // => [1, 2]
- *
- * values(other);
- * // => [3, 4]
- *
- * object.a = 2;
- * values(object);
- * // => [1, 2]
- *
- * // Modify the result cache.
- * values.cache.set(object, ['a', 'b']);
- * values(object);
- * // => ['a', 'b']
- *
- * // Replace `_.memoize.Cache`.
- * _.memoize.Cache = WeakMap;
- */
-function memoize(func, resolver) {
-  if (typeof func != 'function' || (resolver && typeof resolver != 'function')) {
-    throw new TypeError(FUNC_ERROR_TEXT);
-  }
-  var memoized = function() {
-    var args = arguments,
-        key = resolver ? resolver.apply(this, args) : args[0],
-        cache = memoized.cache;
-
-    if (cache.has(key)) {
-      return cache.get(key);
-    }
-    var result = func.apply(this, args);
-    memoized.cache = cache.set(key, result);
-    return result;
-  };
-  memoized.cache = new (memoize.Cache || MapCache);
-  return memoized;
-}
-
-// Assign cache to `_.memoize`.
-memoize.Cache = MapCache;
-
-/**
- * Performs a
- * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
- * comparison between two values to determine if they are equivalent.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to compare.
- * @param {*} other The other value to compare.
- * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
- * @example
- *
- * var object = { 'a': 1 };
- * var other = { 'a': 1 };
- *
- * _.eq(object, object);
- * // => true
- *
- * _.eq(object, other);
- * // => false
- *
- * _.eq('a', 'a');
- * // => true
- *
- * _.eq('a', Object('a'));
- * // => false
- *
- * _.eq(NaN, NaN);
- * // => true
- */
-function eq(value, other) {
-  return value === other || (value !== value && other !== other);
-}
-
-/**
- * Checks if `value` is classified as an `Array` object.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an array, else `false`.
- * @example
- *
- * _.isArray([1, 2, 3]);
- * // => true
- *
- * _.isArray(document.body.children);
- * // => false
- *
- * _.isArray('abc');
- * // => false
- *
- * _.isArray(_.noop);
- * // => false
- */
-var isArray = Array.isArray;
-
-/**
- * Checks if `value` is classified as a `Function` object.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a function, else `false`.
- * @example
- *
- * _.isFunction(_);
- * // => true
- *
- * _.isFunction(/abc/);
- * // => false
- */
-function isFunction(value) {
-  // The use of `Object#toString` avoids issues with the `typeof` operator
-  // in Safari 8-9 which returns 'object' for typed array and other constructors.
-  var tag = isObject(value) ? objectToString.call(value) : '';
-  return tag == funcTag || tag == genTag;
-}
-
-/**
- * Checks if `value` is the
- * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
- * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an object, else `false`.
- * @example
- *
- * _.isObject({});
- * // => true
- *
- * _.isObject([1, 2, 3]);
- * // => true
- *
- * _.isObject(_.noop);
- * // => true
- *
- * _.isObject(null);
- * // => false
- */
-function isObject(value) {
-  var type = typeof value;
-  return !!value && (type == 'object' || type == 'function');
-}
-
-/**
- * Checks if `value` is object-like. A value is object-like if it's not `null`
- * and has a `typeof` result of "object".
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
- * @example
- *
- * _.isObjectLike({});
- * // => true
- *
- * _.isObjectLike([1, 2, 3]);
- * // => true
- *
- * _.isObjectLike(_.noop);
- * // => false
- *
- * _.isObjectLike(null);
- * // => false
- */
-function isObjectLike(value) {
-  return !!value && typeof value == 'object';
-}
-
-/**
- * Checks if `value` is classified as a `Symbol` primitive or object.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
- * @example
- *
- * _.isSymbol(Symbol.iterator);
- * // => true
- *
- * _.isSymbol('abc');
- * // => false
- */
-function isSymbol(value) {
-  return typeof value == 'symbol' ||
-    (isObjectLike(value) && objectToString.call(value) == symbolTag);
-}
-
-/**
- * Converts `value` to a string. An empty string is returned for `null`
- * and `undefined` values. The sign of `-0` is preserved.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to process.
- * @returns {string} Returns the string.
- * @example
- *
- * _.toString(null);
- * // => ''
- *
- * _.toString(-0);
- * // => '-0'
- *
- * _.toString([1, 2, 3]);
- * // => '1,2,3'
- */
-function toString(value) {
-  return value == null ? '' : baseToString(value);
-}
-
-/**
- * Gets the value at `path` of `object`. If the resolved value is
- * `undefined`, the `defaultValue` is returned in its place.
- *
- * @static
- * @memberOf _
- * @since 3.7.0
- * @category Object
- * @param {Object} object The object to query.
- * @param {Array|string} path The path of the property to get.
- * @param {*} [defaultValue] The value returned for `undefined` resolved values.
- * @returns {*} Returns the resolved value.
- * @example
- *
- * var object = { 'a': [{ 'b': { 'c': 3 } }] };
- *
- * _.get(object, 'a[0].b.c');
- * // => 3
- *
- * _.get(object, ['a', '0', 'b', 'c']);
- * // => 3
- *
- * _.get(object, 'a.b.c', 'default');
- * // => 'default'
- */
-function get(object, path, defaultValue) {
-  var result = object == null ? undefined : baseGet(object, path);
-  return result === undefined ? defaultValue : result;
-}
-
-module.exports = get;
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
-
-/***/ }),
 /* 29 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -16042,7 +16302,7 @@ const routerClientInstance_1 = __webpack_require__(5);
 const logger_1 = __webpack_require__(0);
 const async_1 = __webpack_require__(9);
 const system_1 = __webpack_require__(3);
-const Constants = __webpack_require__(11);
+const Constants = __webpack_require__(10);
 const { SERVICE_INITIALIZING_CHANNEL, SERVICE_READY_CHANNEL, SERVICE_CLOSING_CHANNEL, SERVICE_CLOSED_CHANNEL, SERVICE_STOP_CHANNEL } = Constants;
 const defaultBaseServiceParams = {
     startupDependencies: {
@@ -16212,7 +16472,7 @@ class BaseService {
     /**
      * Really only for shutdown right now. Simple array that gets looped through on shutdown.
      * @param {string} listenerType
-     * @param {function} callback
+     * @param {function} callback The callback to be invoked after the method completes successfully.
      */
     addEventListener(listenerType, callback) {
         if (!this.listeners[listenerType]) {
@@ -16221,21 +16481,20 @@ class BaseService {
         this.listeners[listenerType].push(callback);
     }
     /**
-     * When the application sends out a shutdown message, this function is invoked. It iterates through any registered cleanup methods. When all of them have finished (or 10 seconds elapses), it sends a response to the application saying that it's completed cleanup (`shutdownComplete`, below).
+     * When the application sends out a shutdown message, this function is invoked. It iterates through any registered cleanup methods. When all of them have finished, it sends a response to the application saying that it's completed cleanup (`shutdownComplete`, below).
      * @private
     */
     onShutdown(cb) {
         this.addEventListener("onShutdown", cb);
     }
     /**
-     * When the application sends out a shutdown message, this function is invoked. It iterates through any registered cleanup methods. When all of them have finished (or 10 seconds elapses), it sends a response to the application saying that it's completed cleanup (`shutdownComplete`, below).
+     * When the application sends out a shutdown message, this function is invoked. It iterates through any registered cleanup methods. When all of them have finished, it sends a response to the application saying that it's completed cleanup (`shutdownComplete`, below).
      * @private
     */
     handleShutdown(err, message) {
         var self = this;
         function handleShutdownAction(handler, done) {
             let cleanup = async_1.asyncify(handler);
-            cleanup = async_1.timeout(cleanup, 10000); // services may need some time to cleanup (depends on service)
             cleanup(null, done);
         }
         function shutdownComplete(err, data) {
@@ -16338,1086 +16597,7 @@ function fixParams(params) {
 /* 56 */,
 /* 57 */,
 /* 58 */,
-/* 59 */,
-/* 60 */,
-/* 61 */,
-/* 62 */,
-/* 63 */,
-/* 64 */,
-/* 65 */,
-/* 66 */,
-/* 67 */,
-/* 68 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var Symbol = __webpack_require__(80),
-    getRawTag = __webpack_require__(135),
-    objectToString = __webpack_require__(140);
-
-/** `Object#toString` result references. */
-var nullTag = '[object Null]',
-    undefinedTag = '[object Undefined]';
-
-/** Built-in value references. */
-var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
-
-/**
- * The base implementation of `getTag` without fallbacks for buggy environments.
- *
- * @private
- * @param {*} value The value to query.
- * @returns {string} Returns the `toStringTag`.
- */
-function baseGetTag(value) {
-  if (value == null) {
-    return value === undefined ? undefinedTag : nullTag;
-  }
-  return (symToStringTag && symToStringTag in Object(value))
-    ? getRawTag(value)
-    : objectToString(value);
-}
-
-module.exports = baseGetTag;
-
-
-/***/ }),
-/* 69 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var isFunction = __webpack_require__(145),
-    isLength = __webpack_require__(83);
-
-/**
- * Checks if `value` is array-like. A value is considered array-like if it's
- * not a function and has a `value.length` that's an integer greater than or
- * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
- * @example
- *
- * _.isArrayLike([1, 2, 3]);
- * // => true
- *
- * _.isArrayLike(document.body.children);
- * // => true
- *
- * _.isArrayLike('abc');
- * // => true
- *
- * _.isArrayLike(_.noop);
- * // => false
- */
-function isArrayLike(value) {
-  return value != null && isLength(value.length) && !isFunction(value);
-}
-
-module.exports = isArrayLike;
-
-
-/***/ }),
-/* 70 */
-/***/ (function(module, exports) {
-
-/**
- * Checks if `value` is object-like. A value is object-like if it's not `null`
- * and has a `typeof` result of "object".
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
- * @example
- *
- * _.isObjectLike({});
- * // => true
- *
- * _.isObjectLike([1, 2, 3]);
- * // => true
- *
- * _.isObjectLike(_.noop);
- * // => false
- *
- * _.isObjectLike(null);
- * // => false
- */
-function isObjectLike(value) {
-  return value != null && typeof value == 'object';
-}
-
-module.exports = isObjectLike;
-
-
-/***/ }),
-/* 71 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__util__ = __webpack_require__(8);
-
-
-/**
- * Simple object to handle the loading and registration of storage adapters.
- *
- * @export
- * @class AdapterReceiver
- */
-class AdapterReceiver {
-	constructor() {
-		this.callbacks = {};
-		this.adapters = {};
-
-		this.storageAdapters = {};
-		this.loadModel = this.loadModel.bind(this);
-		this.loaded = this.loaded.bind(this);
-		return this;
-	}
-	/**
-  * Loads the model into the page and caches the callback.
-  *
-  * @param {string} name
-  * @param {url} path
-  * @param {function} cb
-  * @memberof AdapterReceiver
-  */
-	loadModel(name, path, cb) {
-		//2nd param is a callback that fires onLoad. We found that this event was unreliable, so we created the AdapterReceiver.
-		this.callbacks[name] = cb;
-		__WEBPACK_IMPORTED_MODULE_0__util__["injectJS"](path, Function.prototype);
-	}
-
-	/**
-  * When the baseStorageModel is loaded, it will call `loaded` on `global.adapterReceiver`. This method will let async know that the file has been successfully loaded.
-  *
-  * @param {any} name
-  * @param {any} adapter
-  * @memberof AdapterReceiver
-  */
-	loaded(name, adapter) {
-		this.adapters[name] = adapter;
-		//old variable. leaving for backwards compatibility.
-		this.storageAdapters[name] = adapter;
-		if (this.callbacks[name]) {
-			this.callbacks[name]();
-			delete this.callbacks[name];
-		} else {
-			console.info("`.loaded` invoked on Adapter Receiver by a storage adapter not loaded dynamically", name);
-		}
-	}
-}
-/* harmony export (immutable) */ __webpack_exports__["a"] = AdapterReceiver;
-
-
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\AdapterReceiver.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\AdapterReceiver.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
-
-/***/ }),
-/* 72 */,
-/* 73 */,
-/* 74 */,
-/* 75 */,
-/* 76 */,
-/* 77 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-// A temporary value used to identify if the loop should be broken.
-// See #1064, #1293
-exports.default = {};
-module.exports = exports["default"];
-
-/***/ }),
-/* 78 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.default = once;
-function once(fn) {
-    return function () {
-        if (fn === null) return;
-        var callFn = fn;
-        fn = null;
-        callFn.apply(this, arguments);
-    };
-}
-module.exports = exports["default"];
-
-/***/ }),
-/* 79 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.default = onlyOnce;
-function onlyOnce(fn) {
-    return function () {
-        if (fn === null) throw new Error("Callback was already called.");
-        var callFn = fn;
-        fn = null;
-        callFn.apply(this, arguments);
-    };
-}
-module.exports = exports["default"];
-
-/***/ }),
-/* 80 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var root = __webpack_require__(82);
-
-/** Built-in value references. */
-var Symbol = root.Symbol;
-
-module.exports = Symbol;
-
-
-/***/ }),
-/* 81 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {/** Detect free variable `global` from Node.js. */
-var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
-
-module.exports = freeGlobal;
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
-
-/***/ }),
-/* 82 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var freeGlobal = __webpack_require__(81);
-
-/** Detect free variable `self`. */
-var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
-
-/** Used as a reference to the global object. */
-var root = freeGlobal || freeSelf || Function('return this')();
-
-module.exports = root;
-
-
-/***/ }),
-/* 83 */
-/***/ (function(module, exports) {
-
-/** Used as references for various `Number` constants. */
-var MAX_SAFE_INTEGER = 9007199254740991;
-
-/**
- * Checks if `value` is a valid array-like length.
- *
- * **Note:** This method is loosely based on
- * [`ToLength`](http://ecma-international.org/ecma-262/7.0/#sec-tolength).
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
- * @example
- *
- * _.isLength(3);
- * // => true
- *
- * _.isLength(Number.MIN_VALUE);
- * // => false
- *
- * _.isLength(Infinity);
- * // => false
- *
- * _.isLength('3');
- * // => false
- */
-function isLength(value) {
-  return typeof value == 'number' &&
-    value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
-}
-
-module.exports = isLength;
-
-
-/***/ }),
-/* 84 */
-/***/ (function(module, exports) {
-
-/**
- * This method returns `undefined`.
- *
- * @static
- * @memberOf _
- * @since 2.3.0
- * @category Util
- * @example
- *
- * _.times(2, _.noop);
- * // => [undefined, undefined]
- */
-function noop() {
-  // No operation performed.
-}
-
-module.exports = noop;
-
-
-/***/ }),
-/* 85 */,
-/* 86 */,
-/* 87 */,
-/* 88 */,
-/* 89 */,
-/* 90 */,
-/* 91 */,
-/* 92 */,
-/* 93 */,
-/* 94 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(global, process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__baseService__ = __webpack_require__(32);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__baseService___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__baseService__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_configClient__ = __webpack_require__(15);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_configClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_configClient__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__common_AdapterReceiver__ = __webpack_require__(71);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_async_each__ = __webpack_require__(101);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_async_each___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_async_each__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__loggerServiceStateManager__ = __webpack_require__(156);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_configUtil__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__common_userNotification__ = __webpack_require__(20);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__common_system__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9__common_system__);
-function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
-
-// Finsemble Central Logger Service -- the top-level file
-
-
-
-
-__WEBPACK_IMPORTED_MODULE_2__clients_configClient___default.a.initialize();
-
-
-
-
-const Receiver = new __WEBPACK_IMPORTED_MODULE_4__common_AdapterReceiver__["a" /* default */]();
-const STORAGE_KEY = "finsemble.loggerStore.mainkey";
-global.adapterReceiver = Receiver;
-
-
-
-
-/**
- * LoggerService supports efficent and configurable run-time logging.
- */
-class LoggerService extends __WEBPACK_IMPORTED_MODULE_0__baseService__["BaseService"] {
-	/**
-  * @param {string} params.name name of the service
-  * @param {object} params.startupDependencies
-  * @param {array} params.startupDependencies.clients Clients to wait on before initializing the service
-  * @param {array} params.startupDependencies.services Services to wait on before initializing the service
-  * @param {object} params.shutdownDependencies
-  * @param {array} params.shutdownDependencies.services Services to wait on before shutting down the service
-  **/
-	constructor() {
-		var _this;
-
-		_this = super({
-			name: "loggerService",
-			startupDependencies: {
-				clients: ["configClient"],
-				services: ["configService"]
-			},
-			shutdownDependencies: {
-				services: ["workspaceService", "startupLauncherService", "windowService", "linkerService", "storageService", "configService", "dataStoreService", "authenticationService", "assimilationService"]
-			}
-		});
-		this.adapters = [];
-		this.myState = {};
-		this.onBaseServiceReady((() => {
-			var _ref = _asyncToGenerator(function* (callback) {
-				console.log("onBaseServiceReady called");
-				yield _this.initialize();
-				console.log("logger service initialized");
-				_this.createRouterEndpoints();
-				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.start();
-				let finWindow = __WEBPACK_IMPORTED_MODULE_9__common_system__["System"].Window.getCurrent();
-				finWindow.addEventListener("close-requested", function () {
-					finWindow.hide();
-				});
-				callback();
-			});
-
-			return function (_x) {
-				return _ref.apply(this, arguments);
-			};
-		})());
-	}
-
-	initialize() {
-		var _this2 = this;
-
-		return _asyncToGenerator(function* () {
-			var storageData = localStorage.getItem(STORAGE_KEY);
-			if (storageData) {
-				_this2.myState = new __WEBPACK_IMPORTED_MODULE_6__loggerServiceStateManager__["a" /* default */](JSON.parse(storageData));
-			} else {
-				_this2.myState = new __WEBPACK_IMPORTED_MODULE_6__loggerServiceStateManager__["a" /* default */]({});
-			}
-			yield _this2.getLogLevelsToThrowErrorsFor();
-			yield _this2.loadAdapters();
-			return;
-		})();
-	}
-
-	/**
-  * Creates the public interface with the rest of the application.
-  * Each of the handlers below simply receive a request, pass it off to a member function that does the work, and then sends the result back to the function that sent the original message (if necessary).
-  * @memberof LoggerService
-  */
-	createRouterEndpoints() {
-		var _this3 = this;
-
-		//Listeners
-		//Responders
-		//Pub/SubResponders
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addListener("CentralConsole-Show", function () {
-			window.showConsole();
-		});
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addResponder("logger.service.unregister", (error, queryMessage) => {
-			if (error) console.error(error);
-			this.unregisterClient(queryMessage.data);
-			queryMessage.sendQueryResponse(null, { status: "success" });
-		});
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addResponder("logger.service.register", (() => {
-			var _ref2 = _asyncToGenerator(function* (error, queryMessage) {
-				if (error) console.error(error);
-				const debugState = yield _this3.registerClient(queryMessage.data);
-				queryMessage.sendQueryResponse(null, debugState);
-			});
-
-			return function (_x2, _x3) {
-				return _ref2.apply(this, arguments);
-			};
-		})());
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addListener("logger.service.logMessages", (error, message) => {
-			if (error) console.error(error);
-			this.pushMessagesToAdapters(message.data);
-		});
-	}
-
-	pushMessagesToAdapters(message) {
-		this.adapters.forEach(adapter => {
-			adapter.onNewMessage(message);
-		});
-	}
-
-	unregisterClient(data) {
-		console.log("logger.service.unregister", data);
-		this.adapters.forEach(adapter => {
-			adapter.onClientUnregistered(data);
-		});
-	}
-	//Figures out whether to throw notifications if certain log-levels are set.
-	getLogLevelsToThrowErrorsFor() {
-		var _this4 = this;
-
-		return _asyncToGenerator(function* () {
-			let { err, config } = yield _this4.getConfig();
-			let isLoggingTooMuch = false;
-
-			let checkIsLoggingTooMuch = function (logLevels, client) {
-				if (client.hasOwnProperty("system")) {
-					for (let i = 0; i < logLevels.length; i++) {
-						if (client.system[logLevels[i]] === true) {
-							isLoggingTooMuch = true;
-						}
-					}
-				}
-			};
-
-			if (!err) {
-				//Get the logLevels to care about from the project config. If that doesn't exist
-				//get it from Finsemble config. If _that_ does not exist we can ignore the
-				//rest of this function
-				let logLevels = config.hasOwnProperty("servicesConfig") && config.servicesConfig.hasOwnProperty("logger") && config.servicesConfig.logger.hasOwnProperty("showWarningForLogStates") ? config.servicesConfig.logger.showWarningForLogStates : config.services.loggerService.showWarningForLogStates;
-
-				let clients = _this4.myState.get("clientState");
-				if (logLevels.length > 0 && Object.keys(clients).length > 0) {
-					for (let i = 0; i < Object.keys(clients).length; i++) {
-						let key = Object.keys(clients)[i];
-						let client = clients[key];
-						checkIsLoggingTooMuch(logLevels, client);
-					}
-
-					if (isLoggingTooMuch) {
-						let message = "Warning: High amounts of data logging detected, which can slow performance. Check that 'info' and 'debug' are off in the central logger.";
-						let notificationURL = __WEBPACK_IMPORTED_MODULE_7__common_configUtil__["ConfigUtilInstance"].getDefault(config, "manifest.finsemble.notificationURL", config.moduleRoot + "/components/system/notification/notification.html");
-						__WEBPACK_IMPORTED_MODULE_8__common_userNotification__["default"].alert("dev", "ONCE-SINCE-STARTUP", "Unnecessary-Logging-States-Error", message, { url: notificationURL, duration: 5000 });
-					}
-				}
-			}
-			return Promise.resolve();
-		})();
-	}
-	getConfig() {
-		const promiseResolver = resolve => {
-			__WEBPACK_IMPORTED_MODULE_2__clients_configClient___default.a.getValue({ field: "finsemble" }, (err, config) => {
-				resolve({ err, config });
-			});
-		};
-		return new Promise(promiseResolver);
-	}
-	//Right now we just have one adapter, the one that sends messages to our home-spun UI. May have more in the future..
-	loadAdapters() {
-		return new Promise((resolve, reject) => {
-			__WEBPACK_IMPORTED_MODULE_2__clients_configClient___default.a.getValue({ field: "finsemble" }, (err, config) => {
-				let adapters = [{
-					name: "loggerUI",
-					path: config.moduleRoot + "/services/logger/loggerUI.js"
-				}];
-				__WEBPACK_IMPORTED_MODULE_5_async_each___default()(adapters, (adapter, done) => {
-					Receiver.loadModel(adapter.name, adapter.path, adapterObject => {
-						//When loaded, the adapter stores a reference to itself on the receiver. We grab it here so that we can reference it later.
-						const theAdapter = Receiver.adapters[adapter.name];
-						theAdapter.receiveLoggerServiceState(this.myState);
-						this.adapters.push(theAdapter);
-						done();
-					});
-				}, function (err) {
-					if (err) {
-						return reject(err);
-					}
-					resolve();
-				});
-			}, function (err) {
-				if (err) {
-					return reject(err);
-				}
-				resolve();
-			});
-		});
-	}
-
-	registerClient(data) {
-		var _this5 = this;
-
-		return _asyncToGenerator(function* () {
-			return new Promise(function (resolve, reject) {
-				if (_this5.adapters.length === 0) resolve({});
-				_this5.adapters.forEach(function (adapter, i) {
-					//todo, eventually the logger will keep track of all of this state instead of the adapters. this is so i don't have to refactor everything right now.
-					let debugState = adapter.onClientRegistered(data);
-					if (i === 0) {
-						resolve(debugState);
-					}
-				});
-			});
-		})();
-	}
-
-	registerAdapter(adapter) {
-		console.log("Adding adapter", adapter.name);
-		this.adapters.push(adapter);
-	}
-}
-
-window.LoggerService = new LoggerService();
-
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\services\\logger\\loggerService.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\services\\logger\\loggerService.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(4), __webpack_require__(1), __webpack_require__(2)(module)))
-
-/***/ }),
-/* 95 */,
-/* 96 */,
-/* 97 */,
-/* 98 */,
-/* 99 */,
-/* 100 */,
-/* 101 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = eachLimit;
-
-var _eachOf = __webpack_require__(102);
-
-var _eachOf2 = _interopRequireDefault(_eachOf);
-
-var _withoutIndex = __webpack_require__(108);
-
-var _withoutIndex2 = _interopRequireDefault(_withoutIndex);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-/**
- * Applies the function `iteratee` to each item in `coll`, in parallel.
- * The `iteratee` is called with an item from the list, and a callback for when
- * it has finished. If the `iteratee` passes an error to its `callback`, the
- * main `callback` (for the `each` function) is immediately called with the
- * error.
- *
- * Note, that since this function applies `iteratee` to each item in parallel,
- * there is no guarantee that the iteratee functions will complete in order.
- *
- * @name each
- * @static
- * @memberOf module:Collections
- * @method
- * @alias forEach
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {Function} iteratee - A function to apply to each item
- * in `coll`. The iteratee is passed a `callback(err)` which must be called once
- * it has completed. If no error has occurred, the `callback` should be run
- * without arguments or with an explicit `null` argument. The array index is not
- * passed to the iteratee. Invoked with (item, callback). If you need the index,
- * use `eachOf`.
- * @param {Function} [callback] - A callback which is called when all
- * `iteratee` functions have finished, or an error occurs. Invoked with (err).
- * @example
- *
- * // assuming openFiles is an array of file names and saveFile is a function
- * // to save the modified contents of that file:
- *
- * async.each(openFiles, saveFile, function(err){
- *   // if any of the saves produced an error, err would equal that error
- * });
- *
- * // assuming openFiles is an array of file names
- * async.each(openFiles, function(file, callback) {
- *
- *     // Perform operation on file here.
- *     console.log('Processing file ' + file);
- *
- *     if( file.length > 32 ) {
- *       console.log('This file name is too long');
- *       callback('File name too long');
- *     } else {
- *       // Do work to process file here
- *       console.log('File processed');
- *       callback();
- *     }
- * }, function(err) {
- *     // if any of the file processing produced an error, err would equal that error
- *     if( err ) {
- *       // One of the iterations produced an error.
- *       // All processing will now stop.
- *       console.log('A file failed to process');
- *     } else {
- *       console.log('All files have been processed successfully');
- *     }
- * });
- */
-function eachLimit(coll, iteratee, callback) {
-  (0, _eachOf2.default)(coll, (0, _withoutIndex2.default)(iteratee), callback);
-}
-module.exports = exports['default'];
-
-/***/ }),
-/* 102 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
-exports.default = function (coll, iteratee, callback) {
-    var eachOfImplementation = (0, _isArrayLike2.default)(coll) ? eachOfArrayLike : eachOfGeneric;
-    eachOfImplementation(coll, iteratee, callback);
-};
-
-var _isArrayLike = __webpack_require__(69);
-
-var _isArrayLike2 = _interopRequireDefault(_isArrayLike);
-
-var _breakLoop = __webpack_require__(77);
-
-var _breakLoop2 = _interopRequireDefault(_breakLoop);
-
-var _eachOfLimit = __webpack_require__(103);
-
-var _eachOfLimit2 = _interopRequireDefault(_eachOfLimit);
-
-var _doLimit = __webpack_require__(104);
-
-var _doLimit2 = _interopRequireDefault(_doLimit);
-
-var _noop = __webpack_require__(84);
-
-var _noop2 = _interopRequireDefault(_noop);
-
-var _once = __webpack_require__(78);
-
-var _once2 = _interopRequireDefault(_once);
-
-var _onlyOnce = __webpack_require__(79);
-
-var _onlyOnce2 = _interopRequireDefault(_onlyOnce);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// eachOf implementation optimized for array-likes
-function eachOfArrayLike(coll, iteratee, callback) {
-    callback = (0, _once2.default)(callback || _noop2.default);
-    var index = 0,
-        completed = 0,
-        length = coll.length;
-    if (length === 0) {
-        callback(null);
-    }
-
-    function iteratorCallback(err, value) {
-        if (err) {
-            callback(err);
-        } else if (++completed === length || value === _breakLoop2.default) {
-            callback(null);
-        }
-    }
-
-    for (; index < length; index++) {
-        iteratee(coll[index], index, (0, _onlyOnce2.default)(iteratorCallback));
-    }
-}
-
-// a generic version of eachOf which can handle array, object, and iterator cases.
-var eachOfGeneric = (0, _doLimit2.default)(_eachOfLimit2.default, Infinity);
-
-/**
- * Like [`each`]{@link module:Collections.each}, except that it passes the key (or index) as the second argument
- * to the iteratee.
- *
- * @name eachOf
- * @static
- * @memberOf module:Collections
- * @method
- * @alias forEachOf
- * @category Collection
- * @see [async.each]{@link module:Collections.each}
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {Function} iteratee - A function to apply to each
- * item in `coll`. The `key` is the item's key, or index in the case of an
- * array. The iteratee is passed a `callback(err)` which must be called once it
- * has completed. If no error has occurred, the callback should be run without
- * arguments or with an explicit `null` argument. Invoked with
- * (item, key, callback).
- * @param {Function} [callback] - A callback which is called when all
- * `iteratee` functions have finished, or an error occurs. Invoked with (err).
- * @example
- *
- * var obj = {dev: "/dev.json", test: "/test.json", prod: "/prod.json"};
- * var configs = {};
- *
- * async.forEachOf(obj, function (value, key, callback) {
- *     fs.readFile(__dirname + value, "utf8", function (err, data) {
- *         if (err) return callback(err);
- *         try {
- *             configs[key] = JSON.parse(data);
- *         } catch (e) {
- *             return callback(e);
- *         }
- *         callback();
- *     });
- * }, function (err) {
- *     if (err) console.error(err.message);
- *     // configs is now a map of JSON data
- *     doSomethingWith(configs);
- * });
- */
-module.exports = exports['default'];
-
-/***/ }),
-/* 103 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = eachOfLimit;
-
-var _eachOfLimit2 = __webpack_require__(105);
-
-var _eachOfLimit3 = _interopRequireDefault(_eachOfLimit2);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-/**
- * The same as [`eachOf`]{@link module:Collections.eachOf} but runs a maximum of `limit` async operations at a
- * time.
- *
- * @name eachOfLimit
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.eachOf]{@link module:Collections.eachOf}
- * @alias forEachOfLimit
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {number} limit - The maximum number of async operations at a time.
- * @param {Function} iteratee - A function to apply to each
- * item in `coll`. The `key` is the item's key, or index in the case of an
- * array. The iteratee is passed a `callback(err)` which must be called once it
- * has completed. If no error has occurred, the callback should be run without
- * arguments or with an explicit `null` argument. Invoked with
- * (item, key, callback).
- * @param {Function} [callback] - A callback which is called when all
- * `iteratee` functions have finished, or an error occurs. Invoked with (err).
- */
-function eachOfLimit(coll, limit, iteratee, callback) {
-  (0, _eachOfLimit3.default)(limit)(coll, iteratee, callback);
-}
-module.exports = exports['default'];
-
-/***/ }),
-/* 104 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.default = doLimit;
-function doLimit(fn, limit) {
-    return function (iterable, iteratee, callback) {
-        return fn(iterable, limit, iteratee, callback);
-    };
-}
-module.exports = exports["default"];
-
-/***/ }),
-/* 105 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.default = _eachOfLimit;
-
-var _noop = __webpack_require__(84);
-
-var _noop2 = _interopRequireDefault(_noop);
-
-var _once = __webpack_require__(78);
-
-var _once2 = _interopRequireDefault(_once);
-
-var _iterator = __webpack_require__(107);
-
-var _iterator2 = _interopRequireDefault(_iterator);
-
-var _onlyOnce = __webpack_require__(79);
-
-var _onlyOnce2 = _interopRequireDefault(_onlyOnce);
-
-var _breakLoop = __webpack_require__(77);
-
-var _breakLoop2 = _interopRequireDefault(_breakLoop);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _eachOfLimit(limit) {
-    return function (obj, iteratee, callback) {
-        callback = (0, _once2.default)(callback || _noop2.default);
-        if (limit <= 0 || !obj) {
-            return callback(null);
-        }
-        var nextElem = (0, _iterator2.default)(obj);
-        var done = false;
-        var running = 0;
-
-        function iterateeCallback(err, value) {
-            running -= 1;
-            if (err) {
-                done = true;
-                callback(err);
-            } else if (value === _breakLoop2.default || done && running <= 0) {
-                done = true;
-                return callback(null);
-            } else {
-                replenish();
-            }
-        }
-
-        function replenish() {
-            while (running < limit && !done) {
-                var elem = nextElem();
-                if (elem === null) {
-                    done = true;
-                    if (running <= 0) {
-                        callback(null);
-                    }
-                    return;
-                }
-                running += 1;
-                iteratee(elem.value, elem.key, (0, _onlyOnce2.default)(iterateeCallback));
-            }
-        }
-
-        replenish();
-    };
-}
-module.exports = exports['default'];
-
-/***/ }),
-/* 106 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
-exports.default = function (coll) {
-    return iteratorSymbol && coll[iteratorSymbol] && coll[iteratorSymbol]();
-};
-
-var iteratorSymbol = typeof Symbol === 'function' && Symbol.iterator;
-
-module.exports = exports['default'];
-
-/***/ }),
-/* 107 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.default = iterator;
-
-var _isArrayLike = __webpack_require__(69);
-
-var _isArrayLike2 = _interopRequireDefault(_isArrayLike);
-
-var _getIterator = __webpack_require__(106);
-
-var _getIterator2 = _interopRequireDefault(_getIterator);
-
-var _keys = __webpack_require__(148);
-
-var _keys2 = _interopRequireDefault(_keys);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function createArrayIterator(coll) {
-    var i = -1;
-    var len = coll.length;
-    return function next() {
-        return ++i < len ? { value: coll[i], key: i } : null;
-    };
-}
-
-function createES2015Iterator(iterator) {
-    var i = -1;
-    return function next() {
-        var item = iterator.next();
-        if (item.done) return null;
-        i++;
-        return { value: item.value, key: i };
-    };
-}
-
-function createObjectIterator(obj) {
-    var okeys = (0, _keys2.default)(obj);
-    var i = -1;
-    var len = okeys.length;
-    return function next() {
-        var key = okeys[++i];
-        return i < len ? { value: obj[key], key: key } : null;
-    };
-}
-
-function iterator(coll) {
-    if ((0, _isArrayLike2.default)(coll)) {
-        return createArrayIterator(coll);
-    }
-
-    var iterator = (0, _getIterator2.default)(coll);
-    return iterator ? createES2015Iterator(iterator) : createObjectIterator(coll);
-}
-module.exports = exports['default'];
-
-/***/ }),
-/* 108 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.default = _withoutIndex;
-function _withoutIndex(iteratee) {
-    return function (value, index, callback) {
-        return iteratee(value, callback);
-    };
-}
-module.exports = exports["default"];
-
-/***/ }),
-/* 109 */,
-/* 110 */,
-/* 111 */,
-/* 112 */,
-/* 113 */,
-/* 114 */,
-/* 115 */,
-/* 116 */,
-/* 117 */,
-/* 118 */,
-/* 119 */,
-/* 120 */,
-/* 121 */,
-/* 122 */,
-/* 123 */,
-/* 124 */,
-/* 125 */,
-/* 126 */
+/* 59 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -17801,8 +16981,1088 @@ module.exports = debounce;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
+/* 60 */,
+/* 61 */,
+/* 62 */,
+/* 63 */,
+/* 64 */,
+/* 65 */,
+/* 66 */,
+/* 67 */,
+/* 68 */,
+/* 69 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Symbol = __webpack_require__(81),
+    getRawTag = __webpack_require__(136),
+    objectToString = __webpack_require__(141);
+
+/** `Object#toString` result references. */
+var nullTag = '[object Null]',
+    undefinedTag = '[object Undefined]';
+
+/** Built-in value references. */
+var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
+
+/**
+ * The base implementation of `getTag` without fallbacks for buggy environments.
+ *
+ * @private
+ * @param {*} value The value to query.
+ * @returns {string} Returns the `toStringTag`.
+ */
+function baseGetTag(value) {
+  if (value == null) {
+    return value === undefined ? undefinedTag : nullTag;
+  }
+  return (symToStringTag && symToStringTag in Object(value))
+    ? getRawTag(value)
+    : objectToString(value);
+}
+
+module.exports = baseGetTag;
+
+
+/***/ }),
+/* 70 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var isFunction = __webpack_require__(146),
+    isLength = __webpack_require__(84);
+
+/**
+ * Checks if `value` is array-like. A value is considered array-like if it's
+ * not a function and has a `value.length` that's an integer greater than or
+ * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
+ * @example
+ *
+ * _.isArrayLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isArrayLike(document.body.children);
+ * // => true
+ *
+ * _.isArrayLike('abc');
+ * // => true
+ *
+ * _.isArrayLike(_.noop);
+ * // => false
+ */
+function isArrayLike(value) {
+  return value != null && isLength(value.length) && !isFunction(value);
+}
+
+module.exports = isArrayLike;
+
+
+/***/ }),
+/* 71 */
+/***/ (function(module, exports) {
+
+/**
+ * Checks if `value` is object-like. A value is object-like if it's not `null`
+ * and has a `typeof` result of "object".
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+ * @example
+ *
+ * _.isObjectLike({});
+ * // => true
+ *
+ * _.isObjectLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isObjectLike(_.noop);
+ * // => false
+ *
+ * _.isObjectLike(null);
+ * // => false
+ */
+function isObjectLike(value) {
+  return value != null && typeof value == 'object';
+}
+
+module.exports = isObjectLike;
+
+
+/***/ }),
+/* 72 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__util__ = __webpack_require__(8);
+
+
+/**
+ * Simple object to handle the loading and registration of storage adapters.
+ *
+ * @export
+ * @class AdapterReceiver
+ */
+class AdapterReceiver {
+	constructor() {
+		this.callbacks = {};
+		this.adapters = {};
+
+		this.storageAdapters = {};
+		this.loadModel = this.loadModel.bind(this);
+		this.loaded = this.loaded.bind(this);
+		return this;
+	}
+	/**
+  * Loads the model into the page and caches the callback.
+  *
+  * @param {string} name
+  * @param {url} path
+  * @param {function} cb
+  * @memberof AdapterReceiver
+  */
+	loadModel(name, path, cb) {
+		//2nd param is a callback that fires onLoad. We found that this event was unreliable, so we created the AdapterReceiver.
+		this.callbacks[name] = cb;
+		__WEBPACK_IMPORTED_MODULE_0__util__["injectJS"](path, Function.prototype);
+	}
+
+	/**
+  * When the baseStorageModel is loaded, it will call `loaded` on `global.adapterReceiver`. This method will let async know that the file has been successfully loaded.
+  *
+  * @param {any} name
+  * @param {any} adapter
+  * @memberof AdapterReceiver
+  */
+	loaded(name, adapter) {
+		this.adapters[name] = adapter;
+		//old variable. leaving for backwards compatibility.
+		this.storageAdapters[name] = adapter;
+		if (this.callbacks[name]) {
+			this.callbacks[name]();
+			delete this.callbacks[name];
+		} else {
+			console.info("`.loaded` invoked on Adapter Receiver by a storage adapter not loaded dynamically", name);
+		}
+	}
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = AdapterReceiver;
+
+
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\AdapterReceiver.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\AdapterReceiver.js"); } } })();
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
+
+/***/ }),
+/* 73 */,
+/* 74 */,
+/* 75 */,
+/* 76 */,
+/* 77 */,
+/* 78 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+// A temporary value used to identify if the loop should be broken.
+// See #1064, #1293
+exports.default = {};
+module.exports = exports["default"];
+
+/***/ }),
+/* 79 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.default = once;
+function once(fn) {
+    return function () {
+        if (fn === null) return;
+        var callFn = fn;
+        fn = null;
+        callFn.apply(this, arguments);
+    };
+}
+module.exports = exports["default"];
+
+/***/ }),
+/* 80 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.default = onlyOnce;
+function onlyOnce(fn) {
+    return function () {
+        if (fn === null) throw new Error("Callback was already called.");
+        var callFn = fn;
+        fn = null;
+        callFn.apply(this, arguments);
+    };
+}
+module.exports = exports["default"];
+
+/***/ }),
+/* 81 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var root = __webpack_require__(83);
+
+/** Built-in value references. */
+var Symbol = root.Symbol;
+
+module.exports = Symbol;
+
+
+/***/ }),
+/* 82 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {/** Detect free variable `global` from Node.js. */
+var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
+
+module.exports = freeGlobal;
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+
+/***/ }),
+/* 83 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var freeGlobal = __webpack_require__(82);
+
+/** Detect free variable `self`. */
+var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+
+/** Used as a reference to the global object. */
+var root = freeGlobal || freeSelf || Function('return this')();
+
+module.exports = root;
+
+
+/***/ }),
+/* 84 */
+/***/ (function(module, exports) {
+
+/** Used as references for various `Number` constants. */
+var MAX_SAFE_INTEGER = 9007199254740991;
+
+/**
+ * Checks if `value` is a valid array-like length.
+ *
+ * **Note:** This method is loosely based on
+ * [`ToLength`](http://ecma-international.org/ecma-262/7.0/#sec-tolength).
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
+ * @example
+ *
+ * _.isLength(3);
+ * // => true
+ *
+ * _.isLength(Number.MIN_VALUE);
+ * // => false
+ *
+ * _.isLength(Infinity);
+ * // => false
+ *
+ * _.isLength('3');
+ * // => false
+ */
+function isLength(value) {
+  return typeof value == 'number' &&
+    value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
+}
+
+module.exports = isLength;
+
+
+/***/ }),
+/* 85 */
+/***/ (function(module, exports) {
+
+/**
+ * This method returns `undefined`.
+ *
+ * @static
+ * @memberOf _
+ * @since 2.3.0
+ * @category Util
+ * @example
+ *
+ * _.times(2, _.noop);
+ * // => [undefined, undefined]
+ */
+function noop() {
+  // No operation performed.
+}
+
+module.exports = noop;
+
+
+/***/ }),
+/* 86 */,
+/* 87 */,
+/* 88 */,
+/* 89 */,
+/* 90 */,
+/* 91 */,
+/* 92 */,
+/* 93 */,
+/* 94 */,
+/* 95 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* WEBPACK VAR INJECTION */(function(global, process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__baseService__ = __webpack_require__(32);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__baseService___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__baseService__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_configClient__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_configClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_configClient__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__common_AdapterReceiver__ = __webpack_require__(72);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_async_each__ = __webpack_require__(102);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_async_each___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_async_each__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__loggerServiceStateManager__ = __webpack_require__(157);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_configUtil__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__common_userNotification__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__common_system__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9__common_system__);
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
+// Finsemble Central Logger Service -- the top-level file
+
+
+
+
+__WEBPACK_IMPORTED_MODULE_2__clients_configClient___default.a.initialize();
+
+
+
+
+const Receiver = new __WEBPACK_IMPORTED_MODULE_4__common_AdapterReceiver__["a" /* default */]();
+const STORAGE_KEY = "finsemble.loggerStore.mainkey";
+global.adapterReceiver = Receiver;
+
+
+
+
+/**
+ * LoggerService supports efficent and configurable run-time logging.
+ */
+class LoggerService extends __WEBPACK_IMPORTED_MODULE_0__baseService__["BaseService"] {
+	/**
+  * @param {string} params.name name of the service
+  * @param {object} params.startupDependencies
+  * @param {array} params.startupDependencies.clients Clients to wait on before initializing the service
+  * @param {array} params.startupDependencies.services Services to wait on before initializing the service
+  * @param {object} params.shutdownDependencies
+  * @param {array} params.shutdownDependencies.services Services to wait on before shutting down the service
+  **/
+	constructor() {
+		var _this;
+
+		_this = super({
+			name: "loggerService",
+			startupDependencies: {
+				clients: ["configClient"],
+				services: ["configService"]
+			},
+			shutdownDependencies: {
+				services: ["workspaceService", "startupLauncherService", "windowService", "linkerService", "storageService", "configService", "dataStoreService", "authenticationService", "assimilationService"]
+			}
+		});
+		this.adapters = [];
+		this.myState = {};
+		this.onBaseServiceReady((() => {
+			var _ref = _asyncToGenerator(function* (callback) {
+				console.log("onBaseServiceReady called");
+				yield _this.initialize();
+				console.log("logger service initialized");
+				_this.createRouterEndpoints();
+				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.start();
+				let finWindow = __WEBPACK_IMPORTED_MODULE_9__common_system__["System"].Window.getCurrent();
+				finWindow.addEventListener("close-requested", function () {
+					finWindow.hide();
+				});
+				callback();
+			});
+
+			return function (_x) {
+				return _ref.apply(this, arguments);
+			};
+		})());
+	}
+
+	initialize() {
+		var _this2 = this;
+
+		return _asyncToGenerator(function* () {
+			var storageData = localStorage.getItem(STORAGE_KEY);
+			if (storageData) {
+				_this2.myState = new __WEBPACK_IMPORTED_MODULE_6__loggerServiceStateManager__["a" /* default */](JSON.parse(storageData));
+			} else {
+				_this2.myState = new __WEBPACK_IMPORTED_MODULE_6__loggerServiceStateManager__["a" /* default */]({});
+			}
+			yield _this2.getLogLevelsToThrowErrorsFor();
+			yield _this2.loadAdapters();
+			return;
+		})();
+	}
+
+	/**
+  * Creates the public interface with the rest of the application.
+  * Each of the handlers below simply receive a request, pass it off to a member function that does the work, and then sends the result back to the function that sent the original message (if necessary).
+  * @memberof LoggerService
+  */
+	createRouterEndpoints() {
+		var _this3 = this;
+
+		//Listeners
+		//Responders
+		//Pub/SubResponders
+		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addListener("CentralConsole-Show", function () {
+			window.showConsole();
+		});
+		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addResponder("logger.service.unregister", (error, queryMessage) => {
+			if (error) console.error(error);
+			this.unregisterClient(queryMessage.data);
+			queryMessage.sendQueryResponse(null, { status: "success" });
+		});
+		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addResponder("logger.service.register", (() => {
+			var _ref2 = _asyncToGenerator(function* (error, queryMessage) {
+				if (error) console.error(error);
+				const debugState = yield _this3.registerClient(queryMessage.data);
+				queryMessage.sendQueryResponse(null, debugState);
+			});
+
+			return function (_x2, _x3) {
+				return _ref2.apply(this, arguments);
+			};
+		})());
+		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addListener("logger.service.logMessages", (error, message) => {
+			if (error) console.error(error);
+			this.pushMessagesToAdapters(message.data);
+		});
+	}
+
+	pushMessagesToAdapters(message) {
+		this.adapters.forEach(adapter => {
+			adapter.onNewMessage(message);
+		});
+	}
+
+	unregisterClient(data) {
+		console.log("logger.service.unregister", data);
+		this.adapters.forEach(adapter => {
+			adapter.onClientUnregistered(data);
+		});
+	}
+	//Figures out whether to throw notifications if certain log-levels are set.
+	getLogLevelsToThrowErrorsFor() {
+		var _this4 = this;
+
+		return _asyncToGenerator(function* () {
+			let { err, config } = yield _this4.getConfig();
+			let isLoggingTooMuch = false;
+
+			let checkIsLoggingTooMuch = function (logLevels, client) {
+				if (client.hasOwnProperty("system")) {
+					for (let i = 0; i < logLevels.length; i++) {
+						if (client.system[logLevels[i]] === true) {
+							isLoggingTooMuch = true;
+						}
+					}
+				}
+			};
+
+			if (!err) {
+				//Get the logLevels to care about from the project config. If that doesn't exist
+				//get it from Finsemble config. If _that_ does not exist we can ignore the
+				//rest of this function
+				let logLevels = config.hasOwnProperty("servicesConfig") && config.servicesConfig.hasOwnProperty("logger") && config.servicesConfig.logger.hasOwnProperty("showWarningForLogStates") ? config.servicesConfig.logger.showWarningForLogStates : config.services.loggerService.showWarningForLogStates;
+
+				let clients = _this4.myState.get("clientState");
+				if (logLevels.length > 0 && Object.keys(clients).length > 0) {
+					for (let i = 0; i < Object.keys(clients).length; i++) {
+						let key = Object.keys(clients)[i];
+						let client = clients[key];
+						checkIsLoggingTooMuch(logLevels, client);
+					}
+
+					if (isLoggingTooMuch) {
+						let message = "Warning: High amounts of data logging detected, which can slow performance. Check that 'info' and 'debug' are off in the central logger.";
+						let notificationURL = __WEBPACK_IMPORTED_MODULE_7__common_configUtil__["ConfigUtilInstance"].getDefault(config, "manifest.finsemble.notificationURL", config.moduleRoot + "/components/system/notification/notification.html");
+						__WEBPACK_IMPORTED_MODULE_8__common_userNotification__["default"].alert("dev", "ONCE-SINCE-STARTUP", "Unnecessary-Logging-States-Error", message, { url: notificationURL, duration: 5000 });
+					}
+				}
+			}
+			return Promise.resolve();
+		})();
+	}
+	getConfig() {
+		const promiseResolver = resolve => {
+			__WEBPACK_IMPORTED_MODULE_2__clients_configClient___default.a.getValue({ field: "finsemble" }, (err, config) => {
+				resolve({ err, config });
+			});
+		};
+		return new Promise(promiseResolver);
+	}
+	//Right now we just have one adapter, the one that sends messages to our home-spun UI. May have more in the future..
+	loadAdapters() {
+		return new Promise((resolve, reject) => {
+			__WEBPACK_IMPORTED_MODULE_2__clients_configClient___default.a.getValue({ field: "finsemble" }, (err, config) => {
+				let adapters = [{
+					name: "loggerUI",
+					path: config.moduleRoot + "/services/logger/loggerUI.js"
+				}];
+				__WEBPACK_IMPORTED_MODULE_5_async_each___default()(adapters, (adapter, done) => {
+					Receiver.loadModel(adapter.name, adapter.path, adapterObject => {
+						//When loaded, the adapter stores a reference to itself on the receiver. We grab it here so that we can reference it later.
+						const theAdapter = Receiver.adapters[adapter.name];
+						theAdapter.receiveLoggerServiceState(this.myState);
+						this.adapters.push(theAdapter);
+						done();
+					});
+				}, function (err) {
+					if (err) {
+						return reject(err);
+					}
+					resolve();
+				});
+			}, function (err) {
+				if (err) {
+					return reject(err);
+				}
+				resolve();
+			});
+		});
+	}
+
+	registerClient(data) {
+		var _this5 = this;
+
+		return _asyncToGenerator(function* () {
+			return new Promise(function (resolve, reject) {
+				if (_this5.adapters.length === 0) resolve({});
+				_this5.adapters.forEach(function (adapter, i) {
+					//todo, eventually the logger will keep track of all of this state instead of the adapters. this is so i don't have to refactor everything right now.
+					let debugState = adapter.onClientRegistered(data);
+					if (i === 0) {
+						resolve(debugState);
+					}
+				});
+			});
+		})();
+	}
+
+	registerAdapter(adapter) {
+		console.log("Adding adapter", adapter.name);
+		this.adapters.push(adapter);
+	}
+}
+
+window.LoggerService = new LoggerService();
+
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\services\\logger\\loggerService.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\services\\logger\\loggerService.js"); } } })();
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(4), __webpack_require__(1), __webpack_require__(2)(module)))
+
+/***/ }),
+/* 96 */,
+/* 97 */,
+/* 98 */,
+/* 99 */,
+/* 100 */,
+/* 101 */,
+/* 102 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = eachLimit;
+
+var _eachOf = __webpack_require__(103);
+
+var _eachOf2 = _interopRequireDefault(_eachOf);
+
+var _withoutIndex = __webpack_require__(109);
+
+var _withoutIndex2 = _interopRequireDefault(_withoutIndex);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/**
+ * Applies the function `iteratee` to each item in `coll`, in parallel.
+ * The `iteratee` is called with an item from the list, and a callback for when
+ * it has finished. If the `iteratee` passes an error to its `callback`, the
+ * main `callback` (for the `each` function) is immediately called with the
+ * error.
+ *
+ * Note, that since this function applies `iteratee` to each item in parallel,
+ * there is no guarantee that the iteratee functions will complete in order.
+ *
+ * @name each
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @alias forEach
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {Function} iteratee - A function to apply to each item
+ * in `coll`. The iteratee is passed a `callback(err)` which must be called once
+ * it has completed. If no error has occurred, the `callback` should be run
+ * without arguments or with an explicit `null` argument. The array index is not
+ * passed to the iteratee. Invoked with (item, callback). If you need the index,
+ * use `eachOf`.
+ * @param {Function} [callback] - A callback which is called when all
+ * `iteratee` functions have finished, or an error occurs. Invoked with (err).
+ * @example
+ *
+ * // assuming openFiles is an array of file names and saveFile is a function
+ * // to save the modified contents of that file:
+ *
+ * async.each(openFiles, saveFile, function(err){
+ *   // if any of the saves produced an error, err would equal that error
+ * });
+ *
+ * // assuming openFiles is an array of file names
+ * async.each(openFiles, function(file, callback) {
+ *
+ *     // Perform operation on file here.
+ *     console.log('Processing file ' + file);
+ *
+ *     if( file.length > 32 ) {
+ *       console.log('This file name is too long');
+ *       callback('File name too long');
+ *     } else {
+ *       // Do work to process file here
+ *       console.log('File processed');
+ *       callback();
+ *     }
+ * }, function(err) {
+ *     // if any of the file processing produced an error, err would equal that error
+ *     if( err ) {
+ *       // One of the iterations produced an error.
+ *       // All processing will now stop.
+ *       console.log('A file failed to process');
+ *     } else {
+ *       console.log('All files have been processed successfully');
+ *     }
+ * });
+ */
+function eachLimit(coll, iteratee, callback) {
+  (0, _eachOf2.default)(coll, (0, _withoutIndex2.default)(iteratee), callback);
+}
+module.exports = exports['default'];
+
+/***/ }),
+/* 103 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+exports.default = function (coll, iteratee, callback) {
+    var eachOfImplementation = (0, _isArrayLike2.default)(coll) ? eachOfArrayLike : eachOfGeneric;
+    eachOfImplementation(coll, iteratee, callback);
+};
+
+var _isArrayLike = __webpack_require__(70);
+
+var _isArrayLike2 = _interopRequireDefault(_isArrayLike);
+
+var _breakLoop = __webpack_require__(78);
+
+var _breakLoop2 = _interopRequireDefault(_breakLoop);
+
+var _eachOfLimit = __webpack_require__(104);
+
+var _eachOfLimit2 = _interopRequireDefault(_eachOfLimit);
+
+var _doLimit = __webpack_require__(105);
+
+var _doLimit2 = _interopRequireDefault(_doLimit);
+
+var _noop = __webpack_require__(85);
+
+var _noop2 = _interopRequireDefault(_noop);
+
+var _once = __webpack_require__(79);
+
+var _once2 = _interopRequireDefault(_once);
+
+var _onlyOnce = __webpack_require__(80);
+
+var _onlyOnce2 = _interopRequireDefault(_onlyOnce);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// eachOf implementation optimized for array-likes
+function eachOfArrayLike(coll, iteratee, callback) {
+    callback = (0, _once2.default)(callback || _noop2.default);
+    var index = 0,
+        completed = 0,
+        length = coll.length;
+    if (length === 0) {
+        callback(null);
+    }
+
+    function iteratorCallback(err, value) {
+        if (err) {
+            callback(err);
+        } else if (++completed === length || value === _breakLoop2.default) {
+            callback(null);
+        }
+    }
+
+    for (; index < length; index++) {
+        iteratee(coll[index], index, (0, _onlyOnce2.default)(iteratorCallback));
+    }
+}
+
+// a generic version of eachOf which can handle array, object, and iterator cases.
+var eachOfGeneric = (0, _doLimit2.default)(_eachOfLimit2.default, Infinity);
+
+/**
+ * Like [`each`]{@link module:Collections.each}, except that it passes the key (or index) as the second argument
+ * to the iteratee.
+ *
+ * @name eachOf
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @alias forEachOf
+ * @category Collection
+ * @see [async.each]{@link module:Collections.each}
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {Function} iteratee - A function to apply to each
+ * item in `coll`. The `key` is the item's key, or index in the case of an
+ * array. The iteratee is passed a `callback(err)` which must be called once it
+ * has completed. If no error has occurred, the callback should be run without
+ * arguments or with an explicit `null` argument. Invoked with
+ * (item, key, callback).
+ * @param {Function} [callback] - A callback which is called when all
+ * `iteratee` functions have finished, or an error occurs. Invoked with (err).
+ * @example
+ *
+ * var obj = {dev: "/dev.json", test: "/test.json", prod: "/prod.json"};
+ * var configs = {};
+ *
+ * async.forEachOf(obj, function (value, key, callback) {
+ *     fs.readFile(__dirname + value, "utf8", function (err, data) {
+ *         if (err) return callback(err);
+ *         try {
+ *             configs[key] = JSON.parse(data);
+ *         } catch (e) {
+ *             return callback(e);
+ *         }
+ *         callback();
+ *     });
+ * }, function (err) {
+ *     if (err) console.error(err.message);
+ *     // configs is now a map of JSON data
+ *     doSomethingWith(configs);
+ * });
+ */
+module.exports = exports['default'];
+
+/***/ }),
+/* 104 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = eachOfLimit;
+
+var _eachOfLimit2 = __webpack_require__(106);
+
+var _eachOfLimit3 = _interopRequireDefault(_eachOfLimit2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/**
+ * The same as [`eachOf`]{@link module:Collections.eachOf} but runs a maximum of `limit` async operations at a
+ * time.
+ *
+ * @name eachOfLimit
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.eachOf]{@link module:Collections.eachOf}
+ * @alias forEachOfLimit
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {number} limit - The maximum number of async operations at a time.
+ * @param {Function} iteratee - A function to apply to each
+ * item in `coll`. The `key` is the item's key, or index in the case of an
+ * array. The iteratee is passed a `callback(err)` which must be called once it
+ * has completed. If no error has occurred, the callback should be run without
+ * arguments or with an explicit `null` argument. Invoked with
+ * (item, key, callback).
+ * @param {Function} [callback] - A callback which is called when all
+ * `iteratee` functions have finished, or an error occurs. Invoked with (err).
+ */
+function eachOfLimit(coll, limit, iteratee, callback) {
+  (0, _eachOfLimit3.default)(limit)(coll, iteratee, callback);
+}
+module.exports = exports['default'];
+
+/***/ }),
+/* 105 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.default = doLimit;
+function doLimit(fn, limit) {
+    return function (iterable, iteratee, callback) {
+        return fn(iterable, limit, iteratee, callback);
+    };
+}
+module.exports = exports["default"];
+
+/***/ }),
+/* 106 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.default = _eachOfLimit;
+
+var _noop = __webpack_require__(85);
+
+var _noop2 = _interopRequireDefault(_noop);
+
+var _once = __webpack_require__(79);
+
+var _once2 = _interopRequireDefault(_once);
+
+var _iterator = __webpack_require__(108);
+
+var _iterator2 = _interopRequireDefault(_iterator);
+
+var _onlyOnce = __webpack_require__(80);
+
+var _onlyOnce2 = _interopRequireDefault(_onlyOnce);
+
+var _breakLoop = __webpack_require__(78);
+
+var _breakLoop2 = _interopRequireDefault(_breakLoop);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _eachOfLimit(limit) {
+    return function (obj, iteratee, callback) {
+        callback = (0, _once2.default)(callback || _noop2.default);
+        if (limit <= 0 || !obj) {
+            return callback(null);
+        }
+        var nextElem = (0, _iterator2.default)(obj);
+        var done = false;
+        var running = 0;
+
+        function iterateeCallback(err, value) {
+            running -= 1;
+            if (err) {
+                done = true;
+                callback(err);
+            } else if (value === _breakLoop2.default || done && running <= 0) {
+                done = true;
+                return callback(null);
+            } else {
+                replenish();
+            }
+        }
+
+        function replenish() {
+            while (running < limit && !done) {
+                var elem = nextElem();
+                if (elem === null) {
+                    done = true;
+                    if (running <= 0) {
+                        callback(null);
+                    }
+                    return;
+                }
+                running += 1;
+                iteratee(elem.value, elem.key, (0, _onlyOnce2.default)(iterateeCallback));
+            }
+        }
+
+        replenish();
+    };
+}
+module.exports = exports['default'];
+
+/***/ }),
+/* 107 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+exports.default = function (coll) {
+    return iteratorSymbol && coll[iteratorSymbol] && coll[iteratorSymbol]();
+};
+
+var iteratorSymbol = typeof Symbol === 'function' && Symbol.iterator;
+
+module.exports = exports['default'];
+
+/***/ }),
+/* 108 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.default = iterator;
+
+var _isArrayLike = __webpack_require__(70);
+
+var _isArrayLike2 = _interopRequireDefault(_isArrayLike);
+
+var _getIterator = __webpack_require__(107);
+
+var _getIterator2 = _interopRequireDefault(_getIterator);
+
+var _keys = __webpack_require__(149);
+
+var _keys2 = _interopRequireDefault(_keys);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function createArrayIterator(coll) {
+    var i = -1;
+    var len = coll.length;
+    return function next() {
+        return ++i < len ? { value: coll[i], key: i } : null;
+    };
+}
+
+function createES2015Iterator(iterator) {
+    var i = -1;
+    return function next() {
+        var item = iterator.next();
+        if (item.done) return null;
+        i++;
+        return { value: item.value, key: i };
+    };
+}
+
+function createObjectIterator(obj) {
+    var okeys = (0, _keys2.default)(obj);
+    var i = -1;
+    var len = okeys.length;
+    return function next() {
+        var key = okeys[++i];
+        return i < len ? { value: obj[key], key: key } : null;
+    };
+}
+
+function iterator(coll) {
+    if ((0, _isArrayLike2.default)(coll)) {
+        return createArrayIterator(coll);
+    }
+
+    var iterator = (0, _getIterator2.default)(coll);
+    return iterator ? createES2015Iterator(iterator) : createObjectIterator(coll);
+}
+module.exports = exports['default'];
+
+/***/ }),
+/* 109 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.default = _withoutIndex;
+function _withoutIndex(iteratee) {
+    return function (value, index, callback) {
+        return iteratee(value, callback);
+    };
+}
+module.exports = exports["default"];
+
+/***/ }),
+/* 110 */,
+/* 111 */,
+/* 112 */,
+/* 113 */,
+/* 114 */,
+/* 115 */,
+/* 116 */,
+/* 117 */,
+/* 118 */,
+/* 119 */,
+/* 120 */,
+/* 121 */,
+/* 122 */,
+/* 123 */,
+/* 124 */,
+/* 125 */,
+/* 126 */,
 /* 127 */,
-/* 128 */
+/* 128 */,
+/* 129 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -18799,15 +19059,15 @@ module.exports = set;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
-/* 129 */
+/* 130 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseTimes = __webpack_require__(133),
-    isArguments = __webpack_require__(142),
-    isArray = __webpack_require__(143),
-    isBuffer = __webpack_require__(144),
-    isIndex = __webpack_require__(136),
-    isTypedArray = __webpack_require__(147);
+var baseTimes = __webpack_require__(134),
+    isArguments = __webpack_require__(143),
+    isArray = __webpack_require__(144),
+    isBuffer = __webpack_require__(145),
+    isIndex = __webpack_require__(137),
+    isTypedArray = __webpack_require__(148);
 
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
@@ -18854,11 +19114,11 @@ module.exports = arrayLikeKeys;
 
 
 /***/ }),
-/* 130 */
+/* 131 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseGetTag = __webpack_require__(68),
-    isObjectLike = __webpack_require__(70);
+var baseGetTag = __webpack_require__(69),
+    isObjectLike = __webpack_require__(71);
 
 /** `Object#toString` result references. */
 var argsTag = '[object Arguments]';
@@ -18878,12 +19138,12 @@ module.exports = baseIsArguments;
 
 
 /***/ }),
-/* 131 */
+/* 132 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseGetTag = __webpack_require__(68),
-    isLength = __webpack_require__(83),
-    isObjectLike = __webpack_require__(70);
+var baseGetTag = __webpack_require__(69),
+    isLength = __webpack_require__(84),
+    isObjectLike = __webpack_require__(71);
 
 /** `Object#toString` result references. */
 var argsTag = '[object Arguments]',
@@ -18944,11 +19204,11 @@ module.exports = baseIsTypedArray;
 
 
 /***/ }),
-/* 132 */
+/* 133 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isPrototype = __webpack_require__(137),
-    nativeKeys = __webpack_require__(138);
+var isPrototype = __webpack_require__(138),
+    nativeKeys = __webpack_require__(139);
 
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
@@ -18980,7 +19240,7 @@ module.exports = baseKeys;
 
 
 /***/ }),
-/* 133 */
+/* 134 */
 /***/ (function(module, exports) {
 
 /**
@@ -19006,7 +19266,7 @@ module.exports = baseTimes;
 
 
 /***/ }),
-/* 134 */
+/* 135 */
 /***/ (function(module, exports) {
 
 /**
@@ -19026,10 +19286,10 @@ module.exports = baseUnary;
 
 
 /***/ }),
-/* 135 */
+/* 136 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Symbol = __webpack_require__(80);
+var Symbol = __webpack_require__(81);
 
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
@@ -19078,7 +19338,7 @@ module.exports = getRawTag;
 
 
 /***/ }),
-/* 136 */
+/* 137 */
 /***/ (function(module, exports) {
 
 /** Used as references for various `Number` constants. */
@@ -19109,7 +19369,7 @@ module.exports = isIndex;
 
 
 /***/ }),
-/* 137 */
+/* 138 */
 /***/ (function(module, exports) {
 
 /** Used for built-in method references. */
@@ -19133,10 +19393,10 @@ module.exports = isPrototype;
 
 
 /***/ }),
-/* 138 */
+/* 139 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var overArg = __webpack_require__(141);
+var overArg = __webpack_require__(142);
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
 var nativeKeys = overArg(Object.keys, Object);
@@ -19145,10 +19405,10 @@ module.exports = nativeKeys;
 
 
 /***/ }),
-/* 139 */
+/* 140 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(module) {var freeGlobal = __webpack_require__(81);
+/* WEBPACK VAR INJECTION */(function(module) {var freeGlobal = __webpack_require__(82);
 
 /** Detect free variable `exports`. */
 var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
@@ -19182,7 +19442,7 @@ module.exports = nodeUtil;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(13)(module)))
 
 /***/ }),
-/* 140 */
+/* 141 */
 /***/ (function(module, exports) {
 
 /** Used for built-in method references. */
@@ -19210,7 +19470,7 @@ module.exports = objectToString;
 
 
 /***/ }),
-/* 141 */
+/* 142 */
 /***/ (function(module, exports) {
 
 /**
@@ -19231,11 +19491,11 @@ module.exports = overArg;
 
 
 /***/ }),
-/* 142 */
+/* 143 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseIsArguments = __webpack_require__(130),
-    isObjectLike = __webpack_require__(70);
+var baseIsArguments = __webpack_require__(131),
+    isObjectLike = __webpack_require__(71);
 
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
@@ -19273,7 +19533,7 @@ module.exports = isArguments;
 
 
 /***/ }),
-/* 143 */
+/* 144 */
 /***/ (function(module, exports) {
 
 /**
@@ -19305,11 +19565,11 @@ module.exports = isArray;
 
 
 /***/ }),
-/* 144 */
+/* 145 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(module) {var root = __webpack_require__(82),
-    stubFalse = __webpack_require__(149);
+/* WEBPACK VAR INJECTION */(function(module) {var root = __webpack_require__(83),
+    stubFalse = __webpack_require__(150);
 
 /** Detect free variable `exports`. */
 var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
@@ -19350,11 +19610,11 @@ module.exports = isBuffer;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(13)(module)))
 
 /***/ }),
-/* 145 */
+/* 146 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseGetTag = __webpack_require__(68),
-    isObject = __webpack_require__(146);
+var baseGetTag = __webpack_require__(69),
+    isObject = __webpack_require__(147);
 
 /** `Object#toString` result references. */
 var asyncTag = '[object AsyncFunction]',
@@ -19393,7 +19653,7 @@ module.exports = isFunction;
 
 
 /***/ }),
-/* 146 */
+/* 147 */
 /***/ (function(module, exports) {
 
 /**
@@ -19430,12 +19690,12 @@ module.exports = isObject;
 
 
 /***/ }),
-/* 147 */
+/* 148 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseIsTypedArray = __webpack_require__(131),
-    baseUnary = __webpack_require__(134),
-    nodeUtil = __webpack_require__(139);
+var baseIsTypedArray = __webpack_require__(132),
+    baseUnary = __webpack_require__(135),
+    nodeUtil = __webpack_require__(140);
 
 /* Node.js helper references. */
 var nodeIsTypedArray = nodeUtil && nodeUtil.isTypedArray;
@@ -19463,12 +19723,12 @@ module.exports = isTypedArray;
 
 
 /***/ }),
-/* 148 */
+/* 149 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var arrayLikeKeys = __webpack_require__(129),
-    baseKeys = __webpack_require__(132),
-    isArrayLike = __webpack_require__(69);
+var arrayLikeKeys = __webpack_require__(130),
+    baseKeys = __webpack_require__(133),
+    isArrayLike = __webpack_require__(70);
 
 /**
  * Creates an array of the own enumerable property names of `object`.
@@ -19506,7 +19766,7 @@ module.exports = keys;
 
 
 /***/ }),
-/* 149 */
+/* 150 */
 /***/ (function(module, exports) {
 
 /**
@@ -19530,21 +19790,21 @@ module.exports = stubFalse;
 
 
 /***/ }),
-/* 150 */,
 /* 151 */,
 /* 152 */,
 /* 153 */,
 /* 154 */,
 /* 155 */,
-/* 156 */
+/* 156 */,
+/* 157 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_lodash_debounce__ = __webpack_require__(126);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_lodash_debounce__ = __webpack_require__(59);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_lodash_debounce___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_lodash_debounce__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_lodash_get__ = __webpack_require__(28);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_lodash_get__ = __webpack_require__(24);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_lodash_get___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_lodash_get__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_lodash_set__ = __webpack_require__(128);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_lodash_set__ = __webpack_require__(129);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_lodash_set___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_lodash_set__);
 /**
  * This file manages all of the state that is passed out to the adapters. The adapters don't modify their own state, they use this object to set/get LoggerService state.
@@ -19670,7 +19930,6 @@ class PersistedState {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 157 */,
 /* 158 */,
 /* 159 */,
 /* 160 */,
@@ -19697,10 +19956,11 @@ class PersistedState {
 /* 181 */,
 /* 182 */,
 /* 183 */,
-/* 184 */
+/* 184 */,
+/* 185 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(94);
+module.exports = __webpack_require__(95);
 
 
 /***/ })

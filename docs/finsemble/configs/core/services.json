@@ -129,7 +129,8 @@
 				"onlySpawned": true,
 				"focusDelay": 30,
 				"eventIgnore": 50,
-				"hotkeyTimeout": 60000
+				"hotkeyTimeout": 60000,
+				"hideTitleBars": false
 			}
 		},
 		"RPCService": {

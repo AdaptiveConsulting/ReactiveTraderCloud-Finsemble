@@ -28,7 +28,8 @@ StoreClient.initialize();
  * In this context, a dialog window is simply a child window spawned to interact with the user, such as a confirmation dialog.
  * Functions are provided here for both the parent-window side and the dialog/child-window side.
  *
- *`FSBL.Clients.DialogManager` is always pre-initialized with one instance of the Dialog Manager in the Finsemble Library (making it essentially, a singleton when referenced in the same window). This means component developers directly access the Dialog Manager without using the constructor (e.g., `FSBL.Clients.DialogManager.spawnDialog(...);`). **The constructor is not exposed to components.**
+ *`FSBL.Clients.DialogManager` is always pre-initialized with one instance of the Dialog Manager in the Finsemble Library (making it essentially, a singleton when referenced in the same window). This means when developing Finsemble components, you directly access the Dialog Manager without using the constructor (e.g., `FSBL.Clients.DialogManager.spawnDialog(...);`). **The constructor is not exposed to components.**
+ *
  *
  * @param {object=} params optional parameters
  * @param {function=} params.onReady callback function indicating when client is ready
@@ -51,9 +52,9 @@ class DialogManagerClient extends _BaseClient {
 	/////////////////////////////////////////////
 
 	/**
-	 * Spawns a Dialog window.
+	 * Spawns a dialog window.
 	 *
-	 * parameters pass here in `inputParams` can be retrieved in the dialog window by calling [getParametersFromInDialog]{@link DialogManagerClient#getParametersFromInDialog}.
+	 * parameters passed here in <code>>params.inputParams</code> can be retrieved in the dialog window by calling <code>getParametersFromInDialog</code>.
 	 *
 	 * @param {object} params Parameters. Same as {@link LauncherClient#spawn} with the following exceptions.
 	 * @param {string} params.url URL of dialog to launch
@@ -66,20 +67,20 @@ class DialogManagerClient extends _BaseClient {
 	 *
 	 * @example
 	 * FSBL.Clients.DialogManager.spawnDialog(
-	 * 	{
-	 * 		name: "dialogTemplate",
-	 * 		height:300,
-	 * 		width:400,
-	 * 		url:"http://localhost/components/system/dialogs/dialog1.html"
-	 * 	},
-	 * 	{
-	 * 		someData: 12345
-	 * 	},
-	 * 		(error, responseParameters) => {
-	 *			if (!error) {
-	 * 				console.log(">>>> spawnDialog response: " + JSON.stringify(responseParameters));
-	 *			}
-	 * 	});
+	 * {
+	 * 	name: "dialogTemplate",
+	 * 	height:300,
+	 * 	width:400,
+	 * 	url:"http://localhost/components/system/dialogs/dialog1.html"
+	 * },
+	 * {
+	 * 	someData: 12345
+	 * },
+	 * (error, responseParameters) => {
+	 *	if (!error) {
+	 * 		console.log(">>>> spawnDialog response: " + JSON.stringify(responseParameters));
+	 *	}
+	 * });
 	 * @todo allow dialogs to be permanent components instead of ad-hoc.
 	 * @todo support paramter to make the dialog modal
 	 */
@@ -115,9 +116,8 @@ class DialogManagerClient extends _BaseClient {
 	/////////////////////////////////////////////
 
 	/**
-	 * Called within dialog window to get the parameters passed in spawnDialog's "inputParams"
-	 *
-	 * @return {object} inputParams parameters pass to dialog
+	 * Called from within dialog window to get the parameters passed in <code>spawnDialog</code> as <code>"inputParams"</code>. For example, if your dialog has a configurable title, you would pass it in to <code>spawnDialog</code>, and retrieve the value using <code>getParametersFromInDialog</code>.
+	 * @todo this auto-bind syntax prevents examples from rendering in documentation.
 	 * @example
 	 * var dialogData = FSBL.Clients.DialogManager.getParametersFromInDialog();
 	 */
@@ -128,9 +128,9 @@ class DialogManagerClient extends _BaseClient {
 	};
 
 	/**
-	 * Called within dialog window to pass back dialog response and terminal window. This results in the [spawnDialog]{@link DialogManagerClient#spawnDialog} callback function (i.e. `dialogResponseCallback`) being invoked with `responseParameters` passed in.
+	 * Called within the dialog window to pass back a dialog response. This results in the <code>spawnDialog</code> callback function (i.e., <code>dialogResponseCallback</code>) being invoked with <code>responseParameters</code> passed in.
 	 *
-	 * @param {object} responseParameters parameters returned to parent (i.e. window that spawned the dialog)
+	 * @param {object} responseParameters The parameters returned to parent (i.e., window that spawned the dialog).
 	 *
 	 * @example
 	 * FSBL.Clients.DialogManager.respondAndExitFromInDialog({ choice: response });
@@ -140,7 +140,6 @@ class DialogManagerClient extends _BaseClient {
 		Logger.system.debug("DialogManagerClient:respondAndExitFromInDialog: " + JSON.stringify(responseParameters));
 		var responseChannel = WindowClient.getSpawnData().responseChannel;
 		this.routerClient.transmit(responseChannel, responseParameters);
-		// FSBL.Clients.WindowClient.close();
 	};
 	/**
 	 * @private
@@ -180,9 +179,9 @@ class DialogManagerClient extends _BaseClient {
 	};
 	/**
 	 * Function to initialize and open a dialog.
-	 * @param {object} identifier window identifier of the dialog.
-	 * @param {object} options Any data to send to the dialog for its initialization
-	 * @param {function} onUserInput callback to be invoked after the user interacts with the dialog.
+	 * @param {object} identifier The window identifier of the dialog.
+	 * @param {object} options Any data to send to the dialog for its initialization.
+	 * @param {function} onUserInput Callback to be invoked after the user interacts with the dialog.
 	 */
 	sendQueryToDialog = (identifier: WindowIdentifier, options: any, onUserInput) => {
 		function warn(timeout) {
@@ -271,7 +270,7 @@ class DialogManagerClient extends _BaseClient {
 
 	/**
 	 * Shows a semi-transparent black modal behind the dialog.
-	 * @param {function} cb
+	 * @param {function} cb The callback to be invoked after the method completes successfully.
 	 */
 	showModal = (cb?: Function) => {
 		this.DialogStore.getValue("modalIdentifier", async (err, identifier) => {
@@ -303,8 +302,8 @@ class DialogManagerClient extends _BaseClient {
 
 	/**
 	 * Retrieves an available dialog. If none are found, one will be created with the options passed.
-	 * @param {string} type component type
-	 * @param {object} options options to pass into the opened window.
+	 * @param {string} type Component type to open. The <code>type</code> must be a key in the finsemble.components configuration object.
+	 * @param {object} options Options to pass into the opened window.
 	 * @param {function} onUserInput Callback to be invoked when the user interacts with the dialog.
 	 */
 	open = (type: string, options: any, onUserInput: Function) => {
@@ -342,7 +341,7 @@ class DialogManagerClient extends _BaseClient {
 	openerMessage = null;
 	/**
 	 * Used by the window that is opening a dialog. This method sets up a query/responder that the opened dialog will invoke when the user has interacted with the dialog.
-	 * @param {function} callback
+	 * @param {function} callback Callback to be invoked after the user interacts with the dialog. Any data sent back from the dialog will be passed in as the 2nd parameter to this callback.
 	 */
 	registerDialogCallback = (callback) => {
 		this.routerClient.addResponder(this.RESPONDER_CHANNEL, (err, message) => {
@@ -352,7 +351,7 @@ class DialogManagerClient extends _BaseClient {
 	};
 
 	/**
-	 * Hides the modal.
+	 * Hides the dialog's modal.
 	 */
 	hideModal = () => {
 		this.DialogStore.getValue("modalIdentifier", async (err, identifier) => {
@@ -367,7 +366,7 @@ class DialogManagerClient extends _BaseClient {
 	};
 
 	/**
-	 * Sends data back to the window that opened the dialog.
+	 * Sends data back to the window that opened the dialog. Will hide the modal unless <code>{ hideModalOnClose: false }</code> is passed in as the first argument.
 	 * @param {any} data
 	 */
 	respondToOpener = (data: any) => {
@@ -382,7 +381,9 @@ class DialogManagerClient extends _BaseClient {
 
 	/**
 	 * Registers the window as a dialog with the global store. If the component is incapable of being used as a dialog (this is set in the component's config), the callback is immediately invoked.
-	 * @param {function} callback
+	 *
+	 * <b>Note:</b> This method will check to see whether the calling window is a dialog.
+	 * @param {function} callback The callback to be invoked after the method completes successfully.
 	 */
 	registerWithStore = (callback: Function) => {
 		if (this.isDialog) {
@@ -396,7 +397,7 @@ class DialogManagerClient extends _BaseClient {
 
 	/**
 	 * Checks to see whether the window is a dialog.
-	 * @param {cb} cb
+	 * @param {cb} cb The callback to be invoked after the method completes successfully.
 	 */
 	checkIfWindowIsDialog = (cb?: Function) => {
 		let err = null;

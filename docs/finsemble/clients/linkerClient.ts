@@ -17,7 +17,7 @@ import { parallel as asyncParallel } from "async";
 import deepEqual = require("lodash.isequal");
 
 function makeKey(windowIdentifier) {
-	return (windowIdentifier.windowName + "::" + windowIdentifier.uuid).replace(".", "_");
+	return (windowIdentifier.windowName + "::" + windowIdentifier.uuid).replace(/\./g, "_");
 };
 
 /**
@@ -50,39 +50,28 @@ declare type linkerGroup = {
  *
  * @introduction
  * <h2>Linker Client</h2>
- * <h3>Public API for the Linker Service</h3>
  * <p>
- * The Linker API provides a mechanism for synchronizing components on a piece of data. For instance, a user might want to link multiple components by stock symbol.
- * Using the Linker API, a developer could enable their component to participate in this synchronization.
- * The developer would use {@link LinkerClient#subscribe} to receive synchronization events, and they would use {@link LinkerClient#publish} to send them.
- * The Linker API is inherently similar to the [Router Client's](IRouterClient.html) pub/sub mechanism. The primary difference is that the Linker API is designed for end-user interaction.
- * By exposing the Linker API, developers allow **end users** to create and destroy linkages at run-time.
+ * The Linker API allows components to synchronize on a piece of data. For instance, an end user can use the Linker to link multiple components by stock symbol.
+ * Use the Linker API to enable your components to participate in this synchronization.
  * </p>
- *
  * <p>
- * In order for components to be linked, they must understand the data format that will be passed between them (the "context"), and agree on a label that identifies that format (the "dataType").
- * For instance, components might choose to publish and subscribe to a dataType called `"symbol"`.
- * They would then also need to agree what a `"symbol"` looks like, for instance, `{symbol:"IBM"}`.
- * The Linker API doesn't proscribe any specific format for context or set of labels (some would call this a "taxonomy").
- * See [the FDC3 project](https://fdc3.org/) for an emerging industry standard taxonomy.
- * </p>
- *
- * <p>
- * End users create linkages by assigning components to "channels." Our default implementation represents channels by color.
- * When a component is assigned to the purple channel, publish and subscribe messages are only received by other components assigned to that channel.
- * If you're using Finsemble's built-in Linker component, you won't have to code this. The Linker component does the work of assigning and un-assigning its associated component to the selected channel.
- * However, the Linker API exposes functionality so that you can manage channels programmatically if you choose.
- * You could use these functions to build your own Linker component using a different paradigm, or intelligently link components based on your own business logic.
- * **Note:** it is not necessary to stick to a color convention. Channels are simple strings and so can be anything.
+ * In order for components to be linked, the components must understand the data format that will be passed between them (the "context"), and agree on a label that identifies that format (the <code>dataType</code>).
+ * For instance, components might choose to publish and subscribe to a <code>dataType</code> called "symbol".
+ * They would then also need to agree what a "symbol" looks like, for instance, <code>{symbol:"IBM"}</code>.
+ * The Linker API doesn't proscribe any specific format for context or set of labels.
  * </p>
  *
  * <p>
  * Behind the scenes, the Linker Service coordinates Linker activity between components. It keeps track of the available channels and channel assignments.
- * It uses a dedicated store ({@link DistributedStoreClient}) to maintain this information and also persists the information to workspaces ({@link WorkspaceClient}).
+ * It uses a dedicated store (<a href="DistributedStoreClient.html">the Distributed Store</a>) to maintain this information and also persists the information to workspaces (<a href="WorkspaceClient.html">Workspace Client</a>).
  * </p>
  *
  * <p>
- * See more on using the Linker API at our <a href="tutorial-Linking.html">Linking tutorial</a>.
+ * The Linker Client frequently uses the parameters <code>windowIdentifier</code> and <code>componentType</code>. <a href="tutorial-ComponentTypesAndWindowNames.html">Learn more about them here</a>.
+ * </p>
+ *
+ * <p>
+ * For more information, see the <a href="tutorial-Linking.html">Linking tutorial</a>.
  * </p>
  * @hideconstructor
  *
@@ -106,6 +95,9 @@ class LinkerClient extends _BaseClient {
 		this.launcherClient = params.clients.launcherClient;
 		this.windowClient = params.clients.windowClient;
 		this.distributedStoreClient = params.clients.distributedStoreClient;
+
+		this.clientsKeyValueChangeStoreListener = this.clientsKeyValueChangeStoreListener.bind(this)
+		this.anyFieldChangeStoreListener = this.anyFieldChangeStoreListener.bind(this)
 	}
 
 	stateChangeListeners = [];
@@ -135,7 +127,7 @@ class LinkerClient extends _BaseClient {
 	/**
 	 * Create a new Linker channel. This channel will be available *globally*.
 	 * @param {object} params
-	 * @param cb - Optional. Callback to retrieve returned results asynchronously
+	 * @param cb - Optional. Callback to retrieve returned results asynchronously.
 	 * @return {Array.<string>} Returns an array of all available channels
 	 * @private
 	 * @since TBD deprecated createGroup
@@ -173,7 +165,7 @@ class LinkerClient extends _BaseClient {
 	 * @private
 	 *
 	 * @example
-	 * LinkerClient.removeChannel("purple")
+	 * FSBL.Clients.LinkerClient.removeChannel("group1")
 	 *
 	 */
 	removeChannel(name: string, cb: Function) {
@@ -219,17 +211,17 @@ class LinkerClient extends _BaseClient {
 		this.linkerStore.setValue({ field: "clients." + key, value: this.clients[key] });
 	};
 	/**
-	 * Add a component to a Linker channel programmatically. Components will begin receiving any new contexts published to this channel but will *not* receive the currently established context.
+	 * Add a component to a Linker channel programmatically. Components will begin receiving any new contexts published to this channel but will <b>not</b> receive the currently established context.
 	 *
 	 * @param {string} channel - The name of the channel to link our component to, or an array of names.
-	 * @param windowIdentifier -  Optional. Window Identifier for the component. If null, it defaults to the current window.
+	 * @param windowIdentifier -  Optional. windowIdentifier for the component. If null, it defaults to the current window.
 	 * @param cb - Optional. Callback to retrieve returned results asynchronously.
 	 * @return {LinkerState} The new state: linked channels, all channels
 	 * @since 2.3 deprecated addToGroup
 	 * @example
 	 *
-	 * LinkerClient.linkToChannel("purple", null); // Link current window to channel "purple".
-	 * LinkerClient.linkToChannel("purple", windowIdentifier); // Link the requested window to channel "purple".
+	 * FSBL.Clients.LinkerClient.linkToChannel("group3", null); // Link current window to channel.
+	 * FSBL.Clients.LinkerClient.linkToChannel("group3", windowIdentifier); // Link the requested window to channel.
 	 *
 	 */
 	linkToChannel(channel: string | string[], windowIdentifier: WindowIdentifier, cb?: Function) {
@@ -263,14 +255,14 @@ class LinkerClient extends _BaseClient {
 	 * Unlinks a component from a Linker channel.
 	 *
 	 * @param {string} channel - Channel to remove, or an array of channels. If null, then all channels will be removed.
-	 * @param windowIdentifier -  Window Identifier for the client (optional). Current window if left null.
-	 * @param cb - Optional. Callback to retrieve returned results asynchronously
+	 * @param windowIdentifier -  windowIdentifier for the window. Defaults to current window if left null.
+	 * @param cb - Optional. Callback to retrieve returned results asynchronously.
 	 * @return {LinkerState} Returns the new state: linked channels, all channels
 	 * @since 2.3 deprecated removeFromGroup
 	 * @example
 	 *
-	 * LinkerClient.unlinkFromChannel("purple", null); // Unlink the current window from channel "purple"
-	 * LinkerClient.unlinkFromChannel("purple", windowIdentifier) // Unlink the requested window form channel "purple"
+	 * FSBL.Clients.LinkerClient.unlinkFromChannel("group1", null); // Unlink the current window from channel "group1"
+	 * FSBL.Clients.LinkerClient.unlinkFromChannel("group1", windowIdentifier) // Unlink the requested window from channel "group1"
 	 *
 	 */
 	unlinkFromChannel(channel: string | string[], windowIdentifier: WindowIdentifier, cb?: Function) {
@@ -307,12 +299,12 @@ class LinkerClient extends _BaseClient {
 	};
 
 	/**
-	 * Returns all available Linker channels
-	 * @param cb - Optional. Callback to retrieve returned results asynchronously
+	 * Returns all available Linker channels.
+	 * @param cb Optional. Callback to retrieve returned results asynchronously.
 	 * @return {array} An array of all channels. Each array item is {name:channelName} plus any other optional fields such as color.
 	 * @since 2.3 deprecated getAllGroups
 	 * @example
-	 * LinkerClient.getAllChannels()
+	 * FSBL.Clients.LinkerClient.getAllChannels()
 	 */
 	getAllChannels(cb?: Function) {
 		sysinfo("LinkerClient.getAllChannels");
@@ -321,8 +313,8 @@ class LinkerClient extends _BaseClient {
 
 	/**
 	 * Retrieve all channels linked to the requested component. Also returns all available channels.
-	 * @param windowIdentifier Which component, or null for the current window.
-	 * @param cb - Optional. Callback to retrieve returned results asynchronously
+	 * @param windowIdentifier Retrieve all channels for identified window. If null, will retrieve for the current window.
+	 * @param cb Optional. Callback to retrieve returned results asynchronously
 	 * @return {LinkerState} The current state: linked channels, all channels
 	 * @since 2.3 deprecated getGroups, no longer supports a callback
 	 * @example
@@ -331,7 +323,7 @@ class LinkerClient extends _BaseClient {
 	getState(windowIdentifier?: WindowIdentifier, cb?: StandardCallback) {
 		sysinfo("LinkerClient.getState", "WINDOW IDENTIFIER", windowIdentifier);
 		var state = {
-			channels: {},
+			channels: [],
 			allChannels: this.allChannels
 		};
 		if (!windowIdentifier) windowIdentifier = this.windowClient.getWindowIdentifier();
@@ -350,6 +342,8 @@ class LinkerClient extends _BaseClient {
 			return componentEntry.channels && componentEntry.channels[value.name] === true;
 		});
 
+		Logger.system.debug("LINKER-3", this.allChannels, "state.channels", state.channels, "key", key, "windowIdentifier", windowIdentifier, "componentEntry", componentEntry)
+
 		// Cleanup code in case of an oops. If we're accessing this component, it must be alive. Make sure the store reflects this.
 		if (!componentEntry.active) {
 			componentEntry.active = true;
@@ -361,11 +355,11 @@ class LinkerClient extends _BaseClient {
 
 	/**
 	* Remove all listeners for the specified dataType.
-	* @param {String}  dataType - The data type be subscribed to
+	* @param {String}  dataType - The data type to which the component is subscribed.
 	* @param {function} cb - Optional. Callback to retrieve returned results asynchronously (empty object)
 	*
 	* @example
-	* LinkerClient.unsubscribe("symbol");
+	* FSBL.Clients.LinkerClient.unsubscribe("symbol");
 	*/
 	unsubscribe(dataType: string, cb?: StandardCallback) {
 		sysinfo("LinkerClient.unsubscribe", "DATA TYPE", dataType);
@@ -375,14 +369,13 @@ class LinkerClient extends _BaseClient {
 	};
 
 	/**
-	* Publish a piece of data. The data will be published to *all channels* that the component is linked to. Foreign components that are linked to those channels will receive the data if they have subscribed to this dataType. They can then use that data to synchronize their internal state. See {@link LinkerClient#subscribe}.
-	* @param {Object}  params
-	* @param {String}  params.dataType - The data type being sent.
+	* Publish a piece of data. The data will be published to <b>all channels</b> that the component is linked to. Foreign components that are linked to those channels will receive the data if they have subscribed to this dataType. They can then use that data to synchronize their internal state. See {@link LinkerClient#subscribe}.
+	* @param {String}  params.dataType - A string representing the data type being sent.
 	* @param {any}  params.data - The data ("context") being transmitted.
-    * @params.channels - Optional. Specifies which channels publish this piece of data. This overrides the default which is to publish to all linked channels.
-	* @param cb - Optional. Callback to retrieve returned results asynchronously
+  * @param {array<string>} params.channels - Optional. Specifies which channels publish this piece of data. This overrides the default which is to publish to all linked channels.
+	* @param cb - Optional. Callback to retrieve returned results asynchronously.
 	* @example
-	* LinkerClient.publish({dataType:"symbol",data:"AAPL"})
+	* FSBL.Clients.LinkerClient.publish({ dataType:"symbol", data:"AAPL" })
 	*/
 	publish(params: {
 		dataType: string,
@@ -405,11 +398,11 @@ class LinkerClient extends _BaseClient {
 	/**
 	* Registers a client for a specific data type that is sent to a channel. Calling `subscribe` multiple times adds additional handlers.
 	* @param {String} dataType A string representing the data type to subscribe to.
-	* @param {function} cb -  A function to be called once the linker receives the specific data.
+	* @param {StandardCallback} cb A function to be called once the Linker receives the specific data.
 	* @example
-	* LinkerClient.subscribe("symbol", function(data){
-		console.log("New symbol received from a remote component " + data);
-	  });
+	* FSBL.Clients.LinkerClient.subscribe("symbol", function(data) {
+	* 	console.log("New symbol received from a remote component " + data);
+	* });
 	*/
 	subscribe(dataType: string, cb: StandardCallback) {
 		sysinfo("LinkerClient.subscribe", "DATA TYPE", dataType);
@@ -425,20 +418,19 @@ class LinkerClient extends _BaseClient {
 	 *
 	 * @param {object} params Optional
 	 * @param {Array.<string>} params.channels Restrict to these channels.
-	 * @param {Array.<string>} params.componentTypes Restrict to these componentTypes.
+	 * @param {Array.<string>} params.componentTypes Restrict to these componentTypes. The componentType is a key in the finsemble.components configuration object.
 	 * @param {windowIdentifier} params.windowIdentifier Restrict to this component.
-	 * @param cb - Optional. Callback to retrieve returned results asynchronously.
+	 * @param cb Optional. Callback to retrieve returned results asynchronously.
 	 * @returns {array} An array of linked components, their windows, and their linked channels.
 	 *
 	 * @since 1.5
 	 * @since 2.3 deprecated getLinkedWindows
 	 * @example <caption>Get all components linked to a given component</caption>
-	 * LinkerClient.getLinkedComponents({windowIdentifier: wi});
+	 * FSBL.Clients.LinkerClient.getLinkedComponents({ windowIdentifier: wi });
 	 *
-	 * @example <caption>Get all components linked to channel "purple"</caption>
-	 * LinkerClient.getLinkedComponents({channels: ['purple']});
-	 * // Response format: [{windowName: 'Window Name', componentType: 'Component Type', uuid: 'uuid', channels: ['purple'] }, ..]
-	 *
+	 * @example <caption>Get all components linked to channel "group 1"</caption>
+	 * FSBL.Clients.LinkerClient.getLinkedComponents({ channels: ['group1'] });
+	 * // Response format: [{windowName: 'Window Name', componentType: 'Component Type', uuid: 'uuid', channels: ['group1'] }]
 	 */
 	getLinkedComponents(params: {
 		channels?: string[],
@@ -548,7 +540,7 @@ class LinkerClient extends _BaseClient {
 
 	/**
 	 * Use this method to register a callback which will be called whenever the state of the Linker changes. This will be called whenever a user links or unlinks your component to a channel.
-	 * @param {function} cb {null, LinkerClient~state}
+	 * @param {function} cb  returns { null, LinkerClient~state }
 	 * @example
 	 * FSBL.Clients.LinkerClient.onStateChange(function(err, response){
 	 *    if(response.channels){
@@ -573,6 +565,40 @@ class LinkerClient extends _BaseClient {
 		});
 	};
 
+	/**
+	 * Callback function for linkerStore.addListener({ field: "clients." + key }). Updates channels and persistState.
+	 *
+	 * @param {object} response contains changed listener data
+	 * @private
+	 */
+	private clientsKeyValueChangeStoreListener(_, response) {
+		sysdebug("My Channels Updated");
+		if (!response.value) return;
+		let responseChannels = response.value.channels || response.value.groups;
+		let areChannelsEqual = deepEqual(responseChannels, this.channels);
+		// If channels change, save, this prevents initial empty channels from saving.
+		if (responseChannels && !areChannelsEqual) {
+			this.persistState(responseChannels);
+			this.channels = responseChannels;
+			this.updateListeners();
+		}
+	};
+
+	/**
+	 * Callback function forlinkerStore.addListener({}).  Updates allChannels, allGroups, and clients.
+	 *
+	 * @param {object} response contains changed listener data
+	 * @private
+	 */
+	private anyFieldChangeStoreListener(_, response) {
+		var values = response.value.values;
+		this.allChannels = values.channels;
+		if (values.groups) this.allChannels = values.groups; // backward compatibility
+		Logger.system.debug("LINKER-2", this.allChannels);
+		this.allGroups = this.allChannels; // backward compatibility
+		this.clients = values.clients;
+	};
+
 	// load all linkages and register listeners for updated data.
 	/**
 	 * @private
@@ -589,12 +615,13 @@ class LinkerClient extends _BaseClient {
 			linkerStore.getValues(["channels"], (err, values) => {
 				if (values && values["channels"]) {
 					this.allChannels = values["channels"];
+					Logger.system.debug("LINKER-1", this.allChannels)
 					this.allGroups = this.allChannels; // backward compatibility
 				}
 				// Now get the linker state (which channels are enabled) for this instance. The windowClient will have retrieved this from Storage.
 				// Use this to initialize our channel state.
 				this.windowClient.getComponentState({ field: "Finsemble_Linker" }, (err, linkerData) => {
-					this.channels = {};
+					this.channels = [];
 					this.clients[key] = {
 						client: wi,
 						active: true,
@@ -620,39 +647,34 @@ class LinkerClient extends _BaseClient {
 				});
 			});
 
-			linkerStore.addListener({ field: "clients." + key }, (err, response) => {
-				sysdebug("My Channels Updated");
-				if (!response.value) return;
-				let responseChannels = response.value.channels || response.value.groups;
-				let areChannelsEqual = deepEqual(responseChannels, this.channels);
-				// If channels change, save, this prevents initial empty channels from saving.
-				if (responseChannels && !areChannelsEqual) {
-					this.persistState(responseChannels);
-					this.channels = responseChannels;
-					this.updateListeners();
-				}
-			});
-
-			linkerStore.addListener({}, (err, response) => {
-				var values = response.value.values;
-				this.allChannels = values.channels;
-				if (values.groups) this.allChannels = values.groups; // backward compatibility
-				this.allGroups = this.allChannels; // backward compatibility
-				this.clients = values.clients;
-			});
+			linkerStore.addListener({ field: "clients." + key }, this.clientsKeyValueChangeStoreListener);
+			linkerStore.addListener({}, this.anyFieldChangeStoreListener);
 		});
 	};
 
 	/**
 	 * @private
 	 */
-	onClose = () => {
+	onClose = (cb) => {
 		var wi = this.windowClient.getWindowIdentifier();
 		var key = makeKey(wi);
 		if (this.clients[key]) {
 			this.clients[key].active = false;
 			this.updateClientInStore(key);
 		}
+		this.linkerStore.removeListener({ field: "clients." + key }, this.clientsKeyValueChangeStoreListener, (err, success) => {
+			if (!success) {
+				Logger.system.warn("Linker Client Onclose: clientsKeyValueChangeStoreListener removeListner failed", key);
+			}
+		});
+		this.linkerStore.removeListener({ field: {} }, this.anyFieldChangeStoreListener, (err, success) => {
+			if (!success) {
+				Logger.system.warn("Linker Client Onclose: anyFieldChangeStoreListener removeListner failed");
+			}
+		});
+
+		Logger.system.debug("LINKER-4 cleanup", key);
+		cb && cb();
 	};
 
 	/**
@@ -759,10 +781,10 @@ class LinkerClient extends _BaseClient {
 
 	/**
 	* Remove all listeners for the specified dataType.
-	* @param {String}  dataType - The data type be subscribed to
+	* @param {String}  dataType - The data type to which the component is subscribed.
 	* @example
-	* LinkerClient.unsubscribe("symbol");
-	* @deprecated since version 4.0
+	* FSBL.Clients.LinkerClient.unsubscribe("symbol");
+	* @deprecated To be removed in 4.0.0. Please use LinkerClient.unsubscribe().
 	*/
 	unSubscribe(dataType: string) {
 		this.unsubscribe(dataType);
@@ -772,17 +794,19 @@ class LinkerClient extends _BaseClient {
 	 *
 	 * @param {object} params Optional
 	 * @param {Array.<string>} params.channels Restrict to these channels.
-	 * @param {Array.<string>} params.componentTypes Restrict to these componentTypes
-	 * @param {windowIdentifier} params.windowIdentifier Restrict to this component
-	 * @param cb - Optional. Callback to retrieve returned results asynchronously
-	 * @returns {array} An array of linked components, their windows, and their linked channels
+	 * @param {Array.<string>} params.componentTypes Restrict to these componentTypes. The componentType is a key in the finsemble.components configuration object.
+	 * @param {windowIdentifier} params.windowIdentifier Restrict to this component.
+	 * @param {windowIdentifier} params.client Alias for windowIdentifier.
+	 * @param {Array.<string>} params.groups Alias for channels.
+	 * @param cb - Optional. Callback to retrieve returned results asynchronously.
+	 * @returns {array} An array of linked components, their windows, and their linked channels.
 	 *
 	 * @example <caption>Get all components linked to a given component</caption>
-	 * LinkerClient.getLinkedWindows({windowIdentifier: wi});
+	 * FSBL.Clients.LinkerClient.getLinkedWindows({windowIdentifier: wi});
 	 *
-	 * @example <caption>Get all Windows linked to channel "purple"</caption>
-	 * LinkerClient.getLinkedComponents({channels: ['purple']});
-	 * // Response format: [{windowName: 'Window Name', componentType: 'Component Type', uuid: 'uuid', channels: ['purple'] }, ..]
+	 * @example <caption>Get all Windows linked to channel "group1"</caption>
+	 * FSBL.Clients.LinkerClient.getLinkedComponents({ channels: ['group1'] });
+	 * // Response format: [{ windowName: 'Window Name', componentType: 'Component Type', uuid: 'uuid', channels: ['group1'] }]
 	 *
 	 */
 	getLinkedWindows(params?: {
@@ -824,8 +848,8 @@ class LinkerClient extends _BaseClient {
 	loading = false;
 
 	/**
-	 * Opens the linker window
-	 * @param {Function} cb The callback
+	 * Opens the Linker window.
+	 * @param {Function} cb The callback to be invoked after the method completes successfully.
 	 */
 	openLinkerWindow(cb) {
 		Validate.args(cb, "function");

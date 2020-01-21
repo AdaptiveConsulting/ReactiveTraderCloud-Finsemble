@@ -44,20 +44,20 @@ type emitter = {
  * <h2>Drag and Drop Client</h2>
  *
  * The Drag and Drop Client acts as an API to share data between components via a user action i.e., drag and drop.
- * As an example, consider a user wanting to share a chart inside a chat - they can do so using the Drag and Drop service.
+ * As an example, consider a user wanting to share a chart inside a chat - they can do so using the Drag and Drop Service.
  *
  *
- * A component that shares data needs to publish the data types it can share by calling setEmitters.
- * The `Window Manager` automatically adds a draggable share icon to any component that calls setEmitters.
- * Similarly, a component that can receive data needs to publish that using addReceivers.
- * Since it is possible to have multiple components on a page receiving the data, you can add multiple receivers for the same dataType.
+ * A component that shares data needs to publish the data types it can share by calling `setEmitters`.
+ * The Window Manager automatically adds a draggable share icon to any component that calls `setEmitters`.
+ * Similarly, a component that can receive data needs to publish that using `addReceivers`.
+ * Since it is possible to have multiple components on a page receiving the data, you can add multiple receivers for the same data `type`.
  *
  * The Drag and Drop Client overlays a scrim on all windows once the user starts dragging a sharable item. The scrim displays which windows can and cannot receive that data.
- * However, this doesn't always work well, especially with complex third party components. You may need to add your own drop zone to the component and use `FSBL.DragAndDropClient.drop` as the handler.
+ * However, this doesn't always work well, especially with complex third party components. You may need to add your own drop zone to the component and use `drop` as the handler.
  *
- * The Drag and Drop Client can also make use of the Linker Client to share data between linked windows. See [DragAndDropClient.html#drop](DragAndDropClient.html#openSharedData).
+ * The Drag and Drop Client can also make use of the Linker Client to share data between linked windows using `openSharedData`.
  *
- * Here is a [tutorial on using the Drag and Drop Client](tutorial-DragAndDropSharing.html).
+ * For more information, see the [Drag and Drop tutorial](tutorial-DragAndDropSharing.html).
  *
  * @hideconstructor
  * @constructor
@@ -125,12 +125,12 @@ class DragAndDropClient extends BaseClient {
 	}
 
 	/**
-	 * setEmitters sets all the data that can be shared by the component. There can only be one emitter for each data type.
+	 * This sets all the data that can be shared by the component. There can only be one emitter for each data type.
 	 *
 	 * @param {Object} params
-	 * @param {Array.<Object>} params.emitters This is a list of objects which contain a dataType and a function to get the data.
+	 * @param {Array.<Object>} params.emitters This is a list of objects (`{ type: string, data: function }`) which contain a type and a function to get the data.
 	 * @example
-	 * DragAndDropClient.setEmitters({
+	 * FSBL.Clients.DragAndDropClient.setEmitters({
 	 * 	emitters: [
 	 * 		{
 	 * 			type: "symbol",
@@ -168,13 +168,13 @@ class DragAndDropClient extends BaseClient {
 	}
 
 	/**
-	 * addReceivers adds receivers for the data that can be received by the component. There can be any number of receiver for each data type. You can also use regular expressions to specify the data that can be received.
+	 * Adds receivers for the data that can be received by the component. There can be any number of receivers for each data type. You can also use regular expressions to specify the data that can be received.
 	 *
 	 * @param {object} params
-	 * @param {Array.<Object>} params.receivers This is a list of objects, each containing a type and a handler function to call with the data once received. The receiver can take a regular expression as its type to provide the ability to receive multiple data types. Each type can have multiple handlers so you can use the same type multiple times in your call.
-	 *
+	 * @param {Array<receiver>} params.receivers This is a list of objects (`{ type: string, handler: function }`), each containing a type and a handler function to call with the data once received. The receiver can take a regular expression as its type to provide the ability to receive multiple data types. Each type can have multiple handlers so you can use the same type multiple times in your call.
+	 * @todo document the receivers type. For now, the description above will suffice.
 	 * @example
-	 * DragAndDropClient.addReceivers({
+	 * FSBL.Clients.DragAndDropClient.addReceivers({
 	 * 	receivers: [
 	 * 		{
 	 * 			type: "symbol",
@@ -183,8 +183,8 @@ class DragAndDropClient extends BaseClient {
 	 * 			type: "chartiq.chart",
 	 * 			handler: openChart
 	 * 		}
-	 * 	])
-	 * DragAndDropClient.addReceivers({
+	 * ])
+	 * FSBL.Clients.DragAndDropClient.addReceivers({
 	 * 	receivers: [
 	 *		{
 	 * 			type: &#47;.*&#47;,
@@ -248,7 +248,7 @@ class DragAndDropClient extends BaseClient {
 	 * updateReceivers updates the handlers for the data that can be received by the component.
 	 *
 	 * @param {object} params
-	 * @param {Array.<Object>} params.receivers This is a list of objects, each containing a type, the existing handler (oldHandler) and a handler function to replace the old handler with.
+	 * @param {Array.<Object>} params.receivers This is a list of objects (`{ type: string, handler: Function, oldHandler: Function }`), each containing a type, the existing handler (oldHandler) and a handler function to replace the old handler with.
 	 * @private
 	 * @example
 	 * DragAndDropClient.updateReceivers({
@@ -355,7 +355,7 @@ class DragAndDropClient extends BaseClient {
 	}
 
 	/**
-	 * This is a drag event handler for an element that can be dragged to share data. Our sample Window Title component uses this internally when the share icon is dragged. This can be attached to any element that needs to be draggable. The data from all emitters that match receivers in the drop component is automatically shared.
+	 * This is a drag event handler for an element that can be dragged to share data. Our sample Window Title Bar component uses this internally when the share icon is dragged. This can be attached to any element that needs to be draggable. The data from all emitters that match receivers in the drop component is automatically shared.
 	 *
 	 * @param {event} event
 	 *
@@ -538,7 +538,7 @@ class DragAndDropClient extends BaseClient {
 	 * @experimental
 	 *
 	 * @param {object} params
-	 * @param {any} params.data
+	 * @param {any} params.data Data to pass to the opened component.
 	 * @param {boolean} params.publishOnly if the component is linked, this will only publish the data, not force open a window if it does not exist. If the component is not linked, this is ignored.
 	 * @param {function} params.multipleOpenerHandler Optional. This function is called with on object that contains a map of componentTypes to the data types they can open. It must return a list of components to be opened. If no handler is provided, the first found component will be chosen. It is possible that the component opened may not handle all the data provided.
 	 * @param {function} cb Callback invoked with action taken.

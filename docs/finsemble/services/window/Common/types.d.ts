@@ -34,6 +34,7 @@ export type WindowDescriptor = {
 	};
 	claimMonitorSpace?: boolean;
 	url?: string;
+	path?: string;
 	// Daniel H. 1/16/19 - This appears to be a duplicate of the .customData.manifest.
 	// @TODO - Pick one and remove the other.
 	manifest?: {};

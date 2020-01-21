@@ -7,6 +7,10 @@ import { FinsembleHoverDetector } from "@chartiq/finsemble-react-controls";
 import { getStore, Actions as HeaderActions } from "../../stores/windowTitleBarStore";
 let windowTitleBarStore;
 
+
+import { UnDockedIcon } from "../assets/UndockedIcon"
+import { DockedIcon } from "../assets/DockedIcon"
+
 export default class DockingButton extends React.Component {
 	constructor(props) {
 		super(props);
@@ -53,7 +57,7 @@ export default class DockingButton extends React.Component {
 	}
 
     /**
-     * Invoked when the store emits a change event. The icon will change. If we're grouped, we show the button that denotes group membership. If we're just snapped, we show the button that will group attached windows.
+     * Invoked when the store emits a change event. The icon will change. If we're grouped, we show the button that denotes group memebership. If we're just snapped, we show the button that will group attached windows.
      *
      * @param {any} err
      * @param {any} response
@@ -100,6 +104,7 @@ export default class DockingButton extends React.Component {
 		let iconClass = "ff-";
 		let wrapClasses = "fsbl-icon fsbl-icon-bordered docking-control";
 
+        const { shade } = this.props;
 		iconClass += this.state.dockingIcon === "ejector" ? "attached" : "detached";
 		let toolTip = this.state.dockingIcon === "ejector" ? "Detach Window" : "Attach Windows";
 
@@ -109,7 +114,11 @@ export default class DockingButton extends React.Component {
 
 		return (<div className={wrapClasses} id="fsbl-window-ejector" title={toolTip} data-hover={this.state.hoverState} onClick={this.onClick}>
             <FinsembleHoverDetector edge="top" hoverAction={this.hoverAction} />
-            <i className={iconClass}></i>
+            {this.state.dockingIcon === "ejector" ? (
+					<DockedIcon />
+				) : (
+					<UnDockedIcon />
+	       )}
         </div>);
 	}
 }

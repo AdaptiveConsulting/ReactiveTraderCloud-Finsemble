@@ -603,7 +603,7 @@ export function getNewBoundsWhenMovedToMonitor(monitor, bounds) {
 	let monitorRect = monitor.unclaimedRect || monitor.availableRect || monitor.monitorRect;
 
 	// Placeholder for new bounds
-	let newBounds = Object.create(bounds);
+	let newBounds = clone(bounds);
 
 	// adjust vertical offset from monitor by moving top down or bottom up
 	if (bounds.top < monitorRect.top) {
@@ -644,19 +644,13 @@ export function getNewBoundsWhenMovedToMonitor(monitor, bounds) {
 };
 
 /**
- * Takes a window's bounds and makes sure it's on a monitor. If the window isn't on a monitor, we determine the closest monitor
- * based on the distance from the top-left corner of the window to the center of the monitor, and then pull the monitor along that line
- * until the window is on the edge of the monitor
- * @param {*} currentBounds
- * @returns the new bounds for the window. which are different from currentBounds only if the window needs to be relocated
+ * Given bounds of a window, will check all monitors against those bounds
+ * Will return true if it is completely on a single monitor, false otherwise
+ * @param {*} bounds
+ * @returns True if the supplied bounds are entirely within a single monitor, false otherwise
  */
-export function adjustBoundsToBeOnMonitor(bounds) {
-	let newBounds = Object.create(bounds);
-
-
-	// Determine if on a monitor, and if not, pull top-left corner directly toward center of monitor until it completely onscreen
-	let isOnAMonitor = this.Monitors.allMonitors.some((monitor) => {
-
+export function isOnAMonitor(bounds) {
+	return this.Monitors.allMonitors.some((monitor) => {
 		/*
 		 * 8/26/19 Joe: This used to only use the monitorRect (the entirety of monitor's dimensions)
 		 * Switched it to use the unclaimedRect. If window is inside of claimed space, then its
@@ -665,34 +659,300 @@ export function adjustBoundsToBeOnMonitor(bounds) {
 		 */
 		let monitorRect = monitor.unclaimedRect || monitor.monitorRect;
 
-		// Check to see tf it's to the right of the left side of the monitor,
-		// to the left of the right side, etc.basically is it within the monitor's bounds.
-		let isOnMonitor = bounds.left >= monitorRect.left && bounds.left <= monitorRect.right
+		return bounds.left >= monitorRect.left && bounds.left <= monitorRect.right
 			&& bounds.right >= monitorRect.left && bounds.right <= monitorRect.right
 			&& bounds.top >= monitorRect.top && bounds.top <= monitorRect.bottom
 			&& bounds.bottom >= monitorRect.top && bounds.bottom <= monitorRect.bottom;
-
-		return isOnMonitor;
-
 	});
+}
 
-	if (!isOnAMonitor) {
-
-		// calculate if the window is on any monitor, and the distance between the top left and the center of the window
-		let monitorAdjustments = this.Monitors.allMonitors.map((monitor) => this.getNewBoundsWhenMovedToMonitor(monitor, bounds));
-
-		// Get the closest monitor, the one with minimum distanceMoved
-		let monitorAdjustmentClosest = monitorAdjustments.sort((md1, md2) => md1.distanceMoved - md2.distanceMoved)[0];
-
-		// notify the movement
-		Logger.system.info("Launcher.adjustWindowDescriptorBoundsToBeOnMonitor: not on monitor.  bounds", bounds, "monitor name", monitorAdjustmentClosest.monitor.name, "newBounds", monitorAdjustmentClosest.newBounds);
-
-		// assign bounds
-		newBounds = monitorAdjustmentClosest.newBounds;
-	} else {
+/**
+ * Takes a window's bounds and makes sure it's on a monitor. If the window is just off the monitor, bounds will be adjusted to be on the monitor it was on and then the check will occur again. If the window isn't on a monitor (or runs off of a monitor), we determine the closest monitor
+ * based on the distance from the top-left corner of the window to the center of the monitor, and then pull the monitor along that line
+ * until the window is on the edge of the monitor
+ * @param {*} currentBounds
+ * @returns the new bounds for the window. which are different from currentBounds only if the window needs to be relocated
+ */
+export function adjustBoundsToBeOnMonitor(bounds) {
+	if (this.isOnAMonitor(bounds)) {
+		//If the window is already on a monitor keep the old bounds and stay on monitor
 		Logger.system.info("Launcher.adjustWindowDescriptorBoundsToBeOnMonitor: on monitor.");
-		newBounds = bounds;
+		return bounds;
 	}
 
-	return newBounds;
+	// calculate if the window is on any monitor, and the distance between the top left and the center of the window
+	let monitorAdjustments = this.Monitors.allMonitors.map((monitor) => this.getNewBoundsWhenMovedToMonitor(monitor, bounds));
+
+	// Get the closest monitor, the one with minimum distanceMoved
+	let monitorAdjustmentClosest = monitorAdjustments.sort((md1, md2) => md1.distanceMoved - md2.distanceMoved)[0];
+
+	// notify the movement
+	Logger.system.info("Launcher.adjustWindowDescriptorBoundsToBeOnMonitor: not on monitor.  bounds", bounds, "monitor name", monitorAdjustmentClosest.monitor.name, "newBounds", monitorAdjustmentClosest.newBounds);
+
+	// assign bounds
+	return monitorAdjustmentClosest.newBounds;
 };
+
+/**
+ * Calculates windowType for a newly spawned window
+ * windowType can be set or overwritten in many ways. The intention here is to end up with a limited set of
+ * final windowTypes
+ * @export
+ * @param {*} config - Object containing all possible values used to set windowTypes, some of these values may be unset depending on the execution path
+ */
+export function getWindowType(config) {
+	const DEFAULT_WINDOW_TYPE = "OpenFinWindow";
+	// All possible windowTypes. Some of these values will be converted to other types
+	const validTypes = [
+		"openfin",
+		"assimilation",
+		"assimilated",
+		"native",
+		"application",
+		"OpenFinWindow",
+		"NativeWindow",
+		"FinsembleNativeWindow",
+		"OpenFinApplication",
+		"CompoundWindow",
+		"StackedWindow"
+	];
+	// If an invalid windowType is given, default and log an error. Note that an empty windowType
+	// is not an error case. This is to let the user know that they may have made a typo setting a type in
+	// the config file. We default to keep Finsemble from breaking, but the user may have intended to launch a
+	// component as a different type.
+	if (config.windowType && !validTypes.includes(config.windowType)) {
+		Logger.system.error(`Invalid windowType: ${config.windowType}, defaulting to windowType: ${DEFAULT_WINDOW_TYPE}`);
+		return DEFAULT_WINDOW_TYPE;
+	}
+	let ret = config.windowType || DEFAULT_WINDOW_TYPE;
+
+  // We allow several additional windowTypes to be inputted to make the config user-friendly
+	// These windowTypes need to be converted to values Finsemble can process
+	switch (config.windowType) {
+		case "assimilation":
+		case "assimilated":
+			ret = "NativeWindow";
+			break;
+		case "native":
+			ret = "FinsembleNativeWindow";
+			break;
+		case "application":
+			ret = "OpenFinApplication";
+			break;
+		case "openfin":
+			ret = "OpenFinWindow";
+			break;
+		case "StackedWindow":
+			ret = "StackedWindow";
+			break;
+		// If config.windowType is unset, we'll use the DEFAULT_WINDOW_TYPE
+		case "default":
+			break;
+	}
+
+	// Next handle any backward compatibility windowType inputs
+	if (config.native) ret = "NativeWindow"; //Backward Compatibility
+	if (config.type === "openfinApplication") ret = "OpenFinApplication"; //Backward Compatibility
+	if (config.compound) ret = "CompoundWindow";
+	return ret;
+}
+
+export function adjustWindowIfInTaskbarSpace(bounds) {
+	let adjustedBounds = this.clone(bounds);
+
+	//Only one adjustment should be necessary if the docked window is now inside of taskbar space,
+	//making anymore than one means we need to find a new monitor
+	let wasAdjusted = false;
+	this.Monitors.allMonitors.forEach(monitor => {
+		// For each monitor, see if the window to be adjusted is currently
+		// 'inside' of the monitor's taskbar space. If so, adjust to be right
+		// below/above the taskbar and recheck isOnAMonitor
+		if (windowBoundsAreInTaskbarSpace(bounds, monitor) && !wasAdjusted) {
+			const taskbar = calculateTaskbarBounds(monitor);
+			const monitorRect = monitor.unclaimedRect || monitor.monitorRect;
+
+			switch (taskbar.edge) {
+				case "top":
+					adjustedBounds.top = monitorRect.top;
+					adjustedBounds.bottom = adjustedBounds.top + adjustedBounds.height;
+					wasAdjusted = true;
+					break;
+				case "bottom":
+					adjustedBounds.top = monitorRect.bottom - adjustedBounds.height;
+					adjustedBounds.bottom = monitorRect.bottom;
+					wasAdjusted = true;
+					break;
+				case "left":
+					adjustedBounds.left = monitorRect.left;
+					adjustedBounds.right = adjustedBounds.left + adjustedBounds.width;
+					wasAdjusted = true;
+					break;
+				case "right":
+					adjustedBounds.left = adjustedBounds.right - adjustedBounds.width;
+					adjustedBounds.right = monitorRect.right;
+					wasAdjusted = true;
+					break;
+				default:
+					break;
+			}
+		}
+	});
+
+	// After adjusting bounds to be on the monitor's new dimensions check if the window is
+	// now on the monitor
+	// If the window can stay on the current monitor with adjusted bounds, there is no need
+	// to determine a new monitor to move to. Return the adjusted bounds
+	if (wasAdjusted && this.isOnAMonitor(adjustedBounds)) {
+		return adjustedBounds;
+	}
+
+	return this.adjustBoundsToBeOnMonitor(bounds);
+}
+
+/**
+ * Takes a window's bounds and a monitor, returns true if the window is in
+ * the monitor's taskbar space, false otherwise.
+ * @param {*} windowBounds
+ * @param {*} monitor
+ */
+function windowBoundsAreInTaskbarSpace(windowBounds, monitor) {
+	const taskbar = calculateTaskbarBounds(monitor);
+
+	if (!taskbar) return false;
+
+	switch (taskbar.edge) {
+		case "top":
+		case "bottom":
+			return windowBounds.top >= taskbar.top &&
+				windowBounds.bottom <= taskbar.bottom &&
+				windowBounds.left >= taskbar.left &&
+				windowBounds.right <= taskbar.right;
+		case "left":
+		case "right":
+			return windowBounds.left >= taskbar.left &&
+				windowBounds.right <= taskbar.right &&
+				windowBounds.top >= taskbar.top &&
+				windowBounds.bottom <= taskbar.bottom;
+		default:
+			return false;
+	}
+}
+
+/**
+ * Given a monitor, will return the Windows taskbar's claimed space.
+ * In electron, this comes with monitor info. In openfin it must be calculated using the differences in
+ * monitor.availableRect and monitor.monitorRect.
+ * @param {*} monitor The monitor to return the taskbar bounds for
+ * @return {*} A bounding box object containing dimensions for the monitor's taskbar (top, bottom, left, right, width, height, and edge)
+ * or undefined if the taskbar doesn't exist (Windows 7 has only one taskbar even in a multi-monitor setup, so this is a plausible scenario)
+ */
+function calculateTaskbarBounds(monitor) {
+	//Electron keeps a representation of the taskbar on each monitor
+	if (fin.container === "Electron" && monitor.taskbar) {
+		return monitor.taskbar;
+	}
+
+	//OpenFin is left to calculate it with monitorRect/availableRect
+	if (monitor.availableRect && monitor.monitorRect) {
+		const usableBounds = monitor.availableRect;
+		const allBounds = monitor.monitorRect;
+
+		//The edge that differs between monitorRect and availableRect is where the toolbar is.
+		//Calculating that edge here
+		const differingEdge = findDifferingDimension(allBounds, usableBounds);
+
+		//If this happens it is not necessarily an error, it depends on the environment. Send it as a verbose message.
+		//If it does happen, and is the cause of an error, it will be logged but out-of-the-way for anyone with standard logging
+		if (!differingEdge) {
+			Logger.system.debug("Utils.calculateTaskbarBounds: Taskbar not found on current monitor: ", monitor);
+		}
+
+		let taskbar = {
+			edge: differingEdge
+		};
+
+		/*
+		 * Picturing monitors as coordinate representations, given monitorRect (the entire monitors bounds)
+		 * and availableRect (the usable space according to the OS), we can determine where the OS's 'claimed' space/taskbar are.
+		 *
+		 * e.g.
+		 *
+		 * This entire square (monitor) is 'monitorRect'
+		 * +------------------------------------------+
+		 * |                                          |
+		 * |                                          |
+		 * |                                          |
+		 * |                                          |
+		 * |                                          |
+		 * |                                          |
+		 * |               availableRect              |
+		 * |                                          |
+		 * |                                          |
+		 * |                                          |
+		 * |                                          |
+		 * |                                          |
+		 * |                                          |
+		 * |                                          |
+		 * |                                          |
+		 * +------------------------------------------+
+		 * |                 Taskbar                  |
+		 * +------------------------------------------+
+
+
+		 */
+		if (differingEdge === "top" || differingEdge === "bottom") {
+
+			taskbar.left = allBounds.left;
+			taskbar.right = allBounds.right;
+			taskbar.width = allBounds.width;
+			taskbar.height = allBounds.height - usableBounds.height;
+
+			if (differingEdge === "top") {
+				taskbar.top = allBounds.top;
+				taskbar.bottom = usableBounds.top;
+			} else {
+				taskbar.top = usableBounds.bottom;
+				taskbar.bottom = allBounds.bottom;
+			}
+
+		} else if (differingEdge === "left" || differingEdge === "right") {
+
+			taskbar.top = allBounds.top;
+			taskbar.bottom = allBounds.bottom;
+			taskbar.width = allBounds.width - usableBounds.width;
+			taskbar.height = allBounds.height;
+
+			if (differingEdge === "left") {
+				taskbar.left = allBounds.left;
+				taskbar.right = usableBounds.left;
+			} else {
+				taskbar.left = usableBounds.right;
+				taskbar.right = allBounds.right;
+			}
+
+		} else {
+			taskbar = undefined;
+		}
+
+		return taskbar;
+	}
+}
+
+/**
+ * Given two bounding boxes (objects containing all bounds: top, left, right, bottom, width, height) returns
+ * the dimension which differs between the two
+ * @param {*} boundingBox1
+ * @param {*} boundingBox2
+ * @return {string} The string representation of the differing dimension
+ */
+function findDifferingDimension(boundingBox1, boundingBox2) {
+	for (let i = 0; i < Object.keys(boundingBox1).length; i++) {
+		const dimensionName = Object.keys(boundingBox1)[i];
+		if (boundingBox1[dimensionName] !== boundingBox2[dimensionName]) {
+			return dimensionName;
+		}
+	}
+
+	//Return null if no differing dimension found
+	return null;
+}

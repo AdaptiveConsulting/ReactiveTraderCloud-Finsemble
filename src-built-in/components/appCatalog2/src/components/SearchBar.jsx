@@ -96,6 +96,7 @@ class SearchBar extends Component {
 	}
 	render() {
 		let tagListClass = "tag-selector-content";
+
 		if (!this.state.tagSelectorOpen) {
 			tagListClass += " hidden";
 		}

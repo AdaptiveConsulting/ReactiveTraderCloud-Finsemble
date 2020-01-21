@@ -1,7 +1,10 @@
 import React from "react";
-import { FinsembleButton, FinsembleToolbarSeparator } from "@chartiq/finsemble-react-controls";
+import {
+	FinsembleButton,
+	FinsembleToolbarSeparator
+} from "@chartiq/finsemble-react-controls";
 import * as storeExports from "../stores/searchStore";
-import * as _debounce from "lodash.debounce"
+import * as _debounce from "lodash.debounce";
 import ToolbarStore from "../stores/toolbarStore";
 
 let menuStore;
@@ -11,7 +14,7 @@ export default class Search extends React.Component {
 		this.state = {
 			ready: false,
 			focus: false,
-			saveText: '',
+			saveText: "",
 			active: false
 		};
 		this.bindCorrectContext();
@@ -24,8 +27,12 @@ export default class Search extends React.Component {
 
 		// Handler for obtaining the search inputContainer bounds for the location of the
 		// search results popup, which is displayed by the SearchStore.
-		storeExports.Actions.setInputContainerBoundsHandler(this.getInputContainerBounds.bind(this));
-		storeExports.Actions.setBlurSearchInputHandler(this.blurSearchInput.bind(this));
+		storeExports.Actions.setInputContainerBoundsHandler(
+			this.getInputContainerBounds.bind(this)
+		);
+		storeExports.Actions.setBlurSearchInputHandler(
+			this.blurSearchInput.bind(this)
+		);
 
 		//Handler to get the input where search terms are actually entered
 		storeExports.Actions.setSearchInputHandler(this.getSearchInput.bind(this));
@@ -48,7 +55,10 @@ export default class Search extends React.Component {
 	}
 	getSearchInput() {
 		let response;
-		if (this.searchInput.current.innerHTML && this.searchInput.current.innerHTML.trim() !== "") {
+		if (
+			this.searchInput.current.innerHTML &&
+			this.searchInput.current.innerHTML.trim() !== ""
+		) {
 			response = this.searchInput.current.innerHTML.trim();
 		} else {
 			response = "";
@@ -56,33 +66,34 @@ export default class Search extends React.Component {
 		return response;
 	}
 	meunBlur() {
-		mouseInElement(this.searchInput.current, function (err, inBounds) {
+		mouseInElement(this.searchInput.current, function(err, inBounds) {
 			if (!inBounds) {
 				storeExports.Actions.handleClose();
 			}
-		})
+		});
 	}
-	onStateUpdate(err, data) {
-
-	}
+	onStateUpdate(err, data) {}
 	componentWillMount() {
 		var self = this;
 
-		storeExports.initialize(function (store) {
+		storeExports.initialize(function(store) {
 			menuStore = store;
-			self.setState({ ready: true })
+			self.setState({ ready: true });
 			ToolbarStore.addListener({ field: "searchActive" }, self.hotKeyActive);
 			menuStore.addListener({ field: "active" }, self.setActive);
 			menuStore.addListener({ field: "state" }, self.onStateUpdate);
-			menuStore.Dispatcher.register(function (action) {
+			menuStore.Dispatcher.register(function(action) {
 				if (action.actionType === "clear") {
 					self.emptyInput();
 				}
 			});
 		});
-		FSBL.Clients.HotkeyClient.addGlobalHotkey([FSBL.Clients.HotkeyClient.keyMap.esc], function () {
-			storeExports.Actions.handleClose()
-		})
+		FSBL.Clients.HotkeyClient.addGlobalHotkey(
+			[FSBL.Clients.HotkeyClient.keyMap.esc],
+			function() {
+				storeExports.Actions.handleClose();
+			}
+		);
 	}
 	emptyInput() {
 		this.setState({ saveText: this.searchInput.current.textContent });
@@ -92,7 +103,6 @@ export default class Search extends React.Component {
 		ToolbarStore.removeListener({ field: "searchActive" }, self.hotKeyActive);
 		menuStore.removeListener({ field: "active" }, self.setActive);
 		menuStore.removeListener({ field: "state" }, self.onStateUpdate);
-
 	}
 	textChange(e) {
 		//have to do this or react will squash the event.
@@ -116,7 +126,10 @@ export default class Search extends React.Component {
 				this.searchContainer.current.focus();
 
 				//After focusing the container (which causes the results to show) we want to position the results. This way if the toolbar was moved with a keyboard shortcut, the results will follow it. Avoid doing this when the search text is empty since we don't want to show the 'No results found'
-				if (this.searchInput.current.innerHTML && this.searchInput.current.innerHTML.trim() !== "") {
+				if (
+					this.searchInput.current.innerHTML &&
+					this.searchInput.current.innerHTML.trim() !== ""
+				) {
 					storeExports.Actions.positionSearchResults();
 				}
 				this.setState({
@@ -141,10 +154,10 @@ export default class Search extends React.Component {
 		this.hotKeyActive = this.hotKeyActive.bind(this);
 	}
 	setActive(err, data) {
-		this.setState({ active: data.value })
+		this.setState({ active: data.value });
 	}
 	hotKeyActive() {
-		this.setState({ active: true, hotkeySet: true })
+		this.setState({ active: true, hotkeySet: true });
 		this.searchInput.current.focus();
 	}
 	focused(e) {
@@ -156,13 +169,13 @@ export default class Search extends React.Component {
 			sel.addRange(range);
 		}
 
-		storeExports.Actions.setFocus(true, e.target)
+		storeExports.Actions.setFocus(true, e.target);
 
 		if (this.state.hotkeySet) {
-			return this.setState({ focus: true, hotkeySet: false })
+			return this.setState({ focus: true, hotkeySet: false });
 		}
 
-		setTimeout(function () {
+		setTimeout(function() {
 			// select the old search text, so the user can edit it or type over it
 			// Do this in a timeout to give some time for the animation to work
 			selectElementContents(this.searchInput);
@@ -172,19 +185,38 @@ export default class Search extends React.Component {
 		storeExports.Actions.setFocus(false);
 	}
 	keyPress(event) {
-		var events = ["ArrowUp", "ArrowDown", "Enter"]
+		var events = ["ArrowUp", "ArrowDown", "Enter"];
 		if (events.includes(event.key)) {
-			storeExports.Actions.actionPress(event.key)
+			storeExports.Actions.actionPress(event.key);
 		}
 	}
 	render() {
-		return <div ref={this.searchContainer} id="inputContainer" className="searchContainer">
-			<div className="searchSection  finsemble-toolbar-button">
-				<div ref={this.searchInput} id="searchInput" contentEditable className={"searchInput " + (this.state.active ? "active" : "compact")} placeholder="Search" onKeyDown={this.keyPress}
-					onFocus={this.focused}
-					onInput={this.textChange} onBlur={this.blurred} onChange={this.textChange} />
+		return (
+			<div
+				ref={this.searchContainer}
+				id="inputContainer"
+				className="searchContainer"
+			>
+				<div class="divider"></div>
+				<div className="searchSection  finsemble-toolbar-button">
+					<div
+						ref={this.searchInput}
+						id="searchInput"
+						contentEditable
+						className={
+							"searchInput " + (this.state.active ? "active" : "compact")
+						}
+						placeholder="Search"
+						onKeyDown={this.keyPress}
+						onFocus={this.focused}
+						onInput={this.textChange}
+						onBlur={this.blurred}
+						onChange={this.textChange}
+					/>
+				</div>
+				<div class="divider"></div>
 			</div>
-		</div>
+		);
 	}
 }
 
@@ -199,13 +231,18 @@ function mouseInElement(element, cb) {
 	mouseInBounds(bounds, cb);
 }
 function mouseInBounds(bounds, cb) {
-	fin.desktop.System.getMousePosition(function (mousePosition) {
-		if (mousePosition.left >= bounds.left & mousePosition.left <= bounds.right) {
-			if (mousePosition.top >= bounds.top & mousePosition.top <= bounds.bottom) {
+	fin.desktop.System.getMousePosition(function(mousePosition) {
+		if (
+			(mousePosition.left >= bounds.left) &
+			(mousePosition.left <= bounds.right)
+		) {
+			if (
+				(mousePosition.top >= bounds.top) &
+				(mousePosition.top <= bounds.bottom)
+			) {
 				return cb(null, true);
 			}
 		}
 		return cb(null, false);
 	});
-
 }

@@ -24,6 +24,8 @@ import AlwaysOnTop from "./components/right/AlwaysOnTop.jsx";
 import TabRegion from './components/center/TabRegion'
 import "../../../../assets/css/finsemble.css";
 
+import {AdaptiveLogo} from "./components/assets/AdaptiveLogo.jsx";
+
 /**
  * This is the main window manager component. It's the custom window frame that we add to each window that has useFSBLHeader set to true in its windowDescriptor.
  */
@@ -172,7 +174,7 @@ class WindowTitleBar extends React.Component {
 	}
 
 	/**
-	 * When tiling stops, we want to find the dragHandler and re-show it
+	 * When tiling stops, we want to find the dragHandler and reshow it
 	 */
 	onTilingStop() {
 		let dragHandle = document.querySelector('.fsbl-drag-handle.hidden');
@@ -254,9 +256,8 @@ class WindowTitleBar extends React.Component {
 		//Add an event listener to hide the drag-handler when tiling is started
 		FSBL.Clients.RouterClient.addListener("DockingService.startTilingOrTabbing", this.onTilingStart);
 
-		//Add an event listener to show the drag-handler when tiling is stopped or cancelled
+		//Add an event listener to show the drag-handler when tiling is stopped
 		FSBL.Clients.RouterClient.addListener("DockingService.stopTilingOrTabbing", this.onTilingStop);
-		FSBL.Clients.RouterClient.addListener("DockingService.cancelTilingOrTabbing", this.onTilingStop);
 	}
 
 	/**
@@ -284,17 +285,18 @@ class WindowTitleBar extends React.Component {
 	onTitleChange(err, response) {
 		let { tabs } = this.state;
 		let myIdentifier = FSBL.Clients.WindowClient.getWindowIdentifier();
-		
-		tabs = tabs.map((el) => {
+		let myIndex = -1;
+		tabs = tabs.filter((el, i) => {
 			if (!el.windowName && el.name) el.windowName = el.name;
 			if (!el.name && el.windowName) el.name = el.windowName;
-			return el;
+
+			if (el.name === myIdentifier.windowName) {
+				myIndex = i;
+				return true;
+			}
+			return false;
 		});
-
-		const myIndex = tabs.findIndex(el => el.name === myIdentifier.windowName);
-		if (myIndex === -1) return;
-
-		let myTab = tabs[myIndex] || {};
+		let myTab = tabs[0] || {};
 		myTab.title = response.value;
 		tabs.splice(myIndex, 1, myTab);
 
@@ -377,13 +379,7 @@ class WindowTitleBar extends React.Component {
 		//See this.allowDragOnCenterRegion for more explanation.
 		return (
 			<div className={headerClasses}>
-				{/* Only render the left section if something is inside of it. The left section has a right-border that we don't want showing willy-nilly. */}
-				{RENDER_LEFT_SECTION &&
-					<div className="fsbl-header-left">
-						{self.state.showLinkerButton ? <Linker /> : null}
-						{self.state.showShareButton ? <Sharer /> : null}
-					</div>
-				}
+			    <AdaptiveLogo />
 				{/* center section of the titlebar */}
 				<div className={titleWrapperClasses}
 					ref={this.setTabBarRef}>
@@ -400,14 +396,19 @@ class WindowTitleBar extends React.Component {
 							ref="tabArea"
 							onTitleUpdated={this.resizeDragHandle}
 						/>}
-
 				</div>
+					{/* Only render the left section if something is inside of it. The left section has a right-border that we don't want showing willy-nilly. */}
+					{RENDER_LEFT_SECTION &&
+					<div className="fsbl-header-left">
+						{self.state.showLinkerButton ? <Linker /> : null}
+						{self.state.showShareButton ? <Sharer /> : null}
+					</div>
+				}
 				<div className={rightWrapperClasses} ref={this.setToolbarRight}>
 					{this.state.alwaysOnTopButton && showMinimizeIcon ? <AlwaysOnTop /> : null}
 					<BringSuiteToFront />
+					{showDockingIcon ? <DockingButton/> : null}
 					{this.state.minButton && showMinimizeIcon ? <Minimize /> : null}
-					{showDockingIcon ? <DockingButton /> : null}
-					{this.state.maxButton ? <Maximize /> : null}
 					{this.state.closeButton ? <Close /> : null}
 				</div>
 			</div>
