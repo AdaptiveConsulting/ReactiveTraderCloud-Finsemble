@@ -6,6 +6,7 @@
 - You need to run npm login and enter your credentials before downloading the core Finsemble packages
 - Node v13 +
 - NPM v6 +
+- Windows only
 
 ## Local Development
 
@@ -30,3 +31,4 @@ To ready this application for production please follow these steps:
 ## Notes
 
 - You can change the `applicationRoot` and `componentRoot` in the manifest-local.json file for local development
+- You can update the Reactive Trader Demo workspace that's found in the `/configs/application/workspaces.json` file
