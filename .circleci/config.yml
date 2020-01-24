@@ -7,9 +7,9 @@ jobs:
   build: # name of your job
     machine:
       image: windows-default # Windows machine image
-   resource_class: windows.medium
-   working_directory: ~/repo
-   steps:
+    resource_class: windows.medium
+    working_directory: ~/repo
+    steps:
       - checkout
       - attach_workspace:
           at: ~/repo
