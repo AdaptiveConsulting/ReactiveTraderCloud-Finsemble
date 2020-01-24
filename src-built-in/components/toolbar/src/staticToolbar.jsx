@@ -48,11 +48,9 @@ export default class Toolbar extends React.Component {
 						preSpawn={true}
 						buttonType={["MenuLauncher", "Toolbar"]}
 						iconClasses="finsemble-toolbar-brand-logo"
-						icon="../../../assets/img/Finsemble_Taskbar_Icon.png"
+						icon="../../../assets/img/adaptive-logo.png"
 						menuType="File Menu"
 					/>
-					<div class="divider"></div>
-					<FinsembleToolbarSeparator />
 					<WorkspaceMenuOpener />
 					<FinsembleButton
 						preSpawn={true}

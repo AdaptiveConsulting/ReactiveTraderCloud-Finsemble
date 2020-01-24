@@ -1,8 +1,9 @@
-import React from "react";
-import { ReactComponent as DragHandleIcon } from "../../../../assets/img/toolbar/drag-handle.svg";
+import React from 'react';
+import { ReactComponent as DragHandleIcon } from '../../../../assets/img/toolbar/drag-handle.svg'
+
 
 const DragHandle = () => {
-	const handleMouseDown = event => {
+	const handleMouseDown = (event) => {
 		FSBL.Clients.WindowClient.startMovingWindow(event);
 	};
 	const handleMouseUp = () => {
@@ -10,14 +11,13 @@ const DragHandle = () => {
 	};
 
 	return (
-		<span
-			className="cq-drag finsemble-toolbar-drag-handle"
+		<span className="cq-drag finsemble-toolbar-drag-handle"
 			onMouseDown={handleMouseDown}
 			onMouseUp={handleMouseUp}
 		>
 			<DragHandleIcon />
 		</span>
-	);
+	)
 };
 
 export default DragHandle;

@@ -5,7 +5,7 @@
 		"gitHash": "7a3f6c912a03461e88a4e98424c5518dd49d914d",
 		"finsembleLibraryPath": "$moduleRoot/FSBL.js",
 		"premiumRoot": "$moduleRoot",
-		"systemTrayIcon": "$moduleRoot/assets/img/Finsemble_Taskbar_Icon.png",
+		"systemTrayIcon": "$moduleRoot/assets/img/adaptive-logo.png",
 		"addFSBLWrappers": false,
 		"saveLogToFileOnShutDown": false,
 		"scheduledRestart": false,

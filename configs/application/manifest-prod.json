@@ -4,7 +4,7 @@
 		"name": "Reactive Trader Finsemble Production",
 		"url": "https://adaptiveconsulting.github.io/rtc-finsemble/finsemble/components/system/serviceManager/serviceManager.html",
 		"uuid": "Finsemble-Prod",
-		"applicationIcon": "https://adaptiveconsulting.github.io/rtc-finsemble/assets/img/Finsemble_Taskbar_Icon.png",
+		"applicationIcon": "https://adaptiveconsulting.github.io/rtc-finsemble/assets/img/adaptive-logo@2x.png",
 		"defaultTop": 0,
 		"defaultLeft": 0,
 		"showTaskbarIcon": true,

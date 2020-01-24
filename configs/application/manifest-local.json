@@ -2,7 +2,7 @@
 	"devtools_port": 9090,
 	"startup_app": {
 		"name": "Reactice Trader Finsemble Local",
-		"url": "http://localhost:3375/finsemble/components/system/serviceManager/serviceManager.html",
+		"url": "http://localhost:3375/finsemble/services/systemManager/systemManager.html",
 		"uuid": "Finsemble-local",
 		"requireHandshake": true,
 		"applicationIcon": "http://localhost:3375/assets/img/adaptive-logo@2x.png",
