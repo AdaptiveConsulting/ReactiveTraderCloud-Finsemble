@@ -1,5 +1,7 @@
 # Reactive Trader Finsemble
 
+[![CircleCI](https://circleci.com/gh/AdaptiveConsulting/ReactiveTraderCloud-Finsemble/tree/master.svg?style=svg&circle-token=c9a64a94d9b308c65df792b7af0412b0a2310a12)](https://circleci.com/gh/AdaptiveConsulting/ReactiveTraderCloud-Finsemble/tree/master)
+
 ## Prerequisites
 
 - Please make sure you have the core Finsemble packages associated with your npm username for local development
