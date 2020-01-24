@@ -13,7 +13,8 @@ jobs:
           at: ~/repo
       - run:
           name: Authenticate with registry
-          command: Add-Content -Path ~/repo/.npmrc -Value "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN"
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/repo/.npmrc
+          shell: bash.exe
       - run: 
           name: Install NPM Packages
           command: yarn install
