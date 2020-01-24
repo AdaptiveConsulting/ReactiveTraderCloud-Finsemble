@@ -47,9 +47,11 @@
 			},
 			"foreign": {
 				"services": {
-					"dockingService": {
-						"canGroup": true,
-						"isArrangable": true
+					"windowService": {
+						"allowSnapping": true,
+						"allowGrouping": true,
+						"allowAutoArrange": true,
+						"allowMinimize": true
 					}
 				},
 				"components": {
