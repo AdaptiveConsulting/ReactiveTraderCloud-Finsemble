@@ -1,25 +1,27 @@
 version: 2.1
 orbs:
   win: circleci/windows@2.2.0
-jobs:
-  build:
-    executor: win/default
-    working_directory: ~/repo
-    steps:
-      - checkout
-      - attach_workspace:
-          at: ~/repo
-      - run:
-          name: "Authenticate with registry"
-          command: 'echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/repo/.npmrc'
-          shell: bash.exe
-      - run:
-          name: "Install NPM Packages"
-          command: "yarn install"
-      - save_cache:
-          paths:
-            - node_modules
-          key: 'v1-dependencies-{{ checksum "package.json" }}'
-      - run:
-          name: "Build Production Assets"
-          command: "yarn build:prod"
+workflows:
+  main:
+    jobs:
+      build:
+        executor: win/default
+        working_directory: ~/repo
+        steps:
+          - checkout
+          - attach_workspace:
+              at: ~/repo
+          - run:
+              name: "Authenticate with registry"
+              command: 'echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/repo/.npmrc'
+              shell: bash.exe
+          - run:
+              name: "Install NPM Packages"
+              command: "yarn install"
+          - save_cache:
+              paths:
+                - node_modules
+              key: 'v1-dependencies-{{ checksum "package.json" }}'
+          - run:
+              name: "Build Production Assets"
+              command: "yarn build:prod"
