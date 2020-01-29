@@ -46,6 +46,7 @@ module.exports = taskMethods => {
 	// };
 
 	const DOCS_OUTPUT = "./docs";
+	const PKG_OUTPUT = "./pkg";
 
 	function deploy_cleanDocsFolder() {
 		return del([`${DOCS_OUTPUT}/**`, `!${DOCS_OUTPUT}`], {
@@ -53,6 +54,13 @@ module.exports = taskMethods => {
 		});
 	}
 	deploy_cleanDocsFolder.displayName = `Delete current ${DOCS_OUTPUT}`;
+
+	function deploy_cleanPkgFolder() {
+		return del([`${PKG_OUTPUT}/**`, `!${PKG_OUTPUT}`], {
+			force: true
+		});
+	}
+	deploy_cleanPkgFolder.displayName = `Delete current ${PKG_OUTPUT}`;
 
 	function deploy_dist() {
 		return gulp.src(`./dist/**`).pipe(gulp.dest(DOCS_OUTPUT));
@@ -74,6 +82,7 @@ module.exports = taskMethods => {
 	function deployToDocs(deployDone) {
 		return gulp.series(
 			deploy_cleanDocsFolder,
+			deploy_cleanPkgFolder,
 			deploy_dist,
 			deploy_finsemble,
 			deploy_public
