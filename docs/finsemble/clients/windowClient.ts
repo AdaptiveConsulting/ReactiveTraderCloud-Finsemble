@@ -111,7 +111,7 @@ function removeClass(el, className) {
 /**
  *
  *@introduction
-  <h2>Window Client</h2>
+  <h2>Window Client (Finsemble Workspaces)</h2>
   ----------
  * The Window Client is primarily responsible for managing the `windowState` (the window's bounds) and `componentState` (data inside of your component).
  * The reference below is provided in case you'd like to manually trigger events.
@@ -192,7 +192,6 @@ class WindowClient extends BaseClient {
 		this.onWindowMaximized = this.onWindowMaximized.bind(this);
 		this.onWindowBlurred = this.onWindowBlurred.bind(this);
 		this.onWindowFocused = this.onWindowFocused.bind(this);
-		this.onParentSet = this.onParentSet.bind(this);
 		this.onMinimizedRestored = this.onMinimizedRestored.bind(this);
 		this.onWindowMinimized = this.onWindowMinimized.bind(this);
 		this.close = this.close.bind(this);
@@ -203,7 +202,6 @@ class WindowClient extends BaseClient {
 
 	/**
 	 * This function is fired every time the window's bounds change. It saves the window's position.
-	 * @param {object} bounds
 	 * @private
 	 */
 	onWindowRestored() {
@@ -252,16 +250,8 @@ class WindowClient extends BaseClient {
 	}
 
 	/**
-	 * Handles the event that fires when the finsemble window's parent is set.
-	 * @private
-	 * @param evt the event itself, which is ignored.  Any time a parent is set, force a group data update.
-	 */
-	private onParentSet(evt) {
-		this.requestGroupDataPublish();
-	}
-
-	/**
 	 * Returns a list of the groups this window is in, if any.
+	 * @private
 	 */
 	getWindowGroups() {
 		return this.windowGroups;
@@ -283,13 +273,6 @@ class WindowClient extends BaseClient {
 			filter(group => group.windowNames.includes(this.getWindowNameForDocking()));
 	};
 
-	/**
-	 * Requests an updated group data message.
-	 * @private
-	 */
-	private requestGroupDataPublish() {
-		this.routerClient.transmit("DockingService.requestGroupDataPublish");
-	}
 
 	/**
 	 * Closes window. Defaults are to remove the window from the workspace if the user presses the X button, but not if the window is closed via an app-level request (e.g., switching workspaces, so all windows need to close).
@@ -297,6 +280,7 @@ class WindowClient extends BaseClient {
 	 * @param {boolean} params.removeFromWorkspace Whether to remove the window from the workspace.
 	 * @param {boolean} params.closeWindow Whether to close the window. On shutdown this method is called, but the Window Service actually closes the window.
 	 * @param {boolean} params.userInitiated Whether the user clicked the X, or if the system asked the window to close.
+	 * @param {boolean} params.ignoreParent Whether or not to update the parent (stack) window when closing.
 	 * @param {function} cb The callback to be invoked after the method completes successfully.
 	 * @example
 	 * //Close window and remove from workspace (e.g., user closes the window).
@@ -463,6 +447,7 @@ class WindowClient extends BaseClient {
 	 *
 	 * Saves the window's state. Rarely called manually, as it's called every time your window moves.
 	 * @param {Object} bounds optional param.
+	 * @param {boolean} setActiveWorkspaceDirty
 	 * @example <caption>The code below is the bulk of our listener for the <code>bounds-changed</code> event from the window. Every time the <code>bounds-changed</code> event is fired (when the window is resized or moved), we save the window's state. The first few lines just prevent the window from being dropped behind the toolbar.</caption>
 	 *finWindow.addEventListener('disabled-frame-bounds-changed', function (bounds) {
 	 * 	if (bounds.top < 45) {
@@ -529,14 +514,13 @@ class WindowClient extends BaseClient {
 
 	/**
 	 * Sets whether window is always on top. By default, this is false.
+	 * @param {boolean} alwaysOnTop The new mode for the window's alwaysOnTop option to be set to.
 	 * @param {function} cb Optional callback to be invoked after the method completes successfully.
 	 * @example
 	 * FSBL.Clients.WindowClient.setAlwaysOnTop(true);
 	 */
 	setAlwaysOnTop(alwaysOnTop: boolean, cb?: Function) {
-		finsembleWindow.updateOptions({ options: { alwaysOnTop: alwaysOnTop } }, () => {
-			if (cb) cb();
-		});
+		finsembleWindow.setAlwaysOnTop({ alwaysOnTop }, cb);
 	}
 
 
@@ -611,7 +595,6 @@ class WindowClient extends BaseClient {
 		finsembleWindow.removeEventListener("focused", this.onWindowFocused);
 		finsembleWindow.removeEventListener("close-requested", this.close);
 		finsembleWindow.removeEventListener("minimized", this.onWindowMinimized);
-		finsembleWindow.removeEventListener("parent-set", this.onParentSet);
 	};
 
 
@@ -622,6 +605,8 @@ class WindowClient extends BaseClient {
 	 * @private
 	 */
 	injectDOM(headerHeight) {
+		Logger.system.debug("injectDOM", headerHeight);
+
 		//for the aesthetics.
 
 		if (document.getElementById("FSBLHeader")) { return; }
@@ -639,11 +624,13 @@ class WindowClient extends BaseClient {
 
 	/**
 	 * Injects the windowTitleBar into the window.
+	 * @param {InjectHeaderParams} params
 	 * @param {function} cb Callback function
 	 * @return {object} Reference to a RouterClient.query
 	 * @private
 	 */
 	injectFSBL(params: InjectHeaderParams, cb: StandardCallback) {
+
 		//This flag is set by the launcher service. It tells us if FSBL was injected
 		this.routerClient.query(`WindowService-Request-injectTitleBar`, { config: finsembleWindow.windowOptions, titleComponent: params.component },
 			(err, response) => {
@@ -663,6 +650,7 @@ class WindowClient extends BaseClient {
 
 	/**
 	 * Given a field, this function retrieves app state. If no params are given, the full state is returned.
+	 * @param {object} params
 	 * @param {string} params.field Field to retrieve.
 	 * @param {Array.<string>} params.fields Fields to retrieve.
 	 * @param {string} params.windowName Window whose component state you are retreiving. If null, the default is to the calling window.
@@ -729,11 +717,11 @@ class WindowClient extends BaseClient {
 
 	/**
 	 * Given a field, this function sets and persists app state.
-	 * @param {object} params
-	 * @param {string} params.field field
-	 * @param {Array.<string>} params.fields fields
+	 * @param {object} params Object of data to be saved
+	 * @param {string} params.field The key name of the field to be saved. Required if not using `fields`.
+	 * @param {Array.<object>} params.fields An array of objects with `field` and `value` keys to be saved.
 	 * @param {string} params.windowName Name of the component whose state you are setting. Defaults to the calling window.
-	 * @param {any} params.value Value of the data being saved
+	 * @param {any} params.value Value of the data being saved. Required if not using `fields`.
 	 * @param {function} cb The callback to be invoked after the method completes successfully.
 	 * @example <caption>The example below shows how we save our chart layout when it changes.</caption>
 	 * var s = stx.exportLayout(true);
@@ -791,9 +779,9 @@ class WindowClient extends BaseClient {
 
 	/**
 	 * Given a field, this function removes it from app state.
-	 * @param {object} params
-	 * @param {string} params.field field
-	 * @param {Array.<string>} params.fields fields
+	 * @param {object} params Object of data to be removed
+	 * @param {string} params.field The key name of the field to be saved. Required if not using `fields`.
+	 * @param {Array.<object>} params.fields An array of objects with `field` keys to be removed.
 	 * @param {string} params.windowName The name of the window to remove component state from
 	 * @param {function} cb The callback to be invoked after the method completes successfully.
 	 * @example <caption>The example below shows how we would remove our chart layout when it no longer needed.</caption>
@@ -864,7 +852,7 @@ class WindowClient extends BaseClient {
 			name: windowName,
 			uuid: uuid,
 			options: params || {},
-			windowType: "OpenFinWindow"
+			windowType: "WebWindow"
 		}, () => {
 			this.startedRegistrationWithDocking = false;
 			if (this.deregisterPlease) {
@@ -1030,6 +1018,7 @@ class WindowClient extends BaseClient {
 		// components."welcome".component.inject|preload="windowTitleBar.js" <-- override the windowTitleBar
 		// Everything from here down then goes into windowTitleBar.jsx inside FSBLReady()
 
+		Logger.system.debug("injectHeader", params);
 		let self = this;
 		if (this.hasHeader) return;
 		this.hasHeader = true;
@@ -1052,6 +1041,7 @@ class WindowClient extends BaseClient {
 			params = Object.assign(defaultParams, params);
 		}
 
+		Logger.system.debug("injectHeader 2", params);
 
 		this.injectDOM(params.forceHeaderHeight);
 
@@ -1071,7 +1061,7 @@ class WindowClient extends BaseClient {
 	}
 
 	/**
-	 * If we spawned this openfin app from our parent application, we listen on that application for certain events that might fire _if_ our parent goes down. If the parent goes down, we want to kill its children as well.
+	 * If we spawned this app from our parent application, we listen on that application for certain events that might fire _if_ our parent goes down. If the parent goes down, we want to kill its children as well.
 	 * @private
 	 */
 	checkIfChildApp() {
@@ -1172,7 +1162,6 @@ class WindowClient extends BaseClient {
 		finsembleWindow.addEventListener("blurred", this.onWindowBlurred);
 		// On focus add a border to the window
 		finsembleWindow.addEventListener("focused", this.onWindowFocused);
-		finsembleWindow.addEventListener("parent-set", this.onParentSet);
 
 		if (typeof FSBL !== "undefined") {
 			FSBL.onShutdown(() => {
@@ -1244,7 +1233,7 @@ class WindowClient extends BaseClient {
 
 	/**
 	 * Retrieves data that was set with <a href="LauncherClient.html#spawn">LauncherClient.spawn</a>.
-	 * @return {object} The data or empty object if no data was set. *Note, this will never return null or undefined.*
+	 * @return {object} The data provided from the component config when spawned.
 	 */
 	getSpawnData() {
 		if (!this.options.customData) { return {}; }
@@ -1263,7 +1252,7 @@ class WindowClient extends BaseClient {
 
 	/**
 	 * For the DOM element that has been passed in, this function returns a bounding box that is relative
-	 * to the OpenFin virtual monitor space. That is, it returns the position of the DOM element on the desktop.
+	 * to the virtual monitor space. That is, it returns the position of the DOM element on the desktop.
 	 * @param {HTMLElement|string} element A selector or HTMLElement
 	 * @private
 	 * @todo convert to use monitor util function and make sure current bounds are correct. For some windows (e.g., toolbars/menus that don't track their own bounds because they don't have drag regions), options.default will represent the data _on spawn_, not the bounds when the function is called.
@@ -1323,9 +1312,9 @@ class WindowClient extends BaseClient {
 
 	/**
 	 * Returns the window identifier for the current component.
-	 * @returns {windowIdentifier}
+	 * @returns {WindowIdentifier}
 	 */
-	getWindowIdentifier() {
+	getWindowIdentifier(): WindowIdentifier {
 		var componentType = null;
 		if (this.options && this.options.customData && this.options.customData.component)
 			componentType = this.options.customData.component.type;
@@ -1333,7 +1322,7 @@ class WindowClient extends BaseClient {
 			windowName: finsembleWindow ? finsembleWindow.name : window.name,
 			uuid: finsembleWindow ? finsembleWindow.uuid : null,
 			componentType: componentType
-		};
+		} as WindowIdentifier;
 	};
 
 	/**
@@ -1351,7 +1340,8 @@ class WindowClient extends BaseClient {
 	};
 
 	/**
-	 * Returns the bounds for the current window.
+	 * Returns the object defining bounds for the current window including the position of the left and right edges measured in pixels from the left edge of the monitor, the top and bottom edges measured in pixels from the top edge, and the width and height of the component in pixels.
+	 * Please note that this method differs from the right and bottom coordinates passed to LauncherClient.spawn(); those are measured from the right and bottom edges of the screen.
 	 * @param {StandardCallback} cb The callback to be invoked after the method completes successfully.
 	 */
 	getBounds(cb: StandardCallback) {
@@ -1363,6 +1353,7 @@ class WindowClient extends BaseClient {
 	/**
 	 * This is used by the Finsemble window title bar when a tab is dragged for tiling or tabbing.
 	 * @param {*} params - <code>params.windowIdentifier</code> is required.
+	 * @param {WindowIdentifier} params.windowIdentifier The Finsemble identifier for the target window.
 	 * @param {*} cb The callback to be invoked after the method completes successfully.
 	 */
 	startTilingOrTabbing(params: {
@@ -1373,9 +1364,26 @@ class WindowClient extends BaseClient {
 	};
 
 	/**
+	 * Begin programmatically moving the window; the first parameter is a mouse event. Until `stopMovingWindow` is invoked, the window will follow the user's mouse. This should be invoked inside of a `mouseDown` event handler.
+	 */
+	startMovingWindow(event: MouseEvent) {
+		const currentWindow = fin.desktop.Window.getCurrent();
+		currentWindow.startMovingWindow(event);
+	}
+
+	/**
+	 * Stops moving a window that was sent in motion via `startMovingWindow`.
+	 */
+	stopMovingWindow() {
+		const currentWindow = fin.desktop.Window.getCurrent();
+		currentWindow.stopMovingWindow();
+	}
+	/**
 	 * This is used to cancel a tabbing or tiling operation.
-	 * @param {*} params - Put <code>windowIdentifier</code> in <code>params.windowIdentifier</code>. If not provided, must set <code>params.waitForIdentifier</code> true.
-	 * @param {*} cb - The callback to be invoked after the method completes successfully.
+	 *
+	 * @param {object} params
+	 * @param {WindowIdentifier} params.windowIdentifier The Finsemble identifier for the window.
+	 * @param {Function} cb - The callback to be invoked after the method completes successfully.
 	 */
 	cancelTilingOrTabbing(params: {
 		windowIdentifier: WindowIdentifier
@@ -1388,6 +1396,7 @@ class WindowClient extends BaseClient {
 	/**
 	 * This is used to let Finsemble know which window is being dragged. <code>params.windowIdentifier</code> must be the identifier of the tab being dragged. This is only used if the identifier is unknown when <code>startTilingOrTabbing</code> is called.
 	 * @param {*} params - The <code>windowIdentifier</code> is required.
+	 * @param {WindowIdentifier} params.windowIdentifier The Finsemble identifier for the target window.
 	 * @param {*} cb - The callback to be invoked after the method completes successfully.
 	 */
 	sendIdentifierForTilingOrTabbing(params: {
@@ -1590,7 +1599,7 @@ class WindowClient extends BaseClient {
 		let headerHeight = window.getComputedStyle(header, null).getPropertyValue("height");
 		document.body.style.marginTop = headerHeight;
 		if (config.bumpElements && config.bumpElements.bumpBy === "auto") {
-		 	config.bumpElements.bumpBy = headerHeight;
+			config.bumpElements.bumpBy = headerHeight;
 		}
 		this.bumpFixedElements(config.bumpElements);
 
@@ -1683,6 +1692,7 @@ class WindowClient extends BaseClient {
 				}
 
 				customData = finsembleWindow.windowOptions.customData;
+				Logger.system.debug("getInitialOptions", customData);
 
 				if (customData) {
 					isCompoundWindow = lodashGet(customData, 'window.compound', false);
@@ -1721,6 +1731,7 @@ class WindowClient extends BaseClient {
 						} else {
 							// Window doesn't support header injection (i.e. dialogModal, toolbar, searchMenu, etc)
 							// so we don't need to inject header and bump window content's fixed elements
+							self.hasHeader = true;
 							done();
 						}
 					},
@@ -1937,7 +1948,7 @@ class WindowClient extends BaseClient {
 
 var windowClient = new WindowClient({
 	startupDependencies: {
-		services: ["storageService", "windowService"]
+		clients: ["storageClient"]
 	},
 	onReady: function (cb) {
 		windowClient.start(cb);

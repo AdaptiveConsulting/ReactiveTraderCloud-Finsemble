@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "http://localhost:3375/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 234);
+/******/ 	return __webpack_require__(__webpack_require__.s = 261);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -78,227 +78,22 @@
  */
 
 if (process.env.NODE_ENV !== 'production') {
-  var ReactIs = __webpack_require__(168);
+  var ReactIs = __webpack_require__(174);
 
   // By explicitly using `prop-types` you are opting into new development behavior.
   // http://fb.me/prop-types-in-prod
   var throwOnDirectAccess = true;
-  module.exports = __webpack_require__(324)(ReactIs.isElement, throwOnDirectAccess);
+  module.exports = __webpack_require__(353)(ReactIs.isElement, throwOnDirectAccess);
 } else {
   // By explicitly using `prop-types` you are opting into new production behavior.
   // http://fb.me/prop-types-in-prod
-  module.exports = __webpack_require__(323)();
+  module.exports = __webpack_require__(352)();
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
 /* 1 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(process) {
-
-if (process.env.NODE_ENV === 'production') {
-  module.exports = __webpack_require__(372);
-} else {
-  module.exports = __webpack_require__(371);
-}
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
-
-/***/ }),
-/* 2 */
-/***/ (function(module, exports) {
-
-// shim for using process in browser
-var process = module.exports = {};
-
-// cached from whatever global is present so that test runners that stub it
-// don't break things.  But we need to wrap it in a try catch in case it is
-// wrapped in strict mode code which doesn't define any globals.  It's inside a
-// function because try/catches deoptimize in certain engines.
-
-var cachedSetTimeout;
-var cachedClearTimeout;
-
-function defaultSetTimout() {
-    throw new Error('setTimeout has not been defined');
-}
-function defaultClearTimeout () {
-    throw new Error('clearTimeout has not been defined');
-}
-(function () {
-    try {
-        if (typeof setTimeout === 'function') {
-            cachedSetTimeout = setTimeout;
-        } else {
-            cachedSetTimeout = defaultSetTimout;
-        }
-    } catch (e) {
-        cachedSetTimeout = defaultSetTimout;
-    }
-    try {
-        if (typeof clearTimeout === 'function') {
-            cachedClearTimeout = clearTimeout;
-        } else {
-            cachedClearTimeout = defaultClearTimeout;
-        }
-    } catch (e) {
-        cachedClearTimeout = defaultClearTimeout;
-    }
-} ())
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        //normal enviroments in sane situations
-        return setTimeout(fun, 0);
-    }
-    // if setTimeout wasn't available but was latter defined
-    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-        cachedSetTimeout = setTimeout;
-        return setTimeout(fun, 0);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedSetTimeout(fun, 0);
-    } catch(e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-            return cachedSetTimeout.call(null, fun, 0);
-        } catch(e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-            return cachedSetTimeout.call(this, fun, 0);
-        }
-    }
-
-
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        //normal enviroments in sane situations
-        return clearTimeout(marker);
-    }
-    // if clearTimeout wasn't available but was latter defined
-    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-        cachedClearTimeout = clearTimeout;
-        return clearTimeout(marker);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedClearTimeout(marker);
-    } catch (e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-            return cachedClearTimeout.call(null, marker);
-        } catch (e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-            return cachedClearTimeout.call(this, marker);
-        }
-    }
-
-
-
-}
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    if (!draining || !currentQueue) {
-        return;
-    }
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = runTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    runClearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
-    }
-};
-
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-process.prependListener = noop;
-process.prependOnceListener = noop;
-
-process.listeners = function (name) { return [] }
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
-
-/***/ }),
-/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -316,13 +111,13 @@ var CONSOLE_DEFAULT_LOG_SETTING = { Error: true, Warn: true, Info: true, Log: tr
 const MAX_LOG_MESSAGE_SIZE = 50000;
 const OVER_LOG_SIZE_LIMIT_MESSAGE = `Log argument greater than ${MAX_LOG_MESSAGE_SIZE / 1000}KB. Check local Console to see output of the object.`;
 const MAX_QUEUE_SIZE = 5 * 1000; // maximum logger queue size; plenty of space although shouldn't need much since continuously sending to logger if working correctly;
-const throttle = __webpack_require__(79);
-const system_1 = __webpack_require__(5);
-const localLogger_1 = __webpack_require__(51);
+const throttle = __webpack_require__(83);
+const system_1 = __webpack_require__(4);
+const localLogger_1 = __webpack_require__(57);
 /**
  * @introduction
  *
- * <h2>Logger Client</h2>
+ * <h2>Logger Client (Finsemble Workspaces)</h2>
  *
  * The Logger Client supports very efficient and configurable run-time logging to the <a href=tutorial-CentralLogger.html>Central Logger</a>.
  * Logging has a small performance overhead, so developers can liberally instrument their code with log messages for debugging and diagnostics.
@@ -968,7 +763,7 @@ exports.LoggerConstructor = function (dependencies) {
         var self = this;
         if (!self.RouterClient) {
             console.log("No instance of the RouterClient found for this instance of the Logger. Dynamically requiring it.");
-            self.RouterClient = __webpack_require__(10).default;
+            self.RouterClient = __webpack_require__(6).default;
         }
         let onlineSubscription, allActiveSubscription;
         //Wait for the service before coming online. can't use the dependency manager, because it uses the router, which uses the logger.
@@ -1017,34 +812,212 @@ exports.default = exports.Logger;
 
 
 /***/ }),
-/* 4 */
-/***/ (function(module, exports) {
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
 
-var g;
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process) {
 
-// This works in non-strict mode
-g = (function() {
-	return this;
-})();
-
-try {
-	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1,eval)("this");
-} catch(e) {
-	// This works if the window reference is available
-	if(typeof window === "object")
-		g = window;
+if (process.env.NODE_ENV === 'production') {
+  module.exports = __webpack_require__(401);
+} else {
+  module.exports = __webpack_require__(400);
 }
 
-// g can still be undefined, but nothing to do about it...
-// We return undefined, instead of nothing here, so it's
-// easier to handle this case. if(!global) { ...}
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
-module.exports = g;
+/***/ }),
+/* 3 */
+/***/ (function(module, exports) {
+
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
 
 
 /***/ }),
-/* 5 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1111,12 +1084,23 @@ class System {
             cb(info);
         });
     }
+    static get container() {
+        if (fin.container)
+            return fin.container;
+        return "Openfin";
+    }
+    static get fin() {
+        return e2o || fin || {};
+    }
     // static get makes this behave like a static variable. so calling system.ready is equivalent to fin.desktop.main.
     static get ready() {
         return fin.desktop.main;
     }
     static get getHostSpecs() {
         return fin.desktop.System.getHostSpecs;
+    }
+    static get InterApplicationBus() {
+        return fin.desktop.InterApplicationBus;
     }
     static get launchExternalProcess() {
         return fin.desktop.System.launchExternalProcess;
@@ -1151,6 +1135,9 @@ class System {
     }
     static get getAllWindows() {
         return fin.desktop.System.getAllWindows;
+    }
+    static get getProcessList() {
+        return fin.desktop.System.getProcessList;
     }
     static FinsembleReady(cb) {
         if (Globals.FSBL && Globals.FSBL.addEventListener) {
@@ -1208,17 +1195,73 @@ class System {
 }
 exports.System = System;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || Function("return this")() || (1,eval)("this");
+} catch(e) {
+	// This works if the window reference is available
+	if(typeof window === "object")
+		g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
 
 /***/ }),
 /* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+Object.defineProperty(exports, "__esModule", { value: true });
+const routerClientConstructor_1 = __webpack_require__(75);
+const logger_1 = __webpack_require__(1);
+let RCConstructor = routerClientConstructor_1.RouterClientConstructor;
+/** The logger needs a router client, and the router client needs a logger.
+ * To get around this fundamental circular dependency, we pass a reference
+ * of the RouterClient to the Logger. Only after this is called will the
+ * RouterClient and Logger be ready. If RouterClient is NOT required before
+ * the Logger, then this file will be dynamically required at Logger.start().
+ */
+/** An instance of the IRouterClient interface, (that is, the Router Client).
+ * All other clients are built on top of the RouterClient; its API is the
+ * primary form of communication between the various components of Finsemble.
+ */
+let RouterClientInstance = new RCConstructor({ clientName: "RouterClient" });
+logger_1.Logger.setRouterClient(RouterClientInstance);
+exports.default = RouterClientInstance;
+
+
+/***/ }),
+/* 7 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__utils_ScalingCellSizeAndPositionManager__ = __webpack_require__(123);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__utils_ScalingCellSizeAndPositionManager__ = __webpack_require__(129);
 
 
 
@@ -1381,10 +1424,10 @@ if (!(process.env.NODE_ENV === 'production') && typeof exports !== 'undefined') 
   value: babelPluginFlowReactPropTypes_proptype_VisibleCellRange,
   configurable: true
 });
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1399,17 +1442,17 @@ exports.default = function (instance, Constructor) {
 };
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var support = __webpack_require__(32);
-var base64 = __webpack_require__(150);
-var nodejsUtils = __webpack_require__(78);
-var setImmediate = __webpack_require__(385);
-var external = __webpack_require__(59);
+var support = __webpack_require__(35);
+var base64 = __webpack_require__(156);
+var nodejsUtils = __webpack_require__(82);
+var setImmediate = __webpack_require__(414);
+var external = __webpack_require__(65);
 
 
 /**
@@ -1882,7 +1925,7 @@ exports.prepareContent = function(name, inputData, isBinary, isOptimizedBinarySt
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1890,7 +1933,7 @@ exports.prepareContent = function(name, inputData, isBinary, isOptimizedBinarySt
 
 exports.__esModule = true;
 
-var _defineProperty = __webpack_require__(243);
+var _defineProperty = __webpack_require__(271);
 
 var _defineProperty2 = _interopRequireDefault(_defineProperty);
 
@@ -1915,1019 +1958,7 @@ exports.default = function () {
 }();
 
 /***/ }),
-/* 10 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-Object.defineProperty(exports, "__esModule", { value: true });
-const routerClientConstructor_1 = __webpack_require__(71);
-const logger_1 = __webpack_require__(3);
-let RCConstructor = routerClientConstructor_1.RouterClientConstructor;
-/** The logger needs a router client, and the router client needs a logger.
- * To get around this fundamental circular dependency, we pass a reference
- * of the RouterClient to the Logger. Only after this is called will the
- * RouterClient and Logger be ready. If RouterClient is NOT required before
- * the Logger, then this file will be dynamically required at Logger.start().
- */
-/** An instance of the IRouterClient interface, (that is, the Router Client).
- * All other clients are built on top of the RouterClient; its API is the
- * primary form of communication between the various components of Finsemble.
- */
-let RouterClientInstance = new RCConstructor({ clientName: "RouterClient" });
-logger_1.Logger.setRouterClient(RouterClientInstance);
-exports.default = RouterClientInstance;
-
-
-/***/ }),
 /* 11 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_routerClientInstance__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_routerClientInstance___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__clients_routerClientInstance__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_events__ = __webpack_require__(13);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_events___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_events__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_util__ = __webpack_require__(17);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_lodash_debounce__ = __webpack_require__(114);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_lodash_debounce___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_lodash_debounce__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_lodash_throttle__ = __webpack_require__(79);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_lodash_throttle___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_lodash_throttle__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_lodash_clone__ = __webpack_require__(113);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_lodash_clone___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_lodash_clone__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__LogMessage__ = __webpack_require__(202);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__CtrlFSearch__ = __webpack_require__(92);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__clients_configClient__ = __webpack_require__(27);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__clients_configClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8__clients_configClient__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__common_system__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9__common_system__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__clients_hotkeysClient__ = __webpack_require__(69);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__clients_hotkeysClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10__clients_hotkeysClient__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_file_saver__ = __webpack_require__(296);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_file_saver___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_11_file_saver__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_async__ = __webpack_require__(22);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_async___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_12_async__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__common_userNotification__ = __webpack_require__(50);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__modules_filtering__ = __webpack_require__(236);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__modules_logCapture__ = __webpack_require__(237);
-function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
-
-/**
- * The brains of the UI. Interfaces with the state manager, emits events for the UI to act on, and receives messages from the logAdapter (via the actions object).
- */
-
-
-
-
-
-
-const FILTER_DEBOUNCE_TIME = 200;
-const SEARCH_DEBOUNCE_TIME = 0;
-const MASTER_MAXSIZE = 100 * 1000;
-
-
-
-
-
-
-
-
-const JSZip = __webpack_require__(302);
-__WEBPACK_IMPORTED_MODULE_10__clients_hotkeysClient___default.a.initialize();
-
-const STORAGE_KEY = "finsemble.loggerStore.mainkey";
-// LoggerStore is the single React data store supporting the central logger. All communication with clients through router also happens here.
-// This store support the pure React model, but Flux not needed (i.e. there is no Dispatcher).
-// All changes of store are communicated back to components using the ; on receiving an  event components then call back to this store to get the new data.
-// Actions triggered by components aren't broken out in a separate class -- they are the "set" and "toggle" methods in the LoggerStore.
-// Generally, all actions cause an  event to be sent (might a rare exception or two).
-
-// There are lots of simularly named operations and functions in this store (due to the nature of the problem).  The easiest way to identify UI functionality is to start in
-// the compponents, seeing what is controlled and map that behavior to the store operations.
-
-var messageCounter = 0;
-var firstMessageTime = Infinity;
-var fileModeState = false;
-var registeredClientNames = [];
-var masterLog = [];
-var filteredLog = [];
-var defaultShowClientState = true;
-var windowWidth = 0; // min width to hold buttons, etc
-var windowHeight = 0;
-var persistState = {};
-var defaultClientState = {};
-var disableClientState = {};
-var disableClientConsoleSetting = { Error: false, Warn: false, Info: false, Log: false, Debug: false, Verbose: false };
-var disableClientSetting = { Error: false, Warn: false, Info: false, Log: false, Debug: false, Verbose: false, LocalOnly: false };
-var Search = null;
-var showOnError = false,
-    showOnStartup = false;
-var shouldShowSearchBox = false;
-var activeRowIndex = 0;
-var rowTimediff = null;
-var activeView = "logger";
-var initialized = false;
-const SHOW_ON_ERROR_PREFERENCE_KEY = "finsemble.preferences.loggerService.showOnError";
-const SHOW_ON_STARTUP_PREFERENCE_KEY = "finsemble.preferences.loggerService.showOnStartup";
-const LARGE_LOG_SIZE_LINES = 50000;
-const LINES_PER_LOG_FILE = 1000;
-
-
-class Store extends __WEBPACK_IMPORTED_MODULE_1_events__["EventEmitter"] {
-	constructor() {
-		super();
-		this.setMaxListeners(100);
-		this.windowVisibility = "visible";
-		// setup throttling here
-		this.activeView = activeView;
-		this.Search = new __WEBPACK_IMPORTED_MODULE_7__CtrlFSearch__["b" /* default */]();
-		this.showOnError = showOnError;
-		this.showOnStartup = showOnStartup;
-		this.activeRowIndex = activeRowIndex;
-		this.rowTimediff = rowTimediff;
-		this.initialized = initialized;
-		this.shouldShowSearchBox = shouldShowSearchBox;
-		this.RouterClient = __WEBPACK_IMPORTED_MODULE_0__clients_routerClientInstance___default.a;
-		this.defaultClientState = defaultClientState;
-		//The modules will put their methods onto `this` and bind the context properly.
-		__WEBPACK_IMPORTED_MODULE_14__modules_filtering__["a" /* default */].deriveMethods(this);
-		__WEBPACK_IMPORTED_MODULE_15__modules_logCapture__["a" /* default */].deriveMethods(this);
-		this.bindCorrectContext();
-		this.registerGlobalHotkey();
-	}
-	bindCorrectContext() {
-		this.broadCastNewMessageUpdateThrottled = __WEBPACK_IMPORTED_MODULE_4_lodash_throttle___default()(this.broadCastNewMessageUpdate.bind(this), 1000);
-		this.setFilter1 = __WEBPACK_IMPORTED_MODULE_3_lodash_debounce___default()(this.setFilter1, FILTER_DEBOUNCE_TIME);
-		this.setFilter2 = __WEBPACK_IMPORTED_MODULE_3_lodash_debounce___default()(this.setFilter2, FILTER_DEBOUNCE_TIME);
-		this.setFilter3 = __WEBPACK_IMPORTED_MODULE_3_lodash_debounce___default()(this.setFilter3, FILTER_DEBOUNCE_TIME);
-		this.setFilter4 = __WEBPACK_IMPORTED_MODULE_3_lodash_debounce___default()(this.setFilter4, FILTER_DEBOUNCE_TIME);
-		this.setLogSearchBoxString = this.setLogSearchBoxString.bind(this);
-		this.setLogSearchBoxString = __WEBPACK_IMPORTED_MODULE_3_lodash_debounce___default()(this.setLogSearchBoxString, SEARCH_DEBOUNCE_TIME);
-		this.setWindowHidden = this.setWindowHidden.bind(this);
-		this.setWindowVisible = this.setWindowVisible.bind(this);
-		this.emitResizeTimeout = this.emitResizeTimeout.bind(this);
-		this.setConfigVisible = this.setConfigVisible.bind(this);
-		this.setLoggerVisible = this.setLoggerVisible.bind(this);
-		this.clearData = this.clearData.bind(this);
-		this.toggleShowOnError = this.toggleShowOnError.bind(this);
-		this.toggleShowOnStartup = this.toggleShowOnStartup.bind(this);
-		this.configureLoggerForDefaults = this.configureLoggerForDefaults.bind(this);
-		this.configureLoggerForErrors = this.configureLoggerForErrors.bind(this);
-		this.configureLoggerForFieldCapture = this.configureLoggerForFieldCapture.bind(this);
-	}
-	initialize() {
-		windowWidth = window.innerWidth; // min width to hold buttons, etc
-		windowHeight = window.innerHeight;
-		this.addWindowListeners();
-		this.addHotkeys();
-	}
-
-	addWindowListeners() {
-		if (this.initialized) return;
-		var finWindow = __WEBPACK_IMPORTED_MODULE_9__common_system__["System"].Window.getCurrent();
-		let nativeWindow = finWindow.nativeWindow || window;
-		finWindow.addEventListener("bounds-change-end", event => {
-			this.processSizeChange(event.width, event.height);
-		});
-
-		finWindow.addEventListener("maximized", event => {
-			this.processSizeChange(nativeWindow.outerWidth, nativeWindow.outerHeight);
-		});
-
-		finWindow.addEventListener("restored", event => {
-			this.processSizeChange(nativeWindow.outerWidth, nativeWindow.outerHeight);
-		});
-	}
-
-	getRegisteredClient() {
-		return registeredClientNames;
-	}
-
-	getWindowWidth() {
-		return windowWidth;
-	}
-
-	getWindowHeight() {
-		return windowHeight;
-	}
-
-	/**
-  * This will look in the logger config to see if a global hotkey is registered to pull
-  * up the central logger. This is typically ctrl-~ but can be configured by developers
-  * as appropriate.
-  */
-	registerGlobalHotkey() {
-		__WEBPACK_IMPORTED_MODULE_8__clients_configClient___default.a.getValue({ field: "finsemble.servicesConfig.logger.hotkeyShowCentralLogger" }, (err, value) => {
-			if (value) {
-				__WEBPACK_IMPORTED_MODULE_10__clients_hotkeysClient___default.a.onReady(() => {
-					__WEBPACK_IMPORTED_MODULE_10__clients_hotkeysClient___default.a.addGlobalHotkey(value, () => {
-						window.showConsole();
-					});
-				});
-			}
-		});
-	}
-
-	addHotkeys() {
-		window.addEventListener("keydown", e => {
-			if (e.ctrlKey && e.altKey) {
-				switch (e.key) {
-					case "c":
-						this.toggleClientListVisible();
-						break;
-					case "d":
-						this.configureLoggerForDefaults();
-						break;
-					case "e":
-						this.configureLoggerForErrors();
-						break;
-					//s for support...
-					case "s":
-						this.configureLoggerForFieldCapture();
-						break;
-					case "x":
-						this.clearData();
-						break;
-				}
-			}
-		});
-	}
-
-	getFileMode() {
-		return fileModeState;
-	}
-
-	getFirstMessageTime() {
-		return firstMessageTime;
-	}
-
-	//Log list things
-
-	// rebuild the current log based on the current state of the store
-	broadCastNewMessageUpdate() {
-		if (this.windowVisibility !== "hidden") {
-			//if  we modify the message, clone it.
-			this.emit("loggerNewMessages");
-		}
-	}
-
-	getMasterLog() {
-		return masterLog;
-	}
-
-	getFilteredLog() {
-		return filteredLog;
-	}
-
-	getLogCounts() {
-		return { master: masterLog.length, display: filteredLog.length };
-	}
-
-	openClient(windowName) {
-		// electron dev tools - must popout of at least one window before this works
-		if (fin.container === "Electron") {
-			return __WEBPACK_IMPORTED_MODULE_9__common_system__["System"].showDeveloperTools(null, windowName);
-		}
-		__WEBPACK_IMPORTED_MODULE_9__common_system__["System"].getAllWindows(apps => {
-			let uuid;
-			for (var a = 0; a < apps.length; a++) {
-				let app = apps[a];
-
-				if (!app.childWindows.length) {
-					//if no child windows then the uuid and name are probably going to be the same (e.g., routerService, LoggerService)
-					if (app.uuid === windowName) {
-						uuid = app.uuid;
-						break;
-					}
-					continue;
-				}
-				let win = app.childWindows.filter(win => win.name === windowName)[0];
-				if (win) {
-					uuid = app.uuid;
-					break;
-				}
-			}
-			if (uuid && windowName) {
-				__WEBPACK_IMPORTED_MODULE_9__common_system__["System"].showDeveloperTools(uuid, windowName, () => {
-					console.log(`Successfully opened devtools for ${uuid}`);
-				}, err => {
-					console.error(err);
-				});
-			}
-		});
-	}
-
-	getRowTimeDiff() {
-		return this.rowTimediff;
-	}
-
-	setRowTimeDiff(diff) {
-		this.rowTimediff = diff;
-		this.emit("rowTimeDiffChange");
-	}
-
-	getClientListVisible() {
-		return persistState.get("clientListVisible");
-	}
-
-	//List rendering functions
-	triggerRowheightRecalculation() {
-		this.emit("recalculateHeight");
-	}
-	triggerLogRerender() {
-		this.emit("rerenderList");
-	}
-	toggleClientListVisible() {
-		persistState.toggle("clientListVisible");
-		this.emit("clientListVisibleChange");
-	}
-	//This is because we have to wait for dom elements to unmount so that the table can calculate its height. I hate it but it works.
-	emitResizeTimeout() {
-		setTimeout(() => {
-			this.emit("WindowResize");
-			this.emit("rerenderList");
-		}, 400);
-	}
-
-	persist() {
-		try {
-			localStorage.setItem(STORAGE_KEY, JSON.stringify(persistState.data));
-		} catch (err) {
-			console.error("Storage.saving Error", err, "key=" + STORAGE_KEY, "value=", persistState.data);
-		}
-	}
-
-	getLogState() {
-		return persistState.get("logState");
-	}
-
-	getClientState(clientName) {
-		return persistState.get(`clientState[${clientName}]`);
-	}
-
-	getShowClientState(clientName) {
-		return persistState.get(`showClientState[${clientName}]`);
-	}
-
-	getLogCategoriesAllowed() {
-		let perf = persistState.get("perfModeState");
-		let dev = persistState.get("devModeState");
-		let system = persistState.get("systemModeState");
-		return { perf, dev, system };
-	}
-
-	getAllShowClientState(clientName) {
-		return persistState.get("showClientState");
-	}
-
-	getClientMode() {
-		return persistState.get("currentCategory");
-	}
-
-	clearData() {
-		masterLog = [];
-		filteredLog = [];
-		this.emit("loggerNewMessages");
-	}
-
-	//Scrolling
-	setTop() {
-		this.emit("SetTop");
-	}
-
-	setBottom() {
-		this.emit("SetBottom");
-	}
-
-	scrollToActiveRow() {
-		this.emit("scrollToActiveRow");
-	}
-
-	setActiveRowIndex(ind) {
-		this.activeRowIndex = ind;
-		this.emit("activeRowChanged");
-	}
-	setActiveConfigSearchMatch(ind) {
-		this.activeConfigSearchMatch = ind;
-		this.emit("activeConfigSearchMatch");
-	}
-	getActiveConfigSearchMatch() {
-		return this.activeConfigSearchMatch;
-	}
-	getActiveRowIndex() {
-		return this.activeRowIndex;
-	}
-	getHideInactiveState() {
-		return persistState.get("hideInactiveState");
-	}
-
-	toggleHideInactive() {
-		persistState.toggle("hideInactiveState");
-		this.emit("newHideInactiveState");
-	}
-
-	getCurrentCategory(category) {
-		return persistState.get("currentCategory");
-	}
-
-	//LogLevel toggles
-	toggleShowClient(clientName) {
-		persistState.toggle(`showClientState[${clientName}]`);
-		this.filterData();
-		this.emit("newShowClientState");
-		this.broadCastNewMessageUpdate();
-	}
-	//toggles visibility of all clients
-	toggleShowAllClients() {
-		var allTrue = true;
-		for (let client in persistState.data.showClientState) {
-			if (persistState.data.showClientState.hasOwnProperty(client)) {
-				allTrue = allTrue && persistState.data.showClientState[client];
-				if (!allTrue) {
-					break;
-				}
-			}
-		}
-		var toggledState = !allTrue;
-		for (let client in persistState.data.showClientState) {
-			if (persistState.data.showClientState.hasOwnProperty(client)) {
-				persistState.set(`showClientState[${client}]`, toggledState);
-			}
-		}
-		this.filterData();
-		this.emit("newShowClientState");
-		this.broadCastNewMessageUpdateThrottled();
-	}
-
-	//CtrlF stuff
-	getShowSearchBox() {
-		return this.shouldShowSearchBox;
-	}
-
-	showSearchBox() {
-		this.shouldShowSearchBox = true;
-		this.emit("showSearchBoxChange");
-	}
-
-	hideSearchBox() {
-		this.shouldShowSearchBox = false;
-		this.setLogSearchBoxString("");
-		this.emit("showSearchBoxChange");
-	}
-
-	getSearchBoxString() {
-		return this.Search.searchString;
-	}
-
-	getSearchMatches() {
-		return this.Search.results;
-	}
-
-	setLogSearchBoxString(str) {
-		this.Search.performLogSearch(filteredLog, str);
-		this.emit("searchBoxTextChange");
-	}
-
-	setConfigSearchBoxString(str) {
-		if (this.finsembleConfig) {
-			this.Search.performStringSearch(this.finsembleConfig, str);
-			this.emit("searchBoxTextChange");
-		} else {
-			this.getFullConfig(cfg => {
-				this.Search.performStringSearch(this.finsembleConfig, str);
-				this.emit("searchBoxTextChange");
-			});
-		}
-	}
-
-	//window visibility handlers
-	setWindowVisible() {
-		this.windowVisibility = "visible";
-		this.broadCastNewMessageUpdate();
-		this.emit("WindowVisibilityChange");
-	}
-	setWindowHidden() {
-		this.windowVisibility = "hidden";
-		this.emit("WindowVisibilityChange");
-	}
-	getWindowVisibility() {
-		return this.windowVisibility;
-	}
-
-	setAllLogStateOn() {
-		persistState.set("logState", { Error: true, Warn: true, Info: true, Log: true, Debug: true, Verbose: true });
-		this.emit("newDisplayState");
-	}
-
-	setLogState(state) {
-		persistState.set("logState", Object.assign(persistState.data.logState, state));
-		this.emit("newDisplayState");
-	}
-
-	//Quickviews
-	configureLoggerForDefaults() {
-		persistState.set("initialClientStateDefault.Error", true);
-		persistState.set("initialClientStateDefault.Warn", true);
-		persistState.set("initialClientStateDefault.Log", true);
-		persistState.set("initialClientStateDefault.Info", false);
-		persistState.set("initialClientStateDefault.Debug", false);
-		persistState.set("initialClientStateDefault.Verbose", false);
-		//Sets the default client states to all of the clients.
-		this.setAllLogStateOn();
-		this.defaultShowClientAll();
-		this.filterData();
-		this.emit("newInitialClientStateDefault");
-	}
-
-	configureLoggerForErrors() {
-		persistState.set("initialClientStateDefault.Error", true);
-		this.emit("newInitialClientStateDefault");
-		this.setLogState({
-			Error: true,
-			Warn: false,
-			Info: false,
-			Log: false,
-			Debug: false,
-			Verbose: false
-		});
-		//Sets the default client states to all of the clients.
-		this.defaultShowClientAll();
-		this.filterData();
-	}
-
-	configureLoggerForFieldCapture() {
-		persistState.set("initialClientStateDefault.Error", true);
-		persistState.set("initialClientStateDefault.Warn", true);
-		persistState.set("initialClientStateDefault.Log", true);
-		persistState.set("initialClientStateDefault.Info", true);
-		persistState.set("initialClientStateDefault.Debug", true);
-		persistState.set("initialClientStateDefault.Verbose", false);
-
-		this.emit("newInitialClientStateDefault");
-		//Sets the default client states to all of the clients.
-		this.defaultShowClientAll();
-		this.persist();
-		this.filterData();
-		//Timeout to let the UI react and show colored buttons everywhere.
-		setTimeout(() => {
-			alert(`Logger is now configured for field capture. Please restart your application if needed, recreate problem, export the log, and send it to Finsemble Support with description of the problem.
-
-			IMPORTANT: Once your log is exported, revert to the default logger settings; otherwise, you may see degraded performance due to the extra logging.`);
-		}, 200);
-	}
-
-	configureLoggerForStartup() {
-		persistState.set("initialClientStateDefault.Error", true);
-		persistState.set("initialClientStateDefault.Warn", true);
-		persistState.set("initialClientStateDefault.Log", true);
-		persistState.set("initialClientStateDefault.Info", true);
-		persistState.set("initialClientStateDefault.Debug", true);
-		this.setFilter1("Service Online");
-		this.emit("NewHighlightValues1");
-		this.setFilter2("not online");
-		this.emit("NewHighlightValues2");
-		this.setFilter3("");
-		this.emit("NewHighlightValues3");
-		this.setFilter4("");
-		this.emit("NewHighlightValues4");
-		this.setFilterLogic("OR");
-		this.emit("newInitialClientStateDefault");
-		//Sets the default client states to all of the clients.
-		this.defaultShowClientAll();
-	}
-
-	setFilteredLog(filteredData) {
-		filteredLog = __WEBPACK_IMPORTED_MODULE_5_lodash_clone___default()(filteredData);
-	}
-
-	/**
-  * Helper function to split the log array into smaller arrays
-  * Calling json.stringify can cause issues on large objects
-  * @param {} array
-  * @param {int} size
-  */
-	chunk(array, size) {
-		const chunked_arr = [];
-		let index = 0;
-		while (index < array.length) {
-			chunked_arr.push(array.slice(index, size + index));
-			index += size;
-		}
-		return chunked_arr;
-	}
-
-	/**
-  * Export the logs to a zip file
-  */
-	saveToFile() {
-		// Handle the special data needed to reconstruct the log.
-		const data = {};
-		data.registeredClientNames = registeredClientNames;
-		data.persistState = persistState.data;
-		const json = JSON.stringify(data);
-		const blob = new Blob([json], { type: "application/json" });
-
-		// Create a zip and add the special data
-		const zip = new JSZip();
-		zip.file("log_state.json", blob);
-
-		// Alert the user if the log has a large number of lines
-		if (masterLog.length > LARGE_LOG_SIZE_LINES) {
-			__WEBPACK_IMPORTED_MODULE_13__common_userNotification__["default"].alert("dev", "ALWAYS", "system", "Currently exporting a large log, this may take some time.");
-		}
-		// Split the log into smaller arrays. This is needed because JSON.stringify runs out of memory with large data objects
-		const chunked_array = this.chunk(masterLog, LINES_PER_LOG_FILE);
-
-		// For each split array, stringify it and create a zip file.
-		for (var i = 0; i < chunked_array.length; i++) {
-			const partial_log = chunked_array[i];
-			console.log("adding to zip", i, partial_log);
-			const json = JSON.stringify({ partial_log });
-			const blob = new Blob([json], { type: "application/json" });
-			zip.file(`log${i}.json`, blob);
-		}
-
-		// Finally save the zip file
-		const log_time = new Date().toLocaleString();
-		zip.generateAsync({ type: "blob" }).then(result => {
-			__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_11_file_saver__["saveAs"])(result, `logs-${log_time}.zip`);
-		});
-	}
-
-	// enables fileMode, essentially disabling all external communication with clients in order to read log data from a file...a special case.
-	fileMode() {
-
-		fileModeState = true;
-
-		var element = document.createElement("div");
-		element.innerHTML = "<input type=\"file\">";
-		var fileInput = element.firstChild;
-
-		fileInput.addEventListener("change", () => {
-			var file = fileInput.files[0];
-			const isZip = file.name.match(/\.(zip)$/) ? true : false;
-			const isJson = file.name.match(/\.(json)$/) ? true : false;
-			if (isZip || isJson) {
-				for (let client in persistState.data.showClientState) {
-					if (persistState.data.showClientState.hasOwnProperty(client) && (!persistState.data.hideInactiveState || persistState.data.showClientState[client])) {
-						let clientState = Object.assign({}, disableClientState); // get a copy of the disabled state
-						clientState.clientChannel = persistState.data.clientState[client].clientChannel; // don't overwrite the channel name
-						__WEBPACK_IMPORTED_MODULE_0__clients_routerClientInstance___default.a.transmit(clientState.clientChannel, clientState);
-						console.debug("disabledClientState", clientState.clientChannel, clientState);
-					}
-				}
-				if (isZip) {
-					//handle importing zip of log files
-					console.log("***** ZipMode *****");
-					let fullArray = [];
-
-					//Load the zip file
-					JSZip.loadAsync(file).then(zip => {
-						//Pop an alert if the zip contains a lot of files. This is a bit arbitrary as the length of time to import is based on the file size not the number of files
-						//However we only have access to the number of files
-						if (Object.keys(zip.files).length > LARGE_LOG_SIZE_LINES / LINES_PER_LOG_FILE) {
-							__WEBPACK_IMPORTED_MODULE_13__common_userNotification__["default"].alert("dev", "ALWAYS", "system", "Currently importing a large log, this may take some time.");
-						}
-						//read each file inside the zip and concatenate into one big array
-						__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_12_async__["eachSeries"])(zip.files, (() => {
-							var _ref = _asyncToGenerator(function* (zipEntry, done) {
-								const file = yield zipEntry.async("blob");
-								const fileName = zipEntry.name;
-								var fr = new FileReader();
-								fr.onload = function () {
-									let json = JSON.parse(fr.result);
-									//handle the file with the special data
-									if (json && fileName === "log_state.json") {
-										persistState.data = json.persistState;
-										registeredClientNames = json.registeredClientNames;
-										// concatenate the log files. For performance reasons it was necessary to use push instead of concat
-										// see: https://dev.to/uilicious/javascript-array-push-is-945x-faster-than-array-concat-1oki
-									} else if (json && json.partial_log) {
-										Array.prototype.push.apply(fullArray, json.partial_log);
-									}
-
-									done();
-								};
-								fr.readAsText(file);
-							});
-
-							function readChunk(_x, _x2) {
-								return _ref.apply(this, arguments);
-							}
-
-							return readChunk;
-						})(), err => {
-							// finally turn off logging
-							firstMessageTime = fullArray[0].logTimestamp;
-							masterLog = fullArray;
-							firstMessageTime = fullArray[0].logTimestamp;
-							console.log("ImportZip", fullArray, firstMessageTime);
-							this.filterData();
-							this.emit("newFirstMessageTime");
-							this.emit("FileMode");
-							this.emit("LoggerRegister");
-							this.emit("newFilterHighlights");
-							this.emit("newDisplayState");
-							this.emit("LoggerUnregister");
-							this.emit("newShowClientState");
-						});
-					});
-				} else if (isJson) {
-					//backwards compatibility for old log files
-					var reader = new FileReader();
-
-					reader.onload = () => {
-						console.log("***** FileMode *****");
-
-						var data = JSON.parse(reader.result);
-
-						firstMessageTime = data.masterLog[0].logTimestamp;
-						masterLog = data.masterLog;
-						firstMessageTime = masterLog[0].logTimestamp;
-						persistState.data = data.persistState;
-						registeredClientNames = data.registeredClientNames;
-						console.log("ImportFile", data, file, reader, firstMessageTime);
-						this.filterData();
-						this.emit("newFirstMessageTime");
-						this.emit("FileMode");
-						this.emit("LoggerRegister");
-						this.emit("newFilterHighlights");
-						this.emit("newDisplayState");
-						this.emit("LoggerUnregister");
-						this.emit("newShowClientState");
-					};
-
-					reader.readAsText(file);
-				}
-			} else {
-				console.error("File not supported, .zip or .json files only");
-			}
-		});
-
-		fileInput.click();
-	}
-
-	//For config only
-	getFullConfig(cb) {
-		__WEBPACK_IMPORTED_MODULE_8__clients_configClient___default.a.getValues(null, (err, cfg) => {
-			let fullConfig = cfg;
-			fullConfig = JSON.stringify(fullConfig, null, 4);
-			fullConfig = fullConfig.split(/\n/g);
-			this.finsembleConfig = fullConfig;
-			cb(fullConfig);
-		});
-	}
-
-	//View handler
-	getActiveView() {
-		return this.activeView;
-	}
-	setLoggerVisible() {
-		this.activeView = "logger";
-		this.emit("viewChange");
-	}
-	setConfigVisible() {
-		this.activeView = "config";
-		this.emit("viewChange");
-	}
-
-	findIndexByTimestamp(logs, timestamp) {
-		for (var i = logs.length - 1; i > 0; i--) {
-			if (logs[i].logTimestamp < timestamp) {
-				break;
-			}
-		}
-		return i;
-	}
-
-	//Preferences
-	toggleShowOnStartup() {
-		this.setShowOnStartup(!this.showOnStartup);
-	}
-
-	getShowOnStartup() {
-		return this.showOnStartup;
-	}
-
-	setShowOnStartup(val, setPreference = true) {
-		this.showOnStartup = val;
-		this.emit("showOnStartup", this.showOnStartup);
-		//we aren't going to set the preference on startup. any other time we will.
-		if (setPreference) {
-			__WEBPACK_IMPORTED_MODULE_8__clients_configClient___default.a.setPreference({ field: SHOW_ON_STARTUP_PREFERENCE_KEY, value: this.showOnStartup });
-		}
-	}
-
-	toggleShowOnError() {
-		this.setShowOnError(!this.showOnError);
-	}
-
-	getShowOnError() {
-		return this.showOnError;
-	}
-
-	setShowOnError(val, setPreference = true) {
-		this.showOnError = val;
-		this.emit("showOnError", this.showOnError);
-		//we aren't going to set the preference on startup. any other time we will.
-		if (setPreference) {
-			__WEBPACK_IMPORTED_MODULE_8__clients_configClient___default.a.setPreference({ field: SHOW_ON_ERROR_PREFERENCE_KEY, value: this.showOnError });
-		}
-	}
-
-	// called whenever the Logger's window size is changed
-	processSizeChange(width, height) {
-		if (windowWidth !== width) {
-			windowWidth = window.innerWidth;
-			this.emit("WindowResize");
-			this.emit("newShowClientState"); // don't know why but table size chance alone doesn't refresh table, so sent this too to trigger refresh
-		}
-		if (windowHeight !== height) {
-			// the height isn't fully tracked because less important
-			windowHeight = window.innerHeight;
-			this.emit("WindowResize");
-			this.emit("newShowClientState"); // don't know why but table size chance alone doesn't refresh table, so sent this too to trigger refresh
-		}
-	}
-
-	// this sorts only the end of the table....when getting a new buffer of messages, only need to sort from the earliest timestamp forward;
-	// the existing buffer (before new buffer is added) may have older timestamps, which is why must start from earliest timestamp in new messages
-	sortNewLogMessages(fromTimestamp) {
-		// compare function to sort messages by timestamp
-		function compareTimestamps(a, b) {
-			var result = 0;
-			if (a.logTimestamp < b.logTimestamp) {
-				result = -1;
-			}
-			if (a.logTimestamp > b.logTimestamp) {
-				result = 1;
-			}
-			return result;
-		}
-
-		var indexToSortFrom = this.findIndexByTimestamp(masterLog, fromTimestamp);
-		var newLogPortion = masterLog.splice(indexToSortFrom, masterLog.length);
-		newLogPortion.sort(compareTimestamps);
-		masterLog = masterLog.concat(newLogPortion);
-		//When we splice masterLog, we return a new array, breaking the reference from filterLog to masterLog. If we are not currently filtering data, we have to reset the pointer in the else block.
-		if (this.shouldFilterData()) {
-			indexToSortFrom = this.findIndexByTimestamp(filteredLog, fromTimestamp);
-			//If the last item in the list is the latest timestamp, no need to splice and force re-renders.
-			if (indexToSortFrom !== filteredLog.length - 1) {
-				newLogPortion = filteredLog.splice(indexToSortFrom, filteredLog.length);
-				newLogPortion.sort(compareTimestamps);
-				filteredLog = filteredLog.concat(newLogPortion);
-			}
-		} else {
-			filteredLog = __WEBPACK_IMPORTED_MODULE_5_lodash_clone___default()(masterLog);
-		}
-	}
-
-	//Adapter-interface handlers
-	onNewMessage(data) {
-		const filteredLogLength = filteredLog.length;
-		if (!fileModeState) {
-			// typically not in filemode, so go through normal handling of log messages, but ignore messages in file mode
-			var earliestTimestamp = Infinity;
-			var messageArray = data;
-			for (var i = 0; i < messageArray.length; i++) {
-				var newMessage = new __WEBPACK_IMPORTED_MODULE_6__LogMessage__["a" /* default */](messageArray[i]);
-				if (messageCounter++ < 10000 && newMessage.logTimestamp < firstMessageTime) {
-					// look for the lowest time value in early messages to set base time
-					firstMessageTime = newMessage.logTimestamp;
-					this.emit("newFirstMessageTime");
-				}
-				if (newMessage.logTimestamp < earliestTimestamp) {
-					earliestTimestamp = newMessage.logTimestamp;
-				}
-				newMessage.timeElapsedFromStartup = Math.round(newMessage.logTimestamp - firstMessageTime);
-				masterLog.push(newMessage);
-				let pushToFilteredLog = this.shouldFilterData() && this.filterData(newMessage).length;
-				if (pushToFilteredLog) {
-					filteredLog.push(newMessage);
-				}
-			}
-			if (this.showOnError && newMessage.logType === "Error") {
-				window.showConsole();
-			}
-			this.sortNewLogMessages(earliestTimestamp);
-
-			if (masterLog.length > MASTER_MAXSIZE) {
-				// limit size of masterLog
-				masterLog = masterLog.slice(masterLog.length - MASTER_MAXSIZE);
-			}
-			if (filteredLogLength !== filteredLog.length) {
-				this.broadCastNewMessageUpdateThrottled();
-			}
-		}
-	}
-
-	onClientRegistered(data) {
-		var clientName = data.clientName;
-
-		if (!fileModeState) {
-			// typically not in filemode, so go through normal registration
-			if (!registeredClientNames.includes(clientName)) {
-				registeredClientNames.push(clientName);
-			}
-
-			if (!(clientName in persistState.data.showClientState)) {
-				persistState.set(`showClientState[${clientName}]`, defaultShowClientState);
-			}
-
-			if (!(clientName in persistState.data.clientState)) {
-				// the data will from from persistState.data. but if not in persistState.data. add it using default values
-				let newClientState = __WEBPACK_IMPORTED_MODULE_2__common_util__["clone"](defaultClientState);
-				persistState.set(`clientState[${clientName}]`, newClientState);
-				persistState.set(`clientState[${clientName}].clientChannel`, data.clientChannel);
-				persistState.set(`clientState[${clientName}].uuid`, data.uuid);
-				persistState.set(`clientState[${clientName}].windowName`, data.windowName);
-			}
-
-			var debugState = persistState.data.clientState[clientName];
-			this.filterData();
-			this.emit("LoggerRegister");
-			//added this  because the react elements weren't getting updated with the proper state as clients registered. I suspect the virtualDOM was doing a diff and getting it wrong..
-			this.emit("newShowClientState");
-			return debugState;
-		} // ignore registration if in filemode -- send back disabled state
-		console.debug("Registration in FileMode");
-		var newClientState = Object.assign({}, disableClientState);
-		newClientState.clientChannel = data.clientChannel;
-		return newClientState;
-	}
-
-	unRegisterClient(data) {
-		let clientName,
-		    deleteFromPersistence = true;
-		if (typeof data === "string" || data instanceof String) {
-			clientName = data;
-		} else {
-			clientName = data.clientName;
-			deleteFromPersistence = data.deleteFromPersistence;
-		}
-
-		for (var i = 0; i < registeredClientNames.length; i++) {
-			if (registeredClientNames[i] === clientName) {
-				registeredClientNames.splice(i, 1);
-			}
-		}
-		if (deleteFromPersistence) {
-			delete persistState.data.clientState[clientName];
-			delete persistState.data.showClientState[clientName];
-			this.persist();
-		}
-		this.emit("LoggerUnregister");
-	}
-	setLoggerServiceState(state) {
-		persistState = state;
-		this.persistState = persistState;
-		defaultClientState.console = persistState.data.initialClientStateDefault;
-		defaultClientState.dev = persistState.data.initialClientStateDefault;
-		defaultClientState.system = persistState.data.initialClientStateDefault;
-		defaultClientState.perf = persistState.data.initialClientStateDefault;
-		defaultClientState.clientChannel = "";
-		defaultClientState.showAdvancedViewFilters = persistState.data.showAdvancedViewFilters;
-		defaultClientState.wrapLog = persistState.data.wrapLog;
-		defaultClientState.showStackStraceInLog = persistState.data.showStackStraceInLog;
-		defaultClientState.filter = persistState.data.filter;
-		defaultClientState.showTimeElapsedFromStartup = persistState.data.showTimeElapsedFromStartup;
-		defaultClientState.clientListVisible = persistState.data.clientListVisible;
-		defaultClientState.colDefs = persistState.data.colDefs;
-		disableClientState.console = disableClientConsoleSetting;
-		disableClientState.dev = disableClientSetting;
-		disableClientState.system = disableClientSetting;
-		disableClientState.perf = disableClientSetting;
-		disableClientState.clientChannel = "";
-	}
-}
-var loggerStore = new Store();
-
-//wait for Router to be ready before initializing.
-__WEBPACK_IMPORTED_MODULE_0__clients_routerClientInstance___default.a.ready(function () {
-	loggerStore.initialize();
-	let finWindow = __WEBPACK_IMPORTED_MODULE_9__common_system__["System"].Window.getCurrent();
-	finWindow.isShowing(isShowing => {
-		if (isShowing) {
-			loggerStore.setWindowVisible();
-		} else {
-			loggerStore.setWindowHidden();
-		}
-		finWindow.addEventListener("shown", loggerStore.setWindowVisible);
-		finWindow.addEventListener("restored", loggerStore.setWindowVisible);
-		finWindow.addEventListener("hidden", loggerStore.setWindowHidden);
-		finWindow.addEventListener("minimized", loggerStore.setWindowHidden);
-	});
-});
-window.TheLoggerStore = loggerStore;
-/* harmony default export */ __webpack_exports__["a"] = (loggerStore);
-
-/***/ }),
-/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2937,11 +1968,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
-const routerClientInstance_1 = __webpack_require__(10);
+const routerClientInstance_1 = __webpack_require__(6);
 const validate_1 = __webpack_require__(18); // Finsemble args validator
-const logger_1 = __webpack_require__(3);
-const system_1 = __webpack_require__(5);
-const dependencyManager_1 = __webpack_require__(41);
+const logger_1 = __webpack_require__(1);
+const system_1 = __webpack_require__(4);
+const dependencyManager_1 = __webpack_require__(58);
 /**
  * @introduction
  * <h2>Base Client</h2>
@@ -3126,7 +2157,7 @@ var BaseClient = function (params) {
      */
     this.routerClient = routerClientInstance_1.default;
     /**
-     * Gets the current openfin window - stays here for backward compatibility
+     * Gets the current window - stays here for backward compatibility
      * @type {object}
      */
     this.finWindow = null;
@@ -3211,7 +2242,6 @@ var BaseClient = function (params) {
             self.windowName = self.finWindow.name;
             logger_1.default.system.debug("Baseclient Init Router Ready", self.name);
             dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor({
-                services: self.startupDependencies.services || [],
                 clients: self.startupDependencies.clients || []
             }, () => {
                 cb();
@@ -3225,538 +2255,17 @@ exports.default = BaseClient;
 
 
 /***/ }),
-/* 13 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-
-
-var R = typeof Reflect === 'object' ? Reflect : null
-var ReflectApply = R && typeof R.apply === 'function'
-  ? R.apply
-  : function ReflectApply(target, receiver, args) {
-    return Function.prototype.apply.call(target, receiver, args);
-  }
-
-var ReflectOwnKeys
-if (R && typeof R.ownKeys === 'function') {
-  ReflectOwnKeys = R.ownKeys
-} else if (Object.getOwnPropertySymbols) {
-  ReflectOwnKeys = function ReflectOwnKeys(target) {
-    return Object.getOwnPropertyNames(target)
-      .concat(Object.getOwnPropertySymbols(target));
-  };
-} else {
-  ReflectOwnKeys = function ReflectOwnKeys(target) {
-    return Object.getOwnPropertyNames(target);
-  };
-}
-
-function ProcessEmitWarning(warning) {
-  if (console && console.warn) console.warn(warning);
-}
-
-var NumberIsNaN = Number.isNaN || function NumberIsNaN(value) {
-  return value !== value;
-}
-
-function EventEmitter() {
-  EventEmitter.init.call(this);
-}
-module.exports = EventEmitter;
-
-// Backwards-compat with node 0.10.x
-EventEmitter.EventEmitter = EventEmitter;
-
-EventEmitter.prototype._events = undefined;
-EventEmitter.prototype._eventsCount = 0;
-EventEmitter.prototype._maxListeners = undefined;
-
-// By default EventEmitters will print a warning if more than 10 listeners are
-// added to it. This is a useful default which helps finding memory leaks.
-var defaultMaxListeners = 10;
-
-function checkListener(listener) {
-  if (typeof listener !== 'function') {
-    throw new TypeError('The "listener" argument must be of type Function. Received type ' + typeof listener);
-  }
-}
-
-Object.defineProperty(EventEmitter, 'defaultMaxListeners', {
-  enumerable: true,
-  get: function() {
-    return defaultMaxListeners;
-  },
-  set: function(arg) {
-    if (typeof arg !== 'number' || arg < 0 || NumberIsNaN(arg)) {
-      throw new RangeError('The value of "defaultMaxListeners" is out of range. It must be a non-negative number. Received ' + arg + '.');
-    }
-    defaultMaxListeners = arg;
-  }
-});
-
-EventEmitter.init = function() {
-
-  if (this._events === undefined ||
-      this._events === Object.getPrototypeOf(this)._events) {
-    this._events = Object.create(null);
-    this._eventsCount = 0;
-  }
-
-  this._maxListeners = this._maxListeners || undefined;
-};
-
-// Obviously not all Emitters should be limited to 10. This function allows
-// that to be increased. Set to zero for unlimited.
-EventEmitter.prototype.setMaxListeners = function setMaxListeners(n) {
-  if (typeof n !== 'number' || n < 0 || NumberIsNaN(n)) {
-    throw new RangeError('The value of "n" is out of range. It must be a non-negative number. Received ' + n + '.');
-  }
-  this._maxListeners = n;
-  return this;
-};
-
-function _getMaxListeners(that) {
-  if (that._maxListeners === undefined)
-    return EventEmitter.defaultMaxListeners;
-  return that._maxListeners;
-}
-
-EventEmitter.prototype.getMaxListeners = function getMaxListeners() {
-  return _getMaxListeners(this);
-};
-
-EventEmitter.prototype.emit = function emit(type) {
-  var args = [];
-  for (var i = 1; i < arguments.length; i++) args.push(arguments[i]);
-  var doError = (type === 'error');
-
-  var events = this._events;
-  if (events !== undefined)
-    doError = (doError && events.error === undefined);
-  else if (!doError)
-    return false;
-
-  // If there is no 'error' event listener then throw.
-  if (doError) {
-    var er;
-    if (args.length > 0)
-      er = args[0];
-    if (er instanceof Error) {
-      // Note: The comments on the `throw` lines are intentional, they show
-      // up in Node's output if this results in an unhandled exception.
-      throw er; // Unhandled 'error' event
-    }
-    // At least give some kind of context to the user
-    var err = new Error('Unhandled error.' + (er ? ' (' + er.message + ')' : ''));
-    err.context = er;
-    throw err; // Unhandled 'error' event
-  }
-
-  var handler = events[type];
-
-  if (handler === undefined)
-    return false;
-
-  if (typeof handler === 'function') {
-    ReflectApply(handler, this, args);
-  } else {
-    var len = handler.length;
-    var listeners = arrayClone(handler, len);
-    for (var i = 0; i < len; ++i)
-      ReflectApply(listeners[i], this, args);
-  }
-
-  return true;
-};
-
-function _addListener(target, type, listener, prepend) {
-  var m;
-  var events;
-  var existing;
-
-  checkListener(listener);
-
-  events = target._events;
-  if (events === undefined) {
-    events = target._events = Object.create(null);
-    target._eventsCount = 0;
-  } else {
-    // To avoid recursion in the case that type === "newListener"! Before
-    // adding it to the listeners, first emit "newListener".
-    if (events.newListener !== undefined) {
-      target.emit('newListener', type,
-                  listener.listener ? listener.listener : listener);
-
-      // Re-assign `events` because a newListener handler could have caused the
-      // this._events to be assigned to a new object
-      events = target._events;
-    }
-    existing = events[type];
-  }
-
-  if (existing === undefined) {
-    // Optimize the case of one listener. Don't need the extra array object.
-    existing = events[type] = listener;
-    ++target._eventsCount;
-  } else {
-    if (typeof existing === 'function') {
-      // Adding the second element, need to change to array.
-      existing = events[type] =
-        prepend ? [listener, existing] : [existing, listener];
-      // If we've already got an array, just append.
-    } else if (prepend) {
-      existing.unshift(listener);
-    } else {
-      existing.push(listener);
-    }
-
-    // Check for listener leak
-    m = _getMaxListeners(target);
-    if (m > 0 && existing.length > m && !existing.warned) {
-      existing.warned = true;
-      // No error code for this since it is a Warning
-      // eslint-disable-next-line no-restricted-syntax
-      var w = new Error('Possible EventEmitter memory leak detected. ' +
-                          existing.length + ' ' + String(type) + ' listeners ' +
-                          'added. Use emitter.setMaxListeners() to ' +
-                          'increase limit');
-      w.name = 'MaxListenersExceededWarning';
-      w.emitter = target;
-      w.type = type;
-      w.count = existing.length;
-      ProcessEmitWarning(w);
-    }
-  }
-
-  return target;
-}
-
-EventEmitter.prototype.addListener = function addListener(type, listener) {
-  return _addListener(this, type, listener, false);
-};
-
-EventEmitter.prototype.on = EventEmitter.prototype.addListener;
-
-EventEmitter.prototype.prependListener =
-    function prependListener(type, listener) {
-      return _addListener(this, type, listener, true);
-    };
-
-function onceWrapper() {
-  if (!this.fired) {
-    this.target.removeListener(this.type, this.wrapFn);
-    this.fired = true;
-    if (arguments.length === 0)
-      return this.listener.call(this.target);
-    return this.listener.apply(this.target, arguments);
-  }
-}
-
-function _onceWrap(target, type, listener) {
-  var state = { fired: false, wrapFn: undefined, target: target, type: type, listener: listener };
-  var wrapped = onceWrapper.bind(state);
-  wrapped.listener = listener;
-  state.wrapFn = wrapped;
-  return wrapped;
-}
-
-EventEmitter.prototype.once = function once(type, listener) {
-  checkListener(listener);
-  this.on(type, _onceWrap(this, type, listener));
-  return this;
-};
-
-EventEmitter.prototype.prependOnceListener =
-    function prependOnceListener(type, listener) {
-      checkListener(listener);
-      this.prependListener(type, _onceWrap(this, type, listener));
-      return this;
-    };
-
-// Emits a 'removeListener' event if and only if the listener was removed.
-EventEmitter.prototype.removeListener =
-    function removeListener(type, listener) {
-      var list, events, position, i, originalListener;
-
-      checkListener(listener);
-
-      events = this._events;
-      if (events === undefined)
-        return this;
-
-      list = events[type];
-      if (list === undefined)
-        return this;
-
-      if (list === listener || list.listener === listener) {
-        if (--this._eventsCount === 0)
-          this._events = Object.create(null);
-        else {
-          delete events[type];
-          if (events.removeListener)
-            this.emit('removeListener', type, list.listener || listener);
-        }
-      } else if (typeof list !== 'function') {
-        position = -1;
-
-        for (i = list.length - 1; i >= 0; i--) {
-          if (list[i] === listener || list[i].listener === listener) {
-            originalListener = list[i].listener;
-            position = i;
-            break;
-          }
-        }
-
-        if (position < 0)
-          return this;
-
-        if (position === 0)
-          list.shift();
-        else {
-          spliceOne(list, position);
-        }
-
-        if (list.length === 1)
-          events[type] = list[0];
-
-        if (events.removeListener !== undefined)
-          this.emit('removeListener', type, originalListener || listener);
-      }
-
-      return this;
-    };
-
-EventEmitter.prototype.off = EventEmitter.prototype.removeListener;
-
-EventEmitter.prototype.removeAllListeners =
-    function removeAllListeners(type) {
-      var listeners, events, i;
-
-      events = this._events;
-      if (events === undefined)
-        return this;
-
-      // not listening for removeListener, no need to emit
-      if (events.removeListener === undefined) {
-        if (arguments.length === 0) {
-          this._events = Object.create(null);
-          this._eventsCount = 0;
-        } else if (events[type] !== undefined) {
-          if (--this._eventsCount === 0)
-            this._events = Object.create(null);
-          else
-            delete events[type];
-        }
-        return this;
-      }
-
-      // emit removeListener for all listeners on all events
-      if (arguments.length === 0) {
-        var keys = Object.keys(events);
-        var key;
-        for (i = 0; i < keys.length; ++i) {
-          key = keys[i];
-          if (key === 'removeListener') continue;
-          this.removeAllListeners(key);
-        }
-        this.removeAllListeners('removeListener');
-        this._events = Object.create(null);
-        this._eventsCount = 0;
-        return this;
-      }
-
-      listeners = events[type];
-
-      if (typeof listeners === 'function') {
-        this.removeListener(type, listeners);
-      } else if (listeners !== undefined) {
-        // LIFO order
-        for (i = listeners.length - 1; i >= 0; i--) {
-          this.removeListener(type, listeners[i]);
-        }
-      }
-
-      return this;
-    };
-
-function _listeners(target, type, unwrap) {
-  var events = target._events;
-
-  if (events === undefined)
-    return [];
-
-  var evlistener = events[type];
-  if (evlistener === undefined)
-    return [];
-
-  if (typeof evlistener === 'function')
-    return unwrap ? [evlistener.listener || evlistener] : [evlistener];
-
-  return unwrap ?
-    unwrapListeners(evlistener) : arrayClone(evlistener, evlistener.length);
-}
-
-EventEmitter.prototype.listeners = function listeners(type) {
-  return _listeners(this, type, true);
-};
-
-EventEmitter.prototype.rawListeners = function rawListeners(type) {
-  return _listeners(this, type, false);
-};
-
-EventEmitter.listenerCount = function(emitter, type) {
-  if (typeof emitter.listenerCount === 'function') {
-    return emitter.listenerCount(type);
-  } else {
-    return listenerCount.call(emitter, type);
-  }
-};
-
-EventEmitter.prototype.listenerCount = listenerCount;
-function listenerCount(type) {
-  var events = this._events;
-
-  if (events !== undefined) {
-    var evlistener = events[type];
-
-    if (typeof evlistener === 'function') {
-      return 1;
-    } else if (evlistener !== undefined) {
-      return evlistener.length;
-    }
-  }
-
-  return 0;
-}
-
-EventEmitter.prototype.eventNames = function eventNames() {
-  return this._eventsCount > 0 ? ReflectOwnKeys(this._events) : [];
-};
-
-function arrayClone(arr, n) {
-  var copy = new Array(n);
-  for (var i = 0; i < n; ++i)
-    copy[i] = arr[i];
-  return copy;
-}
-
-function spliceOne(list, index) {
-  for (; index + 1 < list.length; index++)
-    list[index] = list[index + 1];
-  list.pop();
-}
-
-function unwrapListeners(arr) {
-  var ret = new Array(arr.length);
-  for (var i = 0; i < ret.length; ++i) {
-    ret[i] = arr[i].listener || arr[i];
-  }
-  return ret;
-}
-
-
-/***/ }),
-/* 14 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = { "default": __webpack_require__(255), __esModule: true };
-
-/***/ }),
-/* 15 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-exports.__esModule = true;
-
-var _setPrototypeOf = __webpack_require__(245);
-
-var _setPrototypeOf2 = _interopRequireDefault(_setPrototypeOf);
-
-var _create = __webpack_require__(242);
-
-var _create2 = _interopRequireDefault(_create);
-
-var _typeof2 = __webpack_require__(136);
-
-var _typeof3 = _interopRequireDefault(_typeof2);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-exports.default = function (subClass, superClass) {
-  if (typeof superClass !== "function" && superClass !== null) {
-    throw new TypeError("Super expression must either be null or a function, not " + (typeof superClass === "undefined" ? "undefined" : (0, _typeof3.default)(superClass)));
-  }
-
-  subClass.prototype = (0, _create2.default)(superClass && superClass.prototype, {
-    constructor: {
-      value: subClass,
-      enumerable: false,
-      writable: true,
-      configurable: true
-    }
-  });
-  if (superClass) _setPrototypeOf2.default ? (0, _setPrototypeOf2.default)(subClass, superClass) : subClass.__proto__ = superClass;
-};
-
-/***/ }),
-/* 16 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-exports.__esModule = true;
-
-var _typeof2 = __webpack_require__(136);
-
-var _typeof3 = _interopRequireDefault(_typeof2);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-exports.default = function (self, call) {
-  if (!self) {
-    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  }
-
-  return call && ((typeof call === "undefined" ? "undefined" : (0, _typeof3.default)(call)) === "object" || typeof call === "function") ? call : self;
-};
-
-/***/ }),
-/* 17 */
+/* 12 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (immutable) */ __webpack_exports__["getOpenfinVersion"] = getOpenfinVersion;
+/* harmony export (immutable) */ __webpack_exports__["getContainerVersion"] = getContainerVersion;
 /* harmony export (immutable) */ __webpack_exports__["castToPromise"] = castToPromise;
 /* harmony export (immutable) */ __webpack_exports__["isPercentage"] = isPercentage;
 /* harmony export (immutable) */ __webpack_exports__["crossDomain"] = crossDomain;
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getAllMonitors", function() { return getAllMonitors; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getMonitorFromOpenFinXY", function() { return getMonitorFromOpenFinXY; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getMonitorFromXY", function() { return getMonitorFromXY; });
 /* harmony export (immutable) */ __webpack_exports__["getMonitorFromWindow"] = getMonitorFromWindow;
 /* harmony export (immutable) */ __webpack_exports__["getFinWindow"] = getFinWindow;
 /* harmony export (immutable) */ __webpack_exports__["getWindowDescriptor"] = getWindowDescriptor;
@@ -3777,12 +2286,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (immutable) */ __webpack_exports__["adjustBoundsToBeOnMonitor"] = adjustBoundsToBeOnMonitor;
 /* harmony export (immutable) */ __webpack_exports__["getWindowType"] = getWindowType;
 /* harmony export (immutable) */ __webpack_exports__["adjustWindowIfInTaskbarSpace"] = adjustWindowIfInTaskbarSpace;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__system__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__ = __webpack_require__(86);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__ = __webpack_require__(91);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1__ = __webpack_require__(66);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1__ = __webpack_require__(72);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_uuid_v1__);
 /*!
  * Copyright 2017 by ChartIQ, Inc.
@@ -3806,9 +2315,9 @@ const Monitors = new __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__["a" /* de
 }*/
 
 /**
- * Gets the openfin version in object form.
+ * Gets the container version in object form.
  */
-function getOpenfinVersion(cb = Function.prototype) {
+function getContainerVersion(cb = Function.prototype) {
 	return new Promise(function (resolve /*, reject*/) {
 		__WEBPACK_IMPORTED_MODULE_0__system__["System"].getVersion(ver => {
 			let verArr = ver.split(".").map(Number);
@@ -3883,7 +2392,7 @@ function crossDomain(url) {
 };
 
 /**
- * Gets an array of monitor descriptors. Essentially rationalizing the results of OpenFin getMonitorInfo.
+ * Gets an array of monitor descriptors. Essentially rationalizing the results of getMonitorInfo.
  * into a single array with additional information added.
  *
  * whichMonitor is set to the secondary monitor number, or "primary" if the primary monitor.
@@ -3896,14 +2405,14 @@ function crossDomain(url) {
 var getAllMonitors = Monitors.getAllMonitors;
 
 /**
- * Retrieves a monitor descriptor given an absolute X Y on the OpenFin virtual screen
+ * Retrieves a monitor descriptor given an absolute X Y on the virtual screen
  * @param  {number} x The x position
  * @param  {number} y The y position
- * @param {callback-object}  cb Returns the monitor information from OpenFin.
+ * @param {callback-object}  cb Returns the monitor information from the Container.
  * "isPrimary" is set to true if it's the primary monitor.
  * null is returned if the x,y coordinates are beyond the bounds of the virtual screen.
  */
-var getMonitorFromOpenFinXY = Monitors.getMonitorFromScaledXY;
+var getMonitorFromXY = Monitors.getMonitorFromScaledXY;
 
 /**
  * Retrieves a monitor descriptor for a window. If the window straddles two monitors
@@ -3980,7 +2489,7 @@ function getFinWindow(windowIdentifier, cb) {
 		// Default to current window
 		var myWindow = __WEBPACK_IMPORTED_MODULE_0__system__["System"].Window.getCurrent();
 
-		// Get OpenFin options (windowDescriptor) for current window
+		// Get options (windowDescriptor) for current window
 		// we need this info even if we're going to reference a different window
 		myWindow.getOptions(function (options) {
 			// If windowName is provided, then find that window
@@ -4524,9 +3033,9 @@ function adjustBoundsToBeOnMonitor(bounds) {
  * @param {*} config - Object containing all possible values used to set windowTypes, some of these values may be unset depending on the execution path
  */
 function getWindowType(config) {
-	const DEFAULT_WINDOW_TYPE = "OpenFinWindow";
+	const DEFAULT_WINDOW_TYPE = "WebWindow";
 	// All possible windowTypes. Some of these values will be converted to other types
-	const validTypes = ["openfin", "assimilation", "assimilated", "native", "application", "OpenFinWindow", "NativeWindow", "FinsembleNativeWindow", "OpenFinApplication", "CompoundWindow", "StackedWindow"];
+	const validTypes = ["openfin", "assimilation", "assimilated", "native", "application", "OpenFinWindow", "NativeWindow", "FinsembleNativeWindow", "OpenFinApplication", "CompoundWindow", "WebWindow", "WebApplication", "StackedWindow"];
 	// If an invalid windowType is given, default and log an error. Note that an empty windowType
 	// is not an error case. This is to let the user know that they may have made a typo setting a type in
 	// the config file. We default to keep Finsemble from breaking, but the user may have intended to launch a
@@ -4548,10 +3057,19 @@ function getWindowType(config) {
 			ret = "FinsembleNativeWindow";
 			break;
 		case "application":
-			ret = "OpenFinApplication";
+			ret = "WebApplication";
+			break;
+		case "openFinApplication":
+			ret = "WebApplication";
+			__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.warn(`Window type ${config.windowType} deprecated. Please use WebWindow`);
+			break;
+		case "Web":
+			ret = "WebWindow";
 			break;
 		case "openfin":
-			ret = "OpenFinWindow";
+		case "openFinWindow":
+			ret = "WebWindow";
+			__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.warn(`Window type ${config.windowType} deprecated. Please use WebWindow`);
 			break;
 		case "StackedWindow":
 			ret = "StackedWindow";
@@ -4563,7 +3081,10 @@ function getWindowType(config) {
 
 	// Next handle any backward compatibility windowType inputs
 	if (config.native) ret = "NativeWindow"; //Backward Compatibility
-	if (config.type === "openfinApplication") ret = "OpenFinApplication"; //Backward Compatibility
+	if (config.type === "openfinApplication") {
+		ret = "WebApplication"; //Backward Compatibility
+		__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.warn("Window type openFinApplication deprecated. Please use WebApplication");
+	}
 	if (config.compound) ret = "CompoundWindow";
 	return ret;
 }
@@ -4759,12 +3280,1531 @@ function findDifferingDimension(boundingBox1, boundingBox2) {
 }
 
 /***/ }),
+/* 13 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_routerClientInstance__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_routerClientInstance___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__clients_routerClientInstance__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_events__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_events___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_events__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_util__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_lodash_debounce__ = __webpack_require__(120);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_lodash_debounce___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_lodash_debounce__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_lodash_throttle__ = __webpack_require__(83);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_lodash_throttle___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_lodash_throttle__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_lodash_clone__ = __webpack_require__(119);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_lodash_clone___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_lodash_clone__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__LogMessage__ = __webpack_require__(229);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__CtrlFSearch__ = __webpack_require__(97);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__clients_configClient__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__clients_configClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8__clients_configClient__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__common_system__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9__common_system__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__clients_hotkeysClient__ = __webpack_require__(56);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__clients_hotkeysClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10__clients_hotkeysClient__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__common_systemManagerClient__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__common_systemManagerClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_11__common_systemManagerClient__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_file_saver__ = __webpack_require__(324);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_file_saver___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_12_file_saver__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13_async__ = __webpack_require__(24);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13_async___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_13_async__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__common_userNotification__ = __webpack_require__(55);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__modules_filtering__ = __webpack_require__(263);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__modules_logCapture__ = __webpack_require__(264);
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
+/**
+ * The brains of the UI. Interfaces with the state manager, emits events for the UI to act on, and receives messages from the logAdapter (via the actions object).
+ */
+
+
+
+
+
+
+const FILTER_DEBOUNCE_TIME = 200;
+const SEARCH_DEBOUNCE_TIME = 0;
+const MASTER_MAXSIZE = 100 * 1000;
+
+
+
+
+
+
+
+
+
+const JSZip = __webpack_require__(331);
+__WEBPACK_IMPORTED_MODULE_10__clients_hotkeysClient___default.a.initialize();
+
+const STORAGE_KEY = "finsemble.loggerStore.mainkey";
+// LoggerStore is the single React data store supporting the central logger. All communication with clients through router also happens here.
+// This store support the pure React model, but Flux not needed (i.e. there is no Dispatcher).
+// All changes of store are communicated back to components using the ; on receiving an  event components then call back to this store to get the new data.
+// Actions triggered by components aren't broken out in a separate class -- they are the "set" and "toggle" methods in the LoggerStore.
+// Generally, all actions cause an  event to be sent (might a rare exception or two).
+
+// There are lots of simularly named operations and functions in this store (due to the nature of the problem).  The easiest way to identify UI functionality is to start in
+// the compponents, seeing what is controlled and map that behavior to the store operations.
+
+var messageCounter = 0;
+var firstMessageTime = Infinity;
+var fileModeState = false;
+var registeredClientNames = [];
+var masterLog = [];
+var filteredLog = [];
+var defaultShowClientState = true;
+var windowWidth = 0; // min width to hold buttons, etc
+var windowHeight = 0;
+var persistState = {};
+var defaultClientState = {};
+var disableClientState = {};
+var disableClientConsoleSetting = { Error: false, Warn: false, Info: false, Log: false, Debug: false, Verbose: false };
+var disableClientSetting = { Error: false, Warn: false, Info: false, Log: false, Debug: false, Verbose: false, LocalOnly: false };
+var Search = null;
+var showOnError = false,
+    showOnStartup = false;
+var shouldShowSearchBox = false;
+var activeRowIndex = 0;
+var rowTimediff = null;
+var activeView = "logger";
+var initialized = false;
+const SHOW_ON_ERROR_PREFERENCE_KEY = "finsemble.preferences.loggerService.showOnError";
+const SHOW_ON_STARTUP_PREFERENCE_KEY = "finsemble.preferences.loggerService.showOnStartup";
+const LARGE_LOG_SIZE_LINES = 50000;
+const LINES_PER_LOG_FILE = 1000;
+
+
+class Store extends __WEBPACK_IMPORTED_MODULE_1_events__["EventEmitter"] {
+	constructor() {
+		super();
+		this.setMaxListeners(100);
+		this.windowVisibility = "visible";
+		// setup throttling here
+		this.activeView = activeView;
+		this.Search = new __WEBPACK_IMPORTED_MODULE_7__CtrlFSearch__["b" /* default */]();
+		this.showOnError = showOnError;
+		this.showOnStartup = showOnStartup;
+		this.activeRowIndex = activeRowIndex;
+		this.rowTimediff = rowTimediff;
+		this.initialized = initialized;
+		this.shouldShowSearchBox = shouldShowSearchBox;
+		this.RouterClient = __WEBPACK_IMPORTED_MODULE_0__clients_routerClientInstance___default.a;
+		this.defaultClientState = defaultClientState;
+		//The modules will put their methods onto `this` and bind the context properly.
+		__WEBPACK_IMPORTED_MODULE_15__modules_filtering__["a" /* default */].deriveMethods(this);
+		__WEBPACK_IMPORTED_MODULE_16__modules_logCapture__["a" /* default */].deriveMethods(this);
+		this.bindCorrectContext();
+		this.registerGlobalHotkey();
+	}
+	bindCorrectContext() {
+		this.broadCastNewMessageUpdateThrottled = __WEBPACK_IMPORTED_MODULE_4_lodash_throttle___default()(this.broadCastNewMessageUpdate.bind(this), 1000);
+		this.setFilter1 = __WEBPACK_IMPORTED_MODULE_3_lodash_debounce___default()(this.setFilter1, FILTER_DEBOUNCE_TIME);
+		this.setFilter2 = __WEBPACK_IMPORTED_MODULE_3_lodash_debounce___default()(this.setFilter2, FILTER_DEBOUNCE_TIME);
+		this.setFilter3 = __WEBPACK_IMPORTED_MODULE_3_lodash_debounce___default()(this.setFilter3, FILTER_DEBOUNCE_TIME);
+		this.setFilter4 = __WEBPACK_IMPORTED_MODULE_3_lodash_debounce___default()(this.setFilter4, FILTER_DEBOUNCE_TIME);
+		this.setLogSearchBoxString = this.setLogSearchBoxString.bind(this);
+		this.setLogSearchBoxString = __WEBPACK_IMPORTED_MODULE_3_lodash_debounce___default()(this.setLogSearchBoxString, SEARCH_DEBOUNCE_TIME);
+		this.setWindowHidden = this.setWindowHidden.bind(this);
+		this.setWindowVisible = this.setWindowVisible.bind(this);
+		this.emitResizeTimeout = this.emitResizeTimeout.bind(this);
+		this.setConfigVisible = this.setConfigVisible.bind(this);
+		this.setLoggerVisible = this.setLoggerVisible.bind(this);
+		this.clearData = this.clearData.bind(this);
+		this.toggleShowOnError = this.toggleShowOnError.bind(this);
+		this.toggleShowOnStartup = this.toggleShowOnStartup.bind(this);
+		this.configureLoggerForDefaults = this.configureLoggerForDefaults.bind(this);
+		this.configureLoggerForErrors = this.configureLoggerForErrors.bind(this);
+		this.configureLoggerForFieldCapture = this.configureLoggerForFieldCapture.bind(this);
+	}
+	initialize() {
+		windowWidth = window.innerWidth; // min width to hold buttons, etc
+		windowHeight = window.innerHeight;
+		this.addWindowListeners();
+		this.addHotkeys();
+	}
+
+	addWindowListeners() {
+		if (this.initialized) return;
+		var finWindow = __WEBPACK_IMPORTED_MODULE_9__common_system__["System"].Window.getCurrent();
+		let nativeWindow = finWindow.nativeWindow || window;
+		finWindow.addEventListener("bounds-change-end", event => {
+			this.processSizeChange(event.width, event.height);
+		});
+
+		finWindow.addEventListener("maximized", event => {
+			this.processSizeChange(nativeWindow.outerWidth, nativeWindow.outerHeight);
+		});
+
+		finWindow.addEventListener("restored", event => {
+			this.processSizeChange(nativeWindow.outerWidth, nativeWindow.outerHeight);
+		});
+	}
+
+	getRegisteredClient() {
+		return registeredClientNames;
+	}
+
+	getWindowWidth() {
+		return windowWidth;
+	}
+
+	getWindowHeight() {
+		return windowHeight;
+	}
+
+	/**
+  * This will look in the logger config to see if a global hotkey is registered to pull
+  * up the central logger. This is typically ctrl-~ but can be configured by developers
+  * as appropriate.
+  */
+	registerGlobalHotkey() {
+		return _asyncToGenerator(function* () {
+			yield __WEBPACK_IMPORTED_MODULE_11__common_systemManagerClient___default.a.waitForStartup("configService");
+			__WEBPACK_IMPORTED_MODULE_8__clients_configClient___default.a.getValue({ field: "finsemble.servicesConfig.logger.hotkeyShowCentralLogger" }, (() => {
+				var _ref = _asyncToGenerator(function* (err, value) {
+					if (value) {
+						yield __WEBPACK_IMPORTED_MODULE_11__common_systemManagerClient___default.a.waitForStartup("hotkeysService");
+						__WEBPACK_IMPORTED_MODULE_10__clients_hotkeysClient___default.a.onReady(function () {
+							__WEBPACK_IMPORTED_MODULE_10__clients_hotkeysClient___default.a.addGlobalHotkey(value, function () {
+								window.showConsole();
+							});
+						});
+					}
+				});
+
+				return function (_x, _x2) {
+					return _ref.apply(this, arguments);
+				};
+			})());
+		})();
+	}
+
+	addHotkeys() {
+		window.addEventListener("keydown", e => {
+			if (e.ctrlKey && e.altKey) {
+				switch (e.key) {
+					case "c":
+						this.toggleClientListVisible();
+						break;
+					case "d":
+						this.configureLoggerForDefaults();
+						break;
+					case "e":
+						this.configureLoggerForErrors();
+						break;
+					//s for support...
+					case "s":
+						this.configureLoggerForFieldCapture();
+						break;
+					case "x":
+						this.clearData();
+						break;
+				}
+			}
+		});
+	}
+
+	getFileMode() {
+		return fileModeState;
+	}
+
+	getFirstMessageTime() {
+		return firstMessageTime;
+	}
+
+	//Log list things
+
+	// rebuild the current log based on the current state of the store
+	broadCastNewMessageUpdate() {
+		if (this.windowVisibility !== "hidden") {
+			//if  we modify the message, clone it.
+			this.emit("loggerNewMessages");
+		}
+	}
+
+	getMasterLog() {
+		return masterLog;
+	}
+
+	getFilteredLog() {
+		return filteredLog;
+	}
+
+	getLogCounts() {
+		return { master: masterLog.length, display: filteredLog.length };
+	}
+
+	openClient(windowName) {
+		// electron dev tools - must popout of at least one window before this works
+		if (__WEBPACK_IMPORTED_MODULE_9__common_system__["System"].container === "Electron") {
+			return __WEBPACK_IMPORTED_MODULE_9__common_system__["System"].showDeveloperTools(null, windowName);
+		}
+		__WEBPACK_IMPORTED_MODULE_9__common_system__["System"].getAllWindows(apps => {
+			let uuid;
+			for (var a = 0; a < apps.length; a++) {
+				let app = apps[a];
+
+				if (!app.childWindows.length) {
+					//if no child windows then the uuid and name are probably going to be the same (e.g., routerService, LoggerService)
+					if (app.uuid === windowName) {
+						uuid = app.uuid;
+						break;
+					}
+					continue;
+				}
+				let win = app.childWindows.filter(win => win.name === windowName)[0];
+				if (win) {
+					uuid = app.uuid;
+					break;
+				}
+			}
+			if (uuid && windowName) {
+				__WEBPACK_IMPORTED_MODULE_9__common_system__["System"].showDeveloperTools(uuid, windowName, () => {
+					console.log(`Successfully opened devtools for ${uuid}`);
+				}, err => {
+					console.error(err);
+				});
+			}
+		});
+	}
+
+	getRowTimeDiff() {
+		return this.rowTimediff;
+	}
+
+	setRowTimeDiff(diff) {
+		this.rowTimediff = diff;
+		this.emit("rowTimeDiffChange");
+	}
+
+	getClientListVisible() {
+		return persistState.get("clientListVisible");
+	}
+
+	//List rendering functions
+	triggerRowheightRecalculation() {
+		this.emit("recalculateHeight");
+	}
+	triggerLogRerender() {
+		this.emit("rerenderList");
+	}
+	toggleClientListVisible() {
+		persistState.toggle("clientListVisible");
+		this.emit("clientListVisibleChange");
+	}
+	//This is because we have to wait for dom elements to unmount so that the table can calculate its height. I hate it but it works.
+	emitResizeTimeout() {
+		setTimeout(() => {
+			this.emit("WindowResize");
+			this.emit("rerenderList");
+		}, 400);
+	}
+
+	persist() {
+		try {
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(persistState.data));
+		} catch (err) {
+			console.error("Storage.saving Error", err, "key=" + STORAGE_KEY, "value=", persistState.data);
+		}
+	}
+
+	getLogState() {
+		return persistState.get("logState");
+	}
+
+	getClientState(clientName) {
+		return persistState.get(`clientState[${clientName}]`);
+	}
+
+	getShowClientState(clientName) {
+		return persistState.get(`showClientState[${clientName}]`);
+	}
+
+	getLogCategoriesAllowed() {
+		let perf = persistState.get("perfModeState");
+		let dev = persistState.get("devModeState");
+		let system = persistState.get("systemModeState");
+		return { perf, dev, system };
+	}
+
+	getAllShowClientState(clientName) {
+		return persistState.get("showClientState");
+	}
+
+	getClientMode() {
+		return persistState.get("currentCategory");
+	}
+
+	clearData() {
+		masterLog = [];
+		filteredLog = [];
+		this.emit("loggerNewMessages");
+	}
+
+	//Scrolling
+	setTop() {
+		this.emit("SetTop");
+	}
+
+	setBottom() {
+		this.emit("SetBottom");
+	}
+
+	scrollToActiveRow() {
+		this.emit("scrollToActiveRow");
+	}
+
+	setActiveRowIndex(ind) {
+		this.activeRowIndex = ind;
+		this.emit("activeRowChanged");
+	}
+	setActiveConfigSearchMatch(ind) {
+		this.activeConfigSearchMatch = ind;
+		this.emit("activeConfigSearchMatch");
+	}
+	getActiveConfigSearchMatch() {
+		return this.activeConfigSearchMatch;
+	}
+	getActiveRowIndex() {
+		return this.activeRowIndex;
+	}
+	getHideInactiveState() {
+		return persistState.get("hideInactiveState");
+	}
+
+	toggleHideInactive() {
+		persistState.toggle("hideInactiveState");
+		this.emit("newHideInactiveState");
+	}
+
+	getCurrentCategory(category) {
+		return persistState.get("currentCategory");
+	}
+
+	//LogLevel toggles
+	toggleShowClient(clientName) {
+		persistState.toggle(`showClientState[${clientName}]`);
+		this.filterData();
+		this.emit("newShowClientState");
+		this.broadCastNewMessageUpdate();
+	}
+	//toggles visibility of all clients
+	toggleShowAllClients() {
+		var allTrue = true;
+		for (let client in persistState.data.showClientState) {
+			if (persistState.data.showClientState.hasOwnProperty(client)) {
+				allTrue = allTrue && persistState.data.showClientState[client];
+				if (!allTrue) {
+					break;
+				}
+			}
+		}
+		var toggledState = !allTrue;
+		for (let client in persistState.data.showClientState) {
+			if (persistState.data.showClientState.hasOwnProperty(client)) {
+				persistState.set(`showClientState[${client}]`, toggledState);
+			}
+		}
+		this.filterData();
+		this.emit("newShowClientState");
+		this.broadCastNewMessageUpdateThrottled();
+	}
+
+	//CtrlF stuff
+	getShowSearchBox() {
+		return this.shouldShowSearchBox;
+	}
+
+	showSearchBox() {
+		this.shouldShowSearchBox = true;
+		this.emit("showSearchBoxChange");
+	}
+
+	hideSearchBox() {
+		this.shouldShowSearchBox = false;
+		this.setLogSearchBoxString("");
+		this.emit("showSearchBoxChange");
+	}
+
+	getSearchBoxString() {
+		return this.Search.searchString;
+	}
+
+	getSearchMatches() {
+		return this.Search.results;
+	}
+
+	setLogSearchBoxString(str) {
+		this.Search.performLogSearch(filteredLog, str);
+		this.emit("searchBoxTextChange");
+	}
+
+	setConfigSearchBoxString(str) {
+		if (this.finsembleConfig) {
+			this.Search.performStringSearch(this.finsembleConfig, str);
+			this.emit("searchBoxTextChange");
+		} else {
+			this.getFullConfig(cfg => {
+				this.Search.performStringSearch(this.finsembleConfig, str);
+				this.emit("searchBoxTextChange");
+			});
+		}
+	}
+
+	//window visibility handlers
+	setWindowVisible() {
+		this.windowVisibility = "visible";
+		this.broadCastNewMessageUpdate();
+		this.emit("WindowVisibilityChange");
+	}
+	setWindowHidden() {
+		this.windowVisibility = "hidden";
+		this.emit("WindowVisibilityChange");
+	}
+	getWindowVisibility() {
+		return this.windowVisibility;
+	}
+
+	setAllLogStateOn() {
+		persistState.set("logState", { Error: true, Warn: true, Info: true, Log: true, Debug: true, Verbose: true });
+		this.emit("newDisplayState");
+	}
+
+	setLogState(state) {
+		persistState.set("logState", Object.assign(persistState.data.logState, state));
+		this.emit("newDisplayState");
+	}
+
+	//Quickviews
+	configureLoggerForDefaults() {
+		persistState.set("initialClientStateDefault.Error", true);
+		persistState.set("initialClientStateDefault.Warn", true);
+		persistState.set("initialClientStateDefault.Log", true);
+		persistState.set("initialClientStateDefault.Info", false);
+		persistState.set("initialClientStateDefault.Debug", false);
+		persistState.set("initialClientStateDefault.Verbose", false);
+		//Sets the default client states to all of the clients.
+		this.setAllLogStateOn();
+		this.defaultShowClientAll();
+		this.filterData();
+		this.emit("newInitialClientStateDefault");
+	}
+
+	configureLoggerForErrors() {
+		persistState.set("initialClientStateDefault.Error", true);
+		this.emit("newInitialClientStateDefault");
+		this.setLogState({
+			Error: true,
+			Warn: false,
+			Info: false,
+			Log: false,
+			Debug: false,
+			Verbose: false
+		});
+		//Sets the default client states to all of the clients.
+		this.defaultShowClientAll();
+		this.filterData();
+	}
+
+	configureLoggerForFieldCapture() {
+		persistState.set("initialClientStateDefault.Error", true);
+		persistState.set("initialClientStateDefault.Warn", true);
+		persistState.set("initialClientStateDefault.Log", true);
+		persistState.set("initialClientStateDefault.Info", true);
+		persistState.set("initialClientStateDefault.Debug", true);
+		persistState.set("initialClientStateDefault.Verbose", false);
+
+		this.emit("newInitialClientStateDefault");
+		//Sets the default client states to all of the clients.
+		this.defaultShowClientAll();
+		this.persist();
+		this.filterData();
+		//Timeout to let the UI react and show colored buttons everywhere.
+		setTimeout(() => {
+			alert(`Logger is now configured for field capture. Please restart your application if needed, recreate problem, export the log, and send it to Finsemble Support with description of the problem.
+
+			IMPORTANT: Once your log is exported, revert to the default logger settings; otherwise, you may see degraded performance due to the extra logging.`);
+		}, 200);
+	}
+
+	configureLoggerForStartup() {
+		persistState.set("initialClientStateDefault.Error", true);
+		persistState.set("initialClientStateDefault.Warn", true);
+		persistState.set("initialClientStateDefault.Log", true);
+		persistState.set("initialClientStateDefault.Info", true);
+		persistState.set("initialClientStateDefault.Debug", true);
+		this.setFilter1("Service Online");
+		this.emit("NewHighlightValues1");
+		this.setFilter2("not online");
+		this.emit("NewHighlightValues2");
+		this.setFilter3("");
+		this.emit("NewHighlightValues3");
+		this.setFilter4("");
+		this.emit("NewHighlightValues4");
+		this.setFilterLogic("OR");
+		this.emit("newInitialClientStateDefault");
+		//Sets the default client states to all of the clients.
+		this.defaultShowClientAll();
+	}
+
+	setFilteredLog(filteredData) {
+		filteredLog = __WEBPACK_IMPORTED_MODULE_5_lodash_clone___default()(filteredData);
+	}
+
+	/**
+  * Helper function to split the log array into smaller arrays
+  * Calling json.stringify can cause issues on large objects
+  * @param {} array
+  * @param {int} size
+  */
+	chunk(array, size) {
+		const chunked_arr = [];
+		let index = 0;
+		while (index < array.length) {
+			chunked_arr.push(array.slice(index, size + index));
+			index += size;
+		}
+		return chunked_arr;
+	}
+
+	/**
+  * Export the logs to a zip file
+  */
+	saveToFile() {
+		// Handle the special data needed to reconstruct the log.
+		const data = {};
+		data.registeredClientNames = registeredClientNames;
+		data.persistState = persistState.data;
+		const json = JSON.stringify(data);
+		const blob = new Blob([json], { type: "application/json" });
+
+		// Create a zip and add the special data
+		const zip = new JSZip();
+		zip.file("log_state.json", blob);
+
+		// Alert the user if the log has a large number of lines
+		if (masterLog.length > LARGE_LOG_SIZE_LINES) {
+			__WEBPACK_IMPORTED_MODULE_14__common_userNotification__["default"].alert("dev", "ALWAYS", "system", "Currently exporting a large log, this may take some time.");
+		}
+		// Split the log into smaller arrays. This is needed because JSON.stringify runs out of memory with large data objects
+		const chunked_array = this.chunk(masterLog, LINES_PER_LOG_FILE);
+
+		// For each split array, stringify it and create a zip file.
+		for (var i = 0; i < chunked_array.length; i++) {
+			const partial_log = chunked_array[i];
+			console.log("adding to zip", i, partial_log);
+			const json = JSON.stringify({ partial_log });
+			const blob = new Blob([json], { type: "application/json" });
+			zip.file(`log${i}.json`, blob);
+		}
+
+		// Finally save the zip file
+		const log_time = new Date().toLocaleString();
+		zip.generateAsync({ type: "blob" }).then(result => {
+			__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_12_file_saver__["saveAs"])(result, `logs-${log_time}.zip`);
+		});
+	}
+
+	// enables fileMode, essentially disabling all external communication with clients in order to read log data from a file...a special case.
+	fileMode() {
+
+		fileModeState = true;
+
+		var element = document.createElement("div");
+		element.innerHTML = "<input type=\"file\">";
+		var fileInput = element.firstChild;
+
+		fileInput.addEventListener("change", () => {
+			var file = fileInput.files[0];
+			const isZip = file.name.match(/\.(zip)$/) ? true : false;
+			const isJson = file.name.match(/\.(json)$/) ? true : false;
+			if (isZip || isJson) {
+				for (let client in persistState.data.showClientState) {
+					if (persistState.data.showClientState.hasOwnProperty(client) && (!persistState.data.hideInactiveState || persistState.data.showClientState[client])) {
+						let clientState = Object.assign({}, disableClientState); // get a copy of the disabled state
+						clientState.clientChannel = persistState.data.clientState[client].clientChannel; // don't overwrite the channel name
+						__WEBPACK_IMPORTED_MODULE_0__clients_routerClientInstance___default.a.transmit(clientState.clientChannel, clientState);
+						console.debug("disabledClientState", clientState.clientChannel, clientState);
+					}
+				}
+				if (isZip) {
+					//handle importing zip of log files
+					console.log("***** ZipMode *****");
+					let fullArray = [];
+
+					//Load the zip file
+					JSZip.loadAsync(file).then(zip => {
+						//Pop an alert if the zip contains a lot of files. This is a bit arbitrary as the length of time to import is based on the file size not the number of files
+						//However we only have access to the number of files
+						if (Object.keys(zip.files).length > LARGE_LOG_SIZE_LINES / LINES_PER_LOG_FILE) {
+							__WEBPACK_IMPORTED_MODULE_14__common_userNotification__["default"].alert("dev", "ALWAYS", "system", "Currently importing a large log, this may take some time.");
+						}
+						//read each file inside the zip and concatenate into one big array
+						__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13_async__["eachSeries"])(zip.files, (() => {
+							var _ref2 = _asyncToGenerator(function* (zipEntry, done) {
+								const file = yield zipEntry.async("blob");
+								const fileName = zipEntry.name;
+								var fr = new FileReader();
+								fr.onload = function () {
+									let json = JSON.parse(fr.result);
+									//handle the file with the special data
+									if (json && fileName === "log_state.json") {
+										persistState.data = json.persistState;
+										registeredClientNames = json.registeredClientNames;
+										// concatenate the log files. For performance reasons it was necessary to use push instead of concat
+										// see: https://dev.to/uilicious/javascript-array-push-is-945x-faster-than-array-concat-1oki
+									} else if (json && json.partial_log) {
+										Array.prototype.push.apply(fullArray, json.partial_log);
+									}
+
+									done();
+								};
+								fr.readAsText(file);
+							});
+
+							function readChunk(_x3, _x4) {
+								return _ref2.apply(this, arguments);
+							}
+
+							return readChunk;
+						})(), err => {
+							// finally turn off logging
+							firstMessageTime = fullArray[0].logTimestamp;
+							masterLog = fullArray;
+							firstMessageTime = fullArray[0].logTimestamp;
+							console.log("ImportZip", fullArray, firstMessageTime);
+							this.filterData();
+							this.emit("newFirstMessageTime");
+							this.emit("FileMode");
+							this.emit("LoggerRegister");
+							this.emit("newFilterHighlights");
+							this.emit("newDisplayState");
+							this.emit("LoggerUnregister");
+							this.emit("newShowClientState");
+						});
+					});
+				} else if (isJson) {
+					//backwards compatibility for old log files
+					var reader = new FileReader();
+
+					reader.onload = () => {
+						console.log("***** FileMode *****");
+
+						var data = JSON.parse(reader.result);
+
+						firstMessageTime = data.masterLog[0].logTimestamp;
+						masterLog = data.masterLog;
+						firstMessageTime = masterLog[0].logTimestamp;
+						persistState.data = data.persistState;
+						registeredClientNames = data.registeredClientNames;
+						console.log("ImportFile", data, file, reader, firstMessageTime);
+						this.filterData();
+						this.emit("newFirstMessageTime");
+						this.emit("FileMode");
+						this.emit("LoggerRegister");
+						this.emit("newFilterHighlights");
+						this.emit("newDisplayState");
+						this.emit("LoggerUnregister");
+						this.emit("newShowClientState");
+					};
+
+					reader.readAsText(file);
+				}
+			} else {
+				console.error("File not supported, .zip or .json files only");
+			}
+		});
+
+		fileInput.click();
+	}
+
+	//For config only
+	getFullConfig(cb) {
+		__WEBPACK_IMPORTED_MODULE_8__clients_configClient___default.a.getValues(null, (err, cfg) => {
+			let fullConfig = cfg;
+			fullConfig = JSON.stringify(fullConfig, null, 4);
+			fullConfig = fullConfig.split(/\n/g);
+			this.finsembleConfig = fullConfig;
+			cb(fullConfig);
+		});
+	}
+
+	//View handler
+	getActiveView() {
+		return this.activeView;
+	}
+	setLoggerVisible() {
+		this.activeView = "logger";
+		this.emit("viewChange");
+	}
+	setConfigVisible() {
+		this.activeView = "config";
+		this.emit("viewChange");
+	}
+
+	findIndexByTimestamp(logs, timestamp) {
+		for (var i = logs.length - 1; i > 0; i--) {
+			if (logs[i].logTimestamp < timestamp) {
+				break;
+			}
+		}
+		return i;
+	}
+
+	//Preferences
+	toggleShowOnStartup() {
+		this.setShowOnStartup(!this.showOnStartup);
+	}
+
+	getShowOnStartup() {
+		return this.showOnStartup;
+	}
+
+	setShowOnStartup(val, setPreference = true) {
+		this.showOnStartup = val;
+		this.emit("showOnStartup", this.showOnStartup);
+		//we aren't going to set the preference on startup. any other time we will.
+		if (setPreference) {
+			__WEBPACK_IMPORTED_MODULE_8__clients_configClient___default.a.setPreference({ field: SHOW_ON_STARTUP_PREFERENCE_KEY, value: this.showOnStartup });
+		}
+	}
+
+	toggleShowOnError() {
+		this.setShowOnError(!this.showOnError);
+	}
+
+	getShowOnError() {
+		return this.showOnError;
+	}
+
+	setShowOnError(val, setPreference = true) {
+		this.showOnError = val;
+		this.emit("showOnError", this.showOnError);
+		//we aren't going to set the preference on startup. any other time we will.
+		if (setPreference) {
+			__WEBPACK_IMPORTED_MODULE_8__clients_configClient___default.a.setPreference({ field: SHOW_ON_ERROR_PREFERENCE_KEY, value: this.showOnError });
+		}
+	}
+
+	// called whenever the Logger's window size is changed
+	processSizeChange(width, height) {
+		if (windowWidth !== width) {
+			windowWidth = window.innerWidth;
+			this.emit("WindowResize");
+			this.emit("newShowClientState"); // don't know why but table size chance alone doesn't refresh table, so sent this too to trigger refresh
+		}
+		if (windowHeight !== height) {
+			// the height isn't fully tracked because less important
+			windowHeight = window.innerHeight;
+			this.emit("WindowResize");
+			this.emit("newShowClientState"); // don't know why but table size chance alone doesn't refresh table, so sent this too to trigger refresh
+		}
+	}
+
+	// this sorts only the end of the table....when getting a new buffer of messages, only need to sort from the earliest timestamp forward;
+	// the existing buffer (before new buffer is added) may have older timestamps, which is why must start from earliest timestamp in new messages
+	sortNewLogMessages(fromTimestamp) {
+		// compare function to sort messages by timestamp
+		function compareTimestamps(a, b) {
+			var result = 0;
+			if (a.logTimestamp < b.logTimestamp) {
+				result = -1;
+			}
+			if (a.logTimestamp > b.logTimestamp) {
+				result = 1;
+			}
+			return result;
+		}
+
+		var indexToSortFrom = this.findIndexByTimestamp(masterLog, fromTimestamp);
+		var newLogPortion = masterLog.splice(indexToSortFrom, masterLog.length);
+		newLogPortion.sort(compareTimestamps);
+		masterLog = masterLog.concat(newLogPortion);
+		//When we splice masterLog, we return a new array, breaking the reference from filterLog to masterLog. If we are not currently filtering data, we have to reset the pointer in the else block.
+		if (this.shouldFilterData()) {
+			indexToSortFrom = this.findIndexByTimestamp(filteredLog, fromTimestamp);
+			//If the last item in the list is the latest timestamp, no need to splice and force re-renders.
+			if (indexToSortFrom !== filteredLog.length - 1) {
+				newLogPortion = filteredLog.splice(indexToSortFrom, filteredLog.length);
+				newLogPortion.sort(compareTimestamps);
+				filteredLog = filteredLog.concat(newLogPortion);
+			}
+		} else {
+			filteredLog = __WEBPACK_IMPORTED_MODULE_5_lodash_clone___default()(masterLog);
+		}
+	}
+
+	//Adapter-interface handlers
+	onNewMessage(data) {
+		const filteredLogLength = filteredLog.length;
+		if (!fileModeState) {
+			// typically not in filemode, so go through normal handling of log messages, but ignore messages in file mode
+			var earliestTimestamp = Infinity;
+			var messageArray = data;
+			for (var i = 0; i < messageArray.length; i++) {
+				var newMessage = new __WEBPACK_IMPORTED_MODULE_6__LogMessage__["a" /* default */](messageArray[i]);
+				if (messageCounter++ < 10000 && newMessage.logTimestamp < firstMessageTime) {
+					// look for the lowest time value in early messages to set base time
+					firstMessageTime = newMessage.logTimestamp;
+					this.emit("newFirstMessageTime");
+				}
+				if (newMessage.logTimestamp < earliestTimestamp) {
+					earliestTimestamp = newMessage.logTimestamp;
+				}
+				newMessage.timeElapsedFromStartup = Math.round(newMessage.logTimestamp - firstMessageTime);
+				masterLog.push(newMessage);
+				let pushToFilteredLog = this.shouldFilterData() && this.filterData(newMessage).length;
+				if (pushToFilteredLog) {
+					filteredLog.push(newMessage);
+				}
+			}
+			if (this.showOnError && newMessage.logType === "Error") {
+				window.showConsole();
+			}
+			this.sortNewLogMessages(earliestTimestamp);
+
+			if (masterLog.length > MASTER_MAXSIZE) {
+				// limit size of masterLog
+				masterLog = masterLog.slice(masterLog.length - MASTER_MAXSIZE);
+			}
+			if (filteredLogLength !== filteredLog.length) {
+				this.broadCastNewMessageUpdateThrottled();
+			}
+		}
+	}
+
+	onClientRegistered(data) {
+		var clientName = data.clientName;
+
+		if (!fileModeState) {
+			// typically not in filemode, so go through normal registration
+			console.debug("LoggerStore.registerClient", clientName, data);
+
+			if (!registeredClientNames.includes(clientName)) {
+				registeredClientNames.push(clientName);
+			}
+
+			if (!(clientName in persistState.data.showClientState)) {
+				persistState.set(`showClientState[${clientName}]`, defaultShowClientState);
+			}
+
+			if (!(clientName in persistState.data.clientState)) {
+				// the data will from from persistState.data. but if not in persistState.data. add it using default values
+				let newClientState = __WEBPACK_IMPORTED_MODULE_2__common_util__["clone"](defaultClientState);
+				persistState.set(`clientState[${clientName}]`, newClientState);
+				persistState.set(`clientState[${clientName}].clientChannel`, data.clientChannel);
+				persistState.set(`clientState[${clientName}].uuid`, data.uuid);
+				persistState.set(`clientState[${clientName}].windowName`, data.windowName);
+			}
+
+			var debugState = persistState.data.clientState[clientName];
+			this.filterData();
+			this.emit("LoggerRegister");
+			//added this  because the react elements weren't getting updated with the proper state as clients registered. I suspect the virtualDOM was doing a diff and getting it wrong..
+			this.emit("newShowClientState");
+			return debugState;
+		} // ignore registration if in filemode -- send back disabled state
+		console.debug("Registration in FileMode");
+		var newClientState = Object.assign({}, disableClientState);
+		newClientState.clientChannel = data.clientChannel;
+		return newClientState;
+	}
+
+	unRegisterClient(data) {
+		let clientName,
+		    deleteFromPersistence = true;
+		if (typeof data === "string" || data instanceof String) {
+			clientName = data;
+		} else {
+			clientName = data.clientName;
+			deleteFromPersistence = data.deleteFromPersistence;
+		}
+
+		for (var i = 0; i < registeredClientNames.length; i++) {
+			if (registeredClientNames[i] === clientName) {
+				registeredClientNames.splice(i, 1);
+			}
+		}
+		if (deleteFromPersistence) {
+			delete persistState.data.clientState[clientName];
+			delete persistState.data.showClientState[clientName];
+			this.persist();
+		}
+		this.emit("LoggerUnregister");
+	}
+	setLoggerServiceState(state) {
+		persistState = state;
+		this.persistState = persistState;
+		defaultClientState.console = persistState.data.initialClientStateDefault;
+		defaultClientState.dev = persistState.data.initialClientStateDefault;
+		defaultClientState.system = persistState.data.initialClientStateDefault;
+		defaultClientState.perf = persistState.data.initialClientStateDefault;
+		defaultClientState.clientChannel = "";
+		defaultClientState.showAdvancedViewFilters = persistState.data.showAdvancedViewFilters;
+		defaultClientState.wrapLog = persistState.data.wrapLog;
+		defaultClientState.showStackStraceInLog = persistState.data.showStackStraceInLog;
+		defaultClientState.filter = persistState.data.filter;
+		defaultClientState.showTimeElapsedFromStartup = persistState.data.showTimeElapsedFromStartup;
+		defaultClientState.clientListVisible = persistState.data.clientListVisible;
+		defaultClientState.colDefs = persistState.data.colDefs;
+		disableClientState.console = disableClientConsoleSetting;
+		disableClientState.dev = disableClientSetting;
+		disableClientState.system = disableClientSetting;
+		disableClientState.perf = disableClientSetting;
+		disableClientState.clientChannel = "";
+	}
+}
+var loggerStore = new Store();
+
+//wait for Router to be ready before initializing.
+__WEBPACK_IMPORTED_MODULE_0__clients_routerClientInstance___default.a.ready(function () {
+	loggerStore.initialize();
+	let finWindow = __WEBPACK_IMPORTED_MODULE_9__common_system__["System"].Window.getCurrent();
+	finWindow.isShowing(isShowing => {
+		if (isShowing) {
+			loggerStore.setWindowVisible();
+		} else {
+			loggerStore.setWindowHidden();
+		}
+		finWindow.addEventListener("shown", loggerStore.setWindowVisible);
+		finWindow.addEventListener("restored", loggerStore.setWindowVisible);
+		finWindow.addEventListener("hidden", loggerStore.setWindowHidden);
+		finWindow.addEventListener("minimized", loggerStore.setWindowHidden);
+	});
+});
+window.TheLoggerStore = loggerStore;
+/* harmony default export */ __webpack_exports__["a"] = (loggerStore);
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+
+var R = typeof Reflect === 'object' ? Reflect : null
+var ReflectApply = R && typeof R.apply === 'function'
+  ? R.apply
+  : function ReflectApply(target, receiver, args) {
+    return Function.prototype.apply.call(target, receiver, args);
+  }
+
+var ReflectOwnKeys
+if (R && typeof R.ownKeys === 'function') {
+  ReflectOwnKeys = R.ownKeys
+} else if (Object.getOwnPropertySymbols) {
+  ReflectOwnKeys = function ReflectOwnKeys(target) {
+    return Object.getOwnPropertyNames(target)
+      .concat(Object.getOwnPropertySymbols(target));
+  };
+} else {
+  ReflectOwnKeys = function ReflectOwnKeys(target) {
+    return Object.getOwnPropertyNames(target);
+  };
+}
+
+function ProcessEmitWarning(warning) {
+  if (console && console.warn) console.warn(warning);
+}
+
+var NumberIsNaN = Number.isNaN || function NumberIsNaN(value) {
+  return value !== value;
+}
+
+function EventEmitter() {
+  EventEmitter.init.call(this);
+}
+module.exports = EventEmitter;
+
+// Backwards-compat with node 0.10.x
+EventEmitter.EventEmitter = EventEmitter;
+
+EventEmitter.prototype._events = undefined;
+EventEmitter.prototype._eventsCount = 0;
+EventEmitter.prototype._maxListeners = undefined;
+
+// By default EventEmitters will print a warning if more than 10 listeners are
+// added to it. This is a useful default which helps finding memory leaks.
+var defaultMaxListeners = 10;
+
+function checkListener(listener) {
+  if (typeof listener !== 'function') {
+    throw new TypeError('The "listener" argument must be of type Function. Received type ' + typeof listener);
+  }
+}
+
+Object.defineProperty(EventEmitter, 'defaultMaxListeners', {
+  enumerable: true,
+  get: function() {
+    return defaultMaxListeners;
+  },
+  set: function(arg) {
+    if (typeof arg !== 'number' || arg < 0 || NumberIsNaN(arg)) {
+      throw new RangeError('The value of "defaultMaxListeners" is out of range. It must be a non-negative number. Received ' + arg + '.');
+    }
+    defaultMaxListeners = arg;
+  }
+});
+
+EventEmitter.init = function() {
+
+  if (this._events === undefined ||
+      this._events === Object.getPrototypeOf(this)._events) {
+    this._events = Object.create(null);
+    this._eventsCount = 0;
+  }
+
+  this._maxListeners = this._maxListeners || undefined;
+};
+
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+EventEmitter.prototype.setMaxListeners = function setMaxListeners(n) {
+  if (typeof n !== 'number' || n < 0 || NumberIsNaN(n)) {
+    throw new RangeError('The value of "n" is out of range. It must be a non-negative number. Received ' + n + '.');
+  }
+  this._maxListeners = n;
+  return this;
+};
+
+function _getMaxListeners(that) {
+  if (that._maxListeners === undefined)
+    return EventEmitter.defaultMaxListeners;
+  return that._maxListeners;
+}
+
+EventEmitter.prototype.getMaxListeners = function getMaxListeners() {
+  return _getMaxListeners(this);
+};
+
+EventEmitter.prototype.emit = function emit(type) {
+  var args = [];
+  for (var i = 1; i < arguments.length; i++) args.push(arguments[i]);
+  var doError = (type === 'error');
+
+  var events = this._events;
+  if (events !== undefined)
+    doError = (doError && events.error === undefined);
+  else if (!doError)
+    return false;
+
+  // If there is no 'error' event listener then throw.
+  if (doError) {
+    var er;
+    if (args.length > 0)
+      er = args[0];
+    if (er instanceof Error) {
+      // Note: The comments on the `throw` lines are intentional, they show
+      // up in Node's output if this results in an unhandled exception.
+      throw er; // Unhandled 'error' event
+    }
+    // At least give some kind of context to the user
+    var err = new Error('Unhandled error.' + (er ? ' (' + er.message + ')' : ''));
+    err.context = er;
+    throw err; // Unhandled 'error' event
+  }
+
+  var handler = events[type];
+
+  if (handler === undefined)
+    return false;
+
+  if (typeof handler === 'function') {
+    ReflectApply(handler, this, args);
+  } else {
+    var len = handler.length;
+    var listeners = arrayClone(handler, len);
+    for (var i = 0; i < len; ++i)
+      ReflectApply(listeners[i], this, args);
+  }
+
+  return true;
+};
+
+function _addListener(target, type, listener, prepend) {
+  var m;
+  var events;
+  var existing;
+
+  checkListener(listener);
+
+  events = target._events;
+  if (events === undefined) {
+    events = target._events = Object.create(null);
+    target._eventsCount = 0;
+  } else {
+    // To avoid recursion in the case that type === "newListener"! Before
+    // adding it to the listeners, first emit "newListener".
+    if (events.newListener !== undefined) {
+      target.emit('newListener', type,
+                  listener.listener ? listener.listener : listener);
+
+      // Re-assign `events` because a newListener handler could have caused the
+      // this._events to be assigned to a new object
+      events = target._events;
+    }
+    existing = events[type];
+  }
+
+  if (existing === undefined) {
+    // Optimize the case of one listener. Don't need the extra array object.
+    existing = events[type] = listener;
+    ++target._eventsCount;
+  } else {
+    if (typeof existing === 'function') {
+      // Adding the second element, need to change to array.
+      existing = events[type] =
+        prepend ? [listener, existing] : [existing, listener];
+      // If we've already got an array, just append.
+    } else if (prepend) {
+      existing.unshift(listener);
+    } else {
+      existing.push(listener);
+    }
+
+    // Check for listener leak
+    m = _getMaxListeners(target);
+    if (m > 0 && existing.length > m && !existing.warned) {
+      existing.warned = true;
+      // No error code for this since it is a Warning
+      // eslint-disable-next-line no-restricted-syntax
+      var w = new Error('Possible EventEmitter memory leak detected. ' +
+                          existing.length + ' ' + String(type) + ' listeners ' +
+                          'added. Use emitter.setMaxListeners() to ' +
+                          'increase limit');
+      w.name = 'MaxListenersExceededWarning';
+      w.emitter = target;
+      w.type = type;
+      w.count = existing.length;
+      ProcessEmitWarning(w);
+    }
+  }
+
+  return target;
+}
+
+EventEmitter.prototype.addListener = function addListener(type, listener) {
+  return _addListener(this, type, listener, false);
+};
+
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+EventEmitter.prototype.prependListener =
+    function prependListener(type, listener) {
+      return _addListener(this, type, listener, true);
+    };
+
+function onceWrapper() {
+  if (!this.fired) {
+    this.target.removeListener(this.type, this.wrapFn);
+    this.fired = true;
+    if (arguments.length === 0)
+      return this.listener.call(this.target);
+    return this.listener.apply(this.target, arguments);
+  }
+}
+
+function _onceWrap(target, type, listener) {
+  var state = { fired: false, wrapFn: undefined, target: target, type: type, listener: listener };
+  var wrapped = onceWrapper.bind(state);
+  wrapped.listener = listener;
+  state.wrapFn = wrapped;
+  return wrapped;
+}
+
+EventEmitter.prototype.once = function once(type, listener) {
+  checkListener(listener);
+  this.on(type, _onceWrap(this, type, listener));
+  return this;
+};
+
+EventEmitter.prototype.prependOnceListener =
+    function prependOnceListener(type, listener) {
+      checkListener(listener);
+      this.prependListener(type, _onceWrap(this, type, listener));
+      return this;
+    };
+
+// Emits a 'removeListener' event if and only if the listener was removed.
+EventEmitter.prototype.removeListener =
+    function removeListener(type, listener) {
+      var list, events, position, i, originalListener;
+
+      checkListener(listener);
+
+      events = this._events;
+      if (events === undefined)
+        return this;
+
+      list = events[type];
+      if (list === undefined)
+        return this;
+
+      if (list === listener || list.listener === listener) {
+        if (--this._eventsCount === 0)
+          this._events = Object.create(null);
+        else {
+          delete events[type];
+          if (events.removeListener)
+            this.emit('removeListener', type, list.listener || listener);
+        }
+      } else if (typeof list !== 'function') {
+        position = -1;
+
+        for (i = list.length - 1; i >= 0; i--) {
+          if (list[i] === listener || list[i].listener === listener) {
+            originalListener = list[i].listener;
+            position = i;
+            break;
+          }
+        }
+
+        if (position < 0)
+          return this;
+
+        if (position === 0)
+          list.shift();
+        else {
+          spliceOne(list, position);
+        }
+
+        if (list.length === 1)
+          events[type] = list[0];
+
+        if (events.removeListener !== undefined)
+          this.emit('removeListener', type, originalListener || listener);
+      }
+
+      return this;
+    };
+
+EventEmitter.prototype.off = EventEmitter.prototype.removeListener;
+
+EventEmitter.prototype.removeAllListeners =
+    function removeAllListeners(type) {
+      var listeners, events, i;
+
+      events = this._events;
+      if (events === undefined)
+        return this;
+
+      // not listening for removeListener, no need to emit
+      if (events.removeListener === undefined) {
+        if (arguments.length === 0) {
+          this._events = Object.create(null);
+          this._eventsCount = 0;
+        } else if (events[type] !== undefined) {
+          if (--this._eventsCount === 0)
+            this._events = Object.create(null);
+          else
+            delete events[type];
+        }
+        return this;
+      }
+
+      // emit removeListener for all listeners on all events
+      if (arguments.length === 0) {
+        var keys = Object.keys(events);
+        var key;
+        for (i = 0; i < keys.length; ++i) {
+          key = keys[i];
+          if (key === 'removeListener') continue;
+          this.removeAllListeners(key);
+        }
+        this.removeAllListeners('removeListener');
+        this._events = Object.create(null);
+        this._eventsCount = 0;
+        return this;
+      }
+
+      listeners = events[type];
+
+      if (typeof listeners === 'function') {
+        this.removeListener(type, listeners);
+      } else if (listeners !== undefined) {
+        // LIFO order
+        for (i = listeners.length - 1; i >= 0; i--) {
+          this.removeListener(type, listeners[i]);
+        }
+      }
+
+      return this;
+    };
+
+function _listeners(target, type, unwrap) {
+  var events = target._events;
+
+  if (events === undefined)
+    return [];
+
+  var evlistener = events[type];
+  if (evlistener === undefined)
+    return [];
+
+  if (typeof evlistener === 'function')
+    return unwrap ? [evlistener.listener || evlistener] : [evlistener];
+
+  return unwrap ?
+    unwrapListeners(evlistener) : arrayClone(evlistener, evlistener.length);
+}
+
+EventEmitter.prototype.listeners = function listeners(type) {
+  return _listeners(this, type, true);
+};
+
+EventEmitter.prototype.rawListeners = function rawListeners(type) {
+  return _listeners(this, type, false);
+};
+
+EventEmitter.listenerCount = function(emitter, type) {
+  if (typeof emitter.listenerCount === 'function') {
+    return emitter.listenerCount(type);
+  } else {
+    return listenerCount.call(emitter, type);
+  }
+};
+
+EventEmitter.prototype.listenerCount = listenerCount;
+function listenerCount(type) {
+  var events = this._events;
+
+  if (events !== undefined) {
+    var evlistener = events[type];
+
+    if (typeof evlistener === 'function') {
+      return 1;
+    } else if (evlistener !== undefined) {
+      return evlistener.length;
+    }
+  }
+
+  return 0;
+}
+
+EventEmitter.prototype.eventNames = function eventNames() {
+  return this._eventsCount > 0 ? ReflectOwnKeys(this._events) : [];
+};
+
+function arrayClone(arr, n) {
+  var copy = new Array(n);
+  for (var i = 0; i < n; ++i)
+    copy[i] = arr[i];
+  return copy;
+}
+
+function spliceOne(list, index) {
+  for (; index + 1 < list.length; index++)
+    list[index] = list[index + 1];
+  list.pop();
+}
+
+function unwrapListeners(arr) {
+  var ret = new Array(arr.length);
+  for (var i = 0; i < ret.length; ++i) {
+    ret[i] = arr[i].listener || arr[i];
+  }
+  return ret;
+}
+
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = { "default": __webpack_require__(283), __esModule: true };
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+exports.__esModule = true;
+
+var _setPrototypeOf = __webpack_require__(273);
+
+var _setPrototypeOf2 = _interopRequireDefault(_setPrototypeOf);
+
+var _create = __webpack_require__(270);
+
+var _create2 = _interopRequireDefault(_create);
+
+var _typeof2 = __webpack_require__(142);
+
+var _typeof3 = _interopRequireDefault(_typeof2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+exports.default = function (subClass, superClass) {
+  if (typeof superClass !== "function" && superClass !== null) {
+    throw new TypeError("Super expression must either be null or a function, not " + (typeof superClass === "undefined" ? "undefined" : (0, _typeof3.default)(superClass)));
+  }
+
+  subClass.prototype = (0, _create2.default)(superClass && superClass.prototype, {
+    constructor: {
+      value: subClass,
+      enumerable: false,
+      writable: true,
+      configurable: true
+    }
+  });
+  if (superClass) _setPrototypeOf2.default ? (0, _setPrototypeOf2.default)(subClass, superClass) : subClass.__proto__ = superClass;
+};
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+exports.__esModule = true;
+
+var _typeof2 = __webpack_require__(142);
+
+var _typeof3 = _interopRequireDefault(_typeof2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+exports.default = function (self, call) {
+  if (!self) {
+    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+  }
+
+  return call && ((typeof call === "undefined" ? "undefined" : (0, _typeof3.default)(call)) === "object" || typeof call === "function") ? call : self;
+};
+
+/***/ }),
 /* 18 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__systemSettings__ = __webpack_require__(89);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__systemSettings__ = __webpack_require__(94);
 /*!
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
@@ -4946,18 +4986,200 @@ if (typeof __e == 'number') __e = core; // eslint-disable-line no-undef
 
 /***/ }),
 /* 20 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+Object.defineProperty(exports, "__esModule", { value: true });
+// NOTE: SystemManagerClient is currently located in common but accessible on FSBL.  We have not decided yet whether or not to expose it like the other clients.
+const routerClientInstance_1 = __webpack_require__(6);
+const logger_1 = __webpack_require__(1);
+const _types_1 = __webpack_require__(45);
+const _constants_1 = __webpack_require__(31);
+const common_1 = __webpack_require__(37);
+/**
+ * Singleton API to Finsemble System Manager
+ */
+class SystemManagerClient {
+    /**
+     * Publishes boot status for the service or component (or boot task) being started.  This method is used internally in FSBL and baseService and not directly called.
+     * @param name the name of the service or component or module
+     * @param type the type category ("services" or "components")
+     * @param state the state ("completed" or "failed")
+     *
+     * @private
+     */
+    publishBootStatus(name, type, state) {
+        console.log("publishStartingStatus", name, state);
+        logger_1.default.system.debug("publishBootStatus", name, type, state);
+        routerClientInstance_1.default.publish(common_1.statusChannel(name), { name, type, state });
+    }
+    ;
+    /**
+     * Waits for a specific boot stage
+     * @param stage the name of the service (e.g. "storageService")
+     * @param when wait until either "stageEntered" or "stageCompleted"
+     * @param= [callback]
+     * @returns a promise
+     *
+     * @example
+     *
+     * 	await SystemManagerClient.waitForBootStage("authentication", "stageCompleted");
+     *
+     * 	SystemManagerClient.waitForBootStage("authentication", "stageCompleted", () => {
+     *		RouterClient.publish(Constants.APPLICATION_STATE_CHANNEL, { state: "authenticated" });
+     * 	});
+     *
+     */
+    waitForBootStage(stage, when, callback = Function.prototype) {
+        const waitForBootStageCompletionPromiseResolver = (resolve, reject) => {
+            logger_1.default.system.debug(`SystemManagerClient.waitForBootStage entry`, stage, when);
+            let stageIndex = _types_1.ALL_BOOT_STAGES.indexOf(stage);
+            if (stage === "microkernel" && when === "stageEntered") {
+                logger_1.default.system.error("Cannot wait on `stageEntered` for microkernel because router isn't up yet. So will instead wait for microkernal stage complete.");
+            }
+            // receives startup state from services -- see SystemManagerClient.publishBootStatus
+            let subscribeId = routerClientInstance_1.default.subscribe(_constants_1.STAGE_CHANNEL, (err, notify) => {
+                logger_1.default.system.debug("SystemManagerClient.waitForBootStage new stage", notify.data.stage, subscribeId);
+                if (err) {
+                    logger_1.default.system.error("SystemManagerClient.waitForBootStage subscribe error", err);
+                    callback(err);
+                    reject(err);
+                }
+                else if (stageIndex === -1) { // if illegal stage was input
+                    err = "illegal stage argument";
+                    logger_1.default.system.debug("SystemManagerClient.waitForBootStage subscribe error", err, stage);
+                    callback(err);
+                    reject(err);
+                }
+                else {
+                    // note the following section handles cases where waitForBootStage might be invoked after the stage has been enter or passed
+                    let currentStageIndex = _types_1.ALL_BOOT_STAGES.indexOf(notify.data.stage);
+                    logger_1.default.system.debug(`SystemManagerClient.waitForBootStage currentStageIndex=${currentStageIndex} stageIndex=${stageIndex} wait-on-stage=${stage} this-stage=${notify.data.stage}`);
+                    // when the stage before completes (or anytime after) then done for "stageEntered"
+                    if (when === "stageEntered" && (currentStageIndex + 1) >= stageIndex) {
+                        logger_1.default.system.debug("SystemManagerClient.waitForBootStage stageEntered", stage, subscribeId, callback.name);
+                        callback();
+                        resolve();
+                        routerClientInstance_1.default.unsubscribe(subscribeId);
+                        // when current stage matches (or comes after) given stage, then done for "stageCompleted"
+                    }
+                    else if (when === "stageCompleted" && currentStageIndex >= stageIndex) {
+                        logger_1.default.system.debug("SystemManagerClient.waitForBootStage completed", stage, subscribeId);
+                        callback();
+                        resolve();
+                        routerClientInstance_1.default.unsubscribe(subscribeId);
+                    }
+                    else {
+                        logger_1.default.system.debug(`SystemManagerClient.waitForBootStage else currentStageIndex=${currentStageIndex} stageIndex=${stageIndex} `, currentStageIndex, stageIndex, stage, subscribeId);
+                    }
+                }
+            });
+        };
+        return new Promise(waitForBootStageCompletionPromiseResolver);
+    }
+    /**
+     * Waits for a specific service (or component or boot task) to be started
+     * @param name the name of the service (e.g. "storageService")
+     * @param= [callback]
+     * @returns a promise
+     *
+     * @example
+     *
+     * 	await SystemManagerClient.waitForStartup("configService");
+     *
+     *	SystemManagerClient.waitForStartup("dataStoreService", () => {
+     *		RouterClient.publish(Constants.APPLICATION_STATE_CHANNEL, { state: "configuring" });
+     *	});
+     *
+     */
+    waitForStartup(name, callback = Function.prototype) {
+        const waitForStartupStatePromiseResolver = (resolve, reject) => {
+            logger_1.default.system.debug(`SystemManagerClient.waitForStartup.${name}`, name);
+            // receives startup state from services -- see SystemManagerClient.publishBootStatus
+            let subscribeId = routerClientInstance_1.default.subscribe(common_1.statusChannel(name), (err, notify) => {
+                logger_1.default.system.debug("SystemManagerClient.waitForStartup subscribe", name, err, notify);
+                if (err) {
+                    logger_1.default.system.error("SystemManagerClient.waitForStartup subscribe error", err);
+                    callback(err);
+                    reject();
+                }
+                else {
+                    if (notify.data.name === name && notify.data.state === "completed") {
+                        logger_1.default.system.debug("SystemManagerClient.waitForStartup completed", name);
+                        callback();
+                        resolve();
+                        routerClientInstance_1.default.unsubscribe(subscribeId);
+                    }
+                }
+            });
+        };
+        return new Promise(waitForStartupStatePromiseResolver);
+    }
+    /**
+     * Publishes a checkpoints status. This must be done for any checkpoint so the SystemManager will know if the checkpoint succeeded or not
+     * @param parent the name of the service or component containing the checkpoint (as defined in config)
+     * @param checkpointName tthe name of the checkpoint (as defined in config)
+     * @param state the state for the checkpoint, either "completed" or "failed"
+     *
+     * @example
+     *
+     * 	SystemManagerClient.publishCheckpointState("workspaceService", "importedLegacyWorkspaces", "completed");
+     *
+     */
+    publishCheckpointState(windowName, checkpointName, state) {
+        console.log("publishCheckpoint", windowName, checkpointName, state, common_1.checkpointChannel(windowName, checkpointName));
+        logger_1.default.system.debug("publishCheckpoint", windowName, checkpointName, state, common_1.checkpointChannel(windowName, checkpointName));
+        routerClientInstance_1.default.publish(common_1.checkpointChannel(windowName, checkpointName), { windowName, checkpointName, state });
+    }
+    ;
+    /**
+     * Shows System Log window and bring its to front.
+     */
+    showSystemLog() {
+        logger_1.default.system.debug("SystemManagerClient.showSystemLog");
+        routerClientInstance_1.default.transmit(_constants_1.SHOW_SYSLOG_CHANNEL, true);
+    }
+    /**
+     * Displays message on the system log
+     * @param params gnenerally this is TBD until real system log is written
+     * @param params.error if true then the log message is an error
+     * @param params.notification if true then the log message is a notification
+     * @param message the message string to log
+     *
+     * @example
+     *
+     * 	SystemManagerClient.systemLog({ error: true}, errorMsg);
+     *  SystemManagerClient.systemLog({ notification: true }, "Notification: " + message);
+     *
+     */
+    systemLog(params, logMessage) {
+        logger_1.default.system.debug("SystemManagerClient.systemLog", params, logMessage);
+        routerClientInstance_1.default.transmit(_constants_1.SYSLOG_CHANNEL, { params, logMessage });
+    }
+}
+var systemManagerClient = new SystemManagerClient();
+exports.default = systemManagerClient;
+
+
+/***/ }),
+/* 21 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Grid__ = __webpack_require__(173);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Grid__ = __webpack_require__(179);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return __WEBPACK_IMPORTED_MODULE_0__Grid__["a"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "Grid", function() { return __WEBPACK_IMPORTED_MODULE_0__Grid__["a"]; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__accessibilityOverscanIndicesGetter__ = __webpack_require__(344);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__accessibilityOverscanIndicesGetter__ = __webpack_require__(373);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "accessibilityOverscanIndicesGetter", function() { return __WEBPACK_IMPORTED_MODULE_1__accessibilityOverscanIndicesGetter__["a"]; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__defaultCellRangeRenderer__ = __webpack_require__(174);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__defaultCellRangeRenderer__ = __webpack_require__(180);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "defaultCellRangeRenderer", function() { return __WEBPACK_IMPORTED_MODULE_2__defaultCellRangeRenderer__["a"]; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__defaultOverscanIndicesGetter__ = __webpack_require__(175);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__defaultOverscanIndicesGetter__ = __webpack_require__(181);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "defaultOverscanIndicesGetter", function() { return __WEBPACK_IMPORTED_MODULE_3__defaultOverscanIndicesGetter__["a"]; });
 
 
@@ -4969,277 +5191,1062 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
 
-
+Object.defineProperty(exports, "__esModule", { value: true });
+const validate_1 = __webpack_require__(18); // Finsemble args validator
+const baseClient_1 = __webpack_require__(11);
+const async_1 = __webpack_require__(24);
+const systemManagerClient_1 = __webpack_require__(20);
+const logger_1 = __webpack_require__(1);
 /**
- * A worker that does nothing but passing chunks to the next one. This is like
- * a nodejs stream but with some differences. On the good side :
- * - it works on IE 6-9 without any issue / polyfill
- * - it weights less than the full dependencies bundled with browserify
- * - it forwards errors (no need to declare an error handler EVERYWHERE)
+ * @introduction
+ * <h2>Config Client (Finsemble Connect)</h2>
  *
- * A chunk is an object with 2 attributes : `meta` and `data`. The former is an
- * object containing anything (`percent` for example), see each worker for more
- * details. The latter is the real data (String, Uint8Array, etc).
+ * This client provides run-time access to Finsemble's configuration.
+ * The Config Client functions similar to a global store created with the Distributed Store Client and offers many of the same methods.
+ * Values modified at runtime are not persisted.
  *
+ *
+ * See the [Configuration tutorial](tutorial-Configuration.html) for a configuration overview.
+ *
+ * @hideconstructor
  * @constructor
- * @param {String} name the name of the stream (mainly used for debugging purposes)
  */
-function GenericWorker(name) {
-    // the name of the worker
-    this.name = name || "default";
-    // an object containing metadata about the workers chain
-    this.streamInfo = {};
-    // an error which happened when the worker was paused
-    this.generatedError = null;
-    // an object containing metadata to be merged by this worker into the general metadata
-    this.extraStreamInfo = {};
-    // true if the stream is paused (and should not do anything), false otherwise
-    this.isPaused = true;
-    // true if the stream is finished (and should not do anything), false otherwise
-    this.isFinished = false;
-    // true if the stream is locked to prevent further structure updates (pipe), false otherwise
-    this.isLocked = false;
-    // the event listeners
-    this._listeners = {
-        'data':[],
-        'end':[],
-        'error':[]
-    };
-    // the previous worker, if any
-    this.previous = null;
-}
-
-GenericWorker.prototype = {
-    /**
-     * Push a chunk to the next workers.
-     * @param {Object} chunk the chunk to push
-     */
-    push : function (chunk) {
-        this.emit("data", chunk);
-    },
-    /**
-     * End the stream.
-     * @return {Boolean} true if this call ended the worker, false otherwise.
-     */
-    end : function () {
-        if (this.isFinished) {
-            return false;
-        }
-
-        this.flush();
-        try {
-            this.emit("end");
-            this.cleanUp();
-            this.isFinished = true;
-        } catch (e) {
-            this.emit("error", e);
-        }
-        return true;
-    },
-    /**
-     * End the stream with an error.
-     * @param {Error} e the error which caused the premature end.
-     * @return {Boolean} true if this call ended the worker with an error, false otherwise.
-     */
-    error : function (e) {
-        if (this.isFinished) {
-            return false;
-        }
-
-        if(this.isPaused) {
-            this.generatedError = e;
-        } else {
-            this.isFinished = true;
-
-            this.emit("error", e);
-
-            // in the workers chain exploded in the middle of the chain,
-            // the error event will go downward but we also need to notify
-            // workers upward that there has been an error.
-            if(this.previous) {
-                this.previous.error(e);
+class ConfigClient extends baseClient_1._BaseClient {
+    constructor(params) {
+        super(params);
+        this.listeners = [];
+        /**
+         * make sure we dont have duplicate router subscribers
+         * @private
+         */
+        this.changeSub = (change) => {
+            if (!this.subs)
+                this.subs = {};
+            if (!this.subs[change]) {
+                this.routerClient.query("configService.addListener", change, (err, queryResponse) => {
+                    this.routerClient.subscribe(change, this.handleChanges);
+                });
+                this.subs[change] = true;
             }
-
-            this.cleanUp();
-        }
-        return true;
-    },
-    /**
-     * Add a callback on an event.
-     * @param {String} name the name of the event (data, end, error)
-     * @param {Function} listener the function to call when the event is triggered
-     * @return {GenericWorker} the current object for chainability
-     */
-    on : function (name, listener) {
-        this._listeners[name].push(listener);
-        return this;
-    },
-    /**
-     * Clean any references when a worker is ending.
-     */
-    cleanUp : function () {
-        this.streamInfo = this.generatedError = this.extraStreamInfo = null;
-        this._listeners = [];
-    },
-    /**
-     * Trigger an event. This will call registered callback with the provided arg.
-     * @param {String} name the name of the event (data, end, error)
-     * @param {Object} arg the argument to call the callback with.
-     */
-    emit : function (name, arg) {
-        if (this._listeners[name]) {
-            for(var i = 0; i < this._listeners[name].length; i++) {
-                this._listeners[name][i].call(this, arg);
+        };
+        /**
+         * @private
+         * @memberof ConfigClient
+         */
+        this.handleChanges = (err, response) => {
+            if (err) {
+                logger_1.default.system.error(err);
             }
-        }
-    },
-    /**
-     * Chain a worker with an other.
-     * @param {Worker} next the worker receiving events from the current one.
-     * @return {worker} the next worker for chainability
-     */
-    pipe : function (next) {
-        return next.registerPrevious(this);
-    },
-    /**
-     * Same as `pipe` in the other direction.
-     * Using an API with `pipe(next)` is very easy.
-     * Implementing the API with the point of view of the next one registering
-     * a source is easier, see the ZipFileWorker.
-     * @param {Worker} previous the previous worker, sending events to this one
-     * @return {Worker} the current worker for chainability
-     */
-    registerPrevious : function (previous) {
-        if (this.isLocked) {
-            throw new Error("The stream '" + this + "' has already been used.");
-        }
-
-        // sharing the streamInfo...
-        this.streamInfo = previous.streamInfo;
-        // ... and adding our own bits
-        this.mergeStreamInfo();
-        this.previous =  previous;
-        var self = this;
-        previous.on('data', function (chunk) {
-            self.processChunk(chunk);
-        });
-        previous.on('end', function () {
-            self.end();
-        });
-        previous.on('error', function (e) {
-            self.error(e);
-        });
-        return this;
-    },
-    /**
-     * Pause the stream so it doesn't send events anymore.
-     * @return {Boolean} true if this call paused the worker, false otherwise.
-     */
-    pause : function () {
-        if(this.isPaused || this.isFinished) {
-            return false;
-        }
-        this.isPaused = true;
-
-        if(this.previous) {
-            this.previous.pause();
-        }
-        return true;
-    },
-    /**
-     * Resume a paused stream.
-     * @return {Boolean} true if this call resumed the worker, false otherwise.
-     */
-    resume : function () {
-        if(!this.isPaused || this.isFinished) {
-            return false;
-        }
-        this.isPaused = false;
-
-        // if true, the worker tried to resume but failed
-        var withError = false;
-        if(this.generatedError) {
-            this.error(this.generatedError);
-            withError = true;
-        }
-        if(this.previous) {
-            this.previous.resume();
-        }
-
-        return !withError;
-    },
-    /**
-     * Flush any remaining bytes as the stream is ending.
-     */
-    flush : function () {},
-    /**
-     * Process a chunk. This is usually the method overridden.
-     * @param {Object} chunk the chunk to process.
-     */
-    processChunk : function(chunk) {
-        this.push(chunk);
-    },
-    /**
-     * Add a key/value to be added in the workers chain streamInfo once activated.
-     * @param {String} key the key to use
-     * @param {Object} value the associated value
-     * @return {Worker} the current worker for chainability
-     */
-    withStreamInfo : function (key, value) {
-        this.extraStreamInfo[key] = value;
-        this.mergeStreamInfo();
-        return this;
-    },
-    /**
-     * Merge this worker's streamInfo into the chain's streamInfo.
-     */
-    mergeStreamInfo : function () {
-        for(var key in this.extraStreamInfo) {
-            if (!this.extraStreamInfo.hasOwnProperty(key)) {
-                continue;
+            if (!response.data.field) {
+                response.data.field = null;
             }
-            this.streamInfo[key] = this.extraStreamInfo[key];
-        }
-    },
-
+            //var combined = "configService" + (response.data.field ? "." + response.data.field : "");
+            var val = response.data.storeData ? response.data.storeData : response.data.value;
+            this.triggerListeners(response.data.field ? response.data.field : "configService", val);
+        };
+        // Trigger any function that is listening for changes
+        /**
+         * @private
+         * @memberof ConfigClient
+         */
+        this.triggerListeners = (listenerKey, data) => {
+            if (this.listeners[listenerKey]) {
+                for (var i = 0; i < this.listeners[listenerKey].length; i++) {
+                    if (typeof this.listeners[listenerKey][i] === "function") {
+                        this.listeners[listenerKey][i](null, { field: listenerKey, value: data });
+                    }
+                    else {
+                        logger_1.default.system.warn("ConfigClient:triggerListeners: listener is not a function", listenerKey);
+                    }
+                }
+            }
+        };
+        /**
+         * This is designed to mirror the get. Private because security TBD.
+         * @private
+         *
+         * @param {object} params
+         * @param {function} callback
+         */
+        this.set = (params, callback) => {
+            logger_1.default.system.debug("ConfigClient.Set", params);
+            // if only one argument then assume no filtering parameters -- the complete manifest will be returned
+            if (arguments.length === 1) {
+                callback = params; // since only one arg, it must be the callback
+                validate_1.default.args(callback, "function");
+                params = {};
+            }
+            else {
+                validate_1.default.args(params, "object", callback, "function");
+            }
+            this.routerClient.query("config.set", params, function (queryErr, queryResponse) {
+                callback(queryErr, queryResponse ? queryResponse.data : null);
+            });
+        };
+        //Methods were formally an arrow function. If we want our documentation build to read nested parameters, we need to use this instead of an arrow.
+        this.processAndSet = this.processAndSet.bind(this);
+        this.getValue = this.getValue.bind(this);
+        this.getValues = this.getValues.bind(this);
+        this.setValue = this.setValue.bind(this);
+        this.setValues = this.setValues.bind(this);
+        this.removeValue = this.removeValue.bind(this);
+        this.removeValues = this.removeValues.bind(this);
+        this.addListener = this.addListener.bind(this);
+        this.addListeners = this.addListeners.bind(this);
+        this.removeListener = this.removeListener.bind(this);
+        this.removeListeners = this.removeListeners.bind(this);
+        this.setPreference = this.setPreference.bind(this);
+        this.getPreferences = this.getPreferences.bind(this);
+    }
     /**
-     * Lock the stream to prevent further updates on the workers chain.
-     * After calling this method, all calls to pipe will fail.
+     * Get a value from the config.
+     * @param {Function} cb Will return the value if found.
+     * @returns {any} The value of the field. If no callback is given and the value is local, this will run synchronous
+     * @example
+     * FSBL.Clients.ConfigClient.getValue({ field:'field1' }, function(err,value){ });
+     * FSBL.Clients.ConfigClient.getValue('field1', function(err,value){ });
      */
-    lock: function () {
-        if (this.isLocked) {
-            throw new Error("The stream '" + this + "' has already been used.");
+    getValue(params, cb = Function.prototype) {
+        if (typeof params === "string") {
+            params = { field: params };
         }
-        this.isLocked = true;
-        if (this.previous) {
-            this.previous.lock();
-        }
-    },
-
+        const promiseResolver = (resolve, reject) => {
+            if (!params.field) {
+                const err = "no field provided";
+                reject(err);
+                return cb(err);
+            }
+            this.routerClient.query("configService.getValue", { field: params.field }, function (err, response) {
+                if (err) {
+                    reject(err);
+                    return cb(err);
+                }
+                resolve({ err, data: response.data });
+                return cb(err, response.data);
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    ;
     /**
+     * Get multiple values from the config.
+    * @param {fieldOnlyParam[] | string[]} fields An array of field objects. If there are no fields provided, the complete configuration manifest is returned.
+     * @param {Function} cb Will return the value if found.
+     * @returns {Object} - Returns an object of with the fields as keys. If no callback is given and the value is local, this will run synchronous
+     * @example
+     * FSBL.Clients.ConfigClient.getValues([{ field: 'field1' },{ field2: 'field2' }],function(err,values){ });
+     * FSBL.Clients.ConfigClient.getValues(['field1','field2'], function(err,values){ });
+     * FSBL.Clients.ConfigClient.get(null, callback); // returns the complete manifest containing the finsemble property
+    */
+    getValues(fields, cb = Function.prototype) {
+        if (typeof fields === "function") {
+            cb = fields;
+            fields = null;
+        }
+        if (fields && !Array.isArray(fields)) {
+            return this.getValue(fields, cb);
+        }
+        const promiseResolver = (resolve) => {
+            this.routerClient.query("configService.getValues", {
+                fields: fields
+            }, function (err, response) {
+                if (err) {
+                    return cb(err);
+                }
+                resolve({ err, data: response.data });
+                return cb(err, response.data);
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    ;
+    /**
+     * Set a value in the config. Setting a value will trigger events that you can listen to using <a href="ConfigClient.html#addListener">addListener</a>.
+     * @param {function} cb Optional callback
+     * @returns {null}
      *
-     * Pretty print the workers chain.
+     * @example
+     * FSBL.Clients.ConfigClient.setValue({ field:'field1', value:"new value" });
      */
-    toString : function () {
-        var me = "Worker " + this.name;
-        if (this.previous) {
-            return this.previous + " -> " + me;
-        } else {
-            return me;
+    setValue(params, cb) {
+        var data = {
+            field: params.field,
+            value: params.value
+        };
+        return this.routerClient.query("configService.setValue", data, function (err) {
+            return cb ? cb(err) : null;
+        });
+    }
+    ;
+    /**
+     * This will set multiple values in the config.
+     * @param {function} cb Optional callback
+     * @returns {null}
+     *
+     * @example
+     * FSBL.Clients.ConfigClient.setValues([{ field:'field1', value: "new value" }]);
+     */
+    setValues(fields, cb) {
+        if (!fields) {
+            return logger_1.default.system.error("ConfigClient.SetValues. No params given");
+        }
+        if (!Array.isArray(fields)) {
+            return logger_1.default.system.error("ConfigClient.SetValues. Params must be an array");
+        }
+        return this.routerClient.query("configService.setValues", fields, function (err) {
+            return cb ? cb(err) : null;
+        });
+    }
+    ;
+    /**
+     * Remove a value from the config.
+     * @param {fieldAndValueParam | String} params - Either an object or string
+     * @param {Function} cb -  Returns an error if there is one
+     * @example
+     * FSBL.Clients.ConfigClient.removeValue({ field:'field1' }, function(err,bool){ });
+     */
+    removeValue(params, cb = Function.prototype) {
+        if (params !== undefined) {
+            if (!params.field && typeof params === "string") {
+                params = { field: params };
+            }
+            else {
+                return cb("no field provided");
+            }
+        }
+        params.value = null;
+        return this.setValue(params, cb);
+    }
+    ;
+    /**
+     * Removes multiple values from the config.
+     * @param {fieldAndValueParams} params - An Array of field objects
+     * @param {Function} cb -  Returns an error if there is one.
+     * @example
+     * FSBL.Clients.ConfigClient.removeValues([{
+     * 	field:'field1'
+     * }],
+     * function(err,bool){	});
+     */
+    removeValues(params, cb = Function.prototype) {
+        if (!Array.isArray(params)) {
+            return cb("The passed in parameter needs to be an array");
+        }
+        //casting needed here because params doesn't have an index method?? My guess is that their type defs aren't great.
+        async_1.map(params, this.removeValue, function (err, data) {
+            return cb(err, data);
+        });
+    }
+    ;
+    /**
+    * Add a listener to the config at either the root config level or field level. If no field is given, the root config level is used. You can also listen for changes to config fields any number of levels deep -- finsemble.configitem.deeperconfigitem.evendeeperconfigitem
+    * @param {Function} fn The function to be called when the observed piece of config is modified.
+    * @param {Function} cb Callback to be invoked after the listener is added.
+    * @example
+    * var myFunction = function(err,data){};
+    * FSBL.Clients.ConfigClient.addListener({ field:'field1' }, myFunction, cb);
+    */
+    addListener(params, fn, cb) {
+        var field = null;
+        if (typeof params === "function") {
+            fn = params;
+            params = { field };
+        }
+        if (params.field) {
+            field = params.field;
+        }
+        var combined = "configService" + (field ? "." + field : "");
+        if (this.listeners[combined]) {
+            this.listeners[combined].push(fn);
+        }
+        else {
+            this.listeners[combined] = [fn];
+        }
+        this.changeSub(combined);
+        return cb ? cb() : null;
+    }
+    ;
+    /**
+     * Add an array of listeners as objects or strings. If using strings, you must provide a function callback as the second parameter.
+     *
+     * @param {listenerParam | listenerParam[] | fieldOnlyParam | string[]} params
+     * @param {function} fn The function to be called when the observed piece of config is modified.
+     * @param {function} cb Callback to be invoked after the listeners are added.
+     * @example
+     * var myFunction = function(err,data){}
+    * FSBL.Clients.ConfigClient.addListeners(
+    * 	[
+    * 		{ field: "field1", listener: myFunction },
+    * 		{ field: "field2", listener: myFunction }
+    * 	],
+    * 	null,
+    * 	cb
+    * );
+    *
+    * FSBL.Clients.ConfigClient.addListeners(
+    * [{ field: "field1" }, { field: "field2", listener: myFunction }],
+    * myFunction,
+    * cb
+    * );
+    *
+    * FSBL.Clients.ConfigClient.addListeners(["field1", "field2"], myFunction, cb);
+    */
+    addListeners(params, fn, cb) {
+        if (!Array.isArray(params)) {
+            return this.addListener({ field: params.field }, fn, cb);
+        }
+        for (var i = 0; i < params.length; i++) {
+            var field = null;
+            var item = params[i];
+            var ls;
+            if (typeof item === "string") {
+                field = item;
+            }
+            else if (item.field) {
+                field = item.field;
+                ls = item.listener;
+            }
+            var combined = "configService" + (field ? "." + field : "");
+            if (!ls) {
+                if (fn && typeof fn === "function") {
+                    ls = fn;
+                }
+            }
+            if (this.listeners[combined]) {
+                this.listeners[combined].push(ls);
+            }
+            else {
+                this.listeners[combined] = [ls];
+            }
+            this.changeSub(combined);
+        }
+        return cb ? cb() : null;
+    }
+    ;
+    /**
+     * Remove a listener from config. If no field is given, we look for a config root listener
+     * @param {function} fn The listener to remove.
+     * @param {function} cb Returns true if it was successful in removing the listener.
+     *
+     * @example
+     * var myFunction = function(err,data){ }
+     * FSBL.Clients.ConfigClient.removeListener({
+     * 	field:'field1'
+     * }, MyFunction, function(bool){ });
+     * FSBL.Clients.ConfigClient.removeListener(MyFunction, function(bool){ });
+     */
+    removeListener(params, fn, cb) {
+        var field = null;
+        // The case below is for removing the root level config listener
+        if (typeof params === "function") {
+            cb = fn;
+            fn = params;
+            params = { field };
+        }
+        if (params.field) {
+            field = params.field;
+        }
+        var combined = this.name + (field ? "." + field : "");
+        if (this.listeners[combined]) {
+            for (var i = 0; i < this.listeners[combined].length; i++) {
+                if (this.listeners[combined][i] === fn) {
+                    this.listeners[combined].pop(i);
+                    return cb ? cb(null, true) : null;
+                }
+            }
+        }
+        return cb ? cb(null, false) : null;
+    }
+    ;
+    /**
+     * Remove an array of listeners from the config
+     * @param {removeListenersType} params
+     * @param {function} fn The listener to remove
+     * @param {function} cb Returns true if it was successful in removing the listener.
+     *
+     * @example
+     * var myFunction = function(err,data){ }
+     * FSBL.Clients.ConfigClient.removeListeners({
+     * 	field: 'field1'
+     * }, MyFunction, function(bool){ });
+     * FSBL.Clients.ConfigClient.removeListeners([{ field:'field1', listener: MyFunction }], function(bool){ });
+     * FSBL.Clients.ConfigClient.removeListeners(['field1'], MyFunction, function(bool) { });
+     */
+    removeListeners(params, fn, cb) {
+        if (!Array.isArray(params)) {
+            // The typecasting below is bad but it prevents build problems. We should tighten the APIs.
+            if (typeof params === "function") {
+                this.removeListener({}, params, cb);
+            }
+            else if (params.field) {
+                this.removeListener(params, fn, cb);
+            }
+            return cb("missing fields");
+        }
+        var removeCount = 0;
+        for (var i = 0; i < params.length; i++) {
+            var field = null;
+            var item = params[i];
+            var ls;
+            if (typeof item === "string") {
+                field = item;
+            }
+            else if (item.field) {
+                field = item.field;
+                ls = params[i].listener;
+            }
+            var combined = "configService" + (field ? "." + field : "");
+            if (!ls) {
+                if (fn && typeof fn === "function") {
+                    ls = fn;
+                }
+                else {
+                    continue;
+                }
+            }
+            for (var j = 0; j < this.listeners[combined].length; j++) {
+                if (this.listeners[combined][j] === ls) {
+                    this.listeners[combined].pop(i);
+                    removeCount++;
+                }
+            }
+        }
+        if (removeCount < params.length) {
+            return cb("All listeners could not be found", false);
+        }
+        return cb ? cb(null, true) : null;
+    }
+    ;
+    /**
+     * Get all or a portion of the configuration from the Config Service. Typically this function is used to return Finsemble configuration
+     * (e.g. "finesemble.components"); however, if can also return all or part of the manifest which contains the Finsemble config property.
+     * If no configReference parameter is passed in (i.e. only the callback parameter is specified), then the complete manifest object is returned
+     * (including manifest.finsemble).
+     *
+     * @param {object=} params field property identifies specific config to return
+     * @param {function} callback callback function(error, data) to get the configuration data
+     * @private
+     * @example
+     *
+     * FSBL.Clients.ConfigClient.get({ field: "finsemble" }, function(err, finsemble) {
+     *		if (!err) {
+     *			finsembleConfig = finsemble;
+     *		} else {
+     *			console.error("failed to get finsemble configuration");
+     *		}
+     * });
+     *
+     * FSBL.Clients.ConfigClient.get({ field: "finsemble.isAuthEnabled" }, function(err, isAuthEnabled) {
+     *		var authorizationOn = isAuthEnabled;
+     * });
+     *
+     * FSBL.Clients.ConfigClient.get(callback); // returns the complete manifest containing the finsemble property
+     * FSBL.Clients.ConfigClient.get(null, callback); // alternate form; returns the complete manifest containing the finsemble property
+     * FSBL.Clients.ConfigClient.get({}, callback); // alternate form; returns the complete manifest containing the finsemble property
+     * FSBL.Clients.ConfigClient.get({ field: "finsemble.components" }, callback);
+     * FSBL.Clients.ConfigClient.get({ field: "finsemble.services" }, callback);
+     * FSBL.Clients.ConfigClient.get({ field: "finsemble.components" }, callback);
+     * FSBL.Clients.ConfigClient.get({ field: "finsemble.assimilation" }, callback);
+     * FSBL.Clients.ConfigClient.get({ field: "runtime.version", callback) }; // returns the manifest's runtime.version property
+     */
+    get(params, callback) {
+        logger_1.default.system.debug("ConfigClient.Get", params);
+        logger_1.default.system.warn("This functionality has been deprecated. It will be removed in Finsemble version 3.0. Use getValue instead.", params);
+        // if only one argument then assume no filtering parameters -- the complete manifest will be returned
+        if (arguments.length === 1) {
+            callback = params; // since only one arg, it must be the callback
+            validate_1.default.args(callback, "function");
+            params = {};
+        }
+        else {
+            validate_1.default.args(params, "object", callback, "function");
+        }
+        this.routerClient.query("config.get", params, function (queryErr, queryResponse) {
+            callback(queryErr, queryResponse ? queryResponse.data : null);
+        });
+    }
+    ;
+    /**
+     * Dynamically set config values within the Finsemble configuration.  New config properties may be set or existing ones modified. Note that configuration changes will not necessarily dynamically modify the components or services that use the corresponding configuration -- it depends if the component or service handles the corresponding change notifications (either though PubSub or the Config's DataStore). Also, these changes do not persist in any config files.
+     *
+     * <b>Note</b>: Anytime config is set using this API, the newConfig along with the updated manifest will by published to the PubSub topic "Config.changeNotification".  To get these notifications any component or service can subscribe to the topic. An example is shown below.
+     *
+     * <b>Note</b>: Anytime config is set using this API, the dataStore underlying configuration 'Finsemble-Configuration-Store' will also be updated. To get these dataStore events a listener can be set as shown in the example below. However, any config modifications made directly though the DataStore will not result in corresponding PubSub notifications.
+     *
+     * @param {object} params
+     * @param {object} params.newConfig Provides the configuration properties to add into the existing configuration under manifest.finsemble. This config must match the Finsemble config requirements as described in the [Configuration tutorial]{@tutorial Configuration}. It can include importConfig references to dynamically fetch additional configuration files.
+     * @param {boolean} params.overwrite If true then overwrite any preexisting config with new config (can only set to true when running from same origin, not cross-domain); if false then newConfig must not match properties of existing config, including service and component configuration.
+     * @param {boolean} params.replace True specifies any component or service definitions in the new config will place all existing non-system component and service configuration
+     * @param {StandardCallback} callback Callback to be invoked upon task completion.
+     * @example
+     * // Examples using processAndSet()
+     * FSBL.Clients.ConfigClient.processAndSet({ newConfig: { myNewConfigField: 12345 }, overwrite: false });
+     * FSBL.Clients.ConfigClient.processAndSet(
+     * {
+     *	newConfig: {
+     *		"myNewConfigField": 12345,
+     *		"myNewConfigObject": {
+     *			A: "this is a test",
+     *			B: "more test"
+     *		},
+     *		"importConfig": [
+     *			"$applicationRoot/configs/application/test.json",
+     *		]
+     *	},
+     *	overwrite: true,
+     *  replace: false,
+     * },
+     *	function (err, finsemble) {
+     *		if (err) {
+     *			console.error("ConfigClient.set", err);
+     *		} else {
+     *			console.log("new finsemble config", finsemble);
+     *		}
+     *	}
+     * );
+     *
+     *  // example subscribing to PubSub to get notifications of dynamic updates
+     * RouterClient.subscribe("Config.changeNotification", function (err, notify) {
+     *		console.log("set notification", notify.data.newConfig, notify.data.finsemble);
+     *	});
+     *
+     *  // example using DataStore to get notifications of dynamic updates
+     * DistributedStoreClient.getStore({ store: 'Finsemble-Configuration-Store', global: true }, function (err, configStore) {
+     *		configStore.addListener({ field: "finsemble" }, function (err, newFinsembleConfig) {
+     *			console.log("new manifest.finsemble configuration", newFinsembleConfig);
+     *		});
+     * });
+     *
+     */
+    processAndSet(params, callback) {
+        logger_1.default.system.debug("ConfigClient.processAndSet", params);
+        validate_1.default.args(params, "object", callback, "function=") &&
+            validate_1.default.args2("params.newConfig", params.newConfig, "object", "params.overwrite", params.overwrite, "boolean=", "params.replace", params.replace, "boolean=");
+        if (!params.overwrite && params.replace) {
+            var errMsg = "cannot use replace option unless overwrite is also true";
+            logger_1.default.system.warn("ConfigClient.processAndSet:", errMsg);
+            if (callback) {
+                callback(errMsg, null);
+            }
+        }
+        else {
+            this.routerClient.query("config.processAndSet", params, function (queryErr, queryResponse) {
+                if (callback) {
+                    callback(queryErr, queryResponse ? queryResponse.data : null);
+                }
+            });
         }
     }
-};
-
-module.exports = GenericWorker;
+    ;
+    /**
+     * Sets a value on the configStore and persists that value to storage. On application restart, this value will overwrite any application defaults.
+     * @param {fieldAndValueParam} params
+     * @param {StandardCallback} callback Callback to be invoked when callback to be invoked when preferences have been retrieved from the service.
+     * @example
+     * FSBL.Clients.ConfigClient.setPreference({
+     * 	field: "finsemble.initialWorkspace",
+     * 	value: "Workspace 2"
+     * }, (err, response) => {
+     * 		//preference has been set
+     * });
+     */
+    setPreference(params, callback) {
+        this.routerClient.query("PreferencesService.setPreference", params, function (queryErr, queryResponse) {
+            if (callback) {
+                callback(queryErr, queryResponse ? queryResponse.data : null);
+            }
+        });
+    }
+    ;
+    /**
+     * Retrieves all of the preferences set for the application.
+     * @param {StandardCallback} callback Callback to be invoked when preferences have been retrieved from the service.
+     * @example
+     * FSBL.Clients.ConfigClient.getPreferences((err, preferences)=> {
+     * 		//use preferences.
+     * });
+     */
+    async getPreferences(callback) {
+        logger_1.default.system.debug("ConfigClient.getPreferences", callback);
+        // need to check since preferences doesn't come up until after authentication, so not always ready
+        await systemManagerClient_1.default.waitForStartup("preferencesService");
+        this.routerClient.query("PreferencesService.getPreferences", null, function (queryErr, queryResponse) {
+            logger_1.default.system.debug("ConfigClient.getPrefences response", queryResponse);
+            if (callback) {
+                callback(queryErr, queryResponse ? queryResponse.data : null);
+            }
+        });
+    }
+    ;
+}
+;
+var configClient = new ConfigClient({
+    startupDependencies: {
+        services: ["configService"]
+    },
+    onReady: function (cb) {
+        if (cb) {
+            cb();
+        }
+    },
+    name: "configClient"
+});
+exports.default = configClient;
 
 
 /***/ }),
-/* 22 */
+/* 23 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__util__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__system__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__system__);
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+
+
+
+
+
+
+var ConfigUtil = function () {
+
+	var self = this;
+
+	/**
+  * @introduction
+  * <h2>Finsemble Configuration Utility Functions</h2>
+  * @private
+  * @class ConfigUtil
+  */
+	// run through the configuration object and resolve any variables definitions (i.e. $applicationRoot)
+	this.resolveConfigVariables = function (finsembleConfig, startingConfigObject) {
+		var pass = 0;
+		var needsAnotherPass = true;
+
+		/**
+   * Called by resolveObject().
+   * This function parses a string to find variables.
+   * It looks up the value of any identified variables, replacing them in the string.
+   * The completed string is then returned.
+   * @TODO convert this function to use an actual tokenizer?
+   **/
+		function resolveString(configString) {
+			var delimiters = /[/\\:?=&\s]/; // delimiters in regex form
+			var tokens = configString.split(delimiters);
+			for (var i = 0; i < tokens.length; i++) {
+				if (tokens[i][0] === "$") {
+					// special variable character $ has to first char in string
+					var variableReference = tokens[i].substring(1); // string off the leading $
+					var variableResolution = finsembleConfig[variableReference]; // the variable value is another config property, which already must be set
+					var newValue = configString.replace(tokens[i], variableResolution); // replace the variable reference with new value
+					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.info("forceObjectsToLogger", "ConfigUtil.resolveConfigVariables:resolveString configString", tokens[i], variableReference, variableResolution, "old value=", configString, "value=", newValue);
+					needsAnotherPass = true; // <<-- here is the only place needsAnotherPass is set, since still resolving variables
+					configString = newValue;
+				}
+			}
+			return configString;
+		}
+
+		// process an array of config items looking for variables to resolve (a recursive routine)
+		function resolveArray(configArray, pass, recursionLevel) {
+			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.info("forceObjectsToLogger", "resolveArray", "pass", pass, "recursionLevel", recursionLevel, "configArray:", configArray);
+			for (var i = 0; i < configArray.length; i++) {
+				var value = configArray[i];
+				if (typeof value === "string" && value.indexOf("$") > -1) {
+					configArray[i] = resolveString(value);
+				} else if (value instanceof Array) {
+					resolveArray(value, pass, recursionLevel + 1); // array reference passed so don't need return value
+				} else if (typeof value === "object") {
+					resolveObject(value, pass, recursionLevel + 1); // object reference passed so don't need return value
+				}
+			}
+		}
+
+		/**
+   * Expand "variables" within a config object. Variables are strings that begin with "$".
+   * For instance, `finsemble.bar:"help", foo:$bar` would be expanded into `finsemble.bar:"help",foo:"help"`
+   * This is a recursive routine
+   */
+		function resolveObject(configObject, pass, recursionLevel) {
+			configObject = configObject || {}; // don't error on bad config
+			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.info("forceObjectsToLogger", "ConfigUtil.resolveConfigVariables:resolveObject", "pass", pass, "recursionLevel", recursionLevel, "configObject:", configObject);
+			Object.keys(configObject).forEach(function (key) {
+				var value = configObject[key];
+				if (typeof value === "string" && value.indexOf("$") > -1) {
+					configObject[key] = resolveString(value);
+				} else if (value instanceof Array) {
+					resolveArray(value, pass, recursionLevel + 1); // array reference passed so don't need return value
+				} else if (typeof value === "object") {
+					resolveObject(value, pass, recursionLevel + 1); // object reference passed so don't need return value
+				}
+			});
+		}
+
+		// since variables may be nested, keep resolving till no more left
+		while (needsAnotherPass) {
+			needsAnotherPass = false; // don't need another pass afterwards unless a variable is resolved somewhere in finsembleConfig
+			resolveObject(startingConfigObject, ++pass, 1);
+		}
+	};
+
+	// This does minimal processing of the manifest, just enough to support getting the router up, which is only expanding variables (e.g. moduleRoot) in the raw manifest
+	this.getExpandedRawManifest = function (callback, errorCB) {
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("ConfigUtil.getExpandedRawManifest starting");
+
+		function getRawManifest(callback, application, level) {
+			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getRawManifest", application, level);
+
+			application.getManifest(function (manifest) {
+				// get raw manifest
+				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getExpandedRawManifest: manifest retrieved. Pre-variable resolution", manifest);
+				self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables first time so can find config location
+				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getExpandedRawManifest:Complete. post-variable resolution", manifest);
+				callback(manifest);
+			}, function (err) {
+				if (err) {
+					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("ConfigUtil.getExpandedRawManifest:application.getManifest:err", err);
+					if (errorCb) errorCB();
+				}
+				// no manifest so try parent
+				application.getParentUuid(function (parentUuid) {
+					var parentApplication = __WEBPACK_IMPORTED_MODULE_2__system__["System"].Application.wrap(parentUuid);
+					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "uuid", parentUuid, "parentApplication", parentApplication);
+					if (level < 10) {
+						getRawManifest(callback, parentApplication, ++level);
+					} else {
+						// still could find so must be a problem (i.e. avoid infinite loop)
+						callback("could not find manifest in parent applications");
+					}
+				});
+			});
+		}
+
+		__WEBPACK_IMPORTED_MODULE_2__system__["System"].ready(function () {
+			// make sure system is ready
+			var application = __WEBPACK_IMPORTED_MODULE_2__system__["System"].Application.getCurrent();
+			getRawManifest(callback, application, 1);
+		});
+	};
+
+	// async read of JSON config file
+	this.readConfigFile = function (coreConfigFile, importCallback) {
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("fetching " + coreConfigFile);
+		fetch(coreConfigFile, {
+			credentials: "include"
+		}).then(function (response) {
+			return response.json();
+		}).catch(function (err) {
+			importCallback(`Failure importing ${coreConfigFile}: ${err}`, null);
+		}).then(function (importObject) {
+			importCallback(null, importObject);
+		});
+	};
+
+	// This does a "first stage" processing of the manifest, providing enough config to start finsemble.
+	// Pull in the initial manifest, which includes getting the "hidden" core config file along with its import definitions, and expand all variables.
+	// However, the full config processing, including actually doing the imports, is only done in the Config Service.
+	this.getInitialManifest = function (callback) {
+
+		__WEBPACK_IMPORTED_MODULE_2__system__["System"].ready(function () {
+			// make sure system is ready
+			var application = __WEBPACK_IMPORTED_MODULE_2__system__["System"].Application.getCurrent();
+			application.getManifest(function (manifest) {
+				// get raw manifest
+				manifest.finsemble = manifest.finsemble || {}; // don't error on bad config
+				self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables first time so can find config config location
+				let CORE_CONFIG = manifest.finsemble.moduleRoot + "/configs/core/config.json"; // <<<--- here is the "hidden" core config file
+				self.readConfigFile(CORE_CONFIG, function (error, newFinsembleConfigObject) {
+					// fetch the core config file
+					if (!error) {
+						Object.keys(newFinsembleConfigObject).forEach(function (key) {
+							if (key === "importConfig") {
+								// add any importConfig items from the core to the existing importConfig
+								manifest.finsemble.importConfig = manifest.finsemble.importConfig || [];
+								for (let i = 0; i < newFinsembleConfigObject.importConfig.length; i++) {
+									manifest.finsemble.importConfig.unshift(newFinsembleConfigObject.importConfig[i]);
+								}
+							} else if (key === "importThirdPartyConfig") {
+								// add any importThirdPartyConfig items from the core to the existing importConfig
+								manifest.finsemble.importThirdPartyConfig = manifest.finsemble.importThirdPartyConfig || [];
+								for (let i = 0; i < newFinsembleConfigObject.importThirdPartyConfig.length; i++) {
+									manifest.finsemble.importThirdPartyConfig.unshift(newFinsembleConfigObject.importThirdPartyConfig[i]);
+								}
+							} else {
+								manifest.finsemble[key] = newFinsembleConfigObject[key];
+							}
+						});
+						self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables with finsemble config
+						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getInitialManifest:getCoreConfig:Initial Manifest after variables Resolved", manifest);
+					} else {
+						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("ConfigUtil.getInitialManifest:getCoreConfig:failed importing into finsemble config.", error);
+					}
+					callback(manifest);
+				});
+			});
+		});
+	};
+
+	// output JSON object to file
+	this.promptAndSaveJSONToLocalFile = function (filename, jsonObject) {
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("saveJSONToLocalFile", filename, jsonObject);
+
+		let dataStr = JSON.stringify(jsonObject, null, "\t");
+		let dataUri = "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+
+		let exportFileDefaultName = filename + ".json";
+
+		let linkElement = document.createElement("a");
+		linkElement.setAttribute("href", dataUri);
+		linkElement.setAttribute("download", exportFileDefaultName);
+		linkElement.click();
+	};
+
+	// utility function for future use
+	this.configFormatForExport = function (typeOfConfig, configObject) {
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("configFormatForExport starting", typeOfConfig, configObject);
+		var exportConfig = __WEBPACK_IMPORTED_MODULE_0__util__["default"].clone(configObject);
+
+		if (typeOfConfig === "raw") {
+			// do nothing since config is ready to export as is
+		} else if (typeOfConfig === "all") {
+			delete exportConfig.importConfig;
+			delete exportConfig.comment;
+		} else if (typeOfConfig === "application") {
+			delete exportConfig.importConfig;
+			delete exportConfig.comment;
+			delete exportConfig.system;
+			delete exportConfig.services;
+		} else if (typeOfConfig === "workspace") {
+			exportConfig = { workspace: exportConfig };
+		} else if (typeOfConfig === "workspaceTemplate") {
+			let workspaceDefinition = {};
+			workspaceDefinition[exportConfig.name] = exportConfig;
+			exportConfig = { workspaceTemplates: workspaceDefinition };
+		} else if (typeOfConfig === "services") {
+			exportConfig = exportConfig.services;
+		} else if (typeOfConfig === "components") {
+			exportConfig = exportConfig.components;
+		}
+
+		return exportConfig;
+	};
+
+	/////////////////////////////////////////////////////////////////////////
+	/////////////// Remaining code is for config verification ///////////////
+	/////////////////////////////////////////////////////////////////////////
+
+	// convenience constructor to return record used in configVerifyObject.
+	this.VerifyConfigRecord = function (propertyType, propertyCondition) {
+		this._verify = {
+			type: propertyType,
+			condition: propertyCondition
+		};
+	};
+
+	// convenience constants for defining verification object. See example usage in ServiceManager or ConfigService.
+	// Required means startup will break without it, so error.
+	// Optional means startup will not break without it; however, it is documented and expected as part of the config that should always be there.  So warning message only.
+	// Deprecated mean startup will no break but old config format is used and should be updated.
+	this.REQUIRED_STRING = new this.VerifyConfigRecord("string", "required");
+	this.REQUIRED_OBJECT = new this.VerifyConfigRecord("object", "required");
+	this.REQUIRED_BOOLEAN = new this.VerifyConfigRecord("boolean", "required");
+	this.REQUIRED_ARRAY = new this.VerifyConfigRecord("array", "required");
+	this.OPTIONAL_EXPECTED_STRING = new this.VerifyConfigRecord("string", "optional");
+	this.OPTIONAL_EXPECTED_OBJECT = new this.VerifyConfigRecord("object", "optional");
+	this.OPTIONAL_EXPECTED_BOOLEAN = new this.VerifyConfigRecord("boolean", "optional");
+	this.OPTIONAL_EXPECTED_ARRAY = new this.VerifyConfigRecord("array", "optional");
+	this.DEPRECATED_STRING = new this.VerifyConfigRecord("string", "DEPRECATED");
+	this.DEPRECATED_OBJECT = new this.VerifyConfigRecord("object", "DEPRECATED");
+	this.DEPRECATED_BOOLEAN = new this.VerifyConfigRecord("boolean", "DEPRECATED");
+	this.DEPRECATED_ARRAY = new this.VerifyConfigRecord("array", "DEPRECATED");
+
+	// check type of one config property. Return true if ok; otherwise false. Must handle null configProperty (returning false).
+	function checkType(configProperty, type) {
+		var typeOk = true;
+		if (configProperty) {
+			if (type == "array") {
+				if (!Array.isArray(configProperty)) {
+					typeOk = false;
+				}
+			} else {
+				// note "array" type is being distinguished from "object" type, so configProperty type shouldn't be an array
+				if (Array.isArray(configProperty) || typeof configProperty !== type) {
+					typeOk = false;
+				}
+			}
+		} else {
+			typeOk = false;
+		}
+		return typeOk;
+	}
+
+	// Verifies one config property given it's corresponding verifyRecord and returns appropriate result.
+	function verifyConfigProperty(fullPathName, configProperty, verifyRecord) {
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose(`verifyConfigProperty for ${fullPathName}`, configProperty, verifyRecord);
+		var resultOk = true;
+		switch (verifyRecord._verify.condition) {
+			case "required":
+				resultOk = checkType(configProperty, verifyRecord._verify.type);
+				if (!resultOk) {
+					// required must exist and have correct type
+					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`Illegally formatted configuration.  Type of ${fullPathName} is not an expected ${verifyRecord._verify.type}`, configProperty, verifyRecord);
+				}
+				break;
+			case "optional":
+				if (!configProperty) {
+					// missing optional only generates warning
+					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.warn(`CONFIGURATION WARNING: Expected configuration missing for ${fullPathName}.`, configProperty, verifyRecord);
+				} else {
+					resultOk = checkType(configProperty, verifyRecord._verify.type);
+					if (!resultOk) {
+						// optional only errors with wrong type
+						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`Illegally formatted configuration. Type of ${fullPathName} is not an expected ${verifyRecord._verify.type}`, configProperty, verifyRecord);
+					}
+				}
+				break;
+			case "DEPRECATED":
+				if (configProperty) {
+					// DEPRECATED generates warning
+					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.warn(`CONFIGURATION WARNING: DEPRECATED configuration ${fullPathName}.`, configProperty, verifyRecord);
+					resultOk = checkType(configProperty, verifyRecord._verify.type);
+					if (!resultOk) {
+						// DEPRECATED only errors with wrong type
+						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`Config ${fullPathName} is DEPRECATED and illegally formatted.  Expected type is ${verifyRecord._verify.type}.`, configProperty, verifyRecord);
+					}
+				}
+				break;
+			default:
+				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`Illegally formatted config record.  Condition ${verifyRecord._verify.condition} unknown`, configProperty, verifyRecord);
+		}
+		return resultOk;
+	}
+
+	/**
+  * Verifies config is correct and logs messages as needed. Recursively walks configObject and configVerifyObject.
+  *
+  * @param {object} fullPathName path name of config being verified (e.g. "manifest", "manifest.finsemble"); used for error messages
+  * @param {object} configObject the configuration object to verify (typically the manifest object or manifest.finsemble object)
+  * @param {object} configVerifyObject object to drive the verification; data driven.
+  *
+  * Example configVerifyObject below.
+  * 		Note verification records (e.g. REQUIRED_STRING) only go at the leaf level, but code must handle corresponding undefined config at all levels.
+  *
+  * 		var configVerifyObject = {
+  *		finsemble: {
+  *			applicationRoot: REQUIRED_STRING,
+  *			moduleRoot: REQUIRED_STRING,
+  *			system: {
+  *				FSBLVersion: REQUIRED_STRING,
+  *				requiredServicesConfig: REQUIRED_OBJECT,
+  *			},
+  *			splinteringConfig: {
+  *				splinterAgents: OPTIONAL_EXPECTED_ARRAY
+  *			},
+  *			storage: {
+  *				LocalStorageAdapter: DEPRECATED_STRING
+  *			},
+  *		}
+  *	};
+ 	 *
+  *
+  * @returns If correct, return true (with no log messages generated); return false otherwise. For optional or DEPRECATED generate warning if not defined, but no error unless if wrong type.
+  *
+  * @example See ConfigService for example usage.
+  *
+  * @private
+  */
+	this.verifyConfigObject = function (fullPathName, configObject, configVerifyObject) {
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose(`verifyConfigObject for ${fullPathName}`, configObject, configVerifyObject);
+		var verifyConfigObjectOk = true;
+
+		if (configVerifyObject._verify) {
+			// currently config records only defined at leaf level (could enhance by allowing at any level)
+			verifyConfigObjectOk = verifyConfigProperty(fullPathName, configObject, configVerifyObject);
+		} else {
+			if (!configVerifyObject) {
+				// shouldn't happen unless by api input
+				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`configUtil.verify: configVerifyObject not defined for ${fullPathName}`, configObject, configVerifyObject);
+			} else {
+				var propertyList = Object.keys(configVerifyObject);
+				if (!propertyList) {
+					// shouldn't happen unless by api input
+					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`configUtil.verify: illegally formatted verification record for ${fullPathName}`, configObject, configVerifyObject);
+				} else {
+					// not at leaf level so recursively iterate though all the properties
+					for (let i = 0; i < propertyList.length; i++) {
+						let property = propertyList[i];
+						let thisPropertyPath = fullPathName + "." + property;
+						let thisConfigProperty = null;
+						if (configObject && property in configObject) {
+							thisConfigProperty = configObject[property];
+						}
+						// the order of the conditional (i.e. "&&") insures verification will continue after error(s)
+						verifyConfigObjectOk = this.verifyConfigObject(thisPropertyPath, thisConfigProperty, configVerifyObject[property]) && verifyConfigObjectOk;
+					}
+				}
+			}
+		}
+		return verifyConfigObjectOk;
+	};
+
+	/**
+  * Convenience function to get a default value from config.
+  *
+  * @param {object} base base path of config object
+  * @param {string} path path string of config property
+  * @param {any} defaultValue if path value not defined or null, then use default value
+  *
+  * @returns {object} return config value or default value
+  *
+  * @example
+  *
+  *		defaultAdaptor = ConfigUtil.getDefault(manifest, "manifest.finsemble.defaultStorage", "LocalStorageAdapter");
+  *		sameDomainTransport = ConfigUtil.getDefault(finConfig, "finConfig.router.sameDomainTransport", "SharedWorker");
+  *		var serverAddress = getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress", "ws://127.0.0.1:3376");
+  *
+  */
+	this.getDefault = function (base, path, defaultValue) {
+		var result = defaultValue;
+		if (base) {
+			try {
+				let properties = path.split(".");
+				let currentValue = base;
+				for (let i = 1; i < properties.length; i++) {
+					currentValue = currentValue[properties[i]];
+				}
+				result = currentValue;
+			} catch (err) {
+				result = defaultValue;
+			}
+
+			if (typeof result === "undefined") result = defaultValue;
+		}
+		return result;
+	};
+};
+
+const ConfigUtilInstance = new ConfigUtil();
+/* harmony export (immutable) */ __webpack_exports__["ConfigUtilInstance"] = ConfigUtilInstance;
+
+
+/***/ }),
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module, setImmediate, process) {(function (global, factory) {
@@ -10532,505 +11539,276 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(24)(module), __webpack_require__(63).setImmediate, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5), __webpack_require__(28)(module), __webpack_require__(69).setImmediate, __webpack_require__(3)))
 
 /***/ }),
-/* 23 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-exports.__esModule = true;
+/**
+ * A worker that does nothing but passing chunks to the next one. This is like
+ * a nodejs stream but with some differences. On the good side :
+ * - it works on IE 6-9 without any issue / polyfill
+ * - it weights less than the full dependencies bundled with browserify
+ * - it forwards errors (no need to declare an error handler EVERYWHERE)
+ *
+ * A chunk is an object with 2 attributes : `meta` and `data`. The former is an
+ * object containing anything (`percent` for example), see each worker for more
+ * details. The latter is the real data (String, Uint8Array, etc).
+ *
+ * @constructor
+ * @param {String} name the name of the stream (mainly used for debugging purposes)
+ */
+function GenericWorker(name) {
+    // the name of the worker
+    this.name = name || "default";
+    // an object containing metadata about the workers chain
+    this.streamInfo = {};
+    // an error which happened when the worker was paused
+    this.generatedError = null;
+    // an object containing metadata to be merged by this worker into the general metadata
+    this.extraStreamInfo = {};
+    // true if the stream is paused (and should not do anything), false otherwise
+    this.isPaused = true;
+    // true if the stream is finished (and should not do anything), false otherwise
+    this.isFinished = false;
+    // true if the stream is locked to prevent further structure updates (pipe), false otherwise
+    this.isLocked = false;
+    // the event listeners
+    this._listeners = {
+        'data':[],
+        'end':[],
+        'error':[]
+    };
+    // the previous worker, if any
+    this.previous = null;
+}
 
-var _assign = __webpack_require__(241);
+GenericWorker.prototype = {
+    /**
+     * Push a chunk to the next workers.
+     * @param {Object} chunk the chunk to push
+     */
+    push : function (chunk) {
+        this.emit("data", chunk);
+    },
+    /**
+     * End the stream.
+     * @return {Boolean} true if this call ended the worker, false otherwise.
+     */
+    end : function () {
+        if (this.isFinished) {
+            return false;
+        }
 
-var _assign2 = _interopRequireDefault(_assign);
+        this.flush();
+        try {
+            this.emit("end");
+            this.cleanUp();
+            this.isFinished = true;
+        } catch (e) {
+            this.emit("error", e);
+        }
+        return true;
+    },
+    /**
+     * End the stream with an error.
+     * @param {Error} e the error which caused the premature end.
+     * @return {Boolean} true if this call ended the worker with an error, false otherwise.
+     */
+    error : function (e) {
+        if (this.isFinished) {
+            return false;
+        }
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+        if(this.isPaused) {
+            this.generatedError = e;
+        } else {
+            this.isFinished = true;
 
-exports.default = _assign2.default || function (target) {
-  for (var i = 1; i < arguments.length; i++) {
-    var source = arguments[i];
+            this.emit("error", e);
 
-    for (var key in source) {
-      if (Object.prototype.hasOwnProperty.call(source, key)) {
-        target[key] = source[key];
-      }
+            // in the workers chain exploded in the middle of the chain,
+            // the error event will go downward but we also need to notify
+            // workers upward that there has been an error.
+            if(this.previous) {
+                this.previous.error(e);
+            }
+
+            this.cleanUp();
+        }
+        return true;
+    },
+    /**
+     * Add a callback on an event.
+     * @param {String} name the name of the event (data, end, error)
+     * @param {Function} listener the function to call when the event is triggered
+     * @return {GenericWorker} the current object for chainability
+     */
+    on : function (name, listener) {
+        this._listeners[name].push(listener);
+        return this;
+    },
+    /**
+     * Clean any references when a worker is ending.
+     */
+    cleanUp : function () {
+        this.streamInfo = this.generatedError = this.extraStreamInfo = null;
+        this._listeners = [];
+    },
+    /**
+     * Trigger an event. This will call registered callback with the provided arg.
+     * @param {String} name the name of the event (data, end, error)
+     * @param {Object} arg the argument to call the callback with.
+     */
+    emit : function (name, arg) {
+        if (this._listeners[name]) {
+            for(var i = 0; i < this._listeners[name].length; i++) {
+                this._listeners[name][i].call(this, arg);
+            }
+        }
+    },
+    /**
+     * Chain a worker with an other.
+     * @param {Worker} next the worker receiving events from the current one.
+     * @return {worker} the next worker for chainability
+     */
+    pipe : function (next) {
+        return next.registerPrevious(this);
+    },
+    /**
+     * Same as `pipe` in the other direction.
+     * Using an API with `pipe(next)` is very easy.
+     * Implementing the API with the point of view of the next one registering
+     * a source is easier, see the ZipFileWorker.
+     * @param {Worker} previous the previous worker, sending events to this one
+     * @return {Worker} the current worker for chainability
+     */
+    registerPrevious : function (previous) {
+        if (this.isLocked) {
+            throw new Error("The stream '" + this + "' has already been used.");
+        }
+
+        // sharing the streamInfo...
+        this.streamInfo = previous.streamInfo;
+        // ... and adding our own bits
+        this.mergeStreamInfo();
+        this.previous =  previous;
+        var self = this;
+        previous.on('data', function (chunk) {
+            self.processChunk(chunk);
+        });
+        previous.on('end', function () {
+            self.end();
+        });
+        previous.on('error', function (e) {
+            self.error(e);
+        });
+        return this;
+    },
+    /**
+     * Pause the stream so it doesn't send events anymore.
+     * @return {Boolean} true if this call paused the worker, false otherwise.
+     */
+    pause : function () {
+        if(this.isPaused || this.isFinished) {
+            return false;
+        }
+        this.isPaused = true;
+
+        if(this.previous) {
+            this.previous.pause();
+        }
+        return true;
+    },
+    /**
+     * Resume a paused stream.
+     * @return {Boolean} true if this call resumed the worker, false otherwise.
+     */
+    resume : function () {
+        if(!this.isPaused || this.isFinished) {
+            return false;
+        }
+        this.isPaused = false;
+
+        // if true, the worker tried to resume but failed
+        var withError = false;
+        if(this.generatedError) {
+            this.error(this.generatedError);
+            withError = true;
+        }
+        if(this.previous) {
+            this.previous.resume();
+        }
+
+        return !withError;
+    },
+    /**
+     * Flush any remaining bytes as the stream is ending.
+     */
+    flush : function () {},
+    /**
+     * Process a chunk. This is usually the method overridden.
+     * @param {Object} chunk the chunk to process.
+     */
+    processChunk : function(chunk) {
+        this.push(chunk);
+    },
+    /**
+     * Add a key/value to be added in the workers chain streamInfo once activated.
+     * @param {String} key the key to use
+     * @param {Object} value the associated value
+     * @return {Worker} the current worker for chainability
+     */
+    withStreamInfo : function (key, value) {
+        this.extraStreamInfo[key] = value;
+        this.mergeStreamInfo();
+        return this;
+    },
+    /**
+     * Merge this worker's streamInfo into the chain's streamInfo.
+     */
+    mergeStreamInfo : function () {
+        for(var key in this.extraStreamInfo) {
+            if (!this.extraStreamInfo.hasOwnProperty(key)) {
+                continue;
+            }
+            this.streamInfo[key] = this.extraStreamInfo[key];
+        }
+    },
+
+    /**
+     * Lock the stream to prevent further updates on the workers chain.
+     * After calling this method, all calls to pipe will fail.
+     */
+    lock: function () {
+        if (this.isLocked) {
+            throw new Error("The stream '" + this + "' has already been used.");
+        }
+        this.isLocked = true;
+        if (this.previous) {
+            this.previous.lock();
+        }
+    },
+
+    /**
+     *
+     * Pretty print the workers chain.
+     */
+    toString : function () {
+        var me = "Worker " + this.name;
+        if (this.previous) {
+            return this.previous + " -> " + me;
+        } else {
+            return me;
+        }
     }
-  }
-
-  return target;
 };
 
-/***/ }),
-/* 24 */
-/***/ (function(module, exports) {
-
-module.exports = function(module) {
-	if(!module.webpackPolyfill) {
-		module.deprecate = function() {};
-		module.paths = [];
-		// module.parent = undefined by default
-		if(!module.children) module.children = [];
-		Object.defineProperty(module, "loaded", {
-			enumerable: true,
-			get: function() {
-				return module.l;
-			}
-		});
-		Object.defineProperty(module, "id", {
-			enumerable: true,
-			get: function() {
-				return module.i;
-			}
-		});
-		module.webpackPolyfill = 1;
-	}
-	return module;
-};
-
-
-/***/ }),
-/* 25 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__util__ = __webpack_require__(17);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__system__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__system__);
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-
-
-
-
-
-
-var ConfigUtil = function () {
-
-	var self = this;
-
-	/**
-  * @introduction
-  * <h2>Finsemble Configuration Utility Functions</h2>
-  * @private
-  * @class ConfigUtil
-  */
-	// run through the configuration object and resolve any variables definitions (i.e. $applicationRoot)
-	this.resolveConfigVariables = function (finsembleConfig, startingConfigObject) {
-		var pass = 0;
-		var needsAnotherPass = true;
-
-		/**
-   * Called by resolveObject().
-   * This function parses a string to find variables.
-   * It looks up the value of any identified variables, replacing them in the string.
-   * The completed string is then returned.
-   * @TODO convert this function to use an actual tokenizer?
-   **/
-		function resolveString(configString) {
-			var delimiters = /[/\\:?=&\s]/; // delimiters in regex form
-			var tokens = configString.split(delimiters);
-			for (var i = 0; i < tokens.length; i++) {
-				if (tokens[i][0] === "$") {
-					// special variable character $ has to first char in string
-					var variableReference = tokens[i].substring(1); // string off the leading $
-					var variableResolution = finsembleConfig[variableReference]; // the variable value is another config property, which already must be set
-					var newValue = configString.replace(tokens[i], variableResolution); // replace the variable reference with new value
-					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.info("forceObjectsToLogger", "ConfigUtil.resolveConfigVariables:resolveString configString", tokens[i], variableReference, variableResolution, "old value=", configString, "value=", newValue);
-					needsAnotherPass = true; // <<-- here is the only place needsAnotherPass is set, since still resolving variables
-					configString = newValue;
-				}
-			}
-			return configString;
-		}
-
-		// process an array of config items looking for variables to resolve (a recursive routine)
-		function resolveArray(configArray, pass, recursionLevel) {
-			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.info("forceObjectsToLogger", "resolveArray", "pass", pass, "recursionLevel", recursionLevel, "configArray:", configArray);
-			for (var i = 0; i < configArray.length; i++) {
-				var value = configArray[i];
-				if (typeof value === "string" && value.indexOf("$") > -1) {
-					configArray[i] = resolveString(value);
-				} else if (value instanceof Array) {
-					resolveArray(value, pass, recursionLevel + 1); // array reference passed so don't need return value
-				} else if (typeof value === "object") {
-					resolveObject(value, pass, recursionLevel + 1); // object reference passed so don't need return value
-				}
-			}
-		}
-
-		/**
-   * Expand "variables" within a config object. Variables are strings that begin with "$".
-   * For instance, `finsemble.bar:"help", foo:$bar` would be expanded into `finsemble.bar:"help",foo:"help"`
-   * This is a recursive routine
-   */
-		function resolveObject(configObject, pass, recursionLevel) {
-			configObject = configObject || {}; // don't error on bad config
-			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.info("forceObjectsToLogger", "ConfigUtil.resolveConfigVariables:resolveObject", "pass", pass, "recursionLevel", recursionLevel, "configObject:", configObject);
-			Object.keys(configObject).forEach(function (key) {
-				var value = configObject[key];
-				if (typeof value === "string" && value.indexOf("$") > -1) {
-					configObject[key] = resolveString(value);
-				} else if (value instanceof Array) {
-					resolveArray(value, pass, recursionLevel + 1); // array reference passed so don't need return value
-				} else if (typeof value === "object") {
-					resolveObject(value, pass, recursionLevel + 1); // object reference passed so don't need return value
-				}
-			});
-		}
-
-		// since variables may be nested, keep resolving till no more left
-		while (needsAnotherPass) {
-			needsAnotherPass = false; // don't need another pass afterwards unless a variable is resolved somewhere in finsembleConfig
-			resolveObject(startingConfigObject, ++pass, 1);
-		}
-	};
-
-	// This does minimal processing of the manifest, just enough to support getting the router up, which is only expanding variables (e.g. moduleRoot) in the raw manifest
-	this.getExpandedRawManifest = function (callback, errorCB) {
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("ConfigUtil.getExpandedRawManifest starting");
-
-		function getRawManifest(callback, application, level) {
-			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getRawManifest", application, level);
-
-			application.getManifest(function (manifest) {
-				// get raw openfin manifest
-				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getExpandedRawManifest: manifest retrieved. Pre-variable resolution", manifest);
-				self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables first time so can find config location
-				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getExpandedRawManifest:Complete. post-variable resolution", manifest);
-				callback(manifest);
-			}, function (err) {
-				if (err) {
-					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("ConfigUtil.getExpandedRawManifest:application.getManifest:err", err);
-					if (errorCb) errorCB();
-				}
-				// no manifest so try parent
-				application.getParentUuid(function (parentUuid) {
-					var parentApplication = __WEBPACK_IMPORTED_MODULE_2__system__["System"].Application.wrap(parentUuid);
-					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "uuid", parentUuid, "parentApplication", parentApplication);
-					if (level < 10) {
-						getRawManifest(callback, parentApplication, ++level);
-					} else {
-						// still could find so must be a problem (i.e. avoid infinite loop)
-						callback("could not find manifest in parent applications");
-					}
-				});
-			});
-		}
-
-		__WEBPACK_IMPORTED_MODULE_2__system__["System"].ready(function () {
-			// make sure openfin is ready
-			var application = __WEBPACK_IMPORTED_MODULE_2__system__["System"].Application.getCurrent();
-			getRawManifest(callback, application, 1);
-		});
-	};
-
-	// async read of JSON config file
-	this.readConfigFile = function (coreConfigFile, importCallback) {
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("fetching " + coreConfigFile);
-		fetch(coreConfigFile, {
-			credentials: "include"
-		}).then(function (response) {
-			return response.json();
-		}).catch(function (err) {
-			importCallback("failure importing: " + err, null);
-		}).then(function (importObject) {
-			importCallback(null, importObject);
-		});
-	};
-
-	// This does a "first stage" processing of the manifest, providing enough config to start finsemble.
-	// Pull in the initial manifest, which includes getting the "hidden" core config file along with its import definitions, and expand all variables.
-	// However, the full config processing, including actually doing the imports, is only done in the Config Service.
-	this.getInitialManifest = function (callback) {
-
-		__WEBPACK_IMPORTED_MODULE_2__system__["System"].ready(function () {
-			// make sure openfin is ready
-			var application = __WEBPACK_IMPORTED_MODULE_2__system__["System"].Application.getCurrent();
-			application.getManifest(function (manifest) {
-				// get raw openfin manifest
-				manifest.finsemble = manifest.finsemble || {}; // don't error on bad config
-				self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables first time so can find config config location
-				let CORE_CONFIG = manifest.finsemble.moduleRoot + "/configs/core/config.json"; // <<<--- here is the "hidden" core config file
-				self.readConfigFile(CORE_CONFIG, function (error, newFinsembleConfigObject) {
-					// fetch the core config file
-					if (!error) {
-						Object.keys(newFinsembleConfigObject).forEach(function (key) {
-							if (key === "importConfig") {
-								// add any importConfig items from the core to the existing importConfig
-								manifest.finsemble.importConfig = manifest.finsemble.importConfig || [];
-								for (let i = 0; i < newFinsembleConfigObject.importConfig.length; i++) {
-									manifest.finsemble.importConfig.unshift(newFinsembleConfigObject.importConfig[i]);
-								}
-							} else if (key === "importThirdPartyConfig") {
-								// add any importThirdPartyConfig items from the core to the existing importConfig
-								manifest.finsemble.importThirdPartyConfig = manifest.finsemble.importThirdPartyConfig || [];
-								for (let i = 0; i < newFinsembleConfigObject.importThirdPartyConfig.length; i++) {
-									manifest.finsemble.importThirdPartyConfig.unshift(newFinsembleConfigObject.importThirdPartyConfig[i]);
-								}
-							} else {
-								manifest.finsemble[key] = newFinsembleConfigObject[key];
-							}
-						});
-						self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables with finsemble config
-						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getInitialManifest:getCoreConfig:Initial Manifest after variables Resolved", manifest);
-					} else {
-						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("ConfigUtil.getInitialManifest:getCoreConfig:failed importing into finsemble config", error);
-					}
-					callback(manifest);
-				});
-			});
-		});
-	};
-
-	// output JSON object to file
-	this.promptAndSaveJSONToLocalFile = function (filename, jsonObject) {
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("saveJSONToLocalFile", filename, jsonObject);
-
-		let dataStr = JSON.stringify(jsonObject, null, "\t");
-		let dataUri = "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
-
-		let exportFileDefaultName = filename + ".json";
-
-		let linkElement = document.createElement("a");
-		linkElement.setAttribute("href", dataUri);
-		linkElement.setAttribute("download", exportFileDefaultName);
-		linkElement.click();
-	};
-
-	// utility function for future use
-	this.configFormatForExport = function (typeOfConfig, configObject) {
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("configFormatForExport starting", typeOfConfig, configObject);
-		var exportConfig = __WEBPACK_IMPORTED_MODULE_0__util__["default"].clone(configObject);
-
-		if (typeOfConfig === "raw") {
-			// do nothing since config is ready to export as is
-		} else if (typeOfConfig === "all") {
-			delete exportConfig.importConfig;
-			delete exportConfig.comment;
-		} else if (typeOfConfig === "application") {
-			delete exportConfig.importConfig;
-			delete exportConfig.comment;
-			delete exportConfig.system;
-			delete exportConfig.services;
-		} else if (typeOfConfig === "workspace") {
-			exportConfig = { workspace: exportConfig };
-		} else if (typeOfConfig === "workspaceTemplate") {
-			let workspaceDefinition = {};
-			workspaceDefinition[exportConfig.name] = exportConfig;
-			exportConfig = { workspaceTemplates: workspaceDefinition };
-		} else if (typeOfConfig === "services") {
-			exportConfig = exportConfig.services;
-		} else if (typeOfConfig === "components") {
-			exportConfig = exportConfig.components;
-		}
-
-		return exportConfig;
-	};
-
-	/////////////////////////////////////////////////////////////////////////
-	/////////////// Remaining code is for config verification ///////////////
-	/////////////////////////////////////////////////////////////////////////
-
-	// convenience constructor to return record used in configVerifyObject.
-	this.VerifyConfigRecord = function (propertyType, propertyCondition) {
-		this._verify = {
-			type: propertyType,
-			condition: propertyCondition
-		};
-	};
-
-	// convenience constants for defining verification object. See example usage in ServiceManager or ConfigService.
-	// Required means startup will break without it, so error.
-	// Optional means startup will not break without it; however, it is documented and expected as part of the config that should always be there.  So warning message only.
-	// Deprecated mean startup will no break but old config format is used and should be updated.
-	this.REQUIRED_STRING = new this.VerifyConfigRecord("string", "required");
-	this.REQUIRED_OBJECT = new this.VerifyConfigRecord("object", "required");
-	this.REQUIRED_BOOLEAN = new this.VerifyConfigRecord("boolean", "required");
-	this.REQUIRED_ARRAY = new this.VerifyConfigRecord("array", "required");
-	this.OPTIONAL_EXPECTED_STRING = new this.VerifyConfigRecord("string", "optional");
-	this.OPTIONAL_EXPECTED_OBJECT = new this.VerifyConfigRecord("object", "optional");
-	this.OPTIONAL_EXPECTED_BOOLEAN = new this.VerifyConfigRecord("boolean", "optional");
-	this.OPTIONAL_EXPECTED_ARRAY = new this.VerifyConfigRecord("array", "optional");
-	this.DEPRECATED_STRING = new this.VerifyConfigRecord("string", "DEPRECATED");
-	this.DEPRECATED_OBJECT = new this.VerifyConfigRecord("object", "DEPRECATED");
-	this.DEPRECATED_BOOLEAN = new this.VerifyConfigRecord("boolean", "DEPRECATED");
-	this.DEPRECATED_ARRAY = new this.VerifyConfigRecord("array", "DEPRECATED");
-
-	// check type of one config property. Return true if ok; otherwise false. Must handle null configProperty (returning false).
-	function checkType(configProperty, type) {
-		var typeOk = true;
-		if (configProperty) {
-			if (type == "array") {
-				if (!Array.isArray(configProperty)) {
-					typeOk = false;
-				}
-			} else {
-				// note "array" type is being distinguished from "object" type, so configProperty type shouldn't be an array
-				if (Array.isArray(configProperty) || typeof configProperty !== type) {
-					typeOk = false;
-				}
-			}
-		} else {
-			typeOk = false;
-		}
-		return typeOk;
-	}
-
-	// Verifies one config property given it's corresponding verifyRecord and returns appropriate result.
-	function verifyConfigProperty(fullPathName, configProperty, verifyRecord) {
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose(`verifyConfigProperty for ${fullPathName}`, configProperty, verifyRecord);
-		var resultOk = true;
-		switch (verifyRecord._verify.condition) {
-			case "required":
-				resultOk = checkType(configProperty, verifyRecord._verify.type);
-				if (!resultOk) {
-					// required must exist and have correct type
-					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`Illegally formatted configuration.  Type of ${fullPathName} is not an expected ${verifyRecord._verify.type}`, configProperty, verifyRecord);
-				}
-				break;
-			case "optional":
-				if (!configProperty) {
-					// missing optional only generates warning
-					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.warn(`CONFIGURATION WARNING: Expected configuration missing for ${fullPathName}.`, configProperty, verifyRecord);
-				} else {
-					resultOk = checkType(configProperty, verifyRecord._verify.type);
-					if (!resultOk) {
-						// optional only errors with wrong type
-						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`Illegally formatted configuration. Type of ${fullPathName} is not an expected ${verifyRecord._verify.type}`, configProperty, verifyRecord);
-					}
-				}
-				break;
-			case "DEPRECATED":
-				if (configProperty) {
-					// DEPRECATED generates warning
-					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.warn(`CONFIGURATION WARNING: DEPRECATED configuration ${fullPathName}.`, configProperty, verifyRecord);
-					resultOk = checkType(configProperty, verifyRecord._verify.type);
-					if (!resultOk) {
-						// DEPRECATED only errors with wrong type
-						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`Config ${fullPathName} is DEPRECATED and illegally formatted.  Expected type is ${verifyRecord._verify.type}.`, configProperty, verifyRecord);
-					}
-				}
-				break;
-			default:
-				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`Illegally formatted config record.  Condition ${verifyRecord._verify.condition} unknown`, configProperty, verifyRecord);
-		}
-		return resultOk;
-	}
-
-	/**
-  * Verifies config is correct and logs messages as needed. Recursively walks configObject and configVerifyObject.
-  *
-  * @param {object} fullPathName path name of config being verified (e.g. "manifest", "manifest.finsemble"); used for error messages
-  * @param {object} configObject the configuration object to verify (typically the manifest object or manifest.finsemble object)
-  * @param {object} configVerifyObject object to drive the verification; data driven.
-  *
-  * Example configVerifyObject below.
-  * 		Note verification records (e.g. REQUIRED_STRING) only go at the leaf level, but code must handle corresponding undefined config at all levels.
-  *
-  * 		var configVerifyObject = {
-  *		finsemble: {
-  *			applicationRoot: REQUIRED_STRING,
-  *			moduleRoot: REQUIRED_STRING,
-  *			system: {
-  *				FSBLVersion: REQUIRED_STRING,
-  *				requiredServicesConfig: REQUIRED_OBJECT,
-  *			},
-  *			splinteringConfig: {
-  *				splinterAgents: OPTIONAL_EXPECTED_ARRAY
-  *			},
-  *			storage: {
-  *				LocalStorageAdapter: DEPRECATED_STRING
-  *			},
-  *		}
-  *	};
- 	 *
-  *
-  * @returns If correct, return true (with no log messages generated); return false otherwise. For optional or DEPRECATED generate warning if not defined, but no error unless if wrong type.
-  *
-  * @example See ConfigService for example usage.
-  *
-  * @private
-  */
-	this.verifyConfigObject = function (fullPathName, configObject, configVerifyObject) {
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose(`verifyConfigObject for ${fullPathName}`, configObject, configVerifyObject);
-		var verifyConfigObjectOk = true;
-
-		if (configVerifyObject._verify) {
-			// currently config records only defined at leaf level (could enhance by allowing at any level)
-			verifyConfigObjectOk = verifyConfigProperty(fullPathName, configObject, configVerifyObject);
-		} else {
-			if (!configVerifyObject) {
-				// shouldn't happen unless by api input
-				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`configUtil.verify: configVerifyObject not defined for ${fullPathName}`, configObject, configVerifyObject);
-			} else {
-				var propertyList = Object.keys(configVerifyObject);
-				if (!propertyList) {
-					// shouldn't happen unless by api input
-					__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(`configUtil.verify: illegally formatted verification record for ${fullPathName}`, configObject, configVerifyObject);
-				} else {
-					// not at leaf level so recursively iterate though all the properties
-					for (let i = 0; i < propertyList.length; i++) {
-						let property = propertyList[i];
-						let thisPropertyPath = fullPathName + "." + property;
-						let thisConfigProperty = null;
-						if (configObject && property in configObject) {
-							thisConfigProperty = configObject[property];
-						}
-						// the order of the conditional (i.e. "&&") insures verification will continue after error(s)
-						verifyConfigObjectOk = this.verifyConfigObject(thisPropertyPath, thisConfigProperty, configVerifyObject[property]) && verifyConfigObjectOk;
-					}
-				}
-			}
-		}
-		return verifyConfigObjectOk;
-	};
-
-	/**
-  * Convenience function to get a default value from config.
-  *
-  * @param {object} base base path of config object
-  * @param {string} path path string of config property
-  * @param {any} defaultValue if path value not defined or null, then use default value
-  *
-  * @returns {object} return config value or default value
-  *
-  * @example
-  *
-  *		defaultAdaptor = ConfigUtil.getDefault(manifest, "manifest.finsemble.defaultStorage", "LocalStorageAdapter");
-  *		sameDomainTransport = ConfigUtil.getDefault(finConfig, "finConfig.router.sameDomainTransport", "SharedWorker");
-  *		var serverAddress = getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress", "ws://127.0.0.1:3376");
-  *
-  */
-	this.getDefault = function (base, path, defaultValue) {
-		var result = defaultValue;
-		if (base) {
-			try {
-				let properties = path.split(".");
-				let currentValue = base;
-				for (let i = 1; i < properties.length; i++) {
-					currentValue = currentValue[properties[i]];
-				}
-				result = currentValue;
-			} catch (err) {
-				result = defaultValue;
-			}
-
-			if (typeof result === "undefined") result = defaultValue;
-		}
-		return result;
-	};
-};
-
-const ConfigUtilInstance = new ConfigUtil();
-/* harmony export (immutable) */ __webpack_exports__["ConfigUtilInstance"] = ConfigUtilInstance;
+module.exports = GenericWorker;
 
 
 /***/ }),
@@ -11053,6 +11831,26 @@ exports.SERVICE_INITIALIZING_CHANNEL = "Finsemble.ServiceManager.serviceInitiali
 exports.SERVICE_READY_CHANNEL = "Finsemble.ServiceManager.serviceReady";
 exports.SERVICE_CLOSING_CHANNEL = "Finsemble.ServiceManager.serviceClosing";
 exports.SERVICE_CLOSED_CHANNEL = "Finsemble.ServiceManager.serviceClosed";
+// Naming to supports handshake betwwen each client and its corresponding service
+// Returns the handshake channel for a given service name
+exports.SERVICE_QUERY_READY_CHANNEL = (name) => { return `Finsemble.ServiceManager.queryReady.${name}`; };
+// Maps a client name to its corresponding service name.  Okay to not include all clients here -- if not here then handshake won't be done
+exports.CLIENT_SERVER_MAPPING = (name) => {
+    const MAPPING = {
+        "authenticationClient": "authenticationService",
+        "configClient": "configService",
+        "distributedStoreClient": "dataStoreService",
+        "hotkeysClient": "hotkeysService",
+        "linkerClient": "linkerService",
+        "logger": "loggerService",
+        "searchClient": "searchService",
+        "storageClient": "storageService",
+        "windowClient": "windowService",
+        "workspaceClient": "workspaceService"
+    };
+    // returns undefined if there is no mapping
+    return MAPPING[name];
+};
 //This channel is where the aggregated state of all services is sent out on.
 exports.SERVICES_STATE_CHANNEL = "Finsemble.State.Services";
 exports.WINDOWSTATE = {
@@ -11068,11 +11866,11 @@ exports.DOCKING = {
     GROUP_UPDATE: "DockingService.groupUpdate",
     // For legacy reasons, this is named Workspace, even though it's generated by docking.
     WORKSPACE_GROUP_UPDATE: "Finsemble.WorkspaceService.groupUpdate",
+    REQUEST_PUBLISH: "DockingService.requestGroupDataPublish",
 };
 // These channels are for interrupting events
 exports.EVENT_INTERRUPT_CHANNEL = "Finsemble.Event.Interrupt";
 exports.INTERRUPTIBLE_EVENTS = ["close-requested", "closed", "close-complete", "_container-close-handlers"];
-exports.REMOTE_FOCUS = "WindowService.remoteFocus";
 exports.WORKSPACE = {
     CLEAN_SHUTDOWN: "Finsemble.Workspace.cleanShutdown",
     UPDATE_PUBSUB: "Finsemble.WorkspaceService.update",
@@ -11125,6 +11923,11 @@ exports.WORKSPACE = {
         REMOVE_WINDOW: "WorkspaceService.removeWindow",
     }
 };
+exports.WINDOW_SERVICE_REQUESTS = {
+    REMOTE_FOCUS: "WindowService.remoteFocus",
+    SET_ALWAYS_ON_TOP: "WindowService-Request-setAlwaysOnTop",
+    IS_ALWAYS_ON_TOP: "WindowService-Request-isAlwaysOnTop",
+};
 exports.COMPONENT_STATE_STORAGE_TOPIC = "finsemble.componentStateStorage";
 exports.HEARTBEAT_TIMEOUT_CHANNEL = "Finsemble.WindowService.HeartbeatTimeout";
 exports.LAUNCHER_SERVICE = {
@@ -11145,620 +11948,902 @@ exports.MOVE_REASON = {
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+
+
+exports.__esModule = true;
+
+var _assign = __webpack_require__(269);
+
+var _assign2 = _interopRequireDefault(_assign);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+exports.default = _assign2.default || function (target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i];
+
+    for (var key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    }
+  }
+
+  return target;
+};
+
+/***/ }),
+/* 28 */
+/***/ (function(module, exports) {
+
+module.exports = function(module) {
+	if(!module.webpackPolyfill) {
+		module.deprecate = function() {};
+		module.paths = [];
+		// module.parent = undefined by default
+		if(!module.children) module.children = [];
+		Object.defineProperty(module, "loaded", {
+			enumerable: true,
+			get: function() {
+				return module.l;
+			}
+		});
+		Object.defineProperty(module, "id", {
+			enumerable: true,
+			get: function() {
+				return module.i;
+			}
+		});
+		module.webpackPolyfill = 1;
+	}
+	return module;
+};
+
+
+/***/ }),
+/* 29 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
 /*!
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
-
-Object.defineProperty(exports, "__esModule", { value: true });
+const baseClient_1 = __webpack_require__(11);
+const windowClient_1 = __webpack_require__(76);
+const util = __webpack_require__(12);
 const validate_1 = __webpack_require__(18); // Finsemble args validator
-const baseClient_1 = __webpack_require__(12);
-const async_1 = __webpack_require__(22);
-const logger_1 = __webpack_require__(3);
+const system_1 = __webpack_require__(4);
+const logger_1 = __webpack_require__(1);
+const FinsembleWindow_1 = __webpack_require__(38);
+/** The global `window` object. We cast it to a specific interface here to be
+ * explicit about what Finsemble-related properties it may have. */
+const Globals = window;
 /**
+ * An object that includes all the potential identifications for a window.
+ * For instance, one can try and obtain a reference for a window if some of these values are known.
+ *
+ * @typedef WindowIdentifier
+ * @property {string} [windowName] The name of the physical HTML window, or a reference to a native window that was launched with Assimilation service
+ * @property {string} [uuid] Optional uuid of a particular application process
+ * @property {string} [componentType] The type of component
+ * @property {number|string} [monitor] The number of the monitor. Potentially used to disambiguate multiple components with the same name (for searches only)
+ */
+/**
+ * Finsemble windowDescriptor.
+ * The windowDescriptor includes the following values.
+ *
+ * @typedef WindowDescriptor
+ * @property {string} [url] url to load (if HTML5 component).
+ * @property {string} [native] The name of the native app (if a native component launched by Assimilation service).
+ * @property {string} name The name of the window (sometimes randomly assigned).
+ * @property {string} componentType The type of component (from <i>components.json</i>).
+ */
+// A map of related menus that is kept by handleToggle.
+var okayToOpenMenu = {};
+/**
+ *
  * @introduction
- * <h2>Config Client</h2>
+ * <h2>Launcher Client (Finsemble Workspaces)</h2>
  *
- * This client provides run-time access to Finsemble's configuration.
- * The Config Client functions similar to a global store created with the Distributed Store Client and offers many of the same methods.
- * Values modified at runtime are not persisted.
+ * The Launcher Client handles spawning windows of all kinds.
+ * Finsemble provides the architecture to launch, resize, and reposition any component, whether native, modern, or third-party.
  *
  *
- * See the [Configuration tutorial](tutorial-Configuration.html) for a configuration overview.
+ * The Launcher API has capabilities to customize your end user's experience.
+ * This includes CSS-like positioning and a fully display-aware positioning that deals with idiosyncrasies such as monitors with different scaling resolutions.
+ *
+ *
+ * CSS provides higher level abstractions that aid in laying out an application that is composed of constituent parts.
+ * Finsemble has borrowed CSS’s positioning paradigm and applied it to the task of laying out windows on the desktop.
+ * This CSS-style positioning allows windows to be positioned on the `left`, `right`, `top`, or `bottom` of the end user’s screen for instance; we also developed new positions, such as `adjacent`, which allows a child window to spawn adjacent to their parent.
+ * Components can be positioned and sized by percentage, relative to the monitor or to each other (nested windows).
+ *
+ *
+ * The Launcher Client frequently uses the parameters <code>windowName</code> and <code>componentType</code>. [Learn more about them here](tutorial-ComponentTypesAndWindowNames.html).
+ *
+ *
  *
  * @hideconstructor
  * @constructor
  */
-class ConfigClient extends baseClient_1._BaseClient {
+class LauncherClient extends baseClient_1._BaseClient {
     constructor(params) {
         super(params);
-        this.listeners = [];
-        /**
-         * make sure we dont have duplicate router subscribers
-         * @private
-         */
-        this.changeSub = (change) => {
-            if (!this.subs)
-                this.subs = {};
-            if (!this.subs[change]) {
-                this.routerClient.query("configService.addListener", change, (err, queryResponse) => {
-                    this.routerClient.subscribe(change, this.handleChanges);
-                });
-                this.subs[change] = true;
-            }
-        };
-        /**
-         * @private
-         * @memberof ConfigClient
-         */
-        this.handleChanges = (err, response) => {
-            if (err) {
-                logger_1.default.system.error(err);
-            }
-            if (!response.data.field) {
-                response.data.field = null;
-            }
-            //var combined = "configService" + (response.data.field ? "." + response.data.field : "");
-            var val = response.data.storeData ? response.data.storeData : response.data.value;
-            this.triggerListeners(response.data.field ? response.data.field : "configService", val);
-        };
-        // Trigger any function that is listening for changes
-        /**
-         * @private
-         * @memberof ConfigClient
-         */
-        this.triggerListeners = (listenerKey, data) => {
-            if (this.listeners[listenerKey]) {
-                for (var i = 0; i < this.listeners[listenerKey].length; i++) {
-                    if (typeof this.listeners[listenerKey][i] === "function") {
-                        this.listeners[listenerKey][i](null, { field: listenerKey, value: data });
-                    }
-                    else {
-                        logger_1.default.system.warn("ConfigClient:triggerListeners: listener is not a function", listenerKey);
-                    }
-                }
-            }
-        };
-        /**
-         * This is designed to mirror the get. Private because security TBD.
-         * @private
-         *
-         * @param {object} params
-         * @param {function} callback
-         */
-        this.set = (params, callback) => {
-            logger_1.default.system.debug("ConfigClient.Set", params);
-            // if only one argument then assume no filtering parameters -- the complete manifest will be returned
-            if (arguments.length === 1) {
-                callback = params; // since only one arg, it must be the callback
-                validate_1.default.args(callback, "function");
-                params = {};
-            }
-            else {
-                validate_1.default.args(params, "object", callback, "function");
-            }
-            this.routerClient.query("config.set", params, function (queryErr, queryResponse) {
-                callback(queryErr, queryResponse ? queryResponse.data : null);
-            });
-        };
-        //Methods were formally an arrow function. If we want our documentation build to read nested parameters, we need to use this instead of an arrow.
-        this.processAndSet = this.processAndSet.bind(this);
-        this.getValue = this.getValue.bind(this);
-        this.getValues = this.getValues.bind(this);
-        this.setValue = this.setValue.bind(this);
-        this.setValues = this.setValues.bind(this);
-        this.removeValue = this.removeValue.bind(this);
-        this.removeValues = this.removeValues.bind(this);
-        this.addListener = this.addListener.bind(this);
-        this.addListeners = this.addListeners.bind(this);
-        this.removeListener = this.removeListener.bind(this);
-        this.removeListeners = this.removeListeners.bind(this);
-        this.setPreference = this.setPreference.bind(this);
-        this.getPreferences = this.getPreferences.bind(this);
+        validate_1.default.args(params, "object=") && params && validate_1.default.args2("params.onReady", params.onReady, "function=");
+        this.windowClient = params.clients.windowClient;
     }
+    /** @alias LauncherClient# */
     /**
-     * Get a value from the config.
-     * @param {Function} cb Will return the value if found.
-     * @returns {any} The value of the field. If no callback is given and the value is local, this will run synchronous
-     * @example
-     * FSBL.Clients.ConfigClient.getValue({ field:'field1' }, function(err,value){ });
-     * FSBL.Clients.ConfigClient.getValue('field1', function(err,value){ });
+     * Get a list of registered components (those that were entered into <i>components.json</i>).
+     *
+     * @param {Function} cb Callback returns an object map of components. Each component object
+     * contains the default config for that component.
      */
-    getValue(params, cb = Function.prototype) {
-        if (typeof params === "string") {
-            params = { field: params };
-        }
-        const promiseResolver = (resolve, reject) => {
-            if (!params.field) {
-                const err = "no field provided";
-                reject(err);
-                return cb(err);
-            }
-            this.routerClient.query("configService.getValue", { field: params.field }, function (err, response) {
-                if (err) {
-                    reject(err);
-                    return cb(err);
-                }
-                resolve({ err, data: response.data });
-                return cb(err, response.data);
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    ;
-    /**
-     * Get multiple values from the config.
-    * @param {fieldOnlyParam[] | string[]} fields An array of field objects. If there are no fields provided, the complete configuration manifest is returned.
-     * @param {Function} cb Will return the value if found.
-     * @returns {Object} - Returns an object of with the fields as keys. If no callback is given and the value is local, this will run synchronous
-     * @example
-     * FSBL.Clients.ConfigClient.getValues([{ field: 'field1' },{ field2: 'field2' }],function(err,values){ });
-     * FSBL.Clients.ConfigClient.getValues(['field1','field2'], function(err,values){ });
-     * FSBL.Clients.ConfigClient.get(null, callback); // returns the complete manifest containing the finsemble property
-    */
-    getValues(fields, cb = Function.prototype) {
-        if (typeof fields === "function") {
-            cb = fields;
-            fields = null;
-        }
-        if (fields && !Array.isArray(fields)) {
-            return this.getValue(fields, cb);
-        }
+    getComponentList(cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
         const promiseResolver = (resolve) => {
-            this.routerClient.query("configService.getValues", {
-                fields: fields
-            }, function (err, response) {
-                if (err) {
-                    return cb(err);
-                }
+            this.routerClient.query("Launcher.componentList", {}, function (err, response) {
+                cb(err, response.data);
                 resolve({ err, data: response.data });
-                return cb(err, response.data);
             });
         };
         return new Promise(promiseResolver);
     }
-    ;
     /**
-     * Set a value in the config. Setting a value will trigger events that you can listen to using <a href="ConfigClient.html#addListener">addListener</a>.
-     * @param {function} cb Optional callback
-     * @returns {null}
+     * Get the component config (from <i>components.json</i>) for a specific component.
      *
-     * @example
-     * FSBL.Clients.ConfigClient.setValue({ field:'field1', value:"new value" });
+     * @param {String} componentType The type of the component.
+     * @param {Function} cb Callback returns the default config (windowDescriptor) for the requested componentType.
+     *
      */
-    setValue(params, cb) {
-        var data = {
-            field: params.field,
-            value: params.value
+    getComponentDefaultConfig(componentType, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        const promiseResolver = (resolve) => {
+            this.routerClient.query("Launcher.componentList", {}, function (err, response) {
+                const data = response.data[componentType];
+                cb(err, data);
+                resolve({ err, data });
+            });
         };
-        return this.routerClient.query("configService.setValue", data, function (err) {
-            return cb ? cb(err) : null;
-        });
+        return new Promise(promiseResolver);
     }
-    ;
     /**
-     * This will set multiple values in the config.
-     * @param {function} cb Optional callback
-     * @returns {null}
+     * Gets monitor information for a given windowIdentifier or for a specific monitor.
+     * If neither the identifier or monitor are provided then the monitorInfo for the current window is returned.
      *
-     * @example
-     * FSBL.Clients.ConfigClient.setValues([{ field:'field1', value: "new value" }]);
-     */
-    setValues(fields, cb) {
-        if (!fields) {
-            return logger_1.default.system.error("ConfigClient.SetValues. No params given");
-        }
-        if (!Array.isArray(fields)) {
-            return logger_1.default.system.error("ConfigClient.SetValues. Params must be an array");
-        }
-        return this.routerClient.query("configService.setValues", fields, function (err) {
-            return cb ? cb(err) : null;
-        });
-    }
-    ;
-    /**
-     * Remove a value from the config.
-     * @param {fieldAndValueParam | String} params - Either an object or string
-     * @param {Function} cb -  Returns an error if there is one
-     * @example
-     * FSBL.Clients.ConfigClient.removeValue({ field:'field1' }, function(err,bool){ });
-     */
-    removeValue(params, cb = Function.prototype) {
-        if (params !== undefined) {
-            if (!params.field && typeof params === "string") {
-                params = { field: params };
-            }
-            else {
-                return cb("no field provided");
-            }
-        }
-        params.value = null;
-        return this.setValue(params, cb);
-    }
-    ;
-    /**
-     * Removes multiple values from the config.
-     * @param {fieldAndValueParams} params - An Array of field objects
-     * @param {Function} cb -  Returns an error if there is one.
-     * @example
-     * FSBL.Clients.ConfigClient.removeValues([{
-     * 	field:'field1'
-     * }],
-     * function(err,bool){	});
-     */
-    removeValues(params, cb = Function.prototype) {
-        if (!Array.isArray(params)) {
-            return cb("The passed in parameter needs to be an array");
-        }
-        //casting needed here because params doesn't have an index method?? My guess is that their type defs aren't great.
-        async_1.map(params, this.removeValue, function (err, data) {
-            return cb(err, data);
-        });
-    }
-    ;
-    /**
-    * Add a listener to the config at either the root config level or field level. If no field is given, the root config level is used. You can also listen for changes to config fields any number of levels deep -- finsemble.configitem.deeperconfigitem.evendeeperconfigitem
-    * @param {Function} fn The function to be called when the observed piece of config is modified.
-    * @param {Function} cb Callback to be invoked after the listener is added.
-    * @example
-    * var myFunction = function(err,data){};
-    * FSBL.Clients.ConfigClient.addListener({ field:'field1' }, myFunction, cb);
-    */
-    addListener(params, fn, cb) {
-        var field = null;
-        if (typeof params === "function") {
-            fn = params;
-            params = { field };
-        }
-        if (params.field) {
-            field = params.field;
-        }
-        var combined = "configService" + (field ? "." + field : "");
-        if (this.listeners[combined]) {
-            this.listeners[combined].push(fn);
-        }
-        else {
-            this.listeners[combined] = [fn];
-        }
-        this.changeSub(combined);
-        return cb ? cb() : null;
-    }
-    ;
-    /**
      *
-    * Add an array of listeners as objects or strings. If using strings, you must provide a function callback as the second parameter.
-    * @param {function} fn The function to be called when the observed piece of config is modified.
-    * @param {function} cb Callback to be invoked after the listeners are added.
-    * @example
-    * var myFunction = function(err,data){}
-  * FSBL.Clients.ConfigClient.addListeners(
-    * 	[
-    * 		{ field: "field1", listener: myFunction },
-    * 		{ field: "field2", listener: myFunction }
-    * 	],
-    * 	null,
-    * 	cb
-    * );
-    *
-    * FSBL.Clients.ConfigClient.addListeners(
-    * [{ field: "field1" }, { field: "field2", listener: myFunction }],
-    * myFunction,
-    * cb
-    * );
-    *
-    * FSBL.Clients.ConfigClient.addListeners(["field1", "field2"], myFunction, cb);
-    */
-    addListeners(params, fn, cb) {
-        if (!Array.isArray(params)) {
-            return this.addListener({ field: params.field }, fn, cb);
-        }
-        for (var i = 0; i < params.length; i++) {
-            var field = null;
-            var item = params[i];
-            var ls;
-            if (typeof item === "string") {
-                field = item;
-            }
-            else if (item.field) {
-                field = item.field;
-                ls = params[i].listener;
-            }
-            var combined = "configService" + (field ? "." + field : "");
-            if (!ls) {
-                if (fn && typeof fn === "function") {
-                    ls = fn;
-                }
-            }
-            if (this.listeners[combined]) {
-                this.listeners[combined].push(ls);
-            }
-            else {
-                this.listeners[combined] = [ls];
-            }
-            this.changeSub(combined);
-        }
-        return cb ? cb() : null;
-    }
-    ;
-    /**
-     * Remove a listener from config. If no field is given, we look for a config root listener
-     * @param {function} fn The listener to remove.
-     * @param {function} cb Returns true if it was successful in removing the listener.
+     * The information returned contains:
      *
-     * @example
-     * var myFunction = function(err,data){ }
-     * FSBL.Clients.ConfigClient.removeListener({
-     * 	field:'field1'
-     * }, MyFunction, function(bool){ });
-     * FSBL.Clients.ConfigClient.removeListener(MyFunction, function(bool){ });
-     */
-    removeListener(params, fn, cb) {
-        var field = null;
-        // The case below is for removing the root level config listener
-        if (typeof params === "function") {
-            cb = fn;
-            fn = params;
-            params = { field };
-        }
-        if (params.field) {
-            field = params.field;
-        }
-        var combined = this.name + (field ? "." + field : "");
-        if (this.listeners[combined]) {
-            for (var i = 0; i < this.listeners[combined].length; i++) {
-                if (this.listeners[combined][i] === fn) {
-                    this.listeners[combined].pop(i);
-                    return cb ? cb(null, true) : null;
-                }
-            }
-        }
-        return cb ? cb(null, false) : null;
-    }
-    ;
-    /**
-     * Remove an array of listeners from the config
-     * @param {removeListenersType} params
-     * @param {function} fn The listener to remove
-     * @param {function} cb Returns true if it was successful in removing the listener.
+     * **monitorRect** - The full dimensions for the monitor. <br>
+     * **availableRect** - The dimensions for the available space on the monitor (less the Windows task bar). <br>
+     * **unclaimedRect** - The dimensions for available monitor space less any space claimed by components (such as the Toolbar). <br>
+     * **position** - The position of the monitor, numerically from zero to X. Primary monitor is zero. <br>
+     * **whichMonitor** - Contains the string "primary" if it is the primary monitor. <br>
      *
-     * @example
-     * var myFunction = function(err,data){ }
-     * FSBL.Clients.ConfigClient.removeListeners({
-     * 	field: 'field1'
-     * }, MyFunction, function(bool){ });
-     * FSBL.Clients.ConfigClient.removeListeners([{ field:'field1', listener: MyFunction }], function(bool){ });
-     * FSBL.Clients.ConfigClient.removeListeners(['field1'], MyFunction, function(bool) { });
-     */
-    removeListeners(params, fn, cb) {
-        if (!Array.isArray(params)) {
-            // The typecasting below is bad but it prevents build problems. We should tighten the APIs.
-            if (typeof params === "function") {
-                this.removeListener({}, params, cb);
-            }
-            else if (params.field) {
-                this.removeListener(params, fn, cb);
-            }
-            return cb("missing fields");
-        }
-        var removeCount = 0;
-        for (var i = 0; i < params.length; i++) {
-            var field = null;
-            var item = params[i];
-            var ls;
-            if (typeof item === "string") {
-                field = item;
-            }
-            else if (item.field) {
-                field = item.field;
-                ls = params[i].listener;
-            }
-            var combined = "configService" + (field ? "." + field : "");
-            if (!ls) {
-                if (fn && typeof fn === "function") {
-                    ls = fn;
-                }
-                else {
-                    continue;
-                }
-            }
-            for (var j = 0; j < this.listeners[combined].length; j++) {
-                if (this.listeners[combined][j] === ls) {
-                    this.listeners[combined].pop(i);
-                    removeCount++;
-                }
-            }
-        }
-        if (removeCount < params.length) {
-            return cb("All listeners could not be found", false);
-        }
-        return cb ? cb(null, true) : null;
-    }
-    ;
-    /**
-     * Get all or a portion of the configuration from the Config Service. Typically this function is used to return Finsemble configuration
-     * (e.g. "finesemble.components"); however, if can also return all or part of the manifest which contains the Finsemble config property.
-     * If no configReference parameter is passed in (i.e. only the callback parameter is specified), then the complete manifest object is returned
-     * (including manifest.finsemble).
+     * The dimensions are supplemented with the following additional members:
      *
-     * @param {object=} params field property identifies specific config to return
-     * @param {function} callback callback function(error, data) to get the configuration data
-     * @private
-     * @example
-     *
-     * FSBL.Clients.ConfigClient.get({ field: "finsemble" }, function(err, finsemble) {
-     *		if (!err) {
-     *			finsembleConfig = finsemble;
-     *		} else {
-     *			console.error("failed to get finsemble configuration");
-     *		}
-     * });
-     *
-     * FSBL.Clients.ConfigClient.get({ field: "finsemble.isAuthEnabled" }, function(err, isAuthEnabled) {
-     *		var authorizationOn = isAuthEnabled;
-     * });
-     *
-     * FSBL.Clients.ConfigClient.get(callback); // returns the complete manifest containing the finsemble property
-     * FSBL.Clients.ConfigClient.get(null, callback); // alternate form; returns the complete manifest containing the finsemble property
-     * FSBL.Clients.ConfigClient.get({}, callback); // alternate form; returns the complete manifest containing the finsemble property
-     * FSBL.Clients.ConfigClient.get({ field: "finsemble.components" }, callback);
-     * FSBL.Clients.ConfigClient.get({ field: "finsemble.services" }, callback);
-     * FSBL.Clients.ConfigClient.get({ field: "finsemble.components" }, callback);
-     * FSBL.Clients.ConfigClient.get({ field: "finsemble.assimilation" }, callback);
-     * FSBL.Clients.ConfigClient.get({ field: "runtime.version", callback) }; // returns the manifest's runtime.version property
-     */
-    get(params, callback) {
-        logger_1.default.system.debug("ConfigClient.Get", params);
-        logger_1.default.system.warn("This functionality has been deprecated. It will be removed in Finsemble version 3.0. Use getValue instead.", params);
-        // if only one argument then assume no filtering parameters -- the complete manifest will be returned
-        if (arguments.length === 1) {
-            callback = params; // since only one arg, it must be the callback
-            validate_1.default.args(callback, "function");
-            params = {};
-        }
-        else {
-            validate_1.default.args(params, "object", callback, "function");
-        }
-        this.routerClient.query("config.get", params, function (queryErr, queryResponse) {
-            callback(queryErr, queryResponse ? queryResponse.data : null);
-        });
-    }
-    ;
-    /**
-     * Dynamically set config values within the Finsemble configuration.  New config properties may be set or existing ones modified. Note that configuration changes will not necessarily dynamically modify the components or services that use the corresponding configuration -- it depends if the component or service handles the corresponding change notifications (either though PubSub or the Config's DataStore). Also, these changes do not persist in any config files.
-     *
-     * <b>Note</b>: Anytime config is set using this API, the newConfig along with the updated manifest will by published to the PubSub topic "Config.changeNotification".  To get these notifications any component or service can subscribe to the topic. An example is shown below.
-     *
-     * <b>Note</b>: Anytime config is set using this API, the dataStore underlying configuration 'Finsemble-Configuration-Store' will also be updated. To get these dataStore events a listener can be set as shown in the example below. However, any config modifications made directly though the DataStore will not result in corresponding PubSub notifications.
+     * **width** - The width as calculated (right - left). <br>
+     * **height** - The height as calculated (bottom - top). <br>
      *
      * @param {object} params
-     * @param {object} params.newConfig Provides the configuration properties to add into the existing configuration under manifest.finsemble. This config must match the Finsemble config requirements as described in the [Configuration tutorial]{@tutorial Configuration}. It can include importConfig references to dynamically fetch additional configuration files.
-     * @param {boolean} params.overwrite If true then overwrite any preexisting config with new config (can only set to true when running from same origin, not cross-domain); if false then newConfig must not match properties of existing config, including service and component configuration.
-     * @param {boolean} params.replace True specifies any component or service definitions in the new config will place all existing non-system component and service configuration
-     * @param {StandardCallback} callback Callback to be invoked upon task completion.
-     * @example
-     * // Examples using processAndSet()
-     * FSBL.Clients.ConfigClient.processAndSet({ newConfig: { myNewConfigField: 12345 }, overwrite: false });
-     * FSBL.Clients.ConfigClient.processAndSet(
-     * {
-     *	newConfig: {
-     *		"myNewConfigField": 12345,
-     *		"myNewConfigObject": {
-     *			A: "this is a test",
-     *			B: "more test"
-     *		},
-     *		"importConfig": [
-     *			"$applicationRoot/configs/application/test.json",
-     *		]
-     *	},
-     *	overwrite: true,
-     *  replace: false,
-     * },
-     *	function (err, finsemble) {
-     *		if (err) {
-     *			console.error("ConfigClient.set", err);
-     *		} else {
-     *			console.log("new finsemble config", finsemble);
-     *		}
-     *	}
-     * );
+     * @param  {WindowIdentifier} params.windowIdentifier The windowIdentifier to get the monitorInfo. If undefined, then the current window.
+     * @param  {number|string} params.monitor If passed then a specific monitor is identified. Valid values include:
      *
-     *  // example subscribing to PubSub to get notifications of dynamic updates
-     * RouterClient.subscribe("Config.changeNotification", function (err, notify) {
-     *		console.log("set notification", notify.data.newConfig, notify.data.finsemble);
-     *	});
+     * <b>"mine"</b> - Place the window on the same monitor as the calling window.
      *
-     *  // example using DataStore to get notifications of dynamic updates
-     * DistributedStoreClient.getStore({ store: 'Finsemble-Configuration-Store', global: true }, function (err, configStore) {
-     *		configStore.addListener({ field: "finsemble" }, function (err, newFinsembleConfig) {
-     *			console.log("new manifest.finsemble configuration", newFinsembleConfig);
-     *		});
-     * });
+     * Integer value from 0-n (0 being the primary monitor).
      *
+     * <b>"primary"</b> indicates the user's primary monitor.
+     *
+     * <b>"all"</b> - Put a copy of the component on all monitors.
+     * @param  {Function} cb Returns a monitorInfo object containing the monitorRect, availableRect and unclaimedRect.
      */
-    processAndSet(params, callback) {
-        logger_1.default.system.debug("ConfigClient.processAndSet", params);
-        validate_1.default.args(params, "object", callback, "function=") &&
-            validate_1.default.args2("params.newConfig", params.newConfig, "object", "params.overwrite", params.overwrite, "boolean=", "params.replace", params.replace, "boolean=");
-        if (!params.overwrite && params.replace) {
-            var errMsg = "cannot use replace option unless overwrite is also true";
-            logger_1.default.system.warn("ConfigClient.processAndSet:", errMsg);
-            if (callback) {
-                callback(errMsg, null);
-            }
+    getMonitorInfo(params, cb = Function.prototype) {
+        var self = this;
+        validate_1.default.args(cb, "function=");
+        logger_1.default.system.debug(`MONITOR: launcherClient.getMonitorInfo`);
+        const promiseResolver = (resolve) => {
+            util.getMyWindowIdentifier(function (myWindowIdentifier) {
+                if (!params.windowIdentifier) {
+                    params.windowIdentifier = myWindowIdentifier;
+                }
+                self.routerClient.query("Launcher.getMonitorInfo", params, function (err, response) {
+                    if (cb) {
+                        cb(err, response.data);
+                    }
+                    logger_1.default.system.log(`MONITOR: launcherClient.getMonitorInfo query response data`, response.data);
+                    resolve({ err, data: response.data });
+                });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Gets monitorInfo (dimensions and position) for all monitors. Returns an array of monitorInfo objects. See <a href="LauncherClient.html#getMonitorInfo">LauncherClient#getMonitorInfo</a> for the format of a monitorInfo object.
+     *
+     *
+     *
+     * @param  {Function} cb Returns an array of monitorInfo objects.
+     */
+    getMonitorInfoAll(cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        const promiseResolver = (resolve, reject) => {
+            this.routerClient.query("Launcher.getMonitorInfoAll", {}, function (err, response) {
+                if (err) {
+                    reject({ err });
+                    cb(err);
+                }
+                resolve({ err, data: response.data });
+                cb(err, response.data);
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Registers a component with the Launcher Service. This method registers a given component in a component manifest, making it available to an app launcher component.
+     *
+     * @param {String} params.componentType The key of the component in the component's config.
+     * @param {object} params.manifest This should be a component manifest, i.e., a component configuration file like <i>components.json</i>.
+     * @param {Function} cb The callback to be invoked after the method completes successfully.
+     */
+    registerComponent(params, cb = Function.prototype) {
+        const promiseResolver = (resolve) => {
+            this.routerClient.query("LauncherService.registerComponent", params, function (err, response) {
+                if (cb) {
+                    cb(err, response.data);
+                }
+                resolve({ err, data: response.data });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Unregisters a component with the Launcher Service.
+     *
+     * @param {String} params.componentType The key of the component in the component's config.
+     * @param  {Function} cb
+     */
+    unRegisterComponent(params, cb = Function.prototype) {
+        if (!params.componentType)
+            return cb("No componentType provided");
+        const promiseResolver = (resolve) => {
+            this.routerClient.query("LauncherService.unRegisterComponent", params, function (err, response) {
+                if (cb) {
+                    cb(err, response.data);
+                }
+                resolve({ err, data: response.data });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * A convenience method for dealing with a common use-case, which is toggling the appearance and disappearance of a child window when a button is pressed, aka drop down menus. Simply call this method from the click handler for your element. Your child window will need to close itself on blur events.
+     * @param {HTMLElement|selector} element The DOM element, or selector, clicked by the end user.
+     * @param {windowIdentifier} windowIdentifier Identifies the child window
+     * @param {object} params Parameters to be passed to {@link LauncherClient#showWindow} if the child window is allowed to open
+     */
+    toggleWindowOnClick(element, windowIdentifier, params) {
+        var self = this;
+        var key = windowIdentifier.windowName + ":" + windowIdentifier.uuid;
+        if (!windowIdentifier.windowName)
+            key = windowIdentifier.componentType;
+        //If the element was clicked while the menu was open then return right away. The menu window will receive a blur event and close. This method is dependent on the fact that blur events are processed before click events. If this turns out to be a problem then put this call inside of a setTimeout().
+        if (okayToOpenMenu[key] === false) {
+            okayToOpenMenu[key] = true;
+            return;
         }
-        else {
-            this.routerClient.query("config.processAndSet", params, function (queryErr, queryResponse) {
-                if (callback) {
-                    callback(queryErr, queryResponse ? queryResponse.data : null);
+        var onDisplayed = function (showError, showResponse) {
+            if (!showResponse)
+                return;
+            let finWindow = showResponse.finWindow;
+            var onBlur = function (blurResponse) {
+                okayToOpenMenu[key] = true;
+                self.windowClient.isMouseOverDOMElement(element, function (mouseIsOverElement) {
+                    okayToOpenMenu[key] = !mouseIsOverElement;
+                });
+                finWindow.removeEventListener("blurred", onBlur);
+            };
+            finWindow.addEventListener("blurred", onBlur);
+        };
+        this.showWindow(windowIdentifier, params, onDisplayed);
+    }
+    /**
+     * Displays a window and relocates/resizes it according to the values contained in parameters. If the specified window is in a group or tabbed, it will be unsnapped/ungrouped/untabbed from the other windows.
+     * 	 * If invoked on a tabbed window or a window in a group, the window will be removed from the tab/group.
+     *
+     * @param {WindowIdentifier} windowIdentifier A windowIdentifier. This is an object containing windowName and componentType. If windowName is not given, Finsemble will try to find it by componentType.
+     * @param {object} params Parameters. These are the same as {@link LauncherClient#spawn} with the following exceptions:
+     * @param {any} [params.monitor] Same as spawn() except that null or undefined means the window should not be moved to a different monitor.
+     * @param {number | string} [params.left] Same as spawn() except that null or undefined means the window should not be moved from current horizontal location.
+     * @param {number | string} [params.top] Same as spawn() except that null or undefined means the window should not be moved from current vertical location.
+     * @param {boolean} [params.slave] Cannot be set for an existing window. Will only go into effect if the window is spawned.
+     * (In other words, only use this in conjunction with spawnIfNotFound).
+     * @param {Function} cb Callback to be invoked after function is completed. Callback contains an object with the following information:
+     * <b>windowIdentifier</b> - The <a href="tutorial-ComponentTypesAndWindowNames.html">WindowIdentifier</a> for the new window.
+     * <b>windowDescriptor</b> - The <a href="tutorial-ComponentTypesAndWindowNames.html">WindowDescriptor</a> of the new window.
+     * <b>finWindow</b> - A <code>finWindow</code> object referencing the new window.
+     * @example
+     * FSBL.Clients.LauncherClient.showWindow({windowName: "Welcome Component-86-3416-Finsemble", componentType: "Welcome Component"}, {spawnIfNotFound: true});
+     */
+    showWindow(windowIdentifier, params, cb = Function.prototype) {
+        validate_1.default.args(windowIdentifier, "object", params, "object=", cb, "function=");
+        var self = this;
+        if (!params) {
+            params = {};
+        }
+        params = util.clone(params);
+        if (!params.staggerPixels && params.staggerPixels !== 0) {
+            params.staggerPixels = 100;
+        }
+        params.windowIdentifier = windowIdentifier;
+        const promiseResolver = (resolve) => {
+            util.getMyWindowIdentifier(function (myWindowIdentifier) {
+                if (!params.relativeWindow) {
+                    params.relativeWindow = myWindowIdentifier;
+                }
+                self.routerClient.query("Launcher.showWindow", params, async function (err, response) {
+                    if (err) {
+                        resolve({ err });
+                        return cb(err);
+                    }
+                    var newWindowIdentifier = response.data.windowIdentifier;
+                    response.data.windowIdentifier.name = response.data.windowIdentifier.windowName;
+                    let { wrap } = await FinsembleWindow_1.FinsembleWindow.getInstance({ name: newWindowIdentifier.windowName });
+                    response.data.finWindow = wrap;
+                    resolve({ err, data: response.data });
+                    cb(err, response.data);
+                });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Asks the Launcher service to spawn a new component. Any parameter below can also be specified in <i>../config/components.json</i>, which will
+     * then operate as the default for that value.
+     *
+     * The launcher parameters mimic CSS window positioning.
+     * For instance, to set a full size window use `left=0`,`top=0`,`right=0`,`bottom=0`.
+     * This is functionally equivalent to: left=0,top=0,width="100%",height="100%".
+     *
+     * @since 2.4.1 Added params.windowType (deprecated params.native), params.path, params.alias, params.argumentsAsQueryString - These are all for launching native apps.
+     * @since 3.7.0 Added "affinity" parameter
+     * @param {function} cb Function invoked after the window is created
+     */
+    spawn(component, params, cb = Function.prototype) {
+        var self = this;
+        validate_1.default.args(component, "string", params, "object=", cb, "function=");
+        if (!params) {
+            params = {};
+        }
+        params = util.clone(params);
+        params.component = component;
+        if (!params.options) {
+            params.options = {};
+        }
+        if (!params.options.customData) {
+            params.options.customData = {};
+        }
+        if (!params.staggerPixels && params.staggerPixels !== 0) {
+            params.staggerPixels = 50;
+        }
+        logger_1.default.system.debug(`Calling Spawn for componentType:${component}`);
+        const promiseResolver = (resolve) => {
+            util.getMyWindowIdentifier(function (windowIdentifier) {
+                params.launchingWindow = windowIdentifier;
+                self.callSpawn(params, (err, response) => {
+                    resolve({ err, response });
+                    cb(err, response);
+                });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * @private
+     */
+    callSpawn(params, cb = Function.prototype) {
+        var self = this;
+        validate_1.default.args(cb, "function=");
+        logger_1.default.perf.debug("CallSpawn", "start", "from spawn to callback", params);
+        const promiseResolver = (resolve) => {
+            function invokeSpawnCallback(error, data) {
+                cb(error, data);
+                resolve({ err: error, data });
+            }
+            self.routerClient.query("Launcher.spawn", params, async function (err, response) {
+                logger_1.default.system.debug("CallSpawn", "Initial launcher callback params", err, response);
+                logger_1.default.perf.debug("CallSpawn", "Initial launcher callback", response);
+                if (err) {
+                    invokeSpawnCallback(err, result);
+                    return logger_1.default.system.error("LauncherClient.callSpawn", err);
+                }
+                response.data.windowIdentifier.name = response.data.windowIdentifier.windowName;
+                var result = response.data;
+                // Add a wrapped finWindow to the response (this can only be done client side)
+                if (result.windowDescriptor.native)
+                    return invokeSpawnCallback(err, result); /// This is way too slow for native windows so we just let this pass through and assume the window is ready.
+                var newWindowIdentifier = result.windowIdentifier;
+                let { wrap } = await FinsembleWindow_1.FinsembleWindow.getInstance({ name: newWindowIdentifier.windowName }); //TODO - replace with FinsembleWindow
+                result.finWindow = wrap;
+                let componentOnlineChannel = "Finsemble." + result.windowIdentifier.windowName + ".componentReady";
+                let subscriberID = self.routerClient.subscribe(componentOnlineChannel, componentOnlineCallback);
+                function componentOnlineCallback(err, response) {
+                    if (err)
+                        return logger_1.default.system.error(err);
+                    //Ignore the initial "uninitialized" state message delivered by subscribe (a second message will contain the actual data)
+                    if (response && Object.keys(response.data).length === 0)
+                        return;
+                    if (params.position === "relative" && (params.groupOnSpawn || params.dockOnSpawn)) {
+                        //If 'params.relativeWindow' is supplied we need to dock to it, otherwise get the parent window (System.Window.getCurrent())
+                        const windowToGroup = params.relativeWindow ? params.relativeWindow.windowName : system_1.System.Window.getCurrent().name;
+                        const windows = [result.windowIdentifier.windowName, windowToGroup]; //TODO - replace with FinsembleWindow
+                        self.routerClient.query("DockingService.groupWindows", {
+                            windows: windows,
+                            isMovable: true,
+                        }, function (error, response) {
+                            logger_1.default.perf.debug("CallSpawn", "stop");
+                            invokeSpawnCallback(err, result);
+                        });
+                    }
+                    else {
+                        logger_1.default.perf.debug("CallSpawn", "stop");
+                        invokeSpawnCallback(err, result);
+                    }
+                    self.routerClient.unsubscribe(subscriberID);
                 }
             });
-        }
+        };
+        return new Promise(promiseResolver);
     }
-    ;
     /**
-     * Sets a value on the configStore and persists that value to storage. On application restart, this value will overwrite any application defaults.
-     * @param {fieldAndValueParam} params
-     * @param {StandardCallback} callback Callback to be invoked when callback to be invoked when preferences have been retrieved from the service.
-     * @example
-     * FSBL.Clients.ConfigClient.setPreference({
-     * 	field: "finsemble.initialWorkspace",
-     * 	value: "Workspace 2"
-     * }, (err, response) => {
-     * 		//preference has been set
-     * });
+     * Convenience function to get a monitor descriptor for a given windowIdentifier, or for the
+     * current window.
+     *
+     * @param {WindowIdentifier} [windowIdentifier] The window to find the monitor for. Current window if undefined.
+     * @param  {Function} cb Returns a monitor descriptor (optional or use returned Promise)
+     * @returns {Promise} A promise that resolves to a monitor descriptor
+     * @TODO this probably is unnecessary since a client can include util and a developer should be using this.getMonitorInfo which has full support for searching by component. Did Ryan need this?
+     * @private
      */
-    setPreference(params, callback) {
-        this.routerClient.query("PreferencesService.setPreference", params, function (queryErr, queryResponse) {
-            if (callback) {
-                callback(queryErr, queryResponse ? queryResponse.data : null);
+    getMonitor(windowIdentifier, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        const promiseResolver = (resolve) => {
+            util.getMonitor(windowIdentifier, (monitor) => {
+                cb(monitor);
+                resolve(monitor);
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Returns a windowIdentifier for the current window.
+     *
+     * @param {WindowIdentifier} cb Callback function returns windowIdentifier for this window (optional or use the returned Promise)
+     * @returns {Promise} A promise that resolves to a windowIdentifier
+     */
+    // @TODO, [Terry] calls to launcherClient.myWindowIdentifier or launcherClient.getMyWindowIdentifier()
+    // should be replaced with windowClient.getWindowIdentifier()
+    getMyWindowIdentifier(cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        const promiseResolver = (resolve) => {
+            util.getMyWindowIdentifier((wi) => {
+                cb(wi);
+                resolve(wi);
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+    * Gets the windowDescriptor for all open windows.
+    *
+    * <b>Note:</b> This returns descriptors even if the window is not part of the workspace.
+    *
+    * @param {StandardCallback} cb Callback returns an array of windowDescriptors.
+    *
+    */
+    getActiveDescriptors(cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        const promiseResolver = (resolve) => {
+            this.routerClient.query("Launcher.getActiveDescriptors", {}, function (err, response) {
+                if (err) {
+                    return logger_1.default.system.error(err);
+                }
+                if (response) {
+                    cb(err, response.data);
+                    resolve({ err, data: response.data });
+                }
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Adds a custom component. Private for now.
+     * @private
+     */
+    addUserDefinedComponent(params, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        const promiseResolver = (resolve) => {
+            this.routerClient.query("Launcher.userDefinedComponentUpdate", {
+                type: "add",
+                name: params.name,
+                url: params.url,
+            }, function (err, response) {
+                cb(err, response.data);
+                resolve({ err, data: response.data });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Adds a custom component. Private for now.
+     * @private
+     */
+    removeUserDefinedComponent(params, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        const promiseResolver = (resolve) => {
+            this.routerClient.query("Launcher.userDefinedComponentUpdate", {
+                type: "remove",
+                name: params.name,
+                url: params.url,
+            }, function (err, response) {
+                cb(err, response.data);
+                resolve({ err, data: response.data });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Gets components that can receive specific data types. Returns an object containing componentTypes mapped to a list of dataTypes they can receive. This is based on the "advertiseReceivers" property in a component's config.
+     * @param {Array.<string>} params.dataTypes An array of data types. Looks for components that can receive those data types.
+     * @param {Function} cb The callback to be invoked after the method completes successfully.
+     *
+     * @since 2.0
+     *
+     * @example
+     * FSBL.Client.LauncherClient.getComponentsThatCanReceiveDataTypes({ dataTypes: ['chartiq.chart', 'salesforce.contact']}, function(err, response) {
+     * 	//Response contains: {'chartiq.chart': ['Advanced Chart'], 'salesforce.contact': ['Salesforce Contact']}
+     * })
+     *
+     */
+    getComponentsThatCanReceiveDataTypes(params, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        const promiseResolver = (resolve) => {
+            if (!params || !params.dataTypes) {
+                const err = "Invalid params. Expected: {dataTypes: string[]}";
+                cb(err);
+                return resolve({ err });
             }
-        });
+            if (!Array.isArray(params.dataTypes)) {
+                params.dataTypes = [params.dataTypes];
+            }
+            this.routerClient.query("LauncherService.getComponentsThatCanReceiveDataTypes", params, (err, response) => {
+                cb(err, response.data);
+                resolve({ err, data: response.data });
+            });
+        };
+        return new Promise(promiseResolver);
     }
-    ;
     /**
-     * Retrieves all of the preferences set for the application.
-     * @param {Object} params Parameters to pass to getPreferences. Optional. Defaults to null and currently ignored.
-     * @param {StandardCallback} callback Callback to be invoked when preferences have been retrieved from the service.
+     * Brings a windows to front. If no windowList, groupName or componentType is specified, brings all windows to front.
+     * @param params
+     * @param {Array.<string | Object>} [params.windowList] Optional. An array An array of window names or window identifiers. Not to be used with componentType.
+     * @param {string} [params.groupName] Optional. The name of a window group to bring to front.
+     * @param {string} [params.componentType] Optional. The componentType to bring to front. Not to be used with windowList.
+     *
+     * @since TBD
+     *
      * @example
-     * FSBL.Clients.ConfigClient.getPreferences((err, preferences)=> {
-     * 		//use preferences.
-     * });
+     * LauncherClient.bringWindowsToFront({ windowList: ['AdvancedChart-123-123', 'Symphony-Chat-234-234']}, function(err, response) {
+     *
+     * })
+     *
+     * @private
      */
-    getPreferences(params, callback) {
+    bringWindowsToFront(params = {}, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        if (params.windowList && !Array.isArray(params.windowList)) {
+            params.windowList = [params.windowList];
+        }
+        if (params.groupName) {
+            validate_1.default.args(params.groupName, "string");
+        }
+        if (params.componentType) {
+            validate_1.default.args(params.componentType, "string");
+        }
+        //Changed to query to allow for async bring to front and to do something when all windows have been brought to front
+        this.routerClient.query("LauncherService.bringWindowsToFront", params, (err, response) => {
+            cb(err, response);
+        });
+        return Promise.resolve();
+    }
+    /**
+     * @deprecated as of 4.0.0, may be removed in the future
+     *
+     * Minimizes all but a specific list or group of windows. Either groupName or windowList must be specified.
+     * @param params
+     * @param {Array.<string | Object>} [params.windowList] Optional. An array of window names or window identifiers. Not to be used with componentType.
+     * @param {string} [params.groupName] Optional. The name of a window group to hyperFocus.
+     * @param {string} [params.componentType] Optional. The Component Type to hyperFocus. Not to be used with windowList.
+     *
+     * @since TBD
+     * @example
+     * LauncherClient.hyperFocus({ windowList: ['AdvancedChart-123-123', 'Symphony-Chat-234-234']}, function(err, response) {
+     *
+     * })
+     *
+     * @private
+     */
+    hyperFocus(params, cb = Function.prototype) {
+        logger_1.default.system.warn("hyperFocus is deprecated as of version 4.0.0. This functionality may be removed in a future release");
+        console.warn("hyperFocus is deprecated as of version 4.0.0. This functionality may be removed in a future release");
+        validate_1.default.args(cb, "function=");
+        if (params.windowList && !Array.isArray(params.windowList)) {
+            params.windowList = [params.windowList];
+        }
+        if (!params.windowList && !params.groupName && !params.componentType) {
+            params.windowList = [this.myWindowIdentifier];
+        }
+        if (params.groupName) {
+            validate_1.default.args(params.groupName, "string");
+        }
+        if (params.componentType) {
+            validate_1.default.args(params.componentType, "string");
+        }
+        this.routerClient.transmit("LauncherService.hyperFocus", params);
+        cb();
+        return Promise.resolve();
+    }
+    /**
+     * Minimize windows. If no windowList or groupName is specified, all windows will be minimized.
+     * @param {*} params
+     * @param {Array.<string | Object>} [params.windowList] Optional. An array of window names or window identifiers. Not to be used with componentType.
+     * @param {string} [params.groupName] Optional. The name of a window group to minimize.
+     * @param {string} [params.componentType] Optional. The component type of windows to Minimize. Not to be used with windowList.
+     *
+     * @since TBD
+     * @private
+     */
+    minimizeWindows(params, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        if (params.windowList && !Array.isArray(params.windowList)) {
+            params.windowList = [params.windowList];
+        }
+        if (params.groupName) {
+            validate_1.default.args(params.groupName, "string");
+        }
+        if (params.componentType) {
+            validate_1.default.args(params.componentType, "string");
+        }
+        this.routerClient.transmit("LauncherService.minimizeWindows", params);
+        cb();
+        return Promise.resolve();
+    }
+    /**
+     * Create Window group
+     * @param {*} params
+     * @param {string} [params.groupName] The name of the window group to create
+     * @param {Array.<string | Object>} [params.windowList] An array of window names or window identifiers to add to the group. Optional.
+     * @param {function} cb callback to be called upon group creation
+     *
+     * @since TBD
+     * @private
+     */
+    createWindowGroup(params, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        if (params.windowList && !Array.isArray(params.windowList)) {
+            params.windowList = [params.windowList];
+            delete params.groupName;
+        }
+        validate_1.default.args(params.groupName, "string");
+        const promiseResolver = (resolve) => {
+            if (!params.groupName) {
+                let err = "Invalid Parameters";
+                resolve({ err });
+                cb(err);
+                return;
+            }
+            this.routerClient.query("LauncherService.createWindowGroup", params, function (err, response) {
+                cb(err, response);
+                resolve({ err, data: response });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Add Windows to group
+     * @param {*} params
+     * @param {string} [params.groupName] The name of the window group
+     * @param {Array.<string | Object>} [params.windowList] An array of window names or window identifiers to add to the group.
+     * @param {function} cb callback to be called upon group creation
+     *
+     * @since TBD
+     * @private
+     */
+    addWindowsToGroup(params, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        const promiseResolver = (resolve) => {
+            if (!params.groupName || !params.windowList) {
+                let err = "Invalid Parameters";
+                resolve({ err });
+                cb(err);
+                return;
+            }
+            if (params.windowList && !Array.isArray(params.windowList)) {
+                params.windowList = [params.windowList];
+            }
+            validate_1.default.args(params.groupName, "string");
+            this.routerClient.query("LauncherService.addWindowsToGroup", params, function (err, response) {
+                cb(err, response);
+                resolve({ err, data: response });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Remove Windows from group
+     * @param {*} params
+     * @param {string} [params.groupName] The name of the window group
+     * @param {Array.<string | Object>} [params.windowList] An array of window names or window identifiers to remove from the group.
+     * @param {function} cb callback to be called upon group creation
+     *
+     * @since TBD
+     * @private
+     */
+    removeWindowsFromGroup(params, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        const promiseResolver = (resolve) => {
+            if (!params.groupName || !params.windowList) {
+                let err = "Invalid Parameters";
+                resolve({ err });
+                cb(err);
+                return;
+            }
+            if (params.windowList && !Array.isArray(params.windowList)) {
+                params.windowList = [params.windowList];
+            }
+            this.routerClient.query("LauncherService.removeWindowsFromGroup", params, function (err, response) {
+                cb(err, response);
+                resolve({ err, data: response });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * Get Window Groups that a window belongs to. If no windowIdentifier is specified, gets  the groups of the current window.
+     * @param {*} params
+     * @param {WindowIdentifier} [params.windowIdentifier] Optional. If not specified uses current window
+     * @param {*} cb callback with a list of groups
+     *
+     * @since TBD
+     * @private
+     */
+    getGroupsForWindow(params, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
         if (typeof params === "function") {
-            callback = params;
+            cb = params;
             params = null;
         }
-        this.routerClient.query("PreferencesService.getPreferences", params, function (queryErr, queryResponse) {
-            if (callback) {
-                callback(queryErr, queryResponse ? queryResponse.data : null);
+        const promiseResolver = (resolve) => {
+            if (!params || !params.windowIdentifier) {
+                this.windowClient.getComponentState({ field: "finsemble:windowGroups" }, function (err, groups) {
+                    resolve({ err, data: groups });
+                    cb(err, groups);
+                });
+                return;
+            }
+            this.routerClient.query("LauncherService.getGroupsForWindow", params, function (err, response) {
+                resolve({ err, data: response.data });
+                cb(err, response.data);
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * @private
+     * @param {*} params
+     * @param {WindowIdentifier} [params.windowIdentifier] Optional. Current window is assumed if not specified.
+     * @param {Array.<string>} [params.groupNames] List of group names to add window to. Groups will be created if they do not exist.
+     * @param {*} cb
+     */
+    addToGroups(params, cb = Function.prototype) {
+        validate_1.default.args(cb, "function=");
+        validate_1.default.args(params.groupNames, "array");
+        if (!params.windowIdentifier) {
+            params.windowIdentifier = this.myWindowIdentifier;
+        }
+        const promiseResolver = (resolve) => {
+            this.routerClient.query("LauncherService.addWindowToGroups", params, (err, response) => {
+                cb(err, response);
+                resolve({ err, data: response });
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    /**
+     * _createWrap allows us to create a wrap without spawning a window
+     *
+     * @param {Object} params
+     * @param {String} params.name
+     * @param {Function} cb
+     * @memberof LauncherClient
+     * @private
+     */
+    _createWrap(params, cb) {
+        this.routerClient.query("LauncherService.createWrap", params, cb);
+    }
+    /**
+     * @private
+     *
+     * @param {*} cb
+     * @memberof LauncherClient
+     */
+    start(cb) {
+        var self = this;
+        // Get Group Updates (only if we are not in a service)
+        if (typeof Globals.FSBL !== "undefined") {
+            // Get Groups from Component State on Load
+            function subscribeToGroupUpdates() {
+                self.routerClient.subscribe("Finsemble.LauncherService.updateGroups." + self.windowName, function (err, response) {
+                    if (!Array.isArray(response.data))
+                        return; //dont attempt to save the initial responder state.
+                    self.windowClient.setComponentState({ field: "finsemble:windowGroups", value: response.data });
+                });
+            }
+            // cannot add a windowClient dependency here so explicitly wait for windowClient ready (ideally dependency manage could fully handle but maybe later)
+            Globals.FSBL.addEventListener("onReady", function () {
+                self.windowClient.onReady(() => {
+                    self.windowClient.getComponentState({ field: "finsemble:windowGroups" }, function (err, groups) {
+                        if (!err && groups) {
+                            return self.addToGroups({
+                                groupNames: groups,
+                            }, subscribeToGroupUpdates);
+                        }
+                        subscribeToGroupUpdates();
+                    });
+                });
+            });
+        }
+        setInterval(function () {
+            self.routerClient.transmit("Finsemble.heartbeat", { type: "component", windowName: self.windowName, componentType: "finsemble" });
+        }, 1000);
+        // @TODO, [Terry] remove in favor of calls to windowClient.getMyIdentifier()
+        this.getMyWindowIdentifier((identifier) => {
+            self.myWindowIdentifier = identifier;
+            if (cb) {
+                cb();
             }
         });
     }
-    ;
 }
-;
-var configClient = new ConfigClient({
-    startupDependencies: {
-        services: ["configService"]
-    },
-    onReady: function (cb) {
-        if (cb) {
-            cb();
-        }
-    },
-    name: "configClient"
-});
-exports.default = configClient;
+function constructInstance(params) {
+    params = params ? params : {};
+    if (!params.windowClient)
+        params.windowClient = windowClient_1.default;
+    return new LauncherClient({
+        clients: params,
+        onReady: function (cb) {
+            logger_1.default.system.debug("launcherClient ready", window.name);
+            logger_1.default.perf.debug("LauncherClientReadyTime", "stop");
+            launcherClient.start(cb);
+        },
+        name: "launcherClient",
+    });
+}
+var launcherClient = constructInstance();
+launcherClient.constructInstance = constructInstance;
+exports.default = launcherClient;
 
 
 /***/ }),
-/* 28 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var store = __webpack_require__(103)('wks');
-var uid = __webpack_require__(77);
-var Symbol = __webpack_require__(31).Symbol;
+var store = __webpack_require__(108)('wks');
+var uid = __webpack_require__(81);
+var Symbol = __webpack_require__(34).Symbol;
 var USE_SYMBOL = typeof Symbol == 'function';
 
 var $exports = module.exports = function (name) {
@@ -11770,11 +12855,27 @@ $exports.store = store;
 
 
 /***/ }),
-/* 29 */
+/* 31 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ALL_BOOT_STAGES = ["microkernel", "kernel", "authentication", "preuser", "earlyuser", "user"];
+exports.CRITICAL_BOOT_STAGES = ["microkernel", "kernel", "authentication"];
+exports.SYSLOG_CHANNEL = "systemManager.systemlog";
+exports.SHOW_SYSLOG_CHANNEL = "systemManager.showSystemlog";
+exports.STATUS_CHANNEL_BASE = "systemManager.boot.status";
+exports.STAGE_CHANNEL = "systemManager.boot.stage";
+exports.CHECKPOINT_CHANNEL_BASE = "systemManager.checkpoint";
+
+
+/***/ }),
+/* 32 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /**
  * A button used all over the logger. can be a toggle, a regular old button, or a checkbox with state.
@@ -11819,17 +12920,17 @@ class LoggerButton extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.PureCom
 
 
 /***/ }),
-/* 30 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Thank's IE8 for his funny defineProperty
-module.exports = !__webpack_require__(43)(function () {
+module.exports = !__webpack_require__(47)(function () {
   return Object.defineProperty({}, 'a', { get: function () { return 7; } }).a != 7;
 });
 
 
 /***/ }),
-/* 31 */
+/* 34 */
 /***/ (function(module, exports) {
 
 // https://github.com/zloirock/core-js/issues/86#issuecomment-115759028
@@ -11841,7 +12942,7 @@ if (typeof __g == 'number') __g = global; // eslint-disable-line no-undef
 
 
 /***/ }),
-/* 32 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11879,15 +12980,15 @@ else {
 }
 
 try {
-    exports.nodestream = !!__webpack_require__(153).Readable;
+    exports.nodestream = !!__webpack_require__(159).Readable;
 } catch(e) {
     exports.nodestream = false;
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(57).Buffer))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(63).Buffer))
 
 /***/ }),
-/* 33 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11999,23 +13100,78 @@ exports.setTyped(TYPED_OK);
 
 
 /***/ }),
-/* 34 */
+/* 37 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+// contains common functions -- used in multiple places in the system manager
+Object.defineProperty(exports, "__esModule", { value: true });
+const system_1 = __webpack_require__(4);
+const _constants_1 = __webpack_require__(31);
+/**
+ * Kills old applications -- used at the beginning of start
+ * @param finUUID
+ * @returns
+ */
+function killOldApplications(finUUID) {
+    const promiseResolver = async (resolve) => {
+        system_1.System.getAllApplications(async (applications) => {
+            if (applications) {
+                for (let i = 0; i < applications.length; i++) {
+                    let a = applications[i];
+                    if (a.uuid.endsWith("-" + finUUID)) {
+                        let application = system_1.System.Application.wrap(a.uuid);
+                        await system_1.System.closeApplication(application);
+                    }
+                }
+            }
+            console.log("killOldApplications: finished closing old apps");
+            resolve();
+        });
+    };
+    return new Promise(promiseResolver);
+}
+exports.killOldApplications = killOldApplications;
+/**
+ * Function to return the name of a startup status channel, given the window name
+ * @param name
+ * @returns
+ */
+function statusChannel(name) {
+    return `${_constants_1.STATUS_CHANNEL_BASE}.${name}`;
+}
+exports.statusChannel = statusChannel;
+/**
+ * Function to return the name of a checkpoint status channel, given the parent name (e.g. service name, component name) and the checkpoint name
+ * @param parentName
+ * @param checkpointName
+ * @returns
+ */
+function checkpointChannel(parentName, checkpointName) {
+    return `${_constants_1.CHECKPOINT_CHANNEL_BASE}.${parentName}.${checkpointName}`;
+}
+exports.checkpointChannel = checkpointChannel;
+
+
+/***/ }),
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const routerClientInstance_1 = __webpack_require__(10);
-const logger_1 = __webpack_require__(3);
-const distributedStoreClient_1 = __webpack_require__(68);
-const storageClient_1 = __webpack_require__(52);
-const util = __webpack_require__(17);
-const WindowEventManager_1 = __webpack_require__(85);
+const routerClientInstance_1 = __webpack_require__(6);
+const logger_1 = __webpack_require__(1);
+const distributedStoreClient_1 = __webpack_require__(74);
+const storageClient_1 = __webpack_require__(44);
+const util = __webpack_require__(12);
+const WindowEventManager_1 = __webpack_require__(90);
 const constants = __webpack_require__(26);
-const FinsembleEvent_1 = __webpack_require__(84);
-const system_1 = __webpack_require__(5);
+const FinsembleEvent_1 = __webpack_require__(89);
+const system_1 = __webpack_require__(4);
 /** This import syntax helps the compiler infer the types. */
-const clone = __webpack_require__(112);
+const clone = __webpack_require__(118);
 distributedStoreClient_1.default.initialize();
 storageClient_1.default.initialize();
 const BOUNDS_SET = "bounds-set";
@@ -12080,7 +13236,7 @@ class FinsembleWindow {
     //allows backwards compatibility.
     standardizeEventName(event) {
         switch (event) {
-            //all of these should be deprecated in 3.5ish.
+            // all of these should be deprecated in 3.5ish.
             case "bounds-set":
             case "stoppedMoving":
                 return "bounds-change-end";
@@ -12172,9 +13328,6 @@ class FinsembleWindow {
     listenForBoundsSet() {
         this.eventManager.listenForRemoteEvents(["bounds-change-start", "bounds-changing", "bounds-change-end"]);
     }
-    animate(params = {}, callback = Function.prototype) {
-        this.queryWindowService("animate", params, callback);
-    }
     getWindowStore(cb) {
         if (window._FSBLCache.windowStore) {
             return cb(window._FSBLCache.windowStore);
@@ -12187,7 +13340,7 @@ class FinsembleWindow {
     doConstruction(params) {
         //TODO this is the same as wrap (eventually this should spawn)
         if (!params.setWindowType && !params.windowType) { //Default WindowType
-            params.windowType = "OpenFinWindow";
+            params.windowType = "WebWindow";
         }
         if (params.windowType) { //We need to make a specific kind of Window
             params.setWindowType = params.windowType;
@@ -12237,7 +13390,7 @@ class FinsembleWindow {
         if (!response || !response.data || typeof response.data !== "string")
             return;
         //this.windowOptions.title = response.data;
-        this.eventManager.trigger("title-changed", {
+        this.eventManager.emit("title-changed", {
             title: response.data
         });
     }
@@ -12348,9 +13501,9 @@ class FinsembleWindow {
             let wrap = null;
             if (typeof window._FSBLCache.windowAttempts[params.name] === "undefined")
                 window._FSBLCache.windowAttempts[params.name] = 0;
-            //OpenfinApplication is essentially just an openfinWindow in its own process. We can wrap it just like a window.
-            if (!params.setWindowType && !identifier.windowType || identifier.windowType === "OpenFinApplication") { //Default WindowType
-                identifier.windowType = "OpenFinWindow";
+            // WebApplication is essentially just an WebWindow in its own process. We can wrap it just like a window.
+            if (!params.setWindowType && !identifier.windowType || identifier.windowType === "WebApplication") { //Default WindowType
+                identifier.windowType = "WebWindow";
             }
             //Top level keeps important info (e.g., uuid, name, windowType).
             let paramsForWindow = Object.assign({}, identifier);
@@ -12520,6 +13673,22 @@ class FinsembleWindow {
     bringToFront(params, callback) {
         this.queryWindowService("bringToFront", params, callback);
     }
+    /**
+     * Sets the alwaysOnTop state for the window.
+     * @param params Objecting representing the new alwaysOnTop state.
+     * @param callback Callback accepting two values: a (possible) error object and the alwaysOnTop value for the window.
+     */
+    setAlwaysOnTop(params, callback) {
+        this.queryWindowService("setAlwaysOnTop", params, callback);
+    }
+    /**
+     * Returns the alwaysOnTop for the window.
+     * @param params This parameter is ignored.
+     * @param callback Callback invoked with the alwaysOnTop state for the window.
+     */
+    isAlwaysOnTop(params, callback) {
+        this.queryWindowService("isAlwaysOnTop", {}, callback);
+    }
     isShowing(params, callback) {
         this.queryWindowService("isShowing", params, callback);
     }
@@ -12558,6 +13727,9 @@ class FinsembleWindow {
             logger_1.default.system.debug("WRAP CLOSE. Public close initiated for", this.name);
             callback();
         });
+    }
+    animate(params = {}, callback = Function.prototype) {
+        this.queryWindowService("animate", params, callback);
     }
     /**
      *Register a window with docking. Use this if you don't want to use the full initialization function
@@ -12723,7 +13895,7 @@ class FinsembleWindow {
      * @param {function} cb Callback
      */
     getMonitor(cb) {
-        routerClientInstance_1.default.query("DockingService.getMonitorForWindow", { windowIdentifier: this.identifier }, (err, message) => message ? cb(message.data) : cb());
+        routerClientInstance_1.default.query("DockingService.getMonitorForWindow", { windowIdentifier: this.identifier }, (err, message) => (message ? cb(message.data) : cb()));
     }
     /**
      * Given params, will return the component state. Either the params to search for, or the entire state.
@@ -12843,9 +14015,19 @@ class FinsembleWindow {
                     else {
                         logger_1.default.system.error("FinsembleWindow.setParent error", err);
                     }
+                    /** DH 11/8/2019
+                     * There is an intrinsic race between stacks and grouping:
+                     * The stack is the group, not the children, so the parent might
+                     * not be correct before the update arrives. This publish ensures
+                     * that there is at least one publish _afer_ the parent has been set.
+                     */
+                    routerClientInstance_1.default.transmit(constants.DOCKING.REQUEST_PUBLISH, null);
                     this.settingParent = false;
-                    this.eventManager.trigger("parent-set", { parentName: this.parentWindow.name });
-                    cb(err, wrappedStackedWindow);
+                    const parentSettingDone = () => {
+                        this.removeEventListener("parent-set", parentSettingDone);
+                        cb(err, wrappedStackedWindow);
+                    };
+                    this.addEventListener("parent-set", parentSettingDone);
                 });
             });
         }
@@ -12890,7 +14072,7 @@ class FinsembleWindow {
      */
     clearParent() {
         logger_1.default.system.debug("FinsembleWindow.clearParent", this.parentWindow);
-        this.eventManager.trigger("parent-unset", {
+        this.eventManager.emit("parent-unset", {
             parentName: this.parentWindow.name
         });
         this.parentWindow = null;
@@ -13099,7 +14281,7 @@ FinsembleWindow.isStartupApplication = async function (windowName) {
     // We cannot wrap the service manager.
     // No need to do these checks if we're in a window that lives in the startup app.
     if (manifest) {
-        switch (fin.container) {
+        switch (system_1.System.container) {
             case "Electron":
                 isStartupApplication = manifest && manifest.startup_app && manifest.startup_app.name === windowName;
                 break;
@@ -13145,17 +14327,18 @@ FinsembleWindow._windowReady = function (windowName) {
     return new Promise(promiseResolver);
 };
 exports.FinsembleWindow = FinsembleWindow;
+// @TODO - Process Monitor uses finWindow.getParentApplication. We should implement that here.
 
 
 /***/ }),
-/* 35 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var global = __webpack_require__(31);
+var global = __webpack_require__(34);
 var core = __webpack_require__(19);
-var ctx = __webpack_require__(138);
-var hide = __webpack_require__(44);
-var has = __webpack_require__(36);
+var ctx = __webpack_require__(144);
+var hide = __webpack_require__(48);
+var has = __webpack_require__(40);
 var PROTOTYPE = 'prototype';
 
 var $export = function (type, name, source) {
@@ -13216,7 +14399,7 @@ module.exports = $export;
 
 
 /***/ }),
-/* 36 */
+/* 40 */
 /***/ (function(module, exports) {
 
 var hasOwnProperty = {}.hasOwnProperty;
@@ -13226,15 +14409,15 @@ module.exports = function (it, key) {
 
 
 /***/ }),
-/* 37 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var anObject = __webpack_require__(42);
-var IE8_DOM_DEFINE = __webpack_require__(140);
-var toPrimitive = __webpack_require__(105);
+var anObject = __webpack_require__(46);
+var IE8_DOM_DEFINE = __webpack_require__(146);
+var toPrimitive = __webpack_require__(110);
 var dP = Object.defineProperty;
 
-exports.f = __webpack_require__(30) ? Object.defineProperty : function defineProperty(O, P, Attributes) {
+exports.f = __webpack_require__(33) ? Object.defineProperty : function defineProperty(O, P, Attributes) {
   anObject(O);
   P = toPrimitive(P, true);
   anObject(Attributes);
@@ -13248,19 +14431,19 @@ exports.f = __webpack_require__(30) ? Object.defineProperty : function definePro
 
 
 /***/ }),
-/* 38 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // to indexed object, toObject with fallback for non-array-like ES3 strings
-var IObject = __webpack_require__(141);
-var defined = __webpack_require__(95);
+var IObject = __webpack_require__(147);
+var defined = __webpack_require__(100);
 module.exports = function (it) {
   return IObject(defined(it));
 };
 
 
 /***/ }),
-/* 39 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13294,7 +14477,7 @@ module.exports = function (it) {
 
 /*<replacement>*/
 
-var pna = __webpack_require__(80);
+var pna = __webpack_require__(84);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -13309,12 +14492,12 @@ var objectKeys = Object.keys || function (obj) {
 module.exports = Duplex;
 
 /*<replacement>*/
-var util = Object.create(__webpack_require__(58));
-util.inherits = __webpack_require__(47);
+var util = Object.create(__webpack_require__(64));
+util.inherits = __webpack_require__(51);
 /*</replacement>*/
 
-var Readable = __webpack_require__(186);
-var Writable = __webpack_require__(127);
+var Readable = __webpack_require__(192);
+var Writable = __webpack_require__(133);
 
 util.inherits(Duplex, Readable);
 
@@ -13397,7 +14580,768 @@ Duplex.prototype._destroy = function (err, cb) {
 };
 
 /***/ }),
-/* 40 */
+/* 44 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+Object.defineProperty(exports, "__esModule", { value: true });
+const validate_1 = __webpack_require__(18);
+const logger_1 = __webpack_require__(1);
+const baseClient_1 = __webpack_require__(11);
+const p_limit_1 = __webpack_require__(124);
+const disentangledUtils_1 = __webpack_require__(59);
+const limit = p_limit_1.default(1);
+/**
+ *
+ * @introduction
+ * <h2>Storage Client (Finsemble Connect)</h2>
+ *
+ * The Storage Client handles saving and retrieving data for your smart desktop.
+ *
+ *
+ *See the <a href=tutorial-storingData.html>Storing Data tutorial</a> for an overview of using the Storage Client.
+ * @hideconstructor
+ *  @todo add clear method
+ * @constructor
+ */
+class StorageClient extends baseClient_1._BaseClient {
+    constructor() {
+        super(...arguments);
+        this.clientReady = false;
+        //Did this because "delete" is a reserved keyword; for autocomplete the client is exported as a namespace with a bunch of functions and wouldn't work with a function called delete.
+        this.delete = this.remove;
+    }
+    /**
+     * Define the user name for storage (i.e., each user has unique storage).
+     * @param {object} params
+     * @param {string} params.user A unique key to store user data under
+     * @param {StandardCallback} cb Callback to be called on success.
+     *
+     * @example
+     * FSBL.Clients.StorageClient.setUser({ user: "JohnDeere"});
+     */
+    setUser(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
+        validate_1.default.args(params.user, "string", cb, "function=");
+        this.routerClient.query("Storage.setUser", { user: params.user }, function (err, response) {
+            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+            logMethod("APPLICATION LIFECYCLE:StorageClient.setUser", params, err, response);
+            if (cb) {
+                cb(err, response.data);
+            }
+        });
+    }
+    ;
+    /**
+     * Specifies the data store. For normal operation this function doesn't have to be invoked -- the default data store is set in configuration.
+     * @param {Object} params
+     * @param {String} params.topic If specified then data store is set only for topic.
+     * @param {string} params.dataStore Identifies the data store (e.g. "localStorage", "redis").
+     * @param {function} cb Callback to be called on success.
+     *
+     * @example
+     * FSBL.Clients.StorageClient.setStore({topic:"finsemble", dataStore:"redis"})
+     */
+    setStore(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
+        validate_1.default.args(params.topic, "string", params.dataStore, "string=", cb, "function=");
+        logger_1.default.system.log("APPLICATION LIFECYCLE:StorageClient.setStore", params, cb);
+        this.routerClient.query("Storage.setStore", params, (err, response) => {
+            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+            logMethod("Storage.setStore", err, response);
+            if (cb) {
+                cb(err, response.data);
+            }
+        });
+    }
+    ;
+    /**
+     * Save a key value pair into storage.
+     * @param {Object} params
+     * @param {String} params.topic Storage topic for key being stored.
+     * @param {String} params.key The key for the value to be stored under.
+     * @param {any} params.value The value to be stored.
+     * @param {function} cb Callback to be called on success.
+     *
+     * @example
+     * FSBL.Clients.StorageClient.save({topic:"finsemble", key:"testKey", value:"testValue"})
+     */
+    save(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
+        if (typeof params.key !== "string" || typeof params.topic !== "string") {
+            throw new Error("Values for key and topic must be strings.");
+        }
+        const promiseResolver = (resolve, reject) => {
+            validate_1.default.args(params.topic, "string", params.key, "string", params.value, "any", cb, "function=");
+            this.routerClient.query("Storage.save", params, (err, response) => {
+                const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+                logMethod("Storage.save", err, response);
+                if (cb) {
+                    cb(err, response.data);
+                }
+                if (err) {
+                    reject({ err: err, data: null });
+                }
+                else {
+                    resolve({ err: err, data: response.data });
+                }
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    ;
+    /**
+     *
+     * @param params
+     * @private
+     */
+    save1(params) {
+        return limit(() => this.save(params));
+    }
+    /**
+     * Get a value from storage.
+     * @param {Object} params
+     * @param {String} params.key The key to get from storage.
+     * @param {String} params.topic The topic that the data is saved under.
+     * @param {function} cb Callback to be called on success.
+     *
+     * @example
+     * FSBL.Clients.StorageClient.get({ topic:"finsemble", key:"testKey" }, function(err, data) {
+     *	var myData = data;
+     * });
+     */
+    get(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
+        if (typeof params.key !== "string" || typeof params.topic !== "string") {
+            throw new Error("Values for key and topic must be strings.");
+        }
+        const promiseResolver = (resolve, reject) => {
+            validate_1.default.args(params.topic, "string", params.key, "string", cb, "function=");
+            this.routerClient.query("Storage.get", params, (err, response) => {
+                if (err) {
+                    logger_1.default.system.error("Storage.get", err, response);
+                    cb(err, response ? response.data : null);
+                    return reject(err, response ? response.data : null);
+                }
+                logger_1.default.system.info("Storage.get", err, response);
+                if (cb)
+                    cb(err, response.data);
+                resolve(response.data);
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    ;
+    /**
+     *
+     * @param params
+     * @param cb
+     * @private
+     */
+    get1(params, cb) {
+        return limit(() => this.get(params));
+    }
+    /**
+     * Asynchronously updates provided key in storage by first retrieving the key
+     * then running a provided function on the result and re-saving its value.
+     * There’s no guarantees of consistency or atomicity
+     *
+     * @param params {any} Update storage params
+     * @param params.topic {string} The storage topic
+     * @param params.key {string} The storage key
+     * @param params.updateFn {Function} Function to run to determine the value to store
+     * @private
+     */
+    async updateStorage(params) {
+        const { topic, key, updateFn } = params;
+        const result = await this.get({ topic, key });
+        return this.save({ topic, key, value: updateFn(result) });
+    }
+    /**
+     *
+     * @param params
+     * @private
+     */
+    updateStorage1(params) {
+        return limit(() => this.updateStorage(params));
+    }
+    /**
+     * Get all keys for the topic.
+     * @param {Object} params
+     * @param {String} params.topic Topic for the keys to return.
+     * @param {String=} params.keyPrefix Filter all keys that don't start with this prefix.
+     * @param {function} cb Callback to be called on success.
+     *
+     * @example
+     * FSBL.Clients.StorageClient.keys({topic:"finsemble", keyPrefix:"test"}, function(err, data){
+     *	var myKeys = data;
+     * });
+     */
+    keys(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
+        validate_1.default.args(params.topic, "string", cb, "function=");
+        logger_1.default.system.debug("StorageClient.keys", params, cb);
+        this.routerClient.query("Storage.keys", params, function (err, response) {
+            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+            logMethod("Storage.keys", err, response);
+            if (cb) {
+                cb(err, response.data);
+            }
+        });
+    }
+    ;
+    /**
+     *
+     * @param params
+     * @private
+     */
+    keys1(params) {
+        return limit(() => disentangledUtils_1.promisify(this.keys.bind(this))(params));
+    }
+    /**
+     * Get a multiple values from storage based on regex.(coming soon)
+     * @param {Object} params
+     * @param {function} cb Callback to be called on success.
+     * @private
+     * @todo make this work.
+     * @example
+     * StorageClient.get({key:"testKey"});
+     */
+    getMultiple(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
+        logger_1.default.system.info("StorageClient.getMultiple", params, cb);
+        this.routerClient.query("Storage.getMultiple", params, function (err, response) {
+            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+            logMethod("StorageClient.getMultiple:", params, response);
+            if (cb) {
+                cb(err, response);
+            }
+        });
+    }
+    ;
+    /**
+     * Delete a value from storage.
+     * @param {Object} params
+     * @param {String} params.key The key to get from storage.
+     * @param {String} params.topic The topic that the data is saved under.
+     * @example
+     * FSBL.Clients.StorageClient.remove({ key:"testKey" })
+     */
+    remove(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
+        const promiseResolver = (resolve, reject) => {
+            validate_1.default.args(params.topic, "string", params.key, "string", cb, "function=");
+            this.routerClient.query("Storage.delete", params, function (err, response) {
+                const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+                logMethod("StorageClient.delete", err, response);
+                if (cb) {
+                    cb(err, response.data);
+                }
+                if (err) {
+                    reject({ err: err, data: null });
+                }
+                else {
+                    resolve({ err: err, data: response.data });
+                }
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    ;
+    /**
+     *
+     * @param params
+     * @private
+     */
+    remove1(params) {
+        return limit(() => this.remove(params));
+    }
+    /**
+     * Clears a storage adapter of all data.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     *
+     */
+    clearCache(cb) {
+        logger_1.default.system.log("StorageClient.clearCache", cb);
+        this.routerClient.query("Storage.clearCache", null, function (err, response) {
+            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+            logMethod("StorageClient.clearCache", err, response);
+            if (cb) {
+                cb(err, response.data);
+            }
+        });
+    }
+    ;
+}
+exports.StorageClient = StorageClient;
+;
+var storageClient = new StorageClient({
+    onReady: function (cb) {
+        if (cb) {
+            cb();
+        }
+        storageClient.clientReady = true;
+    },
+    name: "storageClient"
+});
+exports.default = storageClient;
+
+
+/***/ }),
+/* 45 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ALL_BOOT_STAGES = ["microkernel", "kernel", "authentication", "preuser", "earlyuser", "user"];
+/**
+ * Boot config element used to build a node in a dependency tree
+ */
+class BootConfigElement {
+}
+exports.BootConfigElement = BootConfigElement;
+/**
+ * Represents a ready node (i.e. all that's need to start the corresponding task/service/component)
+ */
+class BootReadyItem {
+    constructor(name, type, config) {
+        this.name = name;
+        this.type = type;
+        this.config = config;
+    }
+}
+exports.BootReadyItem = BootReadyItem;
+
+
+/***/ }),
+/* 46 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var isObject = __webpack_require__(49);
+module.exports = function (it) {
+  if (!isObject(it)) throw TypeError(it + ' is not an object!');
+  return it;
+};
+
+
+/***/ }),
+/* 47 */
+/***/ (function(module, exports) {
+
+module.exports = function (exec) {
+  try {
+    return !!exec();
+  } catch (e) {
+    return true;
+  }
+};
+
+
+/***/ }),
+/* 48 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var dP = __webpack_require__(41);
+var createDesc = __webpack_require__(80);
+module.exports = __webpack_require__(33) ? function (object, key, value) {
+  return dP.f(object, key, createDesc(1, value));
+} : function (object, key, value) {
+  object[key] = value;
+  return object;
+};
+
+
+/***/ }),
+/* 49 */
+/***/ (function(module, exports) {
+
+module.exports = function (it) {
+  return typeof it === 'object' ? it !== null : typeof it === 'function';
+};
+
+
+/***/ }),
+/* 50 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
+  Copyright (c) 2017 Jed Watson.
+  Licensed under the MIT License (MIT), see
+  http://jedwatson.github.io/classnames
+*/
+/* global define */
+
+(function () {
+	'use strict';
+
+	var hasOwn = {}.hasOwnProperty;
+
+	function classNames () {
+		var classes = [];
+
+		for (var i = 0; i < arguments.length; i++) {
+			var arg = arguments[i];
+			if (!arg) continue;
+
+			var argType = typeof arg;
+
+			if (argType === 'string' || argType === 'number') {
+				classes.push(arg);
+			} else if (Array.isArray(arg) && arg.length) {
+				var inner = classNames.apply(null, arg);
+				if (inner) {
+					classes.push(inner);
+				}
+			} else if (argType === 'object') {
+				for (var key in arg) {
+					if (hasOwn.call(arg, key) && arg[key]) {
+						classes.push(key);
+					}
+				}
+			}
+		}
+
+		return classes.join(' ');
+	}
+
+	if (typeof module !== 'undefined' && module.exports) {
+		classNames.default = classNames;
+		module.exports = classNames;
+	} else if (true) {
+		// register as 'classnames', consistent with npm package name
+		!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function () {
+			return classNames;
+		}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	} else {
+		window.classNames = classNames;
+	}
+}());
+
+
+/***/ }),
+/* 51 */
+/***/ (function(module, exports) {
+
+if (typeof Object.create === 'function') {
+  // implementation from standard node.js 'util' module
+  module.exports = function inherits(ctor, superCtor) {
+    if (superCtor) {
+      ctor.super_ = superCtor
+      ctor.prototype = Object.create(superCtor.prototype, {
+        constructor: {
+          value: ctor,
+          enumerable: false,
+          writable: true,
+          configurable: true
+        }
+      })
+    }
+  };
+} else {
+  // old school shim for old browsers
+  module.exports = function inherits(ctor, superCtor) {
+    if (superCtor) {
+      ctor.super_ = superCtor
+      var TempCtor = function () {}
+      TempCtor.prototype = superCtor.prototype
+      ctor.prototype = new TempCtor()
+      ctor.prototype.constructor = ctor
+    }
+  }
+}
+
+
+/***/ }),
+/* 52 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var utils = __webpack_require__(9);
+var support = __webpack_require__(35);
+var nodejsUtils = __webpack_require__(82);
+var GenericWorker = __webpack_require__(25);
+
+/**
+ * The following functions come from pako, from pako/lib/utils/strings
+ * released under the MIT license, see pako https://github.com/nodeca/pako/
+ */
+
+// Table with utf8 lengths (calculated by first byte of sequence)
+// Note, that 5 & 6-byte values and some 4-byte values can not be represented in JS,
+// because max possible codepoint is 0x10ffff
+var _utf8len = new Array(256);
+for (var i=0; i<256; i++) {
+  _utf8len[i] = (i >= 252 ? 6 : i >= 248 ? 5 : i >= 240 ? 4 : i >= 224 ? 3 : i >= 192 ? 2 : 1);
+}
+_utf8len[254]=_utf8len[254]=1; // Invalid sequence start
+
+// convert string to array (typed, when possible)
+var string2buf = function (str) {
+    var buf, c, c2, m_pos, i, str_len = str.length, buf_len = 0;
+
+    // count binary size
+    for (m_pos = 0; m_pos < str_len; m_pos++) {
+        c = str.charCodeAt(m_pos);
+        if ((c & 0xfc00) === 0xd800 && (m_pos+1 < str_len)) {
+            c2 = str.charCodeAt(m_pos+1);
+            if ((c2 & 0xfc00) === 0xdc00) {
+                c = 0x10000 + ((c - 0xd800) << 10) + (c2 - 0xdc00);
+                m_pos++;
+            }
+        }
+        buf_len += c < 0x80 ? 1 : c < 0x800 ? 2 : c < 0x10000 ? 3 : 4;
+    }
+
+    // allocate buffer
+    if (support.uint8array) {
+        buf = new Uint8Array(buf_len);
+    } else {
+        buf = new Array(buf_len);
+    }
+
+    // convert
+    for (i=0, m_pos = 0; i < buf_len; m_pos++) {
+        c = str.charCodeAt(m_pos);
+        if ((c & 0xfc00) === 0xd800 && (m_pos+1 < str_len)) {
+            c2 = str.charCodeAt(m_pos+1);
+            if ((c2 & 0xfc00) === 0xdc00) {
+                c = 0x10000 + ((c - 0xd800) << 10) + (c2 - 0xdc00);
+                m_pos++;
+            }
+        }
+        if (c < 0x80) {
+            /* one byte */
+            buf[i++] = c;
+        } else if (c < 0x800) {
+            /* two bytes */
+            buf[i++] = 0xC0 | (c >>> 6);
+            buf[i++] = 0x80 | (c & 0x3f);
+        } else if (c < 0x10000) {
+            /* three bytes */
+            buf[i++] = 0xE0 | (c >>> 12);
+            buf[i++] = 0x80 | (c >>> 6 & 0x3f);
+            buf[i++] = 0x80 | (c & 0x3f);
+        } else {
+            /* four bytes */
+            buf[i++] = 0xf0 | (c >>> 18);
+            buf[i++] = 0x80 | (c >>> 12 & 0x3f);
+            buf[i++] = 0x80 | (c >>> 6 & 0x3f);
+            buf[i++] = 0x80 | (c & 0x3f);
+        }
+    }
+
+    return buf;
+};
+
+// Calculate max possible position in utf8 buffer,
+// that will not break sequence. If that's not possible
+// - (very small limits) return max size as is.
+//
+// buf[] - utf8 bytes array
+// max   - length limit (mandatory);
+var utf8border = function(buf, max) {
+    var pos;
+
+    max = max || buf.length;
+    if (max > buf.length) { max = buf.length; }
+
+    // go back from last position, until start of sequence found
+    pos = max-1;
+    while (pos >= 0 && (buf[pos] & 0xC0) === 0x80) { pos--; }
+
+    // Fuckup - very small and broken sequence,
+    // return max, because we should return something anyway.
+    if (pos < 0) { return max; }
+
+    // If we came to start of buffer - that means vuffer is too small,
+    // return max too.
+    if (pos === 0) { return max; }
+
+    return (pos + _utf8len[buf[pos]] > max) ? pos : max;
+};
+
+// convert array to string
+var buf2string = function (buf) {
+    var str, i, out, c, c_len;
+    var len = buf.length;
+
+    // Reserve max possible length (2 words per char)
+    // NB: by unknown reasons, Array is significantly faster for
+    //     String.fromCharCode.apply than Uint16Array.
+    var utf16buf = new Array(len*2);
+
+    for (out=0, i=0; i<len;) {
+        c = buf[i++];
+        // quick process ascii
+        if (c < 0x80) { utf16buf[out++] = c; continue; }
+
+        c_len = _utf8len[c];
+        // skip 5 & 6 byte codes
+        if (c_len > 4) { utf16buf[out++] = 0xfffd; i += c_len-1; continue; }
+
+        // apply mask on first byte
+        c &= c_len === 2 ? 0x1f : c_len === 3 ? 0x0f : 0x07;
+        // join the rest
+        while (c_len > 1 && i < len) {
+            c = (c << 6) | (buf[i++] & 0x3f);
+            c_len--;
+        }
+
+        // terminated by end of string?
+        if (c_len > 1) { utf16buf[out++] = 0xfffd; continue; }
+
+        if (c < 0x10000) {
+            utf16buf[out++] = c;
+        } else {
+            c -= 0x10000;
+            utf16buf[out++] = 0xd800 | ((c >> 10) & 0x3ff);
+            utf16buf[out++] = 0xdc00 | (c & 0x3ff);
+        }
+    }
+
+    // shrinkBuf(utf16buf, out)
+    if (utf16buf.length !== out) {
+        if(utf16buf.subarray) {
+            utf16buf = utf16buf.subarray(0, out);
+        } else {
+            utf16buf.length = out;
+        }
+    }
+
+    // return String.fromCharCode.apply(null, utf16buf);
+    return utils.applyFromCharCode(utf16buf);
+};
+
+
+// That's all for the pako functions.
+
+
+/**
+ * Transform a javascript string into an array (typed if possible) of bytes,
+ * UTF-8 encoded.
+ * @param {String} str the string to encode
+ * @return {Array|Uint8Array|Buffer} the UTF-8 encoded string.
+ */
+exports.utf8encode = function utf8encode(str) {
+    if (support.nodebuffer) {
+        return nodejsUtils.newBufferFrom(str, "utf-8");
+    }
+
+    return string2buf(str);
+};
+
+
+/**
+ * Transform a bytes array (or a representation) representing an UTF-8 encoded
+ * string into a javascript string.
+ * @param {Array|Uint8Array|Buffer} buf the data de decode
+ * @return {String} the decoded string.
+ */
+exports.utf8decode = function utf8decode(buf) {
+    if (support.nodebuffer) {
+        return utils.transformTo("nodebuffer", buf).toString("utf-8");
+    }
+
+    buf = utils.transformTo(support.uint8array ? "uint8array" : "array", buf);
+
+    return buf2string(buf);
+};
+
+/**
+ * A worker to decode utf8 encoded binary chunks into string chunks.
+ * @constructor
+ */
+function Utf8DecodeWorker() {
+    GenericWorker.call(this, "utf-8 decode");
+    // the last bytes if a chunk didn't end with a complete codepoint.
+    this.leftOver = null;
+}
+utils.inherits(Utf8DecodeWorker, GenericWorker);
+
+/**
+ * @see GenericWorker.processChunk
+ */
+Utf8DecodeWorker.prototype.processChunk = function (chunk) {
+
+    var data = utils.transformTo(support.uint8array ? "uint8array" : "array", chunk.data);
+
+    // 1st step, re-use what's left of the previous chunk
+    if (this.leftOver && this.leftOver.length) {
+        if(support.uint8array) {
+            var previousData = data;
+            data = new Uint8Array(previousData.length + this.leftOver.length);
+            data.set(this.leftOver, 0);
+            data.set(previousData, this.leftOver.length);
+        } else {
+            data = this.leftOver.concat(data);
+        }
+        this.leftOver = null;
+    }
+
+    var nextBoundary = utf8border(data);
+    var usableData = data;
+    if (nextBoundary !== data.length) {
+        if (support.uint8array) {
+            usableData = data.subarray(0, nextBoundary);
+            this.leftOver = data.subarray(nextBoundary, data.length);
+        } else {
+            usableData = data.slice(0, nextBoundary);
+            this.leftOver = data.slice(nextBoundary, data.length);
+        }
+    }
+
+    this.push({
+        data : exports.utf8decode(usableData),
+        meta : chunk.meta
+    });
+};
+
+/**
+ * @see GenericWorker.flush
+ */
+Utf8DecodeWorker.prototype.flush = function () {
+    if(this.leftOver && this.leftOver.length) {
+        this.push({
+            data : exports.utf8decode(this.leftOver),
+            meta : {}
+        });
+        this.leftOver = null;
+    }
+};
+exports.Utf8DecodeWorker = Utf8DecodeWorker;
+
+/**
+ * A worker to endcode string chunks into utf8 encoded binary chunks.
+ * @constructor
+ */
+function Utf8EncodeWorker() {
+    GenericWorker.call(this, "utf-8 encode");
+}
+utils.inherits(Utf8EncodeWorker, GenericWorker);
+
+/**
+ * @see GenericWorker.processChunk
+ */
+Utf8EncodeWorker.prototype.processChunk = function (chunk) {
+    this.push({
+        data : exports.utf8encode(chunk.data),
+        meta : chunk.meta
+    });
+};
+exports.Utf8EncodeWorker = Utf8EncodeWorker;
+
+
+/***/ }),
+/* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -14332,882 +16276,10 @@ function get(object, path, defaultValue) {
 
 module.exports = get;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ }),
-/* 41 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const events_1 = __webpack_require__(13);
-const routerClientInstance_1 = __webpack_require__(10);
-const STARTUP_TIMEOUT_DURATION = 10000;
-const constants_1 = __webpack_require__(26);
-/**
- * Small class to hold on to dependencies and callbacks. Also emits a timeout event that the startupManager is listening for. When it times out, the startupManager catches the event and generates a message that includes all of the offline clients and services. It then causes this class to emit an  err event that the baseService is listening for. This arrangement is set up for a couple of reasons.
- * 1. I can't use the logger in here because the logger uses the startupManager, and there'd be a circular dependency.
- * 2. FSBLDependencyManager is a singleton, and there can be multiple services living in a single window. I didn't want them all to log that they were offline if they weren't (e.g., if I'd put the emitter on the StartupManager instead of this class).
- */
-class StartupDependency extends events_1.EventEmitter {
-    constructor(params) {
-        super();
-        this.callback = params.callback;
-        this.dependencies = params.dependencies;
-        this.startupTimer = null;
-        this.setStartupTimer = this.setStartupTimer.bind(this);
-        this.clearStartupTimer = this.clearStartupTimer.bind(this);
-        this.setStartupTimer();
-    }
-    /**
-     * Removes the startup timer (because the dependency was resolved within the allotted time);
-     */
-    clearStartupTimer() {
-        clearTimeout(this.startupTimer);
-        delete this.startupTimer;
-    }
-    /**
-     * If the dependency hasn't resolved within STARTUP_TIMEOUT_DURATION, emit a timeout event that the StartupManager can catch.
-     */
-    setStartupTimer() {
-        let self = this;
-        //+ coerces the result to a number, making typescript happy.
-        this.startupTimer = +setTimeout(() => {
-            self.emit("timeout");
-        }, STARTUP_TIMEOUT_DURATION);
-    }
-}
-/**
- * Used to generate a unique ID for the list of dependencies.
- */
-function uuidv4() {
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-        var r = Math.random() * 16 | 0, v = c === "x" ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-}
-/**
- * @private
- */
-class StartupManager {
-    /**
-     * @private
-     */
-    constructor() {
-        this.servicesAreAllOnline = {};
-        this.clientsAreAllOnline = {};
-        this.onlineClients = [];
-        this.onlineServices = [];
-        this.dependencies = {};
-        this.AuthorizationCompleted = false;
-        this.startupTimers = {};
-        this.startupTimerFired = false;
-        this.bindCorrectContext();
-    }
-    /**
-     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required dependencies are ready.
-     *
-     * @param {FinsembleDependency} dependencies
-     * @param {any} callback
-     * @memberof StartupManager
-     */
-    waitFor(dependencies, callback) {
-        let id = uuidv4();
-        //Set defaults to an empty array if they aren't passed in.
-        if (!dependencies.services)
-            dependencies.services = [];
-        if (!dependencies.clients)
-            dependencies.clients = [];
-        //The dependency manager can pass in a name to the dependency. If it does, we'll use it. If not, we won't.
-        if (dependencies.clients.length) {
-            if (this.AuthorizationCompleted === false && dependencies.clients.includes("authenticationClient")) {
-                dependencies.clients.splice(dependencies.clients.indexOf("authenticationClient"), 1);
-            }
-            //Lowercase the first letter of the client.
-            dependencies.clients = dependencies.clients.map(clientName => {
-                return clientName.charAt(0).toLowerCase() + clientName.slice(1);
-            });
-        }
-        let dependency = new StartupDependency({ dependencies, callback });
-        //If the dependency times out, throw an error that the baseService can catch. It will then log out why it's not online.
-        dependency.on("timeout", () => {
-            this.onDependencyTimeout(dependency);
-        });
-        this.dependencies[id] = dependency;
-        this.checkDependencies();
-        return dependency;
-    }
-    /**
-     * This method generates a helpful error message giving possible reasons for why the service is offline. After the message is generated, it emits an event on the dependency that's passed in as a parameter. The BaseService is listening for this event, and logs the error message to the central logger.
-     * @param {Dependency} dependency
-     */
-    onDependencyTimeout(dependency) {
-        const NEW_LINE = "\n", TAB = "\u0009", BULLET = "\u2022", BULLET_POINT = NEW_LINE + TAB + BULLET, STORAGE_ADAPTER_ERROR = "The default storage adapter failed to fully initialize, or has a syntax error. Ensure that the default storage adapter is up, connected, and sending/receiving data properly.";
-        const HELPFUL_MESSAGES = {
-            preferencesService: [
-                `PreferencesService failed to start.${BULLET_POINT}Typically this is caused by a failure to retrieve data from your default storage adapter. ${STORAGE_ADAPTER_ERROR}`
-            ],
-            storageService: [
-                `StorageService failed to start. Here are some common reasons for failure:${BULLET_POINT}${STORAGE_ADAPTER_ERROR}${BULLET_POINT}The data coming back from your adapter is improperly formatted or otherwise corrupted. Try clearing your storage and restarting. If the problem persists, the issue may not be in your adapter.`
-            ],
-            routerService: [
-                "RouterService failed to start. This is a fatal error. Contact finsemble support."
-            ],
-            workspaceService: [
-                `WorkspaceService failed to start. Here are some common reasons for failure:${BULLET_POINT}${STORAGE_ADAPTER_ERROR}.${BULLET_POINT}Your active workspace is corrupted.`
-            ],
-            assimilationService: [
-                "AssimilationService failed to start. Check to see that the 'FinsembleAssimilation' is active in your taskManager. If it is, please contact finsemble support."
-            ]
-        };
-        let offlineClients = this.getOfflineClients();
-        let offlineServices = this.getOfflineServices();
-        let errorMessage = `APPLICATION LIFECYCLE:STARTUP:Dependency not online after ${STARTUP_TIMEOUT_DURATION / 1000} seconds.`;
-        if (offlineClients.length) {
-            errorMessage += ` Waiting for these clients: ${offlineClients.join(", ")}.`;
-        }
-        if (offlineServices.length) {
-            errorMessage += ` Waiting for these services: ${offlineServices.join(", ")}.`;
-        }
-        //For every service that's offline, check to see if we have any helpful messages for it. If so, iterate through the array and append to the error message.
-        offlineServices.forEach((service) => {
-            if (HELPFUL_MESSAGES[service]) {
-                HELPFUL_MESSAGES[service].forEach((msg) => {
-                    errorMessage += NEW_LINE + NEW_LINE + msg + NEW_LINE;
-                });
-                //puts a line between our helpful messages and the log stack.
-                errorMessage += NEW_LINE;
-            }
-        });
-        //The BaseService is listening for this event, and will log the errorMessage to the central logger.
-        dependency.emit("err", errorMessage);
-    }
-    /**
-     * This function loops through all of the registered dependencies and checks to see if the conditions have been met. If so, it invokes the callback and removes the reference to the dependency.
-     *
-     * @memberof StartupManager
-     */
-    checkDependencies() {
-        for (let id in this.dependencies) {
-            let dependency = this.dependencies[id];
-            let { dependencies, callback } = dependency;
-            if (dependencies.services.length && !this.servicesAreAllOnline[id]) {
-                this.servicesAreAllOnline[id] = this.checkServices(dependencies.services);
-                if (!this.servicesAreAllOnline[id]) {
-                    continue;
-                }
-            }
-            if (dependencies.clients.length && !this.clientsAreAllOnline[id]) {
-                this.clientsAreAllOnline[id] = this.checkClients(dependencies.clients);
-                if (!this.clientsAreAllOnline[id]) {
-                    continue;
-                }
-            }
-            delete this.dependencies[id];
-            dependency.clearStartupTimer();
-            if (callback) {
-                callback();
-            }
-        }
-    }
-    getOfflineClients() {
-        let offlineClients = [];
-        for (let id in this.dependencies) {
-            let { dependencies } = this.dependencies[id];
-            offlineClients = offlineClients.concat(dependencies.clients.filter((dep) => !this.onlineClients.includes(dep)));
-        }
-        //return deduped list.
-        return offlineClients.filter((client, i) => offlineClients.indexOf(client) === i);
-    }
-    getOfflineServices() {
-        let offlineServices = [];
-        for (let id in this.dependencies) {
-            let { dependencies } = this.dependencies[id];
-            offlineServices = offlineServices.concat(dependencies.services.filter((dep) => !this.onlineServices.includes(dep)));
-        }
-        return offlineServices.filter((client, i) => offlineServices.indexOf(client) === i);
-    }
-    /**
-     * Iterates through required service list, returns false if any required service is offline.
-     *
-     * @param {any} serviceList
-     * @memberof StartupManager
-     */
-    checkServices(serviceList) {
-        return serviceList.every(service => this.onlineServices.includes(service));
-    }
-    /**
-     * Iterates through required client list, returns false if any required client is offline.
-     *
-     * @param {any} clientList
-
-     * @memberof StartupManager
-     */
-    checkClients(clientList) {
-        return clientList.every(client => this.onlineClients.includes(client));
-    }
-    /**
-     * When a service comes online, we push it onto our array of online services, and run through all of the registered dependencies.
-     *
-     * @param {any} serviceName
-     * @memberof StartupManager
-     */
-    setServiceOnline(serviceName) {
-        this.onlineServices.push(serviceName);
-        this.checkDependencies();
-    }
-    /**
-     * Sets an array of services online. Only happens once at startup.
-     *
-     * @param {any} serviceList
-     * @memberof StartupManager
-     */
-    setServicesOnline(serviceList) {
-        this.onlineServices = this.onlineServices.concat(serviceList);
-        this.checkDependencies();
-    }
-    /**
-     *
-     *
-     * @param {any} clientName
-
-     * @memberof StartupManager
-     */
-    setClientOnline(clientName) {
-        //This check is done because multiple clients of the same type can be on a page.
-        if (this.onlineClients.includes(clientName)) {
-            return;
-        }
-        this.onlineClients.push(clientName);
-        this.checkDependencies();
-    }
-    /**
-     * Returns the array of online clients.
-     *
-
-     * @memberof StartupManager
-     */
-    getOnlineClients() {
-        return this.onlineClients;
-    }
-    /**
-     * Returns the array of online services.
-     *
-
-     * @memberof StartupManager
-     */
-    getOnlineServices() {
-        return this.onlineServices;
-    }
-    /**
-     * Method to make sure that `this` is correct when the callbacks are invoked.
-     *
-     * @memberof StartupManager
-     */
-    bindCorrectContext() {
-        this.checkDependencies = this.checkDependencies.bind(this);
-        this.checkServices = this.checkServices.bind(this);
-        this.checkClients = this.checkClients.bind(this);
-        this.getOfflineClients = this.getOfflineClients.bind(this);
-        this.getOfflineServices = this.getOfflineServices.bind(this);
-        this.onDependencyTimeout = this.onDependencyTimeout.bind(this);
-        this.waitFor = this.waitFor.bind(this);
-    }
-}
-/**
- * @private
- */
-class ShutdownManager {
-    /**
-     * @private
-     */
-    constructor() {
-        this.offlineServices = [];
-        this.dependencies = {};
-        this.checkDependencies = this.checkDependencies.bind(this);
-    }
-    /**
-     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required dependencies are ready.
-     *
-     * @param {FinsembleDependency} dependencies
-     * @param {any} callback
-     * @memberof StartupManager
-     */
-    waitFor(dependencies, callback) {
-        //Set defaults to an empty array if they aren't passed in.
-        if (!dependencies.services) {
-            dependencies.services = [];
-        }
-        let id = uuidv4();
-        this.dependencies[id] = { dependencies, callback };
-    }
-    /**
-     * This function loops through all of the registered dependencies and checks to see if the conditions have been met. If so, it invokes the callback and removes the reference to the dependency.
-     *
-     * @memberof ShutdownDependencies
-     */
-    checkDependencies() {
-        console.debug("checkDependencies", this.dependencies);
-        if (Object.keys(this.dependencies)) {
-            for (let id in this.dependencies) {
-                let { dependencies, callback } = this.dependencies[id];
-                console.debug("checkDependency", dependencies.services, this.offlineServices);
-                if (dependencies.services.length) {
-                    let servicesAreAllOffline = this.checkServices(dependencies.services);
-                    if (!servicesAreAllOffline) {
-                        continue;
-                    }
-                }
-                console.debug("checkDependencies callback");
-                delete this.dependencies[id];
-                if (callback) {
-                    callback();
-                }
-            }
-        }
-    }
-    /**
-     * Iterates through required service list, returns false if any required service is offline.
-     *
-     * @param {any} serviceList
-
-     * @memberof StartupManager
-     */
-    checkServices(serviceList) {
-        return serviceList.every(service => this.offlineServices.includes(service));
-    }
-    setServiceOffline(service) {
-        console.debug("setServiceOffline", service);
-        this.offlineServices.push(service);
-        this.checkDependencies();
-    }
-}
-/**
- * This is a class that handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
- * @shouldBePublished false
- * @private
- * @class FSBLDependencyManager
- */
-class FSBLDependencyManager extends events_1.EventEmitter {
-    constructor() {
-        super();
-        this.startup = new StartupManager();
-        this.shutdown = new ShutdownManager();
-        this.RouterClient = routerClientInstance_1.default;
-        this.AuthorizationCompleted = false;
-        this.bindCorrectContext();
-        this.onAuthorizationCompleted(this.startup.checkDependencies);
-        routerClientInstance_1.default.onReady(this.listenForServices);
-    }
-    /**
- * Method to make sure that `this` is correct when the callbacks are invoked.
- *
- * @memberof StartupManager
- */
-    bindCorrectContext() {
-        this.listenForServices = this.listenForServices.bind(this);
-        this.onAuthorizationCompleted = this.onAuthorizationCompleted.bind(this);
-    }
-    setClientOnline(client) {
-        this.startup.setClientOnline(client);
-    }
-    /*
-    * handler for when a service changes its state. If a service comes online or goes offline, dependencies are checked and callbacks invoked.
-    */
-    onServiceStateChange(data) {
-        let ServiceNames = Object.keys(data);
-        //Iterate through all services. If it was online but isn't anymore, set it offline. If it was offline but now is, set it online.
-        ServiceNames.forEach((serviceName) => {
-            let state = data[serviceName].state;
-            let wasOnline = this.startup.onlineServices.includes(serviceName);
-            let isOnline = state === "ready";
-            if (!wasOnline && isOnline) {
-                this.startup.setServiceOnline(serviceName);
-            }
-            if (wasOnline && !isOnline && state === "closed") {
-                this.shutdown.setServiceOffline(serviceName);
-            }
-        });
-    }
-    /**
-     * Listens on the router for services to come online. The first subscriber gets the activeServices as of object instantiation. The 2nd subscriber listens for services to come online after the object is created. We should consider make this all one subscriber, though I see the advantage of having this setup.
-     *
-     */
-    listenForServices() {
-        console.debug("dependency manager: listenForServices in " + this.name);
-        this.RouterClient.subscribe(constants_1.SERVICES_STATE_CHANNEL, (err, event) => {
-            this.onServiceStateChange(event.data);
-        });
-        // TODO: The pubsub responder doesn't seem to work here. IT works for the above when not closing.
-        this.RouterClient.addListener(constants_1.SERVICE_CLOSED_CHANNEL, (err, event) => {
-            let services = {};
-            services[event.data.name] = {
-                state: "closed"
-            };
-            this.onServiceStateChange(services);
-        });
-        this.RouterClient.subscribe(constants_1.APPLICATION_STATE_CHANNEL, (err, response) => {
-            switch (response.data.state) {
-                //authenticated will only be caught by components/services that are up before auth does its thing. Otherwise, a component/service coming up will have the 'ready' application state. In either case, we need to do the things below. But only once.
-                case "authenticated":
-                case "ready":
-                    //No need to send this message out twice.
-                    if (this.AuthorizationCompleted)
-                        break;
-                    console.debug("Authorization Completed");
-                    this.AuthorizationCompleted = true;
-                    this.startup.AuthorizationCompleted = true;
-                    this.emit("AuthorizationCompleted");
-                    break;
-                case "closing":
-                    this.shutdown.checkDependencies();
-                    break;
-            }
-        });
-    }
-    onAuthorizationCompleted(callback) {
-        if (this.AuthorizationCompleted) {
-            callback();
-        }
-        else {
-            this.addListener("AuthorizationCompleted", callback);
-        }
-    }
-}
-/**
- * This is a class that handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
- * @shouldBePublished false
- * @private
- * @class FSBLDependencyManager
- */
-exports.FSBLDependencyManagerSingleton = new FSBLDependencyManager();
-exports.default = exports.FSBLDependencyManagerSingleton;
-
-
-/***/ }),
-/* 42 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var isObject = __webpack_require__(45);
-module.exports = function (it) {
-  if (!isObject(it)) throw TypeError(it + ' is not an object!');
-  return it;
-};
-
-
-/***/ }),
-/* 43 */
-/***/ (function(module, exports) {
-
-module.exports = function (exec) {
-  try {
-    return !!exec();
-  } catch (e) {
-    return true;
-  }
-};
-
-
-/***/ }),
-/* 44 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var dP = __webpack_require__(37);
-var createDesc = __webpack_require__(76);
-module.exports = __webpack_require__(30) ? function (object, key, value) {
-  return dP.f(object, key, createDesc(1, value));
-} : function (object, key, value) {
-  object[key] = value;
-  return object;
-};
-
-
-/***/ }),
-/* 45 */
-/***/ (function(module, exports) {
-
-module.exports = function (it) {
-  return typeof it === 'object' ? it !== null : typeof it === 'function';
-};
-
-
-/***/ }),
-/* 46 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
-  Copyright (c) 2017 Jed Watson.
-  Licensed under the MIT License (MIT), see
-  http://jedwatson.github.io/classnames
-*/
-/* global define */
-
-(function () {
-	'use strict';
-
-	var hasOwn = {}.hasOwnProperty;
-
-	function classNames () {
-		var classes = [];
-
-		for (var i = 0; i < arguments.length; i++) {
-			var arg = arguments[i];
-			if (!arg) continue;
-
-			var argType = typeof arg;
-
-			if (argType === 'string' || argType === 'number') {
-				classes.push(arg);
-			} else if (Array.isArray(arg) && arg.length) {
-				var inner = classNames.apply(null, arg);
-				if (inner) {
-					classes.push(inner);
-				}
-			} else if (argType === 'object') {
-				for (var key in arg) {
-					if (hasOwn.call(arg, key) && arg[key]) {
-						classes.push(key);
-					}
-				}
-			}
-		}
-
-		return classes.join(' ');
-	}
-
-	if (typeof module !== 'undefined' && module.exports) {
-		classNames.default = classNames;
-		module.exports = classNames;
-	} else if (true) {
-		// register as 'classnames', consistent with npm package name
-		!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function () {
-			return classNames;
-		}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),
-				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-	} else {
-		window.classNames = classNames;
-	}
-}());
-
-
-/***/ }),
-/* 47 */
-/***/ (function(module, exports) {
-
-if (typeof Object.create === 'function') {
-  // implementation from standard node.js 'util' module
-  module.exports = function inherits(ctor, superCtor) {
-    if (superCtor) {
-      ctor.super_ = superCtor
-      ctor.prototype = Object.create(superCtor.prototype, {
-        constructor: {
-          value: ctor,
-          enumerable: false,
-          writable: true,
-          configurable: true
-        }
-      })
-    }
-  };
-} else {
-  // old school shim for old browsers
-  module.exports = function inherits(ctor, superCtor) {
-    if (superCtor) {
-      ctor.super_ = superCtor
-      var TempCtor = function () {}
-      TempCtor.prototype = superCtor.prototype
-      ctor.prototype = new TempCtor()
-      ctor.prototype.constructor = ctor
-    }
-  }
-}
-
-
-/***/ }),
-/* 48 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var utils = __webpack_require__(8);
-var support = __webpack_require__(32);
-var nodejsUtils = __webpack_require__(78);
-var GenericWorker = __webpack_require__(21);
-
-/**
- * The following functions come from pako, from pako/lib/utils/strings
- * released under the MIT license, see pako https://github.com/nodeca/pako/
- */
-
-// Table with utf8 lengths (calculated by first byte of sequence)
-// Note, that 5 & 6-byte values and some 4-byte values can not be represented in JS,
-// because max possible codepoint is 0x10ffff
-var _utf8len = new Array(256);
-for (var i=0; i<256; i++) {
-  _utf8len[i] = (i >= 252 ? 6 : i >= 248 ? 5 : i >= 240 ? 4 : i >= 224 ? 3 : i >= 192 ? 2 : 1);
-}
-_utf8len[254]=_utf8len[254]=1; // Invalid sequence start
-
-// convert string to array (typed, when possible)
-var string2buf = function (str) {
-    var buf, c, c2, m_pos, i, str_len = str.length, buf_len = 0;
-
-    // count binary size
-    for (m_pos = 0; m_pos < str_len; m_pos++) {
-        c = str.charCodeAt(m_pos);
-        if ((c & 0xfc00) === 0xd800 && (m_pos+1 < str_len)) {
-            c2 = str.charCodeAt(m_pos+1);
-            if ((c2 & 0xfc00) === 0xdc00) {
-                c = 0x10000 + ((c - 0xd800) << 10) + (c2 - 0xdc00);
-                m_pos++;
-            }
-        }
-        buf_len += c < 0x80 ? 1 : c < 0x800 ? 2 : c < 0x10000 ? 3 : 4;
-    }
-
-    // allocate buffer
-    if (support.uint8array) {
-        buf = new Uint8Array(buf_len);
-    } else {
-        buf = new Array(buf_len);
-    }
-
-    // convert
-    for (i=0, m_pos = 0; i < buf_len; m_pos++) {
-        c = str.charCodeAt(m_pos);
-        if ((c & 0xfc00) === 0xd800 && (m_pos+1 < str_len)) {
-            c2 = str.charCodeAt(m_pos+1);
-            if ((c2 & 0xfc00) === 0xdc00) {
-                c = 0x10000 + ((c - 0xd800) << 10) + (c2 - 0xdc00);
-                m_pos++;
-            }
-        }
-        if (c < 0x80) {
-            /* one byte */
-            buf[i++] = c;
-        } else if (c < 0x800) {
-            /* two bytes */
-            buf[i++] = 0xC0 | (c >>> 6);
-            buf[i++] = 0x80 | (c & 0x3f);
-        } else if (c < 0x10000) {
-            /* three bytes */
-            buf[i++] = 0xE0 | (c >>> 12);
-            buf[i++] = 0x80 | (c >>> 6 & 0x3f);
-            buf[i++] = 0x80 | (c & 0x3f);
-        } else {
-            /* four bytes */
-            buf[i++] = 0xf0 | (c >>> 18);
-            buf[i++] = 0x80 | (c >>> 12 & 0x3f);
-            buf[i++] = 0x80 | (c >>> 6 & 0x3f);
-            buf[i++] = 0x80 | (c & 0x3f);
-        }
-    }
-
-    return buf;
-};
-
-// Calculate max possible position in utf8 buffer,
-// that will not break sequence. If that's not possible
-// - (very small limits) return max size as is.
-//
-// buf[] - utf8 bytes array
-// max   - length limit (mandatory);
-var utf8border = function(buf, max) {
-    var pos;
-
-    max = max || buf.length;
-    if (max > buf.length) { max = buf.length; }
-
-    // go back from last position, until start of sequence found
-    pos = max-1;
-    while (pos >= 0 && (buf[pos] & 0xC0) === 0x80) { pos--; }
-
-    // Fuckup - very small and broken sequence,
-    // return max, because we should return something anyway.
-    if (pos < 0) { return max; }
-
-    // If we came to start of buffer - that means vuffer is too small,
-    // return max too.
-    if (pos === 0) { return max; }
-
-    return (pos + _utf8len[buf[pos]] > max) ? pos : max;
-};
-
-// convert array to string
-var buf2string = function (buf) {
-    var str, i, out, c, c_len;
-    var len = buf.length;
-
-    // Reserve max possible length (2 words per char)
-    // NB: by unknown reasons, Array is significantly faster for
-    //     String.fromCharCode.apply than Uint16Array.
-    var utf16buf = new Array(len*2);
-
-    for (out=0, i=0; i<len;) {
-        c = buf[i++];
-        // quick process ascii
-        if (c < 0x80) { utf16buf[out++] = c; continue; }
-
-        c_len = _utf8len[c];
-        // skip 5 & 6 byte codes
-        if (c_len > 4) { utf16buf[out++] = 0xfffd; i += c_len-1; continue; }
-
-        // apply mask on first byte
-        c &= c_len === 2 ? 0x1f : c_len === 3 ? 0x0f : 0x07;
-        // join the rest
-        while (c_len > 1 && i < len) {
-            c = (c << 6) | (buf[i++] & 0x3f);
-            c_len--;
-        }
-
-        // terminated by end of string?
-        if (c_len > 1) { utf16buf[out++] = 0xfffd; continue; }
-
-        if (c < 0x10000) {
-            utf16buf[out++] = c;
-        } else {
-            c -= 0x10000;
-            utf16buf[out++] = 0xd800 | ((c >> 10) & 0x3ff);
-            utf16buf[out++] = 0xdc00 | (c & 0x3ff);
-        }
-    }
-
-    // shrinkBuf(utf16buf, out)
-    if (utf16buf.length !== out) {
-        if(utf16buf.subarray) {
-            utf16buf = utf16buf.subarray(0, out);
-        } else {
-            utf16buf.length = out;
-        }
-    }
-
-    // return String.fromCharCode.apply(null, utf16buf);
-    return utils.applyFromCharCode(utf16buf);
-};
-
-
-// That's all for the pako functions.
-
-
-/**
- * Transform a javascript string into an array (typed if possible) of bytes,
- * UTF-8 encoded.
- * @param {String} str the string to encode
- * @return {Array|Uint8Array|Buffer} the UTF-8 encoded string.
- */
-exports.utf8encode = function utf8encode(str) {
-    if (support.nodebuffer) {
-        return nodejsUtils.newBufferFrom(str, "utf-8");
-    }
-
-    return string2buf(str);
-};
-
-
-/**
- * Transform a bytes array (or a representation) representing an UTF-8 encoded
- * string into a javascript string.
- * @param {Array|Uint8Array|Buffer} buf the data de decode
- * @return {String} the decoded string.
- */
-exports.utf8decode = function utf8decode(buf) {
-    if (support.nodebuffer) {
-        return utils.transformTo("nodebuffer", buf).toString("utf-8");
-    }
-
-    buf = utils.transformTo(support.uint8array ? "uint8array" : "array", buf);
-
-    return buf2string(buf);
-};
-
-/**
- * A worker to decode utf8 encoded binary chunks into string chunks.
- * @constructor
- */
-function Utf8DecodeWorker() {
-    GenericWorker.call(this, "utf-8 decode");
-    // the last bytes if a chunk didn't end with a complete codepoint.
-    this.leftOver = null;
-}
-utils.inherits(Utf8DecodeWorker, GenericWorker);
-
-/**
- * @see GenericWorker.processChunk
- */
-Utf8DecodeWorker.prototype.processChunk = function (chunk) {
-
-    var data = utils.transformTo(support.uint8array ? "uint8array" : "array", chunk.data);
-
-    // 1st step, re-use what's left of the previous chunk
-    if (this.leftOver && this.leftOver.length) {
-        if(support.uint8array) {
-            var previousData = data;
-            data = new Uint8Array(previousData.length + this.leftOver.length);
-            data.set(this.leftOver, 0);
-            data.set(previousData, this.leftOver.length);
-        } else {
-            data = this.leftOver.concat(data);
-        }
-        this.leftOver = null;
-    }
-
-    var nextBoundary = utf8border(data);
-    var usableData = data;
-    if (nextBoundary !== data.length) {
-        if (support.uint8array) {
-            usableData = data.subarray(0, nextBoundary);
-            this.leftOver = data.subarray(nextBoundary, data.length);
-        } else {
-            usableData = data.slice(0, nextBoundary);
-            this.leftOver = data.slice(nextBoundary, data.length);
-        }
-    }
-
-    this.push({
-        data : exports.utf8decode(usableData),
-        meta : chunk.meta
-    });
-};
-
-/**
- * @see GenericWorker.flush
- */
-Utf8DecodeWorker.prototype.flush = function () {
-    if(this.leftOver && this.leftOver.length) {
-        this.push({
-            data : exports.utf8decode(this.leftOver),
-            meta : {}
-        });
-        this.leftOver = null;
-    }
-};
-exports.Utf8DecodeWorker = Utf8DecodeWorker;
-
-/**
- * A worker to endcode string chunks into utf8 encoded binary chunks.
- * @constructor
- */
-function Utf8EncodeWorker() {
-    GenericWorker.call(this, "utf-8 encode");
-}
-utils.inherits(Utf8EncodeWorker, GenericWorker);
-
-/**
- * @see GenericWorker.processChunk
- */
-Utf8EncodeWorker.prototype.processChunk = function (chunk) {
-    this.push({
-        data : exports.utf8encode(chunk.data),
-        meta : chunk.meta
-    });
-};
-exports.Utf8EncodeWorker = Utf8EncodeWorker;
-
-
-/***/ }),
-/* 49 */
+/* 54 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(process) {var babelPluginFlowReactPropTypes_proptype_Index = process.env.NODE_ENV === 'production' ? null : {
@@ -15251,23 +16323,27 @@ if (!(process.env.NODE_ENV === 'production') && typeof exports !== "undefined") 
   value: babelPluginFlowReactPropTypes_proptype_SizeInfo,
   configurable: true
 });
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
-/* 50 */
+/* 55 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__configUtil__ = __webpack_require__(25);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__configUtil__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__common_system__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__systemManagerClient__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__systemManagerClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__systemManagerClient__);
 /*!
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
+
+
 
 
 
@@ -15279,7 +16355,7 @@ var ConfigClient = null;
 
 /**
  * @introduction
- * <h2>Notification Client</h2>
+ * <h2>Notification Client (Finsemble Workspaces)</h2>
  *
  * Finsemble makes use of pop up (toast) notifications for communicating information to the end user in a gentler way than modal dialogs.
  * Use the Notification API to route messages so that your components can create these notifications.
@@ -15310,7 +16386,7 @@ var UserNotification = function () {
 			}, 0);
 		} else {
 			// Require configClient here instead of at top of page to avoid a dependency error (Router uses UserNotification before config service is ready).
-			if (!ConfigClient) ConfigClient = __webpack_require__(27).default;
+			if (!ConfigClient) ConfigClient = __webpack_require__(22).default;
 			ConfigClient.get({ field: "finsemble" }, function (err, finConfig) {
 				defaultTemplateURL = __WEBPACK_IMPORTED_MODULE_1__configUtil__["ConfigUtilInstance"].getDefault(finConfig, "finsemble.notificationURL", finConfig.moduleRoot + "/components/system/notification/notification.html");
 				cb(defaultTemplateURL);
@@ -15321,7 +16397,7 @@ var UserNotification = function () {
 	/**
   * Conditionally alerts the end user using a desktop notification.
   *
-  * @param {string} topic Specifies a category for the notification. Topic is currently unused, but in the future it will be used to filter notifications (e.g., applying regEx's defined in config to determine which notifications are displayed). Any topic string can be specified; however "system" is the recommended topic for system notifications applicable both to end uses and to developers. "dev" is the recommended topic for notifications applicable only during development (e.g., a notification that <i>config.json</i> has an illegal value).
+  * @param {string} topic Specifies a category for the notification. This parameter is reserved for future use; it is designed to filter notifications (e.g., applying regEx's defined in config to determine which notifications are displayed). Any topic string can be specified; however "system" is the recommended topic for system notifications applicable both to end uses and to developers. "dev" is the recommended topic for notifications applicable only during development (e.g., a notification that <i>config.json</i> has an illegal value).
   * @param {string} frequency Either "ALWAYS", "ONCE-SINCE-STARTUP", or "MAX-COUNT" to determine if alert should be displayed. Note, the frequencies are based on the number of notifications emitted from a window (as opposed to system wide).
   * @param {string} identifier Uniquely identifies this specific notification message. Used when "frequency" is set to "ONCE-SINCE-STARTUP" or "MAX-COUNT".
   * @param {any} message Message to display in the notification. Typically a string. Finsemble's built in templating accepts and object. See <i>../src-built-in/components/notification/notification.html<i>.
@@ -15391,6 +16467,7 @@ var UserNotification = function () {
 				message: message,
 				timeout: duration
 			};
+			__WEBPACK_IMPORTED_MODULE_3__systemManagerClient___default.a.systemLog({ notification: true }, "Notification: " + message);
 			new __WEBPACK_IMPORTED_MODULE_2__common_system__["System"].Notification(notifyObject);
 		}
 	};
@@ -15399,7 +16476,353 @@ var UserNotification = function () {
 /* harmony default export */ __webpack_exports__["default"] = (new UserNotification());
 
 /***/ }),
-/* 51 */
+/* 56 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * Overview of how this works:
+ * - hotkeys are added/removed via methods, passing an array of strings representing keys pressed, a handler method, and (optionally) a callback
+ * - When adding a hotkey, a node js event emitter is created on the client side to trigger the hotkey handler, and a router message is sent to the service to register the key combination with the window name on the client side. Multiple hotkeys may be created for the same key combination, so long as they have different handler functions.
+ * - When the service detects that all of the keys in the hotkey combination are pressed, it sends a message on the "HotkeyTriggered" channel (the method for this is "ListenForHotkeys") which contains the list of all windows registered with that hotkey combination. The client then reads the list of windows, and checks if it's one of those windows. If it is, it fires off the node js event emitter that was registered for that hotkey.
+ * - Removing a hotkey clears the corresponding event emitter, and also sends a router message to the service to remove its window id from the array of windows registered for the hotkey combination - if the window is registered with that hotkey combination multiple times, it will only remove one, allowing other hotkeys on the same window with the same key combination to still be registered.
+*/
+const baseClient_1 = __webpack_require__(11);
+const routerClientInstance_1 = __webpack_require__(6);
+const logger_1 = __webpack_require__(1);
+const keyMap = __webpack_require__(138).dictionary;
+/** The global `window` object. We cast it to a specific interface here to be
+ * explicit about what Finsemble-related properties it may have. */
+const Globals = window;
+const events_1 = __webpack_require__(14);
+var eventEmitter = new events_1.EventEmitter();
+/**
+ * Translates an array representing a key combination, each element of which represents a key, using keyDict, an object containing key-value pairs where the untranslated key representations are the keys, and the translated versions ready to be used by the service are the values.
+ *
+ * If you'd like to create a keymap for translation, look at the values of the keymaps included in the common folder.
+ * @private
+ * @param {object} params
+ * @param {object} params.keys array representing untranslated key representations
+ * @param {object} keyDict
+ */
+function translateKeys(params, keyDict = keyMap) {
+    var translatedKeys = [];
+    params.keys.forEach((key) => {
+        if (!(typeof key === "string")) {
+            return logger_1.default.system.error("FSBL.Clients.HotkeyClient - one of the keys passed into a function was not a string: ", key);
+        }
+        key = key.toLowerCase();
+        let mappedKey = keyDict[key];
+        if (mappedKey) {
+            translatedKeys.push(mappedKey);
+        }
+        else {
+            return logger_1.default.system.error(`FSBL.Clients.HotkeyClient - At least one of the key codes does not map to a supported key - registering hotkey unsuccessful. Unsupported keys: ${key}`);
+        }
+    });
+    return translatedKeys;
+}
+// Keystroke capture class taken from ChartIQ charting library
+const Keystroke = function (cb) {
+    this.cb = cb;
+    this.shift = false;
+    this.ctrl = false;
+    this.cmd = false;
+    this.capsLock = false;
+    this.initialize();
+};
+Keystroke.prototype.keyup = function (e) {
+    switch (e.key) {
+        case "Shift":
+            this.shift = false;
+            this.cb({ key: e.key, e: e, keystroke: this });
+            return;
+        case "Control":
+        case "Alt":
+            this.ctrl = false;
+            this.cb({ key: e.key, e: e, keystroke: this });
+            return;
+        case "Meta":
+        case "Win":
+            this.cmd = false;
+            this.cb({ key: e.key, e: e, keystroke: this });
+            return;
+        default:
+            break;
+    }
+    // This is where we handle the keystroke, regardless of whether we captured the key with a down or press event
+    // The exception to this is the arrow keys, which are processed in keydown
+    if (this.key)
+        this.cb({ key: this.key, e: e, keystroke: this });
+};
+Keystroke.prototype.keydown = function (e) {
+    if (this.noKeyCapture)
+        return;
+    this.key = e.key;
+    switch (e.key) {
+        case "Meta":
+        case "Win":
+            this.cmd = true;
+            break;
+        case "Shift":
+            this.shift = true;
+            break;
+        case "Control":
+        case "Alt":
+            this.ctrl = true;
+            break;
+        case "CapsLock":
+            this.capsLock = !this.capsLock;
+            break;
+        case "ArrowUp":
+        case "ArrowDown":
+        case "ArrowLeft":
+        case "ArrowRight":
+        case "Up":
+        case "Down":
+        case "Left":
+        case "Right":
+            // If you hold a key down, then keydown will repeat. These are the keys
+            // that we want to capture repeat action.
+            this.key = null;
+            this.cb({ key: e.key, e: e, keystroke: this });
+            break;
+    }
+};
+Keystroke.prototype.keypress = function (e) {
+    if (this.noKeyCapture)
+        return;
+    var keyCode = e.which;
+    if (keyCode < 32 || keyCode > 222)
+        return; // handled by keydown
+    this.key = e.key;
+};
+/**
+ * initializes member functions
+ * @memberof CIQ.UI.Keystroke
+ */
+Keystroke.prototype.initialize = function () {
+    var self = this;
+    document.addEventListener("keyup", function (e) {
+        self.keyup(e);
+    });
+    document.addEventListener("keydown", function (e) {
+        self.downValue = e.key;
+        self.keydown(e);
+    });
+    document.addEventListener("keypress", function (e) {
+        self.keypress(e);
+    });
+    window.addEventListener("blur", function (e) {
+        self.ctrl = false;
+        self.cb({ key: "Control", e: e, keystroke: self });
+    });
+};
+// Used to keep track of which browser key combinations are registered locally
+var registeredBrowserKeys = [];
+/**
+ * @introduction
+ *
+ * <h2>Hotkey Client (Finsemble Flow)</h2>
+ *
+ * This module contains the Hotkey Client, used for registering hotkey combinations and their respective handler functions with Finsemble.
+ *
+ * The client can handle two types of hotkeys: **local hotkeys**, for which the handlers will only fire when the window which defined the hotkey is in focus, and **global hotkeys**, which will fire regardless of what window is in focus.
+ *
+ * For more information, see the [Hotkey tutorial](tutorial-Hotkeys.html).
+ *
+ *
+ *
+ * @constructor
+ * @hideconstructor
+ * @publishedName HotkeyClient
+ * @param {*} params
+ */
+class HotkeyClient extends baseClient_1._BaseClient {
+    constructor(params) {
+        super(params);
+        /**
+         * Automatically unregister all hotkeys when the window containing the client closes
+         * @param {function} cb
+         * @private
+         */
+        this.onClose = (cb) => {
+            this.removeAllHotkeys(cb);
+        };
+        this.keyMap = keyMap;
+        this.listenForHotkeys = this.listenForHotkeys.bind(this);
+        this.routerClient = routerClientInstance_1.default;
+        this.routerClient.onReady(this.listenForHotkeys);
+        //Local hotkeys need to only fire if the window is focused. The object below is a map of handlers passed in by the user.
+        //The keys are the handler, and the value is the wrapped method that checks for focus.
+        this.localListeners = {};
+    }
+    /**
+     *Adds a local hotkey which fires only when the window calling the method is in focus. If you execute this function more than once for the same key combination, both hotkeys will coexist, and would need to be removed separately.
+     * @param {Array.<string>} keyArr Array of strings representing hotkey key combination.
+     * @param {function} handler Function to be executed when the hotkey combination is pressed. It is recommended that you define a variable to represent the handler function, as the same function must be passed in order to remove the hotkey.
+     * @param {StandardCallback} cb Callback to be called after local hotkey is added.
+     * @example
+     * var myFunction = function () {...}
+     * FSBL.Clients.HotkeyClient.addLocalHotkey(["ctrl", "shift", "s"], myFunction, cb)
+     */
+    addLocalHotkey(keyArr, handler, cb = (err, response) => { }) {
+        logger_1.default.system.info("HotkeyClient.addLocalHotkey");
+        logger_1.default.system.debug("HotkeyClient.addLocalHotkey, keyArr: ", keyArr);
+        let keyString = translateKeys({ keys: keyArr }).sort().toString();
+        //We create a new function that checks focus before invoking the method.
+        //If assimilation wasn't on, we'd want to use window.addEventListener('keydown');
+        let wrap = () => {
+            if (document.hasFocus()) {
+                handler();
+            }
+        };
+        //Keep a reference to the handler so when the dev wants to remove it, we can.
+        if (!this.localListeners[keyString]) {
+            this.localListeners[keyString] = {};
+        }
+        this.localListeners[keyString][handler] = wrap;
+        eventEmitter.addListener(keyString, wrap);
+        this.routerClient.query("hotkeysService.registerGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb);
+    }
+    /**
+     *Adds a local hotkey, firing only when the window calling the method is in focus. If you execute this function more than once for the same key combination, both hotkeys will coexist, and would need to be remove separately.
+     * This function uses browser key capture, so it will work when assimilation is not running
+     * @param {Array} [keyArr] Array of strings representing hotkey key combination.
+     * @param {function} [handler] Function to be executed when the hotkey combination is pressed. It is recommended that you define a variable to represent the handler function, as the same function must be passed in order to remove the hotkey.
+     * @param {function} cb Callback to be called after local hotkey is added.
+     * @todo Have addLocalHotkey automatically use this when assimilation is not running. Will eventually replace addLocalHotkey.
+     * @private
+     * @example
+     * var myFunction = function () {...}
+     * FSBL.Clients.HotkeyClient.addBrowserHotkey(["ctrl","shift","s"],myFunction,cb)
+     */
+    addBrowserHotkey(keyArr, handler) {
+        // Lazily create a keystroke handler for this web page if one doesn't already exist
+        if (!this.KeyStroke) {
+            this.KeyStroke = new Keystroke(function (params) {
+                let { key, keystroke } = params;
+                var myKeyArray = [key];
+                if (keystroke.ctrl)
+                    myKeyArray.push("control");
+                if (keystroke.shift)
+                    myKeyArray.push("shift");
+                if (keystroke.alt)
+                    myKeyArray.push("alt");
+                let myKeyString = myKeyArray.sort().toString();
+                registeredBrowserKeys.forEach(function (obj) {
+                    if (obj.keyString === myKeyString)
+                        obj.handler();
+                });
+            });
+        }
+        let keyString = translateKeys({ keys: keyArr }).sort().toString();
+        registeredBrowserKeys.push({ keyString: keyString, handler: handler });
+    }
+    /**
+     *Removes a local hotkey.
+     * @param {Array.<string>} keyArr Array of strings representing hotkey key combination.
+     * @param {function} handler Handler registered for the hotkey to be removed.
+     * @param {StandardCallback} cb Callback to be called after local hotkey is removed.
+     * @example
+     *
+     * FSBL.Clients.HotkeyClient.removeLocalHotkey(["ctrl", "shift", "s"], myFunction, cb)
+     */
+    removeLocalHotkey(keyArr, handler, cb = (err, response) => { }) {
+        logger_1.default.system.info("HotkeyClient.removeLocalHotkey");
+        logger_1.default.system.debug("HotkeyClient.removeLocalHotkey, keyArr: ", keyArr);
+        let keyString = translateKeys({ keys: keyArr }).sort().toString();
+        let wrap = this.localListeners[keyString][handler];
+        eventEmitter.removeListener(keyString, wrap);
+        this.routerClient.query("hotkeysService.unregisterGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb); //TODO: query
+    }
+    /**
+     *Adds a global hotkey which fires regardless of what window is in focus. If you execute this function more than once for the same key combination, both hotkeys will coexist, and would need to be removed separately.
+     * @param {Array.<string>} keyArr Array of strings representing a hotkey key combination.
+     * @param {function} handler Function to be executed when the hotkey combination is pressed. It is recommended that you define a variable to represent the handler function, as the same function must be passed in order to remove the hotkey.
+     * @param {StandardCallback} cb Callback to be called after local hotkey is added.
+     * @example
+     * var myFunction = function () {...}
+     * FSBL.Clients.HotkeyClient.addGlobalHotkey(["ctrl", "shift", "s"], myFunction, cb)
+     */
+    addGlobalHotkey(keyArr, handler, cb = (err, response) => { }) {
+        logger_1.default.system.info("HotkeyClient.addGlobalHotkey");
+        logger_1.default.system.debug("HotkeyClient.addGlobalHotkey, keyArr: ", keyArr);
+        let keyString = translateKeys({ keys: keyArr }).sort().toString();
+        eventEmitter.addListener(keyString, handler);
+        this.routerClient.query("hotkeysService.registerGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb);
+    }
+    /**
+     *Removes a global hotkey.
+     * @param {Array.<string>} keyArr Array of strings representing hotkey key combination.
+     * @param {function} handler Handler registered for the hotkey to be removed.
+     * @param {StandardCallback} cb Callback to be called after local hotkey is removed.
+     * @example
+     *
+     * FSBL.Clients.HotkeyClient.removeGlobalHotkey(["ctrl", "shift", "s"], myFunction, cb)
+     */
+    removeGlobalHotkey(keyArr, handler, cb = (err, response) => { }) {
+        logger_1.default.system.info("HotkeyClient.removeGlobalHotkey");
+        logger_1.default.system.debug("HotkeyClient.removeGlobalHotkey, keyArr: ", keyArr);
+        let keyString = translateKeys({ keys: keyArr }).sort().toString();
+        eventEmitter.removeListener(keyString, handler);
+        this.routerClient.query("hotkeysService.unregisterGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb); //TODO: query
+    }
+    /**
+     * Not yet implemented - will return an object that contains all registered Hotkeys
+     */
+    /* getHotkeys() { //TODO: MAKE WORK
+        Logger.system.info("HotkeyClient.getHotkeys");
+        this.routerClient.transmit("hotkeysService.getRegisteredHotkeys", { request: true });
+    } */
+    /**
+     * Handler for "hotkey triggered" messages from the service, called upon client initialization.
+     * @private
+     */
+    listenForHotkeys() {
+        var self = this;
+        this.routerClient.addListener("HotkeyTriggered", function (error, response) {
+            if (error) {
+                console.error("Hotkey Channel Error: " + JSON.stringify(error));
+            }
+            else {
+                if (response.data.windows.includes(self.windowName)) { //if this is one of the windows that the service means to trigger here
+                    eventEmitter.emit(response.data.keys);
+                }
+            }
+        });
+    }
+    /**
+     * Unregister all hotkeys, both locally and service-side.
+     * @param {StandardCallback} cb Optional callback function
+     *
+     */
+    removeAllHotkeys(cb) {
+        eventEmitter.removeAllListeners();
+        this.routerClient.query("hotkeysService.removeAllHotkeysForWindow", { windowName: this.windowName }, cb);
+    }
+}
+var hotkeyClient = new HotkeyClient({
+    onReady: function (cb) {
+        if (cb) {
+            cb();
+        }
+    },
+    name: "hotkeyClient"
+});
+// @TODO - use proper exports instead of global scope.
+Globals.Keystroke = Keystroke;
+exports.default = hotkeyClient;
+
+
+/***/ }),
+/* 57 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15481,323 +16904,401 @@ exports.LocalLogger = LocalLogger;
 
 
 /***/ }),
-/* 52 */
+/* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
 Object.defineProperty(exports, "__esModule", { value: true });
-const validate_1 = __webpack_require__(18);
-const logger_1 = __webpack_require__(3);
-const baseClient_1 = __webpack_require__(12);
-const p_limit_1 = __webpack_require__(118);
-const disentangledUtils_1 = __webpack_require__(53);
-const limit = p_limit_1.default(1);
+const events_1 = __webpack_require__(14);
+const routerClientInstance_1 = __webpack_require__(6);
+const STARTUP_TIMEOUT_DURATION = 10000;
+const constants_1 = __webpack_require__(26);
+const systemManagerClient_1 = __webpack_require__(20);
+const logger_1 = __webpack_require__(1);
 /**
- *
- * @introduction
- * <h2>Storage Client</h2>
- *
- * The Storage Client handles saving and retrieving data for your smart desktop.
- *
- *
- *See the <a href=tutorial-storingData.html>Storing Data tutorial</a> for an overview of using the Storage Client.
- * @hideconstructor
- *  @todo add clear method
- * @constructor
+ * Small class to hold on to dependencies and callbacks. Also emits a timeout event that the startupManager is listening for. When it times out, the startupManager catches the event and generates a message that includes all of the offline clients and services. It then causes this class to emit an  err event that the baseService is listening for. This arrangement is set up for a couple of reasons.
+ * 1. I can't use the logger in here because the logger uses the startupManager, and there'd be a circular dependency.
+ * 2. FSBLDependencyManager is a singleton, and there can be multiple services living in a single window. I didn't want them all to log that they were offline if they weren't (e.g., if I'd put the emitter on the StartupManager instead of this class).
  */
-class StorageClient extends baseClient_1._BaseClient {
-    constructor() {
-        super(...arguments);
-        //Did this because "delete" is a reserved keyword; for autocomplete the client is exported as a namespace with a bunch of functions and wouldn't work with a function called delete.
-        this.delete = this.remove;
+class StartupDependency extends events_1.EventEmitter {
+    constructor(params) {
+        super();
+        this.callback = params.callback;
+        this.dependencies = params.dependencies;
+        this.startupTimer = null;
+        this.setStartupTimer = this.setStartupTimer.bind(this);
+        this.clearStartupTimer = this.clearStartupTimer.bind(this);
+        this.setStartupTimer();
     }
     /**
-     * Define the user name for storage (i.e., each user has unique storage).
-     * @param {Object} params
-     * @param {String} params.user The user name defined for storage.
-     * @param {StandardCallback} cb Callback to be called on success.
-     *
-     * @example
-     * FSBL.Clients.StorageClient.setUser({ user: "JohnDeere"});
+     * Removes the startup timer (because the dependency was resolved within the allotted time);
      */
-    setUser(params, cb) {
-        validate_1.default.args(params.user, "string", cb, "function=");
-        this.routerClient.query("Storage.setUser", { user: params.user }, function (err, response) {
-            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
-            logMethod("APPLICATION LIFECYCLE:StorageClient.setUser", params, err, response);
-            if (cb) {
-                cb(err, response.data);
-            }
-        });
-    }
-    ;
-    /**
-     * Specifies the data store. For normal operation this function doesn't have to be invoked -- the default data store is set in configuration.
-     * @param {Object} params
-     * @param {String} params.topic If specified then data store is set only for topic.
-     * @param {string} params.dataStore Identifies the data store (e.g. "localStorage", "redis").
-     * @param {function} cb Callback to be called on success.
-     *
-     * @example
-     * FSBL.Clients.StorageClient.setStore({topic:"finsemble", dataStore:"redis"})
-     */
-    setStore(params, cb) {
-        validate_1.default.args(params.topic, "string", params.dataStore, "string=", cb, "function=");
-        logger_1.default.system.log("APPLICATION LIFECYCLE:StorageClient.setStore", params, cb);
-        this.routerClient.query("Storage.setStore", params, (err, response) => {
-            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
-            logMethod("Storage.setStore", err, response);
-            if (cb) {
-                cb(err, response.data);
-            }
-        });
-    }
-    ;
-    /**
-     * Save a key value pair into storage.
-     * @param {Object} params
-     * @param {String} params.topic Storage topic for key being stored.
-     * @param {String} params.key The key to be stored.
-     * @param {any} params.value The value to be stored.
-     * @param {function} cb Callback to be called on success.
-     *
-     * @example
-     * FSBL.Clients.StorageClient.save({topic:"finsemble", key:"testKey", value:"testValue"})
-     */
-    save(params, cb) {
-        if (typeof params.key !== "string" || typeof params.topic !== "string") {
-            throw new Error("Values for key and topic must be strings.");
-        }
-        const promiseResolver = (resolve, reject) => {
-            validate_1.default.args(params.topic, "string", params.key, "string", params.value, "any", cb, "function=");
-            this.routerClient.query("Storage.save", params, (err, response) => {
-                const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
-                logMethod("Storage.save", err, response);
-                if (cb) {
-                    cb(err, response.data);
-                }
-                if (err) {
-                    reject({ err: err, data: null });
-                }
-                else {
-                    resolve({ err: err, data: response.data });
-                }
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    ;
-    /**
-     *
-     * @param params
-     * @private
-     */
-    save1(params) {
-        return limit(() => this.save(params));
+    clearStartupTimer() {
+        clearTimeout(this.startupTimer);
+        delete this.startupTimer;
     }
     /**
-     * Get a value from storage.
-     * @param {Object} params
-     * @param {String} params.key The key to get from storage.
-     * @param {String} params.topic The topic that the data is saved under.
-     * @param {function} cb Callback to be called on success.
-     *
-     * @example
-     * FSBL.Clients.StorageClient.get({ topic:"finsemble", key:"testKey" }, function(err, data) {
-     *	var myData = data;
-     * });
+     * If the dependency hasn't resolved within STARTUP_TIMEOUT_DURATION, emit a timeout event that the StartupManager can catch.
      */
-    get(params, cb) {
-        if (typeof params.key !== "string" || typeof params.topic !== "string") {
-            throw new Error("Values for key and topic must be strings.");
-        }
-        const promiseResolver = (resolve, reject) => {
-            validate_1.default.args(params.topic, "string", params.key, "string", cb, "function=");
-            this.routerClient.query("Storage.get", params, (err, response) => {
-                if (err) {
-                    logger_1.default.system.error("Storage.get", err, response);
-                    cb(err, response ? response.data : null);
-                    return reject(err, response ? response.data : null);
-                }
-                logger_1.default.system.info("Storage.get", err, response);
-                if (cb)
-                    cb(err, response.data);
-                resolve(response.data);
-            });
-        };
-        return new Promise(promiseResolver);
+    setStartupTimer() {
+        let self = this;
+        //+ coerces the result to a number, making typescript happy.
+        this.startupTimer = +setTimeout(() => {
+            self.emit("timeout");
+        }, STARTUP_TIMEOUT_DURATION);
     }
-    ;
-    /**
-     *
-     * @param params
-     * @param cb
-     * @private
-     */
-    get1(params, cb) {
-        return limit(() => this.get(params));
-    }
-    /**
-     * Asynchronously updates provided key in storage by first retrieving the key
-     * then running a provided function on the result and re-saving its value.
-     * There’s no guarantees of consistency or atomicity
-     *
-     * @param params {any} Update storage params
-     * @param params.topic {string} The storage topic
-     * @param params.key {string} The storage key
-     * @param params.updateFn {Function} Function to run to determine the value to store
-     * @private
-     */
-    async updateStorage(params) {
-        const { topic, key, updateFn } = params;
-        const result = await this.get({ topic, key });
-        return this.save({ topic, key, value: updateFn(result) });
-    }
-    /**
-     *
-     * @param params
-     * @private
-     */
-    updateStorage1(params) {
-        return limit(() => this.updateStorage(params));
-    }
-    /**
-     * Get all keys for the topic.
-     * @param {Object} params
-     * @param {String} params.topic Topic for the keys to return.
-     * @param {String=} params.keyPrefix Filter all keys that don't start with this prefix.
-     * @param {function} cb Callback to be called on success.
-     *
-     * @example
-     * FSBL.Clients.StorageClient.keys({topic:"finsemble", keyPrefix:"test"}, function(err, data){
-     *	var myKeys = data;
-     * });
-     */
-    keys(params, cb) {
-        validate_1.default.args(params.topic, "string", cb, "function=");
-        logger_1.default.system.debug("StorageClient.keys", params, cb);
-        this.routerClient.query("Storage.keys", params, function (err, response) {
-            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
-            logMethod("Storage.keys", err, response);
-            if (cb) {
-                cb(err, response.data);
-            }
-        });
-    }
-    ;
-    /**
-     *
-     * @param params
-     * @private
-     */
-    keys1(params) {
-        return limit(() => disentangledUtils_1.promisify(this.keys.bind(this))(params));
-    }
-    /**
-     * Get a multiple values from storage based on regex.(coming soon)
-     * @param {Object} params
-     * @param {function} cb Callback to be called on success.
-     * @private
-     * @todo make this work.
-     * @example
-     * StorageClient.get({key:"testKey"});
-     */
-    getMultiple(params, cb) {
-        logger_1.default.system.info("StorageClient.getMultiple", params, cb);
-        this.routerClient.query("Storage.getMultiple", params, function (err, response) {
-            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
-            logMethod("StorageClient.getMultiple:", params, response);
-            if (cb) {
-                cb(err, response);
-            }
-        });
-    }
-    ;
-    /**
-     * Delete a value from storage.
-     * @param {Object} params
-     * @param {String} params.key The key to get from storage.
-     * @param {String} params.topic The topic that the data is saved under.
-     * @example
-     * FSBL.Clients.StorageClient.remove({ key:"testKey" })
-     */
-    remove(params, cb) {
-        const promiseResolver = (resolve, reject) => {
-            validate_1.default.args(params.topic, "string", params.key, "string", cb, "function=");
-            this.routerClient.query("Storage.delete", params, function (err, response) {
-                const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
-                logMethod("StorageClient.delete", err, response);
-                if (cb) {
-                    cb(err, response.data);
-                }
-                if (err) {
-                    reject({ err: err, data: null });
-                }
-                else {
-                    resolve({ err: err, data: response.data });
-                }
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    ;
-    /**
-     *
-     * @param params
-     * @private
-     */
-    remove1(params) {
-        return limit(() => this.remove(params));
-    }
-    /**
-     * Clears a storage adapter of all data.
-     * @param {function} cb The callback to be invoked after the method completes successfully.
-     *
-     */
-    clearCache(cb) {
-        logger_1.default.system.log("StorageClient.clearCache", cb);
-        this.routerClient.query("Storage.clearCache", null, function (err, response) {
-            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
-            logMethod("StorageClient.clearCache", err, response);
-            if (cb) {
-                cb(err, response.data);
-            }
-        });
-    }
-    ;
 }
-exports.StorageClient = StorageClient;
-;
-var storageClient = new StorageClient({
-    startupDependencies: {
-        services: ["storageService"]
-    },
-    onReady: function (cb) {
-        if (cb) {
-            cb();
+/**
+ * Used to generate a unique ID for the list of dependencies.
+ */
+function uuidv4() {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0, v = c === "x" ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+/**
+ * @private
+ */
+class StartupManager {
+    /**
+     * @private
+     */
+    constructor() {
+        this.servicesAreAllOnline = {};
+        this.clientsAreAllOnline = {};
+        this.onlineClients = [];
+        this.dependencies = {};
+        this.startupTimers = {};
+        this.startupTimerFired = false;
+        this.bindCorrectContext();
+    }
+    /**
+     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required dependencies are ready.
+     *
+     * @param {FinsembleDependency} dependencies
+     * @param {any} callback
+     * @memberof StartupManager
+     */
+    waitFor(dependencies, callback) {
+        let id = uuidv4();
+        //Set defaults to an empty array if they aren't passed in.
+        if (!dependencies.clients)
+            dependencies.clients = [];
+        //The dependency manager can pass in a name to the dependency. If it does, we'll use it. If not, we won't.
+        if (dependencies.clients.length) {
+            //Lowercase the first letter of the client.
+            dependencies.clients = dependencies.clients.map(clientName => {
+                return clientName.charAt(0).toLowerCase() + clientName.slice(1);
+            });
         }
-    },
-    name: "storageClient"
-});
-exports.default = storageClient;
+        let dependency = new StartupDependency({ dependencies, callback });
+        //If the dependency times out, throw an error that the baseService can catch. It will then log out why it's not online.
+        dependency.on("timeout", () => {
+            this.onDependencyTimeout(dependency);
+        });
+        this.dependencies[id] = dependency;
+        this.checkDependencies();
+        return dependency;
+    }
+    /**
+     * This method generates a helpful error message giving possible reasons for why the service is offline. After the message is generated, it emits an event on the dependency that's passed in as a parameter. The BaseService is listening for this event, and logs the error message to the central logger.
+     * @param {Dependency} dependency
+     */
+    onDependencyTimeout(dependency) {
+        const NEW_LINE = "\n", TAB = "\u0009", BULLET = "\u2022", BULLET_POINT = NEW_LINE + TAB + BULLET, STORAGE_ADAPTER_ERROR = "The default storage adapter failed to fully initialize, or has a syntax error. Ensure that the default storage adapter is up, connected, and sending/receiving data properly.";
+        let offlineClients = this.getOfflineClients();
+        let errorMessage = `APPLICATION LIFECYCLE:STARTUP:Dependency not online after ${STARTUP_TIMEOUT_DURATION / 1000} seconds.`;
+        if (offlineClients.length) {
+            errorMessage += ` Waiting for these clients: ${offlineClients.join(", ")}.`;
+        }
+        //The BaseService is listening for this event, and will log the errorMessage to the central logger.
+        dependency.emit("err", errorMessage);
+    }
+    /**
+     * This function loops through all of the registered dependencies and checks to see if the conditions have been met. If so, it invokes the callback and removes the reference to the dependency.
+     *
+     * @memberof StartupManager
+     */
+    checkDependencies() {
+        for (let id in this.dependencies) {
+            let dependency = this.dependencies[id];
+            let { dependencies, callback } = dependency;
+            if (dependencies.clients.length && !this.clientsAreAllOnline[id]) {
+                this.clientsAreAllOnline[id] = this.checkClients(dependencies.clients);
+                if (!this.clientsAreAllOnline[id]) {
+                    continue;
+                }
+            }
+            delete this.dependencies[id];
+            dependency.clearStartupTimer();
+            if (callback) {
+                callback();
+            }
+        }
+    }
+    getOfflineClients() {
+        let offlineClients = [];
+        for (let id in this.dependencies) {
+            let { dependencies } = this.dependencies[id];
+            offlineClients = offlineClients.concat(dependencies.clients.filter((dep) => !this.onlineClients.includes(dep)));
+        }
+        //return deduped list.
+        return offlineClients.filter((client, i) => offlineClients.indexOf(client) === i);
+    }
+    /**
+     * Iterates through required client list, returns false if any required client is offline.
+     *
+     * @param {any} clientList
+
+     * @memberof StartupManager
+     */
+    checkClients(clientList) {
+        return clientList.every(client => this.onlineClients.includes(client));
+    }
+    /**
+     *
+     *
+     * @param {any} clientName
+
+     * @memberof StartupManager
+     */
+    setClientOnline(clientName) {
+        //This check is done because multiple clients of the same type can be on a page.
+        if (this.onlineClients.includes(clientName)) {
+            return;
+        }
+        this.onlineClients.push(clientName);
+        this.checkDependencies();
+        // Note From Mike: Must change or workaround how some client usage triggers this code even though the client's service is NOT ready.
+        // This problem happens because some services initialize their clients when the client's service hasn't been created yet, but then don't use the client until later.
+        // So although the general code is correct here, the overall result is not (specifically the queries will timeout causing delays, error logging, and potential side effects).
+        // Therefore disabling this handshake code for now -- BUT KEEP CODE COMMENTED-OUT CODE UNTIL THIS IS RESOLVED. Just to be clear, nothing breaks without this code, but this
+        // code is what generates an error when improperly using a client...so it provides a needed check.
+        // let serviceName = CLIENT_SERVER_MAPPING(clientName);
+        // if (true /*disabling*/ && serviceName) {
+        // 	console.debug("SERVICE_QUERY_READY_CHANNEL querying", clientName, SERVICE_QUERY_READY_CHANNEL(serviceName));
+        // 	// before going online make sure this client's service is ready -- it should be until there is a startup problem
+        // 	RouterClient.query(SERVICE_QUERY_READY_CHANNEL(serviceName), {}, { timeout: 500 }, (err) => {
+        // 		if (err) {
+        // 			Logger.system.error(`DependencyManager: server ${serviceName} is not ready for client ${clientName}. ${err}. Make sure dependencies client dependencies are correct.`)
+        // 		} else {
+        // 			Logger.system.debug(`DependencyManager: server ${serviceName} is ready for client ${clientName} `)
+        // 		}
+        // 		this.onlineClients.push(clientName);
+        // 		this.checkDependencies();
+        // 	});
+        // } else {
+        // 	this.onlineClients.push(clientName);
+        // 	this.checkDependencies();
+        // }
+    }
+    /**
+     * Returns the array of online clients.
+     *
+
+     * @memberof StartupManager
+     */
+    getOnlineClients() {
+        return this.onlineClients;
+    }
+    /**
+     * Method to make sure that `this` is correct when the callbacks are invoked.
+     *
+     * @memberof StartupManager
+     */
+    bindCorrectContext() {
+        this.checkDependencies = this.checkDependencies.bind(this);
+        this.checkClients = this.checkClients.bind(this);
+        this.getOfflineClients = this.getOfflineClients.bind(this);
+        this.onDependencyTimeout = this.onDependencyTimeout.bind(this);
+        this.waitFor = this.waitFor.bind(this);
+    }
+}
+/**
+ * @private
+ */
+class ShutdownManager {
+    /**
+     * @private
+     */
+    constructor() {
+        this.offlineServices = [];
+        this.dependencies = {};
+        this.checkDependencies = this.checkDependencies.bind(this);
+    }
+    /**
+     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required dependencies are ready.
+     *
+     * @param {FinsembleDependency} dependencies
+     * @param {any} callback
+     * @memberof StartupManager
+     */
+    waitFor(dependencies, callback) {
+        logger_1.default.system.debug(`DependencyManager:waitFor`, dependencies);
+        //Set defaults to an empty array if they aren't passed in.
+        if (!dependencies.services) {
+            dependencies.services = [];
+        }
+        let id = uuidv4();
+        this.dependencies[id] = { dependencies, callback };
+    }
+    /**
+     * This function loops through all of the registered dependencies and checks to see if the conditions have been met. If so, it invokes the callback and removes the reference to the dependency.
+     *
+     * @memberof ShutdownDependencies
+     */
+    checkDependencies() {
+        console.debug("checkDependencies", this.dependencies);
+        if (Object.keys(this.dependencies)) {
+            for (let id in this.dependencies) {
+                let { dependencies, callback } = this.dependencies[id];
+                logger_1.default.system.debug(`DependencyManager:checkDependency`, dependencies.services, this.offlineServices);
+                if (dependencies.services.length) {
+                    let servicesAreAllOffline = this.checkServices(dependencies.services);
+                    if (!servicesAreAllOffline) {
+                        continue;
+                    }
+                }
+                console.debug("checkDependencies callback");
+                delete this.dependencies[id];
+                if (callback) {
+                    callback();
+                }
+            }
+        }
+    }
+    /**
+     * Iterates through required service list, returns false if any required service is offline.
+     *
+     * @param {any} serviceList
+
+     * @memberof ShutdownManager
+     */
+    checkServices(serviceList) {
+        return serviceList.every(service => this.offlineServices.includes(service));
+    }
+    setServiceOffline(service) {
+        logger_1.default.system.debug("setServiceOffline", service);
+        console.debug("setServiceOffline", service);
+        this.offlineServices.push(service);
+        this.checkDependencies();
+    }
+}
+/**
+ * This class handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready.
+ *
+ * The constructor is exported for the system mananger's shutDownManager so that class isn't constructed until right time in the starup process.
+ * Otherwise, this class is used as a singleton thoughout the rest of the system.
+ *
+ * @shouldBePublished false
+ * @private
+ * @class FSBLDependencyManager
+ */
+class FSBLDependencyManager extends events_1.EventEmitter {
+    constructor() {
+        super();
+        this.startup = new StartupManager();
+        this.shutdown = new ShutdownManager();
+        this.RouterClient = routerClientInstance_1.default;
+        this.AuthorizationCompleted = false;
+        this.bindCorrectContext();
+        this.onAuthorizationCompleted(this.startup.checkDependencies);
+        routerClientInstance_1.default.onReady(this.listenForServices);
+    }
+    /**
+ * Method to make sure that `this` is correct when the callbacks are invoked.
+ *
+ * @memberof StartupManager
+ */
+    bindCorrectContext() {
+        this.listenForServices = this.listenForServices.bind(this);
+        this.onAuthorizationCompleted = this.onAuthorizationCompleted.bind(this);
+    }
+    setClientOnline(client) {
+        this.startup.setClientOnline(client);
+    }
+    /*
+    * handler for when a service changes its state. If a service comes online or goes offline, dependencies are checked and callbacks invoked.
+    */
+    onServiceStateChange(data) {
+        let ServiceNames = Object.keys(data);
+        //Iterate through all services. If it was online but isn't anymore, set it offline. If it was offline but now is, set it online.
+        ServiceNames.forEach((serviceName) => {
+            let state = data[serviceName].state;
+            if (state === "closed") {
+                this.shutdown.setServiceOffline(serviceName);
+            }
+        });
+    }
+    /**
+     * Listens on the router for services to come online. The first subscriber gets the activeServices as of object instantiation. The 2nd subscriber listens for services to come online after the object is created. We should consider make this all one subscriber, though I see the advantage of having this setup.
+     *
+     */
+    listenForServices() {
+        logger_1.default.system.debug(`DependencyManager:listenForServices before wait`);
+        var listenForServicesCallback;
+        // wait until the essential parts of the microkernel stage is done so pubsub responders are available
+        systemManagerClient_1.default.waitForBootStage("kernel", "stageEntered", listenForServicesCallback = () => {
+            logger_1.default.system.debug(`DependencyManager:listenForServices after wait`);
+            this.RouterClient.subscribe(constants_1.SERVICES_STATE_CHANNEL, (err, event) => {
+                logger_1.default.system.debug(`DependencyManager:listenForServices SERVICES_STATE_CHANNEL`, event.data);
+                this.onServiceStateChange(event.data);
+            });
+            // TODO: The pubsub responder doesnt seem to work here. IT works for the above when not closing.
+            this.RouterClient.addListener(constants_1.SERVICE_CLOSED_CHANNEL, (err, event) => {
+                logger_1.default.system.debug(`DependencyManager:listenForServices SERVICE_CLOSED_CHANNEL`, event.data);
+                let services = {};
+                services[event.data.name] = {
+                    state: "closed"
+                };
+                this.onServiceStateChange(services);
+            });
+            this.RouterClient.subscribe(constants_1.APPLICATION_STATE_CHANNEL, (err, response) => {
+                switch (response.data.state) {
+                    //authenticated will only be caught by components/services that are up before auth does its thing. Otherwise, a component/service coming up will have the 'ready' application state. In either case, we need to do the things below. But only once.
+                    case "authenticated":
+                    case "ready":
+                        break;
+                    case "closing":
+                        this.shutdown.checkDependencies();
+                        break;
+                }
+            });
+        });
+    }
+    onAuthorizationCompleted(callback) {
+        if (this.AuthorizationCompleted) {
+            callback();
+        }
+        else {
+            this.addListener("AuthorizationCompleted", callback);
+        }
+    }
+}
+exports.FSBLDependencyManager = FSBLDependencyManager;
+/**
+ * This class handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
+ * @shouldBePublished false
+ * @private
+ * @class FSBLDependencyManager
+ */
+exports.FSBLDependencyManagerSingleton = new FSBLDependencyManager();
+exports.default = exports.FSBLDependencyManagerSingleton;
 
 
 /***/ }),
-/* 53 */
+/* 59 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const uuid_1 = __webpack_require__(130);
-const get = __webpack_require__(40);
-const pick = __webpack_require__(116);
-const lodash_1 = __webpack_require__(117);
+const uuid_1 = __webpack_require__(136);
+const get = __webpack_require__(53);
+const pick = __webpack_require__(122);
+const lodash_1 = __webpack_require__(123);
 //Class without deep openfin/system dependencies.
 function guuid() {
     return uuid_1.v1(); // return global uuid
@@ -16079,19 +17580,19 @@ exports.checkIfBoundsAreEqual = checkIfBoundsAreEqual;
 
 
 /***/ }),
-/* 54 */
+/* 60 */
 /***/ (function(module, exports) {
 
 module.exports = {};
 
 
 /***/ }),
-/* 55 */
+/* 61 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 19.1.2.14 / 15.2.3.14 Object.keys(O)
-var $keys = __webpack_require__(145);
-var enumBugKeys = __webpack_require__(96);
+var $keys = __webpack_require__(151);
+var enumBugKeys = __webpack_require__(101);
 
 module.exports = Object.keys || function keys(O) {
   return $keys(O, enumBugKeys);
@@ -16099,18 +17600,18 @@ module.exports = Object.keys || function keys(O) {
 
 
 /***/ }),
-/* 56 */
+/* 62 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 7.1.13 ToObject(argument)
-var defined = __webpack_require__(95);
+var defined = __webpack_require__(100);
 module.exports = function (it) {
   return Object(defined(it));
 };
 
 
 /***/ }),
-/* 57 */
+/* 63 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16124,9 +17625,9 @@ module.exports = function (it) {
 
 
 
-var base64 = __webpack_require__(291)
-var ieee754 = __webpack_require__(297)
-var isArray = __webpack_require__(149)
+var base64 = __webpack_require__(319)
+var ieee754 = __webpack_require__(326)
+var isArray = __webpack_require__(155)
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
@@ -17904,10 +19405,10 @@ function isnan (val) {
   return val !== val // eslint-disable-line no-self-compare
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ }),
-/* 58 */
+/* 64 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(Buffer) {// Copyright Joyent, Inc. and other Node contributors.
@@ -18018,10 +19519,10 @@ function objectToString(o) {
   return Object.prototype.toString.call(o);
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(57).Buffer))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(63).Buffer))
 
 /***/ }),
-/* 59 */
+/* 65 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18035,7 +19536,7 @@ var ES6Promise = null;
 if (typeof Promise !== "undefined") {
     ES6Promise = Promise;
 } else {
-    ES6Promise = __webpack_require__(313);
+    ES6Promise = __webpack_require__(342);
 }
 
 /**
@@ -18047,7 +19548,7 @@ module.exports = {
 
 
 /***/ }),
-/* 60 */
+/* 66 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18144,7 +19645,7 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 
 
 /***/ }),
-/* 61 */
+/* 67 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(process) {var babelPluginFlowReactPropTypes_proptype_CellDataGetterParams = process.env.NODE_ENV === 'production' ? null : {
@@ -18224,17 +19725,17 @@ if (!(process.env.NODE_ENV === 'production') && typeof exports !== "undefined") 
   value: babelPluginFlowReactPropTypes_proptype_RowRendererParams,
   configurable: true
 });
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
-/* 62 */
+/* 68 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* WEBPACK VAR INJECTION */(function(process) {/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "cancelAnimationTimeout", function() { return cancelAnimationTimeout; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "requestAnimationTimeout", function() { return requestAnimationTimeout; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__animationFrame__ = __webpack_require__(367);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__animationFrame__ = __webpack_require__(396);
 
 
 var babelPluginFlowReactPropTypes_proptype_AnimationTimeoutId = process.env.NODE_ENV === 'production' ? null : {
@@ -18273,10 +19774,10 @@ var requestAnimationTimeout = function requestAnimationTimeout(callback, delay) 
 
   return frame;
 };
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 63 */
+/* 69 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {var scope = (typeof global !== "undefined" && global) ||
@@ -18332,7 +19833,7 @@ exports._unrefActive = exports.active = function(item) {
 };
 
 // setimmediate attaches itself to the global object
-__webpack_require__(129);
+__webpack_require__(135);
 // On some exotic environments, it's not clear which object `setimmediate` was
 // able to install onto.  Search each possibility in the same order as the
 // `setimmediate` library.
@@ -18343,10 +19844,10 @@ exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
                          (typeof global !== "undefined" && global.clearImmediate) ||
                          (this && this.clearImmediate);
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ }),
-/* 64 */
+/* 70 */
 /***/ (function(module, exports) {
 
 /**
@@ -18375,7 +19876,7 @@ module.exports = bytesToUuid;
 
 
 /***/ }),
-/* 65 */
+/* 71 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {// Unique ID creation requires a high quality random # generator.  In the
@@ -18412,17 +19913,17 @@ if (!rng) {
 
 module.exports = rng;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ }),
-/* 66 */
+/* 72 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Unique ID creation requires a high quality random # generator.  We feature
 // detect to determine the best RNG source, normalizing to a function that
 // returns 128-bits of randomness, since that's what's usually required
-var rng = __webpack_require__(65);
-var bytesToUuid = __webpack_require__(64);
+var rng = __webpack_require__(71);
+var bytesToUuid = __webpack_require__(70);
 
 // **`v1()` - Generate time-based UUID**
 //
@@ -18524,7 +20025,7 @@ module.exports = v1;
 
 
 /***/ }),
-/* 67 */
+/* 73 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18562,22 +20063,22 @@ if (process.env.NODE_ENV === 'production') {
   // DCE check should happen before ReactDOM bundle executes so that
   // DevTools can report bad minification during injection.
   checkDCE();
-  module.exports = __webpack_require__(326);
+  module.exports = __webpack_require__(355);
 } else {
-  module.exports = __webpack_require__(325);
+  module.exports = __webpack_require__(354);
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
-/* 68 */
+/* 74 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const baseClient_1 = __webpack_require__(12);
-const StoreModel_1 = __webpack_require__(83);
+const baseClient_1 = __webpack_require__(11);
+const StoreModel_1 = __webpack_require__(88);
 /** I'm not sure why we previously deferred requiring StoreModel, but we did.
   * I've tried to stay as true to the original implementation as possible. -- Daniel 12/19/18 */
 let _StoreModel;
@@ -18606,7 +20107,7 @@ function removeGlobalStore(params, cb) {
 /**
  *
  * @introduction
- * <h2>Distributed Store Client</h2>
+ * <h2>Distributed Store Client (Finsemble Flow)</h2>
  * The Distributed Store Client handles creating, retrieving, and destroying stores. Stores are used to save and retrieve data either locally or globally.
  * This data is not persisted. You can add listeners at multiple levels (store or field), and get the updated data as it's updated in the store.
  * Fields are stored within the store as key/value pair. For more information, see the <a href="tutorial-DistributedStore.html">Distributed Store tutorial</a>.
@@ -18628,9 +20129,11 @@ class DistributedStoreClient extends baseClient_1._BaseClient {
         this.ls = localStore;
     }
     /**
-     * Get a store. If no store is set, you will get the global Finsemble store. If global is not set, Finsemble will check local first then check global.
+     * Retrieve a store if it exists in the local scope, otherwise from the global scope.
+     *
+     * @param {object} params
      * @param {String} params.store The name of the store.
-     * @param {boolean} params.global Whether a store is accessible outside of the component it's created in.
+     * @param {boolean} params.global Get the store only from the global scope.
      * @param {function} cb -  Will return the value if found.
      * @returns {StoreModel} - returns the store
      * @example
@@ -18716,9 +20219,7 @@ class DistributedStoreClient extends baseClient_1._BaseClient {
 }
 ;
 var storeClient = new DistributedStoreClient({
-    startupDependencies: {
-        services: ["dataStoreService"]
-    },
+    startupDependencies: {},
     onReady: function (cb) {
         _StoreModel = StoreModel_1.default;
         storeClient.load(cb);
@@ -18730,1213 +20231,7 @@ exports.default = storeClient;
 
 
 /***/ }),
-/* 69 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-Object.defineProperty(exports, "__esModule", { value: true });
-/*
-Overview of how this works:
--hotkeys are added/removed via methods, passing an array of strings representing keys pressed, a handler method, and (optionally) a callback
-
--When adding a hotkey, a node js event emitter is created on the client side to trigger the hotkey handler, and a router message is sent to the service to register the key combination with the window name on the client side. Multiple hotkeys may be created for the same key combination, so long as they have different handler functions.
-
--When the service detects that all of the keys in the hotkey combination are pressed, it sends a message on the "HotkeyTriggered" channel (the method for this is "ListenForHotkeys") which contains the list of all windows registered with that hotkey combination. The client then reads the list of windows, and checks if it's one of those windows. If it is, it fires off the node js event emitter that was registered for that hotkey.
-
--Removing a hotkey clears the corresponding event emitter, and also sends a router message to the service to remove its window id from the array of windows registered for the hotkey combination - if the window is registered with that hotkey combination multiple times, it will only remove one, allowing other hotkeys on the same window with the same key combination to still be registered.
-
-*/
-const baseClient_1 = __webpack_require__(12);
-const routerClientInstance_1 = __webpack_require__(10);
-const logger_1 = __webpack_require__(3);
-const keyMap = __webpack_require__(132).dictionary;
-/** The global `window` object. We cast it to a specific interface here to be
- * explicit about what Finsemble-related properties it may have. */
-const Globals = window;
-const events_1 = __webpack_require__(13);
-var eventEmitter = new events_1.EventEmitter();
-/**
- * Translates an array representing a key combination, each element of which represents a key, using keyDict, an object containing key-value pairs where the untranslated key representations are the keys, and the translated versions ready to be used by the service are the values.
- *
- * If you'd like to create a keymap for translation, look at the values of the keymaps included in the common folder.
- * @private
- * @param {object} params
- * @param {object} params.keys array representing untranslated key representations
- * @param {object} keyDict
- */
-function translateKeys(params, keyDict = keyMap) {
-    var translatedKeys = [];
-    params.keys.forEach((key) => {
-        if (!(typeof key === "string")) {
-            return logger_1.default.system.error("FSBL.Clients.HotkeyClient - one of the keys passed into a function was not a string: ", key);
-        }
-        key = key.toLowerCase();
-        let mappedKey = keyDict[key];
-        if (mappedKey) {
-            translatedKeys.push(mappedKey);
-        }
-        else {
-            return logger_1.default.system.error(`FSBL.Clients.HotkeyClient - At least one of the key codes does not map to a supported key - registering hotkey unsuccessful. Unsupported keys: ${key}`);
-        }
-    });
-    return translatedKeys;
-}
-// Keystroke capture class taken from ChartIQ charting library
-const Keystroke = function (cb) {
-    this.cb = cb;
-    this.shift = false;
-    this.ctrl = false;
-    this.cmd = false;
-    this.capsLock = false;
-    this.initialize();
-};
-Keystroke.prototype.keyup = function (e) {
-    switch (e.key) {
-        case "Shift":
-            this.shift = false;
-            this.cb({ key: e.key, e: e, keystroke: this });
-            return;
-        case "Control":
-        case "Alt":
-            this.ctrl = false;
-            this.cb({ key: e.key, e: e, keystroke: this });
-            return;
-        case "Meta":
-        case "Win":
-            this.cmd = false;
-            this.cb({ key: e.key, e: e, keystroke: this });
-            return;
-        default:
-            break;
-    }
-    // This is where we handle the keystroke, regardless of whether we captured the key with a down or press event
-    // The exception to this is the arrow keys, which are processed in keydown
-    if (this.key)
-        this.cb({ key: this.key, e: e, keystroke: this });
-};
-Keystroke.prototype.keydown = function (e) {
-    if (this.noKeyCapture)
-        return;
-    this.key = e.key;
-    switch (e.key) {
-        case "Meta":
-        case "Win":
-            this.cmd = true;
-            break;
-        case "Shift":
-            this.shift = true;
-            break;
-        case "Control":
-        case "Alt":
-            this.ctrl = true;
-            break;
-        case "CapsLock":
-            this.capsLock = !this.capsLock;
-            break;
-        case "ArrowUp":
-        case "ArrowDown":
-        case "ArrowLeft":
-        case "ArrowRight":
-        case "Up":
-        case "Down":
-        case "Left":
-        case "Right":
-            // If you hold a key down, then keydown will repeat. These are the keys
-            // that we want to capture repeat action.
-            this.key = null;
-            this.cb({ key: e.key, e: e, keystroke: this });
-            break;
-    }
-};
-Keystroke.prototype.keypress = function (e) {
-    if (this.noKeyCapture)
-        return;
-    var keyCode = e.which;
-    if (keyCode < 32 || keyCode > 222)
-        return; // handled by keydown
-    this.key = e.key;
-};
-/**
- * initializes member functions
- * @memberof CIQ.UI.Keystroke
- */
-Keystroke.prototype.initialize = function () {
-    var self = this;
-    document.addEventListener("keyup", function (e) {
-        self.keyup(e);
-    });
-    document.addEventListener("keydown", function (e) {
-        self.downValue = e.key;
-        self.keydown(e);
-    });
-    document.addEventListener("keypress", function (e) {
-        self.keypress(e);
-    });
-    window.addEventListener("blur", function (e) {
-        self.ctrl = false;
-        self.cb({ key: "Control", e: e, keystroke: self });
-    });
-};
-// Used to keep track of which browser key combinations are registered locally
-var registeredBrowserKeys = [];
-class HotkeyClient extends baseClient_1._BaseClient {
-    constructor(params) {
-        super(params);
-        /**
-         * Automatically unregister all hotkeys when the window containing the client closes
-         * @param {function} cb
-         * @private
-         */
-        this.onClose = (cb) => {
-            this.removeAllHotkeys(cb);
-        };
-        this.keyMap = keyMap;
-        this.listenForHotkeys = this.listenForHotkeys.bind(this);
-        this.routerClient = routerClientInstance_1.default;
-        this.routerClient.onReady(this.listenForHotkeys);
-        //Local hotkeys need to only fire if the window is focused. The object below is a map of handlers passed in by the user.
-        //The keys are the handler, and the value is the wrapped method that checks for focus.
-        this.localListeners = {};
-    }
-    /**
-     *Adds a local hotkey which fires only when the window calling the method is in focus. If you execute this function more than once for the same key combination, both hotkeys will coexist, and would need to be removed separately.
-     * @param {Array.<string>} keyArr Array of strings representing hotkey key combination.
-     * @param {function} handler Function to be executed when the hotkey combination is pressed. It is recommended that you define a variable to represent the handler function, as the same function must be passed in order to remove the hotkey.
-     * @param {StandardCallback} cb Callback to be called after local hotkey is added.
-     * @example
-     * var myFunction = function () {...}
-     * FSBL.Clients.HotkeyClient.addLocalHotkey(["ctrl", "shift", "s"], myFunction, cb)
-     */
-    addLocalHotkey(keyArr, handler, cb = (err, response) => { }) {
-        logger_1.default.system.info("HotkeyClient.addLocalHotkey");
-        logger_1.default.system.debug("HotkeyClient.addLocalHotkey, keyArr: ", keyArr);
-        let keyString = translateKeys({ keys: keyArr }).sort().toString();
-        //We create a new function that checks focus before invoking the method.
-        //If assimilation wasn't on, we'd want to use window.addEventListener('keydown');
-        let wrap = () => {
-            if (document.hasFocus()) {
-                handler();
-            }
-        };
-        //Keep a reference to the handler so when the dev wants to remove it, we can.
-        if (!this.localListeners[keyString]) {
-            this.localListeners[keyString] = {};
-        }
-        this.localListeners[keyString][handler] = wrap;
-        eventEmitter.addListener(keyString, wrap);
-        this.routerClient.query("hotkeysService.registerGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb);
-    }
-    /**
-     *Adds a local hotkey, firing only when the window calling the method is in focus. If you execute this function more than once for the same key combination, both hotkeys will coexist, and would need to be remove separately.
-     * This function uses browser key capture, so it will work when assimilation is not running
-     * @param {Array} [keyArr] Array of strings representing hotkey key combination.
-     * @param {function} [handler] Function to be executed when the hotkey combination is pressed. It is recommended that you define a variable to represent the handler function, as the same function must be passed in order to remove the hotkey.
-     * @param {function} cb Callback to be called after local hotkey is added.
-     * @todo Have addLocalHotkey automatically use this when assimilation is not running. Will eventually replace addLocalHotkey.
-     * @private
-     * @example
-     * var myFunction = function () {...}
-     * FSBL.Clients.HotkeyClient.addBrowserHotkey(["ctrl","shift","s"],myFunction,cb)
-     */
-    addBrowserHotkey(keyArr, handler) {
-        // Lazily create a keystroke handler for this web page if one doesn't already exist
-        if (!this.KeyStroke) {
-            this.KeyStroke = new Keystroke(function (params) {
-                let { key, keystroke } = params;
-                var myKeyArray = [key];
-                if (keystroke.ctrl)
-                    myKeyArray.push("control");
-                if (keystroke.shift)
-                    myKeyArray.push("shift");
-                if (keystroke.alt)
-                    myKeyArray.push("alt");
-                let myKeyString = myKeyArray.sort().toString();
-                registeredBrowserKeys.forEach(function (obj) {
-                    if (obj.keyString === myKeyString)
-                        obj.handler();
-                });
-            });
-        }
-        let keyString = translateKeys({ keys: keyArr }).sort().toString();
-        registeredBrowserKeys.push({ keyString: keyString, handler: handler });
-    }
-    /**
-     *Removes a local hotkey.
-     * @param {Array.<string>} keyArr Array of strings representing hotkey key combination.
-     * @param {function} handler Handler registered for the hotkey to be removed.
-     * @param {StandardCallback} cb Callback to be called after local hotkey is removed.
-     * @example
-     *
-     * FSBL.Clients.HotkeyClient.removeLocalHotkey(["ctrl", "shift", "s"], myFunction, cb)
-     */
-    removeLocalHotkey(keyArr, handler, cb = (err, response) => { }) {
-        logger_1.default.system.info("HotkeyClient.removeLocalHotkey");
-        logger_1.default.system.debug("HotkeyClient.removeLocalHotkey, keyArr: ", keyArr);
-        let keyString = translateKeys({ keys: keyArr }).sort().toString();
-        let wrap = this.localListeners[keyString][handler];
-        eventEmitter.removeListener(keyString, wrap);
-        this.routerClient.query("hotkeysService.unregisterGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb); //TODO: query
-    }
-    /**
-     *Adds a global hotkey which fires regardless of what window is in focus. If you execute this function more than once for the same key combination, both hotkeys will coexist, and would need to be removed separately.
-     * @param {Array.<string>} keyArr Array of strings representing a hotkey key combination.
-     * @param {function} handler Function to be executed when the hotkey combination is pressed. It is recommended that you define a variable to represent the handler function, as the same function must be passed in order to remove the hotkey.
-     * @param {StandardCallback} cb Callback to be called after local hotkey is added.
-     * @example
-     * var myFunction = function () {...}
-     * FSBL.Clients.HotkeyClient.addGlobalHotkey(["ctrl", "shift", "s"], myFunction, cb)
-     */
-    addGlobalHotkey(keyArr, handler, cb = (err, response) => { }) {
-        logger_1.default.system.info("HotkeyClient.addGlobalHotkey");
-        logger_1.default.system.debug("HotkeyClient.addGlobalHotkey, keyArr: ", keyArr);
-        let keyString = translateKeys({ keys: keyArr }).sort().toString();
-        eventEmitter.addListener(keyString, handler);
-        this.routerClient.query("hotkeysService.registerGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb);
-    }
-    /**
-     *Removes a global hotkey.
-     * @param {Array.<string>} keyArr Array of strings representing hotkey key combination.
-     * @param {function} handler Handler registered for the hotkey to be removed.
-     * @param {StandardCallback} cb Callback to be called after local hotkey is removed.
-     * @example
-     *
-     * FSBL.Clients.HotkeyClient.removeGlobalHotkey(["ctrl", "shift", "s"], myFunction, cb)
-     */
-    removeGlobalHotkey(keyArr, handler, cb = (err, response) => { }) {
-        logger_1.default.system.info("HotkeyClient.removeGlobalHotkey");
-        logger_1.default.system.debug("HotkeyClient.removeGlobalHotkey, keyArr: ", keyArr);
-        let keyString = translateKeys({ keys: keyArr }).sort().toString();
-        eventEmitter.removeListener(keyString, handler);
-        this.routerClient.query("hotkeysService.unregisterGlobalHotkey", { "keys": keyString, windowName: this.windowName }, cb); //TODO: query
-    }
-    /**
-     * Not yet implemented - will return an object that contains all registered Hotkeys
-     */
-    /* getHotkeys() { //TODO: MAKE WORK
-        Logger.system.info("HotkeyClient.getHotkeys");
-        this.routerClient.transmit("hotkeysService.getRegisteredHotkeys", { request: true });
-    } */
-    /**
-     * Handler for "hotkey triggered" messages from the service, called upon client initialization.
-     * @private
-     */
-    listenForHotkeys() {
-        var self = this;
-        this.routerClient.addListener("HotkeyTriggered", function (error, response) {
-            if (error) {
-                console.error("Hotkey Channel Error: " + JSON.stringify(error));
-            }
-            else {
-                if (response.data.windows.includes(self.windowName)) { //if this is one of the windows that the service means to trigger here
-                    eventEmitter.emit(response.data.keys);
-                }
-            }
-        });
-    }
-    /**
-     * Unregister all hotkeys, both locally and service-side.
-     * @param {StandardCallback} cb Optional callback function
-     *
-     */
-    removeAllHotkeys(cb) {
-        eventEmitter.removeAllListeners();
-        this.routerClient.query("hotkeysService.removeAllHotkeysForWindow", { windowName: this.windowName }, cb);
-    }
-}
-var hotkeyClient = new HotkeyClient({
-    startupDependencies: {
-        services: ["hotkeysService"]
-    },
-    onReady: function (cb) {
-        if (cb) {
-            cb();
-        }
-    },
-    name: "hotkeyClient"
-});
-// @TODO - use proper exports instead of global scope.
-Globals.Keystroke = Keystroke;
-exports.default = hotkeyClient;
-
-
-/***/ }),
-/* 70 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-const baseClient_1 = __webpack_require__(12);
-const windowClient_1 = __webpack_require__(72);
-const util = __webpack_require__(17);
-const validate_1 = __webpack_require__(18); // Finsemble args validator
-const system_1 = __webpack_require__(5);
-const logger_1 = __webpack_require__(3);
-const FinsembleWindow_1 = __webpack_require__(34);
-/** The global `window` object. We cast it to a specific interface here to be
- * explicit about what Finsemble-related properties it may have. */
-const Globals = window;
-/**
- * An object that includes all the potential identifications for a window.
- * For instance, one can try and obtain a reference for a window if some of these values are known.
- *
- * @typedef WindowIdentifier
- * @property {string} [windowName] The name of the physical HTML window, or a reference to a native window that was launched with Assimilation service
- * @property {string} [uuid] Optional uuid of a particular OpenFin application process
- * @property {string} [componentType] The type of component
- * @property {number|string} [monitor] The number of the monitor. Potentially used to disambiguate multiple components with the same name (for searches only)
- */
-/**
- * Finsemble windowDescriptor.
- * The windowDescriptor includes the following values.
- *
- * @typedef WindowDescriptor
- * @property {string} [url] url to load (if HTML5 component).
- * @property {string} [native] The name of the native app (if a native component launched by Assimilation service).
- * @property {string} name The name of the window (sometimes randomly assigned).
- * @property {string} componentType The type of component (from <i>components.json</i>).
- */
-/**
- *
- * A convenient assembly of native JavaScript window, `OpenFin` window and windowDescriptor.
- *
- * @typedef RawWindowResult
- * @property {WindowDescriptor} windowDescriptor The window descriptor.
- * @property {fin.desktop.Window} finWindow The `OpenFin` window.
- * @property {Window} browserWindow The native JavaScript window.
- *
- */
-// A map of related menus that is kept by handleToggle.
-var okayToOpenMenu = {};
-/**
- *
- * @introduction
- * <h2>Launcher Client</h2>
- *
- * The Launcher Client handles spawning windows of all kinds.
- * Finsemble provides the architecture to launch, resize, and reposition any component, whether native, modern, or third-party.
- *
- *
- * The Launcher API has capabilities to customize your end user's experience.
- * This includes CSS-like positioning and a fully display-aware positioning that deals with idiosyncrasies such as monitors with different scaling resolutions.
- *
- *
- * CSS provides higher level abstractions that aid in laying out an application that is composed of constituent parts.
- * Finsemble has borrowed CSS’s positioning paradigm and applied it to the task of laying out windows on the desktop.
- * This CSS-style positioning allows windows to be positioned on the `left`, `right`, `top`, or `bottom` of the end user’s screen for instance; we also developed new positions, such as `adjacent`, which allows a child window to spawn adjacent to their parent.
- * Components can be positioned and sized by percentage, relative to the monitor or to each other (nested windows).
- *
- *
- * The Launcher Client frequently uses the parameters <code>windowName</code> and <code>componentType</code>. [Learn more about them here](tutorial-ComponentTypesAndWindowNames.html).
- *
- *
- *
- * @hideconstructor
- * @constructor
- */
-class LauncherClient extends baseClient_1._BaseClient {
-    constructor(params) {
-        super(params);
-        validate_1.default.args(params, "object=") && params && validate_1.default.args2("params.onReady", params.onReady, "function=");
-        this.windowClient = params.clients.windowClient;
-    }
-    /** @alias LauncherClient# */
-    /**
-     * Get a list of registered components (those that were entered into <i>components.json</i>).
-     *
-     * @param {Function} cb Callback returns an object map of components. Each component object
-     * contains the default config for that component.
-     */
-    getComponentList(cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        const promiseResolver = (resolve) => {
-            this.routerClient.query("Launcher.componentList", {}, function (err, response) {
-                cb(err, response.data);
-                resolve({ err, data: response.data });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Get the component config (from <i>components.json</i>) for a specific component.
-     *
-     * @param {String} componentType The type of the component.
-     * @param {Function} cb Callback returns the default config (windowDescriptor) for the requested componentType.
-     *
-     */
-    getComponentDefaultConfig(componentType, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        const promiseResolver = (resolve) => {
-            this.routerClient.query("Launcher.componentList", {}, function (err, response) {
-                const data = response.data[componentType];
-                cb(err, data);
-                resolve({ err, data });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Gets monitor information for a given windowIdentifier or for a specific monitor.
-     * If neither the identifier or monitor are provided then the monitorInfo for the current window is returned.
-     *
-     *
-     * The information returned contains:
-     *
-     * **monitorRect** - The full dimensions for the monitor. <br>
-     * **availableRect** - The dimensions for the available space on the monitor (less the Windows task bar). <br>
-     * **unclaimedRect** - The dimensions for available monitor space less any space claimed by components (such as the Toolbar). <br>
-     *
-     * Each of these is supplemented with the following additional members:
-     *
-     * **width** - The width as calculated (right - left). <br>
-     * **height** - The height as calculated (bottom - top). <br>
-     * **position** - The position of the monitor, numerically from zero to X. Primary monitor is zero. <br>
-     * **whichMonitor** - Contains the string "primary" if it is the primary monitor.
-     *
-     * @param  {WindowIdentifier} params.windowIdentifier The windowIdentifier to get the monitorInfo. If undefined, then the current window.
-     * @param  {number|string} params.monitor If passed then a specific monitor is identified. Valid values include:
-     *
-     * <b>"mine"</b> - Place the window on the same monitor as the calling window.
-     *
-     * Integer value from 0-n (0 being the primary monitor).
-     *
-     * <b>"primary"</b> indicates the user's primary monitor.
-     *
-     * <b>"all"</b> - Put a copy of the component on all monitors.
-     * @param  {Function} cb Returns a monitorInfo object containing the monitorRect, availableRect and unclaimedRect.
-     */
-    getMonitorInfo(params, cb = Function.prototype) {
-        var self = this;
-        validate_1.default.args(cb, "function=");
-        logger_1.default.system.debug(`MONITOR: launcherClient.getMonitorInfo`);
-        const promiseResolver = (resolve) => {
-            util.getMyWindowIdentifier(function (myWindowIdentifier) {
-                if (!params.windowIdentifier) {
-                    params.windowIdentifier = myWindowIdentifier;
-                }
-                self.routerClient.query("Launcher.getMonitorInfo", params, function (err, response) {
-                    if (cb) {
-                        cb(err, response.data);
-                    }
-                    logger_1.default.system.log(`MONITOR: launcherClient.getMonitorInfo query response data`, response.data);
-                    resolve({ err, data: response.data });
-                });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Gets monitorInfo (dimensions and position) for all monitors. Returns an array of monitorInfo objects. See <a href="LauncherClient.html#getMonitorInfo">LauncherClient#getMonitorInfo</a> for the format of a monitorInfo object.
-     *
-     *
-     *
-     * @param  {Function} cb Returns an array of monitorInfo objects.
-     */
-    getMonitorInfoAll(cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        const promiseResolver = (resolve, reject) => {
-            this.routerClient.query("Launcher.getMonitorInfoAll", {}, function (err, response) {
-                if (err) {
-                    reject({ err });
-                    cb(err);
-                }
-                resolve({ err, data: response.data });
-                cb(err, response.data);
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Registers a component with the Launcher Service. This method registers a given component in a component manifest, making it available to an app launcher component.
-     *
-     * @param {String} params.componentType The key of the component in the component's config.
-     * @param {object} params.manifest This should be a component manifest, i.e., a component configuration file like <i>components.json</i>.
-     * @param {Function} cb The callback to be invoked after the method completes successfully.
-     */
-    registerComponent(params, cb = Function.prototype) {
-        const promiseResolver = (resolve) => {
-            this.routerClient.query("LauncherService.registerComponent", params, function (err, response) {
-                if (cb) {
-                    cb(err, response.data);
-                }
-                resolve({ err, data: response.data });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Unregisters a component with the Launcher Service.
-     *
-     * @param {String} params.componentType The key of the component in the component's config.
-     * @param  {Function} cb
-     */
-    unRegisterComponent(params, cb = Function.prototype) {
-        if (!params.componentType)
-            return cb("No componentType provided");
-        const promiseResolver = (resolve) => {
-            this.routerClient.query("LauncherService.unRegisterComponent", params, function (err, response) {
-                if (cb) {
-                    cb(err, response.data);
-                }
-                resolve({ err, data: response.data });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * A convenience method for dealing with a common use-case, which is toggling the appearance and disappearance of a child window when a button is pressed, aka drop down menus. Simply call this method from the click handler for your element. Your child window will need to close itself on blur events.
-     * @param {HTMLElement|selector} element The DOM element, or selector, clicked by the end user.
-     * @param {windowIdentifier} windowIdentifier Identifies the child window
-     * @param {object} params Parameters to be passed to {@link LauncherClient#showWindow} if the child window is allowed to open
-     */
-    toggleWindowOnClick(element, windowIdentifier, params) {
-        var self = this;
-        var key = windowIdentifier.windowName + ":" + windowIdentifier.uuid;
-        if (!windowIdentifier.windowName)
-            key = windowIdentifier.componentType;
-        //If the element was clicked while the menu was open then return right away. The menu window will receive a blur event and close. This method is dependent on the fact that blur events are processed before click events. If this turns out to be a problem then put this call inside of a setTimeout().
-        if (okayToOpenMenu[key] === false) {
-            okayToOpenMenu[key] = true;
-            return;
-        }
-        var onDisplayed = function (showError, showResponse) {
-            if (!showResponse)
-                return;
-            let finWindow = showResponse.finWindow;
-            var onBlur = function (blurResponse) {
-                okayToOpenMenu[key] = true;
-                self.windowClient.isMouseOverDOMElement(element, function (mouseIsOverElement) {
-                    okayToOpenMenu[key] = !mouseIsOverElement;
-                });
-                finWindow.removeEventListener("blurred", onBlur);
-            };
-            finWindow.addEventListener("blurred", onBlur);
-        };
-        this.showWindow(windowIdentifier, params, onDisplayed);
-    }
-    /**
-     * Displays a window and relocates/resizes it according to the values contained in params.
-     *
-     * @param {WindowIdentifier} windowIdentifier A windowIdentifier. This is an object containing windowName and componentType. If windowName is not given, Finsemble will try to find it by componentType.
-     * @param {object} params Parameters. These are the same as {@link LauncherClient#spawn} with the following exceptions:
-     * @param {any} [params.monitor] Same as spawn() except that null or undefined means the window should not be moved to a different monitor.
-     * @param {number | string} [params.left] Same as spawn() except that null or undefined means the window should not be moved from current horizontal location.
-     * @param {number | string} [params.top] Same as spawn() except that null or undefined means the window should not be moved from current vertical location.
-     * @param {boolean} [params.spawnIfNotFound=false] If true, then spawns a new window if the requested one cannot be found.
-     * *Note, only works if the windowIdentifier contains a componentType.*
-     * @param {boolean} [params.autoFocus] If true, window will focus when first shown.
-     * @param {boolean} [params.slave] Cannot be set for an existing window. Will only go into effect if the window is spawned.
-     * (In other words, only use this in conjunction with spawnIfNotFound).
-     * @param {Function} cb Callback to be invoked after function is completed. Callback contains an object with the following information:
-     * <b>windowIdentifier</b> - The {@link WindowIdentifier} for the new window.
-     * <b>windowDescriptor</b> - The {@link WindowDescriptor} of the new window.
-     * <b>finWindow</b> - An `OpenFin` window referencing the new window.
-     * @example
-     * FSBL.Clients.LauncherClient.showWindow({windowName: "Welcome Component-86-3416-Finsemble", componentType: "Welcome Component"}, {spawnIfNotFound: true});
-     */
-    showWindow(windowIdentifier, params, cb = Function.prototype) {
-        validate_1.default.args(windowIdentifier, "object", params, "object=", cb, "function=");
-        var self = this;
-        if (!params) {
-            params = {};
-        }
-        params = util.clone(params);
-        if (!params.staggerPixels && params.staggerPixels !== 0) {
-            params.staggerPixels = 100;
-        }
-        params.windowIdentifier = windowIdentifier;
-        const promiseResolver = (resolve) => {
-            util.getMyWindowIdentifier(function (myWindowIdentifier) {
-                if (!params.relativeWindow) {
-                    params.relativeWindow = myWindowIdentifier;
-                }
-                self.routerClient.query("Launcher.showWindow", params, async function (err, response) {
-                    if (err) {
-                        resolve({ err });
-                        return cb(err);
-                    }
-                    var newWindowIdentifier = response.data.windowIdentifier;
-                    response.data.windowIdentifier.name = response.data.windowIdentifier.windowName;
-                    let { wrap } = await FinsembleWindow_1.FinsembleWindow.getInstance({ name: newWindowIdentifier.windowName });
-                    response.data.finWindow = wrap;
-                    resolve({ err, data: response.data });
-                    cb(err, response.data);
-                });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Asks the Launcher service to spawn a new component. Any parameter below can also be specified in <i>../config/components.json</i>, which will
-     * then operate as the default for that value.
-     *
-     * The launcher parameters mimic CSS window positioning.
-     * For instance, to set a full size window use `left=0`,`top=0`,`right=0`,`bottom=0`.
-     * This is functionally equivalent to: left=0,top=0,width="100%",height="100%"
-     *
-     * @since 2.4.1 Added params.windowType (deprecated params.native), params.path, params.alias, params.argumentsAsQueryString - These are all for launching native apps.
-     * @since 3.7.0 Added "affinity" parameter
-     * @param {function} cb Function invoked after the window is created
-     */
-    spawn(component, params, cb = Function.prototype) {
-        var self = this;
-        validate_1.default.args(component, "string", params, "object=", cb, "function=");
-        if (!params) {
-            params = {};
-        }
-        params = util.clone(params);
-        params.component = component;
-        if (!params.options) {
-            params.options = {};
-        }
-        if (!params.options.customData) {
-            params.options.customData = {};
-        }
-        if (!params.staggerPixels && params.staggerPixels !== 0) {
-            params.staggerPixels = 50;
-        }
-        logger_1.default.system.debug(`Calling Spawn for componentType:${component}`);
-        const promiseResolver = (resolve) => {
-            util.getMyWindowIdentifier(function (windowIdentifier) {
-                params.launchingWindow = windowIdentifier;
-                self.callSpawn(params, (err, response) => {
-                    resolve({ err, response });
-                    cb(err, response);
-                });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Returns an object that provides raw access to a remote window.
-     * It returns an object that contains references to the Finsemble windowDescriptor, to
-     * the `OpenFin` window, and to the native JavaScript (browser) window.
-     *
-     * *This will only work for windows that are launched using the Finsemble Launcher API.*
-     *
-     * As in any browser, you will not be able to manipulate a window that has been launched
-     * cross domain or in a separate physical application (separate process). Caution
-     * should be taken to prevent a window from being closed by the user if you plan on
-     * referencing it directly. Due to these inherent limitations we strongly advise against a
-     * paradigm of directly manipulating remote windows through JavaScript. Instead leverage the
-     * RouterClient to communicate between windows and to use an event based paradigm!
-     *
-     * @param  {object} params Parameters
-     * @param {string} params.windowName The name of the window to access.
-     * @return {RawWindowResult} An object containing windowDescriptor, finWindow, and browserWindow. Or null if window isn't found.
-     * @deprecated Finsemble now uses a splintering agent which disconnects windows from the main launcher.
-     * It becomes impossible to access raw windows. See LauncherClient.getActiveDescriptors() and Util.getFinWindow()
-     * @private
-     */
-    getRawWindow(params) {
-        var launcher = window.opener;
-        if (launcher.name !== "launcherService") {
-            logger_1.default.system.warn("LauncherClient.getNativeWindow: window not opened by Launcher Service");
-        }
-        return launcher.activeWindows.getWindow(params.windowName);
-    }
-    /**
-     * @private
-     */
-    callSpawn(params, cb = Function.prototype) {
-        var self = this;
-        validate_1.default.args(cb, "function=");
-        logger_1.default.perf.debug("CallSpawn", "start", "from spawn to callback", params);
-        const promiseResolver = (resolve) => {
-            function invokeSpawnCallback(error, data) {
-                cb(error, data);
-                resolve({ err: error, data });
-            }
-            self.routerClient.query("Launcher.spawn", params, async function (err, response) {
-                logger_1.default.system.debug("CallSpawn", "Initial launcher callback params", err, response);
-                logger_1.default.perf.debug("CallSpawn", "Initial launcher callback", response);
-                if (err) {
-                    invokeSpawnCallback(err, result);
-                    return logger_1.default.system.error("LauncherClient.callSpawn", err);
-                }
-                response.data.windowIdentifier.name = response.data.windowIdentifier.windowName;
-                var result = response.data;
-                // Add a wrapped finWindow to the response (this can only be done client side)
-                if (result.windowDescriptor.native)
-                    return invokeSpawnCallback(err, result); /// This is way too slow for native windows so we just let this pass through and assume the window is ready.
-                var newWindowIdentifier = result.windowIdentifier;
-                let { wrap } = await FinsembleWindow_1.FinsembleWindow.getInstance({ name: newWindowIdentifier.windowName }); //TODO - replace with FinsembleWindow
-                result.finWindow = wrap;
-                let componentOnlineChannel = "Finsemble." + result.windowIdentifier.windowName + ".componentReady";
-                let subscriberID = self.routerClient.subscribe(componentOnlineChannel, componentOnlineCallback);
-                function componentOnlineCallback(err, response) {
-                    if (err)
-                        return logger_1.default.system.error(err);
-                    //Ignore the initial "uninitialized" state message delivered by subscribe (a second message will contain the actual data)
-                    if (response && Object.keys(response.data).length === 0)
-                        return;
-                    if (params.position === "relative" && (params.groupOnSpawn || params.dockOnSpawn)) {
-                        //If 'params.relativeWindow' is supplied we need to dock to it, otherwise get the parent window (System.Window.getCurrent())
-                        const windowToGroup = params.relativeWindow ? params.relativeWindow.windowName : system_1.System.Window.getCurrent().name;
-                        const windows = [result.windowIdentifier.windowName, windowToGroup]; //TODO - replace with FinsembleWindow
-                        self.routerClient.query("DockingService.groupWindows", {
-                            windows: windows,
-                            isMovable: true,
-                        }, function (error, response) {
-                            logger_1.default.perf.debug("CallSpawn", "stop");
-                            invokeSpawnCallback(err, result);
-                        });
-                    }
-                    else {
-                        logger_1.default.perf.debug("CallSpawn", "stop");
-                        invokeSpawnCallback(err, result);
-                    }
-                    self.routerClient.unsubscribe(subscriberID);
-                }
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Convenience function to get a monitor descriptor for a given windowIdentifier, or for the
-     * current window.
-     *
-     * @param {WindowIdentifier} [windowIdentifier] The window to find the monitor for. Current window if undefined.
-     * @param  {Function} cb Returns a monitor descriptor (optional or use returned Promise)
-     * @returns {Promise} A promise that resolves to a monitor descriptor
-     * @TODO this probably is unnecessary since a client can include util and a developer should be using this.getMonitorInfo which has full support for searching by component. Did Ryan need this?
-     * @private
-     */
-    getMonitor(windowIdentifier, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        const promiseResolver = (resolve) => {
-            util.getMonitor(windowIdentifier, (monitor) => {
-                cb(monitor);
-                resolve(monitor);
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Returns a windowIdentifier for the current window.
-     *
-     * @param {WindowIdentifier} cb Callback function returns windowIdentifier for this window (optional or use the returned Promise)
-     * @returns {Promise} A promise that resolves to a windowIdentifier
-     */
-    // @TODO, [Terry] calls to launcherClient.myWindowIdentifier or launcherClient.getMyWindowIdentifier()
-    // should be replaced with windowClient.getWindowIdentifier()
-    getMyWindowIdentifier(cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        const promiseResolver = (resolve) => {
-            util.getMyWindowIdentifier((wi) => {
-                cb(wi);
-                resolve(wi);
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-    * Gets the windowDescriptor for all open windows.
-    *
-    * <b>Note:</b> This returns descriptors even if the window is not part of the workspace.
-    *
-    * @param {StandardCallback} cb Callback returns an array of windowDescriptors.
-    *
-    */
-    getActiveDescriptors(cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        const promiseResolver = (resolve) => {
-            this.routerClient.query("Launcher.getActiveDescriptors", {}, function (err, response) {
-                if (err) {
-                    return logger_1.default.system.error(err);
-                }
-                if (response) {
-                    cb(err, response.data);
-                    resolve({ err, data: response.data });
-                }
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Adds a custom component. Private for now.
-     * @private
-     */
-    addUserDefinedComponent(params, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        const promiseResolver = (resolve) => {
-            this.routerClient.query("Launcher.userDefinedComponentUpdate", {
-                type: "add",
-                name: params.name,
-                url: params.url,
-            }, function (err, response) {
-                cb(err, response.data);
-                resolve({ err, data: response.data });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Adds a custom component. Private for now.
-     * @private
-     */
-    removeUserDefinedComponent(params, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        const promiseResolver = (resolve) => {
-            this.routerClient.query("Launcher.userDefinedComponentUpdate", {
-                type: "remove",
-                name: params.name,
-                url: params.url,
-            }, function (err, response) {
-                cb(err, response.data);
-                resolve({ err, data: response.data });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Gets components that can receive specific data types. Returns an object containing componentTypes mapped to a list of dataTypes they can receive. This is based on the "advertiseReceivers" property in a component's config.
-     * @param {Array.<string>} params.dataTypes An array of data types. Looks for components that can receive those data types.
-     * @param {Function} cb The callback to be invoked after the method completes successfully.
-     *
-     * @since 2.0
-     *
-     * @example
-     * FSBL.Client.LauncherClient.getComponentsThatCanReceiveDataTypes({ dataTypes: ['chartiq.chart', 'salesforce.contact']}, function(err, response) {
-     * 	//Response contains: {'chartiq.chart': ['Advanced Chart'], 'salesforce.contact': ['Salesforce Contact']}
-     * })
-     *
-     */
-    getComponentsThatCanReceiveDataTypes(params, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        if (params.dataTypes && !Array.isArray(params.dataTypes)) {
-            params.dataTypes = [params.dataTypes];
-        }
-        validate_1.default.args(params.dataTypes, "array");
-        const promiseResolver = (resolve) => {
-            this.routerClient.query("LauncherService.getComponentsThatCanReceiveDataTypes", params, function (err, response) {
-                cb(err, response.data);
-                resolve({ err, data: response.data });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Brings a windows to front. If no windowList, groupName or componentType is specified, brings all windows to front.
-     * @param params
-     * @param {Array.<string | Object>} [params.windowList] Optional. An array An array of window names or window identifiers. Not to be used with componentType.
-     * @param {string} [params.groupName] Optional. The name of a window group to bring to front.
-     * @param {string} [params.componentType] Optional. The componentType to bring to front. Not to be used with windowList.
-     *
-     * @since TBD
-     *
-     * @example
-     * LauncherClient.bringWindowsToFront({ windowList: ['AdvancedChart-123-123', 'Symphony-Chat-234-234']}, function(err, response) {
-     *
-     * })
-     *
-     * @private
-     */
-    bringWindowsToFront(params = {}, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        if (params.windowList && !Array.isArray(params.windowList)) {
-            params.windowList = [params.windowList];
-        }
-        if (params.groupName) {
-            validate_1.default.args(params.groupName, "string");
-        }
-        if (params.componentType) {
-            validate_1.default.args(params.componentType, "string");
-        }
-        //Changed to query to allow for async bring to front and to do something when all windows have been brought to front
-        this.routerClient.query("LauncherService.bringWindowsToFront", params, (err, response) => {
-            cb(err, response);
-        });
-        return Promise.resolve();
-    }
-    /**
-     * Minimizes all but a specific list or group of windows. Either groupName or windowList must be specified.
-     * @param params
-     * @param {Array.<string | Object>} [params.windowList] Optional. An array of window names or window identifiers. Not to be used with componentType.
-     * @param {string} [params.groupName] Optional. The name of a window group to hyperFocus.
-     * @param {string} [params.componentType] Optional. The Component Type to hyperFocus. Not to be used with windowList.
-     *
-     * @since TBD
-     * @example
-     * LauncherClient.hyperFocus({ windowList: ['AdvancedChart-123-123', 'Symphony-Chat-234-234']}, function(err, response) {
-     *
-     * })
-     *
-     * @private
-     */
-    hyperFocus(params, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        if (params.windowList && !Array.isArray(params.windowList)) {
-            params.windowList = [params.windowList];
-        }
-        if (!params.windowList && !params.groupName && !params.componentType) {
-            params.windowList = [this.myWindowIdentifier];
-        }
-        if (params.groupName) {
-            validate_1.default.args(params.groupName, "string");
-        }
-        if (params.componentType) {
-            validate_1.default.args(params.componentType, "string");
-        }
-        this.routerClient.transmit("LauncherService.hyperFocus", params);
-        cb();
-        return Promise.resolve();
-    }
-    /**
-     * Minimize windows. If no windowList or groupName is specified, all windows will be minimized.
-     * @param {*} params
-     * @param {Array.<string | Object>} [params.windowList] Optional. An array of window names or window identifiers. Not to be used with componentType.
-     * @param {string} [params.groupName] Optional. The name of a window group to minimize.
-     * @param {string} [params.componentType] Optional. The component type of windows to Minimize. Not to be used with windowList.
-     *
-     * @since TBD
-     * @private
-     */
-    minimizeWindows(params, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        if (params.windowList && !Array.isArray(params.windowList)) {
-            params.windowList = [params.windowList];
-        }
-        if (params.groupName) {
-            validate_1.default.args(params.groupName, "string");
-        }
-        if (params.componentType) {
-            validate_1.default.args(params.componentType, "string");
-        }
-        this.routerClient.transmit("LauncherService.minimizeWindows", params);
-        cb();
-        return Promise.resolve();
-    }
-    /**
-     * Create Window group
-     * @param {*} params
-     * @param {string} [params.groupName] The name of the window group to create
-     * @param {Array.<string | Object>} [params.windowList] An array of window names or window identifiers to add to the group. Optional.
-     * @param {function} cb callback to be called upon group creation
-     *
-     * @since TBD
-     * @private
-     */
-    createWindowGroup(params, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        if (params.windowList && !Array.isArray(params.windowList)) {
-            params.windowList = [params.windowList];
-            delete params.groupName;
-        }
-        validate_1.default.args(params.groupName, "string");
-        const promiseResolver = (resolve) => {
-            if (!params.groupName) {
-                let err = "Invalid Parameters";
-                resolve({ err });
-                cb(err);
-                return;
-            }
-            this.routerClient.query("LauncherService.createWindowGroup", params, function (err, response) {
-                cb(err, response);
-                resolve({ err, data: response });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Add Windows to group
-     * @param {*} params
-     * @param {string} [params.groupName] The name of the window group
-     * @param {Array.<string | Object>} [params.windowList] An array of window names or window identifiers to add to the group.
-     * @param {function} cb callback to be called upon group creation
-     *
-     * @since TBD
-     * @private
-     */
-    addWindowsToGroup(params, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        const promiseResolver = (resolve) => {
-            if (!params.groupName || !params.windowList) {
-                let err = "Invalid Parameters";
-                resolve({ err });
-                cb(err);
-                return;
-            }
-            if (params.windowList && !Array.isArray(params.windowList)) {
-                params.windowList = [params.windowList];
-            }
-            validate_1.default.args(params.groupName, "string");
-            this.routerClient.query("LauncherService.addWindowsToGroup", params, function (err, response) {
-                cb(err, response);
-                resolve({ err, data: response });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Remove Windows from group
-     * @param {*} params
-     * @param {string} [params.groupName] The name of the window group
-     * @param {Array.<string | Object>} [params.windowList] An array of window names or window identifiers to remove from the group.
-     * @param {function} cb callback to be called upon group creation
-     *
-     * @since TBD
-     * @private
-     */
-    removeWindowsFromGroup(params, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        const promiseResolver = (resolve) => {
-            if (!params.groupName || !params.windowList) {
-                let err = "Invalid Parameters";
-                resolve({ err });
-                cb(err);
-                return;
-            }
-            if (params.windowList && !Array.isArray(params.windowList)) {
-                params.windowList = [params.windowList];
-            }
-            this.routerClient.query("LauncherService.removeWindowsFromGroup", params, function (err, response) {
-                cb(err, response);
-                resolve({ err, data: response });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * Get Window Groups that a window belongs to. If no windowIdentifier is specified, gets  the groups of the current window.
-     * @param {*} params
-     * @param {WindowIdentifier} [params.windowIdentifier] Optional. If not specified uses current window
-     * @param {*} cb callback with a list of groups
-     *
-     * @since TBD
-     * @private
-     */
-    getGroupsForWindow(params, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        if (typeof params === "function") {
-            cb = params;
-            params = null;
-        }
-        const promiseResolver = (resolve) => {
-            if (!params || !params.windowIdentifier) {
-                this.windowClient.getComponentState({ field: "finsemble:windowGroups" }, function (err, groups) {
-                    resolve({ err, data: groups });
-                    cb(err, groups);
-                });
-                return;
-            }
-            this.routerClient.query("LauncherService.getGroupsForWindow", params, function (err, response) {
-                resolve({ err, data: response.data });
-                cb(err, response.data);
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * @private
-     * @param {*} params
-     * @param {WindowIdentifier} [params.windowIdentifier] Optional. Current window is assumed if not specified.
-     * @param {Array.<string>} [params.groupNames] List of group names to add window to. Groups will be created if they do not exist.
-     * @param {*} cb
-     */
-    addToGroups(params, cb = Function.prototype) {
-        validate_1.default.args(cb, "function=");
-        validate_1.default.args(params.groupNames, "array");
-        if (!params.windowIdentifier) {
-            params.windowIdentifier = this.myWindowIdentifier;
-        }
-        const promiseResolver = (resolve) => {
-            this.routerClient.query("LauncherService.addWindowToGroups", params, (err, response) => {
-                cb(err, response);
-                resolve({ err, data: response });
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    /**
-     * _createWrap allows us to create a wrap without spawning a window
-     *
-     * @param {Object} params
-     * @param {String} params.name
-     * @param {Function} cb
-     * @memberof LauncherClient
-     * @private
-     */
-    _createWrap(params, cb) {
-        this.routerClient.query("LauncherService.createWrap", params, cb);
-    }
-    /**
-     * @private
-     *
-     * @param {*} cb
-     * @memberof LauncherClient
-     */
-    start(cb) {
-        var self = this;
-        // Get Group Updates (only if we are not in a service)
-        if (typeof Globals.FSBL !== "undefined") {
-            // Get Groups from Component State on Load
-            function subscribeToGroupUpdates() {
-                self.routerClient.subscribe("Finsemble.LauncherService.updateGroups." + self.windowName, function (err, response) {
-                    if (!Array.isArray(response.data))
-                        return; //dont attempt to save the initial responder state.
-                    self.windowClient.setComponentState({ field: "finsemble:windowGroups", value: response.data });
-                });
-            }
-            // cannot add a windowClient dependency here so explicitly wait for windowClient ready (ideally dependency manage could fully handle but maybe later)
-            Globals.FSBL.addEventListener("onReady", function () {
-                self.windowClient.onReady(() => {
-                    self.windowClient.getComponentState({ field: "finsemble:windowGroups" }, function (err, groups) {
-                        if (!err && groups) {
-                            return self.addToGroups({
-                                groupNames: groups,
-                            }, subscribeToGroupUpdates);
-                        }
-                        subscribeToGroupUpdates();
-                    });
-                });
-            });
-        }
-        setInterval(function () {
-            self.routerClient.transmit("Finsemble.heartbeat", { type: "component", windowName: self.windowName, componentType: "finsemble" });
-        }, 1000);
-        // @TODO, [Terry] remove in favor of calls to windowClient.getMyIdentifier()
-        this.getMyWindowIdentifier((identifier) => {
-            self.myWindowIdentifier = identifier;
-            if (cb) {
-                cb();
-            }
-        });
-    }
-}
-function constructInstance(params) {
-    params = params ? params : {};
-    if (!params.windowClient)
-        params.windowClient = windowClient_1.default;
-    return new LauncherClient({
-        clients: params,
-        startupDependencies: {
-            services: ["windowService"],
-        },
-        onReady: function (cb) {
-            logger_1.default.system.debug("launcherClient ready", window.name);
-            logger_1.default.perf.debug("LauncherClientReadyTime", "stop");
-            launcherClient.start(cb);
-        },
-        name: "launcherClient",
-    });
-}
-var launcherClient = constructInstance();
-launcherClient.constructInstance = constructInstance;
-exports.default = launcherClient;
-
-
-/***/ }),
-/* 71 */
+/* 75 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19946,18 +20241,18 @@ exports.default = launcherClient;
 */
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const routerTransport_1 = __webpack_require__(87);
-const Utils = __webpack_require__(17);
-const configUtil_1 = __webpack_require__(25);
+const routerTransport_1 = __webpack_require__(92);
+const Utils = __webpack_require__(12);
+const configUtil_1 = __webpack_require__(23);
 const validate_1 = __webpack_require__(18); // Finsemble args validator
-const userNotification_1 = __webpack_require__(50);
-const system_1 = __webpack_require__(5);
-const logger_1 = __webpack_require__(3);
+const userNotification_1 = __webpack_require__(55);
+const system_1 = __webpack_require__(4);
+const logger_1 = __webpack_require__(1);
 var queue = []; // should never be used, but message sent before router ready will be queue
 const Globals = typeof window !== "undefined"
     ? window
     : process;
-const localLogger_1 = __webpack_require__(51);
+const localLogger_1 = __webpack_require__(57);
 let Logger = logger_1.Logger;
 //@todo proper types for router messages would be great.
 // Use global data for these objects in case multiple clients running in same window (a side effect of injection and perhaps other edge conditions).
@@ -19978,7 +20273,7 @@ Globals.FSBLData.RouterClients = Globals.FSBLData.RouterClients || {};
  * @hideconstructor
  * @publishedName RouterClient
  * @param {string} clientName router base client name for human readable messages (window name is concatenated to baseClientName)
- * @param {string=} transportName router transport name, currently either "SharedWorker" or "OpenFinBus" (usually this is auto-configured internally but can be selected for testing or special configurations)
+ * @param {string=} transportName router transport name, currently either "SharedWorker" or "IPCBus" (usually this is auto-configured internally but can be selected for testing or special configurations)
  */
 // un-comment for optimization.
 // console.time("FinMainStartup");
@@ -20190,8 +20485,8 @@ exports.RouterClientConstructor = function (params) {
         //This is the only place we need to wait for desktop.main
         system_1.System.ready(function () {
             var finWindow = system_1.System.Window.getCurrent();
-            Logger.system.debug(`WINDOW LIFECYCLE:STARTUP: fin.main invoked in ${finWindow.name}`);
-            console.debug(`WINDOW LIFECYCLE:STARTUP: fin.main invoked in ${finWindow.name}`);
+            Logger.system.debug(`WINDOW LIFECYCLE:STARTUP: System.ready invoked in ${finWindow.name}`);
+            console.debug(`WINDOW LIFECYCLE:STARTUP: System.ready invoked in ${finWindow.name}`);
             self.startupTime = performance.now();
             // un-comment for optimization.
             // console.timeEnd("FinMainStartup");
@@ -20229,14 +20524,13 @@ exports.RouterClientConstructor = function (params) {
         var isFinished = false;
         var handshakeFailedCount = 0;
         var finConfig = manifest.finsemble;
-        var isElectron = fin && fin.container == "Electron";
         var routerParams = {
             FinsembleUUID: finConfig.FinsembleUUID,
             applicationRoot: finConfig.applicationRoot,
             routerDomainRoot: finConfig.moduleRoot,
             forceWindowTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.forceWindowTransport", {}),
             sameDomainTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.sameDomainTransport", "SharedWorker"),
-            crossDomainTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.crossDomainTransport", "OpenFinBus"),
+            crossDomainTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.crossDomainTransport", "IPCBus"),
             transportSettings: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.transportSettings", {}),
             IAC: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.IAC", {})
         };
@@ -21077,8 +21371,9 @@ exports.RouterClientConstructor = function (params) {
      *
      * @example
      *
-     * var subscribeId = RouterClient.subscribe("topicABC", function(err,notify) {
-     *		if (!err) {
+     * var subscriptionDetails = RouterClient.subscribe("topicABC", function(err, notify) {
+     *		if (err) { console.log(err); }
+     *		if (notify) {
      *			var notificationStateData = notify.data;
      *			// do something with notify data
      *  	}
@@ -21121,6 +21416,13 @@ exports.RouterClientConstructor = function (params) {
      * @example
      *
      * FSBL.Clients.RouterClient.unsubscribe(subscribeId);
+     * //Subscription details returned by RouterClient.subscribe(), which take the form:
+     * let subscriptionDetails = {
+     * 	subscribeID: "<subscribeID returned by RouterClient.subscribe>",
+     * 	topic: "topicABC"
+     * };
+     * FSBL.Clients.RouterClient.unsubscribe(subscriptionDetails);
+     *
      *
      */
     this.unsubscribe = function (subscribeIDStruct) {
@@ -21201,10 +21503,10 @@ exports.RouterClientConstructor = function (params) {
     return Globals.FSBLData.RouterClients[clientName];
 };
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
-/* 72 */
+/* 76 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21214,21 +21516,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
-const storageClient_1 = __webpack_require__(52);
-const hotkeysClient_1 = __webpack_require__(69);
-const util = __webpack_require__(17);
-const system_1 = __webpack_require__(5);
-const baseClient_1 = __webpack_require__(12);
-const logger_1 = __webpack_require__(3);
+const storageClient_1 = __webpack_require__(44);
+const hotkeysClient_1 = __webpack_require__(56);
+const util = __webpack_require__(12);
+const system_1 = __webpack_require__(4);
+const baseClient_1 = __webpack_require__(11);
+const logger_1 = __webpack_require__(1);
 const validate_1 = __webpack_require__(18); // Finsemble args validator
-const FinsembleWindow_1 = __webpack_require__(34);
-const configUtil_1 = __webpack_require__(25);
-const async_1 = __webpack_require__(22);
-const routerClientInstance_1 = __webpack_require__(10);
-const lodashGet = __webpack_require__(40);
+const FinsembleWindow_1 = __webpack_require__(38);
+const configUtil_1 = __webpack_require__(23);
+const async_1 = __webpack_require__(24);
+const routerClientInstance_1 = __webpack_require__(6);
+const lodashGet = __webpack_require__(53);
 // DH 3/6/2019 - @TODO - All uses of this should be replaced with calls to the WindowStorageManager
 const constants_1 = __webpack_require__(26);
-const configClient_1 = __webpack_require__(27);
+const configClient_1 = __webpack_require__(22);
 var finsembleWindow;
 /**
  *
@@ -21277,7 +21579,7 @@ function removeClass(el, className) {
 /**
  *
  *@introduction
-  <h2>Window Client</h2>
+  <h2>Window Client (Finsemble Workspaces)</h2>
   ----------
  * The Window Client is primarily responsible for managing the `windowState` (the window's bounds) and `componentState` (data inside of your component).
  * The reference below is provided in case you'd like to manually trigger events.
@@ -21341,7 +21643,6 @@ class WindowClient extends baseClient_1._BaseClient {
         this.onWindowMaximized = this.onWindowMaximized.bind(this);
         this.onWindowBlurred = this.onWindowBlurred.bind(this);
         this.onWindowFocused = this.onWindowFocused.bind(this);
-        this.onParentSet = this.onParentSet.bind(this);
         this.onMinimizedRestored = this.onMinimizedRestored.bind(this);
         this.onWindowMinimized = this.onWindowMinimized.bind(this);
         this.close = this.close.bind(this);
@@ -21351,7 +21652,6 @@ class WindowClient extends baseClient_1._BaseClient {
     }
     /**
      * This function is fired every time the window's bounds change. It saves the window's position.
-     * @param {object} bounds
      * @private
      */
     onWindowRestored() {
@@ -21394,15 +21694,8 @@ class WindowClient extends baseClient_1._BaseClient {
         finsembleWindow.addEventListener("restored", this.onMinimizedRestored);
     }
     /**
-     * Handles the event that fires when the finsemble window's parent is set.
-     * @private
-     * @param evt the event itself, which is ignored.  Any time a parent is set, force a group data update.
-     */
-    onParentSet(evt) {
-        this.requestGroupDataPublish();
-    }
-    /**
      * Returns a list of the groups this window is in, if any.
+     * @private
      */
     getWindowGroups() {
         return this.windowGroups;
@@ -21424,18 +21717,12 @@ class WindowClient extends baseClient_1._BaseClient {
     }
     ;
     /**
-     * Requests an updated group data message.
-     * @private
-     */
-    requestGroupDataPublish() {
-        this.routerClient.transmit("DockingService.requestGroupDataPublish");
-    }
-    /**
      * Closes window. Defaults are to remove the window from the workspace if the user presses the X button, but not if the window is closed via an app-level request (e.g., switching workspaces, so all windows need to close).
      * @param {object} params
      * @param {boolean} params.removeFromWorkspace Whether to remove the window from the workspace.
      * @param {boolean} params.closeWindow Whether to close the window. On shutdown this method is called, but the Window Service actually closes the window.
      * @param {boolean} params.userInitiated Whether the user clicked the X, or if the system asked the window to close.
+     * @param {boolean} params.ignoreParent Whether or not to update the parent (stack) window when closing.
      * @param {function} cb The callback to be invoked after the method completes successfully.
      * @example
      * //Close window and remove from workspace (e.g., user closes the window).
@@ -21596,6 +21883,7 @@ class WindowClient extends baseClient_1._BaseClient {
      *
      * Saves the window's state. Rarely called manually, as it's called every time your window moves.
      * @param {Object} bounds optional param.
+     * @param {boolean} setActiveWorkspaceDirty
      * @example <caption>The code below is the bulk of our listener for the <code>bounds-changed</code> event from the window. Every time the <code>bounds-changed</code> event is fired (when the window is resized or moved), we save the window's state. The first few lines just prevent the window from being dropped behind the toolbar.</caption>
      *finWindow.addEventListener('disabled-frame-bounds-changed', function (bounds) {
      * 	if (bounds.top < 45) {
@@ -21663,15 +21951,13 @@ class WindowClient extends baseClient_1._BaseClient {
     ;
     /**
      * Sets whether window is always on top. By default, this is false.
+     * @param {boolean} alwaysOnTop The new mode for the window's alwaysOnTop option to be set to.
      * @param {function} cb Optional callback to be invoked after the method completes successfully.
      * @example
      * FSBL.Clients.WindowClient.setAlwaysOnTop(true);
      */
     setAlwaysOnTop(alwaysOnTop, cb) {
-        finsembleWindow.updateOptions({ options: { alwaysOnTop: alwaysOnTop } }, () => {
-            if (cb)
-                cb();
-        });
+        finsembleWindow.setAlwaysOnTop({ alwaysOnTop }, cb);
     }
     /**
      * Restores window from a maximized or minimized state.
@@ -21742,7 +22028,6 @@ class WindowClient extends baseClient_1._BaseClient {
         finsembleWindow.removeEventListener("focused", this.onWindowFocused);
         finsembleWindow.removeEventListener("close-requested", this.close);
         finsembleWindow.removeEventListener("minimized", this.onWindowMinimized);
-        finsembleWindow.removeEventListener("parent-set", this.onParentSet);
     }
     ;
     /**
@@ -21752,6 +22037,7 @@ class WindowClient extends baseClient_1._BaseClient {
      * @private
      */
     injectDOM(headerHeight) {
+        logger_1.default.system.debug("injectDOM", headerHeight);
         //for the aesthetics.
         if (document.getElementById("FSBLHeader")) {
             return;
@@ -21769,6 +22055,7 @@ class WindowClient extends baseClient_1._BaseClient {
     ;
     /**
      * Injects the windowTitleBar into the window.
+     * @param {InjectHeaderParams} params
      * @param {function} cb Callback function
      * @return {object} Reference to a RouterClient.query
      * @private
@@ -21793,6 +22080,7 @@ class WindowClient extends baseClient_1._BaseClient {
     ;
     /**
      * Given a field, this function retrieves app state. If no params are given, the full state is returned.
+     * @param {object} params
      * @param {string} params.field Field to retrieve.
      * @param {Array.<string>} params.fields Fields to retrieve.
      * @param {string} params.windowName Window whose component state you are retreiving. If null, the default is to the calling window.
@@ -21859,11 +22147,11 @@ class WindowClient extends baseClient_1._BaseClient {
     ;
     /**
      * Given a field, this function sets and persists app state.
-     * @param {object} params
-     * @param {string} params.field field
-     * @param {Array.<string>} params.fields fields
+     * @param {object} params Object of data to be saved
+     * @param {string} params.field The key name of the field to be saved. Required if not using `fields`.
+     * @param {Array.<object>} params.fields An array of objects with `field` and `value` keys to be saved.
      * @param {string} params.windowName Name of the component whose state you are setting. Defaults to the calling window.
-     * @param {any} params.value Value of the data being saved
+     * @param {any} params.value Value of the data being saved. Required if not using `fields`.
      * @param {function} cb The callback to be invoked after the method completes successfully.
      * @example <caption>The example below shows how we save our chart layout when it changes.</caption>
      * var s = stx.exportLayout(true);
@@ -21916,9 +22204,9 @@ class WindowClient extends baseClient_1._BaseClient {
     }
     /**
      * Given a field, this function removes it from app state.
-     * @param {object} params
-     * @param {string} params.field field
-     * @param {Array.<string>} params.fields fields
+     * @param {object} params Object of data to be removed
+     * @param {string} params.field The key name of the field to be saved. Required if not using `fields`.
+     * @param {Array.<object>} params.fields An array of objects with `field` keys to be removed.
      * @param {string} params.windowName The name of the window to remove component state from
      * @param {function} cb The callback to be invoked after the method completes successfully.
      * @example <caption>The example below shows how we would remove our chart layout when it no longer needed.</caption>
@@ -21981,7 +22269,7 @@ class WindowClient extends baseClient_1._BaseClient {
             name: windowName,
             uuid: uuid,
             options: params || {},
-            windowType: "OpenFinWindow"
+            windowType: "WebWindow"
         }, () => {
             this.startedRegistrationWithDocking = false;
             if (this.deregisterPlease) {
@@ -22141,6 +22429,7 @@ class WindowClient extends baseClient_1._BaseClient {
         // components."*".component.inject|preload="windowTitleBar.js" <-- set the windowTitleBar
         // components."welcome".component.inject|preload="windowTitleBar.js" <-- override the windowTitleBar
         // Everything from here down then goes into windowTitleBar.jsx inside FSBLReady()
+        logger_1.default.system.debug("injectHeader", params);
         let self = this;
         if (this.hasHeader)
             return;
@@ -22162,6 +22451,7 @@ class WindowClient extends baseClient_1._BaseClient {
         else {
             params = Object.assign(defaultParams, params);
         }
+        logger_1.default.system.debug("injectHeader 2", params);
         this.injectDOM(params.forceHeaderHeight);
         // initialize but if child of a stacked window then don't register with docking
         //finsembleWindow.getParent();
@@ -22177,7 +22467,7 @@ class WindowClient extends baseClient_1._BaseClient {
         document.body.appendChild(node);
     }
     /**
-     * If we spawned this openfin app from our parent application, we listen on that application for certain events that might fire _if_ our parent goes down. If the parent goes down, we want to kill its children as well.
+     * If we spawned this app from our parent application, we listen on that application for certain events that might fire _if_ our parent goes down. If the parent goes down, we want to kill its children as well.
      * @private
      */
     checkIfChildApp() {
@@ -22280,7 +22570,6 @@ class WindowClient extends baseClient_1._BaseClient {
         finsembleWindow.addEventListener("blurred", this.onWindowBlurred);
         // On focus add a border to the window
         finsembleWindow.addEventListener("focused", this.onWindowFocused);
-        finsembleWindow.addEventListener("parent-set", this.onParentSet);
         if (typeof FSBL !== "undefined") {
             FSBL.onShutdown(() => {
                 logger_1.default.system.info("WINDOW LIFECYCLE:SHUTDOWN: FSBL.onShutdown start");
@@ -22346,7 +22635,7 @@ class WindowClient extends baseClient_1._BaseClient {
     }
     /**
      * Retrieves data that was set with <a href="LauncherClient.html#spawn">LauncherClient.spawn</a>.
-     * @return {object} The data or empty object if no data was set. *Note, this will never return null or undefined.*
+     * @return {object} The data provided from the component config when spawned.
      */
     getSpawnData() {
         if (!this.options.customData) {
@@ -22369,7 +22658,7 @@ class WindowClient extends baseClient_1._BaseClient {
     ;
     /**
      * For the DOM element that has been passed in, this function returns a bounding box that is relative
-     * to the OpenFin virtual monitor space. That is, it returns the position of the DOM element on the desktop.
+     * to the virtual monitor space. That is, it returns the position of the DOM element on the desktop.
      * @param {HTMLElement|string} element A selector or HTMLElement
      * @private
      * @todo convert to use monitor util function and make sure current bounds are correct. For some windows (e.g., toolbars/menus that don't track their own bounds because they don't have drag regions), options.default will represent the data _on spawn_, not the bounds when the function is called.
@@ -22418,7 +22707,7 @@ class WindowClient extends baseClient_1._BaseClient {
     ;
     /**
      * Returns the window identifier for the current component.
-     * @returns {windowIdentifier}
+     * @returns {WindowIdentifier}
      */
     getWindowIdentifier() {
         var componentType = null;
@@ -22447,7 +22736,8 @@ class WindowClient extends baseClient_1._BaseClient {
     }
     ;
     /**
-     * Returns the bounds for the current window.
+     * Returns the object defining bounds for the current window including the position of the left and right edges measured in pixels from the left edge of the monitor, the top and bottom edges measured in pixels from the top edge, and the width and height of the component in pixels.
+     * Please note that this method differs from the right and bottom coordinates passed to LauncherClient.spawn(); those are measured from the right and bottom edges of the screen.
      * @param {StandardCallback} cb The callback to be invoked after the method completes successfully.
      */
     getBounds(cb) {
@@ -22459,6 +22749,7 @@ class WindowClient extends baseClient_1._BaseClient {
     /**
      * This is used by the Finsemble window title bar when a tab is dragged for tiling or tabbing.
      * @param {*} params - <code>params.windowIdentifier</code> is required.
+     * @param {WindowIdentifier} params.windowIdentifier The Finsemble identifier for the target window.
      * @param {*} cb The callback to be invoked after the method completes successfully.
      */
     startTilingOrTabbing(params, cb = Function.prototype) {
@@ -22467,9 +22758,25 @@ class WindowClient extends baseClient_1._BaseClient {
     }
     ;
     /**
+     * Begin programmatically moving the window; the first parameter is a mouse event. Until `stopMovingWindow` is invoked, the window will follow the user's mouse. This should be invoked inside of a `mouseDown` event handler.
+     */
+    startMovingWindow(event) {
+        const currentWindow = fin.desktop.Window.getCurrent();
+        currentWindow.startMovingWindow(event);
+    }
+    /**
+     * Stops moving a window that was sent in motion via `startMovingWindow`.
+     */
+    stopMovingWindow() {
+        const currentWindow = fin.desktop.Window.getCurrent();
+        currentWindow.stopMovingWindow();
+    }
+    /**
      * This is used to cancel a tabbing or tiling operation.
-     * @param {*} params - Put <code>windowIdentifier</code> in <code>params.windowIdentifier</code>. If not provided, must set <code>params.waitForIdentifier</code> true.
-     * @param {*} cb - The callback to be invoked after the method completes successfully.
+     *
+     * @param {object} params
+     * @param {WindowIdentifier} params.windowIdentifier The Finsemble identifier for the window.
+     * @param {Function} cb - The callback to be invoked after the method completes successfully.
      */
     cancelTilingOrTabbing(params, cb = Function.prototype) {
         console.debug("CancelTilingOrTabbing");
@@ -22480,6 +22787,7 @@ class WindowClient extends baseClient_1._BaseClient {
     /**
      * This is used to let Finsemble know which window is being dragged. <code>params.windowIdentifier</code> must be the identifier of the tab being dragged. This is only used if the identifier is unknown when <code>startTilingOrTabbing</code> is called.
      * @param {*} params - The <code>windowIdentifier</code> is required.
+     * @param {WindowIdentifier} params.windowIdentifier The Finsemble identifier for the target window.
      * @param {*} cb - The callback to be invoked after the method completes successfully.
      */
     sendIdentifierForTilingOrTabbing(params, cb = Function.prototype) {
@@ -22735,6 +23043,7 @@ class WindowClient extends baseClient_1._BaseClient {
                     return callback();
                 }
                 customData = finsembleWindow.windowOptions.customData;
+                logger_1.default.system.debug("getInitialOptions", customData);
                 if (customData) {
                     isCompoundWindow = lodashGet(customData, 'window.compound', false);
                     if (customData.cssOverride) {
@@ -22773,6 +23082,7 @@ class WindowClient extends baseClient_1._BaseClient {
                         else {
                             // Window doesn't support header injection (i.e. dialogModal, toolbar, searchMenu, etc)
                             // so we don't need to inject header and bump window content's fixed elements
+                            self.hasHeader = true;
                             done();
                         }
                     },
@@ -22961,7 +23271,7 @@ class WindowClient extends baseClient_1._BaseClient {
 }
 var windowClient = new WindowClient({
     startupDependencies: {
-        services: ["storageService", "windowService"]
+        clients: ["storageClient"]
     },
     onReady: function (cb) {
         windowClient.start(cb);
@@ -22972,12 +23282,12 @@ exports.default = windowClient;
 
 
 /***/ }),
-/* 73 */
+/* 77 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* unused harmony export findChunks */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /**
  * This component is passed some search strings and a string. It will go through the string and "highlight" any words that matches the array of searches passed in.
@@ -23201,21 +23511,21 @@ class Highlighter extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.PureComp
 
 
 /***/ }),
-/* 74 */
+/* 78 */
 /***/ (function(module, exports) {
 
 module.exports = true;
 
 
 /***/ }),
-/* 75 */
+/* 79 */
 /***/ (function(module, exports) {
 
 exports.f = {}.propertyIsEnumerable;
 
 
 /***/ }),
-/* 76 */
+/* 80 */
 /***/ (function(module, exports) {
 
 module.exports = function (bitmap, value) {
@@ -23229,7 +23539,7 @@ module.exports = function (bitmap, value) {
 
 
 /***/ }),
-/* 77 */
+/* 81 */
 /***/ (function(module, exports) {
 
 var id = 0;
@@ -23240,7 +23550,7 @@ module.exports = function (key) {
 
 
 /***/ }),
-/* 78 */
+/* 82 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23302,10 +23612,10 @@ module.exports = {
     }
 };
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(57).Buffer))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(63).Buffer))
 
 /***/ }),
-/* 79 */
+/* 83 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -23748,10 +24058,10 @@ function toNumber(value) {
 
 module.exports = throttle;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ }),
-/* 80 */
+/* 84 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23801,10 +24111,10 @@ function nextTick(fn, arg1, arg2, arg3) {
 }
 
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
-/* 81 */
+/* 85 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -23825,11 +24135,11 @@ var SortDirection = {
 /* harmony default export */ __webpack_exports__["a"] = (SortDirection);
 
 /***/ }),
-/* 82 */
+/* 86 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* eslint-disable node/no-deprecated-api */
-var buffer = __webpack_require__(57)
+var buffer = __webpack_require__(63)
 var Buffer = buffer.Buffer
 
 // alternative to using Object.keys for old browsers
@@ -23893,16 +24203,17 @@ SafeBuffer.allocUnsafeSlow = function (size) {
 
 
 /***/ }),
-/* 83 */
+/* 87 */,
+/* 88 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const async_1 = __webpack_require__(22);
-const storeUtils = __webpack_require__(88);
-const logger_1 = __webpack_require__(3);
-const baseClient_1 = __webpack_require__(12);
+const async_1 = __webpack_require__(24);
+const storeUtils = __webpack_require__(93);
+const logger_1 = __webpack_require__(1);
+const baseClient_1 = __webpack_require__(11);
 /** The global `window` object. We cast it to a specific interface here to be
  * explicit about what Finsemble-related properties it may have. */
 const Globals = window;
@@ -24058,6 +24369,7 @@ class StoreModel extends baseClient_1._BaseClient {
     ;
     /**
      * Get a value from the store. If global is not set, we'll check local first then we'll check global. Returns the value of the field. If no callback is given and the value is local, this will run synchronously.
+     * @param {object|string} params The field where the value is stored.
      * @param {String} params.field The field where the value is stored.
      * @param {StandardCallback} cb Will return the value if found.
      * @returns {any} The value of the field. If no callback is given and the value is local, this will run synchronous
@@ -24426,13 +24738,13 @@ exports.default = StoreModel;
 
 
 /***/ }),
-/* 84 */
+/* 89 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const events_1 = __webpack_require__(13);
+const events_1 = __webpack_require__(14);
 /**
  * Notes:
  * Client calls finsembleWindow.addEventListener("event", handler)
@@ -24499,15 +24811,15 @@ exports.FinsembleEvent = FinsembleEvent;
 
 
 /***/ }),
-/* 85 */
+/* 90 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const routerClientInstance_1 = __webpack_require__(10);
-const logger_1 = __webpack_require__(3);
-const events_1 = __webpack_require__(13);
+const routerClientInstance_1 = __webpack_require__(6);
+const logger_1 = __webpack_require__(1);
+const events_1 = __webpack_require__(14);
 class WindowEventManager extends events_1.EventEmitter {
     /**
     * Array of events that we're subscribed to remotely. When receiving a remote event, the event manager will emit a local event.
@@ -24582,8 +24894,8 @@ class WindowEventManager extends events_1.EventEmitter {
             }
             //todo need to accommodate wrap-state-changed events in here...maybe?
             let data = { eventName, name: this.windowName };
-            if (eventName.includes("bounds") || eventName.includes("parent")) {
-                //bounds events need to push out more data than just name/eventName. ...response.data will destructure the object and copy them into this new object.
+            if (eventName.includes("bounds") || eventName.includes("parent") || eventName.includes("alwaysOnTop")) {
+                // bounds events need to push out more data than just name/eventName. ...response.data will destructure the object and copy them into this new object.
                 data = Object.assign({ eventName }, response.data);
             }
             if (!response.originatedHere()) {
@@ -24671,16 +24983,20 @@ exports.WindowEventManager = WindowEventManager;
 
 
 /***/ }),
-/* 86 */
+/* 91 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_events__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 
-const deepEqual = __webpack_require__(115);
+
+const deepEqual = __webpack_require__(121);
+
 /** Singleton of the System class shared among all instances of Monitors
  * @TODO Refactor to instance member of class.
  */
@@ -24776,20 +25092,26 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 				console.info("Skipped refreshMonitors because monitors do not change.");
 				monitorsChanged = false;
 			}
-			//console.log("getAllMonitors");
-			this.allMonitors = [];
-			var primaryMonitor = monitorInfo.primaryMonitor;
-			this.primaryMonitor = primaryMonitor;
-			primaryMonitor.whichMonitor = "primary";
 
-			if (fin.container !== "Electron") {
-				primaryMonitor.deviceScaleFactor = this.calculateMonitorScale(primaryMonitor.monitor.dipRect, primaryMonitor.monitor.scaledRect);
+			this.allMonitors = [];
+			let primaryMonitor = monitorInfo.primaryMonitor;
+			if (Object.entries(primaryMonitor).length) {
+				primaryMonitor.whichMonitor = "primary";
+				primaryMonitor.position = 0;
+				if (System.container !== "Electron") {
+					primaryMonitor.deviceScaleFactor = this.calculateMonitorScale(primaryMonitor.monitor.dipRect, primaryMonitor.monitor.scaledRect);
+				}
+				this.allMonitors.push(primaryMonitor);
+			} else {
+				// If there is no primary monitor, then the system is still in the process of updating the monitor information,
+				// so we can return and wait for the next monitor change event comes in.
+				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.System.info("There is no primary monitor in 'monitorInfo' - the system is still in the process of updating the monitor information. Returning from monitorsAndScaling -> refreshMonitors");
+				return;
 			}
-			primaryMonitor.position = 0;
-			this.allMonitors.push(primaryMonitor);
+
 			for (let i = 0; i < monitorInfo.nonPrimaryMonitors.length; i++) {
 				let monitor = monitorInfo.nonPrimaryMonitors[i];
-				if (fin.container !== "Electron") {
+				if (System.container !== "Electron") {
 					monitor.deviceScaleFactor = this.calculateMonitorScale(monitor.monitor.dipRect, monitor.monitor.scaledRect);
 				}
 				monitor.whichMonitor = i;
@@ -24823,7 +25145,7 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 	}
 
 	/**
-  * Gets the monitor on which the point is or null if not on any monitor. This assumes scaled dimensions for the monitor (For example from Openfin or WPF directly).
+  * Gets the monitor on which the point is or null if not on any monitor. This assumes scaled dimensions for the monitor (For example from electron or WPF directly).
   * @param {*} x
   * @param {*} y
   * @param {*} cb
@@ -25043,15 +25365,15 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 /* harmony default export */ __webpack_exports__["a"] = (Monitors);
 
 /***/ }),
-/* 87 */
+/* 92 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__configUtil__ = __webpack_require__(25);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__configUtil__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__common_system__);
 /*!
 * Copyright 2017 by ChartIQ, Inc.
@@ -25150,11 +25472,11 @@ var RouterTransport = {
 			}
 		}
 
-		// if OpenFin IAB available, then add IAB to active list
-		if (fin && fin.desktop && fin.desktop.InterApplicationBus) addToActive("OpenFinBus");
+		// if IPCBus available, then add IAB to active list
+		if (__WEBPACK_IMPORTED_MODULE_2__common_system__["System"].InterApplicationBus) addToActive("IPCBus");
 
 		// If electron, always have FinsembleTransport active
-		if (fin && fin.container === "Electron") addToActive("FinsembleTransport");
+		if (__WEBPACK_IMPORTED_MODULE_2__common_system__["System"].container === "Electron") addToActive("FinsembleTransport");
 
 		// if shared worker available, then add shared-worker transport to active list
 		if (SharedWorker) addToActive("SharedWorker");
@@ -25179,7 +25501,7 @@ var RouterTransport = {
   * @returns the transport object
   */
 	getDefaultTransport: function (params, incomingMessageHandler, source, destination) {
-		return RouterTransport.getTransport(params, "OpenFinBus", incomingMessageHandler, source, destination);
+		return RouterTransport.getTransport(params, "IPCBus", incomingMessageHandler, source, destination);
 	},
 
 	/**
@@ -25334,30 +25656,30 @@ RouterTransportImplementation.SharedWorkerTransport = function (params, parentMe
 };
 
 /*
- * Implements the OpenFin Bus Transport.
+ * Implements the IPC Bus Transport.
  *
  * Required Functions (used by transport clients):
  * 		send(transport, routerMessage) -- transport object contains destination transport info; routerMessage is the message to send
  * 		identifier() -- returns transport's name
  *
- * @param {object} params unused in OpenFin transport
+ * @param {object} params unused in IPC transport
  * @param {any} parentMessageHandler callback for incoming event
  * @param {any} source either the client name or "RouterService"
  * @param {any} destination either the client name or "RouterService"
  */
-RouterTransportImplementation.OpenFinTransport = function (params, parentMessageHandler, source, destination, callback) {
+RouterTransportImplementation.IPCTransport = function (params, parentMessageHandler, source, destination, callback) {
 	var uuid = __WEBPACK_IMPORTED_MODULE_2__common_system__["System"].Application.getCurrent().uuid;
 	var self = this;
 
 	// receives incoming OpenFin bus messages then passes on to parent with correct "wrapper"
-	function openFinMessageHandler(routerMessage, senderUuid) {
+	function messageHandler(routerMessage, senderUuid) {
 		var incomingTransportInfo = { "transportID": self.identifier(), "senderUuid": senderUuid, "name": routerMessage.header.origin };
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("OpenFinTransport Incoming Transport", incomingTransportInfo, "Message", routerMessage);
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("IPCTransport Incoming Transport", incomingTransportInfo, "Message", routerMessage);
 		parentMessageHandler(incomingTransportInfo, routerMessage);
 	}
 
 	function subscribeFailure(reason) {
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("OpenFinBus Subscribe Failure: " + reason);
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("IPCBus Subscribe Failure: " + reason);
 	}
 
 	//required function for the parent (i.e. routeClient or routeService)
@@ -25375,18 +25697,18 @@ RouterTransportImplementation.OpenFinTransport = function (params, parentMessage
 			routerMessage = arguments[1];
 		}
 
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("OpenFinTransport Outgoing Transport", uuid, destTopic, "Message", routerMessage);
-		fin.desktop.InterApplicationBus.publish(destTopic, routerMessage, function () {}, function (err) {});
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("IPCTransport Outgoing Transport", uuid, destTopic, "Message", routerMessage);
+		__WEBPACK_IMPORTED_MODULE_2__common_system__["System"].InterApplicationBus.publish(destTopic, routerMessage, function () {}, function (err) {});
 	};
 
 	//required function for the parent (i.e. routeClient or routeService)
 	this.identifier = function () {
-		return "OpenFinBus";
+		return "IPCBus";
 	};
 
-	__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log(`OpenFinBus Transport Initializing for ${source}`);
-	console.log(`OpenFinBus Transport Initializing for ${source}`);
-	fin.desktop.InterApplicationBus.subscribe("*", source, openFinMessageHandler, null, subscribeFailure);
+	__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log(`IPCBus Transport Initializing for ${source}`);
+	console.log(`IPCBus Transport Initializing for ${source}`);
+	__WEBPACK_IMPORTED_MODULE_2__common_system__["System"].InterApplicationBus.subscribe("*", source, messageHandler, null, subscribeFailure);
 
 	callback(this);
 };
@@ -25404,11 +25726,12 @@ RouterTransportImplementation.OpenFinTransport = function (params, parentMessage
  * @param {any} destination either the client name or "RouterService" (unused in FinsembleTransport)
  */
 RouterTransportImplementation.FinsembleTransport = function (params, parentMessageHandler, source, destination, callback) {
-	/** @TODO - split into two separate vars for clarity. */
-	var serverAddress = __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress", __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.IAC.serverAddress", "ws://127.0.0.1:3376"));
+	const defaultServerAddress = "ws://127.0.0.1:3376";
+	const IACServerAddress = __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.IAC.serverAddress", defaultServerAddress);
+	const serverAddress = __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress", IACServerAddress);
 	const SOCKET_SERVER_ADDRESS = serverAddress + "/router"; // "router" is the socket namespace used on server
 
-	var self = this;
+	const self = this;
 
 	// receives incoming messages then passes on to parent (what's passed to parent should be same routerMessage received in send()
 	function finsembleMessageHandler(routerMessage) {
@@ -25593,13 +25916,13 @@ RouterTransportImplementation.FinsembleCloudTransport = function (params, parent
 
 // add the transports to the available/active list
 RouterTransport.addTransport("SharedWorker", RouterTransportImplementation.SharedWorkerTransport);
-RouterTransport.addTransport("OpenFinBus", RouterTransportImplementation.OpenFinTransport);
+RouterTransport.addTransport("IPCBus", RouterTransportImplementation.IPCTransport);
 RouterTransport.addTransport("FinsembleTransport", RouterTransportImplementation.FinsembleTransport);
 
 /* harmony default export */ __webpack_exports__["default"] = (RouterTransport);
 
 /***/ }),
-/* 88 */
+/* 93 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -25725,7 +26048,7 @@ function removeChildMapping(mapping, field) {
 }
 
 /***/ }),
-/* 89 */
+/* 94 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -25779,16 +26102,16 @@ var SystemSettings = function () {
 /* harmony default export */ __webpack_exports__["a"] = (new SystemSettings());
 
 /***/ }),
-/* 90 */
+/* 95 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_prop_types__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__styles_createStyles__ = __webpack_require__(91);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__highlighter_Highlighter__ = __webpack_require__(73);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__styles_createStyles__ = __webpack_require__(96);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__highlighter_Highlighter__ = __webpack_require__(77);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 
@@ -25838,12 +26161,12 @@ ObjectName.contextTypes = {
 /* harmony default export */ __webpack_exports__["a"] = (ObjectName);
 
 /***/ }),
-/* 91 */
+/* 96 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__themes__ = __webpack_require__(229);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__base__ = __webpack_require__(226);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__themes__ = __webpack_require__(256);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__base__ = __webpack_require__(253);
 
 
 
@@ -25866,7 +26189,7 @@ const createStyles = (key, theme) => {
 /* harmony default export */ __webpack_exports__["a"] = (createStyles);
 
 /***/ }),
-/* 92 */
+/* 97 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -25963,7 +26286,7 @@ class CtrlFSearch {
 
 
 /***/ }),
-/* 93 */
+/* 98 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25984,7 +26307,7 @@ exports.default = function (obj, keys) {
 };
 
 /***/ }),
-/* 94 */
+/* 99 */
 /***/ (function(module, exports) {
 
 var toString = {}.toString;
@@ -25995,7 +26318,7 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 95 */
+/* 100 */
 /***/ (function(module, exports) {
 
 // 7.2.1 RequireObjectCoercible(argument)
@@ -26006,7 +26329,7 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 96 */
+/* 101 */
 /***/ (function(module, exports) {
 
 // IE 8- don't enum bug keys
@@ -26016,27 +26339,27 @@ module.exports = (
 
 
 /***/ }),
-/* 97 */
+/* 102 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 19.1.2.2 / 15.2.3.5 Object.create(O [, Properties])
-var anObject = __webpack_require__(42);
-var dPs = __webpack_require__(270);
-var enumBugKeys = __webpack_require__(96);
-var IE_PROTO = __webpack_require__(102)('IE_PROTO');
+var anObject = __webpack_require__(46);
+var dPs = __webpack_require__(298);
+var enumBugKeys = __webpack_require__(101);
+var IE_PROTO = __webpack_require__(107)('IE_PROTO');
 var Empty = function () { /* empty */ };
 var PROTOTYPE = 'prototype';
 
 // Create object with fake `null` prototype: use iframe Object with cleared prototype
 var createDict = function () {
   // Thrash, waste and sodomy: IE GC bug
-  var iframe = __webpack_require__(139)('iframe');
+  var iframe = __webpack_require__(145)('iframe');
   var i = enumBugKeys.length;
   var lt = '<';
   var gt = '>';
   var iframeDocument;
   iframe.style.display = 'none';
-  __webpack_require__(264).appendChild(iframe);
+  __webpack_require__(292).appendChild(iframe);
   iframe.src = 'javascript:'; // eslint-disable-line no-script-url
   // createDict = iframe.contentWindow.Object;
   // html.removeChild(iframe);
@@ -26063,18 +26386,18 @@ module.exports = Object.create || function create(O, Properties) {
 
 
 /***/ }),
-/* 98 */
+/* 103 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var pIE = __webpack_require__(75);
-var createDesc = __webpack_require__(76);
-var toIObject = __webpack_require__(38);
-var toPrimitive = __webpack_require__(105);
-var has = __webpack_require__(36);
-var IE8_DOM_DEFINE = __webpack_require__(140);
+var pIE = __webpack_require__(79);
+var createDesc = __webpack_require__(80);
+var toIObject = __webpack_require__(42);
+var toPrimitive = __webpack_require__(110);
+var has = __webpack_require__(40);
+var IE8_DOM_DEFINE = __webpack_require__(146);
 var gOPD = Object.getOwnPropertyDescriptor;
 
-exports.f = __webpack_require__(30) ? gOPD : function getOwnPropertyDescriptor(O, P) {
+exports.f = __webpack_require__(33) ? gOPD : function getOwnPropertyDescriptor(O, P) {
   O = toIObject(O);
   P = toPrimitive(P, true);
   if (IE8_DOM_DEFINE) try {
@@ -26085,20 +26408,20 @@ exports.f = __webpack_require__(30) ? gOPD : function getOwnPropertyDescriptor(O
 
 
 /***/ }),
-/* 99 */
+/* 104 */
 /***/ (function(module, exports) {
 
 exports.f = Object.getOwnPropertySymbols;
 
 
 /***/ }),
-/* 100 */
+/* 105 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // most Object methods by ES6 should accept primitives
-var $export = __webpack_require__(35);
+var $export = __webpack_require__(39);
 var core = __webpack_require__(19);
-var fails = __webpack_require__(43);
+var fails = __webpack_require__(47);
 module.exports = function (KEY, exec) {
   var fn = (core.Object || {})[KEY] || Object[KEY];
   var exp = {};
@@ -26108,12 +26431,12 @@ module.exports = function (KEY, exec) {
 
 
 /***/ }),
-/* 101 */
+/* 106 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var def = __webpack_require__(37).f;
-var has = __webpack_require__(36);
-var TAG = __webpack_require__(28)('toStringTag');
+var def = __webpack_require__(41).f;
+var has = __webpack_require__(40);
+var TAG = __webpack_require__(30)('toStringTag');
 
 module.exports = function (it, tag, stat) {
   if (it && !has(it = stat ? it : it.prototype, TAG)) def(it, TAG, { configurable: true, value: tag });
@@ -26121,22 +26444,22 @@ module.exports = function (it, tag, stat) {
 
 
 /***/ }),
-/* 102 */
+/* 107 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var shared = __webpack_require__(103)('keys');
-var uid = __webpack_require__(77);
+var shared = __webpack_require__(108)('keys');
+var uid = __webpack_require__(81);
 module.exports = function (key) {
   return shared[key] || (shared[key] = uid(key));
 };
 
 
 /***/ }),
-/* 103 */
+/* 108 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var core = __webpack_require__(19);
-var global = __webpack_require__(31);
+var global = __webpack_require__(34);
 var SHARED = '__core-js_shared__';
 var store = global[SHARED] || (global[SHARED] = {});
 
@@ -26144,13 +26467,13 @@ var store = global[SHARED] || (global[SHARED] = {});
   return store[key] || (store[key] = value !== undefined ? value : {});
 })('versions', []).push({
   version: core.version,
-  mode: __webpack_require__(74) ? 'pure' : 'global',
+  mode: __webpack_require__(78) ? 'pure' : 'global',
   copyright: '© 2019 Denis Pushkarev (zloirock.ru)'
 });
 
 
 /***/ }),
-/* 104 */
+/* 109 */
 /***/ (function(module, exports) {
 
 // 7.1.4 ToInteger
@@ -26162,11 +26485,11 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 105 */
+/* 110 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 7.1.1 ToPrimitive(input [, PreferredType])
-var isObject = __webpack_require__(45);
+var isObject = __webpack_require__(49);
 // instead of the ES6 spec version, we didn't implement @@toPrimitive case
 // and the second argument - flag - preferred type is a string
 module.exports = function (it, S) {
@@ -26180,14 +26503,14 @@ module.exports = function (it, S) {
 
 
 /***/ }),
-/* 106 */
+/* 111 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var global = __webpack_require__(31);
+var global = __webpack_require__(34);
 var core = __webpack_require__(19);
-var LIBRARY = __webpack_require__(74);
-var wksExt = __webpack_require__(107);
-var defineProperty = __webpack_require__(37).f;
+var LIBRARY = __webpack_require__(78);
+var wksExt = __webpack_require__(112);
+var defineProperty = __webpack_require__(41).f;
 module.exports = function (name) {
   var $Symbol = core.Symbol || (core.Symbol = LIBRARY ? {} : global.Symbol || {});
   if (name.charAt(0) != '_' && !(name in $Symbol)) defineProperty($Symbol, name, { value: wksExt.f(name) });
@@ -26195,22 +26518,22 @@ module.exports = function (name) {
 
 
 /***/ }),
-/* 107 */
+/* 112 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports.f = __webpack_require__(28);
+exports.f = __webpack_require__(30);
 
 
 /***/ }),
-/* 108 */
+/* 113 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var $at = __webpack_require__(273)(true);
+var $at = __webpack_require__(301)(true);
 
 // 21.1.3.27 String.prototype[@@iterator]()
-__webpack_require__(142)(String, 'String', function (iterated) {
+__webpack_require__(148)(String, 'String', function (iterated) {
   this._t = String(iterated); // target
   this._i = 0;                // next index
 // 21.1.5.2.1 %StringIteratorPrototype%.next()
@@ -26226,14 +26549,14 @@ __webpack_require__(142)(String, 'String', function (iterated) {
 
 
 /***/ }),
-/* 109 */
+/* 114 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(279);
-var global = __webpack_require__(31);
-var hide = __webpack_require__(44);
-var Iterators = __webpack_require__(54);
-var TO_STRING_TAG = __webpack_require__(28)('toStringTag');
+__webpack_require__(307);
+var global = __webpack_require__(34);
+var hide = __webpack_require__(48);
+var Iterators = __webpack_require__(60);
+var TO_STRING_TAG = __webpack_require__(30)('toStringTag');
 
 var DOMIterables = ('CSSRuleList,CSSStyleDeclaration,CSSValueList,ClientRectList,DOMRectList,DOMStringList,' +
   'DOMTokenList,DataTransferItemList,FileList,HTMLAllCollection,HTMLCollection,HTMLFormElement,HTMLSelectElement,' +
@@ -26251,17 +26574,18 @@ for (var i = 0; i < DOMIterables.length; i++) {
 
 
 /***/ }),
-/* 110 */
+/* 115 */,
+/* 116 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var external = __webpack_require__(59);
-var DataWorker = __webpack_require__(161);
-var DataLengthProbe = __webpack_require__(160);
-var Crc32Probe = __webpack_require__(159);
-var DataLengthProbe = __webpack_require__(160);
+var external = __webpack_require__(65);
+var DataWorker = __webpack_require__(167);
+var DataLengthProbe = __webpack_require__(166);
+var Crc32Probe = __webpack_require__(165);
+var DataLengthProbe = __webpack_require__(166);
 
 /**
  * Represent a compressed object, with everything needed to decompress it.
@@ -26333,13 +26657,13 @@ module.exports = CompressedObject;
 
 
 /***/ }),
-/* 111 */
+/* 117 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var utils = __webpack_require__(8);
+var utils = __webpack_require__(9);
 
 /**
  * The following functions come from pako, from pako/lib/zlib/crc32.js
@@ -26417,7 +26741,7 @@ module.exports = function crc32wrapper(input, crc) {
 
 
 /***/ }),
-/* 112 */
+/* 118 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {/**
@@ -28169,10 +28493,10 @@ function stubFalse() {
 
 module.exports = cloneDeep;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(24)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5), __webpack_require__(28)(module)))
 
 /***/ }),
-/* 113 */
+/* 119 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {/**
@@ -29932,10 +30256,10 @@ function stubFalse() {
 
 module.exports = clone;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(24)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5), __webpack_require__(28)(module)))
 
 /***/ }),
-/* 114 */
+/* 120 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -30316,10 +30640,10 @@ function toNumber(value) {
 
 module.exports = debounce;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ }),
-/* 115 */
+/* 121 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {/**
@@ -32171,10 +32495,10 @@ function stubFalse() {
 
 module.exports = isEqual;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(24)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5), __webpack_require__(28)(module)))
 
 /***/ }),
-/* 116 */
+/* 122 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -32681,10 +33005,10 @@ var pick = baseRest(function(object, props) {
 
 module.exports = pick;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ }),
-/* 117 */
+/* 123 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {var __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -49801,15 +50125,15 @@ module.exports = pick;
   }
 }.call(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(24)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5), __webpack_require__(28)(module)))
 
 /***/ }),
-/* 118 */
+/* 124 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-const pTry = __webpack_require__(119);
+const pTry = __webpack_require__(125);
 
 const pLimit = concurrency => {
 	if (concurrency < 1) {
@@ -49863,7 +50187,7 @@ module.exports.default = pLimit;
 
 
 /***/ }),
-/* 119 */
+/* 125 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -49879,7 +50203,7 @@ module.exports.default = pTry;
 
 
 /***/ }),
-/* 120 */
+/* 126 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -49918,7 +50242,7 @@ module.exports = {
 
 
 /***/ }),
-/* 121 */
+/* 127 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -49934,7 +50258,7 @@ module.exports = {
 var printWarning = function() {};
 
 if (process.env.NODE_ENV !== 'production') {
-  var ReactPropTypesSecret = __webpack_require__(122);
+  var ReactPropTypesSecret = __webpack_require__(128);
   var loggedTypeFailures = {};
   var has = Function.call.bind(Object.prototype.hasOwnProperty);
 
@@ -50025,10 +50349,10 @@ checkPropTypes.resetWarningCache = function() {
 
 module.exports = checkPropTypes;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
-/* 122 */
+/* 128 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -50047,27 +50371,27 @@ module.exports = ReactPropTypesSecret;
 
 
 /***/ }),
-/* 123 */
+/* 129 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_objectWithoutProperties__ = __webpack_require__(93);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_objectWithoutProperties__ = __webpack_require__(98);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_objectWithoutProperties___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_objectWithoutProperties__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__CellSizeAndPositionManager__ = __webpack_require__(345);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__maxElementSize_js__ = __webpack_require__(347);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__CellSizeAndPositionManager__ = __webpack_require__(374);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__maxElementSize_js__ = __webpack_require__(376);
 
 
 
 
-var babelPluginFlowReactPropTypes_proptype_VisibleCellRange = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_VisibleCellRange || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_VisibleCellRange = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_VisibleCellRange || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_CellSizeGetter = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_CellSizeGetter || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_CellSizeGetter = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_CellSizeGetter || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_Alignment = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_Alignment || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_Alignment = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_Alignment || __webpack_require__(0).any;
 
 
 
@@ -50271,12 +50595,12 @@ var ScalingCellSizeAndPositionManager = function () {
 /* harmony default export */ __webpack_exports__["a"] = (ScalingCellSizeAndPositionManager);
 
 /***/ }),
-/* 124 */
+/* 130 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 
 
@@ -50316,33 +50640,33 @@ if (!(process.env.NODE_ENV === 'production') && typeof exports !== 'undefined') 
   value: babelPluginFlowReactPropTypes_proptype_Scroll,
   configurable: true
 });
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 125 */
+/* 131 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* WEBPACK VAR INJECTION */(function(process) {/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DEFAULT_SCROLLING_RESET_TIME_INTERVAL", function() { return DEFAULT_SCROLLING_RESET_TIME_INTERVAL; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_classnames__ = __webpack_require__(46);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_classnames__ = __webpack_require__(50);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_classnames___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_classnames__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__PositionCache__ = __webpack_require__(352);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__utils_requestAnimationTimeout__ = __webpack_require__(62);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__PositionCache__ = __webpack_require__(381);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__utils_requestAnimationTimeout__ = __webpack_require__(68);
 
 
 
@@ -50354,7 +50678,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-var babelPluginFlowReactPropTypes_proptype_AnimationTimeoutId = __webpack_require__(62).babelPluginFlowReactPropTypes_proptype_AnimationTimeoutId || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_AnimationTimeoutId = __webpack_require__(68).babelPluginFlowReactPropTypes_proptype_AnimationTimeoutId || __webpack_require__(0).any;
 
 var emptyObject = {};
 
@@ -50808,15 +51132,15 @@ if (!(process.env.NODE_ENV === 'production') && typeof exports !== 'undefined') 
   value: babelPluginFlowReactPropTypes_proptype_Positioner,
   configurable: true
 });
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 126 */
+/* 132 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = createCallbackMemoizer;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_keys__ = __webpack_require__(135);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_keys__ = __webpack_require__(141);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_keys___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_keys__);
 
 /**
@@ -50852,7 +51176,7 @@ function createCallbackMemoizer() {
 }
 
 /***/ }),
-/* 127 */
+/* 133 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -50885,7 +51209,7 @@ function createCallbackMemoizer() {
 
 /*<replacement>*/
 
-var pna = __webpack_require__(80);
+var pna = __webpack_require__(84);
 /*</replacement>*/
 
 module.exports = Writable;
@@ -50922,23 +51246,23 @@ var Duplex;
 Writable.WritableState = WritableState;
 
 /*<replacement>*/
-var util = Object.create(__webpack_require__(58));
-util.inherits = __webpack_require__(47);
+var util = Object.create(__webpack_require__(64));
+util.inherits = __webpack_require__(51);
 /*</replacement>*/
 
 /*<replacement>*/
 var internalUtil = {
-  deprecate: __webpack_require__(391)
+  deprecate: __webpack_require__(420)
 };
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(189);
+var Stream = __webpack_require__(195);
 /*</replacement>*/
 
 /*<replacement>*/
 
-var Buffer = __webpack_require__(82).Buffer;
+var Buffer = __webpack_require__(86).Buffer;
 var OurUint8Array = global.Uint8Array || function () {};
 function _uint8ArrayToBuffer(chunk) {
   return Buffer.from(chunk);
@@ -50949,14 +51273,14 @@ function _isUint8Array(obj) {
 
 /*</replacement>*/
 
-var destroyImpl = __webpack_require__(188);
+var destroyImpl = __webpack_require__(194);
 
 util.inherits(Writable, Stream);
 
 function nop() {}
 
 function WritableState(options, stream) {
-  Duplex = Duplex || __webpack_require__(39);
+  Duplex = Duplex || __webpack_require__(43);
 
   options = options || {};
 
@@ -51106,7 +51430,7 @@ if (typeof Symbol === 'function' && Symbol.hasInstance && typeof Function.protot
 }
 
 function Writable(options) {
-  Duplex = Duplex || __webpack_require__(39);
+  Duplex = Duplex || __webpack_require__(43);
 
   // Writable ctor is applied to Duplexes, too.
   // `realHasInstance` is necessary because using plain `instanceof`
@@ -51543,23 +51867,23 @@ Writable.prototype._destroy = function (err, cb) {
   this.end();
   cb(err);
 };
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(63).setImmediate, __webpack_require__(4)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), __webpack_require__(69).setImmediate, __webpack_require__(5)))
 
 /***/ }),
-/* 128 */
+/* 134 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(186);
+exports = module.exports = __webpack_require__(192);
 exports.Stream = exports;
 exports.Readable = exports;
-exports.Writable = __webpack_require__(127);
-exports.Duplex = __webpack_require__(39);
-exports.Transform = __webpack_require__(187);
-exports.PassThrough = __webpack_require__(374);
+exports.Writable = __webpack_require__(133);
+exports.Duplex = __webpack_require__(43);
+exports.Transform = __webpack_require__(193);
+exports.PassThrough = __webpack_require__(403);
 
 
 /***/ }),
-/* 129 */
+/* 135 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
@@ -51749,14 +52073,14 @@ exports.PassThrough = __webpack_require__(374);
     attachTo.clearImmediate = clearImmediate;
 }(typeof self === "undefined" ? typeof global === "undefined" ? this : global : self));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5), __webpack_require__(3)))
 
 /***/ }),
-/* 130 */
+/* 136 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var v1 = __webpack_require__(66);
-var v4 = __webpack_require__(131);
+var v1 = __webpack_require__(72);
+var v4 = __webpack_require__(137);
 
 var uuid = v4;
 uuid.v1 = v1;
@@ -51766,11 +52090,11 @@ module.exports = uuid;
 
 
 /***/ }),
-/* 131 */
+/* 137 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var rng = __webpack_require__(65);
-var bytesToUuid = __webpack_require__(64);
+var rng = __webpack_require__(71);
+var bytesToUuid = __webpack_require__(70);
 
 function v4(options, buf, offset) {
   var i = buf && offset || 0;
@@ -51801,23 +52125,23 @@ module.exports = v4;
 
 
 /***/ }),
-/* 132 */
+/* 138 */
 /***/ (function(module, exports) {
 
 module.exports = {"dictionary":{"0":"0","1":"1","2":"2","3":"3","4":"4","5":"5","6":"6","7":"7","8":"8","9":"9","backspace":"backspace","bs":"backspace","bksp":"backspace","tab":"tab","escape":"escape","esc":"escape","clear":"clear","enter":"enter","return":"enter","shift":"shift","shft":"shift","lshift":"shift","lshft":"shift","left shift":"shift","leftshift":"shift","rshift":"shift","rshft":"shift","right shift":"shift","rightshift":"shift","control":"control","ctrl":"control","alt":"alt","alternate":"alt","pause":"pause","caps lock":"caps lock","capslock":"caps lock","spacebar":"spacebar","space":"spacebar","space bar":"space","page up":"page up","pgup":"page up","pg up":"page up","page down":"page down","pgdn":"page down","pg dn":"page down","end":"end","home":"home","left arrow":"left arrow","left":"left arrow","up arrow":"up arrow","up":"up arrow","right arrow":"right arrow","right":"right arrow","down arrow":"down arrow","down":"down arrow","select":"select","slct":"select","print":"print","prnt":"print","execute":"execute","print screen":"print screen","printscreen":"print screen","print scrn":"print screen","printscrn":"print screen","prnt scrn":"print screen","prntscrn":"print screen","prt scrn":"print screen","prtscrn":"print screen","prt scn":"print screen","prtscn":"print screen","prt scr":"print screen","prtscr":"print screen","prt sc":"print screen","prtsc":"print screen","pr sc":"print screen","prsc":"print screen","insert":"insert","ins":"insert","delete":"delete","del":"delete","help":"help","a":"a","b":"b","c":"c","d":"d","e":"e","f":"f","g":"g","h":"h","i":"i","j":"j","k":"k","l":"l","m":"m","n":"n","o":"o","p":"p","q":"q","r":"r","s":"s","t":"t","u":"u","v":"v","w":"w","x":"x","y":"y","z":"z","windows":"windows","left windows":"windows","right windows":"windows","applications":"applications","computer sleep":"computer sleep","sleep":"computer sleep","numpad 0":"0","numpad 1":"1","numpad 2":"2","numpad 3":"3","numpad 4":"4","numpad 5":"5","numpad 6":"6","numpad 7":"7","numpad 8":"8","numpad 9":"9","f1":"f1","fn1":"f1","function 1":"f1","f2":"f2","fn2":"f2","function 2":"f2","f3":"f3","fn3":"f3","function 3":"f3","f4":"f4","fn4":"f4","function 4":"f4","f5":"f5","fn5":"f5","function 5":"f5","f6":"f6","fn6":"f6","function 6":"f6","f7":"f7","fn7":"f7","function 7":"f7","f8":"f8","fn8":"f8","function 8":"f8","f9":"f9","fn9":"f9","function 9":"f9","f10":"f10","fn10":"f10","function 10":"f10","f11":"f11","fn11":"f11","function 11":"f11","f12":"f12","fn12":"f12","function 12":"f12","f13":"f13","fn":"f13","function 13":"f13","f14":"f14","fn14":"f14","function 14":"f14","f15":"f15","fn15":"f15","function 15":"f15","f16":"f16","fn16":"f16","function 16":"f16","num lock":"num lock","numlock":"num lock","number lock":"num lock","numeric lock":"num lock","scroll lock":"scroll lock","sclk":"scroll lock","scrlk":"scroll lock","slk":"scroll lock","menu":"menu","*":"*","+":"+","-":"-","/":"/",";":";","=":"=",",":",","_":"-",".":".","`":"`","[":"[","]":"]","'":"'"},"assimilationMap":{"1":"lmb","2":"rmb","4":"mmb","8":"backspace","9":"tab","13":"enter","16":"shift","17":"control","18":"alt","19":"pause","20":"caps lock","27":"escape","32":"spacebar","33":"page up","34":"page down","35":"end","36":"home","37":"left arrow","38":"up arrow","39":"right arrow","40":"down arrow","41":"select","42":"print","43":"execute","44":"print screen","45":"insert","46":"delete","47":"help","48":"0","49":"1","50":"2","51":"3","52":"4","53":"5","54":"6","55":"7","56":"8","57":"9","65":"a","66":"b","67":"c","68":"d","69":"e","70":"f","71":"g","72":"h","73":"i","74":"j","75":"k","76":"l","77":"m","78":"n","79":"o","80":"p","81":"q","82":"r","83":"s","84":"t","85":"u","86":"v","87":"w","88":"x","89":"y","90":"z","91":"windows","92":"windows","93":"applications","95":"computer sleep","96":"0","97":"1","98":"2","99":"3","100":"4","101":"5","102":"6","103":"7","104":"8","105":"9","106":"*","107":"+","109":"-","111":"/","112":"f1","113":"f2","114":"f3","115":"f4","116":"f5","117":"f6","118":"f7","119":"f8","120":"f9","121":"f10","122":"f11","123":"f12","124":"f13","125":"f14","126":"f15","127":"f16","144":"num lock","145":"scroll lock","160":"shift","161":"shift","162":"control","163":"control","164":"alt","165":"alt","186":";","187":"=","188":",","189":"-","190":".","191":"/","192":"`","219":"[","220":"\\","221":"]","222":"\\","223":"'","//note, backtick and apostrophe":"are reversed on uk and us keyboards"}}
 
 /***/ }),
-/* 133 */,
-/* 134 */
+/* 139 */,
+/* 140 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_prop_types__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__styles_createStyles__ = __webpack_require__(91);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__highlighter_Highlighter__ = __webpack_require__(73);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__styles_createStyles__ = __webpack_require__(96);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__highlighter_Highlighter__ = __webpack_require__(77);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 
@@ -51983,13 +52307,13 @@ ObjectValue.contextTypes = {
 /* harmony default export */ __webpack_exports__["a"] = (ObjectValue);
 
 /***/ }),
-/* 135 */
+/* 141 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = { "default": __webpack_require__(256), __esModule: true };
+module.exports = { "default": __webpack_require__(284), __esModule: true };
 
 /***/ }),
-/* 136 */
+/* 142 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -51997,11 +52321,11 @@ module.exports = { "default": __webpack_require__(256), __esModule: true };
 
 exports.__esModule = true;
 
-var _iterator = __webpack_require__(247);
+var _iterator = __webpack_require__(275);
 
 var _iterator2 = _interopRequireDefault(_iterator);
 
-var _symbol = __webpack_require__(246);
+var _symbol = __webpack_require__(274);
 
 var _symbol2 = _interopRequireDefault(_symbol);
 
@@ -52016,12 +52340,12 @@ exports.default = typeof _symbol2.default === "function" && _typeof(_iterator2.d
 };
 
 /***/ }),
-/* 137 */
+/* 143 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // getting tag from 19.1.3.6 Object.prototype.toString()
-var cof = __webpack_require__(94);
-var TAG = __webpack_require__(28)('toStringTag');
+var cof = __webpack_require__(99);
+var TAG = __webpack_require__(30)('toStringTag');
 // ES3 wrong here
 var ARG = cof(function () { return arguments; }()) == 'Arguments';
 
@@ -52045,11 +52369,11 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 138 */
+/* 144 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // optional / simple context binding
-var aFunction = __webpack_require__(260);
+var aFunction = __webpack_require__(288);
 module.exports = function (fn, that, length) {
   aFunction(fn);
   if (that === undefined) return fn;
@@ -52071,11 +52395,11 @@ module.exports = function (fn, that, length) {
 
 
 /***/ }),
-/* 139 */
+/* 145 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isObject = __webpack_require__(45);
-var document = __webpack_require__(31).document;
+var isObject = __webpack_require__(49);
+var document = __webpack_require__(34).document;
 // typeof document.createElement is 'object' in old IE
 var is = isObject(document) && isObject(document.createElement);
 module.exports = function (it) {
@@ -52084,20 +52408,20 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 140 */
+/* 146 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = !__webpack_require__(30) && !__webpack_require__(43)(function () {
-  return Object.defineProperty(__webpack_require__(139)('div'), 'a', { get: function () { return 7; } }).a != 7;
+module.exports = !__webpack_require__(33) && !__webpack_require__(47)(function () {
+  return Object.defineProperty(__webpack_require__(145)('div'), 'a', { get: function () { return 7; } }).a != 7;
 });
 
 
 /***/ }),
-/* 141 */
+/* 147 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // fallback for non-array-like ES3 and non-enumerable old V8 strings
-var cof = __webpack_require__(94);
+var cof = __webpack_require__(99);
 // eslint-disable-next-line no-prototype-builtins
 module.exports = Object('z').propertyIsEnumerable(0) ? Object : function (it) {
   return cof(it) == 'String' ? it.split('') : Object(it);
@@ -52105,20 +52429,20 @@ module.exports = Object('z').propertyIsEnumerable(0) ? Object : function (it) {
 
 
 /***/ }),
-/* 142 */
+/* 148 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var LIBRARY = __webpack_require__(74);
-var $export = __webpack_require__(35);
-var redefine = __webpack_require__(146);
-var hide = __webpack_require__(44);
-var Iterators = __webpack_require__(54);
-var $iterCreate = __webpack_require__(266);
-var setToStringTag = __webpack_require__(101);
-var getPrototypeOf = __webpack_require__(144);
-var ITERATOR = __webpack_require__(28)('iterator');
+var LIBRARY = __webpack_require__(78);
+var $export = __webpack_require__(39);
+var redefine = __webpack_require__(152);
+var hide = __webpack_require__(48);
+var Iterators = __webpack_require__(60);
+var $iterCreate = __webpack_require__(294);
+var setToStringTag = __webpack_require__(106);
+var getPrototypeOf = __webpack_require__(150);
+var ITERATOR = __webpack_require__(30)('iterator');
 var BUGGY = !([].keys && 'next' in [].keys()); // Safari has buggy iterators w/o `next`
 var FF_ITERATOR = '@@iterator';
 var KEYS = 'keys';
@@ -52181,12 +52505,12 @@ module.exports = function (Base, NAME, Constructor, next, DEFAULT, IS_SET, FORCE
 
 
 /***/ }),
-/* 143 */
+/* 149 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 19.1.2.7 / 15.2.3.4 Object.getOwnPropertyNames(O)
-var $keys = __webpack_require__(145);
-var hiddenKeys = __webpack_require__(96).concat('length', 'prototype');
+var $keys = __webpack_require__(151);
+var hiddenKeys = __webpack_require__(101).concat('length', 'prototype');
 
 exports.f = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
   return $keys(O, hiddenKeys);
@@ -52194,13 +52518,13 @@ exports.f = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
 
 
 /***/ }),
-/* 144 */
+/* 150 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 19.1.2.9 / 15.2.3.2 Object.getPrototypeOf(O)
-var has = __webpack_require__(36);
-var toObject = __webpack_require__(56);
-var IE_PROTO = __webpack_require__(102)('IE_PROTO');
+var has = __webpack_require__(40);
+var toObject = __webpack_require__(62);
+var IE_PROTO = __webpack_require__(107)('IE_PROTO');
 var ObjectProto = Object.prototype;
 
 module.exports = Object.getPrototypeOf || function (O) {
@@ -52213,13 +52537,13 @@ module.exports = Object.getPrototypeOf || function (O) {
 
 
 /***/ }),
-/* 145 */
+/* 151 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var has = __webpack_require__(36);
-var toIObject = __webpack_require__(38);
-var arrayIndexOf = __webpack_require__(262)(false);
-var IE_PROTO = __webpack_require__(102)('IE_PROTO');
+var has = __webpack_require__(40);
+var toIObject = __webpack_require__(42);
+var arrayIndexOf = __webpack_require__(290)(false);
+var IE_PROTO = __webpack_require__(107)('IE_PROTO');
 
 module.exports = function (object, names) {
   var O = toIObject(object);
@@ -52236,14 +52560,14 @@ module.exports = function (object, names) {
 
 
 /***/ }),
-/* 146 */
+/* 152 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(44);
+module.exports = __webpack_require__(48);
 
 
 /***/ }),
-/* 147 */
+/* 153 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -52334,18 +52658,18 @@ function toComment(sourceMap) {
 }
 
 /***/ }),
-/* 148 */
+/* 154 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var _interopRequireDefault = __webpack_require__(200);
+var _interopRequireDefault = __webpack_require__(221);
 
 exports.__esModule = true;
 exports.default = scrollbarSize;
 
-var _inDOM = _interopRequireDefault(__webpack_require__(295));
+var _inDOM = _interopRequireDefault(__webpack_require__(323));
 
 var size;
 
@@ -52370,7 +52694,7 @@ function scrollbarSize(recalc) {
 module.exports = exports["default"];
 
 /***/ }),
-/* 149 */
+/* 155 */
 /***/ (function(module, exports) {
 
 var toString = {}.toString;
@@ -52381,13 +52705,13 @@ module.exports = Array.isArray || function (arr) {
 
 
 /***/ }),
-/* 150 */
+/* 156 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var utils = __webpack_require__(8);
-var support = __webpack_require__(32);
+var utils = __webpack_require__(9);
+var support = __webpack_require__(35);
 // private property
 var _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
 
@@ -52494,13 +52818,13 @@ exports.decode = function(input) {
 
 
 /***/ }),
-/* 151 */
+/* 157 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var GenericWorker = __webpack_require__(21);
+var GenericWorker = __webpack_require__(25);
 
 exports.STORE = {
     magic: "\x00\x00",
@@ -52511,11 +52835,11 @@ exports.STORE = {
         return new GenericWorker("STORE decompression");
     }
 };
-exports.DEFLATE = __webpack_require__(299);
+exports.DEFLATE = __webpack_require__(328);
 
 
 /***/ }),
-/* 152 */
+/* 158 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -52533,7 +52857,7 @@ exports.dosPermissions = null;
 
 
 /***/ }),
-/* 153 */
+/* 159 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
@@ -52544,17 +52868,17 @@ exports.dosPermissions = null;
  * reduce the final size of the bundle (only one stream implementation, not
  * two).
  */
-module.exports = __webpack_require__(386);
+module.exports = __webpack_require__(415);
 
 
 /***/ }),
-/* 154 */
+/* 160 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var DataReader = __webpack_require__(155);
-var utils = __webpack_require__(8);
+var DataReader = __webpack_require__(161);
+var utils = __webpack_require__(9);
 
 function ArrayReader(data) {
     DataReader.call(this, data);
@@ -52612,12 +52936,12 @@ module.exports = ArrayReader;
 
 
 /***/ }),
-/* 155 */
+/* 161 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var utils = __webpack_require__(8);
+var utils = __webpack_require__(9);
 
 function DataReader(data) {
     this.data = data; // type : see implementation
@@ -52735,13 +53059,13 @@ module.exports = DataReader;
 
 
 /***/ }),
-/* 156 */
+/* 162 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var ArrayReader = __webpack_require__(154);
-var utils = __webpack_require__(8);
+var ArrayReader = __webpack_require__(160);
+var utils = __webpack_require__(9);
 
 function Uint8ArrayReader(data) {
     ArrayReader.call(this, data);
@@ -52764,18 +53088,18 @@ module.exports = Uint8ArrayReader;
 
 
 /***/ }),
-/* 157 */
+/* 163 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var utils = __webpack_require__(8);
-var support = __webpack_require__(32);
-var ArrayReader = __webpack_require__(154);
-var StringReader = __webpack_require__(308);
-var NodeBufferReader = __webpack_require__(307);
-var Uint8ArrayReader = __webpack_require__(156);
+var utils = __webpack_require__(9);
+var support = __webpack_require__(35);
+var ArrayReader = __webpack_require__(160);
+var StringReader = __webpack_require__(337);
+var NodeBufferReader = __webpack_require__(336);
+var Uint8ArrayReader = __webpack_require__(162);
 
 /**
  * Create a reader adapted to the data.
@@ -52799,7 +53123,7 @@ module.exports = function (data) {
 
 
 /***/ }),
-/* 158 */
+/* 164 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -52813,15 +53137,15 @@ exports.DATA_DESCRIPTOR = "PK\x07\x08";
 
 
 /***/ }),
-/* 159 */
+/* 165 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var GenericWorker = __webpack_require__(21);
-var crc32 = __webpack_require__(111);
-var utils = __webpack_require__(8);
+var GenericWorker = __webpack_require__(25);
+var crc32 = __webpack_require__(117);
+var utils = __webpack_require__(9);
 
 /**
  * A worker which calculate the crc32 of the data flowing through.
@@ -52844,14 +53168,14 @@ module.exports = Crc32Probe;
 
 
 /***/ }),
-/* 160 */
+/* 166 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var utils = __webpack_require__(8);
-var GenericWorker = __webpack_require__(21);
+var utils = __webpack_require__(9);
+var GenericWorker = __webpack_require__(25);
 
 /**
  * A worker which calculate the total length of the data flowing through.
@@ -52880,14 +53204,14 @@ module.exports = DataLengthProbe;
 
 
 /***/ }),
-/* 161 */
+/* 167 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var utils = __webpack_require__(8);
-var GenericWorker = __webpack_require__(21);
+var utils = __webpack_require__(9);
+var GenericWorker = __webpack_require__(25);
 
 // the size of the generated chunks
 // TODO expose this as a public variable
@@ -53003,23 +53327,23 @@ module.exports = DataWorker;
 
 
 /***/ }),
-/* 162 */
+/* 168 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(Buffer) {
 
-var utils = __webpack_require__(8);
-var ConvertWorker = __webpack_require__(309);
-var GenericWorker = __webpack_require__(21);
-var base64 = __webpack_require__(150);
-var support = __webpack_require__(32);
-var external = __webpack_require__(59);
+var utils = __webpack_require__(9);
+var ConvertWorker = __webpack_require__(338);
+var GenericWorker = __webpack_require__(25);
+var base64 = __webpack_require__(156);
+var support = __webpack_require__(35);
+var external = __webpack_require__(65);
 
 var NodejsStreamOutputAdapter = null;
 if (support.nodestream) {
     try {
-        NodejsStreamOutputAdapter = __webpack_require__(305);
+        NodejsStreamOutputAdapter = __webpack_require__(334);
     } catch(e) {}
 }
 
@@ -53220,10 +53544,10 @@ StreamHelper.prototype = {
 
 module.exports = StreamHelper;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(57).Buffer))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(63).Buffer))
 
 /***/ }),
-/* 163 */
+/* 169 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -53231,7 +53555,7 @@ module.exports = StreamHelper;
 
 
 
-var utils = __webpack_require__(33);
+var utils = __webpack_require__(36);
 
 
 // Quick check if we can use fast array to bin string conversion
@@ -53417,7 +53741,7 @@ exports.utf8border = function (buf, max) {
 
 
 /***/ }),
-/* 164 */
+/* 170 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -53475,7 +53799,7 @@ module.exports = adler32;
 
 
 /***/ }),
-/* 165 */
+/* 171 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -53550,7 +53874,7 @@ module.exports = {
 
 
 /***/ }),
-/* 166 */
+/* 172 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -53616,7 +53940,7 @@ module.exports = crc32;
 
 
 /***/ }),
-/* 167 */
+/* 173 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -53670,36 +53994,36 @@ module.exports = ZStream;
 
 
 /***/ }),
-/* 168 */
+/* 174 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {
 
 if (process.env.NODE_ENV === 'production') {
-  module.exports = __webpack_require__(328);
+  module.exports = __webpack_require__(357);
 } else {
-  module.exports = __webpack_require__(327);
+  module.exports = __webpack_require__(356);
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
-/* 169 */
+/* 175 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(14);
+/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_possibleConstructorReturn___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_possibleConstructorReturn__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_inherits__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_inherits__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_inherits___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_inherits__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_react__);
 
 
@@ -53707,9 +54031,9 @@ if (process.env.NODE_ENV === 'production') {
 
 
 
-var babelPluginFlowReactPropTypes_proptype_RenderedSection = __webpack_require__(20).babelPluginFlowReactPropTypes_proptype_RenderedSection || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_RenderedSection = __webpack_require__(21).babelPluginFlowReactPropTypes_proptype_RenderedSection || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_ScrollIndices = __webpack_require__(333).babelPluginFlowReactPropTypes_proptype_ScrollIndices || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_ScrollIndices = __webpack_require__(362).babelPluginFlowReactPropTypes_proptype_ScrollIndices || __webpack_require__(0).any;
 
 
 
@@ -53900,28 +54224,28 @@ ArrowKeyStepper.propTypes = process.env.NODE_ENV === 'production' ? null : {
   scrollToRow: __webpack_require__(0).number.isRequired
 };
 /* unused harmony default export */ var _unused_webpack_default_export = (ArrowKeyStepper);
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 170 */
+/* 176 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(23);
+/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__vendor_detectElementResize__ = __webpack_require__(185);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__vendor_detectElementResize__ = __webpack_require__(191);
 
 
 
@@ -54112,18 +54436,18 @@ AutoSizer.propTypes = process.env.NODE_ENV === 'production' ? null : {
   style: __webpack_require__(0).object
 };
 /* unused harmony default export */ var _unused_webpack_default_export = (AutoSizer);
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 171 */
+/* 177 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {/* unused harmony export DEFAULT_HEIGHT */
 /* unused harmony export DEFAULT_WIDTH */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_classCallCheck__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_classCallCheck__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_classCallCheck___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_classCallCheck__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_createClass__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_createClass__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_createClass___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_createClass__);
 
 
@@ -54330,15 +54654,15 @@ var CellMeasurerCache = function () {
 function defaultKeyMapper(rowIndex, columnIndex) {
   return rowIndex + '-' + columnIndex;
 }
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 172 */
+/* 178 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__CellMeasurer__ = __webpack_require__(335);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__CellMeasurerCache__ = __webpack_require__(171);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__CellMeasurer__ = __webpack_require__(364);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__CellMeasurerCache__ = __webpack_require__(177);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return __WEBPACK_IMPORTED_MODULE_0__CellMeasurer__["a"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return __WEBPACK_IMPORTED_MODULE_1__CellMeasurerCache__["a"]; });
 
@@ -54348,36 +54672,36 @@ function defaultKeyMapper(rowIndex, columnIndex) {
 
 
 /***/ }),
-/* 173 */
+/* 179 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {/* unused harmony export DEFAULT_SCROLLING_RESET_TIME_INTERVAL */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_classnames__ = __webpack_require__(46);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_classnames__ = __webpack_require__(50);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_classnames___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_classnames__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__utils_calculateSizeAndPositionDataAndUpdateScrollOffset__ = __webpack_require__(346);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__utils_ScalingCellSizeAndPositionManager__ = __webpack_require__(123);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__utils_createCallbackMemoizer__ = __webpack_require__(126);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__defaultOverscanIndicesGetter__ = __webpack_require__(175);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__utils_updateScrollIndexHelper__ = __webpack_require__(348);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__defaultCellRangeRenderer__ = __webpack_require__(174);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14_dom_helpers_util_scrollbarSize__ = __webpack_require__(148);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__utils_calculateSizeAndPositionDataAndUpdateScrollOffset__ = __webpack_require__(375);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__utils_ScalingCellSizeAndPositionManager__ = __webpack_require__(129);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__utils_createCallbackMemoizer__ = __webpack_require__(132);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__defaultOverscanIndicesGetter__ = __webpack_require__(181);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__utils_updateScrollIndexHelper__ = __webpack_require__(377);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__defaultCellRangeRenderer__ = __webpack_require__(180);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14_dom_helpers_util_scrollbarSize__ = __webpack_require__(154);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_14_dom_helpers_util_scrollbarSize___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_14_dom_helpers_util_scrollbarSize__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__utils_requestAnimationTimeout__ = __webpack_require__(62);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__utils_requestAnimationTimeout__ = __webpack_require__(68);
 
 
 
@@ -54385,29 +54709,29 @@ function defaultKeyMapper(rowIndex, columnIndex) {
 
 
 
-var babelPluginFlowReactPropTypes_proptype_Alignment = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_Alignment || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_Alignment = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_Alignment || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_OverscanIndicesGetter = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_OverscanIndicesGetter || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_OverscanIndicesGetter = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_OverscanIndicesGetter || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_RenderedSection = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_RenderedSection || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_RenderedSection = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_RenderedSection || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_ScrollbarPresenceChange = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_ScrollbarPresenceChange || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_ScrollbarPresenceChange = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_ScrollbarPresenceChange || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_Scroll = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_Scroll || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_Scroll = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_Scroll || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_NoContentRenderer = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_NoContentRenderer || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_NoContentRenderer = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_NoContentRenderer || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_CellSizeGetter = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_CellSizeGetter || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_CellSizeGetter = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_CellSizeGetter || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_CellSize = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_CellSize || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_CellSize = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_CellSize || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_CellPosition = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_CellPosition || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_CellPosition = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_CellPosition || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_CellRangeRenderer = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_CellRangeRenderer || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_CellRangeRenderer = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_CellRangeRenderer || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_CellRenderer = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_CellRenderer || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_CellRenderer = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_CellRenderer || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_AnimationTimeoutId = __webpack_require__(62).babelPluginFlowReactPropTypes_proptype_AnimationTimeoutId || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_AnimationTimeoutId = __webpack_require__(68).babelPluginFlowReactPropTypes_proptype_AnimationTimeoutId || __webpack_require__(0).any;
 
 
 
@@ -55755,10 +56079,10 @@ Grid.propTypes = process.env.NODE_ENV === 'production' ? null : {
   width: __webpack_require__(0).number.isRequired
 };
 /* harmony default export */ __webpack_exports__["a"] = (Grid);
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 174 */
+/* 180 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -55770,7 +56094,7 @@ Grid.propTypes = process.env.NODE_ENV === 'production' ? null : {
  * This renderer supports cell-caching while the user is scrolling.
  */
 
-var babelPluginFlowReactPropTypes_proptype_CellRangeRendererParams = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_CellRangeRendererParams || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_CellRangeRendererParams = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_CellRangeRendererParams || __webpack_require__(0).any;
 
 function defaultCellRangeRenderer(_ref) {
   var cellCache = _ref.cellCache,
@@ -55904,10 +56228,10 @@ function warnAboutMissingStyle(parent, renderedCell) {
     }
   }
 }
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 175 */
+/* 181 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -55916,9 +56240,9 @@ function warnAboutMissingStyle(parent, renderedCell) {
 /* unused harmony export SCROLL_DIRECTION_HORIZONTAL */
 /* unused harmony export SCROLL_DIRECTION_VERTICAL */
 /* harmony export (immutable) */ __webpack_exports__["a"] = defaultOverscanIndicesGetter;
-var babelPluginFlowReactPropTypes_proptype_OverscanIndices = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_OverscanIndices || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_OverscanIndices = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_OverscanIndices || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_OverscanIndicesGetterParams = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_OverscanIndicesGetterParams || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_OverscanIndicesGetterParams = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_OverscanIndicesGetterParams || __webpack_require__(0).any;
 
 var SCROLL_DIRECTION_BACKWARD = -1;
 var SCROLL_DIRECTION_FORWARD = 1;
@@ -55952,28 +56276,28 @@ function defaultOverscanIndicesGetter(_ref) {
 }
 
 /***/ }),
-/* 176 */
+/* 182 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(23);
+/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_own_property_descriptor__ = __webpack_require__(244);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_own_property_descriptor__ = __webpack_require__(272);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_own_property_descriptor___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_own_property_descriptor__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_core_js_object_get_prototype_of___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_babel_runtime_core_js_object_get_prototype_of__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_classCallCheck__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_classCallCheck__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_classCallCheck___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_classCallCheck__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_createClass__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_createClass__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_createClass___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_createClass__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_possibleConstructorReturn___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_possibleConstructorReturn__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_babel_runtime_helpers_inherits__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_babel_runtime_helpers_inherits__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_babel_runtime_helpers_inherits___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_babel_runtime_helpers_inherits__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__Grid__ = __webpack_require__(20);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__Grid__ = __webpack_require__(21);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_classnames__ = __webpack_require__(46);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_classnames__ = __webpack_require__(50);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_classnames___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9_classnames__);
 
 
@@ -55983,27 +56307,27 @@ function defaultOverscanIndicesGetter(_ref) {
 
 
 
-var babelPluginFlowReactPropTypes_proptype_Scroll = __webpack_require__(20).babelPluginFlowReactPropTypes_proptype_Scroll || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_Scroll = __webpack_require__(21).babelPluginFlowReactPropTypes_proptype_Scroll || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_CellRendererParams = __webpack_require__(20).babelPluginFlowReactPropTypes_proptype_CellRendererParams || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_CellRendererParams = __webpack_require__(21).babelPluginFlowReactPropTypes_proptype_CellRendererParams || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_RenderedSection = __webpack_require__(20).babelPluginFlowReactPropTypes_proptype_RenderedSection || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_RenderedSection = __webpack_require__(21).babelPluginFlowReactPropTypes_proptype_RenderedSection || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_OverscanIndicesGetter = __webpack_require__(20).babelPluginFlowReactPropTypes_proptype_OverscanIndicesGetter || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_OverscanIndicesGetter = __webpack_require__(21).babelPluginFlowReactPropTypes_proptype_OverscanIndicesGetter || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_CellPosition = __webpack_require__(20).babelPluginFlowReactPropTypes_proptype_CellPosition || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_CellPosition = __webpack_require__(21).babelPluginFlowReactPropTypes_proptype_CellPosition || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_CellSize = __webpack_require__(20).babelPluginFlowReactPropTypes_proptype_CellSize || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_CellSize = __webpack_require__(21).babelPluginFlowReactPropTypes_proptype_CellSize || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_Alignment = __webpack_require__(20).babelPluginFlowReactPropTypes_proptype_Alignment || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_Alignment = __webpack_require__(21).babelPluginFlowReactPropTypes_proptype_Alignment || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_NoContentRenderer = __webpack_require__(20).babelPluginFlowReactPropTypes_proptype_NoContentRenderer || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_NoContentRenderer = __webpack_require__(21).babelPluginFlowReactPropTypes_proptype_NoContentRenderer || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_Scroll = __webpack_require__(124).babelPluginFlowReactPropTypes_proptype_Scroll || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_Scroll = __webpack_require__(130).babelPluginFlowReactPropTypes_proptype_Scroll || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_RenderedRows = __webpack_require__(124).babelPluginFlowReactPropTypes_proptype_RenderedRows || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_RenderedRows = __webpack_require__(130).babelPluginFlowReactPropTypes_proptype_RenderedRows || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_RowRenderer = __webpack_require__(124).babelPluginFlowReactPropTypes_proptype_RowRenderer || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_RowRenderer = __webpack_require__(130).babelPluginFlowReactPropTypes_proptype_RowRenderer || __webpack_require__(0).any;
 
 
 
@@ -56339,29 +56663,29 @@ List.propTypes = process.env.NODE_ENV === 'production' ? null : {
   width: __webpack_require__(0).number.isRequired
 };
 /* harmony default export */ __webpack_exports__["a"] = (List);
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 177 */
+/* 183 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(14);
+/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_possibleConstructorReturn___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_possibleConstructorReturn__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_inherits__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_inherits__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_inherits___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_inherits__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_prop_types__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_prop_types___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_prop_types__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__defaultHeaderRenderer__ = __webpack_require__(181);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__defaultCellRenderer__ = __webpack_require__(180);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__defaultCellDataGetter__ = __webpack_require__(179);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__SortDirection__ = __webpack_require__(81);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__defaultHeaderRenderer__ = __webpack_require__(187);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__defaultCellRenderer__ = __webpack_require__(186);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__defaultCellDataGetter__ = __webpack_require__(185);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__SortDirection__ = __webpack_require__(85);
 
 
 
@@ -56466,21 +56790,21 @@ Column.propTypes = process.env.NODE_ENV !== "production" ? {
   /** Flex basis (width) for this column; This value can grow or shrink based on :flexGrow and :flexShrink properties. */
   width: __WEBPACK_IMPORTED_MODULE_4_prop_types___default.a.number.isRequired
 } : {};
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 178 */
+/* 184 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {/* harmony export (immutable) */ __webpack_exports__["a"] = SortIndicator;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_classnames__ = __webpack_require__(46);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_classnames__ = __webpack_require__(50);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_classnames___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_classnames__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_prop_types__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__SortDirection__ = __webpack_require__(81);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__SortDirection__ = __webpack_require__(85);
 
 
 
@@ -56508,10 +56832,10 @@ function SortIndicator(_ref) {
 SortIndicator.propTypes = process.env.NODE_ENV !== "production" ? {
   sortDirection: __WEBPACK_IMPORTED_MODULE_1_prop_types___default.a.oneOf([__WEBPACK_IMPORTED_MODULE_3__SortDirection__["a" /* default */].ASC, __WEBPACK_IMPORTED_MODULE_3__SortDirection__["a" /* default */].DESC])
 } : {};
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 179 */
+/* 185 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -56523,7 +56847,7 @@ SortIndicator.propTypes = process.env.NODE_ENV !== "production" ? {
  * This function expects to operate on either a vanilla Object or an Immutable Map.
  * You should override the column's cellDataGetter if your data is some other type of object.
  */
-var babelPluginFlowReactPropTypes_proptype_CellDataGetterParams = __webpack_require__(61).babelPluginFlowReactPropTypes_proptype_CellDataGetterParams || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_CellDataGetterParams = __webpack_require__(67).babelPluginFlowReactPropTypes_proptype_CellDataGetterParams || __webpack_require__(0).any;
 
 function defaultCellDataGetter(_ref) {
   var dataKey = _ref.dataKey,
@@ -56537,7 +56861,7 @@ function defaultCellDataGetter(_ref) {
 }
 
 /***/ }),
-/* 180 */
+/* 186 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -56548,7 +56872,7 @@ function defaultCellDataGetter(_ref) {
  * Default cell renderer that displays an attribute as a simple string
  * You should override the column's cellRenderer if your data is some other type of object.
  */
-var babelPluginFlowReactPropTypes_proptype_CellRendererParams = __webpack_require__(61).babelPluginFlowReactPropTypes_proptype_CellRendererParams || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_CellRendererParams = __webpack_require__(67).babelPluginFlowReactPropTypes_proptype_CellRendererParams || __webpack_require__(0).any;
 
 function defaultCellRenderer(_ref) {
   var cellData = _ref.cellData;
@@ -56561,21 +56885,21 @@ function defaultCellRenderer(_ref) {
 }
 
 /***/ }),
-/* 181 */
+/* 187 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {/* harmony export (immutable) */ __webpack_exports__["a"] = defaultHeaderRenderer;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__SortIndicator__ = __webpack_require__(178);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__SortIndicator__ = __webpack_require__(184);
 
 
 
 /**
  * Default table header renderer.
  */
-var babelPluginFlowReactPropTypes_proptype_HeaderRendererParams = __webpack_require__(61).babelPluginFlowReactPropTypes_proptype_HeaderRendererParams || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_HeaderRendererParams = __webpack_require__(67).babelPluginFlowReactPropTypes_proptype_HeaderRendererParams || __webpack_require__(0).any;
 
 function defaultHeaderRenderer(_ref) {
   var dataKey = _ref.dataKey,
@@ -56600,19 +56924,19 @@ function defaultHeaderRenderer(_ref) {
   return children;
 }
 defaultHeaderRenderer.propTypes = process.env.NODE_ENV === 'production' ? null : babelPluginFlowReactPropTypes_proptype_HeaderRendererParams === __webpack_require__(0).any ? {} : babelPluginFlowReactPropTypes_proptype_HeaderRendererParams;
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 182 */
+/* 188 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {/* harmony export (immutable) */ __webpack_exports__["a"] = defaultHeaderRowRenderer;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 
 
-var babelPluginFlowReactPropTypes_proptype_HeaderRowRendererParams = __webpack_require__(61).babelPluginFlowReactPropTypes_proptype_HeaderRowRendererParams || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_HeaderRowRendererParams = __webpack_require__(67).babelPluginFlowReactPropTypes_proptype_HeaderRowRendererParams || __webpack_require__(0).any;
 
 function defaultHeaderRowRenderer(_ref) {
   var className = _ref.className,
@@ -56626,17 +56950,17 @@ function defaultHeaderRowRenderer(_ref) {
   );
 }
 defaultHeaderRowRenderer.propTypes = process.env.NODE_ENV === 'production' ? null : babelPluginFlowReactPropTypes_proptype_HeaderRowRendererParams === __webpack_require__(0).any ? {} : babelPluginFlowReactPropTypes_proptype_HeaderRowRendererParams;
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 183 */
+/* 189 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {/* harmony export (immutable) */ __webpack_exports__["a"] = defaultRowRenderer;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_react__);
 
 
@@ -56644,7 +56968,7 @@ defaultHeaderRowRenderer.propTypes = process.env.NODE_ENV === 'production' ? nul
 /**
  * Default row renderer for Table.
  */
-var babelPluginFlowReactPropTypes_proptype_RowRendererParams = __webpack_require__(61).babelPluginFlowReactPropTypes_proptype_RowRendererParams || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_RowRendererParams = __webpack_require__(67).babelPluginFlowReactPropTypes_proptype_RowRendererParams || __webpack_require__(0).any;
 
 function defaultRowRenderer(_ref) {
   var className = _ref.className,
@@ -56703,33 +57027,33 @@ function defaultRowRenderer(_ref) {
   );
 }
 defaultRowRenderer.propTypes = process.env.NODE_ENV === 'production' ? null : babelPluginFlowReactPropTypes_proptype_RowRendererParams === __webpack_require__(0).any ? {} : babelPluginFlowReactPropTypes_proptype_RowRendererParams;
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 184 */
+/* 190 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {/* unused harmony export IS_SCROLLING_TIMEOUT */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_react_dom__ = __webpack_require__(67);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_react_dom__ = __webpack_require__(73);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_react_dom___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_react_dom__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__utils_onScroll__ = __webpack_require__(365);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__utils_dimensions__ = __webpack_require__(364);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__vendor_detectElementResize__ = __webpack_require__(185);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__utils_onScroll__ = __webpack_require__(394);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__utils_dimensions__ = __webpack_require__(393);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__vendor_detectElementResize__ = __webpack_require__(191);
 
 
 
@@ -56985,10 +57309,10 @@ WindowScroller.propTypes = process.env.NODE_ENV === 'production' ? null : {
   serverWidth: __webpack_require__(0).number.isRequired
 };
 /* harmony default export */ __webpack_exports__["a"] = (WindowScroller);
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 185 */
+/* 191 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -57187,10 +57511,10 @@ function createDetectElementResize(nonce) {
     removeResizeListener: removeResizeListener
   };
 }
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(4)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(5)))
 
 /***/ }),
-/* 186 */
+/* 192 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -57219,13 +57543,13 @@ function createDetectElementResize(nonce) {
 
 /*<replacement>*/
 
-var pna = __webpack_require__(80);
+var pna = __webpack_require__(84);
 /*</replacement>*/
 
 module.exports = Readable;
 
 /*<replacement>*/
-var isArray = __webpack_require__(149);
+var isArray = __webpack_require__(155);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -57235,7 +57559,7 @@ var Duplex;
 Readable.ReadableState = ReadableState;
 
 /*<replacement>*/
-var EE = __webpack_require__(13).EventEmitter;
+var EE = __webpack_require__(14).EventEmitter;
 
 var EElistenerCount = function (emitter, type) {
   return emitter.listeners(type).length;
@@ -57243,12 +57567,12 @@ var EElistenerCount = function (emitter, type) {
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(189);
+var Stream = __webpack_require__(195);
 /*</replacement>*/
 
 /*<replacement>*/
 
-var Buffer = __webpack_require__(82).Buffer;
+var Buffer = __webpack_require__(86).Buffer;
 var OurUint8Array = global.Uint8Array || function () {};
 function _uint8ArrayToBuffer(chunk) {
   return Buffer.from(chunk);
@@ -57260,12 +57584,12 @@ function _isUint8Array(obj) {
 /*</replacement>*/
 
 /*<replacement>*/
-var util = Object.create(__webpack_require__(58));
-util.inherits = __webpack_require__(47);
+var util = Object.create(__webpack_require__(64));
+util.inherits = __webpack_require__(51);
 /*</replacement>*/
 
 /*<replacement>*/
-var debugUtil = __webpack_require__(392);
+var debugUtil = __webpack_require__(421);
 var debug = void 0;
 if (debugUtil && debugUtil.debuglog) {
   debug = debugUtil.debuglog('stream');
@@ -57274,8 +57598,8 @@ if (debugUtil && debugUtil.debuglog) {
 }
 /*</replacement>*/
 
-var BufferList = __webpack_require__(375);
-var destroyImpl = __webpack_require__(188);
+var BufferList = __webpack_require__(404);
+var destroyImpl = __webpack_require__(194);
 var StringDecoder;
 
 util.inherits(Readable, Stream);
@@ -57295,7 +57619,7 @@ function prependListener(emitter, event, fn) {
 }
 
 function ReadableState(options, stream) {
-  Duplex = Duplex || __webpack_require__(39);
+  Duplex = Duplex || __webpack_require__(43);
 
   options = options || {};
 
@@ -57365,14 +57689,14 @@ function ReadableState(options, stream) {
   this.decoder = null;
   this.encoding = null;
   if (options.encoding) {
-    if (!StringDecoder) StringDecoder = __webpack_require__(191).StringDecoder;
+    if (!StringDecoder) StringDecoder = __webpack_require__(197).StringDecoder;
     this.decoder = new StringDecoder(options.encoding);
     this.encoding = options.encoding;
   }
 }
 
 function Readable(options) {
-  Duplex = Duplex || __webpack_require__(39);
+  Duplex = Duplex || __webpack_require__(43);
 
   if (!(this instanceof Readable)) return new Readable(options);
 
@@ -57521,7 +57845,7 @@ Readable.prototype.isPaused = function () {
 
 // backwards compatibility.
 Readable.prototype.setEncoding = function (enc) {
-  if (!StringDecoder) StringDecoder = __webpack_require__(191).StringDecoder;
+  if (!StringDecoder) StringDecoder = __webpack_require__(197).StringDecoder;
   this._readableState.decoder = new StringDecoder(enc);
   this._readableState.encoding = enc;
   return this;
@@ -58213,10 +58537,10 @@ function indexOf(xs, x) {
   }
   return -1;
 }
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5), __webpack_require__(3)))
 
 /***/ }),
-/* 187 */
+/* 193 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -58287,11 +58611,11 @@ function indexOf(xs, x) {
 
 module.exports = Transform;
 
-var Duplex = __webpack_require__(39);
+var Duplex = __webpack_require__(43);
 
 /*<replacement>*/
-var util = Object.create(__webpack_require__(58));
-util.inherits = __webpack_require__(47);
+var util = Object.create(__webpack_require__(64));
+util.inherits = __webpack_require__(51);
 /*</replacement>*/
 
 util.inherits(Transform, Duplex);
@@ -58436,7 +58760,7 @@ function done(stream, er, data) {
 }
 
 /***/ }),
-/* 188 */
+/* 194 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -58444,7 +58768,7 @@ function done(stream, er, data) {
 
 /*<replacement>*/
 
-var pna = __webpack_require__(80);
+var pna = __webpack_require__(84);
 /*</replacement>*/
 
 // undocumented cb() API, needed for core, not for public API
@@ -58516,29 +58840,29 @@ module.exports = {
 };
 
 /***/ }),
-/* 189 */
+/* 195 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(13).EventEmitter;
+module.exports = __webpack_require__(14).EventEmitter;
 
 
 /***/ }),
-/* 190 */
+/* 196 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {
 
 if (process.env.NODE_ENV === 'production') {
-  module.exports = __webpack_require__(383);
+  module.exports = __webpack_require__(412);
 } else {
-  module.exports = __webpack_require__(382);
+  module.exports = __webpack_require__(411);
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
-/* 191 */
+/* 197 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -58567,7 +58891,7 @@ if (process.env.NODE_ENV === 'production') {
 
 /*<replacement>*/
 
-var Buffer = __webpack_require__(82).Buffer;
+var Buffer = __webpack_require__(86).Buffer;
 /*</replacement>*/
 
 var isEncoding = Buffer.isEncoding || function (encoding) {
@@ -58840,7 +59164,7 @@ function simpleEnd(buf) {
 }
 
 /***/ }),
-/* 192 */
+/* 198 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
@@ -58877,7 +59201,7 @@ var stylesInDom = {},
 	singletonElement = null,
 	singletonCounter = 0,
 	styleElementsInsertedAtTop = [],
-	fixUrls = __webpack_require__(387);
+	fixUrls = __webpack_require__(416);
 
 module.exports = function(list, options) {
 	if(typeof DEBUG !== "undefined" && DEBUG) {
@@ -59136,15 +59460,31 @@ function updateLink(linkElement, options, obj) {
 
 
 /***/ }),
-/* 193 */,
-/* 194 */,
-/* 195 */,
-/* 196 */,
-/* 197 */
+/* 199 */,
+/* 200 */,
+/* 201 */,
+/* 202 */,
+/* 203 */,
+/* 204 */,
+/* 205 */,
+/* 206 */,
+/* 207 */,
+/* 208 */,
+/* 209 */,
+/* 210 */,
+/* 211 */,
+/* 212 */,
+/* 213 */,
+/* 214 */,
+/* 215 */,
+/* 216 */,
+/* 217 */,
+/* 218 */,
+/* 219 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(global) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__stores_Actions__ = __webpack_require__(235);
+/* WEBPACK VAR INJECTION */(function(global) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__stores_Actions__ = __webpack_require__(262);
 /**
  * This is not quite wholly baked yet. The idea is that the LoggerService interacts with an array of LogAdapters. When a new message comes in, it's passed to each adapter, which can do what it wants with the message. In this file, we pass it on to the Actions object, which just calls methods on the LoggerStore.
  * It's easy to conceive that instead of passing the mssage to the UI, we'd run some filter on the message and decide whether to pass it off to a server.
@@ -59179,25 +59519,25 @@ class LogAdapter {
 }
 /* harmony export (immutable) */ __webpack_exports__["a"] = LogAdapter;
 
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(4)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(5)))
 
 /***/ }),
-/* 198 */
+/* 220 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__components_TopCollar__ = __webpack_require__(203);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__components_Views_Logs_LogView__ = __webpack_require__(207);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__components_Views_Config_ConfigViewer__ = __webpack_require__(206);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__app_css__ = __webpack_require__(388);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__components_TopCollar__ = __webpack_require__(230);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__components_Views_Logs_LogView__ = __webpack_require__(234);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__components_Views_Config_ConfigViewer__ = __webpack_require__(233);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__app_css__ = __webpack_require__(417);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__app_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5__app_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_lodash_debounce__ = __webpack_require__(114);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_lodash_debounce__ = __webpack_require__(120);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_lodash_debounce___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_lodash_debounce__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__components_ViewSwitcher__ = __webpack_require__(204);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__clients_launcherClient__ = __webpack_require__(70);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__components_ViewSwitcher__ = __webpack_require__(231);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__clients_launcherClient__ = __webpack_require__(29);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__clients_launcherClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8__clients_launcherClient__);
 /**
  * The main UI file for this program.
@@ -59368,8 +59708,7 @@ class App extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Component {
 
 
 /***/ }),
-/* 199 */,
-/* 200 */
+/* 221 */
 /***/ (function(module, exports) {
 
 function _interopRequireDefault(obj) {
@@ -59381,8 +59720,14 @@ function _interopRequireDefault(obj) {
 module.exports = _interopRequireDefault;
 
 /***/ }),
-/* 201 */,
-/* 202 */
+/* 222 */,
+/* 223 */,
+/* 224 */,
+/* 225 */,
+/* 226 */,
+/* 227 */,
+/* 228 */,
+/* 229 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -59425,17 +59770,17 @@ class LogMessage {
 
 
 /***/ }),
-/* 203 */
+/* 230 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__LoggerButton__ = __webpack_require__(29);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_system__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__LoggerButton__ = __webpack_require__(32);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_system__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__common_system__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_launcherClient__ = __webpack_require__(70);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_launcherClient__ = __webpack_require__(29);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_launcherClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__clients_launcherClient__);
 /**
  * Collar at the top of the page housing import/export, localhost:9090 link, and a link to the process monitor.
@@ -59609,13 +59954,13 @@ class TopCollar extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.PureCompon
 
 
 /***/ }),
-/* 204 */
+/* 231 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(13);
 /**
  * Bar on the left side of the logger that changes the active view.
  */
@@ -59651,14 +59996,14 @@ class ViewSwitcher extends __WEBPACK_IMPORTED_MODULE_0_react__["Component"] {
 /* harmony default export */ __webpack_exports__["a"] = (ViewSwitcher);
 
 /***/ }),
-/* 205 */
+/* 232 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_CtrlFSearch__ = __webpack_require__(92);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_CtrlFSearch__ = __webpack_require__(97);
 /**
  * This is the box that pops up if you press ctrl+f. It handles searching through the content on the page and scrolling to matches.
  */
@@ -59820,15 +60165,15 @@ class LoggerSearchBox extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Comp
 
 
 /***/ }),
-/* 206 */
+/* 233 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__ConfigSearchBox__ = __webpack_require__(205);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__highlighter_Highlighter__ = __webpack_require__(73);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__ConfigSearchBox__ = __webpack_require__(232);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__highlighter_Highlighter__ = __webpack_require__(77);
 /**
  * Here we display the entire parsed, finsemble configuration.
  */
@@ -59913,14 +60258,14 @@ class ConfigViewer extends __WEBPACK_IMPORTED_MODULE_0_react__["Component"] {
 /* harmony default export */ __webpack_exports__["a"] = (ConfigViewer);
 
 /***/ }),
-/* 207 */
+/* 234 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__leftPanel_LeftPanel__ = __webpack_require__(213);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__rightPanel_rightPanel__ = __webpack_require__(220);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__leftPanel_LeftPanel__ = __webpack_require__(240);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__rightPanel_rightPanel__ = __webpack_require__(247);
 /**
  * Harness for the entire log view.
  */
@@ -59942,14 +60287,14 @@ class LogView extends __WEBPACK_IMPORTED_MODULE_0_react__["PureComponent"] {
 /* harmony default export */ __webpack_exports__["a"] = (LogView);
 
 /***/ }),
-/* 208 */
+/* 235 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_CtrlFSearch__ = __webpack_require__(92);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_CtrlFSearch__ = __webpack_require__(97);
 /**
  * This is the box that pops up if you press ctrl+f. It handles searching through the content on the page and scrolling to matches.
  */
@@ -60111,21 +60456,21 @@ class LoggerSearchBox extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Comp
 
 
 /***/ }),
-/* 209 */
+/* 236 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LoggerButton__ = __webpack_require__(29);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LoggerButton__ = __webpack_require__(32);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(13);
 /**
  * Changes which types of logs are captured for a given client. Can also remove all of the client's logs from the view.
  */
 
 
 
-const System = __webpack_require__(5);
+const System = __webpack_require__(4);
 
 // once class per client registered with logger; primarily this components provides UI affecting communication with the client
 class LoggerClientControl extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Component {
@@ -60246,7 +60591,7 @@ class LoggerClientControl extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.
 						onClick: this.showClientToggle }),
 					__WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(
 						"span",
-						{ style: { cursor: "pointer" }, onClick: () => {
+						{ className: "fsbl-logger-client-label", style: { cursor: "pointer" }, title: this.props.clientName, onClick: () => {
 								__WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__["a" /* default */].openClient(this.props.clientName);
 							} },
 						this.props.clientName
@@ -60320,15 +60665,15 @@ class LoggerClientControl extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.
 
 
 /***/ }),
-/* 210 */
+/* 237 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LoggerClientControl__ = __webpack_require__(209);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__LoggerButton__ = __webpack_require__(29);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__stores_LoggerStore__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LoggerClientControl__ = __webpack_require__(236);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__LoggerButton__ = __webpack_require__(32);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__stores_LoggerStore__ = __webpack_require__(13);
 /**
  * The list of all clients that have registered with the logger, in addition to their current capture state.
  */
@@ -60666,14 +61011,14 @@ class LoggerClientControlList extends __WEBPACK_IMPORTED_MODULE_0_react___defaul
 
 
 /***/ }),
-/* 211 */
+/* 238 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LoggerButton__ = __webpack_require__(29);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LoggerButton__ = __webpack_require__(32);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(13);
 /**
  * Toggles for different categories of logs (e.g., system, dev, perf).
  */
@@ -60733,17 +61078,17 @@ class CategoryFilters extends __WEBPACK_IMPORTED_MODULE_0_react__["Component"] {
 /* harmony default export */ __webpack_exports__["a"] = (CategoryFilters);
 
 /***/ }),
-/* 212 */
+/* 239 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LoggerButton__ = __webpack_require__(29);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_resize_observer_polyfill__ = __webpack_require__(379);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__CategoryFilters__ = __webpack_require__(211);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_lodash_debounce__ = __webpack_require__(114);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LoggerButton__ = __webpack_require__(32);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_resize_observer_polyfill__ = __webpack_require__(408);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__CategoryFilters__ = __webpack_require__(238);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_lodash_debounce__ = __webpack_require__(120);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_lodash_debounce___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_lodash_debounce__);
 /**
  * All of the filters that can affect what's visible in the view.
@@ -60888,7 +61233,7 @@ class LoggerClientControlList extends __WEBPACK_IMPORTED_MODULE_0_react___defaul
 				{ className: "logger-row" },
 				__WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(
 					"div",
-					{ style: { marginRight: "12px" }, className: "" },
+					{ style: { margin: "2px 10px" }, className: "" },
 					__WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement("input", { className: "filter filter-0", type: "text", placeholder: "Filter 1", value: this.state.highLight1.str, onChange: this.highLight1 }),
 					__WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement("input", { className: "filter filter-1", type: "text", placeholder: "Filter 2", value: this.state.highLight2.str, onChange: this.highLight2 }),
 					__WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement("input", { className: "filter filter-2", type: "text", placeholder: "Filter 3", value: this.state.highLight3.str, onChange: this.highLight3 }),
@@ -60902,16 +61247,16 @@ class LoggerClientControlList extends __WEBPACK_IMPORTED_MODULE_0_react___defaul
 
 
 /***/ }),
-/* 213 */
+/* 240 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__ClientList_LoggerClientControlList__ = __webpack_require__(210);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Filters_LoggerDisplayControl__ = __webpack_require__(212);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__QuickViews__ = __webpack_require__(214);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Settings_Settings__ = __webpack_require__(215);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__ClientList_LoggerClientControlList__ = __webpack_require__(237);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Filters_LoggerDisplayControl__ = __webpack_require__(239);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__QuickViews__ = __webpack_require__(241);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Settings_Settings__ = __webpack_require__(242);
 /**
  * Left panel of the log-view. Houses settings, filters, client list, etc. It's a column of content, each section is housed inside of an accordion.
  */
@@ -61004,14 +61349,14 @@ class TabSwitcher extends __WEBPACK_IMPORTED_MODULE_0_react__["Component"] {
 /* harmony default export */ __webpack_exports__["a"] = (TabSwitcher);
 
 /***/ }),
-/* 214 */
+/* 241 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LoggerButton__ = __webpack_require__(29);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LoggerButton__ = __webpack_require__(32);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(13);
 /**
  * Houses quick-views, which are buttons that can change quickly change filters and settings to capture/debug a common problem.
  */
@@ -61060,14 +61405,14 @@ class QuickViews extends __WEBPACK_IMPORTED_MODULE_0_react__["Component"] {
 /* harmony default export */ __webpack_exports__["a"] = (QuickViews);
 
 /***/ }),
-/* 215 */
+/* 242 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LoggerButton__ = __webpack_require__(29);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LoggerButton__ = __webpack_require__(32);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(13);
 /**
  * Preferences that can be set by the user.
  */
@@ -61136,7 +61481,7 @@ class Settings extends __WEBPACK_IMPORTED_MODULE_0_react__["Component"] {
 /* harmony default export */ __webpack_exports__["a"] = (Settings);
 
 /***/ }),
-/* 216 */
+/* 243 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -61189,14 +61534,14 @@ const theme = {
 /* harmony default export */ __webpack_exports__["a"] = (theme);
 
 /***/ }),
-/* 217 */
+/* 244 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LoggerButton__ = __webpack_require__(29);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LoggerButton__ = __webpack_require__(32);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stores_LoggerStore__ = __webpack_require__(13);
 /**
  * Knocks out different types of logs from the view (e.g., turn of all errors). Doesn't affect capture state, just log visibility.
  */
@@ -61421,20 +61766,20 @@ class LogLevelFilters extends __WEBPACK_IMPORTED_MODULE_0_react__["Component"] {
 /* harmony default export */ __webpack_exports__["a"] = (LogLevelFilters);
 
 /***/ }),
-/* 218 */
+/* 245 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_react_virtualized_dist_commonjs_AutoSizer__ = __webpack_require__(330);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_react_virtualized_dist_commonjs_AutoSizer__ = __webpack_require__(359);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_react_virtualized_dist_commonjs_AutoSizer___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_react_virtualized_dist_commonjs_AutoSizer__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__objectInspector_object_inspector_ObjectInspector__ = __webpack_require__(221);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__objectInspectorTheme__ = __webpack_require__(216);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_react_virtualized__ = __webpack_require__(366);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__chromeStyleIcons__ = __webpack_require__(219);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__highlighter_Highlighter__ = __webpack_require__(73);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__objectInspector_object_inspector_ObjectInspector__ = __webpack_require__(248);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__objectInspectorTheme__ = __webpack_require__(243);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_react_virtualized__ = __webpack_require__(395);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__chromeStyleIcons__ = __webpack_require__(246);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__highlighter_Highlighter__ = __webpack_require__(77);
 /**
  * The finsemble console. It displays the filtered logs
  */
@@ -61467,7 +61812,7 @@ Object.defineProperty(Date.prototype, "YYYYMMDDHHMMSS", {
 	}
 });
 //@todo, investigate why this is necessary...think I included it for chrome styles. Didn't end up using chrome styles.
-__webpack_require__(389);
+__webpack_require__(418);
 const baseLogClass = "fsbl-log-message fsbl-plaintext-message-wrapper console-message-wrapper";
 const logTypeClasses = {
 	"Verbose": `${baseLogClass} fsbl-log-verbose`,
@@ -61899,11 +62244,11 @@ class LogList extends __WEBPACK_IMPORTED_MODULE_0_react___default.a.Component {
 
 
 /***/ }),
-/* 219 */
+/* 246 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /**
  * Icons that go next to a log-type (e.g., warning triangle, error x, info i). Allows user to quickly go "Oh there's a lot of errors here..").
@@ -61989,16 +62334,16 @@ const IconMap = {
 
 
 /***/ }),
-/* 220 */
+/* 247 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LogLevelFilters__ = __webpack_require__(217);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__LogList__ = __webpack_require__(218);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__LoggerSearchbox__ = __webpack_require__(208);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__stores_LoggerStore__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LogLevelFilters__ = __webpack_require__(244);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__LogList__ = __webpack_require__(245);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__LoggerSearchbox__ = __webpack_require__(235);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__stores_LoggerStore__ = __webpack_require__(13);
 /**
  * The harness for the actual console and filters.
  */
@@ -62043,18 +62388,18 @@ class RightPanel extends __WEBPACK_IMPORTED_MODULE_0_react__["Component"] {
 /* harmony default export */ __webpack_exports__["a"] = (RightPanel);
 
 /***/ }),
-/* 221 */
+/* 248 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_prop_types__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__tree_view_TreeView__ = __webpack_require__(232);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__ObjectRootLabel__ = __webpack_require__(224);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__ObjectLabel__ = __webpack_require__(222);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__styles_ThemeProvider__ = __webpack_require__(225);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__tree_view_TreeView__ = __webpack_require__(259);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__ObjectRootLabel__ = __webpack_require__(251);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__ObjectLabel__ = __webpack_require__(249);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__styles_ThemeProvider__ = __webpack_require__(252);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
@@ -62212,16 +62557,16 @@ ObjectInspector.propTypes = {
 /* harmony default export */ __webpack_exports__["a"] = (ObjectInspector);
 
 /***/ }),
-/* 222 */
+/* 249 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_prop_types__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__object_ObjectName__ = __webpack_require__(90);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__object_ObjectValue__ = __webpack_require__(134);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__object_ObjectName__ = __webpack_require__(95);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__object_ObjectValue__ = __webpack_require__(140);
 
 
 
@@ -62265,16 +62610,16 @@ ObjectLabel.defaultProps = {
 /* harmony default export */ __webpack_exports__["a"] = (ObjectLabel);
 
 /***/ }),
-/* 223 */
+/* 250 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_prop_types__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__object_ObjectValue__ = __webpack_require__(134);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__object_ObjectName__ = __webpack_require__(90);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__object_ObjectValue__ = __webpack_require__(140);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__object_ObjectName__ = __webpack_require__(95);
 
 
 
@@ -62370,14 +62715,14 @@ ObjectPreview.defaultProps = {
 /* harmony default export */ __webpack_exports__["a"] = (ObjectPreview);
 
 /***/ }),
-/* 224 */
+/* 251 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__object_ObjectName__ = __webpack_require__(90);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__ObjectPreview__ = __webpack_require__(223);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__object_ObjectName__ = __webpack_require__(95);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__ObjectPreview__ = __webpack_require__(250);
 
 
 
@@ -62415,11 +62760,11 @@ const ObjectRootLabel = ({ onMatchFound, searchBoxText, filterStrings, name, dat
 /* harmony default export */ __webpack_exports__["a"] = (ObjectRootLabel);
 
 /***/ }),
-/* 225 */
+/* 252 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_prop_types__);
@@ -62448,11 +62793,11 @@ ThemeProvider.childContextTypes = {
 /* harmony default export */ __webpack_exports__["a"] = (ThemeProvider);
 
 /***/ }),
-/* 226 */
+/* 253 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__unselectable__ = __webpack_require__(230);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__unselectable__ = __webpack_require__(257);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 
@@ -62718,7 +63063,7 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 }));
 
 /***/ }),
-/* 227 */
+/* 254 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -62768,7 +63113,7 @@ const theme = {
 /* harmony default export */ __webpack_exports__["a"] = (theme);
 
 /***/ }),
-/* 228 */
+/* 255 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -62818,14 +63163,14 @@ const theme = {
 /* harmony default export */ __webpack_exports__["a"] = (theme);
 
 /***/ }),
-/* 229 */
+/* 256 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__chromeDark__ = __webpack_require__(227);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__chromeDark__ = __webpack_require__(254);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "chromeDark", function() { return __WEBPACK_IMPORTED_MODULE_0__chromeDark__["a"]; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__chromeLight__ = __webpack_require__(228);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__chromeLight__ = __webpack_require__(255);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "chromeLight", function() { return __WEBPACK_IMPORTED_MODULE_1__chromeLight__["a"]; });
 
 
@@ -62833,7 +63178,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 /***/ }),
-/* 230 */
+/* 257 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -62848,15 +63193,15 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 });
 
 /***/ }),
-/* 231 */
+/* 258 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_prop_types__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__styles_createStyles__ = __webpack_require__(91);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__styles_createStyles__ = __webpack_require__(96);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 
@@ -62948,16 +63293,16 @@ TreeNode.contextTypes = {
 /* harmony default export */ __webpack_exports__["a"] = (TreeNode);
 
 /***/ }),
-/* 232 */
+/* 259 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_prop_types__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__TreeNode__ = __webpack_require__(231);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__pathUtils__ = __webpack_require__(233);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__TreeNode__ = __webpack_require__(258);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__pathUtils__ = __webpack_require__(260);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
@@ -63173,7 +63518,7 @@ TreeView.defaultProps = {
 /* harmony default export */ __webpack_exports__["a"] = (TreeView);
 
 /***/ }),
-/* 233 */
+/* 260 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -63241,24 +63586,59 @@ const getExpandedPaths = (data, dataIterator, expandPaths, expandLevel, initialS
 
 
 /***/ }),
-/* 234 */
+/* 261 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_dependencyManager__ = __webpack_require__(41);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_dependencyManager___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__common_dependencyManager__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__LogAdapter__ = __webpack_require__(197);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_react__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_react_dom__ = __webpack_require__(67);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_react_dom___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_react_dom__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__app__ = __webpack_require__(198);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__clients_configClient__ = __webpack_require__(27);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__clients_configClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6__clients_configClient__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_system__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7__common_system__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__stores_LoggerStore__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__LogAdapter__ = __webpack_require__(219);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_react__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_react__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_react_dom__ = __webpack_require__(73);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_react_dom___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_react_dom__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__app__ = __webpack_require__(220);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__clients_configClient__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__clients_configClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5__clients_configClient__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_system__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6__common_system__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_systemManagerClient__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_systemManagerClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7__common_systemManagerClient__);
+let StartLoggerUI = (() => {
+	var _ref = _asyncToGenerator(function* () {
+		yield __WEBPACK_IMPORTED_MODULE_7__common_systemManagerClient___default.a.waitForStartup("configService");
+		yield __WEBPACK_IMPORTED_MODULE_7__common_systemManagerClient___default.a.waitForStartup("preferencesService");
+		__WEBPACK_IMPORTED_MODULE_5__clients_configClient___default.a.getValue({ field: "finsemble" }, function (err, value) {
+			saveLogToFileOnShutDown = value.system.saveLogToFileOnShutDown;
+		});
+		__WEBPACK_IMPORTED_MODULE_5__clients_configClient___default.a.getPreferences(function (err, values) {
+			let showOnStartup = false,
+			    showOnError = false;
+			try {
+				showOnStartup = values["finsemble.preferences.loggerService.showOnStartup"];
+				showOnError = values["finsemble.preferences.loggerService.showOnError"];
+			} catch (e) {
+				//bury the error
+				console.log("Caught error getting preferences...", e);
+			}
+			//Set it, don't set the preference.
+			__WEBPACK_IMPORTED_MODULE_0__stores_LoggerStore__["a" /* default */].setShowOnStartup(showOnStartup, false);
+			__WEBPACK_IMPORTED_MODULE_0__stores_LoggerStore__["a" /* default */].setShowOnError(showOnError, false);
+			if (showOnStartup) {
+				window.showConsole();
+			}
+		});
+
+		__WEBPACK_IMPORTED_MODULE_3_react_dom___default.a.render(__WEBPACK_IMPORTED_MODULE_2_react___default.a.createElement(__WEBPACK_IMPORTED_MODULE_4__app__["a" /* default */], null), document.getElementById("Logger-component-wrapper"));
+	});
+
+	return function StartLoggerUI() {
+		return _ref.apply(this, arguments);
+	};
+})();
+
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
 /**
  * Entry-file for the UI. Loads the store, the adapter, and the main UI file. Gets preferences, and renders the react component.
  */
@@ -63267,17 +63647,17 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-
-const myAdapter = new __WEBPACK_IMPORTED_MODULE_2__LogAdapter__["a" /* default */]();
-
+const myAdapter = new __WEBPACK_IMPORTED_MODULE_1__LogAdapter__["a" /* default */]();
 
 
-__WEBPACK_IMPORTED_MODULE_6__clients_configClient___default.a.initialize();
+
+
+__WEBPACK_IMPORTED_MODULE_5__clients_configClient___default.a.initialize();
 let saveLogToFileOnShutDown = false;
 
 // convenience function for showing console if startup problem
 window.showConsole = function () {
-	let finWindow = __WEBPACK_IMPORTED_MODULE_7__common_system__["System"].Window.getCurrent();
+	let finWindow = __WEBPACK_IMPORTED_MODULE_6__common_system__["System"].Window.getCurrent();
 	finWindow.restore();
 	finWindow.show();
 	finWindow.bringToFront(() => {
@@ -63285,44 +63665,14 @@ window.showConsole = function () {
 	});
 };
 
-function StartLoggerUI() {
-	__WEBPACK_IMPORTED_MODULE_0__common_dependencyManager___default.a.startup.waitFor({
-		services: ["preferencesService"]
-	}, () => {
-		__WEBPACK_IMPORTED_MODULE_6__clients_configClient___default.a.onReady(() => {
-			__WEBPACK_IMPORTED_MODULE_6__clients_configClient___default.a.getValue({ field: "finsemble" }, function (err, value) {
-				saveLogToFileOnShutDown = value.system.saveLogToFileOnShutDown;
-			});
-			__WEBPACK_IMPORTED_MODULE_6__clients_configClient___default.a.getPreferences((err, values) => {
-				let showOnStartup = false,
-				    showOnError = false;
-				try {
-					showOnStartup = values["finsemble.preferences.loggerService.showOnStartup"];
-					showOnError = values["finsemble.preferences.loggerService.showOnError"];
-				} catch (e) {
-					//bury the error
-					console.log("Caught error getting preferences...", e);
-				}
-				//Set it, don't set the preference.
-				__WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__["a" /* default */].setShowOnStartup(showOnStartup, false);
-				__WEBPACK_IMPORTED_MODULE_1__stores_LoggerStore__["a" /* default */].setShowOnError(showOnError, false);
-				if (showOnStartup) {
-					window.showConsole();
-				}
-			});
-		});
-	});
-	__WEBPACK_IMPORTED_MODULE_4_react_dom___default.a.render(__WEBPACK_IMPORTED_MODULE_3_react___default.a.createElement(__WEBPACK_IMPORTED_MODULE_5__app__["a" /* default */], null), document.getElementById("Logger-component-wrapper"));
-}
-
 StartLoggerUI();
 
 /***/ }),
-/* 235 */
+/* 262 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__LoggerStore__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__LoggerStore__ = __webpack_require__(13);
 /**
  * Currently a dumb bridge from the adapter to the logger store. In the future I'd like this to actually work like a proper actions file of a store.
  */
@@ -63344,7 +63694,7 @@ StartLoggerUI();
 });
 
 /***/ }),
-/* 236 */
+/* 263 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -63656,7 +64006,7 @@ StartLoggerUI();
 });
 
 /***/ }),
-/* 237 */
+/* 264 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -63888,62 +64238,63 @@ StartLoggerUI();
 });
 
 /***/ }),
-/* 238 */,
-/* 239 */
+/* 265 */,
+/* 266 */,
+/* 267 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = { "default": __webpack_require__(249), __esModule: true };
+module.exports = { "default": __webpack_require__(277), __esModule: true };
 
 /***/ }),
-/* 240 */
+/* 268 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = { "default": __webpack_require__(250), __esModule: true };
+module.exports = { "default": __webpack_require__(278), __esModule: true };
 
 /***/ }),
-/* 241 */
+/* 269 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = { "default": __webpack_require__(251), __esModule: true };
+module.exports = { "default": __webpack_require__(279), __esModule: true };
 
 /***/ }),
-/* 242 */
+/* 270 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = { "default": __webpack_require__(252), __esModule: true };
+module.exports = { "default": __webpack_require__(280), __esModule: true };
 
 /***/ }),
-/* 243 */
+/* 271 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = { "default": __webpack_require__(253), __esModule: true };
+module.exports = { "default": __webpack_require__(281), __esModule: true };
 
 /***/ }),
-/* 244 */
+/* 272 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = { "default": __webpack_require__(254), __esModule: true };
+module.exports = { "default": __webpack_require__(282), __esModule: true };
 
 /***/ }),
-/* 245 */
+/* 273 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = { "default": __webpack_require__(257), __esModule: true };
+module.exports = { "default": __webpack_require__(285), __esModule: true };
 
 /***/ }),
-/* 246 */
+/* 274 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = { "default": __webpack_require__(258), __esModule: true };
+module.exports = { "default": __webpack_require__(286), __esModule: true };
 
 /***/ }),
-/* 247 */
+/* 275 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = { "default": __webpack_require__(259), __esModule: true };
+module.exports = { "default": __webpack_require__(287), __esModule: true };
 
 /***/ }),
-/* 248 */
+/* 276 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -63951,11 +64302,11 @@ module.exports = { "default": __webpack_require__(259), __esModule: true };
 
 exports.__esModule = true;
 
-var _isIterable2 = __webpack_require__(240);
+var _isIterable2 = __webpack_require__(268);
 
 var _isIterable3 = _interopRequireDefault(_isIterable2);
 
-var _getIterator2 = __webpack_require__(239);
+var _getIterator2 = __webpack_require__(267);
 
 var _getIterator3 = _interopRequireDefault(_getIterator2);
 
@@ -64000,36 +64351,36 @@ exports.default = function () {
 }();
 
 /***/ }),
-/* 249 */
+/* 277 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(109);
-__webpack_require__(108);
-module.exports = __webpack_require__(277);
+__webpack_require__(114);
+__webpack_require__(113);
+module.exports = __webpack_require__(305);
 
 
 /***/ }),
-/* 250 */
+/* 278 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(109);
-__webpack_require__(108);
-module.exports = __webpack_require__(278);
+__webpack_require__(114);
+__webpack_require__(113);
+module.exports = __webpack_require__(306);
 
 
 /***/ }),
-/* 251 */
+/* 279 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(280);
+__webpack_require__(308);
 module.exports = __webpack_require__(19).Object.assign;
 
 
 /***/ }),
-/* 252 */
+/* 280 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(281);
+__webpack_require__(309);
 var $Object = __webpack_require__(19).Object;
 module.exports = function create(P, D) {
   return $Object.create(P, D);
@@ -64037,10 +64388,10 @@ module.exports = function create(P, D) {
 
 
 /***/ }),
-/* 253 */
+/* 281 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(282);
+__webpack_require__(310);
 var $Object = __webpack_require__(19).Object;
 module.exports = function defineProperty(it, key, desc) {
   return $Object.defineProperty(it, key, desc);
@@ -64048,10 +64399,10 @@ module.exports = function defineProperty(it, key, desc) {
 
 
 /***/ }),
-/* 254 */
+/* 282 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(283);
+__webpack_require__(311);
 var $Object = __webpack_require__(19).Object;
 module.exports = function getOwnPropertyDescriptor(it, key) {
   return $Object.getOwnPropertyDescriptor(it, key);
@@ -64059,51 +64410,51 @@ module.exports = function getOwnPropertyDescriptor(it, key) {
 
 
 /***/ }),
-/* 255 */
+/* 283 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(284);
+__webpack_require__(312);
 module.exports = __webpack_require__(19).Object.getPrototypeOf;
 
 
 /***/ }),
-/* 256 */
+/* 284 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(285);
+__webpack_require__(313);
 module.exports = __webpack_require__(19).Object.keys;
 
 
 /***/ }),
-/* 257 */
+/* 285 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(286);
+__webpack_require__(314);
 module.exports = __webpack_require__(19).Object.setPrototypeOf;
 
 
 /***/ }),
-/* 258 */
+/* 286 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(288);
-__webpack_require__(287);
-__webpack_require__(289);
-__webpack_require__(290);
+__webpack_require__(316);
+__webpack_require__(315);
+__webpack_require__(317);
+__webpack_require__(318);
 module.exports = __webpack_require__(19).Symbol;
 
 
 /***/ }),
-/* 259 */
+/* 287 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(108);
-__webpack_require__(109);
-module.exports = __webpack_require__(107).f('iterator');
+__webpack_require__(113);
+__webpack_require__(114);
+module.exports = __webpack_require__(112).f('iterator');
 
 
 /***/ }),
-/* 260 */
+/* 288 */
 /***/ (function(module, exports) {
 
 module.exports = function (it) {
@@ -64113,21 +64464,21 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 261 */
+/* 289 */
 /***/ (function(module, exports) {
 
 module.exports = function () { /* empty */ };
 
 
 /***/ }),
-/* 262 */
+/* 290 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // false -> Array#indexOf
 // true  -> Array#includes
-var toIObject = __webpack_require__(38);
-var toLength = __webpack_require__(275);
-var toAbsoluteIndex = __webpack_require__(274);
+var toIObject = __webpack_require__(42);
+var toLength = __webpack_require__(303);
+var toAbsoluteIndex = __webpack_require__(302);
 module.exports = function (IS_INCLUDES) {
   return function ($this, el, fromIndex) {
     var O = toIObject($this);
@@ -64149,13 +64500,13 @@ module.exports = function (IS_INCLUDES) {
 
 
 /***/ }),
-/* 263 */
+/* 291 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // all enumerable object keys, includes symbols
-var getKeys = __webpack_require__(55);
-var gOPS = __webpack_require__(99);
-var pIE = __webpack_require__(75);
+var getKeys = __webpack_require__(61);
+var gOPS = __webpack_require__(104);
+var pIE = __webpack_require__(79);
 module.exports = function (it) {
   var result = getKeys(it);
   var getSymbols = gOPS.f;
@@ -64170,37 +64521,37 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 264 */
+/* 292 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var document = __webpack_require__(31).document;
+var document = __webpack_require__(34).document;
 module.exports = document && document.documentElement;
 
 
 /***/ }),
-/* 265 */
+/* 293 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 7.2.2 IsArray(argument)
-var cof = __webpack_require__(94);
+var cof = __webpack_require__(99);
 module.exports = Array.isArray || function isArray(arg) {
   return cof(arg) == 'Array';
 };
 
 
 /***/ }),
-/* 266 */
+/* 294 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var create = __webpack_require__(97);
-var descriptor = __webpack_require__(76);
-var setToStringTag = __webpack_require__(101);
+var create = __webpack_require__(102);
+var descriptor = __webpack_require__(80);
+var setToStringTag = __webpack_require__(106);
 var IteratorPrototype = {};
 
 // 25.1.2.1.1 %IteratorPrototype%[@@iterator]()
-__webpack_require__(44)(IteratorPrototype, __webpack_require__(28)('iterator'), function () { return this; });
+__webpack_require__(48)(IteratorPrototype, __webpack_require__(30)('iterator'), function () { return this; });
 
 module.exports = function (Constructor, NAME, next) {
   Constructor.prototype = create(IteratorPrototype, { next: descriptor(1, next) });
@@ -64209,7 +64560,7 @@ module.exports = function (Constructor, NAME, next) {
 
 
 /***/ }),
-/* 267 */
+/* 295 */
 /***/ (function(module, exports) {
 
 module.exports = function (done, value) {
@@ -64218,18 +64569,18 @@ module.exports = function (done, value) {
 
 
 /***/ }),
-/* 268 */
+/* 296 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var META = __webpack_require__(77)('meta');
-var isObject = __webpack_require__(45);
-var has = __webpack_require__(36);
-var setDesc = __webpack_require__(37).f;
+var META = __webpack_require__(81)('meta');
+var isObject = __webpack_require__(49);
+var has = __webpack_require__(40);
+var setDesc = __webpack_require__(41).f;
 var id = 0;
 var isExtensible = Object.isExtensible || function () {
   return true;
 };
-var FREEZE = !__webpack_require__(43)(function () {
+var FREEZE = !__webpack_require__(47)(function () {
   return isExtensible(Object.preventExtensions({}));
 });
 var setMeta = function (it) {
@@ -64277,22 +64628,22 @@ var meta = module.exports = {
 
 
 /***/ }),
-/* 269 */
+/* 297 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 // 19.1.2.1 Object.assign(target, source, ...)
-var DESCRIPTORS = __webpack_require__(30);
-var getKeys = __webpack_require__(55);
-var gOPS = __webpack_require__(99);
-var pIE = __webpack_require__(75);
-var toObject = __webpack_require__(56);
-var IObject = __webpack_require__(141);
+var DESCRIPTORS = __webpack_require__(33);
+var getKeys = __webpack_require__(61);
+var gOPS = __webpack_require__(104);
+var pIE = __webpack_require__(79);
+var toObject = __webpack_require__(62);
+var IObject = __webpack_require__(147);
 var $assign = Object.assign;
 
 // should work with symbols and should have deterministic property order (V8 bug)
-module.exports = !$assign || __webpack_require__(43)(function () {
+module.exports = !$assign || __webpack_require__(47)(function () {
   var A = {};
   var B = {};
   // eslint-disable-next-line no-undef
@@ -64322,14 +64673,14 @@ module.exports = !$assign || __webpack_require__(43)(function () {
 
 
 /***/ }),
-/* 270 */
+/* 298 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var dP = __webpack_require__(37);
-var anObject = __webpack_require__(42);
-var getKeys = __webpack_require__(55);
+var dP = __webpack_require__(41);
+var anObject = __webpack_require__(46);
+var getKeys = __webpack_require__(61);
 
-module.exports = __webpack_require__(30) ? Object.defineProperties : function defineProperties(O, Properties) {
+module.exports = __webpack_require__(33) ? Object.defineProperties : function defineProperties(O, Properties) {
   anObject(O);
   var keys = getKeys(Properties);
   var length = keys.length;
@@ -64341,12 +64692,12 @@ module.exports = __webpack_require__(30) ? Object.defineProperties : function de
 
 
 /***/ }),
-/* 271 */
+/* 299 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // fallback for IE11 buggy Object.getOwnPropertyNames with iframe and window
-var toIObject = __webpack_require__(38);
-var gOPN = __webpack_require__(143).f;
+var toIObject = __webpack_require__(42);
+var gOPN = __webpack_require__(149).f;
 var toString = {}.toString;
 
 var windowNames = typeof window == 'object' && window && Object.getOwnPropertyNames
@@ -64366,13 +64717,13 @@ module.exports.f = function getOwnPropertyNames(it) {
 
 
 /***/ }),
-/* 272 */
+/* 300 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Works with __proto__ only. Old v8 can't work with null proto objects.
 /* eslint-disable no-proto */
-var isObject = __webpack_require__(45);
-var anObject = __webpack_require__(42);
+var isObject = __webpack_require__(49);
+var anObject = __webpack_require__(46);
 var check = function (O, proto) {
   anObject(O);
   if (!isObject(proto) && proto !== null) throw TypeError(proto + ": can't set as prototype!");
@@ -64381,7 +64732,7 @@ module.exports = {
   set: Object.setPrototypeOf || ('__proto__' in {} ? // eslint-disable-line
     function (test, buggy, set) {
       try {
-        set = __webpack_require__(138)(Function.call, __webpack_require__(98).f(Object.prototype, '__proto__').set, 2);
+        set = __webpack_require__(144)(Function.call, __webpack_require__(103).f(Object.prototype, '__proto__').set, 2);
         set(test, []);
         buggy = !(test instanceof Array);
       } catch (e) { buggy = true; }
@@ -64397,11 +64748,11 @@ module.exports = {
 
 
 /***/ }),
-/* 273 */
+/* 301 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var toInteger = __webpack_require__(104);
-var defined = __webpack_require__(95);
+var toInteger = __webpack_require__(109);
+var defined = __webpack_require__(100);
 // true  -> String#at
 // false -> String#codePointAt
 module.exports = function (TO_STRING) {
@@ -64420,10 +64771,10 @@ module.exports = function (TO_STRING) {
 
 
 /***/ }),
-/* 274 */
+/* 302 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var toInteger = __webpack_require__(104);
+var toInteger = __webpack_require__(109);
 var max = Math.max;
 var min = Math.min;
 module.exports = function (index, length) {
@@ -64433,11 +64784,11 @@ module.exports = function (index, length) {
 
 
 /***/ }),
-/* 275 */
+/* 303 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 7.1.15 ToLength
-var toInteger = __webpack_require__(104);
+var toInteger = __webpack_require__(109);
 var min = Math.min;
 module.exports = function (it) {
   return it > 0 ? min(toInteger(it), 0x1fffffffffffff) : 0; // pow(2, 53) - 1 == 9007199254740991
@@ -64445,12 +64796,12 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 276 */
+/* 304 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var classof = __webpack_require__(137);
-var ITERATOR = __webpack_require__(28)('iterator');
-var Iterators = __webpack_require__(54);
+var classof = __webpack_require__(143);
+var ITERATOR = __webpack_require__(30)('iterator');
+var Iterators = __webpack_require__(60);
 module.exports = __webpack_require__(19).getIteratorMethod = function (it) {
   if (it != undefined) return it[ITERATOR]
     || it['@@iterator']
@@ -64459,11 +64810,11 @@ module.exports = __webpack_require__(19).getIteratorMethod = function (it) {
 
 
 /***/ }),
-/* 277 */
+/* 305 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var anObject = __webpack_require__(42);
-var get = __webpack_require__(276);
+var anObject = __webpack_require__(46);
+var get = __webpack_require__(304);
 module.exports = __webpack_require__(19).getIterator = function (it) {
   var iterFn = get(it);
   if (typeof iterFn != 'function') throw TypeError(it + ' is not iterable!');
@@ -64472,12 +64823,12 @@ module.exports = __webpack_require__(19).getIterator = function (it) {
 
 
 /***/ }),
-/* 278 */
+/* 306 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var classof = __webpack_require__(137);
-var ITERATOR = __webpack_require__(28)('iterator');
-var Iterators = __webpack_require__(54);
+var classof = __webpack_require__(143);
+var ITERATOR = __webpack_require__(30)('iterator');
+var Iterators = __webpack_require__(60);
 module.exports = __webpack_require__(19).isIterable = function (it) {
   var O = Object(it);
   return O[ITERATOR] !== undefined
@@ -64488,21 +64839,21 @@ module.exports = __webpack_require__(19).isIterable = function (it) {
 
 
 /***/ }),
-/* 279 */
+/* 307 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var addToUnscopables = __webpack_require__(261);
-var step = __webpack_require__(267);
-var Iterators = __webpack_require__(54);
-var toIObject = __webpack_require__(38);
+var addToUnscopables = __webpack_require__(289);
+var step = __webpack_require__(295);
+var Iterators = __webpack_require__(60);
+var toIObject = __webpack_require__(42);
 
 // 22.1.3.4 Array.prototype.entries()
 // 22.1.3.13 Array.prototype.keys()
 // 22.1.3.29 Array.prototype.values()
 // 22.1.3.30 Array.prototype[@@iterator]()
-module.exports = __webpack_require__(142)(Array, 'Array', function (iterated, kind) {
+module.exports = __webpack_require__(148)(Array, 'Array', function (iterated, kind) {
   this._t = toIObject(iterated); // target
   this._i = 0;                   // next index
   this._k = kind;                // kind
@@ -64529,42 +64880,42 @@ addToUnscopables('entries');
 
 
 /***/ }),
-/* 280 */
+/* 308 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 19.1.3.1 Object.assign(target, source)
-var $export = __webpack_require__(35);
+var $export = __webpack_require__(39);
 
-$export($export.S + $export.F, 'Object', { assign: __webpack_require__(269) });
+$export($export.S + $export.F, 'Object', { assign: __webpack_require__(297) });
 
 
 /***/ }),
-/* 281 */
+/* 309 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $export = __webpack_require__(35);
+var $export = __webpack_require__(39);
 // 19.1.2.2 / 15.2.3.5 Object.create(O [, Properties])
-$export($export.S, 'Object', { create: __webpack_require__(97) });
+$export($export.S, 'Object', { create: __webpack_require__(102) });
 
 
 /***/ }),
-/* 282 */
+/* 310 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $export = __webpack_require__(35);
+var $export = __webpack_require__(39);
 // 19.1.2.4 / 15.2.3.6 Object.defineProperty(O, P, Attributes)
-$export($export.S + $export.F * !__webpack_require__(30), 'Object', { defineProperty: __webpack_require__(37).f });
+$export($export.S + $export.F * !__webpack_require__(33), 'Object', { defineProperty: __webpack_require__(41).f });
 
 
 /***/ }),
-/* 283 */
+/* 311 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 19.1.2.6 Object.getOwnPropertyDescriptor(O, P)
-var toIObject = __webpack_require__(38);
-var $getOwnPropertyDescriptor = __webpack_require__(98).f;
+var toIObject = __webpack_require__(42);
+var $getOwnPropertyDescriptor = __webpack_require__(103).f;
 
-__webpack_require__(100)('getOwnPropertyDescriptor', function () {
+__webpack_require__(105)('getOwnPropertyDescriptor', function () {
   return function getOwnPropertyDescriptor(it, key) {
     return $getOwnPropertyDescriptor(toIObject(it), key);
   };
@@ -64572,14 +64923,14 @@ __webpack_require__(100)('getOwnPropertyDescriptor', function () {
 
 
 /***/ }),
-/* 284 */
+/* 312 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 19.1.2.9 Object.getPrototypeOf(O)
-var toObject = __webpack_require__(56);
-var $getPrototypeOf = __webpack_require__(144);
+var toObject = __webpack_require__(62);
+var $getPrototypeOf = __webpack_require__(150);
 
-__webpack_require__(100)('getPrototypeOf', function () {
+__webpack_require__(105)('getPrototypeOf', function () {
   return function getPrototypeOf(it) {
     return $getPrototypeOf(toObject(it));
   };
@@ -64587,14 +64938,14 @@ __webpack_require__(100)('getPrototypeOf', function () {
 
 
 /***/ }),
-/* 285 */
+/* 313 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 19.1.2.14 Object.keys(O)
-var toObject = __webpack_require__(56);
-var $keys = __webpack_require__(55);
+var toObject = __webpack_require__(62);
+var $keys = __webpack_require__(61);
 
-__webpack_require__(100)('keys', function () {
+__webpack_require__(105)('keys', function () {
   return function keys(it) {
     return $keys(toObject(it));
   };
@@ -64602,54 +64953,54 @@ __webpack_require__(100)('keys', function () {
 
 
 /***/ }),
-/* 286 */
+/* 314 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 19.1.3.19 Object.setPrototypeOf(O, proto)
-var $export = __webpack_require__(35);
-$export($export.S, 'Object', { setPrototypeOf: __webpack_require__(272).set });
+var $export = __webpack_require__(39);
+$export($export.S, 'Object', { setPrototypeOf: __webpack_require__(300).set });
 
 
 /***/ }),
-/* 287 */
+/* 315 */
 /***/ (function(module, exports) {
 
 
 
 /***/ }),
-/* 288 */
+/* 316 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 // ECMAScript 6 symbols shim
-var global = __webpack_require__(31);
-var has = __webpack_require__(36);
-var DESCRIPTORS = __webpack_require__(30);
-var $export = __webpack_require__(35);
-var redefine = __webpack_require__(146);
-var META = __webpack_require__(268).KEY;
-var $fails = __webpack_require__(43);
-var shared = __webpack_require__(103);
-var setToStringTag = __webpack_require__(101);
-var uid = __webpack_require__(77);
-var wks = __webpack_require__(28);
-var wksExt = __webpack_require__(107);
-var wksDefine = __webpack_require__(106);
-var enumKeys = __webpack_require__(263);
-var isArray = __webpack_require__(265);
-var anObject = __webpack_require__(42);
-var isObject = __webpack_require__(45);
-var toObject = __webpack_require__(56);
-var toIObject = __webpack_require__(38);
-var toPrimitive = __webpack_require__(105);
-var createDesc = __webpack_require__(76);
-var _create = __webpack_require__(97);
-var gOPNExt = __webpack_require__(271);
-var $GOPD = __webpack_require__(98);
-var $GOPS = __webpack_require__(99);
-var $DP = __webpack_require__(37);
-var $keys = __webpack_require__(55);
+var global = __webpack_require__(34);
+var has = __webpack_require__(40);
+var DESCRIPTORS = __webpack_require__(33);
+var $export = __webpack_require__(39);
+var redefine = __webpack_require__(152);
+var META = __webpack_require__(296).KEY;
+var $fails = __webpack_require__(47);
+var shared = __webpack_require__(108);
+var setToStringTag = __webpack_require__(106);
+var uid = __webpack_require__(81);
+var wks = __webpack_require__(30);
+var wksExt = __webpack_require__(112);
+var wksDefine = __webpack_require__(111);
+var enumKeys = __webpack_require__(291);
+var isArray = __webpack_require__(293);
+var anObject = __webpack_require__(46);
+var isObject = __webpack_require__(49);
+var toObject = __webpack_require__(62);
+var toIObject = __webpack_require__(42);
+var toPrimitive = __webpack_require__(110);
+var createDesc = __webpack_require__(80);
+var _create = __webpack_require__(102);
+var gOPNExt = __webpack_require__(299);
+var $GOPD = __webpack_require__(103);
+var $GOPS = __webpack_require__(104);
+var $DP = __webpack_require__(41);
+var $keys = __webpack_require__(61);
 var gOPD = $GOPD.f;
 var dP = $DP.f;
 var gOPN = gOPNExt.f;
@@ -64772,11 +65123,11 @@ if (!USE_NATIVE) {
 
   $GOPD.f = $getOwnPropertyDescriptor;
   $DP.f = $defineProperty;
-  __webpack_require__(143).f = gOPNExt.f = $getOwnPropertyNames;
-  __webpack_require__(75).f = $propertyIsEnumerable;
+  __webpack_require__(149).f = gOPNExt.f = $getOwnPropertyNames;
+  __webpack_require__(79).f = $propertyIsEnumerable;
   $GOPS.f = $getOwnPropertySymbols;
 
-  if (DESCRIPTORS && !__webpack_require__(74)) {
+  if (DESCRIPTORS && !__webpack_require__(78)) {
     redefine(ObjectProto, 'propertyIsEnumerable', $propertyIsEnumerable, true);
   }
 
@@ -64860,7 +65211,7 @@ $JSON && $export($export.S + $export.F * (!USE_NATIVE || $fails(function () {
 });
 
 // 19.4.3.4 Symbol.prototype[@@toPrimitive](hint)
-$Symbol[PROTOTYPE][TO_PRIMITIVE] || __webpack_require__(44)($Symbol[PROTOTYPE], TO_PRIMITIVE, $Symbol[PROTOTYPE].valueOf);
+$Symbol[PROTOTYPE][TO_PRIMITIVE] || __webpack_require__(48)($Symbol[PROTOTYPE], TO_PRIMITIVE, $Symbol[PROTOTYPE].valueOf);
 // 19.4.3.5 Symbol.prototype[@@toStringTag]
 setToStringTag($Symbol, 'Symbol');
 // 20.2.1.9 Math[@@toStringTag]
@@ -64870,21 +65221,21 @@ setToStringTag(global.JSON, 'JSON', true);
 
 
 /***/ }),
-/* 289 */
+/* 317 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(106)('asyncIterator');
+__webpack_require__(111)('asyncIterator');
 
 
 /***/ }),
-/* 290 */
+/* 318 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(106)('observable');
+__webpack_require__(111)('observable');
 
 
 /***/ }),
-/* 291 */
+/* 319 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -65043,33 +65394,33 @@ function fromByteArray (uint8) {
 
 
 /***/ }),
-/* 292 */
+/* 320 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(147)(false);
+exports = module.exports = __webpack_require__(153)(false);
 // Imports
 exports.push([module.i, "@import url(https://fonts.googleapis.com/css?family=Roboto);", ""]);
 exports.push([module.i, "@import url(https://fonts.googleapis.com/css?family=Source+Code+Pro);", ""]);
-var urlEscape = __webpack_require__(294);
-var ___CSS_LOADER_URL___0___ = urlEscape(__webpack_require__(390));
+var urlEscape = __webpack_require__(322);
+var ___CSS_LOADER_URL___0___ = urlEscape(__webpack_require__(419));
 
 // Module
-exports.push([module.i, ":root {\n\t--slate1: #7B98B3;\n\t--slate2: #67829A;\n\t--slate3: #617383;\n\t--slate4: #495A69;\n\t--slate5: #3C4C58;\n\t--slate6: #303D47;\n\t--slate7: #1C2A36;\n\t--gray1: #EEE;\n\t--gray2: #DDD;\n\t--gray3: #CCC;\n\t--gray4: #BBB;\n\t--gray5: #999;\n\t--gray6: #777;\n\t--gray7: #555;\n\t--blue1: #66C2FF;\n\t--blue2: #3FB2FC;\n\t--blue3: #039BFF;\n\t--blue4: #0A8CF4;\n\t--blue5: #117DE9;\n\t--blue6: #005BC5;\n\t--blue7: #004BA3;\n\t--yellow1: #FFE869;\n\t--yellow2: #FFE347;\n\t--yellow3: #FFDD25;\n\t--yellow4: #FFD803;\n\t--yellow5: #F1CC00;\n\t--yellow6: #E0BD00;\n\t--yellow7: #CFAF00;\n\t--red1: #EE5C5C;\n\t--red2: #F64352;\n\t--red3: #FF2445;\n\t--red4: #EF1436;\n\t--red5: #D30E2D;\n\t--red6: #B70C06;\n\t--red7: #960A05;\n\t--slate: var(--slate4);\n\t--gray: var(--gray4);\n\t--blue: var(--blue4);\n\t--yellow: var(--yellow4);\n\t--red: var(--red4);\n\t--active-logger-button-background: var(--blue7);\n\t--collar-background-color: var(--slate5);\n\t--collar-border-color: #dadada;\n\n\t--basic-button-background-color: var(--gray3);\n\t--button-border-color: var(--active-logger-button-background);\n\t--accordion-label-color: var(--collar-background-color);\n\t--logger-row-border-color: var(--accordion-label-color);\n\t--left-panel-background-color: var(--slate4);\n\t--inactive-logger-button-background: var(--basic-button-background-color);\n\t--basic-button-font-color: var(--gray7);\n\t--toggle-button-font-color: var(--gray4);\n\t--toggle-button-background-color: var(--slate6);\n\t--accordion-label-wrap-height: 30px;\n\t--match-0: var(--slate4);\n\t--match-1: var(--blue4);\n\t--match-2: var(--yellow4);\n\t--match-3: rgb(32, 173, 32);\n}\n* {\n\tbox-sizing: border-box;\n}\nhtml {\n\theight: 100%;\n}\n\nbody {\n\toverflow: hidden;\n\tmargin: 10px;\n\theight: 100%;\n\twidth: 100%;\n\tfont-family: 'Roboto medium, sans-serif';\n\tfont-size: 11px;\n}\n\ntitle {\n\tfont-family: 'Roboto';\n\tfont-size: 18pt;\n}\n\n.hidden {\n\tdisplay: none !important;\n}\n\n.fsbl-logger-button.fsbl-logger-button-negative, .fsbl-logger-button-negative {\n\tbackground-color: var(--red5);\n\tcolor: var(--gray1);\n}\n\n.fsbl-logger-button {\n\ttext-align: center;\n\tfont-size: 1em;\n\tmargin-right: 2px;\n\tdisplay: inline-block;\n\tpadding: 2px;\n\tbackground-color: var(--basic-button-background-color);\n\tcolor: var(--basic-button-font-color);\n\tcursor: pointer;\n\tfont-weight: 400;\n}\n\n.flex-column {\n\tdisplay: flex;\n\tflex-direction: column;\n}\n\n.inline-flex-column {\n\tdisplay: inline-flex;\n\tflex-direction: column;\n}\n\n.fsbl-logger-button-group {\n\talign-self: flex-end;\n}\n\n.filter-logic {\n\tmargin-right: 18px;\n}\n\n.fsbl-logger-searchbox {\n\tdisplay: flex;\n\tposition: absolute;\n\tbottom: 0;\n\tbackground-color: var(--gray1);\n\twidth: 100%;\n\tz-index: 100;\n\talign-items: center;\n}\n\n.fsbl-logger-searchbox>div {\n\tdisplay: flex;\n}\n\n/*forces log stacks onto a new line/ */\n\n.message-log-stack {\n\tdisplay: block !important;\n}\n\n.search-box-input-wrapper {\n\theight: 18px;\n}\n\n.search-box-match-navigators {\n\tmargin-right: .5em;\n\tdisplay: flex;\n}\n\n.search-box-match-navigators>span, .search-box-cancel-button>span {\n\tdisplay: flex;\n\tflex-direction: column;\n\talign-self: center;\n\tborder: 1px solid var(--collar-border-color);\n\tbackground-color: var(--inactive-logger-button-background);\n\twidth: 25px;\n\tjustify-content: center;\n\tcursor: pointer;\n\tcolor: #848383;\n\tfont-size: 8px;\n\theight: 100%;\n\talign-items: center;\n}\n\n.search-box-cancel-button {\n\tmargin-left: auto;\n}\n\n.search-box-cancel-button>span {\n\tbackground-color: white;\n\tpadding: 0px 4px;\n}\n\n.search-box-match-navigators>span:hover, .search-box-cancel-button>span:hover {\n\tbackground-color: gainsboro;\n\tcolor: black;\n}\n\n.search-box-cancel-button>span {\n\twidth: 100%;\n\tfont-size: 12px;\n}\n\n.search-box-match-text {\n\tdisplay: inline-flex;\n\talign-items: center;\n\tcolor: gray;\n\tbackground-color: white;\n}\n\n.search-box-text-input input {\n\tborder: 0px;\n\theight: 16px;\n}\n\n.search-box-text-input {\n\tborder: 1px solid var(--collar-border-color);\n}\n\n.fsbl-plaintext-log-message span {\n\tdisplay: inline-block;\n\twhite-space: pre-wrap;\n}\n\n.fsbl-logger-row-index {\n\ttext-align: right;\n}\n\n.fsbl-logger-button-group-label {\n\tdisplay: flex;\n\tmargin: .5em 0;\n\tfont-weight: 500;\n}\n\n.fsbl-log-message {\n\tuser-select: auto;\n\tword-break: break-all;\n}\n\n.fsbl-logger-highlight {\n\tbackground-color: #38ff03 !important;\n}\n\n.fsbl-logger-search-highlight {\n\tbackground-color: yellow !important;\n}\n\n.fsbl-logger-row-selected {\n\tbackground-color: rgba(0, 126, 255, 0.24) !important;\n\tborder-top: 2px solid;\n}\n\n.console-debug-level {\n\tcolor: blue;\n}\n\n.fsbl-log-info {\n\tcolor: #2b8686;\n\tbackground-color: #e9fbfb;\n\tborder-bottom: 1px solid #d2fbfb;\n}\n\n.fsbl-log-warning {\n\tcolor: #5c3b00;\n\tbackground-color: #fffbe6;\n\tborder: 1px solid #fff5c2;\n}\n\n.fsbl-log-error {\n\tbackground-color: #fff0f0;\n\tborder: 1px solid #ffd7d7;\n\tcolor: #ff0000;\n}\n\n.fsbl-log-verbose {\n\tcolor: gray;\n}\n\n.pull-right {\n\tmargin-left: auto;\n\talign-self: center;\n}\n\n.fsbl-logger-client-row, .logger-row {\n\tdisplay: flex;\n\tflex-direction: row;\n\talign-items: center;\n\tjustify-content: space-between;\n}\n\n\n.fsbl-logger-client-row{\n\tmargin: 3px 0px;\n}\n\n.filter-client-list {\n\tmargin-left: 6px;\n}\n\n.fsbl-logger-client-name {\n\tmax-width: 50%;\n\tdisplay: flex;\n\talign-content: center;\n\talign-items: center;\n}\n\n.time-elapsed {\n\tcolor: gray;\n\twidth: 85px;\n\tjustify-content: flex-start;\n\tdisplay: inline-flex;\n\tmargin-right: 5px;\n\talign-self: flex-start;\n}\n\n.fsbl-logger-button {\n\tborder: 1px solid transparent;\n}\n\n.fsbl-logger-button.active {\n\tbackground-color: var(--active-logger-button-background) !important;\n\tcolor: #f1f0f0 !important;\n}\n\n.fsbl-logger-button.active:hover {\n\tbackground-color: white !important;\n\tborder: 1px solid var(--active-logger-button-background);\n\tcolor: black !important;\n}\n\n.fsbl-logger-button:hover {\n\tcolor: #2a2a2a;\n\tbackground-color: gainsboro;\n\ttransition: .1s ease;\n}\n\n.fsbl-logger-toggle:hover {\n\tbackground: var(--active-logger-button-background);\n\tcolor: var(--gray2);\n\ttransition: .1s ease;\n}\n.fsbl-logger-toggle {\n\tcolor: var(--toggle-button-font-color);\n\tbackground-color: var(--toggle-button-background-color);\n}\n.fsbl-logger-button i {\n\tvertical-align: middle;\n\tmargin: 0 6px;\n}\n\n.fsbl-log {\n\tfont-family: Consolas;\n\tfont-size: 1.1em;\n\tuser-select: initial;\n}\n\n.delta-box-wrapper {\n\tmargin-left: 12px;\n}\n\n.fsbl-logger-row-diff {\n\tfont-size: 1.1em;\n\tbackground-color: gainsboro;\n\tpadding: .25em;\n\ttext-align: center;\n\tfont-weight: 400;\n}\n\n.logger-button-margin-left {\n\tmargin-left: 6px;\n}\n\n.fsbl-logger-row-diff-okay {\n\tbackground-color: green;\n\tcolor: white;\n}\n\n.top-collar {\n\tbackground-color: var(--collar-background-color);\n\tmargin-bottom: 0px;\n\twidth: 100%;\n}\n\n.top-border {\n\tmargin-top: 8px;\n\tborder-top: 1px solid var(--collar-border-color);\n}\n\n.top-collar .fsbl-logger-button {\n\tborder: 0px;\n\tbox-shadow: none;\n\tbackground-color: transparent;\n\tmargin-top: 0px;\n\tmargin-bottom: 0px;\n\tpadding: .5em;\n\tcolor: var(--gray3);\n}\n\n.top-collar .fsbl-logger-button:hover {\n\tbackground-color: var(--gray3);\n\tcolor: var(--gray6);\n}\n\n.fsbl-logger-row-diff-slow {\n\tbackground-color: #ffe900;\n\tcolor: #5a5a5a;\n}\ni, i:before, i:after, .fsbl-window-manager-icon {\n\t\tbox-sizing: content-box;\n\t}\n.top-toggle-buttons {\n\tpadding-left: 77px;\n}\n\n.fsbl-logger-row-diff-very-slow {\n\tbackground-color: orange;\n\tcolor: white;\n}\n\n.fsbl-logger-row-diff-beyond-help {\n\tbackground-color: red;\n\tcolor: white;\n}\n\n.fsbl-plaintext-message-wrapper {\n\tborder-top: 1px solid transparent;\n\tborder-bottom: 1px solid #f0f0f0;\n\tpadding: .5em;\n\talign-self: flex-start;\n\tpadding-left: .5em;\n}\n\n.active-console-row {\n\tborder-top: 1px solid #aeaef1;\n\tborder-bottom: 1px solid #aeaef1 !important;\n\tbackground-color: #e7f3fd;\n}\n\n.fsbl-plaintext-log-message {\n\tflex: 1 1;\n}\n\n.fsbl-plaintext-message {\n\tdisplay: flex;\n\talign-items: center;\n\tjustify-content: space-between;\n}\n\n.fsbl-plaintext-extra-info {\n\tmax-width: 300px;\n\tdisplay: flex;\n\tjustify-content: flex-end;\n\twhite-space: nowrap;\n\ttext-decoration: underline;\n\tcursor: pointer;\n\tmargin-left: 10px;\n}\n\n.fsbl-plaintext-number {\n\tcolor: blue;\n}\n\n.fsbl-plaintext-timestamp {\n\tcolor: blue;\n}\n\n.fixed-header {\n\tborder-bottom: 1px solid #f0f0f0;\n\tz-index: 1000;\n}\n\n.flex-start {\n\talign-self: flex-start;\n}\n\nbody.dialog input:focus {\n\tborder: 1px solid #039bff;\n}\n\nbody {\n\tmargin: 0px;\n\tfont-family: 'Segoe UI', Tahoma, sans-serif;\n\tfont-weight: 400;\n\toverflow-x: hidden;\n\theight: 100%;\n\t-webkit-user-select: none;\n\tbackground-color: white;\n}\n\n.checkStyle {\n\tvertical-align: bottom;\n\theight: 14px;\n}\n\n.fsbl-logger-toggle-all-span {\n\tmargin: 50px;\n}\n\nhr {\n\twidth: 100%;\n}\n\ninput {\n\tborder: 1px solid #d0d0d0;\n\tpadding: 1px 0px 1px 5px;\n}\n\n.filter {\n\twidth: 450px;\n}\n\n.checkbox {\n\twidth: 14px;\n\theight: 14px;\n\tdisplay: inline-flex;\n\talign-content: center;\n\tborder-radius: 50%;\n\tpadding: 2px;\n\tborder: 1px solid #abc5aa;\n\tcursor: pointer;\n\tmargin-right: 5px;\n}\n\n.inline-checkbox {\n\tdisplay: inline-flex;\n}\n\n.checkbox.active>.checkbox-background, .checkbox:hover>.checkbox-background {\n\tbackground-color: var(--active-logger-button-background);\n}\n\n.checkbox-background {\n\tbackground-color: var(--toggle-button-background-color);\n\twidth: 100%;\n\theight: 100%;\n\tborder-radius: 50%;\n}\n\n.source-code {\n\tfont-family: monospace;\n\tfont-size: 11px !important;\n\twhite-space: pre-wrap;\n}\n\n:focus {\n\toutline-width: 0;\n}\n\nimg {\n\t-webkit-user-drag: none;\n}\n\n.match-searchBox {\n\tbackground-color: yellow;\n}\n\n[class^=\"filter-\"] {\n\tborder-radius: 2px;\n}\n\n.filter-0 {\n\tbox-shadow: inset 0px 0px 3px 3px var(--match-0);\n}\n\n.filter-1 {\n\tbox-shadow: inset 0px 0px 3px 3px var(--match-1);\n}\n\n.filter-2 {\n\tbox-shadow: inset 0px 0px 3px 3px var(--match-2);\n}\n\n.filter-3 {\n\tbox-shadow: inset 0px 0px 3px 3px var(--match-3);\n}\n\n.match-0 {\n\tbackground-color: var(--match-0);\n\tcolor: white;\n}\n\n.match-1 {\n\tbackground-color: var(--match-1);\n\tcolor: white;\n}\n\n.match-2 {\n\tbackground-color: var(--match-2);\n\tcolor: white;\n}\n\n.match-3 {\n\tbackground-color: var(--match-3);\n}\n\n.multiple-matches {\n\tbackground-color: #795C5F;\n\tcolor: white;\n}\n\n.active-console-row .match-searchBox {\n\tbackground-color: #FFB86F;\n}\n\n.Logger {\n\tdisplay: flex;\n\tflex-direction: column;\n}\n\n.log-content {\n\tdisplay: flex;\n\tflex-direction: row;\n}\n\n.left-panel, .right-panel {\n\tdisplay: flex;\n\tflex-direction: column;\n}\n\n.right-panel {\n\tflex: 1 1 auto;\n\theight: calc(100vh - 26px);\n}\n\n.left-panel input {\n\tdisplay: flex;\n\tbackground-color: var(--slate3);\n\tcolor: var(--gray1);\n\tcaret-color: var(--gray1);\n\theight: 26px;\n\tmargin-top: 7px;\n}\n\n.left-panel {\n\tbackground-color: var(--left-panel-background-color);\n\theight: calc(100vh - 26px);\n\tcolor: var(--gray2);\n\twidth: 500px;\n\tborder-right: 1px solid var(--collar-border-color);\n}\n\n.left-panel-accordion {\n\tdisplay: flex;\n\tflex-direction: column;\n}\n.client-list-accordion {\n\tflex: 1;\n}\n\n.left-panel-accordion-content.visible {\n\tpadding: 1em;\n\theight: calc(100% - var(--accordion-label-wrap-height));\n\toverflow: auto;\n}\n\n.left-panel-accordion-label-wrap {\n\theight: var(--accordion-label-wrap-height);\n\tfont-size: 14px;\n\tpadding: 0 .25em;\n\tcursor: pointer;\n\tbackground-color: var(--accordion-label-color);\n\tborder-bottom: 1px solid var(--slate7);\n\tdisplay: flex;\n\tflex-direction: row;\n\talign-items: center;\n\tfont-weight: bold;\n}\n\n.left-panel-accordion-visiblity-indicator {\n\tmargin-right: .5em;\n}\n\n.logger-client-list {\n\tmargin-top: 1em;\n}\n.right-panel-controls {\n\tborder-bottom: 1px solid var(--collar-border-color);\n\talign-items: flex-start;\n\tpadding: 1em;\n}\n\n.logger-wrapper {\n\tborder-top: 1px solid var(--slate7);\n\tdisplay: flex;\n\tflex: 1 1;\n}\n\n.quick-views {\n\tpadding: 1em;\n}\n\n.checkbox-row {\n\tdisplay: block;\n\tcursor: pointer;\n\tmargin-top: 5px;\n}\n\n.view-switcher {\n\tdisplay: flex;\n\tflex-direction: column;\n\twidth: 35px;\n\tbackground-color: var(--slate7);\n\tcolor: var(--gray5);\n\talign-items: center;\n}\n\n.view-label {\n\tfont-size: 14px;\n\tmargin: 1em 0;\n\tcursor: pointer;\n}\n.view-label-active {\n\tcolor: var(--gray2);\n\tfont-weight: bold;\n}\n.config-viewer {\n\tdisplay: flex;\n\toverflow: auto;\n\theight: calc(100vh - 26px);\n\tflex: 1 1;\n\tbackground-color: var(--slate6);\n\tcolor: var(--gray4);\n\tflex-direction: column;\n}\n.config-viewer .config {\n\theight: 100%;\n\toverflow: auto;\n}\n.config-viewer pre {\n\tfont-family: Consolas !important;\n\tfont-size: 12px;\n\tuser-select: auto;\n\tmargin:0px;\n}\n\n.body-wrapper {\n\tdisplay: flex;\n\tflex-direction: column;\n}\n\n.inner-content-wrapper {\n\tflex-direction: row;\n\tdisplay: flex;\n}\n\n.config-viewer .fsbl-logger-searchbox {\n\tposition: relative;\n}\n\n.config-viewer .match-searchBox {\n\tcolor: var(--gray7)\n}\n\n.spritesheet-smallicons:not(.icon-mask) {\n\talign-self: flex-start;\n\tbackground-image: url(" + ___CSS_LOADER_URL___0___ + ");\n}\n\n.spritesheet-smallicons.icon-mask {\n\t-webkit-mask-image: url(" + ___CSS_LOADER_URL___0___ + ");\n}", ""]);
+exports.push([module.i, ":root {\n\t--core-primary: #22262F;\n    --core-primary-1: #171A20;\n    --core-primary-2: #373B43;\n    --core-primary-3: #3D4455;\n    --core-primary-4: #5B606F;\n    --core-primary-5: #ACB2C0;\n\n    --accent-primary: #0A8CF4;\n    --accent-primary-1: #087DDB;\n    --accent-primary-2: #398BFF;\n\n    --accent-positive: #2CC13F;\n    --accent-positive-1: #27AE38;\n\n    --accent-aware: #F5A623;\n    --accent-aware-1: #DC951F;\n\n    --accent-negative: #F26666;\n    --accent-negative-1: #DA5C5C;\n\n\t--scrollbar-color: var(--core-primary-5);\n\n\t--slate1: var(--core-primary-5);\n    --slate2: var(--core-primary-5);\n    --slate3: var(--core-primary-4);\n    --slate4: var(--core-primary-3);\n    --slate5: var(--core-primary-2);\n    --slate6: var(--core-primary);\n    --slate7: var(--core-primary-1);\n    --gray1: #EEE;\n    --gray2: #DDD;\n    --gray3: #CCC;\n    --gray4: #BBB;\n    --gray5: #999;\n    --gray6: #777;\n    --gray7: #555;\n    --blue1: var(--accent-primary-2);\n    --blue2: var(--accent-primary-2);\n    --blue3: var(--accent-primary-2);\n    --blue4: var(--accent-primary);\n    --blue5: var(--accent-primary);\n    --blue6: var(--accent-primary-1);\n    --blue7: var(--accent-primary-1);\n    --yellow1: var(--accent-aware);\n    --yellow2: var(--accent-aware);\n    --yellow3: var(--accent-aware);\n    --yellow4: var(--accent-aware);\n    --yellow5: var(--accent-aware-1);\n    --yellow6: var(--accent-aware-1);\n    --yellow7: var(--accent-aware-1);\n    --red1: var(--accent-negative);\n    --red2: var(--accent-negative);\n    --red3: var(--accent-negative);\n    --red4: var(--accent-negative);\n    --red5: var(--accent-negative-1);\n    --red6: var(--accent-negative-1);\n    --red7: var(--accent-negative-1);\n\t--slate: var(--slate4);\n\t--gray: var(--gray4);\n\t--blue: var(--blue4);\n\t--yellow: var(--yellow4);\n\t--red: var(--red4);\n\n\t--collar-background-color: var(--core-primary);\n\t--collar-border-color: #dadada;\n\t--left-panel-background-color: var(--core-primary-2);\n\t--leftNav-background-color: var(--core-primary);\n\n\t--active-logger-button-background: var(--accent-primary);\n\t--basic-button-background-color: var(--gray1);\n\t--basic-button-font-color: black;\n\t--button-border-color: var(--active-logger-button-background);\n\t--accordion-label-color: var(--collar-background-color);\n\t--logger-row-border-color: var(--accordion-label-color);\n\t--inactive-logger-button-background: var(--basic-button-background-color);\n\t--toggle-button-font-color: var(--gray1);\n\t--toggle-button-background-color: var(--core-primary-4);\n\t--accordion-label-wrap-height: 30px;\n\n\t--match-0: var(--core-primary-5);\n\t--match-1: var(--accent-primary-2);\n\t--match-2: var(--accent-aware);\n\t--match-3: var(--accent-positive);\n}\n* {\n\tbox-sizing: border-box;\n}\nhtml {\n\theight: 100%;\n}\n\nbody {\n\toverflow: hidden;\n\tmargin: 10px;\n\theight: 100%;\n\twidth: 100%;\n\tfont-family: 'Roboto medium, sans-serif';\n\tfont-size: 11px;\n}\n\ntitle {\n\tfont-family: 'Roboto';\n\tfont-size: 18pt;\n}\n\n.hidden {\n\tdisplay: none !important;\n}\n\n.fsbl-logger-button.fsbl-logger-button-negative, .fsbl-logger-button-negative {\n\tbackground-color: var(--accent-negative);\n\tcolor: white;\n}\n\n.fsbl-logger-button.fsbl-logger-button-negative:hover {\n\tbackground-color: var(--accent-negative-1);\n\tcolor: white;\n}\n\n.fsbl-logger-button {\n\ttext-align: center;\n\tfont-size: 1em;\n\tmargin: 2px;\n\tdisplay: inline-block;\n\tpadding: 2px 4px;\n\tborder-radius: 3px;\n\tbackground-color: var(--basic-button-background-color);\n\tcolor: var(--basic-button-font-color);\n\tcursor: pointer;\n\tfont-weight: 400;\n}\n\n.flex-column {\n\tdisplay: flex;\n\tflex-direction: column;\n}\n\n.inline-flex-column {\n\tdisplay: inline-flex;\n\tflex-direction: column;\n}\n\n.fsbl-logger-button-group {\n\talign-self: flex-end;\n}\n\n.filter-logic {\n\tmargin-right: 18px;\n}\n\n.fsbl-logger-searchbox {\n\tdisplay: flex;\n\tposition: absolute;\n\tbottom: 0;\n\tbackground-color: var(--gray1);\n\twidth: 100%;\n\tz-index: 100;\n\talign-items: center;\n}\n\n.fsbl-logger-searchbox>div {\n\tdisplay: flex;\n}\n\n/*forces log stacks onto a new line/ */\n\n.message-log-stack {\n\tdisplay: block !important;\n}\n\n.search-box-input-wrapper {\n\theight: 18px;\n}\n\n.search-box-match-navigators {\n\tmargin-right: .5em;\n\tdisplay: flex;\n}\n\n.search-box-match-navigators>span, .search-box-cancel-button>span {\n\tdisplay: flex;\n\tflex-direction: column;\n\talign-self: center;\n\tborder: 1px solid var(--collar-border-color);\n\tbackground-color: var(--inactive-logger-button-background);\n\twidth: 25px;\n\tjustify-content: center;\n\tcursor: pointer;\n\tcolor: #848383;\n\tfont-size: 8px;\n\theight: 100%;\n\talign-items: center;\n}\n\n.search-box-cancel-button {\n\tmargin-left: auto;\n}\n\n.search-box-cancel-button>span {\n\tbackground-color: white;\n\tpadding: 0px 4px;\n}\n\n.search-box-match-navigators>span:hover, .search-box-cancel-button>span:hover {\n\tbackground-color: gainsboro;\n\tcolor: black;\n}\n\n.search-box-cancel-button>span {\n\twidth: 100%;\n\tfont-size: 12px;\n}\n\n.search-box-match-text {\n\tdisplay: inline-flex;\n\talign-items: center;\n\tcolor: gray;\n\tbackground-color: white;\n}\n\n.search-box-text-input input {\n\tborder: 0px;\n\theight: 16px;\n}\n\n.search-box-text-input {\n\tborder: 1px solid var(--collar-border-color);\n}\n\n.fsbl-plaintext-log-message span {\n\tdisplay: inline-block;\n\twhite-space: pre-wrap;\n}\n\n.fsbl-logger-row-index {\n\ttext-align: right;\n}\n\n.fsbl-logger-button-group-label {\n\tdisplay: flex;\n\tmargin: .5em 0;\n\tfont-weight: 500;\n}\n\n.fsbl-log-message {\n\tuser-select: auto;\n\tword-break: break-all;\n}\n\n.fsbl-logger-highlight {\n\tbackground-color: #38ff03 !important;\n}\n\n.fsbl-logger-search-highlight {\n\tbackground-color: yellow !important;\n}\n\n.fsbl-logger-row-selected {\n\tbackground-color: rgba(0, 126, 255, 0.24) !important;\n\tborder-top: 2px solid;\n}\n\n.console-debug-level {\n\tcolor: blue;\n}\n\n.fsbl-log-info {\n\tcolor: #2b8686;\n\tbackground-color: #e9fbfb;\n\tborder-bottom: 1px solid #d2fbfb;\n}\n\n.fsbl-log-warning {\n\tcolor: #5c3b00;\n\tbackground-color: #fffbe6;\n\tborder: 1px solid #fff5c2;\n}\n\n.fsbl-log-error {\n\tbackground-color: #fff0f0;\n\tborder: 1px solid #ffd7d7;\n\tcolor: #ff0000;\n}\n\n.fsbl-log-verbose {\n\tcolor: gray;\n}\n\n.pull-right {\n\tmargin-left: auto;\n\talign-self: center;\n}\n\n.fsbl-logger-client-row, .logger-row {\n\tdisplay: flex;\n\tflex-direction: row;\n\talign-items: center;\n\tjustify-content: space-between;\n}\n\n\n.fsbl-logger-client-row{\n\tmargin: 3px 0px;\n}\n\n.filter-client-list {\n\tmargin-left: 6px;\n}\n\n.fsbl-logger-client-name {\n\tmax-width: 50%;\n\tdisplay: flex;\n\talign-content: center;\n\talign-items: center;\n}\n\n.fsbl-logger-client-label {\n\twhite-space: nowrap;\n    overflow: hidden;\n\ttext-overflow: ellipsis;\n\twidth: 100%;\n}\n\n.time-elapsed {\n\tcolor: gray;\n\twidth: 85px;\n\tjustify-content: flex-start;\n\tdisplay: inline-flex;\n\tmargin-right: 5px;\n\talign-self: flex-start;\n}\n\n.fsbl-logger-button {\n\tborder: 1px solid transparent;\n}\n\n.fsbl-logger-button.active {\n\tbackground-color: var(--active-logger-button-background) !important;\n\tcolor: white !important;\n}\n\n.fsbl-logger-button.active:hover {\n\tbackground-color: var(--accent-primary-1) !important;\n\tcolor: white !important;\n}\n\n.fsbl-logger-button:hover {\n\tbackground-color: var(--gray3);\n\ttransition: .1s ease;\n}\n\n.fsbl-logger-toggle:hover {\n\tbackground: var(--active-logger-button-background);\n\tcolor: white;\n\ttransition: .1s ease;\n}\n.fsbl-logger-toggle {\n\tcolor: var(--toggle-button-font-color);\n\tbackground-color: var(--toggle-button-background-color);\n}\n.fsbl-logger-button i {\n\tvertical-align: middle;\n\tmargin: 0 6px;\n}\n\n.fsbl-log {\n\tfont-family: Consolas;\n\tfont-size: 1.1em;\n\tuser-select: initial;\n}\n\n.delta-box-wrapper {\n\tmargin-left: 12px;\n}\n\n.fsbl-logger-row-diff {\n\tfont-size: 1.1em;\n\tbackground-color: gainsboro;\n\tpadding: .25em;\n\ttext-align: center;\n\tfont-weight: 400;\n}\n\n.logger-button-margin-left {\n\tmargin-left: 6px;\n}\n\n.fsbl-logger-row-diff-okay {\n\tbackground-color: green;\n\tcolor: white;\n}\n\n.top-collar {\n\tbackground-color: var(--collar-background-color);\n\tmargin-bottom: 0px;\n\twidth: 100%;\n}\n\n.top-border {\n\tmargin-top: 8px;\n\tborder-top: 1px solid var(--collar-border-color);\n}\n\n.top-collar .fsbl-logger-button {\n\tborder: 0px;\n\tbox-shadow: none;\n\tbackground-color: transparent;\n\tmargin-top: 0px;\n\tmargin-bottom: 0px;\n\tpadding: .5em;\n\tcolor: var(--core-primary-5);\n}\n\n.top-collar .fsbl-logger-button:hover {\n\tbackground-color: var(--core-primary-2);\n\tcolor: white;\n}\n\n.fsbl-logger-row-diff-slow {\n\tbackground-color: #ffe900;\n\tcolor: #5a5a5a;\n}\ni, i:before, i:after, .fsbl-window-manager-icon {\n\t\tbox-sizing: content-box;\n\t}\n.top-toggle-buttons {\n\tpadding-left: 77px;\n}\n\n.fsbl-logger-row-diff-very-slow {\n\tbackground-color: orange;\n\tcolor: white;\n}\n\n.fsbl-logger-row-diff-beyond-help {\n\tbackground-color: red;\n\tcolor: white;\n}\n\n.fsbl-plaintext-message-wrapper {\n\tborder-top: 1px solid transparent;\n\tborder-bottom: 1px solid #f0f0f0;\n\tpadding: .5em;\n\talign-self: flex-start;\n\tpadding-left: .5em;\n}\n\n.active-console-row {\n\tborder-top: 1px solid #aeaef1;\n\tborder-bottom: 1px solid #aeaef1 !important;\n\tbackground-color: #e7f3fd;\n}\n\n.fsbl-plaintext-log-message {\n\tflex: 1 1;\n}\n\n.fsbl-plaintext-message {\n\tdisplay: flex;\n\talign-items: center;\n\tjustify-content: space-between;\n}\n\n.fsbl-plaintext-extra-info {\n\tmax-width: 300px;\n\tdisplay: flex;\n\tjustify-content: flex-end;\n\twhite-space: nowrap;\n\ttext-decoration: underline;\n\tcursor: pointer;\n\tmargin-left: 10px;\n}\n\n.fsbl-plaintext-number {\n\tcolor: blue;\n}\n\n.fsbl-plaintext-timestamp {\n\tcolor: blue;\n}\n\n.fixed-header {\n\tborder-bottom: 1px solid #f0f0f0;\n\tz-index: 1000;\n}\n\n.flex-start {\n\talign-self: flex-start;\n}\n\nbody.dialog input:focus {\n\tborder: 1px solid #039bff;\n}\n\nbody {\n\tmargin: 0px;\n\tfont-family: 'Segoe UI', Tahoma, sans-serif;\n\tfont-weight: 400;\n\toverflow-x: hidden;\n\theight: 100%;\n\t-webkit-user-select: none;\n\tbackground-color: white;\n}\n\n.checkStyle {\n\tvertical-align: bottom;\n\theight: 14px;\n}\n\n.fsbl-logger-toggle-all-span {\n\tmargin: 50px;\n}\n\nhr {\n\twidth: 100%;\n}\n\ninput {\n\tborder: 1px solid #d0d0d0;\n\tpadding: 1px 0px 1px 5px;\n}\n\n.filter {\n\twidth: 480px;\n}\n\n.checkbox {\n\twidth: 14px;\n\theight: 14px;\n\tdisplay: inline-flex;\n\talign-content: center;\n\tborder-radius: 50%;\n\tpadding: 2px;\n\tborder: 1px solid #abc5aa;\n\tcursor: pointer;\n\tmargin-right: 5px;\n}\n\n.inline-checkbox {\n\tdisplay: inline-flex;\n}\n\n.checkbox.active>.checkbox-background, .checkbox:hover>.checkbox-background {\n\tbackground-color: var(--active-logger-button-background);\n}\n\n.checkbox-background {\n\tbackground-color: var(--toggle-button-background-color);\n\twidth: 100%;\n\theight: 100%;\n\tborder-radius: 50%;\n}\n\n.source-code {\n\tfont-family: monospace;\n\tfont-size: 11px !important;\n\twhite-space: pre-wrap;\n}\n\n:focus {\n\toutline-width: 0;\n}\n\nimg {\n\t-webkit-user-drag: none;\n}\n\n.match-searchBox {\n\tbackground-color: yellow;\n}\n\n[class^=\"filter-\"] {\n\tborder-radius: 2px;\n}\n\n.filter-0 {\n\tborder: solid 2px var(--match-0);\n}\n\n.filter-1 {\n\tborder: solid 2px var(--match-1);\n}\n\n.filter-2 {\n\tborder: solid 2px var(--match-2);\n}\n\n.filter-3 {\n\tborder: solid 2px var(--match-3);\n}\n\n.match-0 {\n\tbackground-color: var(--match-0);\n\tcolor: white;\n}\n\n.match-1 {\n\tbackground-color: var(--match-1);\n\tcolor: white;\n}\n\n.match-2 {\n\tbackground-color: var(--match-2);\n\tcolor: white;\n}\n\n.match-3 {\n\tbackground-color: var(--match-3);\n}\n\n.multiple-matches {\n\tbackground-color: #795C5F;\n\tcolor: white;\n}\n\n.active-console-row .match-searchBox {\n\tbackground-color: #FFB86F;\n}\n\n.Logger {\n\tdisplay: flex;\n\tflex-direction: column;\n}\n\n.log-content {\n\tdisplay: flex;\n\tflex-direction: row;\n}\n\n.left-panel, .right-panel {\n\tdisplay: flex;\n\tflex-direction: column;\n}\n\n.right-panel {\n\tflex: 1 1 auto;\n\theight: calc(100vh - 26px);\n}\n\n.left-panel input {\n\tdisplay: flex;\n\tbackground-color: var(--left-panel-background-color);\n\tcolor: var(--core-primary-5);\n\tcaret-color: var(--core-primary-5);\n\theight: 26px;\n\tmargin-top: 7px;\n}\n\n.left-panel {\n\tbackground-color: var(--left-panel-background-color);\n\theight: calc(100vh - 26px);\n\tcolor: var(--gray2);\n\twidth: 530px;\n\tborder-right: 1px solid var(--collar-border-color);\n}\n\n.left-panel-accordion {\n\tdisplay: flex;\n\tflex-direction: column;\n}\n.client-list-accordion {\n\tflex: 1;\n\toverflow: hidden;\n}\n\n.left-panel-accordion-content.visible {\n\tpadding: 1em;\n\theight: calc(100% - var(--accordion-label-wrap-height));\n\toverflow: auto;\n}\n\n.left-panel-accordion-label-wrap {\n\theight: var(--accordion-label-wrap-height);\n\tfont-size: 14px;\n\tpadding: 0 .25em;\n\tcursor: pointer;\n\tbackground-color: var(--accordion-label-color);\n\tborder-bottom: 1px solid var(--slate7);\n\tdisplay: flex;\n\tflex-direction: row;\n\talign-items: center;\n\tfont-weight: bold;\n}\n\n.left-panel-accordion-visiblity-indicator {\n\tmargin-right: .5em;\n}\n\n.logger-client-list {\n\tmargin-top: 1em;\n}\n.right-panel-controls {\n\tborder-bottom: 1px solid var(--collar-border-color);\n\talign-items: flex-start;\n\tpadding: 1em;\n}\n\n.logger-wrapper {\n\tborder-top: 1px solid var(--slate7);\n\tdisplay: flex;\n\tflex: 1 1;\n}\n\n.quick-views {\n\tpadding: 1em;\n}\n\n.checkbox-row {\n\tdisplay: block;\n\tcursor: pointer;\n\tmargin-top: 5px;\n}\n\n.view-switcher {\n\tdisplay: flex;\n\tflex-direction: column;\n\twidth: 50px;\n\tpadding: 0 4px;\n\tbackground-color: var(--leftNav-background-color);\n\tcolor: var(--gray5);\n\talign-items: center;\n}\n\n.view-label {\n\tfont-size: 14px;\n\tmargin: 1em 0;\n\tcursor: pointer;\n\tpadding-bottom: 4px;\n\tborder-bottom: 3px solid transparent;\n}\n\n.view-label:hover {\n\tborder-bottom: 3px solid var(--core-primary-5);\n\tcolor: white;\n}\n\n.view-label-active {\n\tcolor: var(--gray2);\n\tfont-weight: bold;\n\tborder-bottom: 3px solid var(--accent-primary);\n}\n.config-viewer {\n\tdisplay: flex;\n\toverflow: auto;\n\theight: calc(100vh - 26px);\n\tflex: 1 1;\n\tbackground-color: var(--slate6);\n\tcolor: var(--gray4);\n\tflex-direction: column;\n}\n.config-viewer .config {\n\theight: 100%;\n\toverflow: auto;\n}\n.config-viewer pre {\n\tfont-family: Consolas !important;\n\tfont-size: 12px;\n\tuser-select: auto;\n\tmargin:0px;\n}\n\n.body-wrapper {\n\tdisplay: flex;\n\tflex-direction: column;\n}\n\n.inner-content-wrapper {\n\tflex-direction: row;\n\tdisplay: flex;\n}\n\n.config-viewer .fsbl-logger-searchbox {\n\tposition: relative;\n}\n\n.config-viewer .match-searchBox {\n\tcolor: var(--gray7)\n}\n\n.spritesheet-smallicons:not(.icon-mask) {\n\talign-self: flex-start;\n\tbackground-image: url(" + ___CSS_LOADER_URL___0___ + ");\n}\n\n.spritesheet-smallicons.icon-mask {\n\t-webkit-mask-image: url(" + ___CSS_LOADER_URL___0___ + ");\n}\n\n::-webkit-scrollbar-track {\n    border-radius: 3px;\n}\n\n::-webkit-scrollbar {\n    width: 9px;\n    background-color: var(--scrollbar-color);\n    border-radius: 3px;\n}\n\n::-webkit-scrollbar-thumb {\n    cursor: pointer;\n    border-radius: inherit;\n    background-color: rgba(0, 0, 0, 0.2);\n}", ""]);
 
 
 
 /***/ }),
-/* 293 */
+/* 321 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(147)(false);
+exports = module.exports = __webpack_require__(153)(false);
 // Module
 exports.push([module.i, "/*\n * Copyright (C) 2006, 2007, 2008 Apple Inc.  All rights reserved.\n * Copyright (C) 2009 Anthony Ricaud <rik@webkit.org>\n *\n * Redistribution and use in source and binary forms, with or without\n * modification, are permitted provided that the following conditions\n * are met:\n *\n * 1.  Redistributions of source code must retain the above copyright\n *     notice, this list of conditions and the following disclaimer.\n * 2.  Redistributions in binary form must reproduce the above copyright\n *     notice, this list of conditions and the following disclaimer in the\n *     documentation and/or other materials provided with the distribution.\n * 3.  Neither the name of Apple Computer, Inc. (\"Apple\") nor the names of\n *     its contributors may be used to endorse or promote products derived\n *     from this software without specific prior written permission.\n *\n * THIS SOFTWARE IS PROVIDED BY APPLE AND ITS CONTRIBUTORS \"AS IS\" AND ANY\n * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\n * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\n * DISCLAIMED. IN NO EVENT SHALL APPLE OR ITS CONTRIBUTORS BE LIABLE FOR ANY\n * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\n * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\n * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND\n * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF\n * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n */\n\n .console-view {\n    background-color: white;\n    overflow: hidden;\n}\n\n.console-view > .toolbar {\n    border-bottom: 1px solid #dadada;\n}\n\n.console-view-wrapper {\n    background-color: #eee;\n}\n\n.console-view-fix-select-all {\n    height: 0;\n    overflow: hidden;\n}\n\n.console-settings-pane {\n    flex: none;\n    border-bottom: 1px solid #dadada;\n}\n\n.console-settings-pane .toolbar {\n    flex: 1 1;\n}\n\n#console-messages {\n    flex: 1 1;\n    padding: 2px 0;\n    overflow-y: auto;\n    word-wrap: break-word;\n    -webkit-user-select: text;\n    transform: translateZ(0);\n}\n\n#console-prompt {\n    clear: right;\n    position: relative;\n    margin: 0 22px 0 20px;\n    min-height: 18px;  /* Sync with ConsoleViewMessage.js */\n}\n\n#console-prompt .CodeMirror {\n    padding: 3px 0 1px 0;\n}\n\n#console-prompt .CodeMirror-line {\n    padding-top: 0;\n}\n\n#console-prompt .CodeMirror-lines {\n    padding-top: 0;\n}\n\n#console-prompt .console-prompt-icon {\n    position: absolute;\n    left: -13px;\n    top: 5px;\n    -webkit-user-select: none;\n}\n\n.console-message,\n.console-user-command {\n    clear: right;\n    position: relative;\n    padding: 3px 22px 1px 0;\n    margin-left: 24px;\n    min-height: 18px;  /* Sync with ConsoleViewMessage.js */\n    flex: auto;\n    display: flex;\n}\n\n.console-message > * {\n    flex: auto;\n}\n\n.console-timestamp {\n    color: gray;\n    -webkit-user-select: none;\n    flex: none;\n    margin-right: 5px;\n}\n\n\n.console-message-repeat-count {\n    margin: 2px 0 0 10px;\n    flex: none;\n}\n\n.repeated-message {\n    margin-left: 4px;\n}\n\n.repeated-message .console-message-stack-trace-toggle,\n.repeated-message > .console-message-text {\n    flex: 1;\n}\n\n.console-error-level .repeated-message,\n.console-warning-level .repeated-message,\n.console-verbose-level .repeated-message,\n.console-info-level .repeated-message {\n    display: flex;\n}\n\n.console-info {\n    color: rgb(128, 128, 128);\n    font-style: italic;\n    padding-bottom: 2px;\n}\n\n.console-group .console-group > .console-group-messages {\n    margin-left: 16px;\n}\n\n.console-group-title {\n    font-weight: bold;\n}\n\n.expand-group-icon {\n    -webkit-user-select: none;\n    position: absolute;\n    background-color: rgb(110, 110, 110);\n    left: -14px;\n}\n\n.console-group {\n    position: relative;\n}\n\n.console-message-wrapper {\n    display: flex;\n    border-bottom: 1px solid rgb(240, 240, 240);\n}\n\n.console-message-wrapper.console-adjacent-user-command-result {\n    border-bottom: none;\n}\n\n.console-message-wrapper.console-error-level {\n    border-top: 1px solid hsl(0, 100%, 92%);\n    border-bottom: 1px solid hsl(0, 100%, 92%);\n    margin-top: -1px;\n}\n\n.console-message-wrapper.console-warning-level {\n    border-top: 1px solid hsl(50, 100%, 88%);\n    border-bottom: 1px solid hsl(50, 100%, 88%);\n    margin-top: -1px;\n}\n\n.console-message-wrapper .nesting-level-marker {\n    width: 14px;\n    flex: 0 0 auto;\n    border-right: 1px solid #a5a5a5;\n    position: relative;\n    margin-bottom: -1px;\n}\n\n.console-message-wrapper:last-child .nesting-level-marker::before,\n.console-message-wrapper .nesting-level-marker.group-closed::before {\n    content: \"\";\n}\n\n.console-message-wrapper .nesting-level-marker::before {\n    border-bottom: 1px solid #a5a5a5;\n    position: absolute;\n    top: 0;\n    left: 0;\n    margin-left: 100%;\n    width: 3px;\n    height: 100%;\n    box-sizing: border-box;\n}\n\n.console-error-level {\n    background-color: hsl(0, 100%, 97%);\n}\n\n.-theme-with-dark-background .console-error-level {\n    background-color: hsl(0, 100%, 8%);\n}\n\n.console-warning-level {\n    background-color: hsl(50, 100%, 95%);\n}\n\n.-theme-with-dark-background .console-warning-level {\n    background-color: hsl(50, 100%, 10%);\n}\n\n.console-warning-level .console-message-text {\n    color: hsl(39, 100%, 18%);\n}\n\n.console-error-level .console-message-text,\n.console-error-level .console-view-object-properties-section {\n    color: red !important;\n}\n\n.-theme-with-dark-background .console-error-level .console-message-text,\n.-theme-with-dark-background .console-error-level .console-view-object-properties-section {\n    color: hsl(0, 100%, 75%) !important;\n}\n\n.-theme-with-dark-background .console-verbose-level .console-message-text {\n    color: hsl(220, 100%, 65%) !important;\n}\n\n.console-message.console-warning-level {\n    background-color: rgb(255, 250, 224);\n}\n\n#console-messages .link {\n    text-decoration: underline;\n}\n\n#console-messages .link,\n#console-messages .devtools-link {\n    color: rgb(33%, 33%, 33%);\n    cursor: pointer;\n    word-break: break-all;\n}\n\n#console-messages .link:hover,\n#console-messages .devtools-link:hover {\n    color: rgb(15%, 15%, 15%);\n}\n\n.console-group-messages .section {\n    margin: 0 0 0 12px !important;\n}\n\n.console-group-messages .section > .header {\n    padding: 0 8px 0 0;\n    background-image: none;\n    border: none;\n    min-height: 0;\n}\n\n.console-group-messages .section > .header::before {\n    margin-left: -12px;\n}\n\n.console-group-messages .section > .header .title {\n    color: #222;\n    font-weight: normal;\n    line-height: 13px;\n}\n\n.console-group-messages .section .properties li .info {\n    padding-top: 0;\n    padding-bottom: 0;\n    color: rgb(60%, 60%, 60%);\n}\n\n.console-object-preview {\n    white-space: normal;\n    word-wrap: break-word;\n    font-style: italic;\n}\n\n.console-object-preview .name {\n    /* Follows .section .properties .name, .event-properties .name */\n    color: rgb(136, 19, 145);\n    flex-shrink: 0;\n}\n\n.console-message-text .object-value-string {\n    white-space: pre-wrap;\n}\n\n.console-message-formatted-table {\n    clear: both;\n}\n\n.console-message-anchor {\n    float: right;\n    text-align: right;\n    max-width: 100%;\n    margin-left: 4px;\n}\n\n.console-message-badge {\n    float: right;\n    margin-left: 4px;\n}\n\n.console-message-nowrap-below,\n.console-message-nowrap-below div,\n.console-message-nowrap-below span {\n    white-space: nowrap !important;\n}\n\n.object-state-note {\n    display: inline-block;\n    width: 11px;\n    height: 11px;\n    color: white;\n    text-align: center;\n    border-radius: 3px;\n    line-height: 13px;\n    margin: 0 6px;\n    font-size: 9px;\n}\n\n.-theme-with-dark-background .object-state-note {\n    background-color: hsl(230, 100%, 80%);\n}\n\n.info-note {\n    background-color: rgb(179, 203, 247);\n}\n\n.info-note::before {\n    content: \"i\";\n}\n\n.console-view-object-properties-section:not(.expanded) .info-note {\n    display: none;\n}\n\n.console-view-object-properties-section {\n    padding: 0px;\n    position: relative;\n    vertical-align: baseline;\n    color: inherit;\n    display: inline-block;\n}\n\n.console-message-stack-trace-toggle {\n    display: flex;\n    flex-direction: row;\n    align-items: flex-start;\n}\n\n.console-message-stack-trace-wrapper {\n    flex: 1 1 auto;\n    display: flex;\n    flex-direction: column;\n    align-items: stretch;\n}\n\n.console-message-stack-trace-wrapper > * {\n    flex: none;\n}\n\n.console-message-expand-icon {\n    margin-bottom: -2px;\n}", ""]);
 
 
 
 /***/ }),
-/* 294 */
+/* 322 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -65095,7 +65446,7 @@ module.exports = function escape(url, needQuotes) {
 };
 
 /***/ }),
-/* 295 */
+/* 323 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -65110,7 +65461,7 @@ exports.default = _default;
 module.exports = exports["default"];
 
 /***/ }),
-/* 296 */
+/* 324 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(a,b){if(true)!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (b),
@@ -65119,10 +65470,11 @@ module.exports = exports["default"];
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));else if("undefined"!=typeof exports)b();else{b(),a.FileSaver={exports:{}}.exports}})(this,function(){"use strict";function b(a,b){return"undefined"==typeof b?b={autoBom:!1}:"object"!=typeof b&&(console.warn("Deprecated: Expected third argument to be a object"),b={autoBom:!b}),b.autoBom&&/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(a.type)?new Blob(["\uFEFF",a],{type:a.type}):a}function c(b,c,d){var e=new XMLHttpRequest;e.open("GET",b),e.responseType="blob",e.onload=function(){a(e.response,c,d)},e.onerror=function(){console.error("could not download file")},e.send()}function d(a){var b=new XMLHttpRequest;b.open("HEAD",a,!1);try{b.send()}catch(a){}return 200<=b.status&&299>=b.status}function e(a){try{a.dispatchEvent(new MouseEvent("click"))}catch(c){var b=document.createEvent("MouseEvents");b.initMouseEvent("click",!0,!0,window,0,0,0,80,20,!1,!1,!1,!1,0,null),a.dispatchEvent(b)}}var f="object"==typeof window&&window.window===window?window:"object"==typeof self&&self.self===self?self:"object"==typeof global&&global.global===global?global:void 0,a=f.saveAs||("object"!=typeof window||window!==f?function(){}:"download"in HTMLAnchorElement.prototype?function(b,g,h){var i=f.URL||f.webkitURL,j=document.createElement("a");g=g||b.name||"download",j.download=g,j.rel="noopener","string"==typeof b?(j.href=b,j.origin===location.origin?e(j):d(j.href)?c(b,g,h):e(j,j.target="_blank")):(j.href=i.createObjectURL(b),setTimeout(function(){i.revokeObjectURL(j.href)},4E4),setTimeout(function(){e(j)},0))}:"msSaveOrOpenBlob"in navigator?function(f,g,h){if(g=g||f.name||"download","string"!=typeof f)navigator.msSaveOrOpenBlob(b(f,h),g);else if(d(f))c(f,g,h);else{var i=document.createElement("a");i.href=f,i.target="_blank",setTimeout(function(){e(i)})}}:function(a,b,d,e){if(e=e||open("","_blank"),e&&(e.document.title=e.document.body.innerText="downloading..."),"string"==typeof a)return c(a,b,d);var g="application/octet-stream"===a.type,h=/constructor/i.test(f.HTMLElement)||f.safari,i=/CriOS\/[\d]+/.test(navigator.userAgent);if((i||g&&h)&&"object"==typeof FileReader){var j=new FileReader;j.onloadend=function(){var a=j.result;a=i?a:a.replace(/^data:[^;]*;/,"data:attachment/file;"),e?e.location.href=a:location=a,e=null},j.readAsDataURL(a)}else{var k=f.URL||f.webkitURL,l=k.createObjectURL(a);e?e.location=l:location.href=l,e=null,setTimeout(function(){k.revokeObjectURL(l)},4E4)}});f.saveAs=a.saveAs=a,"undefined"!=typeof module&&(module.exports=a)});
 
 //# sourceMappingURL=FileSaver.min.js.map
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ }),
-/* 297 */
+/* 325 */,
+/* 326 */
 /***/ (function(module, exports) {
 
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -65212,7 +65564,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 
 /***/ }),
-/* 298 */
+/* 327 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -65286,19 +65638,19 @@ function immediate(task) {
   }
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ }),
-/* 299 */
+/* 328 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 var USE_TYPEDARRAY = (typeof Uint8Array !== 'undefined') && (typeof Uint16Array !== 'undefined') && (typeof Uint32Array !== 'undefined');
 
-var pako = __webpack_require__(314);
-var utils = __webpack_require__(8);
-var GenericWorker = __webpack_require__(21);
+var pako = __webpack_require__(343);
+var utils = __webpack_require__(9);
+var GenericWorker = __webpack_require__(25);
 
 var ARRAY_TYPE = USE_TYPEDARRAY ? "uint8array" : "array";
 
@@ -65381,17 +65733,17 @@ exports.uncompressWorker = function () {
 
 
 /***/ }),
-/* 300 */
+/* 329 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var utils = __webpack_require__(8);
-var GenericWorker = __webpack_require__(21);
-var utf8 = __webpack_require__(48);
-var crc32 = __webpack_require__(111);
-var signature = __webpack_require__(158);
+var utils = __webpack_require__(9);
+var GenericWorker = __webpack_require__(25);
+var utf8 = __webpack_require__(52);
+var crc32 = __webpack_require__(117);
+var signature = __webpack_require__(164);
 
 /**
  * Transform an integer into a string in hexadecimal.
@@ -65928,14 +66280,14 @@ module.exports = ZipFileWorker;
 
 
 /***/ }),
-/* 301 */
+/* 330 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var compressions = __webpack_require__(151);
-var ZipFileWorker = __webpack_require__(300);
+var compressions = __webpack_require__(157);
+var ZipFileWorker = __webpack_require__(329);
 
 /**
  * Find the compression to use.
@@ -65992,7 +66344,7 @@ exports.generateWorker = function (zip, options, comment) {
 
 
 /***/ }),
-/* 302 */
+/* 331 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -66033,10 +66385,10 @@ function JSZip() {
         return newObj;
     };
 }
-JSZip.prototype = __webpack_require__(306);
-JSZip.prototype.loadAsync = __webpack_require__(303);
-JSZip.support = __webpack_require__(32);
-JSZip.defaults = __webpack_require__(152);
+JSZip.prototype = __webpack_require__(335);
+JSZip.prototype.loadAsync = __webpack_require__(332);
+JSZip.support = __webpack_require__(35);
+JSZip.defaults = __webpack_require__(158);
 
 // TODO find a better way to handle this version,
 // a require('package.json').version doesn't work with webpack, see #327
@@ -66046,23 +66398,23 @@ JSZip.loadAsync = function (content, options) {
     return new JSZip().loadAsync(content, options);
 };
 
-JSZip.external = __webpack_require__(59);
+JSZip.external = __webpack_require__(65);
 module.exports = JSZip;
 
 
 /***/ }),
-/* 303 */
+/* 332 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var utils = __webpack_require__(8);
-var external = __webpack_require__(59);
-var utf8 = __webpack_require__(48);
-var utils = __webpack_require__(8);
-var ZipEntries = __webpack_require__(310);
-var Crc32Probe = __webpack_require__(159);
-var nodejsUtils = __webpack_require__(78);
+var utils = __webpack_require__(9);
+var external = __webpack_require__(65);
+var utf8 = __webpack_require__(52);
+var utils = __webpack_require__(9);
+var ZipEntries = __webpack_require__(339);
+var Crc32Probe = __webpack_require__(165);
+var nodejsUtils = __webpack_require__(82);
 
 /**
  * Check the CRC32 of an entry.
@@ -66140,14 +66492,14 @@ module.exports = function(data, options) {
 
 
 /***/ }),
-/* 304 */
+/* 333 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var utils = __webpack_require__(8);
-var GenericWorker = __webpack_require__(21);
+var utils = __webpack_require__(9);
+var GenericWorker = __webpack_require__(25);
 
 /**
  * A worker that use a nodejs stream as source.
@@ -66221,15 +66573,15 @@ module.exports = NodejsStreamInputAdapter;
 
 
 /***/ }),
-/* 305 */
+/* 334 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var Readable = __webpack_require__(153).Readable;
+var Readable = __webpack_require__(159).Readable;
 
-var utils = __webpack_require__(8);
+var utils = __webpack_require__(9);
 utils.inherits(NodejsStreamOutputAdapter, Readable);
 
 /**
@@ -66270,21 +66622,21 @@ module.exports = NodejsStreamOutputAdapter;
 
 
 /***/ }),
-/* 306 */
+/* 335 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var utf8 = __webpack_require__(48);
-var utils = __webpack_require__(8);
-var GenericWorker = __webpack_require__(21);
-var StreamHelper = __webpack_require__(162);
-var defaults = __webpack_require__(152);
-var CompressedObject = __webpack_require__(110);
-var ZipObject = __webpack_require__(312);
-var generate = __webpack_require__(301);
-var nodejsUtils = __webpack_require__(78);
-var NodejsStreamInputAdapter = __webpack_require__(304);
+var utf8 = __webpack_require__(52);
+var utils = __webpack_require__(9);
+var GenericWorker = __webpack_require__(25);
+var StreamHelper = __webpack_require__(168);
+var defaults = __webpack_require__(158);
+var CompressedObject = __webpack_require__(116);
+var ZipObject = __webpack_require__(341);
+var generate = __webpack_require__(330);
+var nodejsUtils = __webpack_require__(82);
+var NodejsStreamInputAdapter = __webpack_require__(333);
 
 
 /**
@@ -66666,13 +67018,13 @@ module.exports = out;
 
 
 /***/ }),
-/* 307 */
+/* 336 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var Uint8ArrayReader = __webpack_require__(156);
-var utils = __webpack_require__(8);
+var Uint8ArrayReader = __webpack_require__(162);
+var utils = __webpack_require__(9);
 
 function NodeBufferReader(data) {
     Uint8ArrayReader.call(this, data);
@@ -66692,13 +67044,13 @@ module.exports = NodeBufferReader;
 
 
 /***/ }),
-/* 308 */
+/* 337 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var DataReader = __webpack_require__(155);
-var utils = __webpack_require__(8);
+var DataReader = __webpack_require__(161);
+var utils = __webpack_require__(9);
 
 function StringReader(data) {
     DataReader.call(this, data);
@@ -66737,14 +67089,14 @@ module.exports = StringReader;
 
 
 /***/ }),
-/* 309 */
+/* 338 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var GenericWorker = __webpack_require__(21);
-var utils = __webpack_require__(8);
+var GenericWorker = __webpack_require__(25);
+var utils = __webpack_require__(9);
 
 /**
  * A worker which convert chunks to a specified type.
@@ -66770,17 +67122,17 @@ module.exports = ConvertWorker;
 
 
 /***/ }),
-/* 310 */
+/* 339 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var readerFor = __webpack_require__(157);
-var utils = __webpack_require__(8);
-var sig = __webpack_require__(158);
-var ZipEntry = __webpack_require__(311);
-var utf8 = __webpack_require__(48);
-var support = __webpack_require__(32);
+var readerFor = __webpack_require__(163);
+var utils = __webpack_require__(9);
+var sig = __webpack_require__(164);
+var ZipEntry = __webpack_require__(340);
+var utf8 = __webpack_require__(52);
+var support = __webpack_require__(35);
 //  class ZipEntries {{{
 /**
  * All the entries in the zip file.
@@ -67039,18 +67391,18 @@ module.exports = ZipEntries;
 
 
 /***/ }),
-/* 311 */
+/* 340 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var readerFor = __webpack_require__(157);
-var utils = __webpack_require__(8);
-var CompressedObject = __webpack_require__(110);
-var crc32fn = __webpack_require__(111);
-var utf8 = __webpack_require__(48);
-var compressions = __webpack_require__(151);
-var support = __webpack_require__(32);
+var readerFor = __webpack_require__(163);
+var utils = __webpack_require__(9);
+var CompressedObject = __webpack_require__(116);
+var crc32fn = __webpack_require__(117);
+var utf8 = __webpack_require__(52);
+var compressions = __webpack_require__(157);
+var support = __webpack_require__(35);
 
 var MADE_BY_DOS = 0x00;
 var MADE_BY_UNIX = 0x03;
@@ -67338,17 +67690,17 @@ module.exports = ZipEntry;
 
 
 /***/ }),
-/* 312 */
+/* 341 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var StreamHelper = __webpack_require__(162);
-var DataWorker = __webpack_require__(161);
-var utf8 = __webpack_require__(48);
-var CompressedObject = __webpack_require__(110);
-var GenericWorker = __webpack_require__(21);
+var StreamHelper = __webpack_require__(168);
+var DataWorker = __webpack_require__(167);
+var utf8 = __webpack_require__(52);
+var CompressedObject = __webpack_require__(116);
+var GenericWorker = __webpack_require__(25);
 
 /**
  * A simple object representing a file in the zip file.
@@ -67478,12 +67830,12 @@ module.exports = ZipObject;
 
 
 /***/ }),
-/* 313 */
+/* 342 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var immediate = __webpack_require__(298);
+var immediate = __webpack_require__(327);
 
 /* istanbul ignore next */
 function INTERNAL() {}
@@ -67758,18 +68110,18 @@ function race(iterable) {
 
 
 /***/ }),
-/* 314 */
+/* 343 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 // Top level file is just a mixin of submodules & constants
 
 
-var assign    = __webpack_require__(33).assign;
+var assign    = __webpack_require__(36).assign;
 
-var deflate   = __webpack_require__(315);
-var inflate   = __webpack_require__(316);
-var constants = __webpack_require__(165);
+var deflate   = __webpack_require__(344);
+var inflate   = __webpack_require__(345);
+var constants = __webpack_require__(171);
 
 var pako = {};
 
@@ -67779,18 +68131,18 @@ module.exports = pako;
 
 
 /***/ }),
-/* 315 */
+/* 344 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 
-var zlib_deflate = __webpack_require__(317);
-var utils        = __webpack_require__(33);
-var strings      = __webpack_require__(163);
-var msg          = __webpack_require__(120);
-var ZStream      = __webpack_require__(167);
+var zlib_deflate = __webpack_require__(346);
+var utils        = __webpack_require__(36);
+var strings      = __webpack_require__(169);
+var msg          = __webpack_require__(126);
+var ZStream      = __webpack_require__(173);
 
 var toString = Object.prototype.toString;
 
@@ -68186,20 +68538,20 @@ exports.gzip = gzip;
 
 
 /***/ }),
-/* 316 */
+/* 345 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 
-var zlib_inflate = __webpack_require__(320);
-var utils        = __webpack_require__(33);
-var strings      = __webpack_require__(163);
-var c            = __webpack_require__(165);
-var msg          = __webpack_require__(120);
-var ZStream      = __webpack_require__(167);
-var GZheader     = __webpack_require__(318);
+var zlib_inflate = __webpack_require__(349);
+var utils        = __webpack_require__(36);
+var strings      = __webpack_require__(169);
+var c            = __webpack_require__(171);
+var msg          = __webpack_require__(126);
+var ZStream      = __webpack_require__(173);
+var GZheader     = __webpack_require__(347);
 
 var toString = Object.prototype.toString;
 
@@ -68616,7 +68968,7 @@ exports.ungzip  = inflate;
 
 
 /***/ }),
-/* 317 */
+/* 346 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -68641,11 +68993,11 @@ exports.ungzip  = inflate;
 //   misrepresented as being the original software.
 // 3. This notice may not be removed or altered from any source distribution.
 
-var utils   = __webpack_require__(33);
-var trees   = __webpack_require__(322);
-var adler32 = __webpack_require__(164);
-var crc32   = __webpack_require__(166);
-var msg     = __webpack_require__(120);
+var utils   = __webpack_require__(36);
+var trees   = __webpack_require__(351);
+var adler32 = __webpack_require__(170);
+var crc32   = __webpack_require__(172);
+var msg     = __webpack_require__(126);
 
 /* Public constants ==========================================================*/
 /* ===========================================================================*/
@@ -70497,7 +70849,7 @@ exports.deflateTune = deflateTune;
 
 
 /***/ }),
-/* 318 */
+/* 347 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -70562,7 +70914,7 @@ module.exports = GZheader;
 
 
 /***/ }),
-/* 319 */
+/* 348 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -70914,7 +71266,7 @@ module.exports = function inflate_fast(strm, start) {
 
 
 /***/ }),
-/* 320 */
+/* 349 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -70939,11 +71291,11 @@ module.exports = function inflate_fast(strm, start) {
 //   misrepresented as being the original software.
 // 3. This notice may not be removed or altered from any source distribution.
 
-var utils         = __webpack_require__(33);
-var adler32       = __webpack_require__(164);
-var crc32         = __webpack_require__(166);
-var inflate_fast  = __webpack_require__(319);
-var inflate_table = __webpack_require__(321);
+var utils         = __webpack_require__(36);
+var adler32       = __webpack_require__(170);
+var crc32         = __webpack_require__(172);
+var inflate_fast  = __webpack_require__(348);
+var inflate_table = __webpack_require__(350);
 
 var CODES = 0;
 var LENS = 1;
@@ -72477,7 +72829,7 @@ exports.inflateUndermine = inflateUndermine;
 
 
 /***/ }),
-/* 321 */
+/* 350 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -72502,7 +72854,7 @@ exports.inflateUndermine = inflateUndermine;
 //   misrepresented as being the original software.
 // 3. This notice may not be removed or altered from any source distribution.
 
-var utils = __webpack_require__(33);
+var utils = __webpack_require__(36);
 
 var MAXBITS = 15;
 var ENOUGH_LENS = 852;
@@ -72827,7 +73179,7 @@ module.exports = function inflate_table(type, lens, lens_index, codes, table, ta
 
 
 /***/ }),
-/* 322 */
+/* 351 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -72854,7 +73206,7 @@ module.exports = function inflate_table(type, lens, lens_index, codes, table, ta
 
 /* eslint-disable space-unary-ops */
 
-var utils = __webpack_require__(33);
+var utils = __webpack_require__(36);
 
 /* Public constants ==========================================================*/
 /* ===========================================================================*/
@@ -74056,7 +74408,7 @@ exports._tr_align = _tr_align;
 
 
 /***/ }),
-/* 323 */
+/* 352 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -74069,7 +74421,7 @@ exports._tr_align = _tr_align;
 
 
 
-var ReactPropTypesSecret = __webpack_require__(122);
+var ReactPropTypesSecret = __webpack_require__(128);
 
 function emptyFunction() {}
 function emptyFunctionWithReset() {}
@@ -74127,7 +74479,7 @@ module.exports = function() {
 
 
 /***/ }),
-/* 324 */
+/* 353 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -74140,11 +74492,11 @@ module.exports = function() {
 
 
 
-var ReactIs = __webpack_require__(168);
-var assign = __webpack_require__(60);
+var ReactIs = __webpack_require__(174);
+var assign = __webpack_require__(66);
 
-var ReactPropTypesSecret = __webpack_require__(122);
-var checkPropTypes = __webpack_require__(121);
+var ReactPropTypesSecret = __webpack_require__(128);
+var checkPropTypes = __webpack_require__(127);
 
 var has = Function.call.bind(Object.prototype.hasOwnProperty);
 var printWarning = function() {};
@@ -74723,10 +75075,10 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
   return ReactPropTypes;
 };
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
-/* 325 */
+/* 354 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -74747,11 +75099,11 @@ if (process.env.NODE_ENV !== "production") {
   (function() {
 'use strict';
 
-var React = __webpack_require__(1);
-var _assign = __webpack_require__(60);
-var checkPropTypes = __webpack_require__(121);
-var scheduler = __webpack_require__(190);
-var tracing = __webpack_require__(384);
+var React = __webpack_require__(2);
+var _assign = __webpack_require__(66);
+var checkPropTypes = __webpack_require__(127);
+var scheduler = __webpack_require__(196);
+var tracing = __webpack_require__(413);
 
 /**
  * Use invariant() to assert state which your program assumes to be true.
@@ -95963,10 +96315,10 @@ module.exports = reactDom;
   })();
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
-/* 326 */
+/* 355 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -95982,7 +96334,7 @@ module.exports = reactDom;
 /*
  Modernizr 3.0.0pre (Custom Build) | MIT
 */
-var aa=__webpack_require__(1),n=__webpack_require__(60),r=__webpack_require__(190);function ba(a,b,c,d,e,f,g,h){if(!a){a=void 0;if(void 0===b)a=Error("Minified exception occurred; use the non-minified dev environment for the full error message and additional helpful warnings.");else{var l=[c,d,e,f,g,h],k=0;a=Error(b.replace(/%s/g,function(){return l[k++]}));a.name="Invariant Violation"}a.framesToPop=1;throw a;}}
+var aa=__webpack_require__(2),n=__webpack_require__(66),r=__webpack_require__(196);function ba(a,b,c,d,e,f,g,h){if(!a){a=void 0;if(void 0===b)a=Error("Minified exception occurred; use the non-minified dev environment for the full error message and additional helpful warnings.");else{var l=[c,d,e,f,g,h],k=0;a=Error(b.replace(/%s/g,function(){return l[k++]}));a.name="Invariant Violation"}a.framesToPop=1;throw a;}}
 function x(a){for(var b=arguments.length-1,c="https://reactjs.org/docs/error-decoder.html?invariant="+a,d=0;d<b;d++)c+="&args[]="+encodeURIComponent(arguments[d+1]);ba(!1,"Minified React error #"+a+"; visit %s for the full message or use the non-minified dev environment for full errors and additional helpful warnings. ",c)}aa?void 0:x("227");function ca(a,b,c,d,e,f,g,h,l){var k=Array.prototype.slice.call(arguments,3);try{b.apply(c,k)}catch(m){this.onError(m)}}
 var da=!1,ea=null,fa=!1,ha=null,ia={onError:function(a){da=!0;ea=a}};function ja(a,b,c,d,e,f,g,h,l){da=!1;ea=null;ca.apply(ia,arguments)}function ka(a,b,c,d,e,f,g,h,l){ja.apply(this,arguments);if(da){if(da){var k=ea;da=!1;ea=null}else x("198"),k=void 0;fa||(fa=!0,ha=k)}}var la=null,ma={};
 function na(){if(la)for(var a in ma){var b=ma[a],c=la.indexOf(a);-1<c?void 0:x("96",a);if(!oa[c]){b.extractEvents?void 0:x("97",a);oa[c]=b;c=b.eventTypes;for(var d in c){var e=void 0;var f=c[d],g=b,h=d;pa.hasOwnProperty(h)?x("99",h):void 0;pa[h]=f;var l=f.phasedRegistrationNames;if(l){for(e in l)l.hasOwnProperty(e)&&qa(l[e],g,h);e=!0}else f.registrationName?(qa(f.registrationName,g,h),e=!0):e=!1;e?void 0:x("98",d,a)}}}}
@@ -96242,7 +96594,7 @@ X;X=!0;try{ki(a)}finally{(X=b)||W||Yh(1073741823,!1)}},__SECRET_INTERNALS_DO_NOT
 
 
 /***/ }),
-/* 327 */
+/* 356 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -96483,10 +96835,10 @@ exports.isSuspense = isSuspense;
   })();
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
-/* 328 */
+/* 357 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -96508,7 +96860,7 @@ exports.isElement=function(a){return"object"===typeof a&&null!==a&&a.$$typeof===
 
 
 /***/ }),
-/* 329 */
+/* 358 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -96518,35 +96870,35 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _extends2 = __webpack_require__(23);
+var _extends2 = __webpack_require__(27);
 
 var _extends3 = _interopRequireDefault(_extends2);
 
-var _getPrototypeOf = __webpack_require__(14);
+var _getPrototypeOf = __webpack_require__(15);
 
 var _getPrototypeOf2 = _interopRequireDefault(_getPrototypeOf);
 
-var _classCallCheck2 = __webpack_require__(7);
+var _classCallCheck2 = __webpack_require__(8);
 
 var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
 
-var _createClass2 = __webpack_require__(9);
+var _createClass2 = __webpack_require__(10);
 
 var _createClass3 = _interopRequireDefault(_createClass2);
 
-var _possibleConstructorReturn2 = __webpack_require__(16);
+var _possibleConstructorReturn2 = __webpack_require__(17);
 
 var _possibleConstructorReturn3 = _interopRequireDefault(_possibleConstructorReturn2);
 
-var _inherits2 = __webpack_require__(15);
+var _inherits2 = __webpack_require__(16);
 
 var _inherits3 = _interopRequireDefault(_inherits2);
 
-var _react = __webpack_require__(1);
+var _react = __webpack_require__(2);
 
 var React = _interopRequireWildcard(_react);
 
-var _detectElementResize = __webpack_require__(331);
+var _detectElementResize = __webpack_require__(360);
 
 var _detectElementResize2 = _interopRequireDefault(_detectElementResize);
 
@@ -96734,10 +97086,10 @@ AutoSizer.propTypes = process.env.NODE_ENV === 'production' ? null : {
   style: __webpack_require__(0).object
 };
 exports.default = AutoSizer;
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
-/* 330 */
+/* 359 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -96747,7 +97099,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _AutoSizer = __webpack_require__(329);
+var _AutoSizer = __webpack_require__(358);
 
 Object.defineProperty(exports, 'default', {
   enumerable: true,
@@ -96765,7 +97117,7 @@ Object.defineProperty(exports, 'AutoSizer', {
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /***/ }),
-/* 331 */
+/* 360 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -96969,14 +97321,14 @@ function createDetectElementResize(nonce) {
     removeResizeListener: removeResizeListener
   };
 }
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ }),
-/* 332 */
+/* 361 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__ArrowKeyStepper__ = __webpack_require__(169);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__ArrowKeyStepper__ = __webpack_require__(175);
 /* unused harmony reexport default */
 /* unused harmony reexport ArrowKeyStepper */
 
@@ -96986,7 +97338,7 @@ function createDetectElementResize(nonce) {
 
 
 /***/ }),
-/* 333 */
+/* 362 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(process) {var babelPluginFlowReactPropTypes_proptype_ScrollIndices = process.env.NODE_ENV === 'production' ? null : {
@@ -96997,39 +97349,39 @@ if (!(process.env.NODE_ENV === 'production') && typeof exports !== "undefined") 
   value: babelPluginFlowReactPropTypes_proptype_ScrollIndices,
   configurable: true
 });
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
-/* 334 */
+/* 363 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__AutoSizer__ = __webpack_require__(170);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__AutoSizer__ = __webpack_require__(176);
 /* unused harmony reexport default */
 /* unused harmony reexport AutoSizer */
 
 
 
 /***/ }),
-/* 335 */
+/* 364 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(14);
+/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_possibleConstructorReturn___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_possibleConstructorReturn__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_inherits__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_inherits__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_inherits___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_inherits__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_react_dom__ = __webpack_require__(67);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_react_dom__ = __webpack_require__(73);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_react_dom___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_react_dom__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__CellMeasurerCache_js__ = __webpack_require__(171);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__CellMeasurerCache_js__ = __webpack_require__(177);
 
 
 
@@ -97200,34 +97552,34 @@ CellMeasurer.propTypes = process.env.NODE_ENV === 'production' ? null : {
 if (process.env.NODE_ENV !== 'production') {
   CellMeasurer.__internalCellMeasurerFlag = true;
 }
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 336 */
+/* 365 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(23);
+/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_objectWithoutProperties__ = __webpack_require__(93);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_objectWithoutProperties__ = __webpack_require__(98);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_objectWithoutProperties___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_objectWithoutProperties__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_core_js_object_get_prototype_of___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_babel_runtime_core_js_object_get_prototype_of__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_classCallCheck__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_classCallCheck__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_classCallCheck___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_classCallCheck__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_createClass__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_createClass__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_createClass___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_createClass__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_possibleConstructorReturn___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_possibleConstructorReturn__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_babel_runtime_helpers_inherits__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_babel_runtime_helpers_inherits__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_babel_runtime_helpers_inherits___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_babel_runtime_helpers_inherits__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_prop_types__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_prop_types___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_prop_types__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__CollectionView__ = __webpack_require__(337);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__utils_calculateSizeAndPositionData__ = __webpack_require__(341);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__utils_getUpdatedOffsetForIndex__ = __webpack_require__(368);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__CollectionView__ = __webpack_require__(366);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__utils_calculateSizeAndPositionData__ = __webpack_require__(370);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__utils_getUpdatedOffsetForIndex__ = __webpack_require__(397);
 
 
 
@@ -97245,9 +97597,9 @@ if (process.env.NODE_ENV !== 'production') {
  * Renders scattered or non-linear data.
  * Unlike Grid, which renders checkerboard data, Collection can render arbitrarily positioned- even overlapping- data.
  */
-var babelPluginFlowReactPropTypes_proptype_SizeInfo = __webpack_require__(49).babelPluginFlowReactPropTypes_proptype_SizeInfo || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_SizeInfo = __webpack_require__(54).babelPluginFlowReactPropTypes_proptype_SizeInfo || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_ScrollPosition = __webpack_require__(49).babelPluginFlowReactPropTypes_proptype_ScrollPosition || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_ScrollPosition = __webpack_require__(54).babelPluginFlowReactPropTypes_proptype_ScrollPosition || __webpack_require__(0).any;
 
 var Collection = function (_PureComponent) {
   __WEBPACK_IMPORTED_MODULE_6_babel_runtime_helpers_inherits___default()(Collection, _PureComponent);
@@ -97516,33 +97868,33 @@ function defaultCellGroupRenderer(_ref4) {
     return !!renderedCell;
   });
 }
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 337 */
+/* 366 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(23);
+/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_prop_types__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_prop_types___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_prop_types__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_classnames__ = __webpack_require__(46);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_classnames__ = __webpack_require__(50);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_classnames___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8_classnames__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__utils_createCallbackMemoizer__ = __webpack_require__(126);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_dom_helpers_util_scrollbarSize__ = __webpack_require__(148);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__utils_createCallbackMemoizer__ = __webpack_require__(132);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_dom_helpers_util_scrollbarSize__ = __webpack_require__(154);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_dom_helpers_util_scrollbarSize___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10_dom_helpers_util_scrollbarSize__);
 
 
@@ -98173,16 +98525,16 @@ CollectionView.propTypes = process.env.NODE_ENV !== "production" ? {
    */
   width: __WEBPACK_IMPORTED_MODULE_6_prop_types___default.a.number.isRequired
 } : {};
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 338 */
+/* 367 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_classCallCheck__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_classCallCheck__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_classCallCheck___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_classCallCheck__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_createClass__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_createClass__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_createClass___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_createClass__);
 
 
@@ -98193,10 +98545,10 @@ CollectionView.propTypes = process.env.NODE_ENV !== "production" ? {
  * This enables us to more quickly determine which cells to display in a given region of the Window.
  * Sections have a fixed size and contain 0 to many cells (tracked by their indices).
  */
-var babelPluginFlowReactPropTypes_proptype_SizeAndPositionInfo = __webpack_require__(49).babelPluginFlowReactPropTypes_proptype_SizeAndPositionInfo || __webpack_require__(0).any; /** @rlow */
+var babelPluginFlowReactPropTypes_proptype_SizeAndPositionInfo = __webpack_require__(54).babelPluginFlowReactPropTypes_proptype_SizeAndPositionInfo || __webpack_require__(0).any; /** @rlow */
 
 
-var babelPluginFlowReactPropTypes_proptype_Index = __webpack_require__(49).babelPluginFlowReactPropTypes_proptype_Index || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_Index = __webpack_require__(54).babelPluginFlowReactPropTypes_proptype_Index || __webpack_require__(0).any;
 
 var Section = function () {
   function Section(_ref) {
@@ -98253,17 +98605,17 @@ var Section = function () {
 /* harmony default export */ __webpack_exports__["a"] = (Section);
 
 /***/ }),
-/* 339 */
+/* 368 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_keys__ = __webpack_require__(135);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_keys__ = __webpack_require__(141);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_keys___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_keys__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Section__ = __webpack_require__(338);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Section__ = __webpack_require__(367);
 
 
 
@@ -98274,9 +98626,9 @@ var Section = function () {
  */
 
 
-var babelPluginFlowReactPropTypes_proptype_SizeAndPositionInfo = __webpack_require__(49).babelPluginFlowReactPropTypes_proptype_SizeAndPositionInfo || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_SizeAndPositionInfo = __webpack_require__(54).babelPluginFlowReactPropTypes_proptype_SizeAndPositionInfo || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_Index = __webpack_require__(49).babelPluginFlowReactPropTypes_proptype_Index || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_Index = __webpack_require__(54).babelPluginFlowReactPropTypes_proptype_Index || __webpack_require__(0).any;
 
 var SECTION_SIZE = 100;
 
@@ -98414,11 +98766,11 @@ var SectionManager = function () {
 /* harmony default export */ __webpack_exports__["a"] = (SectionManager);
 
 /***/ }),
-/* 340 */
+/* 369 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Collection__ = __webpack_require__(336);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Collection__ = __webpack_require__(365);
 /* unused harmony reexport Collection */
 
 
@@ -98426,12 +98778,12 @@ var SectionManager = function () {
 
 
 /***/ }),
-/* 341 */
+/* 370 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = calculateSizeAndPositionData;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__SectionManager__ = __webpack_require__(339);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__SectionManager__ = __webpack_require__(368);
 
 
 function calculateSizeAndPositionData(_ref) {
@@ -98470,23 +98822,23 @@ function calculateSizeAndPositionData(_ref) {
 }
 
 /***/ }),
-/* 342 */
+/* 371 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(14);
+/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_possibleConstructorReturn___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_possibleConstructorReturn__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_inherits__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_inherits__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_inherits___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_inherits__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_prop_types__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_prop_types___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_prop_types__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_react__);
 
 
@@ -98602,14 +98954,14 @@ ColumnSizer.propTypes = process.env.NODE_ENV !== "production" ? {
   /** Width of Grid or Table child */
   width: __WEBPACK_IMPORTED_MODULE_5_prop_types___default.a.number.isRequired
 } : {};
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 343 */
+/* 372 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__ColumnSizer__ = __webpack_require__(342);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__ColumnSizer__ = __webpack_require__(371);
 /* unused harmony reexport ColumnSizer */
 
 
@@ -98617,7 +98969,7 @@ ColumnSizer.propTypes = process.env.NODE_ENV !== "production" ? {
 
 
 /***/ }),
-/* 344 */
+/* 373 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -98626,9 +98978,9 @@ ColumnSizer.propTypes = process.env.NODE_ENV !== "production" ? {
 /* unused harmony export SCROLL_DIRECTION_HORIZONTAL */
 /* unused harmony export SCROLL_DIRECTION_VERTICAL */
 /* harmony export (immutable) */ __webpack_exports__["a"] = defaultOverscanIndicesGetter;
-var babelPluginFlowReactPropTypes_proptype_OverscanIndices = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_OverscanIndices || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_OverscanIndices = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_OverscanIndices || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_OverscanIndicesGetterParams = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_OverscanIndicesGetterParams || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_OverscanIndicesGetterParams = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_OverscanIndicesGetterParams || __webpack_require__(0).any;
 
 var SCROLL_DIRECTION_BACKWARD = -1;
 var SCROLL_DIRECTION_FORWARD = 1;
@@ -98667,22 +99019,22 @@ function defaultOverscanIndicesGetter(_ref) {
 }
 
 /***/ }),
-/* 345 */
+/* 374 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_classCallCheck__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_classCallCheck__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_classCallCheck___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_classCallCheck__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_createClass__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_createClass__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_createClass___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_createClass__);
 
 
 
-var babelPluginFlowReactPropTypes_proptype_VisibleCellRange = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_VisibleCellRange || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_VisibleCellRange = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_VisibleCellRange || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_CellSizeGetter = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_CellSizeGetter || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_CellSizeGetter = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_CellSizeGetter || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_Alignment = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_Alignment || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_Alignment = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_Alignment || __webpack_require__(0).any;
 
 /**
  * Just-in-time calculates and caches size and position information for a collection of cells.
@@ -98986,7 +99338,7 @@ var CellSizeAndPositionManager = function () {
 /* harmony default export */ __webpack_exports__["a"] = (CellSizeAndPositionManager);
 
 /***/ }),
-/* 346 */
+/* 375 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -99022,7 +99374,7 @@ function calculateSizeAndPositionDataAndUpdateScrollOffset(_ref) {
  */
 
 /***/ }),
-/* 347 */
+/* 376 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -99048,15 +99400,15 @@ var getMaxElementSize = function getMaxElementSize() {
 };
 
 /***/ }),
-/* 348 */
+/* 377 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = updateScrollIndexHelper;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__ScalingCellSizeAndPositionManager_js__ = __webpack_require__(123);
-var babelPluginFlowReactPropTypes_proptype_CellSize = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_CellSize || __webpack_require__(0).any;
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__ScalingCellSizeAndPositionManager_js__ = __webpack_require__(129);
+var babelPluginFlowReactPropTypes_proptype_CellSize = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_CellSize || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_Alignment = __webpack_require__(6).babelPluginFlowReactPropTypes_proptype_Alignment || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_Alignment = __webpack_require__(7).babelPluginFlowReactPropTypes_proptype_Alignment || __webpack_require__(0).any;
 
 
 
@@ -99103,28 +99455,28 @@ function updateScrollIndexHelper(_ref) {
 }
 
 /***/ }),
-/* 349 */
+/* 378 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {/* unused harmony export isRangeVisible */
 /* unused harmony export scanForUnloadedRanges */
 /* unused harmony export forceUpdateReactVirtualizedComponent */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_possibleConstructorReturn___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_possibleConstructorReturn__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_inherits__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_inherits__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_inherits___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_inherits__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_react__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_prop_types__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_prop_types___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_prop_types__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__utils_createCallbackMemoizer__ = __webpack_require__(126);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__utils_createCallbackMemoizer__ = __webpack_require__(132);
 
 
 
@@ -99413,14 +99765,14 @@ function forceUpdateReactVirtualizedComponent(component) {
     component.forceUpdate();
   }
 }
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 350 */
+/* 379 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__InfiniteLoader__ = __webpack_require__(349);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__InfiniteLoader__ = __webpack_require__(378);
 /* unused harmony reexport InfiniteLoader */
 
 
@@ -99428,11 +99780,11 @@ function forceUpdateReactVirtualizedComponent(component) {
 
 
 /***/ }),
-/* 351 */
+/* 380 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__List__ = __webpack_require__(176);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__List__ = __webpack_require__(182);
 /* unused harmony reexport default */
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return __WEBPACK_IMPORTED_MODULE_0__List__["a"]; });
 
@@ -99442,17 +99794,17 @@ function forceUpdateReactVirtualizedComponent(component) {
 
 
 /***/ }),
-/* 352 */
+/* 381 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_slicedToArray__ = __webpack_require__(248);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_slicedToArray__ = __webpack_require__(276);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_slicedToArray___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_slicedToArray__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__vendor_intervalTree__ = __webpack_require__(370);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__vendor_intervalTree__ = __webpack_require__(399);
 
 
 
@@ -99556,14 +99908,14 @@ var PositionCache = function () {
 /* harmony default export */ __webpack_exports__["a"] = (PositionCache);
 
 /***/ }),
-/* 353 */
+/* 382 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* unused harmony export default */
-var babelPluginFlowReactPropTypes_proptype_Positioner = __webpack_require__(125).babelPluginFlowReactPropTypes_proptype_Positioner || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_Positioner = __webpack_require__(131).babelPluginFlowReactPropTypes_proptype_Positioner || __webpack_require__(0).any;
 
-var babelPluginFlowReactPropTypes_proptype_CellMeasurerCache = __webpack_require__(125).babelPluginFlowReactPropTypes_proptype_CellMeasurerCache || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_CellMeasurerCache = __webpack_require__(131).babelPluginFlowReactPropTypes_proptype_CellMeasurerCache || __webpack_require__(0).any;
 
 function createCellPositioner(_ref) {
   var cellMeasurerCache = _ref.cellMeasurerCache,
@@ -99619,12 +99971,12 @@ function createCellPositioner(_ref) {
 }
 
 /***/ }),
-/* 354 */
+/* 383 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__createCellPositioner__ = __webpack_require__(353);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Masonry__ = __webpack_require__(125);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__createCellPositioner__ = __webpack_require__(382);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Masonry__ = __webpack_require__(131);
 /* unused harmony reexport createCellPositioner */
 /* unused harmony reexport Masonry */
 
@@ -99634,15 +99986,15 @@ function createCellPositioner(_ref) {
 
 
 /***/ }),
-/* 355 */
+/* 384 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_classCallCheck__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_classCallCheck__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_classCallCheck___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_classCallCheck__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_createClass__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_createClass__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_createClass___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_createClass__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__CellMeasurer__ = __webpack_require__(172);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__CellMeasurer__ = __webpack_require__(178);
 
 
 
@@ -99750,30 +100102,30 @@ var CellMeasurerCacheDecorator = function () {
 /* harmony default export */ __webpack_exports__["a"] = (CellMeasurerCacheDecorator);
 
 /***/ }),
-/* 356 */
+/* 385 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(23);
+/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_objectWithoutProperties__ = __webpack_require__(93);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_objectWithoutProperties__ = __webpack_require__(98);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_objectWithoutProperties___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_objectWithoutProperties__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_core_js_object_get_prototype_of___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_babel_runtime_core_js_object_get_prototype_of__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_classCallCheck__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_classCallCheck__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_classCallCheck___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_classCallCheck__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_createClass__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_createClass__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_createClass___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_createClass__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_possibleConstructorReturn___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_possibleConstructorReturn__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_babel_runtime_helpers_inherits__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_babel_runtime_helpers_inherits__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_babel_runtime_helpers_inherits___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_babel_runtime_helpers_inherits__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_prop_types__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_prop_types___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_prop_types__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__CellMeasurerCacheDecorator__ = __webpack_require__(355);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__Grid__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__CellMeasurerCacheDecorator__ = __webpack_require__(384);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__Grid__ = __webpack_require__(21);
 
 
 
@@ -100586,14 +100938,14 @@ MultiGrid.propTypes = process.env.NODE_ENV !== "production" ? {
   styleTopLeftGrid: __WEBPACK_IMPORTED_MODULE_7_prop_types___default.a.object.isRequired,
   styleTopRightGrid: __WEBPACK_IMPORTED_MODULE_7_prop_types___default.a.object.isRequired
 } : {};
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 357 */
+/* 386 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__MultiGrid__ = __webpack_require__(356);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__MultiGrid__ = __webpack_require__(385);
 /* unused harmony reexport MultiGrid */
 
 
@@ -100601,23 +100953,23 @@ MultiGrid.propTypes = process.env.NODE_ENV !== "production" ? {
 
 
 /***/ }),
-/* 358 */
+/* 387 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(14);
+/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_get_prototype_of__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_classCallCheck__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_createClass__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_possibleConstructorReturn___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_possibleConstructorReturn__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_inherits__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_inherits__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_inherits___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_inherits__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_prop_types__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_prop_types___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_prop_types__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_react__);
 
 
@@ -100708,14 +101060,14 @@ ScrollSync.propTypes = process.env.NODE_ENV !== "production" ? {
    */
   children: __WEBPACK_IMPORTED_MODULE_5_prop_types___default.a.func.isRequired
 } : {};
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 359 */
+/* 388 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__ScrollSync__ = __webpack_require__(358);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__ScrollSync__ = __webpack_require__(387);
 /* unused harmony reexport ScrollSync */
 
 
@@ -100723,35 +101075,35 @@ ScrollSync.propTypes = process.env.NODE_ENV !== "production" ? {
 
 
 /***/ }),
-/* 360 */
+/* 389 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(23);
+/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_helpers_extends__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_get_prototype_of__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_classCallCheck__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_babel_runtime_helpers_createClass__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_possibleConstructorReturn__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_classnames__ = __webpack_require__(46);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_classnames__ = __webpack_require__(50);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_classnames___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_classnames__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__Column__ = __webpack_require__(177);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__Column__ = __webpack_require__(183);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_prop_types__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_prop_types___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8_prop_types__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_react__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_react__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_react_dom__ = __webpack_require__(67);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_react_dom__ = __webpack_require__(73);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_react_dom___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10_react_dom__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__Grid__ = __webpack_require__(20);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__defaultRowRenderer__ = __webpack_require__(183);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__defaultHeaderRowRenderer__ = __webpack_require__(182);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__SortDirection__ = __webpack_require__(81);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__Grid__ = __webpack_require__(21);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__defaultRowRenderer__ = __webpack_require__(189);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__defaultHeaderRowRenderer__ = __webpack_require__(188);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__SortDirection__ = __webpack_require__(85);
 
 
 
@@ -100759,7 +101111,7 @@ ScrollSync.propTypes = process.env.NODE_ENV !== "production" ? {
 
 
 
-var babelPluginFlowReactPropTypes_proptype_CellPosition = __webpack_require__(20).babelPluginFlowReactPropTypes_proptype_CellPosition || __webpack_require__(0).any;
+var babelPluginFlowReactPropTypes_proptype_CellPosition = __webpack_require__(21).babelPluginFlowReactPropTypes_proptype_CellPosition || __webpack_require__(0).any;
 
 
 
@@ -101533,10 +101885,10 @@ Table.propTypes = process.env.NODE_ENV !== "production" ? {
   /** Width of list */
   width: __WEBPACK_IMPORTED_MODULE_8_prop_types___default.a.number.isRequired
 } : {};
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(3)))
 
 /***/ }),
-/* 361 */
+/* 390 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -101606,20 +101958,20 @@ function createMultiSort(sortCallback) {
 }
 
 /***/ }),
-/* 362 */
+/* 391 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__createMultiSort__ = __webpack_require__(361);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__defaultCellDataGetter__ = __webpack_require__(179);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__defaultCellRenderer__ = __webpack_require__(180);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__defaultHeaderRowRenderer_js__ = __webpack_require__(182);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__defaultHeaderRenderer__ = __webpack_require__(181);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__defaultRowRenderer__ = __webpack_require__(183);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Column__ = __webpack_require__(177);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__SortDirection__ = __webpack_require__(81);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__SortIndicator__ = __webpack_require__(178);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__Table__ = __webpack_require__(360);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__createMultiSort__ = __webpack_require__(390);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__defaultCellDataGetter__ = __webpack_require__(185);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__defaultCellRenderer__ = __webpack_require__(186);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__defaultHeaderRowRenderer_js__ = __webpack_require__(188);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__defaultHeaderRenderer__ = __webpack_require__(187);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__defaultRowRenderer__ = __webpack_require__(189);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Column__ = __webpack_require__(183);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__SortDirection__ = __webpack_require__(85);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__SortIndicator__ = __webpack_require__(184);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__Table__ = __webpack_require__(389);
 /* unused harmony reexport createMultiSort */
 /* unused harmony reexport defaultCellDataGetter */
 /* unused harmony reexport defaultCellRenderer */
@@ -101645,11 +101997,11 @@ function createMultiSort(sortCallback) {
 
 
 /***/ }),
-/* 363 */
+/* 392 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__WindowScroller__ = __webpack_require__(184);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__WindowScroller__ = __webpack_require__(190);
 /* unused harmony reexport WindowScroller */
 /* unused harmony reexport IS_SCROLLING_TIMEOUT */
 
@@ -101658,7 +102010,7 @@ function createMultiSort(sortCallback) {
 
 
 /***/ }),
-/* 364 */
+/* 393 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -101748,14 +102100,14 @@ function getScrollOffset(element) {
 }
 
 /***/ }),
-/* 365 */
+/* 394 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = registerScrollListener;
 /* harmony export (immutable) */ __webpack_exports__["b"] = unregisterScrollListener;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_requestAnimationTimeout__ = __webpack_require__(62);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__WindowScroller_js__ = __webpack_require__(184);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_requestAnimationTimeout__ = __webpack_require__(68);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__WindowScroller_js__ = __webpack_require__(190);
 
 
 
@@ -101832,38 +102184,38 @@ function unregisterScrollListener(component, element) {
 }
 
 /***/ }),
-/* 366 */
+/* 395 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__ArrowKeyStepper__ = __webpack_require__(332);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__ArrowKeyStepper__ = __webpack_require__(361);
 /* unused harmony reexport ArrowKeyStepper */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__AutoSizer__ = __webpack_require__(334);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__AutoSizer__ = __webpack_require__(363);
 /* unused harmony reexport AutoSizer */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__CellMeasurer__ = __webpack_require__(172);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__CellMeasurer__ = __webpack_require__(178);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return __WEBPACK_IMPORTED_MODULE_2__CellMeasurer__["a"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return __WEBPACK_IMPORTED_MODULE_2__CellMeasurer__["b"]; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Collection__ = __webpack_require__(340);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Collection__ = __webpack_require__(369);
 /* unused harmony reexport Collection */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__ColumnSizer__ = __webpack_require__(343);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__ColumnSizer__ = __webpack_require__(372);
 /* unused harmony reexport ColumnSizer */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__Grid__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__Grid__ = __webpack_require__(21);
 /* unused harmony reexport accessibilityOverscanIndicesGetter */
 /* unused harmony reexport defaultCellRangeRenderer */
 /* unused harmony reexport defaultOverscanIndicesGetter */
 /* unused harmony reexport Grid */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__InfiniteLoader__ = __webpack_require__(350);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__InfiniteLoader__ = __webpack_require__(379);
 /* unused harmony reexport InfiniteLoader */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__List__ = __webpack_require__(351);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__List__ = __webpack_require__(380);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return __WEBPACK_IMPORTED_MODULE_7__List__["a"]; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__Masonry__ = __webpack_require__(354);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__Masonry__ = __webpack_require__(383);
 /* unused harmony reexport createMasonryCellPositioner */
 /* unused harmony reexport Masonry */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__MultiGrid__ = __webpack_require__(357);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__MultiGrid__ = __webpack_require__(386);
 /* unused harmony reexport MultiGrid */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__ScrollSync__ = __webpack_require__(359);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__ScrollSync__ = __webpack_require__(388);
 /* unused harmony reexport ScrollSync */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__Table__ = __webpack_require__(362);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__Table__ = __webpack_require__(391);
 /* unused harmony reexport createTableMultiSort */
 /* unused harmony reexport defaultTableCellDataGetter */
 /* unused harmony reexport defaultTableCellRenderer */
@@ -101874,7 +102226,7 @@ function unregisterScrollListener(component, element) {
 /* unused harmony reexport Column */
 /* unused harmony reexport SortDirection */
 /* unused harmony reexport SortIndicator */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__WindowScroller__ = __webpack_require__(363);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__WindowScroller__ = __webpack_require__(392);
 /* unused harmony reexport WindowScroller */
 
 
@@ -101891,7 +102243,7 @@ function unregisterScrollListener(component, element) {
 
 
 /***/ }),
-/* 367 */
+/* 396 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -101924,7 +102276,7 @@ var raf = request;
 var caf = cancel;
 
 /***/ }),
-/* 368 */
+/* 397 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -101965,7 +102317,7 @@ function getUpdatedOffsetForIndex(_ref) {
 }
 
 /***/ }),
-/* 369 */
+/* 398 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -102170,12 +102522,12 @@ function dispatchBsearchEQ(a, y, c, l, h) {
 });
 
 /***/ }),
-/* 370 */
+/* 399 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = createWrapper;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__binarySearchBounds__ = __webpack_require__(369);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__binarySearchBounds__ = __webpack_require__(398);
 /**
  * Binary Search Bounds
  * https://github.com/mikolalysenko/interval-tree-1d
@@ -102562,7 +102914,7 @@ function createWrapper(intervals) {
 }
 
 /***/ }),
-/* 371 */
+/* 400 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -102583,8 +102935,8 @@ if (process.env.NODE_ENV !== "production") {
   (function() {
 'use strict';
 
-var _assign = __webpack_require__(60);
-var checkPropTypes = __webpack_require__(121);
+var _assign = __webpack_require__(66);
+var checkPropTypes = __webpack_require__(127);
 
 // TODO: this is special because it gets imported during build.
 
@@ -104468,10 +104820,10 @@ module.exports = react;
   })();
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
-/* 372 */
+/* 401 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -104484,7 +104836,7 @@ module.exports = react;
  * LICENSE file in the root directory of this source tree.
  */
 
-var k=__webpack_require__(60),n="function"===typeof Symbol&&Symbol.for,p=n?Symbol.for("react.element"):60103,q=n?Symbol.for("react.portal"):60106,r=n?Symbol.for("react.fragment"):60107,t=n?Symbol.for("react.strict_mode"):60108,u=n?Symbol.for("react.profiler"):60114,v=n?Symbol.for("react.provider"):60109,w=n?Symbol.for("react.context"):60110,x=n?Symbol.for("react.concurrent_mode"):60111,y=n?Symbol.for("react.forward_ref"):60112,z=n?Symbol.for("react.suspense"):60113,aa=n?Symbol.for("react.memo"):
+var k=__webpack_require__(66),n="function"===typeof Symbol&&Symbol.for,p=n?Symbol.for("react.element"):60103,q=n?Symbol.for("react.portal"):60106,r=n?Symbol.for("react.fragment"):60107,t=n?Symbol.for("react.strict_mode"):60108,u=n?Symbol.for("react.profiler"):60114,v=n?Symbol.for("react.provider"):60109,w=n?Symbol.for("react.context"):60110,x=n?Symbol.for("react.concurrent_mode"):60111,y=n?Symbol.for("react.forward_ref"):60112,z=n?Symbol.for("react.suspense"):60113,aa=n?Symbol.for("react.memo"):
 60115,ba=n?Symbol.for("react.lazy"):60116,A="function"===typeof Symbol&&Symbol.iterator;function ca(a,b,d,c,e,g,h,f){if(!a){a=void 0;if(void 0===b)a=Error("Minified exception occurred; use the non-minified dev environment for the full error message and additional helpful warnings.");else{var l=[d,c,e,g,h,f],m=0;a=Error(b.replace(/%s/g,function(){return l[m++]}));a.name="Invariant Violation"}a.framesToPop=1;throw a;}}
 function B(a){for(var b=arguments.length-1,d="https://reactjs.org/docs/error-decoder.html?invariant="+a,c=0;c<b;c++)d+="&args[]="+encodeURIComponent(arguments[c+1]);ca(!1,"Minified React error #"+a+"; visit %s for the full message or use the non-minified dev environment for full errors and additional helpful warnings. ",d)}var C={isMounted:function(){return!1},enqueueForceUpdate:function(){},enqueueReplaceState:function(){},enqueueSetState:function(){}},D={};
 function E(a,b,d){this.props=a;this.context=b;this.refs=D;this.updater=d||C}E.prototype.isReactComponent={};E.prototype.setState=function(a,b){"object"!==typeof a&&"function"!==typeof a&&null!=a?B("85"):void 0;this.updater.enqueueSetState(this,a,b,"setState")};E.prototype.forceUpdate=function(a){this.updater.enqueueForceUpdate(this,a,"forceUpdate")};function F(){}F.prototype=E.prototype;function G(a,b,d){this.props=a;this.context=b;this.refs=D;this.updater=d||C}var H=G.prototype=new F;
@@ -104503,14 +104855,14 @@ unstable_ConcurrentMode:x,unstable_Profiler:u,__SECRET_INTERNALS_DO_NOT_USE_OR_Y
 
 
 /***/ }),
-/* 373 */
+/* 402 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(39);
+module.exports = __webpack_require__(43);
 
 
 /***/ }),
-/* 374 */
+/* 403 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -104543,11 +104895,11 @@ module.exports = __webpack_require__(39);
 
 module.exports = PassThrough;
 
-var Transform = __webpack_require__(187);
+var Transform = __webpack_require__(193);
 
 /*<replacement>*/
-var util = Object.create(__webpack_require__(58));
-util.inherits = __webpack_require__(47);
+var util = Object.create(__webpack_require__(64));
+util.inherits = __webpack_require__(51);
 /*</replacement>*/
 
 util.inherits(PassThrough, Transform);
@@ -104563,7 +104915,7 @@ PassThrough.prototype._transform = function (chunk, encoding, cb) {
 };
 
 /***/ }),
-/* 375 */
+/* 404 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -104571,8 +104923,8 @@ PassThrough.prototype._transform = function (chunk, encoding, cb) {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Buffer = __webpack_require__(82).Buffer;
-var util = __webpack_require__(393);
+var Buffer = __webpack_require__(86).Buffer;
+var util = __webpack_require__(422);
 
 function copyBuffer(src, target, offset) {
   src.copy(target, offset);
@@ -104648,28 +105000,28 @@ if (util && util.inspect && util.inspect.custom) {
 }
 
 /***/ }),
-/* 376 */
+/* 405 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(128).PassThrough
+module.exports = __webpack_require__(134).PassThrough
 
 
 /***/ }),
-/* 377 */
+/* 406 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(128).Transform
+module.exports = __webpack_require__(134).Transform
 
 
 /***/ }),
-/* 378 */
+/* 407 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(127);
+module.exports = __webpack_require__(133);
 
 
 /***/ }),
-/* 379 */
+/* 408 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -105602,10 +105954,10 @@ var index = (function () {
 
 /* harmony default export */ __webpack_exports__["a"] = (index);
 
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(4)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(5)))
 
 /***/ }),
-/* 380 */
+/* 409 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -106033,10 +106385,10 @@ exports.unstable_unsubscribe = unstable_unsubscribe;
   })();
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
-/* 381 */
+/* 410 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -106053,7 +106405,7 @@ Object.defineProperty(exports,"__esModule",{value:!0});var b=0;exports.__interac
 
 
 /***/ }),
-/* 382 */
+/* 411 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -106757,10 +107109,10 @@ exports.unstable_getFirstCallbackNode = unstable_getFirstCallbackNode;
   })();
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(4)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), __webpack_require__(5)))
 
 /***/ }),
-/* 383 */
+/* 412 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -106786,25 +107138,25 @@ exports.unstable_scheduleCallback=function(a,b){var c=-1!==k?k:exports.unstable_
 b=c.previous;b.next=c.previous=a;a.next=c;a.previous=b}return a};exports.unstable_cancelCallback=function(a){var b=a.next;if(null!==b){if(b===a)d=null;else{a===d&&(d=b);var c=a.previous;c.next=b;b.previous=c}a.next=a.previous=null}};exports.unstable_wrapCallback=function(a){var b=g;return function(){var c=g,f=k;g=b;k=exports.unstable_now();try{return a.apply(this,arguments)}finally{g=c,k=f,v()}}};exports.unstable_getCurrentPriorityLevel=function(){return g};
 exports.unstable_shouldYield=function(){return!e&&(null!==d&&d.expirationTime<l||w())};exports.unstable_continueExecution=function(){null!==d&&p()};exports.unstable_pauseExecution=function(){};exports.unstable_getFirstCallbackNode=function(){return d};
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ }),
-/* 384 */
+/* 413 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {
 
 if (process.env.NODE_ENV === 'production') {
-  module.exports = __webpack_require__(381);
+  module.exports = __webpack_require__(410);
 } else {
-  module.exports = __webpack_require__(380);
+  module.exports = __webpack_require__(409);
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
-/* 385 */
+/* 414 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -106816,10 +107168,10 @@ module.exports = typeof setImmediate === 'function' ? setImmediate :
 		setTimeout.apply(null, args);
 	};
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(63).setImmediate))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(69).setImmediate))
 
 /***/ }),
-/* 386 */
+/* 415 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Copyright Joyent, Inc. and other Node contributors.
@@ -106845,15 +107197,15 @@ module.exports = typeof setImmediate === 'function' ? setImmediate :
 
 module.exports = Stream;
 
-var EE = __webpack_require__(13).EventEmitter;
-var inherits = __webpack_require__(47);
+var EE = __webpack_require__(14).EventEmitter;
+var inherits = __webpack_require__(51);
 
 inherits(Stream, EE);
-Stream.Readable = __webpack_require__(128);
-Stream.Writable = __webpack_require__(378);
-Stream.Duplex = __webpack_require__(373);
-Stream.Transform = __webpack_require__(377);
-Stream.PassThrough = __webpack_require__(376);
+Stream.Readable = __webpack_require__(134);
+Stream.Writable = __webpack_require__(407);
+Stream.Duplex = __webpack_require__(402);
+Stream.Transform = __webpack_require__(406);
+Stream.PassThrough = __webpack_require__(405);
 
 // Backwards-compat with node 0.4.x
 Stream.Stream = Stream;
@@ -106952,7 +107304,7 @@ Stream.prototype.pipe = function(dest, options) {
 
 
 /***/ }),
-/* 387 */
+/* 416 */
 /***/ (function(module, exports) {
 
 
@@ -107047,16 +107399,16 @@ module.exports = function (css) {
 
 
 /***/ }),
-/* 388 */
+/* 417 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(292);
+var content = __webpack_require__(320);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // add the styles to the DOM
-var update = __webpack_require__(192)(content, {});
+var update = __webpack_require__(198)(content, {});
 if(content.locals) module.exports = content.locals;
 // Hot Module Replacement
 if(false) {
@@ -107073,16 +107425,16 @@ if(false) {
 }
 
 /***/ }),
-/* 389 */
+/* 418 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(293);
+var content = __webpack_require__(321);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // add the styles to the DOM
-var update = __webpack_require__(192)(content, {});
+var update = __webpack_require__(198)(content, {});
 if(content.locals) module.exports = content.locals;
 // Hot Module Replacement
 if(false) {
@@ -107099,13 +107451,13 @@ if(false) {
 }
 
 /***/ }),
-/* 390 */
+/* 419 */
 /***/ (function(module, exports) {
 
 module.exports = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFoAAABuCAYAAACnQwS5AAALt0lEQVR42u2dBXBUVxfHT1yQEA+E4k4Nh52mTYu7a71YDY3hLDW07u7FpU2bEoEEIiUUd3cntskmWLLnO2fnLXOb2Y9m33ukYXJ/M7/Jzbl3du7+9+a++95WQMBAriTjyVhyuVKrKBjIteR5xbVK7Z5iGvkLGSTUqpHvkdEVZH4l5BXyB/Ir8oxS4757AoMy4W9IZzv97+m8csaQHVTMD8lPhLo3uYz7ynV+GlhLoqK9sKuRy0EfxpMWMt7B+V0hP1Xm+FGpuV3iMfrPT3/Ok/gvYceCdsYpb2IL6ePg/H4gnZQVjeSHQv8aHlPe89MetP2wHfmEq5GNSv85angT58nPgSgV9vskk6whaA3z07J12A87iFwJZWc9eZFsRjKjNb4Jnt8J0stO2J+RNzVsHdrnp+piYz/sXxy82HQg85Sw54hvQuP8lpJVhLC/JVHDxdCgeX4ajk8oqvb4JISNOr2J6cpcLpKrle3iFteUPkdxJ8+I87uXbwg47Hgd38Rj5B8cNsttrpXz/CQSiUQikUgkEolEItHAehLvKI/57/mQLBbmVKzUHCJ8qtnyRGShWfTxCPP18AhzBNxlsIzqxUKyLzhOsd2ag3SOKix8aYkFRcctKsEuUWbTY1H5YaCB9rPyYjrMyHlQTdCh5EAdg36BRDINHAft17QHzb4wvxifiDRfDZtcWBNU8LAxt0b7Wfln288y5babmW8oa9A3yZ9JZo5OQT+qvO4lsk5FC5od9frN4s5R5j1txqEbqKCNMacOBX2ILGw3y9TjTkFvJceSvrYPiszWIeiGZBZ5jewITAUMmh00+4a5S2ThN6CSVtMLAink7RT2zXaz84aVnmy2Eirjq4S9VcMe/RA5Wmn7kAdJJEcCU4mDnqO0fyZv6nAx3EpeJ1uR8SSS80Ckkm4dA8lQHU8dHclbZBGJ5HLSCUohL4b2dJy5JJKZpBdop1g407NYUY935X3D4qKs5BA9b1iEoPW/YZFIJBKJRCKRSCQSiUSyvma1sG1N6mXubdmsgOU218BBfnzVybJ0krNZ9JcJTtd/mgARoBPd5puMcLd56aWXmo4dOzb15ZdfDgEFbnON+0AFGU3rLDrVtiNe7fT4P+Qa94EDLJ3oXJj7dTUUvfJFVVwxxdn04wQI0yPkbgtMCP9GUlLSgwkJCTGgks6dOzcZPXr0aQr2KAfMcptr3AcOktKiSdjp9gZrsNkDhlt/im3u4zFagmZPf1QFaXVn/TgZamoNubRQmvj4eAOFnEueTU5OrgEqadeu3cO2sG0hcw1UsLtdu0xbsCVZ2Zj34kSW27fD5jFag2b3LPYqXjbJae/n48BNr5DZ0iu5BwVcmJiYeIisAxrp0aNH9/HjxyPLbVDJYUNYAYfJWgPOM6HFZLK2bXUeo0fQ7Oa57oXLJjl/ozFk+0FTsMMo5Jv0c3tcXFygEnwXql3gn+Ag4nYhbiOggiNhncWgrSFz2GLQPKbSBS2GzNsFqyXsw517/+vWwWMq3dbRr1+/ts8+++wOcU/mNte4z+E9eshTYecf7f5/L4bcx2Mq48WQ8bFfU8eBwc8tOh/e0xqsKNe4rxIc78qP/WOiwk4Mei7zdN+RBSy3uXav3rBIJBKJRCKRSCQSiUQyFV4APfjB9ZHgX2ul9/urv3no1mGFtWJrp8OPruGgks4jtod1GLQt86H+fxe07L2loEnnjMz7WqeEgUrOLwVDdmxIalFmf3PR1iHmnN9DU7lWXrffHDS6R7tPBw34rguc/9bxtzA+Kx4TsxJJMjsR3z75DobE1loIDtLjmb2LHh6yHVsM3o5frL6IT886bG037ZOJIW03LgIHyVrj8+atI7MRL68m19y2+NgbmPVb8HzQAD9Qsh+2Eq5o8OvBZo9oj3dBDStdw9tv6WBZeHIhsotOLsLFJxfj4lOLccmpJdh9e3cLrHB9BMrIiJf2h7UetsMabEsKe8fBAjR+dpp/t9q4VyZWa7I+zJGVfCO9lQWPRqM9b27pZOExDocrajfsoeDC4a7OX33b7y9/j3UW1jF7TvP8ydrvCL+5pASmBuLQ3UOtDts9zOrw3cNxxJ4R2DCjIcKvLpvK/Cae25dpC3XCwuP41dpLOGXJCbTV2KAOKZlQRq6ugo242R9xR2f7pgYjj9EYtJ2wjeDuHOFcwgGL/pz1MzZ7rxmHHQcTwAPKyp/OJpomeqd4Y+CmQKybWhfrpdbDkM0hWD2lOnIfxDnnQhkJf3pPgRhqfmExrkvOQrFWK2xzAZQR0zrIxQ2AmOyJuMmXg2W5TTUv5D4eoz3o0mFPAS+XKJdbugWdQCFymHcy3sX0nwdt37sY9MtQ1S3a7YZuW0eC6yZboE7JrJOiEHSCS4qarUMIWtvWIQabpCjU9No6us83vSb+xzJ9db0YJtKFbqOzJWhLVbzv7xpYW9D/ryrIfTQmXM3FkE8b126U4K7DZuz60l7VF8OiOLCUpHhgySavf8g17lNxMbSQxeQNIejX7/rxDja7zmu2LcQy6lhbHHWsDY48yrbG5ttrWiDFdZ7a453hud0csNXWo3aqPt5dXg7GonQfy7WDdVCUa9yn9XjXfUH+m+V3w5LqGl79L+/U9rvqmzvsql8QuMUnA9JcH6lINyxX4zzT8rb4m1lu63LDsiB/PtxrSCQSiUQikUgkEolkCnhBefEjgCEhJCR1d//+5j1DhpgTQ0NTuabzf4LTqCGMRq7Rrjnu09xNNl2jXN8EjbjHuM/ziPE4CpMgGO42v/v4vHlp9mwsWr0ai9asue3lN97AP4KD56sI2h5GTUFHQDPfOb4FX1/4GtkRsSOQHuN+ChqggN/lJ5X9V/W/Sa91FqKhNjhOHIn25T6FlQCGI61aWXKjo9Gexzp1svAYnYJOURX4FHhHeXx73fbM/PmE55FrThFO56g/FBzDyTPG86vQN0MLv730rfX1nv7z6VsU9iWIhPrgGM3JW3ZC5hr1KcQDbDzt749XOne26+ngYOQxOgWdRr5HoqPBeE/3jm3/RfuiVaZV1mDm7JyD9GdfQCG3BEcwgjN9QF/f4YM7D5OgKTjGB3aCpppAGkDuceo45emJZ3198TwFy3L7lJcXch+P0SloDjlcRdDAX6dR2Nt6LO1xY8nhJUh/9kUQCeFatiI/o1++GLSGrciPzBZCpjbXBDKUoO9kRkUIWvk2iMI4RV+93XKJcBkJGuCgeQWLukS7fAjqmSAETe1SpAJstAV6QlQIOtXxrcNoxxTNQTOT4WXnSOcN8AJUAz0wgitEQQhox5U8oEjtUmwAMOwBsJyp7oHnArz/4RkfT+Q+HgNlRQxW2ZMFx2gJ2i3KbUroW6GW7kt7IP3Z54BG+JRBr3OmwZKGlwLmBRhBOz0V7ZNOwRyr72u53LUhih5v7G/hPlCDuFWIagi66oyqm59PeAGX5iznoItB+DdcVX5wr4zdMO7W8ryV6DvX9zSUBxkAhp01q6UdbBtacKhj7YKdodXTuQbqMer+/wyIgHYUyI2AeYElfnP9/tRjRfvSim5IK5o+uNdBUup4NgX8dHw9V+WusHIjkUgkEolEIpFIJHFkc9CfnooVkmQjuB5dDvuProB93IZywPbVywfCA2t9HxtWQLZ/A1PMSYAst8slaMFscoIQjk4PwrXz0UcfxXzyyScP6rWaT6wE09m1gCy3y2NVox0PkD11/WpHA++++26NDz/88CyZ+/777xv0WM1n1gDa4LbGVe0GhvAYGD05jeU21zQEreHLSo1QwHVoVR+isAs//vjjHlpW8+k1kMcr2Qa3uaZ6VXOwv2UiJO2zym2uadg6NH79rpEPPvggkILeTt6k0Idp2Zsv/w54o+gqy21tezWvYg5YlGsaL4ba/4ESnYJWu5oLN1Cw5PkDP1nlNtfEVa1z0MLxroKjdesQV7MStCjXxFWt/9ZR8dHvYkgr9ioHypbeo231U2sgR9eLYcVH/+Pd4WWw61IsIHtuHSD9bpXbtvqRZbAddOZ/XPpgQl0g51YAAAAASUVORK5CYII="
 
 /***/ }),
-/* 391 */
+/* 420 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {
@@ -107176,16 +107528,16 @@ function config (name) {
   return String(val).toLowerCase() === 'true';
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ }),
-/* 392 */
+/* 421 */
 /***/ (function(module, exports) {
 
 /* (ignored) */
 
 /***/ }),
-/* 393 */
+/* 422 */
 /***/ (function(module, exports) {
 
 /* (ignored) */

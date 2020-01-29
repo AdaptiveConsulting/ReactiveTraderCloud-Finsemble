@@ -13,7 +13,7 @@ import { _BaseClient } from "./baseClient";
 /**
  *
  * @introduction
- * <h2>Search Client</h2>
+ * <h2>Search Client (Finsemble Connect)</h2>
  *
  * The Search Client allows for any window launched by Finsemble to act as a search provider or query against the registered providers.
  *
@@ -165,8 +165,11 @@ class SearchClient extends _BaseClient {
 		this.routerClient.query("Search.Provider.ItemAction." + item.provider, { item: item, action: action });
 	};
 	/**
-	 * Call this when you want to trigger an action associated to a provider. This may not exist on the provider.
-	 * @param {Provider} provider - This is the search result item.
+	 * Call this when you want to trigger an action associated with a provider.
+	 * Not all providers register an action handler.
+	 *
+	 * @param {object} provider Object containing the information needed to trigger an action.
+	 * @param {string} provider.channel The channel identifier which is being requested to conduct it's action
 	 * @example
 	 * FSBL.Clients.SearchClient.invokeProviderAction(provider);
 	 */
@@ -188,9 +191,6 @@ class SearchClient extends _BaseClient {
 };
 
 var searchClient = new SearchClient({
-	startupDependencies: {
-		services: ["searchService"]
-	},
 	onReady: function (cb) {
 		if (cb) {
 			cb();

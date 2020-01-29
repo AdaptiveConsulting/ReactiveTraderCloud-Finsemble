@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "http://localhost:3375/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 183);
+/******/ 	return __webpack_require__(__webpack_require__.s = 220);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -86,13 +86,13 @@ var CONSOLE_DEFAULT_LOG_SETTING = { Error: true, Warn: true, Info: true, Log: tr
 const MAX_LOG_MESSAGE_SIZE = 50000;
 const OVER_LOG_SIZE_LIMIT_MESSAGE = `Log argument greater than ${MAX_LOG_MESSAGE_SIZE / 1000}KB. Check local Console to see output of the object.`;
 const MAX_QUEUE_SIZE = 5 * 1000; // maximum logger queue size; plenty of space although shouldn't need much since continuously sending to logger if working correctly;
-const throttle = __webpack_require__(23);
+const throttle = __webpack_require__(24);
 const system_1 = __webpack_require__(3);
 const localLogger_1 = __webpack_require__(16);
 /**
  * @introduction
  *
- * <h2>Logger Client</h2>
+ * <h2>Logger Client (Finsemble Workspaces)</h2>
  *
  * The Logger Client supports very efficient and configurable run-time logging to the <a href=tutorial-CentralLogger.html>Central Logger</a>.
  * Logging has a small performance overhead, so developers can liberally instrument their code with log messages for debugging and diagnostics.
@@ -985,6 +985,304 @@ process.umask = function() { return 0; };
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+const routerClientInstance_1 = __webpack_require__(5);
+const validate_1 = __webpack_require__(6); // Finsemble args validator
+const logger_1 = __webpack_require__(0);
+const system_1 = __webpack_require__(3);
+const dependencyManager_1 = __webpack_require__(17);
+/**
+ * @introduction
+ * <h2>Base Client</h2>
+ * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependencies are met, either client or service, the client's `onReady` method is fired.
+ *
+ * We're currently halfway through migrating our clients from extending a normal function prototype to an ES6 class.
+ * "_BaseClient" represents the new class, while "BaseClient" is the original function. When the migration is complete,
+ * we will remove the old function and rename "_BaseClient" to "BaseClient".
+ * @constructor
+ * @param {Object} params
+ * @param {Function} params.onReady - A function to be called after the client has initialized.
+ * @param {String} params.name - The name of the client
+ * @shouldBePublished false
+    @example
+    import { _BaseClient as BaseClient } from "./baseClient";
+    var NewClient = function (params) {
+        BaseClient.call(this, params);
+        var self = this;
+
+        return this;
+    };
+
+    var clientInstance = new NewClient({
+        onReady: function (cb) {
+            Logger.system.log("NewClient Online");
+            cb();
+        },
+        name:"NewClient"
+    });
+    clientInstance.requiredServices = [REPLACE_THIS_ARRAY_WITH_DEPENENCIES];
+    clientInstance.initialize();
+    module.exports = clientInstance;
+    @private
+ */
+class _BaseClient {
+    constructor(params) {
+        /** The current status of this service. */
+        this.status = "offline";
+        this.startupTime = 0;
+        this.initialized = false;
+        this.startupDependencies = { services: [], clients: [] };
+        /** Gets the current window. */
+        this.finsembleWindow = null;
+        /** Gets the current window name. */
+        this.windowName = "";
+        /** Queue of functions to process once the client goes online. */
+        this.clientReadyQueue = [];
+        /**
+         * @private
+         *
+         */
+        this.processClientReadyQueue = () => {
+            for (let cb of this.clientReadyQueue) {
+                cb();
+            }
+            this.clientReadyQueue = [];
+        };
+        /**
+         * @private
+         *
+         */
+        this.onReady = (cb) => {
+            this.clientReadyQueue.push(cb);
+            if (this.status === "online") {
+                this.processClientReadyQueue();
+            }
+        };
+        /** Check to see if the client can come online. We check this against the required services and clients */
+        /**
+     * @private
+     *
+     */
+        this.setClientOnline = () => {
+            this.status = "online";
+            const onReadyMessage = `STARTUP:CLIENT ONLINE:${this.finWindow.name}:${this.name}`;
+            this.startupTime = window.performance.now() - this.startupTime;
+            const readyCB = () => {
+                this.logger.system.debug(onReadyMessage);
+                this.processClientReadyQueue();
+                dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(this.name);
+            };
+            if (this._onReady) {
+                this._onReady(readyCB);
+            }
+            else {
+                readyCB();
+            }
+        };
+        /**
+         * @private
+         *
+         */
+        this.initialize = (cb = Function.prototype) => {
+            if (this.initialized)
+                return;
+            this.initialized = true;
+            this.startupTime = performance.now();
+            this.routerClient.onReady(() => {
+                // TODO, [terry] allow the finsembleWindow to be passed in, so we can support proxying windowClient in RPC
+                this.finWindow = system_1.System.Window.getCurrent();
+                this.windowName = this.finWindow.name;
+                this.logger.system.debug("Baseclient Init Router Ready", this.name);
+                dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor(this.startupDependencies, () => {
+                    cb();
+                    this.setClientOnline();
+                });
+            });
+        };
+        /**
+         * @private
+         *
+         */
+        this.onClose = (cb) => {
+            if (cb)
+                cb();
+        };
+        this.name = params.name;
+        this._onReady = params.onReady;
+        this.startupDependencies = params.startupDependencies || {
+            services: [],
+            clients: []
+        };
+        // @TODO - Refactor this to use DI.
+        this.logger = logger_1.default;
+        /**
+         * Reference to the RouterClient
+         */
+        this.routerClient = routerClientInstance_1.default;
+    }
+}
+exports._BaseClient = _BaseClient;
+/**
+ * @introduction
+ * <h2>Base Client</h2>
+ * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependencies are met, either client or service, the client's `onReady` method is fired.
+ * @constructor
+ * @param {Object} params
+ * @param {Function} params.onReady - A function to be called after the client has initialized.
+ * @param {String} params.name - The name of the client
+ * @shouldBePublished false
+    @example
+    import { _BaseClient as BaseClient } from "./baseClient";
+    var NewClient = function (params) {
+        BaseClient.call(this, params);
+        var self = this;
+
+        return this;
+    };
+
+    var clientInstance = new NewClient({
+        onReady: function (cb) {
+            Logger.system.log("NewClient Online");
+            cb();
+        },
+        name:"NewClient"
+    });
+    clientInstance.requiredServices = [REPLACE_THIS_ARRAY_WITH_DEPENENCIES];
+    clientInstance.initialize();
+    module.exports = clientInstance;
+    @private
+ */
+var BaseClient = function (params) {
+    validate_1.default.args(params, "object=");
+    var self = this;
+    var status = "offline";
+    var onReady;
+    this.startupTime = 0;
+    if (params) {
+        if (params.onReady) {
+            onReady = params.onReady;
+        }
+        this.name = params.name;
+    }
+    this.initialized = false;
+    this.startupDependencies = params.startupDependencies || {
+        services: [],
+        clients: []
+    };
+    /**
+     * Reference to the RouterClient
+     *  @type {Object}
+     */
+    this.routerClient = routerClientInstance_1.default;
+    /**
+     * Gets the current window - stays here for backward compatibility
+     * @type {object}
+     */
+    this.finWindow = null;
+    /**
+     * Gets the current window
+     * @type {object}
+     */
+    this.finsembleWindow = null;
+    /**
+     * Gets the current window name
+     *  @type {string}
+     */
+    this.windowName = ""; //The current window
+    /**
+     * Services the are required to be online before the service can come online
+     *  @type {Array.<Object>}
+     */
+    this.requiredServices = [];
+    /**
+     * Clients the are required to be online before the service can come online
+     *  @type {Array.<Object>}
+     */
+    this.requiredClients = [];
+    /**
+     * Queue of functions to process once the client goes online.
+     * @private
+     */
+    this.clientReadyQueue = [];
+    /**
+     * Iterates through the clientReadyQueue, invoking each call to `.ready`.
+     */
+    this.processClientReadyQueue = function () {
+        for (var i = 0; i < this.clientReadyQueue.length; i++) {
+            let callback = this.clientReadyQueue[i];
+            if (typeof callback === "function") {
+                callback();
+            }
+        }
+        this.clientReadyQueue = [];
+    };
+    /**
+     * Method for adding callbacks to each client.
+     */
+    this.onReady = function (cb) {
+        this.clientReadyQueue.push(cb);
+        if (status === "online") {
+            this.processClientReadyQueue();
+        }
+    };
+    //Check to see if the client can come online. We check this against the required services and clients
+    this.setClientOnline = function () {
+        var self = this;
+        status = "online";
+        let onReadyMessage = `STARTUP:CLIENT ONLINE:${self.finWindow.name}:${self.name}`;
+        self.startupTime = performance.now() - self.startupTime;
+        if (onReady) {
+            onReady(function () {
+                logger_1.default.system.debug(onReadyMessage);
+                self.processClientReadyQueue();
+                dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(self.name);
+            });
+        }
+        else {
+            logger_1.default.system.debug(onReadyMessage);
+            self.processClientReadyQueue();
+            dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(self.name);
+        }
+    };
+    /**
+    * Starts the process of checking services and any other function required before the client can come online
+    */
+    this.initialize = function (cb = Function.prototype) {
+        if (self.initialized) {
+            return;
+        }
+        self.initialized = true;
+        self.setClientOnline = self.setClientOnline.bind(self);
+        self.startupTime = performance.now();
+        self.routerClient.onReady(function () {
+            // TODO, [terry] allow the finsembleWindow to be passed in, so we can support proxying windowClient in RPC
+            self.finWindow = system_1.System.Window.getCurrent();
+            self.windowName = self.finWindow.name;
+            logger_1.default.system.debug("Baseclient Init Router Ready", self.name);
+            dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor({
+                clients: self.startupDependencies.clients || []
+            }, () => {
+                cb();
+                self.setClientOnline();
+            });
+        });
+    };
+    this.onClose = function () { };
+};
+exports.default = BaseClient;
+
+
+/***/ }),
+
+/***/ 11:
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.WRAPPERS = {
     /*
         TODO: For the time being these are just events our windows fire but not OpenFin (this is used in the OF wrapper. Long term we might have to reverse this)
@@ -998,6 +1296,26 @@ exports.SERVICE_INITIALIZING_CHANNEL = "Finsemble.ServiceManager.serviceInitiali
 exports.SERVICE_READY_CHANNEL = "Finsemble.ServiceManager.serviceReady";
 exports.SERVICE_CLOSING_CHANNEL = "Finsemble.ServiceManager.serviceClosing";
 exports.SERVICE_CLOSED_CHANNEL = "Finsemble.ServiceManager.serviceClosed";
+// Naming to supports handshake betwwen each client and its corresponding service
+// Returns the handshake channel for a given service name
+exports.SERVICE_QUERY_READY_CHANNEL = (name) => { return `Finsemble.ServiceManager.queryReady.${name}`; };
+// Maps a client name to its corresponding service name.  Okay to not include all clients here -- if not here then handshake won't be done
+exports.CLIENT_SERVER_MAPPING = (name) => {
+    const MAPPING = {
+        "authenticationClient": "authenticationService",
+        "configClient": "configService",
+        "distributedStoreClient": "dataStoreService",
+        "hotkeysClient": "hotkeysService",
+        "linkerClient": "linkerService",
+        "logger": "loggerService",
+        "searchClient": "searchService",
+        "storageClient": "storageService",
+        "windowClient": "windowService",
+        "workspaceClient": "workspaceService"
+    };
+    // returns undefined if there is no mapping
+    return MAPPING[name];
+};
 //This channel is where the aggregated state of all services is sent out on.
 exports.SERVICES_STATE_CHANNEL = "Finsemble.State.Services";
 exports.WINDOWSTATE = {
@@ -1013,11 +1331,11 @@ exports.DOCKING = {
     GROUP_UPDATE: "DockingService.groupUpdate",
     // For legacy reasons, this is named Workspace, even though it's generated by docking.
     WORKSPACE_GROUP_UPDATE: "Finsemble.WorkspaceService.groupUpdate",
+    REQUEST_PUBLISH: "DockingService.requestGroupDataPublish",
 };
 // These channels are for interrupting events
 exports.EVENT_INTERRUPT_CHANNEL = "Finsemble.Event.Interrupt";
 exports.INTERRUPTIBLE_EVENTS = ["close-requested", "closed", "close-complete", "_container-close-handlers"];
-exports.REMOTE_FOCUS = "WindowService.remoteFocus";
 exports.WORKSPACE = {
     CLEAN_SHUTDOWN: "Finsemble.Workspace.cleanShutdown",
     UPDATE_PUBSUB: "Finsemble.WorkspaceService.update",
@@ -1070,6 +1388,11 @@ exports.WORKSPACE = {
         REMOVE_WINDOW: "WorkspaceService.removeWindow",
     }
 };
+exports.WINDOW_SERVICE_REQUESTS = {
+    REMOTE_FOCUS: "WindowService.remoteFocus",
+    SET_ALWAYS_ON_TOP: "WindowService-Request-setAlwaysOnTop",
+    IS_ALWAYS_ON_TOP: "WindowService-Request-isAlwaysOnTop",
+};
 exports.COMPONENT_STATE_STORAGE_TOPIC = "finsemble.componentStateStorage";
 exports.HEARTBEAT_TIMEOUT_CHANNEL = "Finsemble.WindowService.HeartbeatTimeout";
 exports.LAUNCHER_SERVICE = {
@@ -1087,7 +1410,241 @@ exports.MOVE_REASON = {
 
 /***/ }),
 
-/***/ 11:
+/***/ 112:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__baseService__ = __webpack_require__(36);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__baseService___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__baseService__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_keyMaps_json__ = __webpack_require__(50);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_keyMaps_json___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__common_keyMaps_json__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_system__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__common_system__);
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+
+
+
+
+
+
+
+__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.start();
+
+/**
+ * The HotkeyService is responsible for registering and unregistering hotkeys via the hotkey client. It checks key presses received from assimilation, and checks if those key presses match and key combinations registered as hotkeys by hotkey clients. If it does, it sends out a router message including all windows registered with that component.
+ */
+class HotkeyService extends __WEBPACK_IMPORTED_MODULE_0__baseService__["BaseService"] {
+
+	/**
+  * @constructor
+  * @param {string} params.name name of the service
+  * @param {object} params.startupDependencies
+  * @param {array} params.startupDependencies.clients Clients to wait on before initializing the service
+  * @param {array} params.startupDependencies.services Services to wait on before initializing the service
+  * @param {object} params.shutdownDependencies
+  * @param {array} params.shutdownDependencies.services Services to wait on before shutting down the service
+  **/
+	constructor(params) {
+		// FIXME(Terry) should be hotkeyService (with no "s") in order to match HotkeyClient
+		params.name = "hotkeysService";
+		super(params);
+		this.registeredHotkeys = {};
+		this.keysDown = {}; //currently pressed keys
+		this.bindCorrectContext();
+		this.onBaseServiceReady(this.initialize);
+		this.start();
+	}
+
+	bindCorrectContext() {
+		this.initialize = this.initialize.bind(this);
+		this.createRouterEndpoints = this.createRouterEndpoints.bind(this);
+		this.checkHotkeys = this.checkHotkeys.bind(this);
+		this.getRegisteredHotkeys = this.getRegisteredHotkeys.bind(this);
+		this.onKeydown = this.onKeydown.bind(this);
+		this.onKeyup = this.onKeyup.bind(this);
+		this.registerGlobalHotkey = this.registerGlobalHotkey.bind(this);
+		this.removeAllHotkeysForWindow = this.removeAllHotkeysForWindow.bind(this);
+		this.unregisterGlobalHotkey = this.unregisterGlobalHotkey.bind(this);
+	}
+
+	/**
+  * Just adds router endpoints
+  * @param {*} cb
+  */
+	createRouterEndpoints(cb) {
+		this.RouterClient.addResponder("hotkeysService.registerGlobalHotkey", this.registerGlobalHotkey);
+
+		this.RouterClient.addResponder("hotkeysService.unregisterGlobalHotkey", this.unregisterGlobalHotkey);
+
+		this.RouterClient.addResponder("hotkeysService.removeAllHotkeysForWindow", this.removeAllHotkeysForWindow);
+
+		this.RouterClient.addListener("finsemble.assimilation.keydown", this.onKeydown);
+
+		this.RouterClient.addListener("finsemble.assimilation.keyup", this.onKeyup);
+
+		this.RouterClient.addListener("hotkeysService.getRegisteredHotkeys", this.getRegisteredHotkeys);
+
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.info("Added listeners for hotkeysService");
+		cb();
+	}
+
+	/**
+  * Initializes a hotkey service
+  */
+	initialize(cb) {
+		this.createRouterEndpoints(cb);
+		__WEBPACK_IMPORTED_MODULE_3__common_system__["System"].addEventListener("session-changed", params => {
+			this.keysDown = {};
+		});
+	}
+
+	/**
+  * This is a function called whenever a key is pressed or unpressed. It looks at the keys currently pressed, and compares them with all registered hotkey key combinations. If they match a combination, the service sends out a router message to all the clients with a list of windows registered with that hotkey
+  */
+	checkHotkeys() {
+		var keysPressed = Object.keys(this.keysDown).sort().toString(); //reads all fields from the hotkeys object
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("hotkeysService.checkHotkeys", keysPressed);
+		if (!this.registeredHotkeys[keysPressed]) return;
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.info("hotkeysService.checkHotkeys: detected a hotkey combination", keysPressed);
+		this.RouterClient.transmit("HotkeyTriggered", {
+			windows: this.registeredHotkeys[keysPressed],
+			keys: keysPressed
+		});
+	}
+
+	/**
+  * Passes back the registered keys to the caller
+  *
+  * @param {*} error
+  * @param {*} response
+  */
+	getRegisteredHotkeys(error, response) {
+		var self = this;
+		if (error) {
+			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log("requestHotkeys error: " + error);
+		} else {
+			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log("currently registered Hotkeys: ", self.registeredHotkeys);
+		}
+		return this.registeredHotkeys;
+	}
+
+	/**
+  * Detects key downs passed from assimilation, translates the key codes to strings, and adds them to this.keysDown. Then checks if service should trigger any hotkeys.
+  * @param {*} error
+  * @param {*} response
+  */
+	onKeydown(error, response) {
+		let keyPressed = response.data.key.toString();
+		let keyFromDictionary = __WEBPACK_IMPORTED_MODULE_2__common_keyMaps_json__["assimilationMap"][keyPressed];
+		this.keysDown[keyFromDictionary] = true;
+		this.checkHotkeys();
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("received keydown - key pressed: ", __WEBPACK_IMPORTED_MODULE_2__common_keyMaps_json__["assimilationMap"][response.data.key], "raw key code: ", response.data.key);
+	}
+
+	/**
+  * Detects key ups passed from assimilation, translates the key codes to strings, and removes them from this.keysDown. Then checks if service should trigger any hotkeys.
+  * @param {*} error
+  * @param {*} response
+  */
+	onKeyup(error, response) {
+		let keyPressed = response.data.key.toString();
+		let keyFromDictionary = __WEBPACK_IMPORTED_MODULE_2__common_keyMaps_json__["assimilationMap"][keyPressed];
+		delete this.keysDown[keyFromDictionary];
+		this.checkHotkeys();
+		// console.log("received keyup - current keys down:", this.keysDown);
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("received keyup - current keys down:", this.keysDown);
+	}
+
+	/**
+  * This function registers global hotkeys - ones that can be triggered regardless of what window is in focus. Registration occurs in this.registeredHotkeys, which consists of key-value pairs where the key is the key combination for the hotkey, and the value is all windows that have registered a key combination with that hotkey
+  * @param {*} error
+  * @param {*} message
+  */
+	registerGlobalHotkey(error, message) {
+		let origin = message.data.windowName;
+		let keys = message.data.keys;
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log("hotkeysService.registerGlobalHotkey, hotkey: ", keys, " origin: ", origin);
+		if (!this.registeredHotkeys[keys]) {
+			//if the hotkey doesn't already exist TODO: Pre-stringify this on the client side
+			this.registeredHotkeys[keys] = [origin];
+		} else {
+			this.registeredHotkeys[keys].push(origin);
+		}
+		message.sendQueryResponse(null, "success");
+	}
+
+	//Unregisters a global hotkey - removes the window id from this.registeredHotkeys[keys] (or deletes this.registeredHotkeys[keys] if it's the only one)
+	unregisterGlobalHotkey(err, message) {
+		let error = null;
+		let keys = message.data.keys;
+		let windowsListening = this.registeredHotkeys[keys];
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log("hotkeysService.registerGlobalHotkey, hotkey: ", keys);
+		if (windowsListening) {
+			//note that "keys" is already a string - if any hotkeys exist for this key combination
+			if (windowsListening.includes(message.data.windowName)) {
+				windowsListening = windowsListening.splice(windowsListening.indexOf(message.data.windowName), 1);
+				if (this.registeredHotkeys[keys].length === 0) {
+					delete this.registeredHotkeys[keys];
+				}
+			} else {
+				error = "Attempt to remove hotkey failed - this component had not registered this hotkey with the service";
+			}
+		} else {
+			error = "Attempt to remove hotkey failed - this component had not registered this hotkey with the service";
+		}
+		if (error) {
+			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(error);
+		}
+		message.sendQueryResponse(error, error ? null : "success");
+	}
+
+	/**
+  * Removes all hotkeys for a window
+  *
+  * @param {*} err
+  * @param {*} message
+  */
+	removeAllHotkeysForWindow(err, message) {
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.info("Removing all hotkeys for ", message.data.windowName);
+		let hotkeyCombinations = Object.keys(this.registeredHotkeys);
+		hotkeyCombinations.forEach(combo => {
+			let windowNames = this.registeredHotkeys[combo];
+			let i = windowNames.length;
+			//GO through all of the window names. if any match the window trying to unregister, remove it from the array.
+			//windows can have multiple listeners for a single hotkey combination; this will handle that.
+			while (i--) {
+				if (windowNames[i] === message.data.windowName) {
+					windowNames.splice(i, 1);
+				}
+			}
+		});
+		message.sendQueryResponse(null, "success");
+	}
+}
+
+let serviceInstance = new HotkeyService({
+	startupDependencies: {
+		services: []
+	},
+	shutdownDependencies: {
+		services: ["windowService"]
+	}
+});
+
+/* harmony default export */ __webpack_exports__["default"] = (serviceInstance);
+
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\services\\hotkeys\\hotkeysService.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\services\\hotkeys\\hotkeysService.js"); } } })();
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
+
+/***/ }),
+
+/***/ 12:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1196,7 +1753,7 @@ var ConfigUtil = function () {
 			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getRawManifest", application, level);
 
 			application.getManifest(function (manifest) {
-				// get raw openfin manifest
+				// get raw manifest
 				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getExpandedRawManifest: manifest retrieved. Pre-variable resolution", manifest);
 				self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables first time so can find config location
 				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getExpandedRawManifest:Complete. post-variable resolution", manifest);
@@ -1221,7 +1778,7 @@ var ConfigUtil = function () {
 		}
 
 		__WEBPACK_IMPORTED_MODULE_2__system__["System"].ready(function () {
-			// make sure openfin is ready
+			// make sure system is ready
 			var application = __WEBPACK_IMPORTED_MODULE_2__system__["System"].Application.getCurrent();
 			getRawManifest(callback, application, 1);
 		});
@@ -1235,7 +1792,7 @@ var ConfigUtil = function () {
 		}).then(function (response) {
 			return response.json();
 		}).catch(function (err) {
-			importCallback("failure importing: " + err, null);
+			importCallback(`Failure importing ${coreConfigFile}: ${err}`, null);
 		}).then(function (importObject) {
 			importCallback(null, importObject);
 		});
@@ -1247,10 +1804,10 @@ var ConfigUtil = function () {
 	this.getInitialManifest = function (callback) {
 
 		__WEBPACK_IMPORTED_MODULE_2__system__["System"].ready(function () {
-			// make sure openfin is ready
+			// make sure system is ready
 			var application = __WEBPACK_IMPORTED_MODULE_2__system__["System"].Application.getCurrent();
 			application.getManifest(function (manifest) {
-				// get raw openfin manifest
+				// get raw manifest
 				manifest.finsemble = manifest.finsemble || {}; // don't error on bad config
 				self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables first time so can find config config location
 				let CORE_CONFIG = manifest.finsemble.moduleRoot + "/configs/core/config.json"; // <<<--- here is the "hidden" core config file
@@ -1277,7 +1834,7 @@ var ConfigUtil = function () {
 						self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables with finsemble config
 						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getInitialManifest:getCoreConfig:Initial Manifest after variables Resolved", manifest);
 					} else {
-						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("ConfigUtil.getInitialManifest:getCoreConfig:failed importing into finsemble config", error);
+						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("ConfigUtil.getInitialManifest:getCoreConfig:failed importing into finsemble config.", error);
 					}
 					callback(manifest);
 				});
@@ -1533,7 +2090,7 @@ const ConfigUtilInstance = new ConfigUtil();
 
 /***/ }),
 
-/***/ 12:
+/***/ 13:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1987,7 +2544,7 @@ function unwrapListeners(arr) {
 
 /***/ }),
 
-/***/ 13:
+/***/ 14:
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -2016,458 +2573,6 @@ module.exports = function(module) {
 
 /***/ }),
 
-/***/ 14:
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const events_1 = __webpack_require__(12);
-const routerClientInstance_1 = __webpack_require__(5);
-const STARTUP_TIMEOUT_DURATION = 10000;
-const constants_1 = __webpack_require__(10);
-/**
- * Small class to hold on to dependencies and callbacks. Also emits a timeout event that the startupManager is listening for. When it times out, the startupManager catches the event and generates a message that includes all of the offline clients and services. It then causes this class to emit an  err event that the baseService is listening for. This arrangement is set up for a couple of reasons.
- * 1. I can't use the logger in here because the logger uses the startupManager, and there'd be a circular dependency.
- * 2. FSBLDependencyManager is a singleton, and there can be multiple services living in a single window. I didn't want them all to log that they were offline if they weren't (e.g., if I'd put the emitter on the StartupManager instead of this class).
- */
-class StartupDependency extends events_1.EventEmitter {
-    constructor(params) {
-        super();
-        this.callback = params.callback;
-        this.dependencies = params.dependencies;
-        this.startupTimer = null;
-        this.setStartupTimer = this.setStartupTimer.bind(this);
-        this.clearStartupTimer = this.clearStartupTimer.bind(this);
-        this.setStartupTimer();
-    }
-    /**
-     * Removes the startup timer (because the dependency was resolved within the allotted time);
-     */
-    clearStartupTimer() {
-        clearTimeout(this.startupTimer);
-        delete this.startupTimer;
-    }
-    /**
-     * If the dependency hasn't resolved within STARTUP_TIMEOUT_DURATION, emit a timeout event that the StartupManager can catch.
-     */
-    setStartupTimer() {
-        let self = this;
-        //+ coerces the result to a number, making typescript happy.
-        this.startupTimer = +setTimeout(() => {
-            self.emit("timeout");
-        }, STARTUP_TIMEOUT_DURATION);
-    }
-}
-/**
- * Used to generate a unique ID for the list of dependencies.
- */
-function uuidv4() {
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-        var r = Math.random() * 16 | 0, v = c === "x" ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-}
-/**
- * @private
- */
-class StartupManager {
-    /**
-     * @private
-     */
-    constructor() {
-        this.servicesAreAllOnline = {};
-        this.clientsAreAllOnline = {};
-        this.onlineClients = [];
-        this.onlineServices = [];
-        this.dependencies = {};
-        this.AuthorizationCompleted = false;
-        this.startupTimers = {};
-        this.startupTimerFired = false;
-        this.bindCorrectContext();
-    }
-    /**
-     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required dependencies are ready.
-     *
-     * @param {FinsembleDependency} dependencies
-     * @param {any} callback
-     * @memberof StartupManager
-     */
-    waitFor(dependencies, callback) {
-        let id = uuidv4();
-        //Set defaults to an empty array if they aren't passed in.
-        if (!dependencies.services)
-            dependencies.services = [];
-        if (!dependencies.clients)
-            dependencies.clients = [];
-        //The dependency manager can pass in a name to the dependency. If it does, we'll use it. If not, we won't.
-        if (dependencies.clients.length) {
-            if (this.AuthorizationCompleted === false && dependencies.clients.includes("authenticationClient")) {
-                dependencies.clients.splice(dependencies.clients.indexOf("authenticationClient"), 1);
-            }
-            //Lowercase the first letter of the client.
-            dependencies.clients = dependencies.clients.map(clientName => {
-                return clientName.charAt(0).toLowerCase() + clientName.slice(1);
-            });
-        }
-        let dependency = new StartupDependency({ dependencies, callback });
-        //If the dependency times out, throw an error that the baseService can catch. It will then log out why it's not online.
-        dependency.on("timeout", () => {
-            this.onDependencyTimeout(dependency);
-        });
-        this.dependencies[id] = dependency;
-        this.checkDependencies();
-        return dependency;
-    }
-    /**
-     * This method generates a helpful error message giving possible reasons for why the service is offline. After the message is generated, it emits an event on the dependency that's passed in as a parameter. The BaseService is listening for this event, and logs the error message to the central logger.
-     * @param {Dependency} dependency
-     */
-    onDependencyTimeout(dependency) {
-        const NEW_LINE = "\n", TAB = "\u0009", BULLET = "\u2022", BULLET_POINT = NEW_LINE + TAB + BULLET, STORAGE_ADAPTER_ERROR = "The default storage adapter failed to fully initialize, or has a syntax error. Ensure that the default storage adapter is up, connected, and sending/receiving data properly.";
-        const HELPFUL_MESSAGES = {
-            preferencesService: [
-                `PreferencesService failed to start.${BULLET_POINT}Typically this is caused by a failure to retrieve data from your default storage adapter. ${STORAGE_ADAPTER_ERROR}`
-            ],
-            storageService: [
-                `StorageService failed to start. Here are some common reasons for failure:${BULLET_POINT}${STORAGE_ADAPTER_ERROR}${BULLET_POINT}The data coming back from your adapter is improperly formatted or otherwise corrupted. Try clearing your storage and restarting. If the problem persists, the issue may not be in your adapter.`
-            ],
-            routerService: [
-                "RouterService failed to start. This is a fatal error. Contact finsemble support."
-            ],
-            workspaceService: [
-                `WorkspaceService failed to start. Here are some common reasons for failure:${BULLET_POINT}${STORAGE_ADAPTER_ERROR}.${BULLET_POINT}Your active workspace is corrupted.`
-            ],
-            assimilationService: [
-                "AssimilationService failed to start. Check to see that the 'FinsembleAssimilation' is active in your taskManager. If it is, please contact finsemble support."
-            ]
-        };
-        let offlineClients = this.getOfflineClients();
-        let offlineServices = this.getOfflineServices();
-        let errorMessage = `APPLICATION LIFECYCLE:STARTUP:Dependency not online after ${STARTUP_TIMEOUT_DURATION / 1000} seconds.`;
-        if (offlineClients.length) {
-            errorMessage += ` Waiting for these clients: ${offlineClients.join(", ")}.`;
-        }
-        if (offlineServices.length) {
-            errorMessage += ` Waiting for these services: ${offlineServices.join(", ")}.`;
-        }
-        //For every service that's offline, check to see if we have any helpful messages for it. If so, iterate through the array and append to the error message.
-        offlineServices.forEach((service) => {
-            if (HELPFUL_MESSAGES[service]) {
-                HELPFUL_MESSAGES[service].forEach((msg) => {
-                    errorMessage += NEW_LINE + NEW_LINE + msg + NEW_LINE;
-                });
-                //puts a line between our helpful messages and the log stack.
-                errorMessage += NEW_LINE;
-            }
-        });
-        //The BaseService is listening for this event, and will log the errorMessage to the central logger.
-        dependency.emit("err", errorMessage);
-    }
-    /**
-     * This function loops through all of the registered dependencies and checks to see if the conditions have been met. If so, it invokes the callback and removes the reference to the dependency.
-     *
-     * @memberof StartupManager
-     */
-    checkDependencies() {
-        for (let id in this.dependencies) {
-            let dependency = this.dependencies[id];
-            let { dependencies, callback } = dependency;
-            if (dependencies.services.length && !this.servicesAreAllOnline[id]) {
-                this.servicesAreAllOnline[id] = this.checkServices(dependencies.services);
-                if (!this.servicesAreAllOnline[id]) {
-                    continue;
-                }
-            }
-            if (dependencies.clients.length && !this.clientsAreAllOnline[id]) {
-                this.clientsAreAllOnline[id] = this.checkClients(dependencies.clients);
-                if (!this.clientsAreAllOnline[id]) {
-                    continue;
-                }
-            }
-            delete this.dependencies[id];
-            dependency.clearStartupTimer();
-            if (callback) {
-                callback();
-            }
-        }
-    }
-    getOfflineClients() {
-        let offlineClients = [];
-        for (let id in this.dependencies) {
-            let { dependencies } = this.dependencies[id];
-            offlineClients = offlineClients.concat(dependencies.clients.filter((dep) => !this.onlineClients.includes(dep)));
-        }
-        //return deduped list.
-        return offlineClients.filter((client, i) => offlineClients.indexOf(client) === i);
-    }
-    getOfflineServices() {
-        let offlineServices = [];
-        for (let id in this.dependencies) {
-            let { dependencies } = this.dependencies[id];
-            offlineServices = offlineServices.concat(dependencies.services.filter((dep) => !this.onlineServices.includes(dep)));
-        }
-        return offlineServices.filter((client, i) => offlineServices.indexOf(client) === i);
-    }
-    /**
-     * Iterates through required service list, returns false if any required service is offline.
-     *
-     * @param {any} serviceList
-     * @memberof StartupManager
-     */
-    checkServices(serviceList) {
-        return serviceList.every(service => this.onlineServices.includes(service));
-    }
-    /**
-     * Iterates through required client list, returns false if any required client is offline.
-     *
-     * @param {any} clientList
-
-     * @memberof StartupManager
-     */
-    checkClients(clientList) {
-        return clientList.every(client => this.onlineClients.includes(client));
-    }
-    /**
-     * When a service comes online, we push it onto our array of online services, and run through all of the registered dependencies.
-     *
-     * @param {any} serviceName
-     * @memberof StartupManager
-     */
-    setServiceOnline(serviceName) {
-        this.onlineServices.push(serviceName);
-        this.checkDependencies();
-    }
-    /**
-     * Sets an array of services online. Only happens once at startup.
-     *
-     * @param {any} serviceList
-     * @memberof StartupManager
-     */
-    setServicesOnline(serviceList) {
-        this.onlineServices = this.onlineServices.concat(serviceList);
-        this.checkDependencies();
-    }
-    /**
-     *
-     *
-     * @param {any} clientName
-
-     * @memberof StartupManager
-     */
-    setClientOnline(clientName) {
-        //This check is done because multiple clients of the same type can be on a page.
-        if (this.onlineClients.includes(clientName)) {
-            return;
-        }
-        this.onlineClients.push(clientName);
-        this.checkDependencies();
-    }
-    /**
-     * Returns the array of online clients.
-     *
-
-     * @memberof StartupManager
-     */
-    getOnlineClients() {
-        return this.onlineClients;
-    }
-    /**
-     * Returns the array of online services.
-     *
-
-     * @memberof StartupManager
-     */
-    getOnlineServices() {
-        return this.onlineServices;
-    }
-    /**
-     * Method to make sure that `this` is correct when the callbacks are invoked.
-     *
-     * @memberof StartupManager
-     */
-    bindCorrectContext() {
-        this.checkDependencies = this.checkDependencies.bind(this);
-        this.checkServices = this.checkServices.bind(this);
-        this.checkClients = this.checkClients.bind(this);
-        this.getOfflineClients = this.getOfflineClients.bind(this);
-        this.getOfflineServices = this.getOfflineServices.bind(this);
-        this.onDependencyTimeout = this.onDependencyTimeout.bind(this);
-        this.waitFor = this.waitFor.bind(this);
-    }
-}
-/**
- * @private
- */
-class ShutdownManager {
-    /**
-     * @private
-     */
-    constructor() {
-        this.offlineServices = [];
-        this.dependencies = {};
-        this.checkDependencies = this.checkDependencies.bind(this);
-    }
-    /**
-     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required dependencies are ready.
-     *
-     * @param {FinsembleDependency} dependencies
-     * @param {any} callback
-     * @memberof StartupManager
-     */
-    waitFor(dependencies, callback) {
-        //Set defaults to an empty array if they aren't passed in.
-        if (!dependencies.services) {
-            dependencies.services = [];
-        }
-        let id = uuidv4();
-        this.dependencies[id] = { dependencies, callback };
-    }
-    /**
-     * This function loops through all of the registered dependencies and checks to see if the conditions have been met. If so, it invokes the callback and removes the reference to the dependency.
-     *
-     * @memberof ShutdownDependencies
-     */
-    checkDependencies() {
-        console.debug("checkDependencies", this.dependencies);
-        if (Object.keys(this.dependencies)) {
-            for (let id in this.dependencies) {
-                let { dependencies, callback } = this.dependencies[id];
-                console.debug("checkDependency", dependencies.services, this.offlineServices);
-                if (dependencies.services.length) {
-                    let servicesAreAllOffline = this.checkServices(dependencies.services);
-                    if (!servicesAreAllOffline) {
-                        continue;
-                    }
-                }
-                console.debug("checkDependencies callback");
-                delete this.dependencies[id];
-                if (callback) {
-                    callback();
-                }
-            }
-        }
-    }
-    /**
-     * Iterates through required service list, returns false if any required service is offline.
-     *
-     * @param {any} serviceList
-
-     * @memberof StartupManager
-     */
-    checkServices(serviceList) {
-        return serviceList.every(service => this.offlineServices.includes(service));
-    }
-    setServiceOffline(service) {
-        console.debug("setServiceOffline", service);
-        this.offlineServices.push(service);
-        this.checkDependencies();
-    }
-}
-/**
- * This is a class that handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
- * @shouldBePublished false
- * @private
- * @class FSBLDependencyManager
- */
-class FSBLDependencyManager extends events_1.EventEmitter {
-    constructor() {
-        super();
-        this.startup = new StartupManager();
-        this.shutdown = new ShutdownManager();
-        this.RouterClient = routerClientInstance_1.default;
-        this.AuthorizationCompleted = false;
-        this.bindCorrectContext();
-        this.onAuthorizationCompleted(this.startup.checkDependencies);
-        routerClientInstance_1.default.onReady(this.listenForServices);
-    }
-    /**
- * Method to make sure that `this` is correct when the callbacks are invoked.
- *
- * @memberof StartupManager
- */
-    bindCorrectContext() {
-        this.listenForServices = this.listenForServices.bind(this);
-        this.onAuthorizationCompleted = this.onAuthorizationCompleted.bind(this);
-    }
-    setClientOnline(client) {
-        this.startup.setClientOnline(client);
-    }
-    /*
-    * handler for when a service changes its state. If a service comes online or goes offline, dependencies are checked and callbacks invoked.
-    */
-    onServiceStateChange(data) {
-        let ServiceNames = Object.keys(data);
-        //Iterate through all services. If it was online but isn't anymore, set it offline. If it was offline but now is, set it online.
-        ServiceNames.forEach((serviceName) => {
-            let state = data[serviceName].state;
-            let wasOnline = this.startup.onlineServices.includes(serviceName);
-            let isOnline = state === "ready";
-            if (!wasOnline && isOnline) {
-                this.startup.setServiceOnline(serviceName);
-            }
-            if (wasOnline && !isOnline && state === "closed") {
-                this.shutdown.setServiceOffline(serviceName);
-            }
-        });
-    }
-    /**
-     * Listens on the router for services to come online. The first subscriber gets the activeServices as of object instantiation. The 2nd subscriber listens for services to come online after the object is created. We should consider make this all one subscriber, though I see the advantage of having this setup.
-     *
-     */
-    listenForServices() {
-        console.debug("dependency manager: listenForServices in " + this.name);
-        this.RouterClient.subscribe(constants_1.SERVICES_STATE_CHANNEL, (err, event) => {
-            this.onServiceStateChange(event.data);
-        });
-        // TODO: The pubsub responder doesn't seem to work here. IT works for the above when not closing.
-        this.RouterClient.addListener(constants_1.SERVICE_CLOSED_CHANNEL, (err, event) => {
-            let services = {};
-            services[event.data.name] = {
-                state: "closed"
-            };
-            this.onServiceStateChange(services);
-        });
-        this.RouterClient.subscribe(constants_1.APPLICATION_STATE_CHANNEL, (err, response) => {
-            switch (response.data.state) {
-                //authenticated will only be caught by components/services that are up before auth does its thing. Otherwise, a component/service coming up will have the 'ready' application state. In either case, we need to do the things below. But only once.
-                case "authenticated":
-                case "ready":
-                    //No need to send this message out twice.
-                    if (this.AuthorizationCompleted)
-                        break;
-                    console.debug("Authorization Completed");
-                    this.AuthorizationCompleted = true;
-                    this.startup.AuthorizationCompleted = true;
-                    this.emit("AuthorizationCompleted");
-                    break;
-                case "closing":
-                    this.shutdown.checkDependencies();
-                    break;
-            }
-        });
-    }
-    onAuthorizationCompleted(callback) {
-        if (this.AuthorizationCompleted) {
-            callback();
-        }
-        else {
-            this.addListener("AuthorizationCompleted", callback);
-        }
-    }
-}
-/**
- * This is a class that handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
- * @shouldBePublished false
- * @private
- * @class FSBLDependencyManager
- */
-exports.FSBLDependencyManagerSingleton = new FSBLDependencyManager();
-exports.default = exports.FSBLDependencyManagerSingleton;
-
-
-/***/ }),
-
 /***/ 15:
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -2479,12 +2584,13 @@ exports.default = exports.FSBLDependencyManagerSingleton;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const validate_1 = __webpack_require__(6); // Finsemble args validator
-const baseClient_1 = __webpack_require__(7);
+const baseClient_1 = __webpack_require__(10);
 const async_1 = __webpack_require__(9);
+const systemManagerClient_1 = __webpack_require__(7);
 const logger_1 = __webpack_require__(0);
 /**
  * @introduction
- * <h2>Config Client</h2>
+ * <h2>Config Client (Finsemble Connect)</h2>
  *
  * This client provides run-time access to Finsemble's configuration.
  * The Config Client functions similar to a global store created with the Distributed Store Client and offers many of the same methods.
@@ -2752,13 +2858,14 @@ class ConfigClient extends baseClient_1._BaseClient {
     }
     ;
     /**
+     * Add an array of listeners as objects or strings. If using strings, you must provide a function callback as the second parameter.
      *
-    * Add an array of listeners as objects or strings. If using strings, you must provide a function callback as the second parameter.
-    * @param {function} fn The function to be called when the observed piece of config is modified.
-    * @param {function} cb Callback to be invoked after the listeners are added.
-    * @example
-    * var myFunction = function(err,data){}
-  * FSBL.Clients.ConfigClient.addListeners(
+     * @param {listenerParam | listenerParam[] | fieldOnlyParam | string[]} params
+     * @param {function} fn The function to be called when the observed piece of config is modified.
+     * @param {function} cb Callback to be invoked after the listeners are added.
+     * @example
+     * var myFunction = function(err,data){}
+    * FSBL.Clients.ConfigClient.addListeners(
     * 	[
     * 		{ field: "field1", listener: myFunction },
     * 		{ field: "field2", listener: myFunction }
@@ -2788,7 +2895,7 @@ class ConfigClient extends baseClient_1._BaseClient {
             }
             else if (item.field) {
                 field = item.field;
-                ls = params[i].listener;
+                ls = item.listener;
             }
             var combined = "configService" + (field ? "." + field : "");
             if (!ls) {
@@ -3044,19 +3151,18 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
      * Retrieves all of the preferences set for the application.
-     * @param {Object} params Parameters to pass to getPreferences. Optional. Defaults to null and currently ignored.
      * @param {StandardCallback} callback Callback to be invoked when preferences have been retrieved from the service.
      * @example
      * FSBL.Clients.ConfigClient.getPreferences((err, preferences)=> {
      * 		//use preferences.
      * });
      */
-    getPreferences(params, callback) {
-        if (typeof params === "function") {
-            callback = params;
-            params = null;
-        }
-        this.routerClient.query("PreferencesService.getPreferences", params, function (queryErr, queryResponse) {
+    async getPreferences(callback) {
+        logger_1.default.system.debug("ConfigClient.getPreferences", callback);
+        // need to check since preferences doesn't come up until after authentication, so not always ready
+        await systemManagerClient_1.default.waitForStartup("preferencesService");
+        this.routerClient.query("PreferencesService.getPreferences", null, function (queryErr, queryResponse) {
+            logger_1.default.system.debug("ConfigClient.getPrefences response", queryResponse);
             if (callback) {
                 callback(queryErr, queryResponse ? queryResponse.data : null);
             }
@@ -3165,6 +3271,409 @@ exports.LocalLogger = LocalLogger;
 /***/ }),
 
 /***/ 17:
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const events_1 = __webpack_require__(13);
+const routerClientInstance_1 = __webpack_require__(5);
+const STARTUP_TIMEOUT_DURATION = 10000;
+const constants_1 = __webpack_require__(11);
+const systemManagerClient_1 = __webpack_require__(7);
+const logger_1 = __webpack_require__(0);
+/**
+ * Small class to hold on to dependencies and callbacks. Also emits a timeout event that the startupManager is listening for. When it times out, the startupManager catches the event and generates a message that includes all of the offline clients and services. It then causes this class to emit an  err event that the baseService is listening for. This arrangement is set up for a couple of reasons.
+ * 1. I can't use the logger in here because the logger uses the startupManager, and there'd be a circular dependency.
+ * 2. FSBLDependencyManager is a singleton, and there can be multiple services living in a single window. I didn't want them all to log that they were offline if they weren't (e.g., if I'd put the emitter on the StartupManager instead of this class).
+ */
+class StartupDependency extends events_1.EventEmitter {
+    constructor(params) {
+        super();
+        this.callback = params.callback;
+        this.dependencies = params.dependencies;
+        this.startupTimer = null;
+        this.setStartupTimer = this.setStartupTimer.bind(this);
+        this.clearStartupTimer = this.clearStartupTimer.bind(this);
+        this.setStartupTimer();
+    }
+    /**
+     * Removes the startup timer (because the dependency was resolved within the allotted time);
+     */
+    clearStartupTimer() {
+        clearTimeout(this.startupTimer);
+        delete this.startupTimer;
+    }
+    /**
+     * If the dependency hasn't resolved within STARTUP_TIMEOUT_DURATION, emit a timeout event that the StartupManager can catch.
+     */
+    setStartupTimer() {
+        let self = this;
+        //+ coerces the result to a number, making typescript happy.
+        this.startupTimer = +setTimeout(() => {
+            self.emit("timeout");
+        }, STARTUP_TIMEOUT_DURATION);
+    }
+}
+/**
+ * Used to generate a unique ID for the list of dependencies.
+ */
+function uuidv4() {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0, v = c === "x" ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+/**
+ * @private
+ */
+class StartupManager {
+    /**
+     * @private
+     */
+    constructor() {
+        this.servicesAreAllOnline = {};
+        this.clientsAreAllOnline = {};
+        this.onlineClients = [];
+        this.dependencies = {};
+        this.startupTimers = {};
+        this.startupTimerFired = false;
+        this.bindCorrectContext();
+    }
+    /**
+     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required dependencies are ready.
+     *
+     * @param {FinsembleDependency} dependencies
+     * @param {any} callback
+     * @memberof StartupManager
+     */
+    waitFor(dependencies, callback) {
+        let id = uuidv4();
+        //Set defaults to an empty array if they aren't passed in.
+        if (!dependencies.clients)
+            dependencies.clients = [];
+        //The dependency manager can pass in a name to the dependency. If it does, we'll use it. If not, we won't.
+        if (dependencies.clients.length) {
+            //Lowercase the first letter of the client.
+            dependencies.clients = dependencies.clients.map(clientName => {
+                return clientName.charAt(0).toLowerCase() + clientName.slice(1);
+            });
+        }
+        let dependency = new StartupDependency({ dependencies, callback });
+        //If the dependency times out, throw an error that the baseService can catch. It will then log out why it's not online.
+        dependency.on("timeout", () => {
+            this.onDependencyTimeout(dependency);
+        });
+        this.dependencies[id] = dependency;
+        this.checkDependencies();
+        return dependency;
+    }
+    /**
+     * This method generates a helpful error message giving possible reasons for why the service is offline. After the message is generated, it emits an event on the dependency that's passed in as a parameter. The BaseService is listening for this event, and logs the error message to the central logger.
+     * @param {Dependency} dependency
+     */
+    onDependencyTimeout(dependency) {
+        const NEW_LINE = "\n", TAB = "\u0009", BULLET = "\u2022", BULLET_POINT = NEW_LINE + TAB + BULLET, STORAGE_ADAPTER_ERROR = "The default storage adapter failed to fully initialize, or has a syntax error. Ensure that the default storage adapter is up, connected, and sending/receiving data properly.";
+        let offlineClients = this.getOfflineClients();
+        let errorMessage = `APPLICATION LIFECYCLE:STARTUP:Dependency not online after ${STARTUP_TIMEOUT_DURATION / 1000} seconds.`;
+        if (offlineClients.length) {
+            errorMessage += ` Waiting for these clients: ${offlineClients.join(", ")}.`;
+        }
+        //The BaseService is listening for this event, and will log the errorMessage to the central logger.
+        dependency.emit("err", errorMessage);
+    }
+    /**
+     * This function loops through all of the registered dependencies and checks to see if the conditions have been met. If so, it invokes the callback and removes the reference to the dependency.
+     *
+     * @memberof StartupManager
+     */
+    checkDependencies() {
+        for (let id in this.dependencies) {
+            let dependency = this.dependencies[id];
+            let { dependencies, callback } = dependency;
+            if (dependencies.clients.length && !this.clientsAreAllOnline[id]) {
+                this.clientsAreAllOnline[id] = this.checkClients(dependencies.clients);
+                if (!this.clientsAreAllOnline[id]) {
+                    continue;
+                }
+            }
+            delete this.dependencies[id];
+            dependency.clearStartupTimer();
+            if (callback) {
+                callback();
+            }
+        }
+    }
+    getOfflineClients() {
+        let offlineClients = [];
+        for (let id in this.dependencies) {
+            let { dependencies } = this.dependencies[id];
+            offlineClients = offlineClients.concat(dependencies.clients.filter((dep) => !this.onlineClients.includes(dep)));
+        }
+        //return deduped list.
+        return offlineClients.filter((client, i) => offlineClients.indexOf(client) === i);
+    }
+    /**
+     * Iterates through required client list, returns false if any required client is offline.
+     *
+     * @param {any} clientList
+
+     * @memberof StartupManager
+     */
+    checkClients(clientList) {
+        return clientList.every(client => this.onlineClients.includes(client));
+    }
+    /**
+     *
+     *
+     * @param {any} clientName
+
+     * @memberof StartupManager
+     */
+    setClientOnline(clientName) {
+        //This check is done because multiple clients of the same type can be on a page.
+        if (this.onlineClients.includes(clientName)) {
+            return;
+        }
+        this.onlineClients.push(clientName);
+        this.checkDependencies();
+        // Note From Mike: Must change or workaround how some client usage triggers this code even though the client's service is NOT ready.
+        // This problem happens because some services initialize their clients when the client's service hasn't been created yet, but then don't use the client until later.
+        // So although the general code is correct here, the overall result is not (specifically the queries will timeout causing delays, error logging, and potential side effects).
+        // Therefore disabling this handshake code for now -- BUT KEEP CODE COMMENTED-OUT CODE UNTIL THIS IS RESOLVED. Just to be clear, nothing breaks without this code, but this
+        // code is what generates an error when improperly using a client...so it provides a needed check.
+        // let serviceName = CLIENT_SERVER_MAPPING(clientName);
+        // if (true /*disabling*/ && serviceName) {
+        // 	console.debug("SERVICE_QUERY_READY_CHANNEL querying", clientName, SERVICE_QUERY_READY_CHANNEL(serviceName));
+        // 	// before going online make sure this client's service is ready -- it should be until there is a startup problem
+        // 	RouterClient.query(SERVICE_QUERY_READY_CHANNEL(serviceName), {}, { timeout: 500 }, (err) => {
+        // 		if (err) {
+        // 			Logger.system.error(`DependencyManager: server ${serviceName} is not ready for client ${clientName}. ${err}. Make sure dependencies client dependencies are correct.`)
+        // 		} else {
+        // 			Logger.system.debug(`DependencyManager: server ${serviceName} is ready for client ${clientName} `)
+        // 		}
+        // 		this.onlineClients.push(clientName);
+        // 		this.checkDependencies();
+        // 	});
+        // } else {
+        // 	this.onlineClients.push(clientName);
+        // 	this.checkDependencies();
+        // }
+    }
+    /**
+     * Returns the array of online clients.
+     *
+
+     * @memberof StartupManager
+     */
+    getOnlineClients() {
+        return this.onlineClients;
+    }
+    /**
+     * Method to make sure that `this` is correct when the callbacks are invoked.
+     *
+     * @memberof StartupManager
+     */
+    bindCorrectContext() {
+        this.checkDependencies = this.checkDependencies.bind(this);
+        this.checkClients = this.checkClients.bind(this);
+        this.getOfflineClients = this.getOfflineClients.bind(this);
+        this.onDependencyTimeout = this.onDependencyTimeout.bind(this);
+        this.waitFor = this.waitFor.bind(this);
+    }
+}
+/**
+ * @private
+ */
+class ShutdownManager {
+    /**
+     * @private
+     */
+    constructor() {
+        this.offlineServices = [];
+        this.dependencies = {};
+        this.checkDependencies = this.checkDependencies.bind(this);
+    }
+    /**
+     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required dependencies are ready.
+     *
+     * @param {FinsembleDependency} dependencies
+     * @param {any} callback
+     * @memberof StartupManager
+     */
+    waitFor(dependencies, callback) {
+        logger_1.default.system.debug(`DependencyManager:waitFor`, dependencies);
+        //Set defaults to an empty array if they aren't passed in.
+        if (!dependencies.services) {
+            dependencies.services = [];
+        }
+        let id = uuidv4();
+        this.dependencies[id] = { dependencies, callback };
+    }
+    /**
+     * This function loops through all of the registered dependencies and checks to see if the conditions have been met. If so, it invokes the callback and removes the reference to the dependency.
+     *
+     * @memberof ShutdownDependencies
+     */
+    checkDependencies() {
+        console.debug("checkDependencies", this.dependencies);
+        if (Object.keys(this.dependencies)) {
+            for (let id in this.dependencies) {
+                let { dependencies, callback } = this.dependencies[id];
+                logger_1.default.system.debug(`DependencyManager:checkDependency`, dependencies.services, this.offlineServices);
+                if (dependencies.services.length) {
+                    let servicesAreAllOffline = this.checkServices(dependencies.services);
+                    if (!servicesAreAllOffline) {
+                        continue;
+                    }
+                }
+                console.debug("checkDependencies callback");
+                delete this.dependencies[id];
+                if (callback) {
+                    callback();
+                }
+            }
+        }
+    }
+    /**
+     * Iterates through required service list, returns false if any required service is offline.
+     *
+     * @param {any} serviceList
+
+     * @memberof ShutdownManager
+     */
+    checkServices(serviceList) {
+        return serviceList.every(service => this.offlineServices.includes(service));
+    }
+    setServiceOffline(service) {
+        logger_1.default.system.debug("setServiceOffline", service);
+        console.debug("setServiceOffline", service);
+        this.offlineServices.push(service);
+        this.checkDependencies();
+    }
+}
+/**
+ * This class handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready.
+ *
+ * The constructor is exported for the system mananger's shutDownManager so that class isn't constructed until right time in the starup process.
+ * Otherwise, this class is used as a singleton thoughout the rest of the system.
+ *
+ * @shouldBePublished false
+ * @private
+ * @class FSBLDependencyManager
+ */
+class FSBLDependencyManager extends events_1.EventEmitter {
+    constructor() {
+        super();
+        this.startup = new StartupManager();
+        this.shutdown = new ShutdownManager();
+        this.RouterClient = routerClientInstance_1.default;
+        this.AuthorizationCompleted = false;
+        this.bindCorrectContext();
+        this.onAuthorizationCompleted(this.startup.checkDependencies);
+        routerClientInstance_1.default.onReady(this.listenForServices);
+    }
+    /**
+ * Method to make sure that `this` is correct when the callbacks are invoked.
+ *
+ * @memberof StartupManager
+ */
+    bindCorrectContext() {
+        this.listenForServices = this.listenForServices.bind(this);
+        this.onAuthorizationCompleted = this.onAuthorizationCompleted.bind(this);
+    }
+    setClientOnline(client) {
+        this.startup.setClientOnline(client);
+    }
+    /*
+    * handler for when a service changes its state. If a service comes online or goes offline, dependencies are checked and callbacks invoked.
+    */
+    onServiceStateChange(data) {
+        let ServiceNames = Object.keys(data);
+        //Iterate through all services. If it was online but isn't anymore, set it offline. If it was offline but now is, set it online.
+        ServiceNames.forEach((serviceName) => {
+            let state = data[serviceName].state;
+            if (state === "closed") {
+                this.shutdown.setServiceOffline(serviceName);
+            }
+        });
+    }
+    /**
+     * Listens on the router for services to come online. The first subscriber gets the activeServices as of object instantiation. The 2nd subscriber listens for services to come online after the object is created. We should consider make this all one subscriber, though I see the advantage of having this setup.
+     *
+     */
+    listenForServices() {
+        logger_1.default.system.debug(`DependencyManager:listenForServices before wait`);
+        var listenForServicesCallback;
+        // wait until the essential parts of the microkernel stage is done so pubsub responders are available
+        systemManagerClient_1.default.waitForBootStage("kernel", "stageEntered", listenForServicesCallback = () => {
+            logger_1.default.system.debug(`DependencyManager:listenForServices after wait`);
+            this.RouterClient.subscribe(constants_1.SERVICES_STATE_CHANNEL, (err, event) => {
+                logger_1.default.system.debug(`DependencyManager:listenForServices SERVICES_STATE_CHANNEL`, event.data);
+                this.onServiceStateChange(event.data);
+            });
+            // TODO: The pubsub responder doesnt seem to work here. IT works for the above when not closing.
+            this.RouterClient.addListener(constants_1.SERVICE_CLOSED_CHANNEL, (err, event) => {
+                logger_1.default.system.debug(`DependencyManager:listenForServices SERVICE_CLOSED_CHANNEL`, event.data);
+                let services = {};
+                services[event.data.name] = {
+                    state: "closed"
+                };
+                this.onServiceStateChange(services);
+            });
+            this.RouterClient.subscribe(constants_1.APPLICATION_STATE_CHANNEL, (err, response) => {
+                switch (response.data.state) {
+                    //authenticated will only be caught by components/services that are up before auth does its thing. Otherwise, a component/service coming up will have the 'ready' application state. In either case, we need to do the things below. But only once.
+                    case "authenticated":
+                    case "ready":
+                        break;
+                    case "closing":
+                        this.shutdown.checkDependencies();
+                        break;
+                }
+            });
+        });
+    }
+    onAuthorizationCompleted(callback) {
+        if (this.AuthorizationCompleted) {
+            callback();
+        }
+        else {
+            this.addListener("AuthorizationCompleted", callback);
+        }
+    }
+}
+exports.FSBLDependencyManager = FSBLDependencyManager;
+/**
+ * This class handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
+ * @shouldBePublished false
+ * @private
+ * @class FSBLDependencyManager
+ */
+exports.FSBLDependencyManagerSingleton = new FSBLDependencyManager();
+exports.default = exports.FSBLDependencyManagerSingleton;
+
+
+/***/ }),
+
+/***/ 18:
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ALL_BOOT_STAGES = ["microkernel", "kernel", "authentication", "preuser", "earlyuser", "user"];
+exports.CRITICAL_BOOT_STAGES = ["microkernel", "kernel", "authentication"];
+exports.SYSLOG_CHANNEL = "systemManager.systemlog";
+exports.SHOW_SYSLOG_CHANNEL = "systemManager.showSystemlog";
+exports.STATUS_CHANNEL_BASE = "systemManager.boot.status";
+exports.STAGE_CHANNEL = "systemManager.boot.stage";
+exports.CHECKPOINT_CHANNEL_BASE = "systemManager.checkpoint";
+
+
+/***/ }),
+
+/***/ 19:
 /***/ (function(module, exports) {
 
 /**
@@ -3194,7 +3703,38 @@ module.exports = bytesToUuid;
 
 /***/ }),
 
-/***/ 18:
+/***/ 2:
+/***/ (function(module, exports) {
+
+module.exports = function(originalModule) {
+	if(!originalModule.webpackPolyfill) {
+		var module = Object.create(originalModule);
+		// module.parent = undefined by default
+		if(!module.children) module.children = [];
+		Object.defineProperty(module, "loaded", {
+			enumerable: true,
+			get: function() {
+				return module.l;
+			}
+		});
+		Object.defineProperty(module, "id", {
+			enumerable: true,
+			get: function() {
+				return module.i;
+			}
+		});
+		Object.defineProperty(module, "exports", {
+			enumerable: true,
+		});
+		module.webpackPolyfill = 1;
+	}
+	return module;
+};
+
+
+/***/ }),
+
+/***/ 20:
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {// Unique ID creation requires a high quality random # generator.  In the
@@ -3235,22 +3775,14 @@ module.exports = rng;
 
 /***/ }),
 
-/***/ 183:
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(93);
-
-
-/***/ }),
-
-/***/ 19:
+/***/ 21:
 /***/ (function(module, exports, __webpack_require__) {
 
 // Unique ID creation requires a high quality random # generator.  We feature
 // detect to determine the best RNG source, normalizing to a function that
 // returns 128-bits of randomness, since that's what's usually required
-var rng = __webpack_require__(18);
-var bytesToUuid = __webpack_require__(17);
+var rng = __webpack_require__(20);
+var bytesToUuid = __webpack_require__(19);
 
 // **`v1()` - Generate time-based UUID**
 //
@@ -3353,51 +3885,24 @@ module.exports = v1;
 
 /***/ }),
 
-/***/ 2:
-/***/ (function(module, exports) {
-
-module.exports = function(originalModule) {
-	if(!originalModule.webpackPolyfill) {
-		var module = Object.create(originalModule);
-		// module.parent = undefined by default
-		if(!module.children) module.children = [];
-		Object.defineProperty(module, "loaded", {
-			enumerable: true,
-			get: function() {
-				return module.l;
-			}
-		});
-		Object.defineProperty(module, "id", {
-			enumerable: true,
-			get: function() {
-				return module.i;
-			}
-		});
-		Object.defineProperty(module, "exports", {
-			enumerable: true,
-		});
-		module.webpackPolyfill = 1;
-	}
-	return module;
-};
-
-
-/***/ }),
-
-/***/ 20:
+/***/ 22:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__configUtil__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__configUtil__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__common_system__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__systemManagerClient__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__systemManagerClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__systemManagerClient__);
 /*!
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
+
+
 
 
 
@@ -3409,7 +3914,7 @@ var ConfigClient = null;
 
 /**
  * @introduction
- * <h2>Notification Client</h2>
+ * <h2>Notification Client (Finsemble Workspaces)</h2>
  *
  * Finsemble makes use of pop up (toast) notifications for communicating information to the end user in a gentler way than modal dialogs.
  * Use the Notification API to route messages so that your components can create these notifications.
@@ -3451,7 +3956,7 @@ var UserNotification = function () {
 	/**
   * Conditionally alerts the end user using a desktop notification.
   *
-  * @param {string} topic Specifies a category for the notification. Topic is currently unused, but in the future it will be used to filter notifications (e.g., applying regEx's defined in config to determine which notifications are displayed). Any topic string can be specified; however "system" is the recommended topic for system notifications applicable both to end uses and to developers. "dev" is the recommended topic for notifications applicable only during development (e.g., a notification that <i>config.json</i> has an illegal value).
+  * @param {string} topic Specifies a category for the notification. This parameter is reserved for future use; it is designed to filter notifications (e.g., applying regEx's defined in config to determine which notifications are displayed). Any topic string can be specified; however "system" is the recommended topic for system notifications applicable both to end uses and to developers. "dev" is the recommended topic for notifications applicable only during development (e.g., a notification that <i>config.json</i> has an illegal value).
   * @param {string} frequency Either "ALWAYS", "ONCE-SINCE-STARTUP", or "MAX-COUNT" to determine if alert should be displayed. Note, the frequencies are based on the number of notifications emitted from a window (as opposed to system wide).
   * @param {string} identifier Uniquely identifies this specific notification message. Used when "frequency" is set to "ONCE-SINCE-STARTUP" or "MAX-COUNT".
   * @param {any} message Message to display in the notification. Typically a string. Finsemble's built in templating accepts and object. See <i>../src-built-in/components/notification/notification.html<i>.
@@ -3521,6 +4026,7 @@ var UserNotification = function () {
 				message: message,
 				timeout: duration
 			};
+			__WEBPACK_IMPORTED_MODULE_3__systemManagerClient___default.a.systemLog({ notification: true }, "Notification: " + message);
 			new __WEBPACK_IMPORTED_MODULE_2__common_system__["System"].Notification(notifyObject);
 		}
 	};
@@ -3533,7 +4039,15 @@ var UserNotification = function () {
 
 /***/ }),
 
-/***/ 23:
+/***/ 220:
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(112);
+
+
+/***/ }),
+
+/***/ 24:
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -3980,7 +4494,7 @@ module.exports = throttle;
 
 /***/ }),
 
-/***/ 25:
+/***/ 26:
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {/**
@@ -5832,20 +6346,24 @@ function stubFalse() {
 
 module.exports = isEqual;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(13)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(14)(module)))
 
 /***/ }),
 
-/***/ 26:
+/***/ 27:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events__ = __webpack_require__(12);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_events__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 
-const deepEqual = __webpack_require__(25);
+
+const deepEqual = __webpack_require__(26);
+
 /** Singleton of the System class shared among all instances of Monitors
  * @TODO Refactor to instance member of class.
  */
@@ -5941,20 +6459,26 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 				console.info("Skipped refreshMonitors because monitors do not change.");
 				monitorsChanged = false;
 			}
-			//console.log("getAllMonitors");
-			this.allMonitors = [];
-			var primaryMonitor = monitorInfo.primaryMonitor;
-			this.primaryMonitor = primaryMonitor;
-			primaryMonitor.whichMonitor = "primary";
 
-			if (fin.container !== "Electron") {
-				primaryMonitor.deviceScaleFactor = this.calculateMonitorScale(primaryMonitor.monitor.dipRect, primaryMonitor.monitor.scaledRect);
+			this.allMonitors = [];
+			let primaryMonitor = monitorInfo.primaryMonitor;
+			if (Object.entries(primaryMonitor).length) {
+				primaryMonitor.whichMonitor = "primary";
+				primaryMonitor.position = 0;
+				if (System.container !== "Electron") {
+					primaryMonitor.deviceScaleFactor = this.calculateMonitorScale(primaryMonitor.monitor.dipRect, primaryMonitor.monitor.scaledRect);
+				}
+				this.allMonitors.push(primaryMonitor);
+			} else {
+				// If there is no primary monitor, then the system is still in the process of updating the monitor information,
+				// so we can return and wait for the next monitor change event comes in.
+				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.System.info("There is no primary monitor in 'monitorInfo' - the system is still in the process of updating the monitor information. Returning from monitorsAndScaling -> refreshMonitors");
+				return;
 			}
-			primaryMonitor.position = 0;
-			this.allMonitors.push(primaryMonitor);
+
 			for (let i = 0; i < monitorInfo.nonPrimaryMonitors.length; i++) {
 				let monitor = monitorInfo.nonPrimaryMonitors[i];
-				if (fin.container !== "Electron") {
+				if (System.container !== "Electron") {
 					monitor.deviceScaleFactor = this.calculateMonitorScale(monitor.monitor.dipRect, monitor.monitor.scaledRect);
 				}
 				monitor.whichMonitor = i;
@@ -5988,7 +6512,7 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 	}
 
 	/**
-  * Gets the monitor on which the point is or null if not on any monitor. This assumes scaled dimensions for the monitor (For example from Openfin or WPF directly).
+  * Gets the monitor on which the point is or null if not on any monitor. This assumes scaled dimensions for the monitor (For example from electron or WPF directly).
   * @param {*} x
   * @param {*} y
   * @param {*} cb
@@ -6212,12 +6736,12 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 
 /***/ }),
 
-/***/ 27:
+/***/ 28:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__configUtil__ = __webpack_require__(11);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__configUtil__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system__ = __webpack_require__(3);
@@ -6319,11 +6843,11 @@ var RouterTransport = {
 			}
 		}
 
-		// if OpenFin IAB available, then add IAB to active list
-		if (fin && fin.desktop && fin.desktop.InterApplicationBus) addToActive("OpenFinBus");
+		// if IPCBus available, then add IAB to active list
+		if (__WEBPACK_IMPORTED_MODULE_2__common_system__["System"].InterApplicationBus) addToActive("IPCBus");
 
 		// If electron, always have FinsembleTransport active
-		if (fin && fin.container === "Electron") addToActive("FinsembleTransport");
+		if (__WEBPACK_IMPORTED_MODULE_2__common_system__["System"].container === "Electron") addToActive("FinsembleTransport");
 
 		// if shared worker available, then add shared-worker transport to active list
 		if (SharedWorker) addToActive("SharedWorker");
@@ -6348,7 +6872,7 @@ var RouterTransport = {
   * @returns the transport object
   */
 	getDefaultTransport: function (params, incomingMessageHandler, source, destination) {
-		return RouterTransport.getTransport(params, "OpenFinBus", incomingMessageHandler, source, destination);
+		return RouterTransport.getTransport(params, "IPCBus", incomingMessageHandler, source, destination);
 	},
 
 	/**
@@ -6503,30 +7027,30 @@ RouterTransportImplementation.SharedWorkerTransport = function (params, parentMe
 };
 
 /*
- * Implements the OpenFin Bus Transport.
+ * Implements the IPC Bus Transport.
  *
  * Required Functions (used by transport clients):
  * 		send(transport, routerMessage) -- transport object contains destination transport info; routerMessage is the message to send
  * 		identifier() -- returns transport's name
  *
- * @param {object} params unused in OpenFin transport
+ * @param {object} params unused in IPC transport
  * @param {any} parentMessageHandler callback for incoming event
  * @param {any} source either the client name or "RouterService"
  * @param {any} destination either the client name or "RouterService"
  */
-RouterTransportImplementation.OpenFinTransport = function (params, parentMessageHandler, source, destination, callback) {
+RouterTransportImplementation.IPCTransport = function (params, parentMessageHandler, source, destination, callback) {
 	var uuid = __WEBPACK_IMPORTED_MODULE_2__common_system__["System"].Application.getCurrent().uuid;
 	var self = this;
 
 	// receives incoming OpenFin bus messages then passes on to parent with correct "wrapper"
-	function openFinMessageHandler(routerMessage, senderUuid) {
+	function messageHandler(routerMessage, senderUuid) {
 		var incomingTransportInfo = { "transportID": self.identifier(), "senderUuid": senderUuid, "name": routerMessage.header.origin };
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("OpenFinTransport Incoming Transport", incomingTransportInfo, "Message", routerMessage);
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("IPCTransport Incoming Transport", incomingTransportInfo, "Message", routerMessage);
 		parentMessageHandler(incomingTransportInfo, routerMessage);
 	}
 
 	function subscribeFailure(reason) {
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("OpenFinBus Subscribe Failure: " + reason);
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("IPCBus Subscribe Failure: " + reason);
 	}
 
 	//required function for the parent (i.e. routeClient or routeService)
@@ -6544,18 +7068,18 @@ RouterTransportImplementation.OpenFinTransport = function (params, parentMessage
 			routerMessage = arguments[1];
 		}
 
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("OpenFinTransport Outgoing Transport", uuid, destTopic, "Message", routerMessage);
-		fin.desktop.InterApplicationBus.publish(destTopic, routerMessage, function () {}, function (err) {});
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("IPCTransport Outgoing Transport", uuid, destTopic, "Message", routerMessage);
+		__WEBPACK_IMPORTED_MODULE_2__common_system__["System"].InterApplicationBus.publish(destTopic, routerMessage, function () {}, function (err) {});
 	};
 
 	//required function for the parent (i.e. routeClient or routeService)
 	this.identifier = function () {
-		return "OpenFinBus";
+		return "IPCBus";
 	};
 
-	__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log(`OpenFinBus Transport Initializing for ${source}`);
-	console.log(`OpenFinBus Transport Initializing for ${source}`);
-	fin.desktop.InterApplicationBus.subscribe("*", source, openFinMessageHandler, null, subscribeFailure);
+	__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log(`IPCBus Transport Initializing for ${source}`);
+	console.log(`IPCBus Transport Initializing for ${source}`);
+	__WEBPACK_IMPORTED_MODULE_2__common_system__["System"].InterApplicationBus.subscribe("*", source, messageHandler, null, subscribeFailure);
 
 	callback(this);
 };
@@ -6573,11 +7097,12 @@ RouterTransportImplementation.OpenFinTransport = function (params, parentMessage
  * @param {any} destination either the client name or "RouterService" (unused in FinsembleTransport)
  */
 RouterTransportImplementation.FinsembleTransport = function (params, parentMessageHandler, source, destination, callback) {
-	/** @TODO - split into two separate vars for clarity. */
-	var serverAddress = __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress", __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.IAC.serverAddress", "ws://127.0.0.1:3376"));
+	const defaultServerAddress = "ws://127.0.0.1:3376";
+	const IACServerAddress = __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.IAC.serverAddress", defaultServerAddress);
+	const serverAddress = __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress", IACServerAddress);
 	const SOCKET_SERVER_ADDRESS = serverAddress + "/router"; // "router" is the socket namespace used on server
 
-	var self = this;
+	const self = this;
 
 	// receives incoming messages then passes on to parent (what's passed to parent should be same routerMessage received in send()
 	function finsembleMessageHandler(routerMessage) {
@@ -6762,7 +7287,7 @@ RouterTransportImplementation.FinsembleCloudTransport = function (params, parent
 
 // add the transports to the available/active list
 RouterTransport.addTransport("SharedWorker", RouterTransportImplementation.SharedWorkerTransport);
-RouterTransport.addTransport("OpenFinBus", RouterTransportImplementation.OpenFinTransport);
+RouterTransport.addTransport("IPCBus", RouterTransportImplementation.IPCTransport);
 RouterTransport.addTransport("FinsembleTransport", RouterTransportImplementation.FinsembleTransport);
 
 /* harmony default export */ __webpack_exports__["default"] = (RouterTransport);
@@ -6772,7 +7297,260 @@ RouterTransport.addTransport("FinsembleTransport", RouterTransportImplementation
 
 /***/ }),
 
-/***/ 28:
+/***/ 29:
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {var scope = (typeof global !== "undefined" && global) ||
+            (typeof self !== "undefined" && self) ||
+            window;
+var apply = Function.prototype.apply;
+
+// DOM APIs, for completeness
+
+exports.setTimeout = function() {
+  return new Timeout(apply.call(setTimeout, scope, arguments), clearTimeout);
+};
+exports.setInterval = function() {
+  return new Timeout(apply.call(setInterval, scope, arguments), clearInterval);
+};
+exports.clearTimeout =
+exports.clearInterval = function(timeout) {
+  if (timeout) {
+    timeout.close();
+  }
+};
+
+function Timeout(id, clearFn) {
+  this._id = id;
+  this._clearFn = clearFn;
+}
+Timeout.prototype.unref = Timeout.prototype.ref = function() {};
+Timeout.prototype.close = function() {
+  this._clearFn.call(scope, this._id);
+};
+
+// Does not start the time, just sets up the members needed.
+exports.enroll = function(item, msecs) {
+  clearTimeout(item._idleTimeoutId);
+  item._idleTimeout = msecs;
+};
+
+exports.unenroll = function(item) {
+  clearTimeout(item._idleTimeoutId);
+  item._idleTimeout = -1;
+};
+
+exports._unrefActive = exports.active = function(item) {
+  clearTimeout(item._idleTimeoutId);
+
+  var msecs = item._idleTimeout;
+  if (msecs >= 0) {
+    item._idleTimeoutId = setTimeout(function onTimeout() {
+      if (item._onTimeout)
+        item._onTimeout();
+    }, msecs);
+  }
+};
+
+// setimmediate attaches itself to the global object
+__webpack_require__(35);
+// On some exotic environments, it's not clear which object `setimmediate` was
+// able to install onto.  Search each possibility in the same order as the
+// `setimmediate` library.
+exports.setImmediate = (typeof self !== "undefined" && self.setImmediate) ||
+                       (typeof global !== "undefined" && global.setImmediate) ||
+                       (this && this.setImmediate);
+exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
+                         (typeof global !== "undefined" && global.clearImmediate) ||
+                         (this && this.clearImmediate);
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+
+/***/ }),
+
+/***/ 3:
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process) {
+Object.defineProperty(exports, "__esModule", { value: true });
+/** The global `window` object. We cast it to a specific interface here to be
+ * explicit about what Finsemble-related properties it may have.*/
+const Globals = 
+/** In our testing environments (i.e, mocha running in node.js),
+ * `window` is not defined. Therefore, we have to check that `window`
+ * exists; otherwise, in node, `process` is the global context.
+ */
+typeof window !== "undefined" ?
+    window
+    : process;
+class SystemWindow {
+    constructor(params, cb, errCb) {
+        return new fin.desktop.Window(params, cb);
+    }
+    static get getCurrent() {
+        return fin.desktop.Window.getCurrent;
+    }
+    static get wrap() {
+        return fin.desktop.Window.wrap;
+    }
+}
+class Application {
+    constructor(params, cb, errCb) {
+        return new fin.desktop.Application(params, cb);
+    }
+    static get getCurrent() {
+        return fin.desktop.Application.getCurrent;
+    }
+    static get wrap() {
+        return fin.desktop.Application.wrap;
+    }
+}
+class SystemNotification {
+    constructor(params) {
+        new fin.desktop.Notification(params);
+    }
+}
+class System {
+    static get Application() {
+        return Application;
+    }
+    static get Window() {
+        return SystemWindow;
+    }
+    static get Notification() {
+        return SystemNotification;
+    }
+    static getMousePosition(cb) {
+        fin.desktop.System.getMousePosition((mousePosition) => {
+            if (mousePosition.left || mousePosition.left === 0)
+                mousePosition.x = mousePosition.left;
+            if (mousePosition.top || mousePosition.top === 0)
+                mousePosition.y = mousePosition.top;
+            cb(null, mousePosition);
+        }, (err) => { cb(err, null); });
+    }
+    static getMonitorInfo(cb) {
+        fin.desktop.System.getMonitorInfo((info) => {
+            cb(info);
+        });
+    }
+    static get container() {
+        if (fin.container)
+            return fin.container;
+        return "Openfin";
+    }
+    static get fin() {
+        return e2o || fin || {};
+    }
+    // static get makes this behave like a static variable. so calling system.ready is equivalent to fin.desktop.main.
+    static get ready() {
+        return fin.desktop.main;
+    }
+    static get getHostSpecs() {
+        return fin.desktop.System.getHostSpecs;
+    }
+    static get InterApplicationBus() {
+        return fin.desktop.InterApplicationBus;
+    }
+    static get launchExternalProcess() {
+        return fin.desktop.System.launchExternalProcess;
+    }
+    static get terminateExternalProcess() {
+        return fin.desktop.System.terminateExternalProcess;
+    }
+    static get getAllApplications() {
+        return fin.desktop.System.getAllApplications;
+    }
+    static get exit() {
+        return fin.desktop.System.exit;
+    }
+    static get clearCache() {
+        return fin.desktop.System.clearCache;
+    }
+    static get showDeveloperTools() {
+        return fin.desktop.System.showDeveloperTools;
+    }
+    static get getRuntimeInfo() {
+        return fin.desktop.System.getRuntimeInfo || chrome.desktop.getDetails;
+    }
+    static get addEventListener() {
+        /* events we use so far in Finsemble: monitor-info-changed, session-changed */
+        return fin.desktop.System.addEventListener;
+    }
+    static get getVersion() {
+        return fin.desktop.System.getVersion;
+    }
+    static get openUrlWithBrowser() {
+        return fin.desktop.System.openUrlWithBrowser;
+    }
+    static get getAllWindows() {
+        return fin.desktop.System.getAllWindows;
+    }
+    static get getProcessList() {
+        return fin.desktop.System.getProcessList;
+    }
+    static FinsembleReady(cb) {
+        if (Globals.FSBL && Globals.FSBL.addEventListener) {
+            return Globals.FSBL.addEventListener("onready", cb);
+        }
+        return window.addEventListener("FSBLready", cb);
+    }
+    /**
+     * Performs handshake with FEA to indicate the primary application started successfully
+     */
+    static startupApplicationHandshake() {
+        if (fin.desktop.System.startupApplicationHandshake) {
+            fin.desktop.System.startupApplicationHandshake();
+        }
+    }
+    // This is not overriding or pointing to Openfin. This is the pattern used to close applications.
+    static closeApplication(app, cb = Function.prototype) {
+        const promiseResolver = (resolve) => {
+            let t;
+            let timeoutCleared = false;
+            let terminateAndResolve = () => {
+                if (timeoutCleared)
+                    return;
+                console.log("Attempting to terminate", app.uuid);
+                app.terminate(() => {
+                    cb();
+                    resolve();
+                }, () => {
+                    if (timeoutCleared)
+                        return;
+                    timeoutCleared = true;
+                    clearInterval(t);
+                    // If closing fails, force close
+                    console.log("force closing ", app.uuid);
+                    app.terminate();
+                });
+            };
+            //Hanging apps can be unresponsive to close and terminate calls for a period of time, keep trying until they're closed
+            t = setInterval(terminateAndResolve, 2000);
+            console.log("closing ", app.uuid);
+            //OpenFin windows will wait to callback until close is successful, so no need to keep trying to close on a success callback.
+            app.close(false, () => {
+                console.log("app.close: successfully closed", app.uuid);
+                timeoutCleared = true;
+                clearInterval(t);
+                cb();
+                resolve();
+            }, terminateAndResolve);
+        };
+        return new Promise(promiseResolver);
+    }
+    static isElectron() {
+        return fin.container === 'Electron';
+    }
+}
+exports.System = System;
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
+
+/***/ }),
+
+/***/ 30:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6782,11 +7560,11 @@ RouterTransport.addTransport("FinsembleTransport", RouterTransportImplementation
 */
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const routerTransport_1 = __webpack_require__(27);
+const routerTransport_1 = __webpack_require__(28);
 const Utils = __webpack_require__(8);
-const configUtil_1 = __webpack_require__(11);
+const configUtil_1 = __webpack_require__(12);
 const validate_1 = __webpack_require__(6); // Finsemble args validator
-const userNotification_1 = __webpack_require__(20);
+const userNotification_1 = __webpack_require__(22);
 const system_1 = __webpack_require__(3);
 const logger_1 = __webpack_require__(0);
 var queue = []; // should never be used, but message sent before router ready will be queue
@@ -6814,7 +7592,7 @@ Globals.FSBLData.RouterClients = Globals.FSBLData.RouterClients || {};
  * @hideconstructor
  * @publishedName RouterClient
  * @param {string} clientName router base client name for human readable messages (window name is concatenated to baseClientName)
- * @param {string=} transportName router transport name, currently either "SharedWorker" or "OpenFinBus" (usually this is auto-configured internally but can be selected for testing or special configurations)
+ * @param {string=} transportName router transport name, currently either "SharedWorker" or "IPCBus" (usually this is auto-configured internally but can be selected for testing or special configurations)
  */
 // un-comment for optimization.
 // console.time("FinMainStartup");
@@ -7026,8 +7804,8 @@ exports.RouterClientConstructor = function (params) {
         //This is the only place we need to wait for desktop.main
         system_1.System.ready(function () {
             var finWindow = system_1.System.Window.getCurrent();
-            Logger.system.debug(`WINDOW LIFECYCLE:STARTUP: fin.main invoked in ${finWindow.name}`);
-            console.debug(`WINDOW LIFECYCLE:STARTUP: fin.main invoked in ${finWindow.name}`);
+            Logger.system.debug(`WINDOW LIFECYCLE:STARTUP: System.ready invoked in ${finWindow.name}`);
+            console.debug(`WINDOW LIFECYCLE:STARTUP: System.ready invoked in ${finWindow.name}`);
             self.startupTime = performance.now();
             // un-comment for optimization.
             // console.timeEnd("FinMainStartup");
@@ -7065,14 +7843,13 @@ exports.RouterClientConstructor = function (params) {
         var isFinished = false;
         var handshakeFailedCount = 0;
         var finConfig = manifest.finsemble;
-        var isElectron = fin && fin.container == "Electron";
         var routerParams = {
             FinsembleUUID: finConfig.FinsembleUUID,
             applicationRoot: finConfig.applicationRoot,
             routerDomainRoot: finConfig.moduleRoot,
             forceWindowTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.forceWindowTransport", {}),
             sameDomainTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.sameDomainTransport", "SharedWorker"),
-            crossDomainTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.crossDomainTransport", "OpenFinBus"),
+            crossDomainTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.crossDomainTransport", "IPCBus"),
             transportSettings: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.transportSettings", {}),
             IAC: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.IAC", {})
         };
@@ -7913,8 +8690,9 @@ exports.RouterClientConstructor = function (params) {
      *
      * @example
      *
-     * var subscribeId = RouterClient.subscribe("topicABC", function(err,notify) {
-     *		if (!err) {
+     * var subscriptionDetails = RouterClient.subscribe("topicABC", function(err, notify) {
+     *		if (err) { console.log(err); }
+     *		if (notify) {
      *			var notificationStateData = notify.data;
      *			// do something with notify data
      *  	}
@@ -7957,6 +8735,13 @@ exports.RouterClientConstructor = function (params) {
      * @example
      *
      * FSBL.Clients.RouterClient.unsubscribe(subscribeId);
+     * //Subscription details returned by RouterClient.subscribe(), which take the form:
+     * let subscriptionDetails = {
+     * 	subscribeID: "<subscribeID returned by RouterClient.subscribe>",
+     * 	topic: "topicABC"
+     * };
+     * FSBL.Clients.RouterClient.unsubscribe(subscriptionDetails);
+     *
      *
      */
     this.unsubscribe = function (subscribeIDStruct) {
@@ -8041,7 +8826,91 @@ exports.RouterClientConstructor = function (params) {
 
 /***/ }),
 
-/***/ 29:
+/***/ 31:
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ALL_BOOT_STAGES = ["microkernel", "kernel", "authentication", "preuser", "earlyuser", "user"];
+/**
+ * Boot config element used to build a node in a dependency tree
+ */
+class BootConfigElement {
+}
+exports.BootConfigElement = BootConfigElement;
+/**
+ * Represents a ready node (i.e. all that's need to start the corresponding task/service/component)
+ */
+class BootReadyItem {
+    constructor(name, type, config) {
+        this.name = name;
+        this.type = type;
+        this.config = config;
+    }
+}
+exports.BootReadyItem = BootReadyItem;
+
+
+/***/ }),
+
+/***/ 32:
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+// contains common functions -- used in multiple places in the system manager
+Object.defineProperty(exports, "__esModule", { value: true });
+const system_1 = __webpack_require__(3);
+const _constants_1 = __webpack_require__(18);
+/**
+ * Kills old applications -- used at the beginning of start
+ * @param finUUID
+ * @returns
+ */
+function killOldApplications(finUUID) {
+    const promiseResolver = async (resolve) => {
+        system_1.System.getAllApplications(async (applications) => {
+            if (applications) {
+                for (let i = 0; i < applications.length; i++) {
+                    let a = applications[i];
+                    if (a.uuid.endsWith("-" + finUUID)) {
+                        let application = system_1.System.Application.wrap(a.uuid);
+                        await system_1.System.closeApplication(application);
+                    }
+                }
+            }
+            console.log("killOldApplications: finished closing old apps");
+            resolve();
+        });
+    };
+    return new Promise(promiseResolver);
+}
+exports.killOldApplications = killOldApplications;
+/**
+ * Function to return the name of a startup status channel, given the window name
+ * @param name
+ * @returns
+ */
+function statusChannel(name) {
+    return `${_constants_1.STATUS_CHANNEL_BASE}.${name}`;
+}
+exports.statusChannel = statusChannel;
+/**
+ * Function to return the name of a checkpoint status channel, given the parent name (e.g. service name, component name) and the checkpoint name
+ * @param parentName
+ * @param checkpointName
+ * @returns
+ */
+function checkpointChannel(parentName, checkpointName) {
+    return `${_constants_1.CHECKPOINT_CHANNEL_BASE}.${parentName}.${checkpointName}`;
+}
+exports.checkpointChannel = checkpointChannel;
+
+
+/***/ }),
+
+/***/ 34:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -8099,175 +8968,7 @@ var SystemSettings = function () {
 
 /***/ }),
 
-/***/ 3:
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(process) {
-Object.defineProperty(exports, "__esModule", { value: true });
-/** The global `window` object. We cast it to a specific interface here to be
- * explicit about what Finsemble-related properties it may have.*/
-const Globals = 
-/** In our testing environments (i.e, mocha running in node.js),
- * `window` is not defined. Therefore, we have to check that `window`
- * exists; otherwise, in node, `process` is the global context.
- */
-typeof window !== "undefined" ?
-    window
-    : process;
-class SystemWindow {
-    constructor(params, cb, errCb) {
-        return new fin.desktop.Window(params, cb);
-    }
-    static get getCurrent() {
-        return fin.desktop.Window.getCurrent;
-    }
-    static get wrap() {
-        return fin.desktop.Window.wrap;
-    }
-}
-class Application {
-    constructor(params, cb, errCb) {
-        return new fin.desktop.Application(params, cb);
-    }
-    static get getCurrent() {
-        return fin.desktop.Application.getCurrent;
-    }
-    static get wrap() {
-        return fin.desktop.Application.wrap;
-    }
-}
-class SystemNotification {
-    constructor(params) {
-        new fin.desktop.Notification(params);
-    }
-}
-class System {
-    static get Application() {
-        return Application;
-    }
-    static get Window() {
-        return SystemWindow;
-    }
-    static get Notification() {
-        return SystemNotification;
-    }
-    static getMousePosition(cb) {
-        fin.desktop.System.getMousePosition((mousePosition) => {
-            if (mousePosition.left || mousePosition.left === 0)
-                mousePosition.x = mousePosition.left;
-            if (mousePosition.top || mousePosition.top === 0)
-                mousePosition.y = mousePosition.top;
-            cb(null, mousePosition);
-        }, (err) => { cb(err, null); });
-    }
-    static getMonitorInfo(cb) {
-        fin.desktop.System.getMonitorInfo((info) => {
-            cb(info);
-        });
-    }
-    // static get makes this behave like a static variable. so calling system.ready is equivalent to fin.desktop.main.
-    static get ready() {
-        return fin.desktop.main;
-    }
-    static get getHostSpecs() {
-        return fin.desktop.System.getHostSpecs;
-    }
-    static get launchExternalProcess() {
-        return fin.desktop.System.launchExternalProcess;
-    }
-    static get terminateExternalProcess() {
-        return fin.desktop.System.terminateExternalProcess;
-    }
-    static get getAllApplications() {
-        return fin.desktop.System.getAllApplications;
-    }
-    static get exit() {
-        return fin.desktop.System.exit;
-    }
-    static get clearCache() {
-        return fin.desktop.System.clearCache;
-    }
-    static get showDeveloperTools() {
-        return fin.desktop.System.showDeveloperTools;
-    }
-    static get getRuntimeInfo() {
-        return fin.desktop.System.getRuntimeInfo || chrome.desktop.getDetails;
-    }
-    static get addEventListener() {
-        /* events we use so far in Finsemble: monitor-info-changed, session-changed */
-        return fin.desktop.System.addEventListener;
-    }
-    static get getVersion() {
-        return fin.desktop.System.getVersion;
-    }
-    static get openUrlWithBrowser() {
-        return fin.desktop.System.openUrlWithBrowser;
-    }
-    static get getAllWindows() {
-        return fin.desktop.System.getAllWindows;
-    }
-    static FinsembleReady(cb) {
-        if (Globals.FSBL && Globals.FSBL.addEventListener) {
-            return Globals.FSBL.addEventListener("onready", cb);
-        }
-        return window.addEventListener("FSBLready", cb);
-    }
-    /**
-     * Performs handshake with FEA to indicate the primary application started successfully
-     */
-    static startupApplicationHandshake() {
-        if (fin.desktop.System.startupApplicationHandshake) {
-            fin.desktop.System.startupApplicationHandshake();
-        }
-    }
-    // This is not overriding or pointing to Openfin. This is the pattern used to close applications.
-    static closeApplication(app, cb = Function.prototype) {
-        const promiseResolver = (resolve) => {
-            let t;
-            let timeoutCleared = false;
-            let terminateAndResolve = () => {
-                if (timeoutCleared)
-                    return;
-                console.log("Attempting to terminate", app.uuid);
-                app.terminate(() => {
-                    cb();
-                    resolve();
-                }, () => {
-                    if (timeoutCleared)
-                        return;
-                    timeoutCleared = true;
-                    clearInterval(t);
-                    // If closing fails, force close
-                    console.log("force closing ", app.uuid);
-                    app.terminate();
-                });
-            };
-            //Hanging apps can be unresponsive to close and terminate calls for a period of time, keep trying until they're closed
-            t = setInterval(terminateAndResolve, 2000);
-            console.log("closing ", app.uuid);
-            //OpenFin windows will wait to callback until close is successful, so no need to keep trying to close on a success callback.
-            app.close(false, () => {
-                console.log("app.close: successfully closed", app.uuid);
-                timeoutCleared = true;
-                clearInterval(t);
-                cb();
-                resolve();
-            }, terminateAndResolve);
-        };
-        return new Promise(promiseResolver);
-    }
-    static isElectron() {
-        return fin.container === 'Electron';
-    }
-}
-exports.System = System;
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
-
-/***/ }),
-
-/***/ 30:
+/***/ 35:
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
@@ -8461,78 +9162,7 @@ exports.System = System;
 
 /***/ }),
 
-/***/ 31:
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {var scope = (typeof global !== "undefined" && global) ||
-            (typeof self !== "undefined" && self) ||
-            window;
-var apply = Function.prototype.apply;
-
-// DOM APIs, for completeness
-
-exports.setTimeout = function() {
-  return new Timeout(apply.call(setTimeout, scope, arguments), clearTimeout);
-};
-exports.setInterval = function() {
-  return new Timeout(apply.call(setInterval, scope, arguments), clearInterval);
-};
-exports.clearTimeout =
-exports.clearInterval = function(timeout) {
-  if (timeout) {
-    timeout.close();
-  }
-};
-
-function Timeout(id, clearFn) {
-  this._id = id;
-  this._clearFn = clearFn;
-}
-Timeout.prototype.unref = Timeout.prototype.ref = function() {};
-Timeout.prototype.close = function() {
-  this._clearFn.call(scope, this._id);
-};
-
-// Does not start the time, just sets up the members needed.
-exports.enroll = function(item, msecs) {
-  clearTimeout(item._idleTimeoutId);
-  item._idleTimeout = msecs;
-};
-
-exports.unenroll = function(item) {
-  clearTimeout(item._idleTimeoutId);
-  item._idleTimeout = -1;
-};
-
-exports._unrefActive = exports.active = function(item) {
-  clearTimeout(item._idleTimeoutId);
-
-  var msecs = item._idleTimeout;
-  if (msecs >= 0) {
-    item._idleTimeoutId = setTimeout(function onTimeout() {
-      if (item._onTimeout)
-        item._onTimeout();
-    }, msecs);
-  }
-};
-
-// setimmediate attaches itself to the global object
-__webpack_require__(30);
-// On some exotic environments, it's not clear which object `setimmediate` was
-// able to install onto.  Search each possibility in the same order as the
-// `setimmediate` library.
-exports.setImmediate = (typeof self !== "undefined" && self.setImmediate) ||
-                       (typeof global !== "undefined" && global.setImmediate) ||
-                       (this && this.setImmediate);
-exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
-                         (typeof global !== "undefined" && global.clearImmediate) ||
-                         (this && this.clearImmediate);
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
-
-/***/ }),
-
-/***/ 32:
+/***/ 36:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8542,13 +9172,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
-const dependencyManager_1 = __webpack_require__(14);
+const dependencyManager_1 = __webpack_require__(17);
 const routerClientInstance_1 = __webpack_require__(5);
 const logger_1 = __webpack_require__(0);
-const async_1 = __webpack_require__(9);
+const systemManagerClient_1 = __webpack_require__(7);
 const system_1 = __webpack_require__(3);
-const Constants = __webpack_require__(10);
-const { SERVICE_INITIALIZING_CHANNEL, SERVICE_READY_CHANNEL, SERVICE_CLOSING_CHANNEL, SERVICE_CLOSED_CHANNEL, SERVICE_STOP_CHANNEL } = Constants;
+const Constants = __webpack_require__(11);
+const async_1 = __webpack_require__(9);
+const { SERVICE_INITIALIZING_CHANNEL, SERVICE_READY_CHANNEL, SERVICE_QUERY_READY_CHANNEL, SERVICE_CLOSING_CHANNEL, SERVICE_CLOSED_CHANNEL, SERVICE_STOP_CHANNEL } = Constants;
 const defaultBaseServiceParams = {
     startupDependencies: {
         services: [],
@@ -8560,11 +9191,14 @@ const defaultBaseServiceParams = {
     addOFWrapper: false,
     name: window.name
 };
-/*
+/**
  * @introduction
  * <h2>Base Service</h2>
- * Creates an instance of the Base Service which all service must inherit. Services are spawned from your *service.json* file and managed by a helper thread - the **Service Manager**.
- * Services communicate their status and receive status of other service through the Service Manager.
+ *
+ * The Base Service is available with any of Finsemble's advanced packages.
+ *
+ * Creates an instance of the Base Service which all service must inherit. Services are spawned from your <i>service.json</i> file and managed by a helper thread - the <b>Service Manager</b>.
+ * Services communicate their status and receive status of other services through the Service Manager.
  * Services have an initial handshake with the Service Manager on load, and then either go online or wait for dependant services to come online.
  * Service initialization is completely asynchronous, which allows all services to load at the same time, as long as their dependencies have been met.
  * @constructor
@@ -8577,8 +9211,6 @@ class BaseService {
         this.shutdownDependencies = params.shutdownDependencies;
         this.Logger = logger_1.default;
         this.RouterClient = routerClientInstance_1.default;
-        //This will be set to true after the debugServiceDelay is met. Defaults to 0, but developers can up it if they need to jump in and add breakpoints and are on a bad computer.
-        this.waitedLongEnough = false;
         //this.parentUuid = System.Application.getCurrent().uuid;
         this.onBaseServiceReadyCB = null;
         this.setOnConnectionCompleteCB = null;
@@ -8601,6 +9233,7 @@ class BaseService {
     * @private
     */
     waitForDependencies() {
+        var self = this;
         //For backwards compat. note Start used to be invoked after the constructor.
         //note do this later
         if (this.started)
@@ -8618,19 +9251,43 @@ class BaseService {
         }
         function onRouterReady(done) {
             routerClientInstance_1.default.onReady(function () {
+                // Here is the responder to allow each client to handshake with its service to make sure its ready
+                routerClientInstance_1.default.addResponder(SERVICE_QUERY_READY_CHANNEL(self.name), (err, message) => {
+                    if (self.status = "ready") {
+                        message.sendQueryResponse(null);
+                    }
+                    else {
+                        message.sendQueryResponse("service not ready");
+                    }
+                });
                 routerClientInstance_1.default.transmit(SERVICE_INITIALIZING_CHANNEL, { name: service.name });
                 window.addEventListener("beforeunload", service.RouterClient.disconnectAll);
                 logger_1.default.system.debug("APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start.onRouterReady");
                 done();
             });
         }
+        // supports option to delay the debug based on service config's debugServiceDelay value (passed in through custom data).
+        function debugDelay(done) {
+            const debugServiceDelay = service.customData.debugServiceDelay || 0;
+            logger_1.default.system.debug(`Custom Data: ${service.name} custom data`, service.customData);
+            if (!Number.isInteger(debugServiceDelay)) {
+                const errorMsg = `debugDelay has an illegal value ("${debugServiceDelay}") for ${service.name}. Value must be an integer.`;
+                logger_1.default.system.error(`APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start: ${errorMsg}`);
+                systemManagerClient_1.default.systemLog({ error: true }, errorMsg);
+            }
+            else if (debugServiceDelay > 0) {
+                logger_1.default.system.debug(`APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start.debugDelay: ${service.name} startup will delayed by ${debugServiceDelay} milliseconds for debugging`);
+            }
+            // invoke done() after optional debug delay
+            setTimeout(done, debugServiceDelay);
+        }
         function readyToGo(done) {
-            logger_1.default.system.debug("APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start.readyToGo");
+            logger_1.default.system.debug(`APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start.readyToGo ${service.name}`);
             console.log(performance.now(), "ReadyToGo called");
             console.log("Startup Dependencies for", service.name, service.startupDependencies);
             console.log("Shutdown Dependencies for", service.name, service.shutdownDependencies);
-            service.waitedLongEnough = true;
             dependencyManager_1.FSBLDependencyManagerSingleton.shutdown.waitFor(service.shutdownDependencies, service.handleShutdown);
+            logger_1.default.system.debug(`APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start.readyToGo after wait ${service.name}`);
             routerClientInstance_1.default.transmit(`${system_1.System.Window.getCurrent().name}.onSpawned`, {});
             //`done` invoked when all dependencies are up
             let dependency = dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor(service.startupDependencies, done);
@@ -8655,6 +9312,7 @@ class BaseService {
                 onRouterReady,
                 cacheCustomData,
                 showDeveloperTools,
+                debugDelay,
                 readyToGo
             ], () => {
                 resolve();
@@ -8668,13 +9326,14 @@ class BaseService {
     setOnline() {
         if (this.status !== "ready") {
             console.log("Setting service online", this.name);
-            logger_1.default.system.log("APPLICATION LIFECYCLE:STARTUP:SERVICE ONLINE", this.name);
-            routerClientInstance_1.default.transmit(SERVICE_READY_CHANNEL, { serviceName: this.name }); // notify service manager
             this.RouterClient.addListener(SERVICE_STOP_CHANNEL + "." + this.name, (err, response) => {
                 this;
                 dependencyManager_1.FSBLDependencyManagerSingleton.shutdown.checkDependencies();
             });
             this.status = "ready";
+            routerClientInstance_1.default.transmit(SERVICE_READY_CHANNEL, { serviceName: this.name }); // notify service manager
+            logger_1.default.system.log("APPLICATION LIFECYCLE:STARTUP:SERVICE ONLINE", this.name);
+            systemManagerClient_1.default.publishBootStatus(this.name, "services", "completed");
         }
     }
     /**
@@ -8703,6 +9362,11 @@ class BaseService {
             }
         });
     }
+    /**
+     * Conduct operations when the base service becomes ready.
+     *
+     * @param {function} func Any function of code desired to execute when ready.
+     */
     onBaseServiceReady(func) {
         if (this.status === "initializing") {
             //onBaseServiceReady is backwards-compatibility stuff.
@@ -8716,7 +9380,7 @@ class BaseService {
     }
     /**
      * Really only for shutdown right now. Simple array that gets looped through on shutdown.
-     * @param {string} listenerType
+     * @param {string} listenerType Any event identifier the service provides to operate with.
      * @param {function} callback The callback to be invoked after the method completes successfully.
      */
     addEventListener(listenerType, callback) {
@@ -8737,6 +9401,7 @@ class BaseService {
      * @private
     */
     handleShutdown(err, message) {
+        logger_1.default.system.debug("BaseService.handleShutdown");
         var self = this;
         function handleShutdownAction(handler, done) {
             let cleanup = async_1.asyncify(handler);
@@ -8845,13 +9510,6 @@ module.exports = g;
 
 /***/ }),
 
-/***/ 46:
-/***/ (function(module, exports) {
-
-module.exports = {"dictionary":{"0":"0","1":"1","2":"2","3":"3","4":"4","5":"5","6":"6","7":"7","8":"8","9":"9","backspace":"backspace","bs":"backspace","bksp":"backspace","tab":"tab","escape":"escape","esc":"escape","clear":"clear","enter":"enter","return":"enter","shift":"shift","shft":"shift","lshift":"shift","lshft":"shift","left shift":"shift","leftshift":"shift","rshift":"shift","rshft":"shift","right shift":"shift","rightshift":"shift","control":"control","ctrl":"control","alt":"alt","alternate":"alt","pause":"pause","caps lock":"caps lock","capslock":"caps lock","spacebar":"spacebar","space":"spacebar","space bar":"space","page up":"page up","pgup":"page up","pg up":"page up","page down":"page down","pgdn":"page down","pg dn":"page down","end":"end","home":"home","left arrow":"left arrow","left":"left arrow","up arrow":"up arrow","up":"up arrow","right arrow":"right arrow","right":"right arrow","down arrow":"down arrow","down":"down arrow","select":"select","slct":"select","print":"print","prnt":"print","execute":"execute","print screen":"print screen","printscreen":"print screen","print scrn":"print screen","printscrn":"print screen","prnt scrn":"print screen","prntscrn":"print screen","prt scrn":"print screen","prtscrn":"print screen","prt scn":"print screen","prtscn":"print screen","prt scr":"print screen","prtscr":"print screen","prt sc":"print screen","prtsc":"print screen","pr sc":"print screen","prsc":"print screen","insert":"insert","ins":"insert","delete":"delete","del":"delete","help":"help","a":"a","b":"b","c":"c","d":"d","e":"e","f":"f","g":"g","h":"h","i":"i","j":"j","k":"k","l":"l","m":"m","n":"n","o":"o","p":"p","q":"q","r":"r","s":"s","t":"t","u":"u","v":"v","w":"w","x":"x","y":"y","z":"z","windows":"windows","left windows":"windows","right windows":"windows","applications":"applications","computer sleep":"computer sleep","sleep":"computer sleep","numpad 0":"0","numpad 1":"1","numpad 2":"2","numpad 3":"3","numpad 4":"4","numpad 5":"5","numpad 6":"6","numpad 7":"7","numpad 8":"8","numpad 9":"9","f1":"f1","fn1":"f1","function 1":"f1","f2":"f2","fn2":"f2","function 2":"f2","f3":"f3","fn3":"f3","function 3":"f3","f4":"f4","fn4":"f4","function 4":"f4","f5":"f5","fn5":"f5","function 5":"f5","f6":"f6","fn6":"f6","function 6":"f6","f7":"f7","fn7":"f7","function 7":"f7","f8":"f8","fn8":"f8","function 8":"f8","f9":"f9","fn9":"f9","function 9":"f9","f10":"f10","fn10":"f10","function 10":"f10","f11":"f11","fn11":"f11","function 11":"f11","f12":"f12","fn12":"f12","function 12":"f12","f13":"f13","fn":"f13","function 13":"f13","f14":"f14","fn14":"f14","function 14":"f14","f15":"f15","fn15":"f15","function 15":"f15","f16":"f16","fn16":"f16","function 16":"f16","num lock":"num lock","numlock":"num lock","number lock":"num lock","numeric lock":"num lock","scroll lock":"scroll lock","sclk":"scroll lock","scrlk":"scroll lock","slk":"scroll lock","menu":"menu","*":"*","+":"+","-":"-","/":"/",";":";","=":"=",",":",","_":"-",".":".","`":"`","[":"[","]":"]","'":"'"},"assimilationMap":{"1":"lmb","2":"rmb","4":"mmb","8":"backspace","9":"tab","13":"enter","16":"shift","17":"control","18":"alt","19":"pause","20":"caps lock","27":"escape","32":"spacebar","33":"page up","34":"page down","35":"end","36":"home","37":"left arrow","38":"up arrow","39":"right arrow","40":"down arrow","41":"select","42":"print","43":"execute","44":"print screen","45":"insert","46":"delete","47":"help","48":"0","49":"1","50":"2","51":"3","52":"4","53":"5","54":"6","55":"7","56":"8","57":"9","65":"a","66":"b","67":"c","68":"d","69":"e","70":"f","71":"g","72":"h","73":"i","74":"j","75":"k","76":"l","77":"m","78":"n","79":"o","80":"p","81":"q","82":"r","83":"s","84":"t","85":"u","86":"v","87":"w","88":"x","89":"y","90":"z","91":"windows","92":"windows","93":"applications","95":"computer sleep","96":"0","97":"1","98":"2","99":"3","100":"4","101":"5","102":"6","103":"7","104":"8","105":"9","106":"*","107":"+","109":"-","111":"/","112":"f1","113":"f2","114":"f3","115":"f4","116":"f5","117":"f6","118":"f7","119":"f8","120":"f9","121":"f10","122":"f11","123":"f12","124":"f13","125":"f14","126":"f15","127":"f16","144":"num lock","145":"scroll lock","160":"shift","161":"shift","162":"control","163":"control","164":"alt","165":"alt","186":";","187":"=","188":",","189":"-","190":".","191":"/","192":"`","219":"[","220":"\\","221":"]","222":"\\","223":"'","//note, backtick and apostrophe":"are reversed on uk and us keyboards"}}
-
-/***/ }),
-
 /***/ 5:
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -8862,7 +9520,7 @@ module.exports = {"dictionary":{"0":"0","1":"1","2":"2","3":"3","4":"4","5":"5",
 * All rights reserved.
 */
 Object.defineProperty(exports, "__esModule", { value: true });
-const routerClientConstructor_1 = __webpack_require__(28);
+const routerClientConstructor_1 = __webpack_require__(30);
 const logger_1 = __webpack_require__(0);
 let RCConstructor = routerClientConstructor_1.RouterClientConstructor;
 /** The logger needs a router client, and the router client needs a logger.
@@ -8882,12 +9540,19 @@ exports.default = RouterClientInstance;
 
 /***/ }),
 
+/***/ 50:
+/***/ (function(module, exports) {
+
+module.exports = {"dictionary":{"0":"0","1":"1","2":"2","3":"3","4":"4","5":"5","6":"6","7":"7","8":"8","9":"9","backspace":"backspace","bs":"backspace","bksp":"backspace","tab":"tab","escape":"escape","esc":"escape","clear":"clear","enter":"enter","return":"enter","shift":"shift","shft":"shift","lshift":"shift","lshft":"shift","left shift":"shift","leftshift":"shift","rshift":"shift","rshft":"shift","right shift":"shift","rightshift":"shift","control":"control","ctrl":"control","alt":"alt","alternate":"alt","pause":"pause","caps lock":"caps lock","capslock":"caps lock","spacebar":"spacebar","space":"spacebar","space bar":"space","page up":"page up","pgup":"page up","pg up":"page up","page down":"page down","pgdn":"page down","pg dn":"page down","end":"end","home":"home","left arrow":"left arrow","left":"left arrow","up arrow":"up arrow","up":"up arrow","right arrow":"right arrow","right":"right arrow","down arrow":"down arrow","down":"down arrow","select":"select","slct":"select","print":"print","prnt":"print","execute":"execute","print screen":"print screen","printscreen":"print screen","print scrn":"print screen","printscrn":"print screen","prnt scrn":"print screen","prntscrn":"print screen","prt scrn":"print screen","prtscrn":"print screen","prt scn":"print screen","prtscn":"print screen","prt scr":"print screen","prtscr":"print screen","prt sc":"print screen","prtsc":"print screen","pr sc":"print screen","prsc":"print screen","insert":"insert","ins":"insert","delete":"delete","del":"delete","help":"help","a":"a","b":"b","c":"c","d":"d","e":"e","f":"f","g":"g","h":"h","i":"i","j":"j","k":"k","l":"l","m":"m","n":"n","o":"o","p":"p","q":"q","r":"r","s":"s","t":"t","u":"u","v":"v","w":"w","x":"x","y":"y","z":"z","windows":"windows","left windows":"windows","right windows":"windows","applications":"applications","computer sleep":"computer sleep","sleep":"computer sleep","numpad 0":"0","numpad 1":"1","numpad 2":"2","numpad 3":"3","numpad 4":"4","numpad 5":"5","numpad 6":"6","numpad 7":"7","numpad 8":"8","numpad 9":"9","f1":"f1","fn1":"f1","function 1":"f1","f2":"f2","fn2":"f2","function 2":"f2","f3":"f3","fn3":"f3","function 3":"f3","f4":"f4","fn4":"f4","function 4":"f4","f5":"f5","fn5":"f5","function 5":"f5","f6":"f6","fn6":"f6","function 6":"f6","f7":"f7","fn7":"f7","function 7":"f7","f8":"f8","fn8":"f8","function 8":"f8","f9":"f9","fn9":"f9","function 9":"f9","f10":"f10","fn10":"f10","function 10":"f10","f11":"f11","fn11":"f11","function 11":"f11","f12":"f12","fn12":"f12","function 12":"f12","f13":"f13","fn":"f13","function 13":"f13","f14":"f14","fn14":"f14","function 14":"f14","f15":"f15","fn15":"f15","function 15":"f15","f16":"f16","fn16":"f16","function 16":"f16","num lock":"num lock","numlock":"num lock","number lock":"num lock","numeric lock":"num lock","scroll lock":"scroll lock","sclk":"scroll lock","scrlk":"scroll lock","slk":"scroll lock","menu":"menu","*":"*","+":"+","-":"-","/":"/",";":";","=":"=",",":",","_":"-",".":".","`":"`","[":"[","]":"]","'":"'"},"assimilationMap":{"1":"lmb","2":"rmb","4":"mmb","8":"backspace","9":"tab","13":"enter","16":"shift","17":"control","18":"alt","19":"pause","20":"caps lock","27":"escape","32":"spacebar","33":"page up","34":"page down","35":"end","36":"home","37":"left arrow","38":"up arrow","39":"right arrow","40":"down arrow","41":"select","42":"print","43":"execute","44":"print screen","45":"insert","46":"delete","47":"help","48":"0","49":"1","50":"2","51":"3","52":"4","53":"5","54":"6","55":"7","56":"8","57":"9","65":"a","66":"b","67":"c","68":"d","69":"e","70":"f","71":"g","72":"h","73":"i","74":"j","75":"k","76":"l","77":"m","78":"n","79":"o","80":"p","81":"q","82":"r","83":"s","84":"t","85":"u","86":"v","87":"w","88":"x","89":"y","90":"z","91":"windows","92":"windows","93":"applications","95":"computer sleep","96":"0","97":"1","98":"2","99":"3","100":"4","101":"5","102":"6","103":"7","104":"8","105":"9","106":"*","107":"+","109":"-","111":"/","112":"f1","113":"f2","114":"f3","115":"f4","116":"f5","117":"f6","118":"f7","119":"f8","120":"f9","121":"f10","122":"f11","123":"f12","124":"f13","125":"f14","126":"f15","127":"f16","144":"num lock","145":"scroll lock","160":"shift","161":"shift","162":"control","163":"control","164":"alt","165":"alt","186":";","187":"=","188":",","189":"-","190":".","191":"/","192":"`","219":"[","220":"\\","221":"]","222":"\\","223":"'","//note, backtick and apostrophe":"are reversed on uk and us keyboards"}}
+
+/***/ }),
+
 /***/ 6:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__systemSettings__ = __webpack_require__(29);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__systemSettings__ = __webpack_require__(34);
 /*!
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
@@ -9069,296 +9734,180 @@ var Validate = function () {
 
 "use strict";
 
-Object.defineProperty(exports, "__esModule", { value: true });
 /*!
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
+Object.defineProperty(exports, "__esModule", { value: true });
+// NOTE: SystemManagerClient is currently located in common but accessible on FSBL.  We have not decided yet whether or not to expose it like the other clients.
 const routerClientInstance_1 = __webpack_require__(5);
-const validate_1 = __webpack_require__(6); // Finsemble args validator
 const logger_1 = __webpack_require__(0);
-const system_1 = __webpack_require__(3);
-const dependencyManager_1 = __webpack_require__(14);
+const _types_1 = __webpack_require__(31);
+const _constants_1 = __webpack_require__(18);
+const common_1 = __webpack_require__(32);
 /**
- * @introduction
- * <h2>Base Client</h2>
- * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependencies are met, either client or service, the client's `onReady` method is fired.
- *
- * We're currently halfway through migrating our clients from extending a normal function prototype to an ES6 class.
- * "_BaseClient" represents the new class, while "BaseClient" is the original function. When the migration is complete,
- * we will remove the old function and rename "_BaseClient" to "BaseClient".
- * @constructor
- * @param {Object} params
- * @param {Function} params.onReady - A function to be called after the client has initialized.
- * @param {String} params.name - The name of the client
- * @shouldBePublished false
-    @example
-    import { _BaseClient as BaseClient } from "./baseClient";
-    var NewClient = function (params) {
-        BaseClient.call(this, params);
-        var self = this;
-
-        return this;
-    };
-
-    var clientInstance = new NewClient({
-        onReady: function (cb) {
-            Logger.system.log("NewClient Online");
-            cb();
-        },
-        name:"NewClient"
-    });
-    clientInstance.requiredServices = [REPLACE_THIS_ARRAY_WITH_DEPENENCIES];
-    clientInstance.initialize();
-    module.exports = clientInstance;
-    @private
+ * Singleton API to Finsemble System Manager
  */
-class _BaseClient {
-    constructor(params) {
-        /** The current status of this service. */
-        this.status = "offline";
-        this.startupTime = 0;
-        this.initialized = false;
-        this.startupDependencies = { services: [], clients: [] };
-        /** Gets the current window. */
-        this.finsembleWindow = null;
-        /** Gets the current window name. */
-        this.windowName = "";
-        /** Queue of functions to process once the client goes online. */
-        this.clientReadyQueue = [];
-        /**
-         * @private
-         *
-         */
-        this.processClientReadyQueue = () => {
-            for (let cb of this.clientReadyQueue) {
-                cb();
-            }
-            this.clientReadyQueue = [];
-        };
-        /**
-         * @private
-         *
-         */
-        this.onReady = (cb) => {
-            this.clientReadyQueue.push(cb);
-            if (this.status === "online") {
-                this.processClientReadyQueue();
-            }
-        };
-        /** Check to see if the client can come online. We check this against the required services and clients */
-        /**
+class SystemManagerClient {
+    /**
+     * Publishes boot status for the service or component (or boot task) being started.  This method is used internally in FSBL and baseService and not directly called.
+     * @param name the name of the service or component or module
+     * @param type the type category ("services" or "components")
+     * @param state the state ("completed" or "failed")
+     *
      * @private
+     */
+    publishBootStatus(name, type, state) {
+        console.log("publishStartingStatus", name, state);
+        logger_1.default.system.debug("publishBootStatus", name, type, state);
+        routerClientInstance_1.default.publish(common_1.statusChannel(name), { name, type, state });
+    }
+    ;
+    /**
+     * Waits for a specific boot stage
+     * @param stage the name of the service (e.g. "storageService")
+     * @param when wait until either "stageEntered" or "stageCompleted"
+     * @param= [callback]
+     * @returns a promise
+     *
+     * @example
+     *
+     * 	await SystemManagerClient.waitForBootStage("authentication", "stageCompleted");
+     *
+     * 	SystemManagerClient.waitForBootStage("authentication", "stageCompleted", () => {
+     *		RouterClient.publish(Constants.APPLICATION_STATE_CHANNEL, { state: "authenticated" });
+     * 	});
      *
      */
-        this.setClientOnline = () => {
-            this.status = "online";
-            const onReadyMessage = `STARTUP:CLIENT ONLINE:${this.finWindow.name}:${this.name}`;
-            this.startupTime = window.performance.now() - this.startupTime;
-            const readyCB = () => {
-                this.logger.system.debug(onReadyMessage);
-                this.processClientReadyQueue();
-                dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(this.name);
-            };
-            if (this._onReady) {
-                this._onReady(readyCB);
+    waitForBootStage(stage, when, callback = Function.prototype) {
+        const waitForBootStageCompletionPromiseResolver = (resolve, reject) => {
+            logger_1.default.system.debug(`SystemManagerClient.waitForBootStage entry`, stage, when);
+            let stageIndex = _types_1.ALL_BOOT_STAGES.indexOf(stage);
+            if (stage === "microkernel" && when === "stageEntered") {
+                logger_1.default.system.error("Cannot wait on `stageEntered` for microkernel because router isn't up yet. So will instead wait for microkernal stage complete.");
             }
-            else {
-                readyCB();
-            }
-        };
-        /**
-         * @private
-         *
-         */
-        this.initialize = (cb = Function.prototype) => {
-            if (this.initialized)
-                return;
-            this.initialized = true;
-            this.startupTime = performance.now();
-            this.routerClient.onReady(() => {
-                // TODO, [terry] allow the finsembleWindow to be passed in, so we can support proxying windowClient in RPC
-                this.finWindow = system_1.System.Window.getCurrent();
-                this.windowName = this.finWindow.name;
-                this.logger.system.debug("Baseclient Init Router Ready", this.name);
-                dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor(this.startupDependencies, () => {
-                    cb();
-                    this.setClientOnline();
-                });
+            // receives startup state from services -- see SystemManagerClient.publishBootStatus
+            let subscribeId = routerClientInstance_1.default.subscribe(_constants_1.STAGE_CHANNEL, (err, notify) => {
+                logger_1.default.system.debug("SystemManagerClient.waitForBootStage new stage", notify.data.stage, subscribeId);
+                if (err) {
+                    logger_1.default.system.error("SystemManagerClient.waitForBootStage subscribe error", err);
+                    callback(err);
+                    reject(err);
+                }
+                else if (stageIndex === -1) { // if illegal stage was input
+                    err = "illegal stage argument";
+                    logger_1.default.system.debug("SystemManagerClient.waitForBootStage subscribe error", err, stage);
+                    callback(err);
+                    reject(err);
+                }
+                else {
+                    // note the following section handles cases where waitForBootStage might be invoked after the stage has been enter or passed
+                    let currentStageIndex = _types_1.ALL_BOOT_STAGES.indexOf(notify.data.stage);
+                    logger_1.default.system.debug(`SystemManagerClient.waitForBootStage currentStageIndex=${currentStageIndex} stageIndex=${stageIndex} wait-on-stage=${stage} this-stage=${notify.data.stage}`);
+                    // when the stage before completes (or anytime after) then done for "stageEntered"
+                    if (when === "stageEntered" && (currentStageIndex + 1) >= stageIndex) {
+                        logger_1.default.system.debug("SystemManagerClient.waitForBootStage stageEntered", stage, subscribeId, callback.name);
+                        callback();
+                        resolve();
+                        routerClientInstance_1.default.unsubscribe(subscribeId);
+                        // when current stage matches (or comes after) given stage, then done for "stageCompleted"
+                    }
+                    else if (when === "stageCompleted" && currentStageIndex >= stageIndex) {
+                        logger_1.default.system.debug("SystemManagerClient.waitForBootStage completed", stage, subscribeId);
+                        callback();
+                        resolve();
+                        routerClientInstance_1.default.unsubscribe(subscribeId);
+                    }
+                    else {
+                        logger_1.default.system.debug(`SystemManagerClient.waitForBootStage else currentStageIndex=${currentStageIndex} stageIndex=${stageIndex} `, currentStageIndex, stageIndex, stage, subscribeId);
+                    }
+                }
             });
         };
-        /**
-         * @private
-         *
-         */
-        this.onClose = (cb) => {
-            if (cb)
-                cb();
+        return new Promise(waitForBootStageCompletionPromiseResolver);
+    }
+    /**
+     * Waits for a specific service (or component or boot task) to be started
+     * @param name the name of the service (e.g. "storageService")
+     * @param= [callback]
+     * @returns a promise
+     *
+     * @example
+     *
+     * 	await SystemManagerClient.waitForStartup("configService");
+     *
+     *	SystemManagerClient.waitForStartup("dataStoreService", () => {
+     *		RouterClient.publish(Constants.APPLICATION_STATE_CHANNEL, { state: "configuring" });
+     *	});
+     *
+     */
+    waitForStartup(name, callback = Function.prototype) {
+        const waitForStartupStatePromiseResolver = (resolve, reject) => {
+            logger_1.default.system.debug(`SystemManagerClient.waitForStartup.${name}`, name);
+            // receives startup state from services -- see SystemManagerClient.publishBootStatus
+            let subscribeId = routerClientInstance_1.default.subscribe(common_1.statusChannel(name), (err, notify) => {
+                logger_1.default.system.debug("SystemManagerClient.waitForStartup subscribe", name, err, notify);
+                if (err) {
+                    logger_1.default.system.error("SystemManagerClient.waitForStartup subscribe error", err);
+                    callback(err);
+                    reject();
+                }
+                else {
+                    if (notify.data.name === name && notify.data.state === "completed") {
+                        logger_1.default.system.debug("SystemManagerClient.waitForStartup completed", name);
+                        callback();
+                        resolve();
+                        routerClientInstance_1.default.unsubscribe(subscribeId);
+                    }
+                }
+            });
         };
-        this.name = params.name;
-        this._onReady = params.onReady;
-        this.startupDependencies = params.startupDependencies || {
-            services: [],
-            clients: []
-        };
-        // @TODO - Refactor this to use DI.
-        this.logger = logger_1.default;
-        /**
-         * Reference to the RouterClient
-         */
-        this.routerClient = routerClientInstance_1.default;
+        return new Promise(waitForStartupStatePromiseResolver);
+    }
+    /**
+     * Publishes a checkpoints status. This must be done for any checkpoint so the SystemManager will know if the checkpoint succeeded or not
+     * @param parent the name of the service or component containing the checkpoint (as defined in config)
+     * @param checkpointName tthe name of the checkpoint (as defined in config)
+     * @param state the state for the checkpoint, either "completed" or "failed"
+     *
+     * @example
+     *
+     * 	SystemManagerClient.publishCheckpointState("workspaceService", "importedLegacyWorkspaces", "completed");
+     *
+     */
+    publishCheckpointState(windowName, checkpointName, state) {
+        console.log("publishCheckpoint", windowName, checkpointName, state, common_1.checkpointChannel(windowName, checkpointName));
+        logger_1.default.system.debug("publishCheckpoint", windowName, checkpointName, state, common_1.checkpointChannel(windowName, checkpointName));
+        routerClientInstance_1.default.publish(common_1.checkpointChannel(windowName, checkpointName), { windowName, checkpointName, state });
+    }
+    ;
+    /**
+     * Shows System Log window and bring its to front.
+     */
+    showSystemLog() {
+        logger_1.default.system.debug("SystemManagerClient.showSystemLog");
+        routerClientInstance_1.default.transmit(_constants_1.SHOW_SYSLOG_CHANNEL, true);
+    }
+    /**
+     * Displays message on the system log
+     * @param params gnenerally this is TBD until real system log is written
+     * @param params.error if true then the log message is an error
+     * @param params.notification if true then the log message is a notification
+     * @param message the message string to log
+     *
+     * @example
+     *
+     * 	SystemManagerClient.systemLog({ error: true}, errorMsg);
+     *  SystemManagerClient.systemLog({ notification: true }, "Notification: " + message);
+     *
+     */
+    systemLog(params, logMessage) {
+        logger_1.default.system.debug("SystemManagerClient.systemLog", params, logMessage);
+        routerClientInstance_1.default.transmit(_constants_1.SYSLOG_CHANNEL, { params, logMessage });
     }
 }
-exports._BaseClient = _BaseClient;
-/**
- * @introduction
- * <h2>Base Client</h2>
- * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependencies are met, either client or service, the client's `onReady` method is fired.
- * @constructor
- * @param {Object} params
- * @param {Function} params.onReady - A function to be called after the client has initialized.
- * @param {String} params.name - The name of the client
- * @shouldBePublished false
-    @example
-    import { _BaseClient as BaseClient } from "./baseClient";
-    var NewClient = function (params) {
-        BaseClient.call(this, params);
-        var self = this;
-
-        return this;
-    };
-
-    var clientInstance = new NewClient({
-        onReady: function (cb) {
-            Logger.system.log("NewClient Online");
-            cb();
-        },
-        name:"NewClient"
-    });
-    clientInstance.requiredServices = [REPLACE_THIS_ARRAY_WITH_DEPENENCIES];
-    clientInstance.initialize();
-    module.exports = clientInstance;
-    @private
- */
-var BaseClient = function (params) {
-    validate_1.default.args(params, "object=");
-    var self = this;
-    var status = "offline";
-    var onReady;
-    this.startupTime = 0;
-    if (params) {
-        if (params.onReady) {
-            onReady = params.onReady;
-        }
-        this.name = params.name;
-    }
-    this.initialized = false;
-    this.startupDependencies = params.startupDependencies || {
-        services: [],
-        clients: []
-    };
-    /**
-     * Reference to the RouterClient
-     *  @type {Object}
-     */
-    this.routerClient = routerClientInstance_1.default;
-    /**
-     * Gets the current openfin window - stays here for backward compatibility
-     * @type {object}
-     */
-    this.finWindow = null;
-    /**
-     * Gets the current window
-     * @type {object}
-     */
-    this.finsembleWindow = null;
-    /**
-     * Gets the current window name
-     *  @type {string}
-     */
-    this.windowName = ""; //The current window
-    /**
-     * Services the are required to be online before the service can come online
-     *  @type {Array.<Object>}
-     */
-    this.requiredServices = [];
-    /**
-     * Clients the are required to be online before the service can come online
-     *  @type {Array.<Object>}
-     */
-    this.requiredClients = [];
-    /**
-     * Queue of functions to process once the client goes online.
-     * @private
-     */
-    this.clientReadyQueue = [];
-    /**
-     * Iterates through the clientReadyQueue, invoking each call to `.ready`.
-     */
-    this.processClientReadyQueue = function () {
-        for (var i = 0; i < this.clientReadyQueue.length; i++) {
-            let callback = this.clientReadyQueue[i];
-            if (typeof callback === "function") {
-                callback();
-            }
-        }
-        this.clientReadyQueue = [];
-    };
-    /**
-     * Method for adding callbacks to each client.
-     */
-    this.onReady = function (cb) {
-        this.clientReadyQueue.push(cb);
-        if (status === "online") {
-            this.processClientReadyQueue();
-        }
-    };
-    //Check to see if the client can come online. We check this against the required services and clients
-    this.setClientOnline = function () {
-        var self = this;
-        status = "online";
-        let onReadyMessage = `STARTUP:CLIENT ONLINE:${self.finWindow.name}:${self.name}`;
-        self.startupTime = performance.now() - self.startupTime;
-        if (onReady) {
-            onReady(function () {
-                logger_1.default.system.debug(onReadyMessage);
-                self.processClientReadyQueue();
-                dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(self.name);
-            });
-        }
-        else {
-            logger_1.default.system.debug(onReadyMessage);
-            self.processClientReadyQueue();
-            dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(self.name);
-        }
-    };
-    /**
-    * Starts the process of checking services and any other function required before the client can come online
-    */
-    this.initialize = function (cb = Function.prototype) {
-        if (self.initialized) {
-            return;
-        }
-        self.initialized = true;
-        self.setClientOnline = self.setClientOnline.bind(self);
-        self.startupTime = performance.now();
-        self.routerClient.onReady(function () {
-            // TODO, [terry] allow the finsembleWindow to be passed in, so we can support proxying windowClient in RPC
-            self.finWindow = system_1.System.Window.getCurrent();
-            self.windowName = self.finWindow.name;
-            logger_1.default.system.debug("Baseclient Init Router Ready", self.name);
-            dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor({
-                services: self.startupDependencies.services || [],
-                clients: self.startupDependencies.clients || []
-            }, () => {
-                cb();
-                self.setClientOnline();
-            });
-        });
-    };
-    this.onClose = function () { };
-};
-exports.default = BaseClient;
+var systemManagerClient = new SystemManagerClient();
+exports.default = systemManagerClient;
 
 
 /***/ }),
@@ -9368,12 +9917,12 @@ exports.default = BaseClient;
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony export (immutable) */ __webpack_exports__["getOpenfinVersion"] = getOpenfinVersion;
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony export (immutable) */ __webpack_exports__["getContainerVersion"] = getContainerVersion;
 /* harmony export (immutable) */ __webpack_exports__["castToPromise"] = castToPromise;
 /* harmony export (immutable) */ __webpack_exports__["isPercentage"] = isPercentage;
 /* harmony export (immutable) */ __webpack_exports__["crossDomain"] = crossDomain;
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getAllMonitors", function() { return getAllMonitors; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getMonitorFromOpenFinXY", function() { return getMonitorFromOpenFinXY; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getMonitorFromXY", function() { return getMonitorFromXY; });
 /* harmony export (immutable) */ __webpack_exports__["getMonitorFromWindow"] = getMonitorFromWindow;
 /* harmony export (immutable) */ __webpack_exports__["getFinWindow"] = getFinWindow;
 /* harmony export (immutable) */ __webpack_exports__["getWindowDescriptor"] = getWindowDescriptor;
@@ -9396,10 +9945,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (immutable) */ __webpack_exports__["adjustWindowIfInTaskbarSpace"] = adjustWindowIfInTaskbarSpace;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__system__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__ = __webpack_require__(26);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1__ = __webpack_require__(21);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_uuid_v1__);
 /*!
  * Copyright 2017 by ChartIQ, Inc.
@@ -9423,9 +9972,9 @@ const Monitors = new __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__["a" /* de
 }*/
 
 /**
- * Gets the openfin version in object form.
+ * Gets the container version in object form.
  */
-function getOpenfinVersion(cb = Function.prototype) {
+function getContainerVersion(cb = Function.prototype) {
 	return new Promise(function (resolve /*, reject*/) {
 		__WEBPACK_IMPORTED_MODULE_0__system__["System"].getVersion(ver => {
 			let verArr = ver.split(".").map(Number);
@@ -9500,7 +10049,7 @@ function crossDomain(url) {
 };
 
 /**
- * Gets an array of monitor descriptors. Essentially rationalizing the results of OpenFin getMonitorInfo.
+ * Gets an array of monitor descriptors. Essentially rationalizing the results of getMonitorInfo.
  * into a single array with additional information added.
  *
  * whichMonitor is set to the secondary monitor number, or "primary" if the primary monitor.
@@ -9513,14 +10062,14 @@ function crossDomain(url) {
 var getAllMonitors = Monitors.getAllMonitors;
 
 /**
- * Retrieves a monitor descriptor given an absolute X Y on the OpenFin virtual screen
+ * Retrieves a monitor descriptor given an absolute X Y on the virtual screen
  * @param  {number} x The x position
  * @param  {number} y The y position
- * @param {callback-object}  cb Returns the monitor information from OpenFin.
+ * @param {callback-object}  cb Returns the monitor information from the Container.
  * "isPrimary" is set to true if it's the primary monitor.
  * null is returned if the x,y coordinates are beyond the bounds of the virtual screen.
  */
-var getMonitorFromOpenFinXY = Monitors.getMonitorFromScaledXY;
+var getMonitorFromXY = Monitors.getMonitorFromScaledXY;
 
 /**
  * Retrieves a monitor descriptor for a window. If the window straddles two monitors
@@ -9597,7 +10146,7 @@ function getFinWindow(windowIdentifier, cb) {
 		// Default to current window
 		var myWindow = __WEBPACK_IMPORTED_MODULE_0__system__["System"].Window.getCurrent();
 
-		// Get OpenFin options (windowDescriptor) for current window
+		// Get options (windowDescriptor) for current window
 		// we need this info even if we're going to reference a different window
 		myWindow.getOptions(function (options) {
 			// If windowName is provided, then find that window
@@ -10141,9 +10690,9 @@ function adjustBoundsToBeOnMonitor(bounds) {
  * @param {*} config - Object containing all possible values used to set windowTypes, some of these values may be unset depending on the execution path
  */
 function getWindowType(config) {
-	const DEFAULT_WINDOW_TYPE = "OpenFinWindow";
+	const DEFAULT_WINDOW_TYPE = "WebWindow";
 	// All possible windowTypes. Some of these values will be converted to other types
-	const validTypes = ["openfin", "assimilation", "assimilated", "native", "application", "OpenFinWindow", "NativeWindow", "FinsembleNativeWindow", "OpenFinApplication", "CompoundWindow", "StackedWindow"];
+	const validTypes = ["openfin", "assimilation", "assimilated", "native", "application", "OpenFinWindow", "NativeWindow", "FinsembleNativeWindow", "OpenFinApplication", "CompoundWindow", "WebWindow", "WebApplication", "StackedWindow"];
 	// If an invalid windowType is given, default and log an error. Note that an empty windowType
 	// is not an error case. This is to let the user know that they may have made a typo setting a type in
 	// the config file. We default to keep Finsemble from breaking, but the user may have intended to launch a
@@ -10165,10 +10714,19 @@ function getWindowType(config) {
 			ret = "FinsembleNativeWindow";
 			break;
 		case "application":
-			ret = "OpenFinApplication";
+			ret = "WebApplication";
+			break;
+		case "openFinApplication":
+			ret = "WebApplication";
+			__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.warn(`Window type ${config.windowType} deprecated. Please use WebWindow`);
+			break;
+		case "Web":
+			ret = "WebWindow";
 			break;
 		case "openfin":
-			ret = "OpenFinWindow";
+		case "openFinWindow":
+			ret = "WebWindow";
+			__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.warn(`Window type ${config.windowType} deprecated. Please use WebWindow`);
 			break;
 		case "StackedWindow":
 			ret = "StackedWindow";
@@ -10180,7 +10738,10 @@ function getWindowType(config) {
 
 	// Next handle any backward compatibility windowType inputs
 	if (config.native) ret = "NativeWindow"; //Backward Compatibility
-	if (config.type === "openfinApplication") ret = "OpenFinApplication"; //Backward Compatibility
+	if (config.type === "openfinApplication") {
+		ret = "WebApplication"; //Backward Compatibility
+		__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.warn("Window type openFinApplication deprecated. Please use WebApplication");
+	}
 	if (config.compound) ret = "CompoundWindow";
 	return ret;
 }
@@ -15673,241 +16234,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(13)(module), __webpack_require__(31).setImmediate, __webpack_require__(1)))
-
-/***/ }),
-
-/***/ 93:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__baseService__ = __webpack_require__(32);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__baseService___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__baseService__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_keyMaps_json__ = __webpack_require__(46);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_keyMaps_json___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__common_keyMaps_json__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_system__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__common_system__);
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-
-
-
-
-
-
-
-__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.start();
-
-/**
- * The HotkeyService is responsible for registering and unregistering hotkeys via the hotkey client. It checks key presses received from assimilation, and checks if those key presses match and key combinations registered as hotkeys by hotkey clients. If it does, it sends out a router message including all windows registered with that component.
- */
-class HotkeyService extends __WEBPACK_IMPORTED_MODULE_0__baseService__["BaseService"] {
-
-	/**
-  * @constructor
-  * @param {string} params.name name of the service
-  * @param {object} params.startupDependencies
-  * @param {array} params.startupDependencies.clients Clients to wait on before initializing the service
-  * @param {array} params.startupDependencies.services Services to wait on before initializing the service
-  * @param {object} params.shutdownDependencies
-  * @param {array} params.shutdownDependencies.services Services to wait on before shutting down the service
-  **/
-	constructor(params) {
-		// FIXME(Terry) should be hotkeyService (with no "s") in order to match HotkeyClient
-		params.name = "hotkeysService";
-		super(params);
-		this.registeredHotkeys = {};
-		this.keysDown = {}; //currently pressed keys
-		this.bindCorrectContext();
-		this.onBaseServiceReady(this.initialize);
-		this.start();
-	}
-
-	bindCorrectContext() {
-		this.initialize = this.initialize.bind(this);
-		this.createRouterEndpoints = this.createRouterEndpoints.bind(this);
-		this.checkHotkeys = this.checkHotkeys.bind(this);
-		this.getRegisteredHotkeys = this.getRegisteredHotkeys.bind(this);
-		this.onKeydown = this.onKeydown.bind(this);
-		this.onKeyup = this.onKeyup.bind(this);
-		this.registerGlobalHotkey = this.registerGlobalHotkey.bind(this);
-		this.removeAllHotkeysForWindow = this.removeAllHotkeysForWindow.bind(this);
-		this.unregisterGlobalHotkey = this.unregisterGlobalHotkey.bind(this);
-	}
-
-	/**
-  * Just adds router endpoints
-  * @param {*} cb
-  */
-	createRouterEndpoints(cb) {
-		this.RouterClient.addResponder("hotkeysService.registerGlobalHotkey", this.registerGlobalHotkey);
-
-		this.RouterClient.addResponder("hotkeysService.unregisterGlobalHotkey", this.unregisterGlobalHotkey);
-
-		this.RouterClient.addResponder("hotkeysService.removeAllHotkeysForWindow", this.removeAllHotkeysForWindow);
-
-		this.RouterClient.addListener("finsemble.assimilation.keydown", this.onKeydown);
-
-		this.RouterClient.addListener("finsemble.assimilation.keyup", this.onKeyup);
-
-		this.RouterClient.addListener("hotkeysService.getRegisteredHotkeys", this.getRegisteredHotkeys);
-
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.info("Added listeners for hotkeysService");
-		cb();
-	}
-
-	/**
-  * Initializes a hotkey service
-  */
-	initialize(cb) {
-		this.createRouterEndpoints(cb);
-		__WEBPACK_IMPORTED_MODULE_3__common_system__["System"].addEventListener("session-changed", params => {
-			this.keysDown = {};
-		});
-	}
-
-	/**
-  * This is a function called whenever a key is pressed or unpressed. It looks at the keys currently pressed, and compares them with all registered hotkey key combinations. If they match a combination, the service sends out a router message to all the clients with a list of windows registered with that hotkey
-  */
-	checkHotkeys() {
-		var keysPressed = Object.keys(this.keysDown).sort().toString(); //reads all fields from the hotkeys object
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("hotkeysService.checkHotkeys", keysPressed);
-		if (!this.registeredHotkeys[keysPressed]) return;
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.info("hotkeysService.checkHotkeys: detected a hotkey combination", keysPressed);
-		this.RouterClient.transmit("HotkeyTriggered", {
-			windows: this.registeredHotkeys[keysPressed],
-			keys: keysPressed
-		});
-	}
-
-	/**
-  * Passes back the registered keys to the caller
-  *
-  * @param {*} error
-  * @param {*} response
-  */
-	getRegisteredHotkeys(error, response) {
-		var self = this;
-		if (error) {
-			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log("requestHotkeys error: " + error);
-		} else {
-			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log("currently registered Hotkeys: ", self.registeredHotkeys);
-		}
-		return this.registeredHotkeys;
-	}
-
-	/**
-  * Detects key downs passed from assimilation, translates the key codes to strings, and adds them to this.keysDown. Then checks if service should trigger any hotkeys.
-  * @param {*} error
-  * @param {*} response
-  */
-	onKeydown(error, response) {
-		let keyPressed = response.data.key.toString();
-		let keyFromDictionary = __WEBPACK_IMPORTED_MODULE_2__common_keyMaps_json__["assimilationMap"][keyPressed];
-		this.keysDown[keyFromDictionary] = true;
-		this.checkHotkeys();
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("received keydown - key pressed: ", __WEBPACK_IMPORTED_MODULE_2__common_keyMaps_json__["assimilationMap"][response.data.key], "raw key code: ", response.data.key);
-	}
-
-	/**
-  * Detects key ups passed from assimilation, translates the key codes to strings, and removes them from this.keysDown. Then checks if service should trigger any hotkeys.
-  * @param {*} error
-  * @param {*} response
-  */
-	onKeyup(error, response) {
-		let keyPressed = response.data.key.toString();
-		let keyFromDictionary = __WEBPACK_IMPORTED_MODULE_2__common_keyMaps_json__["assimilationMap"][keyPressed];
-		delete this.keysDown[keyFromDictionary];
-		this.checkHotkeys();
-		// console.log("received keyup - current keys down:", this.keysDown);
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("received keyup - current keys down:", this.keysDown);
-	}
-
-	/**
-  * This function registers global hotkeys - ones that can be triggered regardless of what window is in focus. Registration occurs in this.registeredHotkeys, which consists of key-value pairs where the key is the key combination for the hotkey, and the value is all windows that have registered a key combination with that hotkey
-  * @param {*} error
-  * @param {*} message
-  */
-	registerGlobalHotkey(error, message) {
-		let origin = message.data.windowName;
-		let keys = message.data.keys;
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log("hotkeysService.registerGlobalHotkey, hotkey: ", keys, " origin: ", origin);
-		if (!this.registeredHotkeys[keys]) {
-			//if the hotkey doesn't already exist TODO: Pre-stringify this on the client side
-			this.registeredHotkeys[keys] = [origin];
-		} else {
-			this.registeredHotkeys[keys].push(origin);
-		}
-		message.sendQueryResponse(null, "success");
-	}
-
-	//Unregisters a global hotkey - removes the window id from this.registeredHotkeys[keys] (or deletes this.registeredHotkeys[keys] if it's the only one)
-	unregisterGlobalHotkey(err, message) {
-		let error = null;
-		let keys = message.data.keys;
-		let windowsListening = this.registeredHotkeys[keys];
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log("hotkeysService.registerGlobalHotkey, hotkey: ", keys);
-		if (windowsListening) {
-			//note that "keys" is already a string - if any hotkeys exist for this key combination
-			if (windowsListening.includes(message.data.windowName)) {
-				windowsListening = windowsListening.splice(windowsListening.indexOf(message.data.windowName), 1);
-				if (this.registeredHotkeys[keys].length === 0) {
-					delete this.registeredHotkeys[keys];
-				}
-			} else {
-				error = "Attempt to remove hotkey failed - this component had not registered this hotkey with the service";
-			}
-		} else {
-			error = "Attempt to remove hotkey failed - this component had not registered this hotkey with the service";
-		}
-		if (error) {
-			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error(error);
-		}
-		message.sendQueryResponse(error, error ? null : "success");
-	}
-
-	/**
-  * Removes all hotkeys for a window
-  *
-  * @param {*} err
-  * @param {*} message
-  */
-	removeAllHotkeysForWindow(err, message) {
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.info("Removing all hotkeys for ", message.data.windowName);
-		let hotkeyCombinations = Object.keys(this.registeredHotkeys);
-		hotkeyCombinations.forEach(combo => {
-			let windowNames = this.registeredHotkeys[combo];
-			let i = windowNames.length;
-			//GO through all of the window names. if any match the window trying to unregister, remove it from the array.
-			//windows can have multiple listeners for a single hotkey combination; this will handle that.
-			while (i--) {
-				if (windowNames[i] === message.data.windowName) {
-					windowNames.splice(i, 1);
-				}
-			}
-		});
-		message.sendQueryResponse(null, "success");
-	}
-}
-
-let serviceInstance = new HotkeyService({
-	startupDependencies: {
-		services: ["assimilationService"]
-	},
-	shutdownDependencies: {
-		services: ["windowService"]
-	}
-});
-
-/* harmony default export */ __webpack_exports__["default"] = (serviceInstance);
-
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\services\\hotkeys\\hotkeysService.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\services\\hotkeys\\hotkeysService.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(14)(module), __webpack_require__(29).setImmediate, __webpack_require__(1)))
 
 /***/ })
 

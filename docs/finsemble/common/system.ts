@@ -1,5 +1,6 @@
 // pass through to openfin. In the future we can make this the pass through to any container.
 declare var fin;
+declare var e2o;
 declare var chrome;
 
 import { IGlobals } from "../common/Globals";
@@ -73,6 +74,15 @@ export class System {
 		});
 	}
 
+	static get container() {
+		if (fin.container) return fin.container;
+		return "Openfin";
+	}
+
+	static get fin() {
+		return e2o || fin || {};
+	}
+
 	// static get makes this behave like a static variable. so calling system.ready is equivalent to fin.desktop.main.
 	static get ready() {
 		return fin.desktop.main;
@@ -80,6 +90,10 @@ export class System {
 
 	static get getHostSpecs() {
 		return fin.desktop.System.getHostSpecs;
+	}
+
+	static get InterApplicationBus() {
+		return fin.desktop.InterApplicationBus;
 	}
 
 	static get launchExternalProcess() {
@@ -125,6 +139,10 @@ export class System {
 
 	static get getAllWindows() {
 		return fin.desktop.System.getAllWindows;
+	}
+
+	static get getProcessList() {
+		return fin.desktop.System.getProcessList;
 	}
 
 	static FinsembleReady(cb) {

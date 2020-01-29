@@ -78,7 +78,7 @@ export type OptionalFinsembleWindowData = {
 	 * creating the possibility for the
 	 * OS and Electron/OF to think different
 	 * windows have focus. Currently, we
-	 * only keep this state on OpenFinWindows.
+	 * only keep this state on WebWindows.
 	 * If we can figure out a different way
 	 * to synchronize the OS and container,
 	 * we may not need this state.
@@ -158,9 +158,9 @@ export type OptionalFinsembleWindowData = {
 		name: string;
 		uuid: string;
 		windowName: string;
-		windowType: "StackedWindow" | "OpenFinWindow" | "NativeWindow" | "FinsembleNativeWindow";
+		windowType: "StackedWindow" | "WebWindow" | "NativeWindow" | "FinsembleNativeWindow";
 	};
-	windowType: "StackedWindow" | "OpenFinWindow" | "NativeWindow" | "FinsembleNativeWindow";
+	windowType: "StackedWindow" | "WebWindow" | "NativeWindow" | "FinsembleNativeWindow";
 	x: number;
 	y: number;
 }

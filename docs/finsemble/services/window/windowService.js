@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "http://localhost:3375/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 192);
+/******/ 	return __webpack_require__(__webpack_require__.s = 228);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -85,13 +85,13 @@ var CONSOLE_DEFAULT_LOG_SETTING = { Error: true, Warn: true, Info: true, Log: tr
 const MAX_LOG_MESSAGE_SIZE = 50000;
 const OVER_LOG_SIZE_LIMIT_MESSAGE = `Log argument greater than ${MAX_LOG_MESSAGE_SIZE / 1000}KB. Check local Console to see output of the object.`;
 const MAX_QUEUE_SIZE = 5 * 1000; // maximum logger queue size; plenty of space although shouldn't need much since continuously sending to logger if working correctly;
-const throttle = __webpack_require__(23);
+const throttle = __webpack_require__(24);
 const system_1 = __webpack_require__(3);
 const localLogger_1 = __webpack_require__(16);
 /**
  * @introduction
  *
- * <h2>Logger Client</h2>
+ * <h2>Logger Client (Finsemble Workspaces)</h2>
  *
  * The Logger Client supports very efficient and configurable run-time logging to the <a href=tutorial-CentralLogger.html>Central Logger</a>.
  * Logging has a small performance overhead, so developers can liberally instrument their code with log messages for debugging and diagnostics.
@@ -1073,12 +1073,23 @@ class System {
             cb(info);
         });
     }
+    static get container() {
+        if (fin.container)
+            return fin.container;
+        return "Openfin";
+    }
+    static get fin() {
+        return e2o || fin || {};
+    }
     // static get makes this behave like a static variable. so calling system.ready is equivalent to fin.desktop.main.
     static get ready() {
         return fin.desktop.main;
     }
     static get getHostSpecs() {
         return fin.desktop.System.getHostSpecs;
+    }
+    static get InterApplicationBus() {
+        return fin.desktop.InterApplicationBus;
     }
     static get launchExternalProcess() {
         return fin.desktop.System.launchExternalProcess;
@@ -1113,6 +1124,9 @@ class System {
     }
     static get getAllWindows() {
         return fin.desktop.System.getAllWindows;
+    }
+    static get getProcessList() {
+        return fin.desktop.System.getProcessList;
     }
     static FinsembleReady(cb) {
         if (Globals.FSBL && Globals.FSBL.addEventListener) {
@@ -1210,7 +1224,7 @@ module.exports = g;
 * All rights reserved.
 */
 Object.defineProperty(exports, "__esModule", { value: true });
-const routerClientConstructor_1 = __webpack_require__(28);
+const routerClientConstructor_1 = __webpack_require__(30);
 const logger_1 = __webpack_require__(0);
 let RCConstructor = routerClientConstructor_1.RouterClientConstructor;
 /** The logger needs a router client, and the router client needs a logger.
@@ -1234,7 +1248,7 @@ exports.default = RouterClientInstance;
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__systemSettings__ = __webpack_require__(29);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__systemSettings__ = __webpack_require__(34);
 /*!
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
@@ -1415,296 +1429,180 @@ var Validate = function () {
 
 "use strict";
 
-Object.defineProperty(exports, "__esModule", { value: true });
 /*!
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
+Object.defineProperty(exports, "__esModule", { value: true });
+// NOTE: SystemManagerClient is currently located in common but accessible on FSBL.  We have not decided yet whether or not to expose it like the other clients.
 const routerClientInstance_1 = __webpack_require__(5);
-const validate_1 = __webpack_require__(6); // Finsemble args validator
 const logger_1 = __webpack_require__(0);
-const system_1 = __webpack_require__(3);
-const dependencyManager_1 = __webpack_require__(14);
+const _types_1 = __webpack_require__(31);
+const _constants_1 = __webpack_require__(18);
+const common_1 = __webpack_require__(32);
 /**
- * @introduction
- * <h2>Base Client</h2>
- * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependencies are met, either client or service, the client's `onReady` method is fired.
- *
- * We're currently halfway through migrating our clients from extending a normal function prototype to an ES6 class.
- * "_BaseClient" represents the new class, while "BaseClient" is the original function. When the migration is complete,
- * we will remove the old function and rename "_BaseClient" to "BaseClient".
- * @constructor
- * @param {Object} params
- * @param {Function} params.onReady - A function to be called after the client has initialized.
- * @param {String} params.name - The name of the client
- * @shouldBePublished false
-    @example
-    import { _BaseClient as BaseClient } from "./baseClient";
-    var NewClient = function (params) {
-        BaseClient.call(this, params);
-        var self = this;
-
-        return this;
-    };
-
-    var clientInstance = new NewClient({
-        onReady: function (cb) {
-            Logger.system.log("NewClient Online");
-            cb();
-        },
-        name:"NewClient"
-    });
-    clientInstance.requiredServices = [REPLACE_THIS_ARRAY_WITH_DEPENENCIES];
-    clientInstance.initialize();
-    module.exports = clientInstance;
-    @private
+ * Singleton API to Finsemble System Manager
  */
-class _BaseClient {
-    constructor(params) {
-        /** The current status of this service. */
-        this.status = "offline";
-        this.startupTime = 0;
-        this.initialized = false;
-        this.startupDependencies = { services: [], clients: [] };
-        /** Gets the current window. */
-        this.finsembleWindow = null;
-        /** Gets the current window name. */
-        this.windowName = "";
-        /** Queue of functions to process once the client goes online. */
-        this.clientReadyQueue = [];
-        /**
-         * @private
-         *
-         */
-        this.processClientReadyQueue = () => {
-            for (let cb of this.clientReadyQueue) {
-                cb();
-            }
-            this.clientReadyQueue = [];
-        };
-        /**
-         * @private
-         *
-         */
-        this.onReady = (cb) => {
-            this.clientReadyQueue.push(cb);
-            if (this.status === "online") {
-                this.processClientReadyQueue();
-            }
-        };
-        /** Check to see if the client can come online. We check this against the required services and clients */
-        /**
+class SystemManagerClient {
+    /**
+     * Publishes boot status for the service or component (or boot task) being started.  This method is used internally in FSBL and baseService and not directly called.
+     * @param name the name of the service or component or module
+     * @param type the type category ("services" or "components")
+     * @param state the state ("completed" or "failed")
+     *
      * @private
+     */
+    publishBootStatus(name, type, state) {
+        console.log("publishStartingStatus", name, state);
+        logger_1.default.system.debug("publishBootStatus", name, type, state);
+        routerClientInstance_1.default.publish(common_1.statusChannel(name), { name, type, state });
+    }
+    ;
+    /**
+     * Waits for a specific boot stage
+     * @param stage the name of the service (e.g. "storageService")
+     * @param when wait until either "stageEntered" or "stageCompleted"
+     * @param= [callback]
+     * @returns a promise
+     *
+     * @example
+     *
+     * 	await SystemManagerClient.waitForBootStage("authentication", "stageCompleted");
+     *
+     * 	SystemManagerClient.waitForBootStage("authentication", "stageCompleted", () => {
+     *		RouterClient.publish(Constants.APPLICATION_STATE_CHANNEL, { state: "authenticated" });
+     * 	});
      *
      */
-        this.setClientOnline = () => {
-            this.status = "online";
-            const onReadyMessage = `STARTUP:CLIENT ONLINE:${this.finWindow.name}:${this.name}`;
-            this.startupTime = window.performance.now() - this.startupTime;
-            const readyCB = () => {
-                this.logger.system.debug(onReadyMessage);
-                this.processClientReadyQueue();
-                dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(this.name);
-            };
-            if (this._onReady) {
-                this._onReady(readyCB);
+    waitForBootStage(stage, when, callback = Function.prototype) {
+        const waitForBootStageCompletionPromiseResolver = (resolve, reject) => {
+            logger_1.default.system.debug(`SystemManagerClient.waitForBootStage entry`, stage, when);
+            let stageIndex = _types_1.ALL_BOOT_STAGES.indexOf(stage);
+            if (stage === "microkernel" && when === "stageEntered") {
+                logger_1.default.system.error("Cannot wait on `stageEntered` for microkernel because router isn't up yet. So will instead wait for microkernal stage complete.");
             }
-            else {
-                readyCB();
-            }
-        };
-        /**
-         * @private
-         *
-         */
-        this.initialize = (cb = Function.prototype) => {
-            if (this.initialized)
-                return;
-            this.initialized = true;
-            this.startupTime = performance.now();
-            this.routerClient.onReady(() => {
-                // TODO, [terry] allow the finsembleWindow to be passed in, so we can support proxying windowClient in RPC
-                this.finWindow = system_1.System.Window.getCurrent();
-                this.windowName = this.finWindow.name;
-                this.logger.system.debug("Baseclient Init Router Ready", this.name);
-                dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor(this.startupDependencies, () => {
-                    cb();
-                    this.setClientOnline();
-                });
+            // receives startup state from services -- see SystemManagerClient.publishBootStatus
+            let subscribeId = routerClientInstance_1.default.subscribe(_constants_1.STAGE_CHANNEL, (err, notify) => {
+                logger_1.default.system.debug("SystemManagerClient.waitForBootStage new stage", notify.data.stage, subscribeId);
+                if (err) {
+                    logger_1.default.system.error("SystemManagerClient.waitForBootStage subscribe error", err);
+                    callback(err);
+                    reject(err);
+                }
+                else if (stageIndex === -1) { // if illegal stage was input
+                    err = "illegal stage argument";
+                    logger_1.default.system.debug("SystemManagerClient.waitForBootStage subscribe error", err, stage);
+                    callback(err);
+                    reject(err);
+                }
+                else {
+                    // note the following section handles cases where waitForBootStage might be invoked after the stage has been enter or passed
+                    let currentStageIndex = _types_1.ALL_BOOT_STAGES.indexOf(notify.data.stage);
+                    logger_1.default.system.debug(`SystemManagerClient.waitForBootStage currentStageIndex=${currentStageIndex} stageIndex=${stageIndex} wait-on-stage=${stage} this-stage=${notify.data.stage}`);
+                    // when the stage before completes (or anytime after) then done for "stageEntered"
+                    if (when === "stageEntered" && (currentStageIndex + 1) >= stageIndex) {
+                        logger_1.default.system.debug("SystemManagerClient.waitForBootStage stageEntered", stage, subscribeId, callback.name);
+                        callback();
+                        resolve();
+                        routerClientInstance_1.default.unsubscribe(subscribeId);
+                        // when current stage matches (or comes after) given stage, then done for "stageCompleted"
+                    }
+                    else if (when === "stageCompleted" && currentStageIndex >= stageIndex) {
+                        logger_1.default.system.debug("SystemManagerClient.waitForBootStage completed", stage, subscribeId);
+                        callback();
+                        resolve();
+                        routerClientInstance_1.default.unsubscribe(subscribeId);
+                    }
+                    else {
+                        logger_1.default.system.debug(`SystemManagerClient.waitForBootStage else currentStageIndex=${currentStageIndex} stageIndex=${stageIndex} `, currentStageIndex, stageIndex, stage, subscribeId);
+                    }
+                }
             });
         };
-        /**
-         * @private
-         *
-         */
-        this.onClose = (cb) => {
-            if (cb)
-                cb();
+        return new Promise(waitForBootStageCompletionPromiseResolver);
+    }
+    /**
+     * Waits for a specific service (or component or boot task) to be started
+     * @param name the name of the service (e.g. "storageService")
+     * @param= [callback]
+     * @returns a promise
+     *
+     * @example
+     *
+     * 	await SystemManagerClient.waitForStartup("configService");
+     *
+     *	SystemManagerClient.waitForStartup("dataStoreService", () => {
+     *		RouterClient.publish(Constants.APPLICATION_STATE_CHANNEL, { state: "configuring" });
+     *	});
+     *
+     */
+    waitForStartup(name, callback = Function.prototype) {
+        const waitForStartupStatePromiseResolver = (resolve, reject) => {
+            logger_1.default.system.debug(`SystemManagerClient.waitForStartup.${name}`, name);
+            // receives startup state from services -- see SystemManagerClient.publishBootStatus
+            let subscribeId = routerClientInstance_1.default.subscribe(common_1.statusChannel(name), (err, notify) => {
+                logger_1.default.system.debug("SystemManagerClient.waitForStartup subscribe", name, err, notify);
+                if (err) {
+                    logger_1.default.system.error("SystemManagerClient.waitForStartup subscribe error", err);
+                    callback(err);
+                    reject();
+                }
+                else {
+                    if (notify.data.name === name && notify.data.state === "completed") {
+                        logger_1.default.system.debug("SystemManagerClient.waitForStartup completed", name);
+                        callback();
+                        resolve();
+                        routerClientInstance_1.default.unsubscribe(subscribeId);
+                    }
+                }
+            });
         };
-        this.name = params.name;
-        this._onReady = params.onReady;
-        this.startupDependencies = params.startupDependencies || {
-            services: [],
-            clients: []
-        };
-        // @TODO - Refactor this to use DI.
-        this.logger = logger_1.default;
-        /**
-         * Reference to the RouterClient
-         */
-        this.routerClient = routerClientInstance_1.default;
+        return new Promise(waitForStartupStatePromiseResolver);
+    }
+    /**
+     * Publishes a checkpoints status. This must be done for any checkpoint so the SystemManager will know if the checkpoint succeeded or not
+     * @param parent the name of the service or component containing the checkpoint (as defined in config)
+     * @param checkpointName tthe name of the checkpoint (as defined in config)
+     * @param state the state for the checkpoint, either "completed" or "failed"
+     *
+     * @example
+     *
+     * 	SystemManagerClient.publishCheckpointState("workspaceService", "importedLegacyWorkspaces", "completed");
+     *
+     */
+    publishCheckpointState(windowName, checkpointName, state) {
+        console.log("publishCheckpoint", windowName, checkpointName, state, common_1.checkpointChannel(windowName, checkpointName));
+        logger_1.default.system.debug("publishCheckpoint", windowName, checkpointName, state, common_1.checkpointChannel(windowName, checkpointName));
+        routerClientInstance_1.default.publish(common_1.checkpointChannel(windowName, checkpointName), { windowName, checkpointName, state });
+    }
+    ;
+    /**
+     * Shows System Log window and bring its to front.
+     */
+    showSystemLog() {
+        logger_1.default.system.debug("SystemManagerClient.showSystemLog");
+        routerClientInstance_1.default.transmit(_constants_1.SHOW_SYSLOG_CHANNEL, true);
+    }
+    /**
+     * Displays message on the system log
+     * @param params gnenerally this is TBD until real system log is written
+     * @param params.error if true then the log message is an error
+     * @param params.notification if true then the log message is a notification
+     * @param message the message string to log
+     *
+     * @example
+     *
+     * 	SystemManagerClient.systemLog({ error: true}, errorMsg);
+     *  SystemManagerClient.systemLog({ notification: true }, "Notification: " + message);
+     *
+     */
+    systemLog(params, logMessage) {
+        logger_1.default.system.debug("SystemManagerClient.systemLog", params, logMessage);
+        routerClientInstance_1.default.transmit(_constants_1.SYSLOG_CHANNEL, { params, logMessage });
     }
 }
-exports._BaseClient = _BaseClient;
-/**
- * @introduction
- * <h2>Base Client</h2>
- * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependencies are met, either client or service, the client's `onReady` method is fired.
- * @constructor
- * @param {Object} params
- * @param {Function} params.onReady - A function to be called after the client has initialized.
- * @param {String} params.name - The name of the client
- * @shouldBePublished false
-    @example
-    import { _BaseClient as BaseClient } from "./baseClient";
-    var NewClient = function (params) {
-        BaseClient.call(this, params);
-        var self = this;
-
-        return this;
-    };
-
-    var clientInstance = new NewClient({
-        onReady: function (cb) {
-            Logger.system.log("NewClient Online");
-            cb();
-        },
-        name:"NewClient"
-    });
-    clientInstance.requiredServices = [REPLACE_THIS_ARRAY_WITH_DEPENENCIES];
-    clientInstance.initialize();
-    module.exports = clientInstance;
-    @private
- */
-var BaseClient = function (params) {
-    validate_1.default.args(params, "object=");
-    var self = this;
-    var status = "offline";
-    var onReady;
-    this.startupTime = 0;
-    if (params) {
-        if (params.onReady) {
-            onReady = params.onReady;
-        }
-        this.name = params.name;
-    }
-    this.initialized = false;
-    this.startupDependencies = params.startupDependencies || {
-        services: [],
-        clients: []
-    };
-    /**
-     * Reference to the RouterClient
-     *  @type {Object}
-     */
-    this.routerClient = routerClientInstance_1.default;
-    /**
-     * Gets the current openfin window - stays here for backward compatibility
-     * @type {object}
-     */
-    this.finWindow = null;
-    /**
-     * Gets the current window
-     * @type {object}
-     */
-    this.finsembleWindow = null;
-    /**
-     * Gets the current window name
-     *  @type {string}
-     */
-    this.windowName = ""; //The current window
-    /**
-     * Services the are required to be online before the service can come online
-     *  @type {Array.<Object>}
-     */
-    this.requiredServices = [];
-    /**
-     * Clients the are required to be online before the service can come online
-     *  @type {Array.<Object>}
-     */
-    this.requiredClients = [];
-    /**
-     * Queue of functions to process once the client goes online.
-     * @private
-     */
-    this.clientReadyQueue = [];
-    /**
-     * Iterates through the clientReadyQueue, invoking each call to `.ready`.
-     */
-    this.processClientReadyQueue = function () {
-        for (var i = 0; i < this.clientReadyQueue.length; i++) {
-            let callback = this.clientReadyQueue[i];
-            if (typeof callback === "function") {
-                callback();
-            }
-        }
-        this.clientReadyQueue = [];
-    };
-    /**
-     * Method for adding callbacks to each client.
-     */
-    this.onReady = function (cb) {
-        this.clientReadyQueue.push(cb);
-        if (status === "online") {
-            this.processClientReadyQueue();
-        }
-    };
-    //Check to see if the client can come online. We check this against the required services and clients
-    this.setClientOnline = function () {
-        var self = this;
-        status = "online";
-        let onReadyMessage = `STARTUP:CLIENT ONLINE:${self.finWindow.name}:${self.name}`;
-        self.startupTime = performance.now() - self.startupTime;
-        if (onReady) {
-            onReady(function () {
-                logger_1.default.system.debug(onReadyMessage);
-                self.processClientReadyQueue();
-                dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(self.name);
-            });
-        }
-        else {
-            logger_1.default.system.debug(onReadyMessage);
-            self.processClientReadyQueue();
-            dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(self.name);
-        }
-    };
-    /**
-    * Starts the process of checking services and any other function required before the client can come online
-    */
-    this.initialize = function (cb = Function.prototype) {
-        if (self.initialized) {
-            return;
-        }
-        self.initialized = true;
-        self.setClientOnline = self.setClientOnline.bind(self);
-        self.startupTime = performance.now();
-        self.routerClient.onReady(function () {
-            // TODO, [terry] allow the finsembleWindow to be passed in, so we can support proxying windowClient in RPC
-            self.finWindow = system_1.System.Window.getCurrent();
-            self.windowName = self.finWindow.name;
-            logger_1.default.system.debug("Baseclient Init Router Ready", self.name);
-            dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor({
-                services: self.startupDependencies.services || [],
-                clients: self.startupDependencies.clients || []
-            }, () => {
-                cb();
-                self.setClientOnline();
-            });
-        });
-    };
-    this.onClose = function () { };
-};
-exports.default = BaseClient;
+var systemManagerClient = new SystemManagerClient();
+exports.default = systemManagerClient;
 
 
 /***/ }),
@@ -1713,12 +1611,12 @@ exports.default = BaseClient;
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony export (immutable) */ __webpack_exports__["getOpenfinVersion"] = getOpenfinVersion;
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony export (immutable) */ __webpack_exports__["getContainerVersion"] = getContainerVersion;
 /* harmony export (immutable) */ __webpack_exports__["castToPromise"] = castToPromise;
 /* harmony export (immutable) */ __webpack_exports__["isPercentage"] = isPercentage;
 /* harmony export (immutable) */ __webpack_exports__["crossDomain"] = crossDomain;
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getAllMonitors", function() { return getAllMonitors; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getMonitorFromOpenFinXY", function() { return getMonitorFromOpenFinXY; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getMonitorFromXY", function() { return getMonitorFromXY; });
 /* harmony export (immutable) */ __webpack_exports__["getMonitorFromWindow"] = getMonitorFromWindow;
 /* harmony export (immutable) */ __webpack_exports__["getFinWindow"] = getFinWindow;
 /* harmony export (immutable) */ __webpack_exports__["getWindowDescriptor"] = getWindowDescriptor;
@@ -1741,10 +1639,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (immutable) */ __webpack_exports__["adjustWindowIfInTaskbarSpace"] = adjustWindowIfInTaskbarSpace;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__system__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__ = __webpack_require__(26);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1__ = __webpack_require__(21);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_uuid_v1__);
 /*!
  * Copyright 2017 by ChartIQ, Inc.
@@ -1768,9 +1666,9 @@ const Monitors = new __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__["a" /* de
 }*/
 
 /**
- * Gets the openfin version in object form.
+ * Gets the container version in object form.
  */
-function getOpenfinVersion(cb = Function.prototype) {
+function getContainerVersion(cb = Function.prototype) {
 	return new Promise(function (resolve /*, reject*/) {
 		__WEBPACK_IMPORTED_MODULE_0__system__["System"].getVersion(ver => {
 			let verArr = ver.split(".").map(Number);
@@ -1845,7 +1743,7 @@ function crossDomain(url) {
 };
 
 /**
- * Gets an array of monitor descriptors. Essentially rationalizing the results of OpenFin getMonitorInfo.
+ * Gets an array of monitor descriptors. Essentially rationalizing the results of getMonitorInfo.
  * into a single array with additional information added.
  *
  * whichMonitor is set to the secondary monitor number, or "primary" if the primary monitor.
@@ -1858,14 +1756,14 @@ function crossDomain(url) {
 var getAllMonitors = Monitors.getAllMonitors;
 
 /**
- * Retrieves a monitor descriptor given an absolute X Y on the OpenFin virtual screen
+ * Retrieves a monitor descriptor given an absolute X Y on the virtual screen
  * @param  {number} x The x position
  * @param  {number} y The y position
- * @param {callback-object}  cb Returns the monitor information from OpenFin.
+ * @param {callback-object}  cb Returns the monitor information from the Container.
  * "isPrimary" is set to true if it's the primary monitor.
  * null is returned if the x,y coordinates are beyond the bounds of the virtual screen.
  */
-var getMonitorFromOpenFinXY = Monitors.getMonitorFromScaledXY;
+var getMonitorFromXY = Monitors.getMonitorFromScaledXY;
 
 /**
  * Retrieves a monitor descriptor for a window. If the window straddles two monitors
@@ -1942,7 +1840,7 @@ function getFinWindow(windowIdentifier, cb) {
 		// Default to current window
 		var myWindow = __WEBPACK_IMPORTED_MODULE_0__system__["System"].Window.getCurrent();
 
-		// Get OpenFin options (windowDescriptor) for current window
+		// Get options (windowDescriptor) for current window
 		// we need this info even if we're going to reference a different window
 		myWindow.getOptions(function (options) {
 			// If windowName is provided, then find that window
@@ -2486,9 +2384,9 @@ function adjustBoundsToBeOnMonitor(bounds) {
  * @param {*} config - Object containing all possible values used to set windowTypes, some of these values may be unset depending on the execution path
  */
 function getWindowType(config) {
-	const DEFAULT_WINDOW_TYPE = "OpenFinWindow";
+	const DEFAULT_WINDOW_TYPE = "WebWindow";
 	// All possible windowTypes. Some of these values will be converted to other types
-	const validTypes = ["openfin", "assimilation", "assimilated", "native", "application", "OpenFinWindow", "NativeWindow", "FinsembleNativeWindow", "OpenFinApplication", "CompoundWindow", "StackedWindow"];
+	const validTypes = ["openfin", "assimilation", "assimilated", "native", "application", "OpenFinWindow", "NativeWindow", "FinsembleNativeWindow", "OpenFinApplication", "CompoundWindow", "WebWindow", "WebApplication", "StackedWindow"];
 	// If an invalid windowType is given, default and log an error. Note that an empty windowType
 	// is not an error case. This is to let the user know that they may have made a typo setting a type in
 	// the config file. We default to keep Finsemble from breaking, but the user may have intended to launch a
@@ -2510,10 +2408,19 @@ function getWindowType(config) {
 			ret = "FinsembleNativeWindow";
 			break;
 		case "application":
-			ret = "OpenFinApplication";
+			ret = "WebApplication";
+			break;
+		case "openFinApplication":
+			ret = "WebApplication";
+			__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.warn(`Window type ${config.windowType} deprecated. Please use WebWindow`);
+			break;
+		case "Web":
+			ret = "WebWindow";
 			break;
 		case "openfin":
-			ret = "OpenFinWindow";
+		case "openFinWindow":
+			ret = "WebWindow";
+			__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.warn(`Window type ${config.windowType} deprecated. Please use WebWindow`);
 			break;
 		case "StackedWindow":
 			ret = "StackedWindow";
@@ -2525,7 +2432,10 @@ function getWindowType(config) {
 
 	// Next handle any backward compatibility windowType inputs
 	if (config.native) ret = "NativeWindow"; //Backward Compatibility
-	if (config.type === "openfinApplication") ret = "OpenFinApplication"; //Backward Compatibility
+	if (config.type === "openfinApplication") {
+		ret = "WebApplication"; //Backward Compatibility
+		__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.warn("Window type openFinApplication deprecated. Please use WebApplication");
+	}
 	if (config.compound) ret = "CompoundWindow";
 	return ret;
 }
@@ -8017,10 +7927,307 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(13)(module), __webpack_require__(31).setImmediate, __webpack_require__(1)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(14)(module), __webpack_require__(29).setImmediate, __webpack_require__(1)))
 
 /***/ }),
 /* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+const routerClientInstance_1 = __webpack_require__(5);
+const validate_1 = __webpack_require__(6); // Finsemble args validator
+const logger_1 = __webpack_require__(0);
+const system_1 = __webpack_require__(3);
+const dependencyManager_1 = __webpack_require__(17);
+/**
+ * @introduction
+ * <h2>Base Client</h2>
+ * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependencies are met, either client or service, the client's `onReady` method is fired.
+ *
+ * We're currently halfway through migrating our clients from extending a normal function prototype to an ES6 class.
+ * "_BaseClient" represents the new class, while "BaseClient" is the original function. When the migration is complete,
+ * we will remove the old function and rename "_BaseClient" to "BaseClient".
+ * @constructor
+ * @param {Object} params
+ * @param {Function} params.onReady - A function to be called after the client has initialized.
+ * @param {String} params.name - The name of the client
+ * @shouldBePublished false
+    @example
+    import { _BaseClient as BaseClient } from "./baseClient";
+    var NewClient = function (params) {
+        BaseClient.call(this, params);
+        var self = this;
+
+        return this;
+    };
+
+    var clientInstance = new NewClient({
+        onReady: function (cb) {
+            Logger.system.log("NewClient Online");
+            cb();
+        },
+        name:"NewClient"
+    });
+    clientInstance.requiredServices = [REPLACE_THIS_ARRAY_WITH_DEPENENCIES];
+    clientInstance.initialize();
+    module.exports = clientInstance;
+    @private
+ */
+class _BaseClient {
+    constructor(params) {
+        /** The current status of this service. */
+        this.status = "offline";
+        this.startupTime = 0;
+        this.initialized = false;
+        this.startupDependencies = { services: [], clients: [] };
+        /** Gets the current window. */
+        this.finsembleWindow = null;
+        /** Gets the current window name. */
+        this.windowName = "";
+        /** Queue of functions to process once the client goes online. */
+        this.clientReadyQueue = [];
+        /**
+         * @private
+         *
+         */
+        this.processClientReadyQueue = () => {
+            for (let cb of this.clientReadyQueue) {
+                cb();
+            }
+            this.clientReadyQueue = [];
+        };
+        /**
+         * @private
+         *
+         */
+        this.onReady = (cb) => {
+            this.clientReadyQueue.push(cb);
+            if (this.status === "online") {
+                this.processClientReadyQueue();
+            }
+        };
+        /** Check to see if the client can come online. We check this against the required services and clients */
+        /**
+     * @private
+     *
+     */
+        this.setClientOnline = () => {
+            this.status = "online";
+            const onReadyMessage = `STARTUP:CLIENT ONLINE:${this.finWindow.name}:${this.name}`;
+            this.startupTime = window.performance.now() - this.startupTime;
+            const readyCB = () => {
+                this.logger.system.debug(onReadyMessage);
+                this.processClientReadyQueue();
+                dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(this.name);
+            };
+            if (this._onReady) {
+                this._onReady(readyCB);
+            }
+            else {
+                readyCB();
+            }
+        };
+        /**
+         * @private
+         *
+         */
+        this.initialize = (cb = Function.prototype) => {
+            if (this.initialized)
+                return;
+            this.initialized = true;
+            this.startupTime = performance.now();
+            this.routerClient.onReady(() => {
+                // TODO, [terry] allow the finsembleWindow to be passed in, so we can support proxying windowClient in RPC
+                this.finWindow = system_1.System.Window.getCurrent();
+                this.windowName = this.finWindow.name;
+                this.logger.system.debug("Baseclient Init Router Ready", this.name);
+                dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor(this.startupDependencies, () => {
+                    cb();
+                    this.setClientOnline();
+                });
+            });
+        };
+        /**
+         * @private
+         *
+         */
+        this.onClose = (cb) => {
+            if (cb)
+                cb();
+        };
+        this.name = params.name;
+        this._onReady = params.onReady;
+        this.startupDependencies = params.startupDependencies || {
+            services: [],
+            clients: []
+        };
+        // @TODO - Refactor this to use DI.
+        this.logger = logger_1.default;
+        /**
+         * Reference to the RouterClient
+         */
+        this.routerClient = routerClientInstance_1.default;
+    }
+}
+exports._BaseClient = _BaseClient;
+/**
+ * @introduction
+ * <h2>Base Client</h2>
+ * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependencies are met, either client or service, the client's `onReady` method is fired.
+ * @constructor
+ * @param {Object} params
+ * @param {Function} params.onReady - A function to be called after the client has initialized.
+ * @param {String} params.name - The name of the client
+ * @shouldBePublished false
+    @example
+    import { _BaseClient as BaseClient } from "./baseClient";
+    var NewClient = function (params) {
+        BaseClient.call(this, params);
+        var self = this;
+
+        return this;
+    };
+
+    var clientInstance = new NewClient({
+        onReady: function (cb) {
+            Logger.system.log("NewClient Online");
+            cb();
+        },
+        name:"NewClient"
+    });
+    clientInstance.requiredServices = [REPLACE_THIS_ARRAY_WITH_DEPENENCIES];
+    clientInstance.initialize();
+    module.exports = clientInstance;
+    @private
+ */
+var BaseClient = function (params) {
+    validate_1.default.args(params, "object=");
+    var self = this;
+    var status = "offline";
+    var onReady;
+    this.startupTime = 0;
+    if (params) {
+        if (params.onReady) {
+            onReady = params.onReady;
+        }
+        this.name = params.name;
+    }
+    this.initialized = false;
+    this.startupDependencies = params.startupDependencies || {
+        services: [],
+        clients: []
+    };
+    /**
+     * Reference to the RouterClient
+     *  @type {Object}
+     */
+    this.routerClient = routerClientInstance_1.default;
+    /**
+     * Gets the current window - stays here for backward compatibility
+     * @type {object}
+     */
+    this.finWindow = null;
+    /**
+     * Gets the current window
+     * @type {object}
+     */
+    this.finsembleWindow = null;
+    /**
+     * Gets the current window name
+     *  @type {string}
+     */
+    this.windowName = ""; //The current window
+    /**
+     * Services the are required to be online before the service can come online
+     *  @type {Array.<Object>}
+     */
+    this.requiredServices = [];
+    /**
+     * Clients the are required to be online before the service can come online
+     *  @type {Array.<Object>}
+     */
+    this.requiredClients = [];
+    /**
+     * Queue of functions to process once the client goes online.
+     * @private
+     */
+    this.clientReadyQueue = [];
+    /**
+     * Iterates through the clientReadyQueue, invoking each call to `.ready`.
+     */
+    this.processClientReadyQueue = function () {
+        for (var i = 0; i < this.clientReadyQueue.length; i++) {
+            let callback = this.clientReadyQueue[i];
+            if (typeof callback === "function") {
+                callback();
+            }
+        }
+        this.clientReadyQueue = [];
+    };
+    /**
+     * Method for adding callbacks to each client.
+     */
+    this.onReady = function (cb) {
+        this.clientReadyQueue.push(cb);
+        if (status === "online") {
+            this.processClientReadyQueue();
+        }
+    };
+    //Check to see if the client can come online. We check this against the required services and clients
+    this.setClientOnline = function () {
+        var self = this;
+        status = "online";
+        let onReadyMessage = `STARTUP:CLIENT ONLINE:${self.finWindow.name}:${self.name}`;
+        self.startupTime = performance.now() - self.startupTime;
+        if (onReady) {
+            onReady(function () {
+                logger_1.default.system.debug(onReadyMessage);
+                self.processClientReadyQueue();
+                dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(self.name);
+            });
+        }
+        else {
+            logger_1.default.system.debug(onReadyMessage);
+            self.processClientReadyQueue();
+            dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(self.name);
+        }
+    };
+    /**
+    * Starts the process of checking services and any other function required before the client can come online
+    */
+    this.initialize = function (cb = Function.prototype) {
+        if (self.initialized) {
+            return;
+        }
+        self.initialized = true;
+        self.setClientOnline = self.setClientOnline.bind(self);
+        self.startupTime = performance.now();
+        self.routerClient.onReady(function () {
+            // TODO, [terry] allow the finsembleWindow to be passed in, so we can support proxying windowClient in RPC
+            self.finWindow = system_1.System.Window.getCurrent();
+            self.windowName = self.finWindow.name;
+            logger_1.default.system.debug("Baseclient Init Router Ready", self.name);
+            dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor({
+                clients: self.startupDependencies.clients || []
+            }, () => {
+                cb();
+                self.setClientOnline();
+            });
+        });
+    };
+    this.onClose = function () { };
+};
+exports.default = BaseClient;
+
+
+/***/ }),
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8039,6 +8246,26 @@ exports.SERVICE_INITIALIZING_CHANNEL = "Finsemble.ServiceManager.serviceInitiali
 exports.SERVICE_READY_CHANNEL = "Finsemble.ServiceManager.serviceReady";
 exports.SERVICE_CLOSING_CHANNEL = "Finsemble.ServiceManager.serviceClosing";
 exports.SERVICE_CLOSED_CHANNEL = "Finsemble.ServiceManager.serviceClosed";
+// Naming to supports handshake betwwen each client and its corresponding service
+// Returns the handshake channel for a given service name
+exports.SERVICE_QUERY_READY_CHANNEL = (name) => { return `Finsemble.ServiceManager.queryReady.${name}`; };
+// Maps a client name to its corresponding service name.  Okay to not include all clients here -- if not here then handshake won't be done
+exports.CLIENT_SERVER_MAPPING = (name) => {
+    const MAPPING = {
+        "authenticationClient": "authenticationService",
+        "configClient": "configService",
+        "distributedStoreClient": "dataStoreService",
+        "hotkeysClient": "hotkeysService",
+        "linkerClient": "linkerService",
+        "logger": "loggerService",
+        "searchClient": "searchService",
+        "storageClient": "storageService",
+        "windowClient": "windowService",
+        "workspaceClient": "workspaceService"
+    };
+    // returns undefined if there is no mapping
+    return MAPPING[name];
+};
 //This channel is where the aggregated state of all services is sent out on.
 exports.SERVICES_STATE_CHANNEL = "Finsemble.State.Services";
 exports.WINDOWSTATE = {
@@ -8054,11 +8281,11 @@ exports.DOCKING = {
     GROUP_UPDATE: "DockingService.groupUpdate",
     // For legacy reasons, this is named Workspace, even though it's generated by docking.
     WORKSPACE_GROUP_UPDATE: "Finsemble.WorkspaceService.groupUpdate",
+    REQUEST_PUBLISH: "DockingService.requestGroupDataPublish",
 };
 // These channels are for interrupting events
 exports.EVENT_INTERRUPT_CHANNEL = "Finsemble.Event.Interrupt";
 exports.INTERRUPTIBLE_EVENTS = ["close-requested", "closed", "close-complete", "_container-close-handlers"];
-exports.REMOTE_FOCUS = "WindowService.remoteFocus";
 exports.WORKSPACE = {
     CLEAN_SHUTDOWN: "Finsemble.Workspace.cleanShutdown",
     UPDATE_PUBSUB: "Finsemble.WorkspaceService.update",
@@ -8111,6 +8338,11 @@ exports.WORKSPACE = {
         REMOVE_WINDOW: "WorkspaceService.removeWindow",
     }
 };
+exports.WINDOW_SERVICE_REQUESTS = {
+    REMOTE_FOCUS: "WindowService.remoteFocus",
+    SET_ALWAYS_ON_TOP: "WindowService-Request-setAlwaysOnTop",
+    IS_ALWAYS_ON_TOP: "WindowService-Request-isAlwaysOnTop",
+};
 exports.COMPONENT_STATE_STORAGE_TOPIC = "finsemble.componentStateStorage";
 exports.HEARTBEAT_TIMEOUT_CHANNEL = "Finsemble.WindowService.HeartbeatTimeout";
 exports.LAUNCHER_SERVICE = {
@@ -8127,7 +8359,7 @@ exports.MOVE_REASON = {
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -8236,7 +8468,7 @@ var ConfigUtil = function () {
 			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getRawManifest", application, level);
 
 			application.getManifest(function (manifest) {
-				// get raw openfin manifest
+				// get raw manifest
 				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getExpandedRawManifest: manifest retrieved. Pre-variable resolution", manifest);
 				self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables first time so can find config location
 				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getExpandedRawManifest:Complete. post-variable resolution", manifest);
@@ -8261,7 +8493,7 @@ var ConfigUtil = function () {
 		}
 
 		__WEBPACK_IMPORTED_MODULE_2__system__["System"].ready(function () {
-			// make sure openfin is ready
+			// make sure system is ready
 			var application = __WEBPACK_IMPORTED_MODULE_2__system__["System"].Application.getCurrent();
 			getRawManifest(callback, application, 1);
 		});
@@ -8275,7 +8507,7 @@ var ConfigUtil = function () {
 		}).then(function (response) {
 			return response.json();
 		}).catch(function (err) {
-			importCallback("failure importing: " + err, null);
+			importCallback(`Failure importing ${coreConfigFile}: ${err}`, null);
 		}).then(function (importObject) {
 			importCallback(null, importObject);
 		});
@@ -8287,10 +8519,10 @@ var ConfigUtil = function () {
 	this.getInitialManifest = function (callback) {
 
 		__WEBPACK_IMPORTED_MODULE_2__system__["System"].ready(function () {
-			// make sure openfin is ready
+			// make sure system is ready
 			var application = __WEBPACK_IMPORTED_MODULE_2__system__["System"].Application.getCurrent();
 			application.getManifest(function (manifest) {
-				// get raw openfin manifest
+				// get raw manifest
 				manifest.finsemble = manifest.finsemble || {}; // don't error on bad config
 				self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables first time so can find config config location
 				let CORE_CONFIG = manifest.finsemble.moduleRoot + "/configs/core/config.json"; // <<<--- here is the "hidden" core config file
@@ -8317,7 +8549,7 @@ var ConfigUtil = function () {
 						self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables with finsemble config
 						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getInitialManifest:getCoreConfig:Initial Manifest after variables Resolved", manifest);
 					} else {
-						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("ConfigUtil.getInitialManifest:getCoreConfig:failed importing into finsemble config", error);
+						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("ConfigUtil.getInitialManifest:getCoreConfig:failed importing into finsemble config.", error);
 					}
 					callback(manifest);
 				});
@@ -8572,7 +8804,7 @@ const ConfigUtilInstance = new ConfigUtil();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9025,7 +9257,7 @@ function unwrapListeners(arr) {
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -9053,457 +9285,6 @@ module.exports = function(module) {
 
 
 /***/ }),
-/* 14 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const events_1 = __webpack_require__(12);
-const routerClientInstance_1 = __webpack_require__(5);
-const STARTUP_TIMEOUT_DURATION = 10000;
-const constants_1 = __webpack_require__(10);
-/**
- * Small class to hold on to dependencies and callbacks. Also emits a timeout event that the startupManager is listening for. When it times out, the startupManager catches the event and generates a message that includes all of the offline clients and services. It then causes this class to emit an  err event that the baseService is listening for. This arrangement is set up for a couple of reasons.
- * 1. I can't use the logger in here because the logger uses the startupManager, and there'd be a circular dependency.
- * 2. FSBLDependencyManager is a singleton, and there can be multiple services living in a single window. I didn't want them all to log that they were offline if they weren't (e.g., if I'd put the emitter on the StartupManager instead of this class).
- */
-class StartupDependency extends events_1.EventEmitter {
-    constructor(params) {
-        super();
-        this.callback = params.callback;
-        this.dependencies = params.dependencies;
-        this.startupTimer = null;
-        this.setStartupTimer = this.setStartupTimer.bind(this);
-        this.clearStartupTimer = this.clearStartupTimer.bind(this);
-        this.setStartupTimer();
-    }
-    /**
-     * Removes the startup timer (because the dependency was resolved within the allotted time);
-     */
-    clearStartupTimer() {
-        clearTimeout(this.startupTimer);
-        delete this.startupTimer;
-    }
-    /**
-     * If the dependency hasn't resolved within STARTUP_TIMEOUT_DURATION, emit a timeout event that the StartupManager can catch.
-     */
-    setStartupTimer() {
-        let self = this;
-        //+ coerces the result to a number, making typescript happy.
-        this.startupTimer = +setTimeout(() => {
-            self.emit("timeout");
-        }, STARTUP_TIMEOUT_DURATION);
-    }
-}
-/**
- * Used to generate a unique ID for the list of dependencies.
- */
-function uuidv4() {
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-        var r = Math.random() * 16 | 0, v = c === "x" ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-}
-/**
- * @private
- */
-class StartupManager {
-    /**
-     * @private
-     */
-    constructor() {
-        this.servicesAreAllOnline = {};
-        this.clientsAreAllOnline = {};
-        this.onlineClients = [];
-        this.onlineServices = [];
-        this.dependencies = {};
-        this.AuthorizationCompleted = false;
-        this.startupTimers = {};
-        this.startupTimerFired = false;
-        this.bindCorrectContext();
-    }
-    /**
-     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required dependencies are ready.
-     *
-     * @param {FinsembleDependency} dependencies
-     * @param {any} callback
-     * @memberof StartupManager
-     */
-    waitFor(dependencies, callback) {
-        let id = uuidv4();
-        //Set defaults to an empty array if they aren't passed in.
-        if (!dependencies.services)
-            dependencies.services = [];
-        if (!dependencies.clients)
-            dependencies.clients = [];
-        //The dependency manager can pass in a name to the dependency. If it does, we'll use it. If not, we won't.
-        if (dependencies.clients.length) {
-            if (this.AuthorizationCompleted === false && dependencies.clients.includes("authenticationClient")) {
-                dependencies.clients.splice(dependencies.clients.indexOf("authenticationClient"), 1);
-            }
-            //Lowercase the first letter of the client.
-            dependencies.clients = dependencies.clients.map(clientName => {
-                return clientName.charAt(0).toLowerCase() + clientName.slice(1);
-            });
-        }
-        let dependency = new StartupDependency({ dependencies, callback });
-        //If the dependency times out, throw an error that the baseService can catch. It will then log out why it's not online.
-        dependency.on("timeout", () => {
-            this.onDependencyTimeout(dependency);
-        });
-        this.dependencies[id] = dependency;
-        this.checkDependencies();
-        return dependency;
-    }
-    /**
-     * This method generates a helpful error message giving possible reasons for why the service is offline. After the message is generated, it emits an event on the dependency that's passed in as a parameter. The BaseService is listening for this event, and logs the error message to the central logger.
-     * @param {Dependency} dependency
-     */
-    onDependencyTimeout(dependency) {
-        const NEW_LINE = "\n", TAB = "\u0009", BULLET = "\u2022", BULLET_POINT = NEW_LINE + TAB + BULLET, STORAGE_ADAPTER_ERROR = "The default storage adapter failed to fully initialize, or has a syntax error. Ensure that the default storage adapter is up, connected, and sending/receiving data properly.";
-        const HELPFUL_MESSAGES = {
-            preferencesService: [
-                `PreferencesService failed to start.${BULLET_POINT}Typically this is caused by a failure to retrieve data from your default storage adapter. ${STORAGE_ADAPTER_ERROR}`
-            ],
-            storageService: [
-                `StorageService failed to start. Here are some common reasons for failure:${BULLET_POINT}${STORAGE_ADAPTER_ERROR}${BULLET_POINT}The data coming back from your adapter is improperly formatted or otherwise corrupted. Try clearing your storage and restarting. If the problem persists, the issue may not be in your adapter.`
-            ],
-            routerService: [
-                "RouterService failed to start. This is a fatal error. Contact finsemble support."
-            ],
-            workspaceService: [
-                `WorkspaceService failed to start. Here are some common reasons for failure:${BULLET_POINT}${STORAGE_ADAPTER_ERROR}.${BULLET_POINT}Your active workspace is corrupted.`
-            ],
-            assimilationService: [
-                "AssimilationService failed to start. Check to see that the 'FinsembleAssimilation' is active in your taskManager. If it is, please contact finsemble support."
-            ]
-        };
-        let offlineClients = this.getOfflineClients();
-        let offlineServices = this.getOfflineServices();
-        let errorMessage = `APPLICATION LIFECYCLE:STARTUP:Dependency not online after ${STARTUP_TIMEOUT_DURATION / 1000} seconds.`;
-        if (offlineClients.length) {
-            errorMessage += ` Waiting for these clients: ${offlineClients.join(", ")}.`;
-        }
-        if (offlineServices.length) {
-            errorMessage += ` Waiting for these services: ${offlineServices.join(", ")}.`;
-        }
-        //For every service that's offline, check to see if we have any helpful messages for it. If so, iterate through the array and append to the error message.
-        offlineServices.forEach((service) => {
-            if (HELPFUL_MESSAGES[service]) {
-                HELPFUL_MESSAGES[service].forEach((msg) => {
-                    errorMessage += NEW_LINE + NEW_LINE + msg + NEW_LINE;
-                });
-                //puts a line between our helpful messages and the log stack.
-                errorMessage += NEW_LINE;
-            }
-        });
-        //The BaseService is listening for this event, and will log the errorMessage to the central logger.
-        dependency.emit("err", errorMessage);
-    }
-    /**
-     * This function loops through all of the registered dependencies and checks to see if the conditions have been met. If so, it invokes the callback and removes the reference to the dependency.
-     *
-     * @memberof StartupManager
-     */
-    checkDependencies() {
-        for (let id in this.dependencies) {
-            let dependency = this.dependencies[id];
-            let { dependencies, callback } = dependency;
-            if (dependencies.services.length && !this.servicesAreAllOnline[id]) {
-                this.servicesAreAllOnline[id] = this.checkServices(dependencies.services);
-                if (!this.servicesAreAllOnline[id]) {
-                    continue;
-                }
-            }
-            if (dependencies.clients.length && !this.clientsAreAllOnline[id]) {
-                this.clientsAreAllOnline[id] = this.checkClients(dependencies.clients);
-                if (!this.clientsAreAllOnline[id]) {
-                    continue;
-                }
-            }
-            delete this.dependencies[id];
-            dependency.clearStartupTimer();
-            if (callback) {
-                callback();
-            }
-        }
-    }
-    getOfflineClients() {
-        let offlineClients = [];
-        for (let id in this.dependencies) {
-            let { dependencies } = this.dependencies[id];
-            offlineClients = offlineClients.concat(dependencies.clients.filter((dep) => !this.onlineClients.includes(dep)));
-        }
-        //return deduped list.
-        return offlineClients.filter((client, i) => offlineClients.indexOf(client) === i);
-    }
-    getOfflineServices() {
-        let offlineServices = [];
-        for (let id in this.dependencies) {
-            let { dependencies } = this.dependencies[id];
-            offlineServices = offlineServices.concat(dependencies.services.filter((dep) => !this.onlineServices.includes(dep)));
-        }
-        return offlineServices.filter((client, i) => offlineServices.indexOf(client) === i);
-    }
-    /**
-     * Iterates through required service list, returns false if any required service is offline.
-     *
-     * @param {any} serviceList
-     * @memberof StartupManager
-     */
-    checkServices(serviceList) {
-        return serviceList.every(service => this.onlineServices.includes(service));
-    }
-    /**
-     * Iterates through required client list, returns false if any required client is offline.
-     *
-     * @param {any} clientList
-
-     * @memberof StartupManager
-     */
-    checkClients(clientList) {
-        return clientList.every(client => this.onlineClients.includes(client));
-    }
-    /**
-     * When a service comes online, we push it onto our array of online services, and run through all of the registered dependencies.
-     *
-     * @param {any} serviceName
-     * @memberof StartupManager
-     */
-    setServiceOnline(serviceName) {
-        this.onlineServices.push(serviceName);
-        this.checkDependencies();
-    }
-    /**
-     * Sets an array of services online. Only happens once at startup.
-     *
-     * @param {any} serviceList
-     * @memberof StartupManager
-     */
-    setServicesOnline(serviceList) {
-        this.onlineServices = this.onlineServices.concat(serviceList);
-        this.checkDependencies();
-    }
-    /**
-     *
-     *
-     * @param {any} clientName
-
-     * @memberof StartupManager
-     */
-    setClientOnline(clientName) {
-        //This check is done because multiple clients of the same type can be on a page.
-        if (this.onlineClients.includes(clientName)) {
-            return;
-        }
-        this.onlineClients.push(clientName);
-        this.checkDependencies();
-    }
-    /**
-     * Returns the array of online clients.
-     *
-
-     * @memberof StartupManager
-     */
-    getOnlineClients() {
-        return this.onlineClients;
-    }
-    /**
-     * Returns the array of online services.
-     *
-
-     * @memberof StartupManager
-     */
-    getOnlineServices() {
-        return this.onlineServices;
-    }
-    /**
-     * Method to make sure that `this` is correct when the callbacks are invoked.
-     *
-     * @memberof StartupManager
-     */
-    bindCorrectContext() {
-        this.checkDependencies = this.checkDependencies.bind(this);
-        this.checkServices = this.checkServices.bind(this);
-        this.checkClients = this.checkClients.bind(this);
-        this.getOfflineClients = this.getOfflineClients.bind(this);
-        this.getOfflineServices = this.getOfflineServices.bind(this);
-        this.onDependencyTimeout = this.onDependencyTimeout.bind(this);
-        this.waitFor = this.waitFor.bind(this);
-    }
-}
-/**
- * @private
- */
-class ShutdownManager {
-    /**
-     * @private
-     */
-    constructor() {
-        this.offlineServices = [];
-        this.dependencies = {};
-        this.checkDependencies = this.checkDependencies.bind(this);
-    }
-    /**
-     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required dependencies are ready.
-     *
-     * @param {FinsembleDependency} dependencies
-     * @param {any} callback
-     * @memberof StartupManager
-     */
-    waitFor(dependencies, callback) {
-        //Set defaults to an empty array if they aren't passed in.
-        if (!dependencies.services) {
-            dependencies.services = [];
-        }
-        let id = uuidv4();
-        this.dependencies[id] = { dependencies, callback };
-    }
-    /**
-     * This function loops through all of the registered dependencies and checks to see if the conditions have been met. If so, it invokes the callback and removes the reference to the dependency.
-     *
-     * @memberof ShutdownDependencies
-     */
-    checkDependencies() {
-        console.debug("checkDependencies", this.dependencies);
-        if (Object.keys(this.dependencies)) {
-            for (let id in this.dependencies) {
-                let { dependencies, callback } = this.dependencies[id];
-                console.debug("checkDependency", dependencies.services, this.offlineServices);
-                if (dependencies.services.length) {
-                    let servicesAreAllOffline = this.checkServices(dependencies.services);
-                    if (!servicesAreAllOffline) {
-                        continue;
-                    }
-                }
-                console.debug("checkDependencies callback");
-                delete this.dependencies[id];
-                if (callback) {
-                    callback();
-                }
-            }
-        }
-    }
-    /**
-     * Iterates through required service list, returns false if any required service is offline.
-     *
-     * @param {any} serviceList
-
-     * @memberof StartupManager
-     */
-    checkServices(serviceList) {
-        return serviceList.every(service => this.offlineServices.includes(service));
-    }
-    setServiceOffline(service) {
-        console.debug("setServiceOffline", service);
-        this.offlineServices.push(service);
-        this.checkDependencies();
-    }
-}
-/**
- * This is a class that handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
- * @shouldBePublished false
- * @private
- * @class FSBLDependencyManager
- */
-class FSBLDependencyManager extends events_1.EventEmitter {
-    constructor() {
-        super();
-        this.startup = new StartupManager();
-        this.shutdown = new ShutdownManager();
-        this.RouterClient = routerClientInstance_1.default;
-        this.AuthorizationCompleted = false;
-        this.bindCorrectContext();
-        this.onAuthorizationCompleted(this.startup.checkDependencies);
-        routerClientInstance_1.default.onReady(this.listenForServices);
-    }
-    /**
- * Method to make sure that `this` is correct when the callbacks are invoked.
- *
- * @memberof StartupManager
- */
-    bindCorrectContext() {
-        this.listenForServices = this.listenForServices.bind(this);
-        this.onAuthorizationCompleted = this.onAuthorizationCompleted.bind(this);
-    }
-    setClientOnline(client) {
-        this.startup.setClientOnline(client);
-    }
-    /*
-    * handler for when a service changes its state. If a service comes online or goes offline, dependencies are checked and callbacks invoked.
-    */
-    onServiceStateChange(data) {
-        let ServiceNames = Object.keys(data);
-        //Iterate through all services. If it was online but isn't anymore, set it offline. If it was offline but now is, set it online.
-        ServiceNames.forEach((serviceName) => {
-            let state = data[serviceName].state;
-            let wasOnline = this.startup.onlineServices.includes(serviceName);
-            let isOnline = state === "ready";
-            if (!wasOnline && isOnline) {
-                this.startup.setServiceOnline(serviceName);
-            }
-            if (wasOnline && !isOnline && state === "closed") {
-                this.shutdown.setServiceOffline(serviceName);
-            }
-        });
-    }
-    /**
-     * Listens on the router for services to come online. The first subscriber gets the activeServices as of object instantiation. The 2nd subscriber listens for services to come online after the object is created. We should consider make this all one subscriber, though I see the advantage of having this setup.
-     *
-     */
-    listenForServices() {
-        console.debug("dependency manager: listenForServices in " + this.name);
-        this.RouterClient.subscribe(constants_1.SERVICES_STATE_CHANNEL, (err, event) => {
-            this.onServiceStateChange(event.data);
-        });
-        // TODO: The pubsub responder doesn't seem to work here. IT works for the above when not closing.
-        this.RouterClient.addListener(constants_1.SERVICE_CLOSED_CHANNEL, (err, event) => {
-            let services = {};
-            services[event.data.name] = {
-                state: "closed"
-            };
-            this.onServiceStateChange(services);
-        });
-        this.RouterClient.subscribe(constants_1.APPLICATION_STATE_CHANNEL, (err, response) => {
-            switch (response.data.state) {
-                //authenticated will only be caught by components/services that are up before auth does its thing. Otherwise, a component/service coming up will have the 'ready' application state. In either case, we need to do the things below. But only once.
-                case "authenticated":
-                case "ready":
-                    //No need to send this message out twice.
-                    if (this.AuthorizationCompleted)
-                        break;
-                    console.debug("Authorization Completed");
-                    this.AuthorizationCompleted = true;
-                    this.startup.AuthorizationCompleted = true;
-                    this.emit("AuthorizationCompleted");
-                    break;
-                case "closing":
-                    this.shutdown.checkDependencies();
-                    break;
-            }
-        });
-    }
-    onAuthorizationCompleted(callback) {
-        if (this.AuthorizationCompleted) {
-            callback();
-        }
-        else {
-            this.addListener("AuthorizationCompleted", callback);
-        }
-    }
-}
-/**
- * This is a class that handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
- * @shouldBePublished false
- * @private
- * @class FSBLDependencyManager
- */
-exports.FSBLDependencyManagerSingleton = new FSBLDependencyManager();
-exports.default = exports.FSBLDependencyManagerSingleton;
-
-
-/***/ }),
 /* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -9515,12 +9296,13 @@ exports.default = exports.FSBLDependencyManagerSingleton;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const validate_1 = __webpack_require__(6); // Finsemble args validator
-const baseClient_1 = __webpack_require__(7);
+const baseClient_1 = __webpack_require__(10);
 const async_1 = __webpack_require__(9);
+const systemManagerClient_1 = __webpack_require__(7);
 const logger_1 = __webpack_require__(0);
 /**
  * @introduction
- * <h2>Config Client</h2>
+ * <h2>Config Client (Finsemble Connect)</h2>
  *
  * This client provides run-time access to Finsemble's configuration.
  * The Config Client functions similar to a global store created with the Distributed Store Client and offers many of the same methods.
@@ -9788,13 +9570,14 @@ class ConfigClient extends baseClient_1._BaseClient {
     }
     ;
     /**
+     * Add an array of listeners as objects or strings. If using strings, you must provide a function callback as the second parameter.
      *
-    * Add an array of listeners as objects or strings. If using strings, you must provide a function callback as the second parameter.
-    * @param {function} fn The function to be called when the observed piece of config is modified.
-    * @param {function} cb Callback to be invoked after the listeners are added.
-    * @example
-    * var myFunction = function(err,data){}
-  * FSBL.Clients.ConfigClient.addListeners(
+     * @param {listenerParam | listenerParam[] | fieldOnlyParam | string[]} params
+     * @param {function} fn The function to be called when the observed piece of config is modified.
+     * @param {function} cb Callback to be invoked after the listeners are added.
+     * @example
+     * var myFunction = function(err,data){}
+    * FSBL.Clients.ConfigClient.addListeners(
     * 	[
     * 		{ field: "field1", listener: myFunction },
     * 		{ field: "field2", listener: myFunction }
@@ -9824,7 +9607,7 @@ class ConfigClient extends baseClient_1._BaseClient {
             }
             else if (item.field) {
                 field = item.field;
-                ls = params[i].listener;
+                ls = item.listener;
             }
             var combined = "configService" + (field ? "." + field : "");
             if (!ls) {
@@ -10080,19 +9863,18 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
      * Retrieves all of the preferences set for the application.
-     * @param {Object} params Parameters to pass to getPreferences. Optional. Defaults to null and currently ignored.
      * @param {StandardCallback} callback Callback to be invoked when preferences have been retrieved from the service.
      * @example
      * FSBL.Clients.ConfigClient.getPreferences((err, preferences)=> {
      * 		//use preferences.
      * });
      */
-    getPreferences(params, callback) {
-        if (typeof params === "function") {
-            callback = params;
-            params = null;
-        }
-        this.routerClient.query("PreferencesService.getPreferences", params, function (queryErr, queryResponse) {
+    async getPreferences(callback) {
+        logger_1.default.system.debug("ConfigClient.getPreferences", callback);
+        // need to check since preferences doesn't come up until after authentication, so not always ready
+        await systemManagerClient_1.default.waitForStartup("preferencesService");
+        this.routerClient.query("PreferencesService.getPreferences", null, function (queryErr, queryResponse) {
+            logger_1.default.system.debug("ConfigClient.getPrefences response", queryResponse);
             if (callback) {
                 callback(queryErr, queryResponse ? queryResponse.data : null);
             }
@@ -10199,6 +9981,407 @@ exports.LocalLogger = LocalLogger;
 
 /***/ }),
 /* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const events_1 = __webpack_require__(13);
+const routerClientInstance_1 = __webpack_require__(5);
+const STARTUP_TIMEOUT_DURATION = 10000;
+const constants_1 = __webpack_require__(11);
+const systemManagerClient_1 = __webpack_require__(7);
+const logger_1 = __webpack_require__(0);
+/**
+ * Small class to hold on to dependencies and callbacks. Also emits a timeout event that the startupManager is listening for. When it times out, the startupManager catches the event and generates a message that includes all of the offline clients and services. It then causes this class to emit an  err event that the baseService is listening for. This arrangement is set up for a couple of reasons.
+ * 1. I can't use the logger in here because the logger uses the startupManager, and there'd be a circular dependency.
+ * 2. FSBLDependencyManager is a singleton, and there can be multiple services living in a single window. I didn't want them all to log that they were offline if they weren't (e.g., if I'd put the emitter on the StartupManager instead of this class).
+ */
+class StartupDependency extends events_1.EventEmitter {
+    constructor(params) {
+        super();
+        this.callback = params.callback;
+        this.dependencies = params.dependencies;
+        this.startupTimer = null;
+        this.setStartupTimer = this.setStartupTimer.bind(this);
+        this.clearStartupTimer = this.clearStartupTimer.bind(this);
+        this.setStartupTimer();
+    }
+    /**
+     * Removes the startup timer (because the dependency was resolved within the allotted time);
+     */
+    clearStartupTimer() {
+        clearTimeout(this.startupTimer);
+        delete this.startupTimer;
+    }
+    /**
+     * If the dependency hasn't resolved within STARTUP_TIMEOUT_DURATION, emit a timeout event that the StartupManager can catch.
+     */
+    setStartupTimer() {
+        let self = this;
+        //+ coerces the result to a number, making typescript happy.
+        this.startupTimer = +setTimeout(() => {
+            self.emit("timeout");
+        }, STARTUP_TIMEOUT_DURATION);
+    }
+}
+/**
+ * Used to generate a unique ID for the list of dependencies.
+ */
+function uuidv4() {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0, v = c === "x" ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+/**
+ * @private
+ */
+class StartupManager {
+    /**
+     * @private
+     */
+    constructor() {
+        this.servicesAreAllOnline = {};
+        this.clientsAreAllOnline = {};
+        this.onlineClients = [];
+        this.dependencies = {};
+        this.startupTimers = {};
+        this.startupTimerFired = false;
+        this.bindCorrectContext();
+    }
+    /**
+     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required dependencies are ready.
+     *
+     * @param {FinsembleDependency} dependencies
+     * @param {any} callback
+     * @memberof StartupManager
+     */
+    waitFor(dependencies, callback) {
+        let id = uuidv4();
+        //Set defaults to an empty array if they aren't passed in.
+        if (!dependencies.clients)
+            dependencies.clients = [];
+        //The dependency manager can pass in a name to the dependency. If it does, we'll use it. If not, we won't.
+        if (dependencies.clients.length) {
+            //Lowercase the first letter of the client.
+            dependencies.clients = dependencies.clients.map(clientName => {
+                return clientName.charAt(0).toLowerCase() + clientName.slice(1);
+            });
+        }
+        let dependency = new StartupDependency({ dependencies, callback });
+        //If the dependency times out, throw an error that the baseService can catch. It will then log out why it's not online.
+        dependency.on("timeout", () => {
+            this.onDependencyTimeout(dependency);
+        });
+        this.dependencies[id] = dependency;
+        this.checkDependencies();
+        return dependency;
+    }
+    /**
+     * This method generates a helpful error message giving possible reasons for why the service is offline. After the message is generated, it emits an event on the dependency that's passed in as a parameter. The BaseService is listening for this event, and logs the error message to the central logger.
+     * @param {Dependency} dependency
+     */
+    onDependencyTimeout(dependency) {
+        const NEW_LINE = "\n", TAB = "\u0009", BULLET = "\u2022", BULLET_POINT = NEW_LINE + TAB + BULLET, STORAGE_ADAPTER_ERROR = "The default storage adapter failed to fully initialize, or has a syntax error. Ensure that the default storage adapter is up, connected, and sending/receiving data properly.";
+        let offlineClients = this.getOfflineClients();
+        let errorMessage = `APPLICATION LIFECYCLE:STARTUP:Dependency not online after ${STARTUP_TIMEOUT_DURATION / 1000} seconds.`;
+        if (offlineClients.length) {
+            errorMessage += ` Waiting for these clients: ${offlineClients.join(", ")}.`;
+        }
+        //The BaseService is listening for this event, and will log the errorMessage to the central logger.
+        dependency.emit("err", errorMessage);
+    }
+    /**
+     * This function loops through all of the registered dependencies and checks to see if the conditions have been met. If so, it invokes the callback and removes the reference to the dependency.
+     *
+     * @memberof StartupManager
+     */
+    checkDependencies() {
+        for (let id in this.dependencies) {
+            let dependency = this.dependencies[id];
+            let { dependencies, callback } = dependency;
+            if (dependencies.clients.length && !this.clientsAreAllOnline[id]) {
+                this.clientsAreAllOnline[id] = this.checkClients(dependencies.clients);
+                if (!this.clientsAreAllOnline[id]) {
+                    continue;
+                }
+            }
+            delete this.dependencies[id];
+            dependency.clearStartupTimer();
+            if (callback) {
+                callback();
+            }
+        }
+    }
+    getOfflineClients() {
+        let offlineClients = [];
+        for (let id in this.dependencies) {
+            let { dependencies } = this.dependencies[id];
+            offlineClients = offlineClients.concat(dependencies.clients.filter((dep) => !this.onlineClients.includes(dep)));
+        }
+        //return deduped list.
+        return offlineClients.filter((client, i) => offlineClients.indexOf(client) === i);
+    }
+    /**
+     * Iterates through required client list, returns false if any required client is offline.
+     *
+     * @param {any} clientList
+
+     * @memberof StartupManager
+     */
+    checkClients(clientList) {
+        return clientList.every(client => this.onlineClients.includes(client));
+    }
+    /**
+     *
+     *
+     * @param {any} clientName
+
+     * @memberof StartupManager
+     */
+    setClientOnline(clientName) {
+        //This check is done because multiple clients of the same type can be on a page.
+        if (this.onlineClients.includes(clientName)) {
+            return;
+        }
+        this.onlineClients.push(clientName);
+        this.checkDependencies();
+        // Note From Mike: Must change or workaround how some client usage triggers this code even though the client's service is NOT ready.
+        // This problem happens because some services initialize their clients when the client's service hasn't been created yet, but then don't use the client until later.
+        // So although the general code is correct here, the overall result is not (specifically the queries will timeout causing delays, error logging, and potential side effects).
+        // Therefore disabling this handshake code for now -- BUT KEEP CODE COMMENTED-OUT CODE UNTIL THIS IS RESOLVED. Just to be clear, nothing breaks without this code, but this
+        // code is what generates an error when improperly using a client...so it provides a needed check.
+        // let serviceName = CLIENT_SERVER_MAPPING(clientName);
+        // if (true /*disabling*/ && serviceName) {
+        // 	console.debug("SERVICE_QUERY_READY_CHANNEL querying", clientName, SERVICE_QUERY_READY_CHANNEL(serviceName));
+        // 	// before going online make sure this client's service is ready -- it should be until there is a startup problem
+        // 	RouterClient.query(SERVICE_QUERY_READY_CHANNEL(serviceName), {}, { timeout: 500 }, (err) => {
+        // 		if (err) {
+        // 			Logger.system.error(`DependencyManager: server ${serviceName} is not ready for client ${clientName}. ${err}. Make sure dependencies client dependencies are correct.`)
+        // 		} else {
+        // 			Logger.system.debug(`DependencyManager: server ${serviceName} is ready for client ${clientName} `)
+        // 		}
+        // 		this.onlineClients.push(clientName);
+        // 		this.checkDependencies();
+        // 	});
+        // } else {
+        // 	this.onlineClients.push(clientName);
+        // 	this.checkDependencies();
+        // }
+    }
+    /**
+     * Returns the array of online clients.
+     *
+
+     * @memberof StartupManager
+     */
+    getOnlineClients() {
+        return this.onlineClients;
+    }
+    /**
+     * Method to make sure that `this` is correct when the callbacks are invoked.
+     *
+     * @memberof StartupManager
+     */
+    bindCorrectContext() {
+        this.checkDependencies = this.checkDependencies.bind(this);
+        this.checkClients = this.checkClients.bind(this);
+        this.getOfflineClients = this.getOfflineClients.bind(this);
+        this.onDependencyTimeout = this.onDependencyTimeout.bind(this);
+        this.waitFor = this.waitFor.bind(this);
+    }
+}
+/**
+ * @private
+ */
+class ShutdownManager {
+    /**
+     * @private
+     */
+    constructor() {
+        this.offlineServices = [];
+        this.dependencies = {};
+        this.checkDependencies = this.checkDependencies.bind(this);
+    }
+    /**
+     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required dependencies are ready.
+     *
+     * @param {FinsembleDependency} dependencies
+     * @param {any} callback
+     * @memberof StartupManager
+     */
+    waitFor(dependencies, callback) {
+        logger_1.default.system.debug(`DependencyManager:waitFor`, dependencies);
+        //Set defaults to an empty array if they aren't passed in.
+        if (!dependencies.services) {
+            dependencies.services = [];
+        }
+        let id = uuidv4();
+        this.dependencies[id] = { dependencies, callback };
+    }
+    /**
+     * This function loops through all of the registered dependencies and checks to see if the conditions have been met. If so, it invokes the callback and removes the reference to the dependency.
+     *
+     * @memberof ShutdownDependencies
+     */
+    checkDependencies() {
+        console.debug("checkDependencies", this.dependencies);
+        if (Object.keys(this.dependencies)) {
+            for (let id in this.dependencies) {
+                let { dependencies, callback } = this.dependencies[id];
+                logger_1.default.system.debug(`DependencyManager:checkDependency`, dependencies.services, this.offlineServices);
+                if (dependencies.services.length) {
+                    let servicesAreAllOffline = this.checkServices(dependencies.services);
+                    if (!servicesAreAllOffline) {
+                        continue;
+                    }
+                }
+                console.debug("checkDependencies callback");
+                delete this.dependencies[id];
+                if (callback) {
+                    callback();
+                }
+            }
+        }
+    }
+    /**
+     * Iterates through required service list, returns false if any required service is offline.
+     *
+     * @param {any} serviceList
+
+     * @memberof ShutdownManager
+     */
+    checkServices(serviceList) {
+        return serviceList.every(service => this.offlineServices.includes(service));
+    }
+    setServiceOffline(service) {
+        logger_1.default.system.debug("setServiceOffline", service);
+        console.debug("setServiceOffline", service);
+        this.offlineServices.push(service);
+        this.checkDependencies();
+    }
+}
+/**
+ * This class handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready.
+ *
+ * The constructor is exported for the system mananger's shutDownManager so that class isn't constructed until right time in the starup process.
+ * Otherwise, this class is used as a singleton thoughout the rest of the system.
+ *
+ * @shouldBePublished false
+ * @private
+ * @class FSBLDependencyManager
+ */
+class FSBLDependencyManager extends events_1.EventEmitter {
+    constructor() {
+        super();
+        this.startup = new StartupManager();
+        this.shutdown = new ShutdownManager();
+        this.RouterClient = routerClientInstance_1.default;
+        this.AuthorizationCompleted = false;
+        this.bindCorrectContext();
+        this.onAuthorizationCompleted(this.startup.checkDependencies);
+        routerClientInstance_1.default.onReady(this.listenForServices);
+    }
+    /**
+ * Method to make sure that `this` is correct when the callbacks are invoked.
+ *
+ * @memberof StartupManager
+ */
+    bindCorrectContext() {
+        this.listenForServices = this.listenForServices.bind(this);
+        this.onAuthorizationCompleted = this.onAuthorizationCompleted.bind(this);
+    }
+    setClientOnline(client) {
+        this.startup.setClientOnline(client);
+    }
+    /*
+    * handler for when a service changes its state. If a service comes online or goes offline, dependencies are checked and callbacks invoked.
+    */
+    onServiceStateChange(data) {
+        let ServiceNames = Object.keys(data);
+        //Iterate through all services. If it was online but isn't anymore, set it offline. If it was offline but now is, set it online.
+        ServiceNames.forEach((serviceName) => {
+            let state = data[serviceName].state;
+            if (state === "closed") {
+                this.shutdown.setServiceOffline(serviceName);
+            }
+        });
+    }
+    /**
+     * Listens on the router for services to come online. The first subscriber gets the activeServices as of object instantiation. The 2nd subscriber listens for services to come online after the object is created. We should consider make this all one subscriber, though I see the advantage of having this setup.
+     *
+     */
+    listenForServices() {
+        logger_1.default.system.debug(`DependencyManager:listenForServices before wait`);
+        var listenForServicesCallback;
+        // wait until the essential parts of the microkernel stage is done so pubsub responders are available
+        systemManagerClient_1.default.waitForBootStage("kernel", "stageEntered", listenForServicesCallback = () => {
+            logger_1.default.system.debug(`DependencyManager:listenForServices after wait`);
+            this.RouterClient.subscribe(constants_1.SERVICES_STATE_CHANNEL, (err, event) => {
+                logger_1.default.system.debug(`DependencyManager:listenForServices SERVICES_STATE_CHANNEL`, event.data);
+                this.onServiceStateChange(event.data);
+            });
+            // TODO: The pubsub responder doesnt seem to work here. IT works for the above when not closing.
+            this.RouterClient.addListener(constants_1.SERVICE_CLOSED_CHANNEL, (err, event) => {
+                logger_1.default.system.debug(`DependencyManager:listenForServices SERVICE_CLOSED_CHANNEL`, event.data);
+                let services = {};
+                services[event.data.name] = {
+                    state: "closed"
+                };
+                this.onServiceStateChange(services);
+            });
+            this.RouterClient.subscribe(constants_1.APPLICATION_STATE_CHANNEL, (err, response) => {
+                switch (response.data.state) {
+                    //authenticated will only be caught by components/services that are up before auth does its thing. Otherwise, a component/service coming up will have the 'ready' application state. In either case, we need to do the things below. But only once.
+                    case "authenticated":
+                    case "ready":
+                        break;
+                    case "closing":
+                        this.shutdown.checkDependencies();
+                        break;
+                }
+            });
+        });
+    }
+    onAuthorizationCompleted(callback) {
+        if (this.AuthorizationCompleted) {
+            callback();
+        }
+        else {
+            this.addListener("AuthorizationCompleted", callback);
+        }
+    }
+}
+exports.FSBLDependencyManager = FSBLDependencyManager;
+/**
+ * This class handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
+ * @shouldBePublished false
+ * @private
+ * @class FSBLDependencyManager
+ */
+exports.FSBLDependencyManagerSingleton = new FSBLDependencyManager();
+exports.default = exports.FSBLDependencyManagerSingleton;
+
+
+/***/ }),
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ALL_BOOT_STAGES = ["microkernel", "kernel", "authentication", "preuser", "earlyuser", "user"];
+exports.CRITICAL_BOOT_STAGES = ["microkernel", "kernel", "authentication"];
+exports.SYSLOG_CHANNEL = "systemManager.systemlog";
+exports.SHOW_SYSLOG_CHANNEL = "systemManager.showSystemlog";
+exports.STATUS_CHANNEL_BASE = "systemManager.boot.status";
+exports.STAGE_CHANNEL = "systemManager.boot.stage";
+exports.CHECKPOINT_CHANNEL_BASE = "systemManager.checkpoint";
+
+
+/***/ }),
+/* 19 */
 /***/ (function(module, exports) {
 
 /**
@@ -10227,7 +10410,7 @@ module.exports = bytesToUuid;
 
 
 /***/ }),
-/* 18 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {// Unique ID creation requires a high quality random # generator.  In the
@@ -10267,14 +10450,14 @@ module.exports = rng;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
-/* 19 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Unique ID creation requires a high quality random # generator.  We feature
 // detect to determine the best RNG source, normalizing to a function that
 // returns 128-bits of randomness, since that's what's usually required
-var rng = __webpack_require__(18);
-var bytesToUuid = __webpack_require__(17);
+var rng = __webpack_require__(20);
+var bytesToUuid = __webpack_require__(19);
 
 // **`v1()` - Generate time-based UUID**
 //
@@ -10376,20 +10559,24 @@ module.exports = v1;
 
 
 /***/ }),
-/* 20 */
+/* 22 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__configUtil__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__configUtil__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__common_system__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__systemManagerClient__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__systemManagerClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__systemManagerClient__);
 /*!
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
+
+
 
 
 
@@ -10401,7 +10588,7 @@ var ConfigClient = null;
 
 /**
  * @introduction
- * <h2>Notification Client</h2>
+ * <h2>Notification Client (Finsemble Workspaces)</h2>
  *
  * Finsemble makes use of pop up (toast) notifications for communicating information to the end user in a gentler way than modal dialogs.
  * Use the Notification API to route messages so that your components can create these notifications.
@@ -10443,7 +10630,7 @@ var UserNotification = function () {
 	/**
   * Conditionally alerts the end user using a desktop notification.
   *
-  * @param {string} topic Specifies a category for the notification. Topic is currently unused, but in the future it will be used to filter notifications (e.g., applying regEx's defined in config to determine which notifications are displayed). Any topic string can be specified; however "system" is the recommended topic for system notifications applicable both to end uses and to developers. "dev" is the recommended topic for notifications applicable only during development (e.g., a notification that <i>config.json</i> has an illegal value).
+  * @param {string} topic Specifies a category for the notification. This parameter is reserved for future use; it is designed to filter notifications (e.g., applying regEx's defined in config to determine which notifications are displayed). Any topic string can be specified; however "system" is the recommended topic for system notifications applicable both to end uses and to developers. "dev" is the recommended topic for notifications applicable only during development (e.g., a notification that <i>config.json</i> has an illegal value).
   * @param {string} frequency Either "ALWAYS", "ONCE-SINCE-STARTUP", or "MAX-COUNT" to determine if alert should be displayed. Note, the frequencies are based on the number of notifications emitted from a window (as opposed to system wide).
   * @param {string} identifier Uniquely identifies this specific notification message. Used when "frequency" is set to "ONCE-SINCE-STARTUP" or "MAX-COUNT".
   * @param {any} message Message to display in the notification. Typically a string. Finsemble's built in templating accepts and object. See <i>../src-built-in/components/notification/notification.html<i>.
@@ -10513,6 +10700,7 @@ var UserNotification = function () {
 				message: message,
 				timeout: duration
 			};
+			__WEBPACK_IMPORTED_MODULE_3__systemManagerClient___default.a.systemLog({ notification: true }, "Notification: " + message);
 			new __WEBPACK_IMPORTED_MODULE_2__common_system__["System"].Notification(notifyObject);
 		}
 	};
@@ -10524,323 +10712,16 @@ var UserNotification = function () {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 21 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-Object.defineProperty(exports, "__esModule", { value: true });
-const validate_1 = __webpack_require__(6);
-const logger_1 = __webpack_require__(0);
-const baseClient_1 = __webpack_require__(7);
-const p_limit_1 = __webpack_require__(37);
-const disentangledUtils_1 = __webpack_require__(22);
-const limit = p_limit_1.default(1);
-/**
- *
- * @introduction
- * <h2>Storage Client</h2>
- *
- * The Storage Client handles saving and retrieving data for your smart desktop.
- *
- *
- *See the <a href=tutorial-storingData.html>Storing Data tutorial</a> for an overview of using the Storage Client.
- * @hideconstructor
- *  @todo add clear method
- * @constructor
- */
-class StorageClient extends baseClient_1._BaseClient {
-    constructor() {
-        super(...arguments);
-        //Did this because "delete" is a reserved keyword; for autocomplete the client is exported as a namespace with a bunch of functions and wouldn't work with a function called delete.
-        this.delete = this.remove;
-    }
-    /**
-     * Define the user name for storage (i.e., each user has unique storage).
-     * @param {Object} params
-     * @param {String} params.user The user name defined for storage.
-     * @param {StandardCallback} cb Callback to be called on success.
-     *
-     * @example
-     * FSBL.Clients.StorageClient.setUser({ user: "JohnDeere"});
-     */
-    setUser(params, cb) {
-        validate_1.default.args(params.user, "string", cb, "function=");
-        this.routerClient.query("Storage.setUser", { user: params.user }, function (err, response) {
-            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
-            logMethod("APPLICATION LIFECYCLE:StorageClient.setUser", params, err, response);
-            if (cb) {
-                cb(err, response.data);
-            }
-        });
-    }
-    ;
-    /**
-     * Specifies the data store. For normal operation this function doesn't have to be invoked -- the default data store is set in configuration.
-     * @param {Object} params
-     * @param {String} params.topic If specified then data store is set only for topic.
-     * @param {string} params.dataStore Identifies the data store (e.g. "localStorage", "redis").
-     * @param {function} cb Callback to be called on success.
-     *
-     * @example
-     * FSBL.Clients.StorageClient.setStore({topic:"finsemble", dataStore:"redis"})
-     */
-    setStore(params, cb) {
-        validate_1.default.args(params.topic, "string", params.dataStore, "string=", cb, "function=");
-        logger_1.default.system.log("APPLICATION LIFECYCLE:StorageClient.setStore", params, cb);
-        this.routerClient.query("Storage.setStore", params, (err, response) => {
-            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
-            logMethod("Storage.setStore", err, response);
-            if (cb) {
-                cb(err, response.data);
-            }
-        });
-    }
-    ;
-    /**
-     * Save a key value pair into storage.
-     * @param {Object} params
-     * @param {String} params.topic Storage topic for key being stored.
-     * @param {String} params.key The key to be stored.
-     * @param {any} params.value The value to be stored.
-     * @param {function} cb Callback to be called on success.
-     *
-     * @example
-     * FSBL.Clients.StorageClient.save({topic:"finsemble", key:"testKey", value:"testValue"})
-     */
-    save(params, cb) {
-        if (typeof params.key !== "string" || typeof params.topic !== "string") {
-            throw new Error("Values for key and topic must be strings.");
-        }
-        const promiseResolver = (resolve, reject) => {
-            validate_1.default.args(params.topic, "string", params.key, "string", params.value, "any", cb, "function=");
-            this.routerClient.query("Storage.save", params, (err, response) => {
-                const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
-                logMethod("Storage.save", err, response);
-                if (cb) {
-                    cb(err, response.data);
-                }
-                if (err) {
-                    reject({ err: err, data: null });
-                }
-                else {
-                    resolve({ err: err, data: response.data });
-                }
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    ;
-    /**
-     *
-     * @param params
-     * @private
-     */
-    save1(params) {
-        return limit(() => this.save(params));
-    }
-    /**
-     * Get a value from storage.
-     * @param {Object} params
-     * @param {String} params.key The key to get from storage.
-     * @param {String} params.topic The topic that the data is saved under.
-     * @param {function} cb Callback to be called on success.
-     *
-     * @example
-     * FSBL.Clients.StorageClient.get({ topic:"finsemble", key:"testKey" }, function(err, data) {
-     *	var myData = data;
-     * });
-     */
-    get(params, cb) {
-        if (typeof params.key !== "string" || typeof params.topic !== "string") {
-            throw new Error("Values for key and topic must be strings.");
-        }
-        const promiseResolver = (resolve, reject) => {
-            validate_1.default.args(params.topic, "string", params.key, "string", cb, "function=");
-            this.routerClient.query("Storage.get", params, (err, response) => {
-                if (err) {
-                    logger_1.default.system.error("Storage.get", err, response);
-                    cb(err, response ? response.data : null);
-                    return reject(err, response ? response.data : null);
-                }
-                logger_1.default.system.info("Storage.get", err, response);
-                if (cb)
-                    cb(err, response.data);
-                resolve(response.data);
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    ;
-    /**
-     *
-     * @param params
-     * @param cb
-     * @private
-     */
-    get1(params, cb) {
-        return limit(() => this.get(params));
-    }
-    /**
-     * Asynchronously updates provided key in storage by first retrieving the key
-     * then running a provided function on the result and re-saving its value.
-     * There’s no guarantees of consistency or atomicity
-     *
-     * @param params {any} Update storage params
-     * @param params.topic {string} The storage topic
-     * @param params.key {string} The storage key
-     * @param params.updateFn {Function} Function to run to determine the value to store
-     * @private
-     */
-    async updateStorage(params) {
-        const { topic, key, updateFn } = params;
-        const result = await this.get({ topic, key });
-        return this.save({ topic, key, value: updateFn(result) });
-    }
-    /**
-     *
-     * @param params
-     * @private
-     */
-    updateStorage1(params) {
-        return limit(() => this.updateStorage(params));
-    }
-    /**
-     * Get all keys for the topic.
-     * @param {Object} params
-     * @param {String} params.topic Topic for the keys to return.
-     * @param {String=} params.keyPrefix Filter all keys that don't start with this prefix.
-     * @param {function} cb Callback to be called on success.
-     *
-     * @example
-     * FSBL.Clients.StorageClient.keys({topic:"finsemble", keyPrefix:"test"}, function(err, data){
-     *	var myKeys = data;
-     * });
-     */
-    keys(params, cb) {
-        validate_1.default.args(params.topic, "string", cb, "function=");
-        logger_1.default.system.debug("StorageClient.keys", params, cb);
-        this.routerClient.query("Storage.keys", params, function (err, response) {
-            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
-            logMethod("Storage.keys", err, response);
-            if (cb) {
-                cb(err, response.data);
-            }
-        });
-    }
-    ;
-    /**
-     *
-     * @param params
-     * @private
-     */
-    keys1(params) {
-        return limit(() => disentangledUtils_1.promisify(this.keys.bind(this))(params));
-    }
-    /**
-     * Get a multiple values from storage based on regex.(coming soon)
-     * @param {Object} params
-     * @param {function} cb Callback to be called on success.
-     * @private
-     * @todo make this work.
-     * @example
-     * StorageClient.get({key:"testKey"});
-     */
-    getMultiple(params, cb) {
-        logger_1.default.system.info("StorageClient.getMultiple", params, cb);
-        this.routerClient.query("Storage.getMultiple", params, function (err, response) {
-            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
-            logMethod("StorageClient.getMultiple:", params, response);
-            if (cb) {
-                cb(err, response);
-            }
-        });
-    }
-    ;
-    /**
-     * Delete a value from storage.
-     * @param {Object} params
-     * @param {String} params.key The key to get from storage.
-     * @param {String} params.topic The topic that the data is saved under.
-     * @example
-     * FSBL.Clients.StorageClient.remove({ key:"testKey" })
-     */
-    remove(params, cb) {
-        const promiseResolver = (resolve, reject) => {
-            validate_1.default.args(params.topic, "string", params.key, "string", cb, "function=");
-            this.routerClient.query("Storage.delete", params, function (err, response) {
-                const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
-                logMethod("StorageClient.delete", err, response);
-                if (cb) {
-                    cb(err, response.data);
-                }
-                if (err) {
-                    reject({ err: err, data: null });
-                }
-                else {
-                    resolve({ err: err, data: response.data });
-                }
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    ;
-    /**
-     *
-     * @param params
-     * @private
-     */
-    remove1(params) {
-        return limit(() => this.remove(params));
-    }
-    /**
-     * Clears a storage adapter of all data.
-     * @param {function} cb The callback to be invoked after the method completes successfully.
-     *
-     */
-    clearCache(cb) {
-        logger_1.default.system.log("StorageClient.clearCache", cb);
-        this.routerClient.query("Storage.clearCache", null, function (err, response) {
-            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
-            logMethod("StorageClient.clearCache", err, response);
-            if (cb) {
-                cb(err, response.data);
-            }
-        });
-    }
-    ;
-}
-exports.StorageClient = StorageClient;
-;
-var storageClient = new StorageClient({
-    startupDependencies: {
-        services: ["storageService"]
-    },
-    onReady: function (cb) {
-        if (cb) {
-            cb();
-        }
-    },
-    name: "storageClient"
-});
-exports.default = storageClient;
-
-
-/***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const uuid_1 = __webpack_require__(40);
-const get = __webpack_require__(24);
-const pick = __webpack_require__(38);
-const lodash_1 = __webpack_require__(34);
+const uuid_1 = __webpack_require__(44);
+const get = __webpack_require__(33);
+const pick = __webpack_require__(42);
+const lodash_1 = __webpack_require__(38);
 //Class without deep openfin/system dependencies.
 function guuid() {
     return uuid_1.v1(); // return global uuid
@@ -11122,7 +11003,7 @@ exports.checkIfBoundsAreEqual = checkIfBoundsAreEqual;
 
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -11568,945 +11449,320 @@ module.exports = throttle;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(global) {/**
- * lodash (Custom Build) <https://lodash.com/>
- * Build: `lodash modularize exports="npm" -o ./`
- * Copyright jQuery Foundation and other contributors <https://jquery.org/>
- * Released under MIT license <https://lodash.com/license>
- * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
- * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
- */
+"use strict";
 
-/** Used as the `TypeError` message for "Functions" methods. */
-var FUNC_ERROR_TEXT = 'Expected a function';
-
-/** Used to stand-in for `undefined` hash values. */
-var HASH_UNDEFINED = '__lodash_hash_undefined__';
-
-/** Used as references for various `Number` constants. */
-var INFINITY = 1 / 0;
-
-/** `Object#toString` result references. */
-var funcTag = '[object Function]',
-    genTag = '[object GeneratorFunction]',
-    symbolTag = '[object Symbol]';
-
-/** Used to match property names within property paths. */
-var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\\]|\\.)*?\1)\]/,
-    reIsPlainProp = /^\w*$/,
-    reLeadingDot = /^\./,
-    rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|$))/g;
-
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+Object.defineProperty(exports, "__esModule", { value: true });
+const validate_1 = __webpack_require__(6);
+const logger_1 = __webpack_require__(0);
+const baseClient_1 = __webpack_require__(10);
+const p_limit_1 = __webpack_require__(41);
+const disentangledUtils_1 = __webpack_require__(23);
+const limit = p_limit_1.default(1);
 /**
- * Used to match `RegExp`
- * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
- */
-var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
-
-/** Used to match backslashes in property paths. */
-var reEscapeChar = /\\(\\)?/g;
-
-/** Used to detect host constructors (Safari). */
-var reIsHostCtor = /^\[object .+?Constructor\]$/;
-
-/** Detect free variable `global` from Node.js. */
-var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
-
-/** Detect free variable `self`. */
-var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
-
-/** Used as a reference to the global object. */
-var root = freeGlobal || freeSelf || Function('return this')();
-
-/**
- * Gets the value at `key` of `object`.
  *
- * @private
- * @param {Object} [object] The object to query.
- * @param {string} key The key of the property to get.
- * @returns {*} Returns the property value.
- */
-function getValue(object, key) {
-  return object == null ? undefined : object[key];
-}
-
-/**
- * Checks if `value` is a host object in IE < 9.
+ * @introduction
+ * <h2>Storage Client (Finsemble Connect)</h2>
  *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
- */
-function isHostObject(value) {
-  // Many host objects are `Object` objects that can coerce to strings
-  // despite having improperly defined `toString` methods.
-  var result = false;
-  if (value != null && typeof value.toString != 'function') {
-    try {
-      result = !!(value + '');
-    } catch (e) {}
-  }
-  return result;
-}
-
-/** Used for built-in method references. */
-var arrayProto = Array.prototype,
-    funcProto = Function.prototype,
-    objectProto = Object.prototype;
-
-/** Used to detect overreaching core-js shims. */
-var coreJsData = root['__core-js_shared__'];
-
-/** Used to detect methods masquerading as native. */
-var maskSrcKey = (function() {
-  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
-  return uid ? ('Symbol(src)_1.' + uid) : '';
-}());
-
-/** Used to resolve the decompiled source of functions. */
-var funcToString = funcProto.toString;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * Used to resolve the
- * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
- * of values.
- */
-var objectToString = objectProto.toString;
-
-/** Used to detect if a method is native. */
-var reIsNative = RegExp('^' +
-  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
-  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
-);
-
-/** Built-in value references. */
-var Symbol = root.Symbol,
-    splice = arrayProto.splice;
-
-/* Built-in method references that are verified to be native. */
-var Map = getNative(root, 'Map'),
-    nativeCreate = getNative(Object, 'create');
-
-/** Used to convert symbols to primitives and strings. */
-var symbolProto = Symbol ? Symbol.prototype : undefined,
-    symbolToString = symbolProto ? symbolProto.toString : undefined;
-
-/**
- * Creates a hash object.
+ * The Storage Client handles saving and retrieving data for your smart desktop.
  *
- * @private
+ *
+ *See the <a href=tutorial-storingData.html>Storing Data tutorial</a> for an overview of using the Storage Client.
+ * @hideconstructor
+ *  @todo add clear method
  * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
  */
-function Hash(entries) {
-  var index = -1,
-      length = entries ? entries.length : 0;
-
-  this.clear();
-  while (++index < length) {
-    var entry = entries[index];
-    this.set(entry[0], entry[1]);
-  }
-}
-
-/**
- * Removes all key-value entries from the hash.
- *
- * @private
- * @name clear
- * @memberOf Hash
- */
-function hashClear() {
-  this.__data__ = nativeCreate ? nativeCreate(null) : {};
-}
-
-/**
- * Removes `key` and its value from the hash.
- *
- * @private
- * @name delete
- * @memberOf Hash
- * @param {Object} hash The hash to modify.
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function hashDelete(key) {
-  return this.has(key) && delete this.__data__[key];
-}
-
-/**
- * Gets the hash value for `key`.
- *
- * @private
- * @name get
- * @memberOf Hash
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function hashGet(key) {
-  var data = this.__data__;
-  if (nativeCreate) {
-    var result = data[key];
-    return result === HASH_UNDEFINED ? undefined : result;
-  }
-  return hasOwnProperty.call(data, key) ? data[key] : undefined;
-}
-
-/**
- * Checks if a hash value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf Hash
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function hashHas(key) {
-  var data = this.__data__;
-  return nativeCreate ? data[key] !== undefined : hasOwnProperty.call(data, key);
-}
-
-/**
- * Sets the hash `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf Hash
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the hash instance.
- */
-function hashSet(key, value) {
-  var data = this.__data__;
-  data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
-  return this;
-}
-
-// Add methods to `Hash`.
-Hash.prototype.clear = hashClear;
-Hash.prototype['delete'] = hashDelete;
-Hash.prototype.get = hashGet;
-Hash.prototype.has = hashHas;
-Hash.prototype.set = hashSet;
-
-/**
- * Creates an list cache object.
- *
- * @private
- * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
- */
-function ListCache(entries) {
-  var index = -1,
-      length = entries ? entries.length : 0;
-
-  this.clear();
-  while (++index < length) {
-    var entry = entries[index];
-    this.set(entry[0], entry[1]);
-  }
-}
-
-/**
- * Removes all key-value entries from the list cache.
- *
- * @private
- * @name clear
- * @memberOf ListCache
- */
-function listCacheClear() {
-  this.__data__ = [];
-}
-
-/**
- * Removes `key` and its value from the list cache.
- *
- * @private
- * @name delete
- * @memberOf ListCache
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function listCacheDelete(key) {
-  var data = this.__data__,
-      index = assocIndexOf(data, key);
-
-  if (index < 0) {
-    return false;
-  }
-  var lastIndex = data.length - 1;
-  if (index == lastIndex) {
-    data.pop();
-  } else {
-    splice.call(data, index, 1);
-  }
-  return true;
-}
-
-/**
- * Gets the list cache value for `key`.
- *
- * @private
- * @name get
- * @memberOf ListCache
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function listCacheGet(key) {
-  var data = this.__data__,
-      index = assocIndexOf(data, key);
-
-  return index < 0 ? undefined : data[index][1];
-}
-
-/**
- * Checks if a list cache value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf ListCache
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function listCacheHas(key) {
-  return assocIndexOf(this.__data__, key) > -1;
-}
-
-/**
- * Sets the list cache `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf ListCache
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the list cache instance.
- */
-function listCacheSet(key, value) {
-  var data = this.__data__,
-      index = assocIndexOf(data, key);
-
-  if (index < 0) {
-    data.push([key, value]);
-  } else {
-    data[index][1] = value;
-  }
-  return this;
-}
-
-// Add methods to `ListCache`.
-ListCache.prototype.clear = listCacheClear;
-ListCache.prototype['delete'] = listCacheDelete;
-ListCache.prototype.get = listCacheGet;
-ListCache.prototype.has = listCacheHas;
-ListCache.prototype.set = listCacheSet;
-
-/**
- * Creates a map cache object to store key-value pairs.
- *
- * @private
- * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
- */
-function MapCache(entries) {
-  var index = -1,
-      length = entries ? entries.length : 0;
-
-  this.clear();
-  while (++index < length) {
-    var entry = entries[index];
-    this.set(entry[0], entry[1]);
-  }
-}
-
-/**
- * Removes all key-value entries from the map.
- *
- * @private
- * @name clear
- * @memberOf MapCache
- */
-function mapCacheClear() {
-  this.__data__ = {
-    'hash': new Hash,
-    'map': new (Map || ListCache),
-    'string': new Hash
-  };
-}
-
-/**
- * Removes `key` and its value from the map.
- *
- * @private
- * @name delete
- * @memberOf MapCache
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function mapCacheDelete(key) {
-  return getMapData(this, key)['delete'](key);
-}
-
-/**
- * Gets the map value for `key`.
- *
- * @private
- * @name get
- * @memberOf MapCache
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function mapCacheGet(key) {
-  return getMapData(this, key).get(key);
-}
-
-/**
- * Checks if a map value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf MapCache
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function mapCacheHas(key) {
-  return getMapData(this, key).has(key);
-}
-
-/**
- * Sets the map `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf MapCache
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the map cache instance.
- */
-function mapCacheSet(key, value) {
-  getMapData(this, key).set(key, value);
-  return this;
-}
-
-// Add methods to `MapCache`.
-MapCache.prototype.clear = mapCacheClear;
-MapCache.prototype['delete'] = mapCacheDelete;
-MapCache.prototype.get = mapCacheGet;
-MapCache.prototype.has = mapCacheHas;
-MapCache.prototype.set = mapCacheSet;
-
-/**
- * Gets the index at which the `key` is found in `array` of key-value pairs.
- *
- * @private
- * @param {Array} array The array to inspect.
- * @param {*} key The key to search for.
- * @returns {number} Returns the index of the matched value, else `-1`.
- */
-function assocIndexOf(array, key) {
-  var length = array.length;
-  while (length--) {
-    if (eq(array[length][0], key)) {
-      return length;
+class StorageClient extends baseClient_1._BaseClient {
+    constructor() {
+        super(...arguments);
+        this.clientReady = false;
+        //Did this because "delete" is a reserved keyword; for autocomplete the client is exported as a namespace with a bunch of functions and wouldn't work with a function called delete.
+        this.delete = this.remove;
     }
-  }
-  return -1;
+    /**
+     * Define the user name for storage (i.e., each user has unique storage).
+     * @param {object} params
+     * @param {string} params.user A unique key to store user data under
+     * @param {StandardCallback} cb Callback to be called on success.
+     *
+     * @example
+     * FSBL.Clients.StorageClient.setUser({ user: "JohnDeere"});
+     */
+    setUser(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
+        validate_1.default.args(params.user, "string", cb, "function=");
+        this.routerClient.query("Storage.setUser", { user: params.user }, function (err, response) {
+            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+            logMethod("APPLICATION LIFECYCLE:StorageClient.setUser", params, err, response);
+            if (cb) {
+                cb(err, response.data);
+            }
+        });
+    }
+    ;
+    /**
+     * Specifies the data store. For normal operation this function doesn't have to be invoked -- the default data store is set in configuration.
+     * @param {Object} params
+     * @param {String} params.topic If specified then data store is set only for topic.
+     * @param {string} params.dataStore Identifies the data store (e.g. "localStorage", "redis").
+     * @param {function} cb Callback to be called on success.
+     *
+     * @example
+     * FSBL.Clients.StorageClient.setStore({topic:"finsemble", dataStore:"redis"})
+     */
+    setStore(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
+        validate_1.default.args(params.topic, "string", params.dataStore, "string=", cb, "function=");
+        logger_1.default.system.log("APPLICATION LIFECYCLE:StorageClient.setStore", params, cb);
+        this.routerClient.query("Storage.setStore", params, (err, response) => {
+            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+            logMethod("Storage.setStore", err, response);
+            if (cb) {
+                cb(err, response.data);
+            }
+        });
+    }
+    ;
+    /**
+     * Save a key value pair into storage.
+     * @param {Object} params
+     * @param {String} params.topic Storage topic for key being stored.
+     * @param {String} params.key The key for the value to be stored under.
+     * @param {any} params.value The value to be stored.
+     * @param {function} cb Callback to be called on success.
+     *
+     * @example
+     * FSBL.Clients.StorageClient.save({topic:"finsemble", key:"testKey", value:"testValue"})
+     */
+    save(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
+        if (typeof params.key !== "string" || typeof params.topic !== "string") {
+            throw new Error("Values for key and topic must be strings.");
+        }
+        const promiseResolver = (resolve, reject) => {
+            validate_1.default.args(params.topic, "string", params.key, "string", params.value, "any", cb, "function=");
+            this.routerClient.query("Storage.save", params, (err, response) => {
+                const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+                logMethod("Storage.save", err, response);
+                if (cb) {
+                    cb(err, response.data);
+                }
+                if (err) {
+                    reject({ err: err, data: null });
+                }
+                else {
+                    resolve({ err: err, data: response.data });
+                }
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    ;
+    /**
+     *
+     * @param params
+     * @private
+     */
+    save1(params) {
+        return limit(() => this.save(params));
+    }
+    /**
+     * Get a value from storage.
+     * @param {Object} params
+     * @param {String} params.key The key to get from storage.
+     * @param {String} params.topic The topic that the data is saved under.
+     * @param {function} cb Callback to be called on success.
+     *
+     * @example
+     * FSBL.Clients.StorageClient.get({ topic:"finsemble", key:"testKey" }, function(err, data) {
+     *	var myData = data;
+     * });
+     */
+    get(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
+        if (typeof params.key !== "string" || typeof params.topic !== "string") {
+            throw new Error("Values for key and topic must be strings.");
+        }
+        const promiseResolver = (resolve, reject) => {
+            validate_1.default.args(params.topic, "string", params.key, "string", cb, "function=");
+            this.routerClient.query("Storage.get", params, (err, response) => {
+                if (err) {
+                    logger_1.default.system.error("Storage.get", err, response);
+                    cb(err, response ? response.data : null);
+                    return reject(err, response ? response.data : null);
+                }
+                logger_1.default.system.info("Storage.get", err, response);
+                if (cb)
+                    cb(err, response.data);
+                resolve(response.data);
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    ;
+    /**
+     *
+     * @param params
+     * @param cb
+     * @private
+     */
+    get1(params, cb) {
+        return limit(() => this.get(params));
+    }
+    /**
+     * Asynchronously updates provided key in storage by first retrieving the key
+     * then running a provided function on the result and re-saving its value.
+     * There’s no guarantees of consistency or atomicity
+     *
+     * @param params {any} Update storage params
+     * @param params.topic {string} The storage topic
+     * @param params.key {string} The storage key
+     * @param params.updateFn {Function} Function to run to determine the value to store
+     * @private
+     */
+    async updateStorage(params) {
+        const { topic, key, updateFn } = params;
+        const result = await this.get({ topic, key });
+        return this.save({ topic, key, value: updateFn(result) });
+    }
+    /**
+     *
+     * @param params
+     * @private
+     */
+    updateStorage1(params) {
+        return limit(() => this.updateStorage(params));
+    }
+    /**
+     * Get all keys for the topic.
+     * @param {Object} params
+     * @param {String} params.topic Topic for the keys to return.
+     * @param {String=} params.keyPrefix Filter all keys that don't start with this prefix.
+     * @param {function} cb Callback to be called on success.
+     *
+     * @example
+     * FSBL.Clients.StorageClient.keys({topic:"finsemble", keyPrefix:"test"}, function(err, data){
+     *	var myKeys = data;
+     * });
+     */
+    keys(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
+        validate_1.default.args(params.topic, "string", cb, "function=");
+        logger_1.default.system.debug("StorageClient.keys", params, cb);
+        this.routerClient.query("Storage.keys", params, function (err, response) {
+            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+            logMethod("Storage.keys", err, response);
+            if (cb) {
+                cb(err, response.data);
+            }
+        });
+    }
+    ;
+    /**
+     *
+     * @param params
+     * @private
+     */
+    keys1(params) {
+        return limit(() => disentangledUtils_1.promisify(this.keys.bind(this))(params));
+    }
+    /**
+     * Get a multiple values from storage based on regex.(coming soon)
+     * @param {Object} params
+     * @param {function} cb Callback to be called on success.
+     * @private
+     * @todo make this work.
+     * @example
+     * StorageClient.get({key:"testKey"});
+     */
+    getMultiple(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
+        logger_1.default.system.info("StorageClient.getMultiple", params, cb);
+        this.routerClient.query("Storage.getMultiple", params, function (err, response) {
+            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+            logMethod("StorageClient.getMultiple:", params, response);
+            if (cb) {
+                cb(err, response);
+            }
+        });
+    }
+    ;
+    /**
+     * Delete a value from storage.
+     * @param {Object} params
+     * @param {String} params.key The key to get from storage.
+     * @param {String} params.topic The topic that the data is saved under.
+     * @example
+     * FSBL.Clients.StorageClient.remove({ key:"testKey" })
+     */
+    remove(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
+        const promiseResolver = (resolve, reject) => {
+            validate_1.default.args(params.topic, "string", params.key, "string", cb, "function=");
+            this.routerClient.query("Storage.delete", params, function (err, response) {
+                const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+                logMethod("StorageClient.delete", err, response);
+                if (cb) {
+                    cb(err, response.data);
+                }
+                if (err) {
+                    reject({ err: err, data: null });
+                }
+                else {
+                    resolve({ err: err, data: response.data });
+                }
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    ;
+    /**
+     *
+     * @param params
+     * @private
+     */
+    remove1(params) {
+        return limit(() => this.remove(params));
+    }
+    /**
+     * Clears a storage adapter of all data.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     *
+     */
+    clearCache(cb) {
+        logger_1.default.system.log("StorageClient.clearCache", cb);
+        this.routerClient.query("Storage.clearCache", null, function (err, response) {
+            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+            logMethod("StorageClient.clearCache", err, response);
+            if (cb) {
+                cb(err, response.data);
+            }
+        });
+    }
+    ;
 }
-
-/**
- * The base implementation of `_.get` without support for default values.
- *
- * @private
- * @param {Object} object The object to query.
- * @param {Array|string} path The path of the property to get.
- * @returns {*} Returns the resolved value.
- */
-function baseGet(object, path) {
-  path = isKey(path, object) ? [path] : castPath(path);
-
-  var index = 0,
-      length = path.length;
-
-  while (object != null && index < length) {
-    object = object[toKey(path[index++])];
-  }
-  return (index && index == length) ? object : undefined;
-}
-
-/**
- * The base implementation of `_.isNative` without bad shim checks.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a native function,
- *  else `false`.
- */
-function baseIsNative(value) {
-  if (!isObject(value) || isMasked(value)) {
-    return false;
-  }
-  var pattern = (isFunction(value) || isHostObject(value)) ? reIsNative : reIsHostCtor;
-  return pattern.test(toSource(value));
-}
-
-/**
- * The base implementation of `_.toString` which doesn't convert nullish
- * values to empty strings.
- *
- * @private
- * @param {*} value The value to process.
- * @returns {string} Returns the string.
- */
-function baseToString(value) {
-  // Exit early for strings to avoid a performance hit in some environments.
-  if (typeof value == 'string') {
-    return value;
-  }
-  if (isSymbol(value)) {
-    return symbolToString ? symbolToString.call(value) : '';
-  }
-  var result = (value + '');
-  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
-}
-
-/**
- * Casts `value` to a path array if it's not one.
- *
- * @private
- * @param {*} value The value to inspect.
- * @returns {Array} Returns the cast property path array.
- */
-function castPath(value) {
-  return isArray(value) ? value : stringToPath(value);
-}
-
-/**
- * Gets the data for `map`.
- *
- * @private
- * @param {Object} map The map to query.
- * @param {string} key The reference key.
- * @returns {*} Returns the map data.
- */
-function getMapData(map, key) {
-  var data = map.__data__;
-  return isKeyable(key)
-    ? data[typeof key == 'string' ? 'string' : 'hash']
-    : data.map;
-}
-
-/**
- * Gets the native function at `key` of `object`.
- *
- * @private
- * @param {Object} object The object to query.
- * @param {string} key The key of the method to get.
- * @returns {*} Returns the function if it's native, else `undefined`.
- */
-function getNative(object, key) {
-  var value = getValue(object, key);
-  return baseIsNative(value) ? value : undefined;
-}
-
-/**
- * Checks if `value` is a property name and not a property path.
- *
- * @private
- * @param {*} value The value to check.
- * @param {Object} [object] The object to query keys on.
- * @returns {boolean} Returns `true` if `value` is a property name, else `false`.
- */
-function isKey(value, object) {
-  if (isArray(value)) {
-    return false;
-  }
-  var type = typeof value;
-  if (type == 'number' || type == 'symbol' || type == 'boolean' ||
-      value == null || isSymbol(value)) {
-    return true;
-  }
-  return reIsPlainProp.test(value) || !reIsDeepProp.test(value) ||
-    (object != null && value in Object(object));
-}
-
-/**
- * Checks if `value` is suitable for use as unique object key.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is suitable, else `false`.
- */
-function isKeyable(value) {
-  var type = typeof value;
-  return (type == 'string' || type == 'number' || type == 'symbol' || type == 'boolean')
-    ? (value !== '__proto__')
-    : (value === null);
-}
-
-/**
- * Checks if `func` has its source masked.
- *
- * @private
- * @param {Function} func The function to check.
- * @returns {boolean} Returns `true` if `func` is masked, else `false`.
- */
-function isMasked(func) {
-  return !!maskSrcKey && (maskSrcKey in func);
-}
-
-/**
- * Converts `string` to a property path array.
- *
- * @private
- * @param {string} string The string to convert.
- * @returns {Array} Returns the property path array.
- */
-var stringToPath = memoize(function(string) {
-  string = toString(string);
-
-  var result = [];
-  if (reLeadingDot.test(string)) {
-    result.push('');
-  }
-  string.replace(rePropName, function(match, number, quote, string) {
-    result.push(quote ? string.replace(reEscapeChar, '$1') : (number || match));
-  });
-  return result;
+exports.StorageClient = StorageClient;
+;
+var storageClient = new StorageClient({
+    onReady: function (cb) {
+        if (cb) {
+            cb();
+        }
+        storageClient.clientReady = true;
+    },
+    name: "storageClient"
 });
+exports.default = storageClient;
 
-/**
- * Converts `value` to a string key if it's not a string or symbol.
- *
- * @private
- * @param {*} value The value to inspect.
- * @returns {string|symbol} Returns the key.
- */
-function toKey(value) {
-  if (typeof value == 'string' || isSymbol(value)) {
-    return value;
-  }
-  var result = (value + '');
-  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
-}
-
-/**
- * Converts `func` to its source code.
- *
- * @private
- * @param {Function} func The function to process.
- * @returns {string} Returns the source code.
- */
-function toSource(func) {
-  if (func != null) {
-    try {
-      return funcToString.call(func);
-    } catch (e) {}
-    try {
-      return (func + '');
-    } catch (e) {}
-  }
-  return '';
-}
-
-/**
- * Creates a function that memoizes the result of `func`. If `resolver` is
- * provided, it determines the cache key for storing the result based on the
- * arguments provided to the memoized function. By default, the first argument
- * provided to the memoized function is used as the map cache key. The `func`
- * is invoked with the `this` binding of the memoized function.
- *
- * **Note:** The cache is exposed as the `cache` property on the memoized
- * function. Its creation may be customized by replacing the `_.memoize.Cache`
- * constructor with one whose instances implement the
- * [`Map`](http://ecma-international.org/ecma-262/7.0/#sec-properties-of-the-map-prototype-object)
- * method interface of `delete`, `get`, `has`, and `set`.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Function
- * @param {Function} func The function to have its output memoized.
- * @param {Function} [resolver] The function to resolve the cache key.
- * @returns {Function} Returns the new memoized function.
- * @example
- *
- * var object = { 'a': 1, 'b': 2 };
- * var other = { 'c': 3, 'd': 4 };
- *
- * var values = _.memoize(_.values);
- * values(object);
- * // => [1, 2]
- *
- * values(other);
- * // => [3, 4]
- *
- * object.a = 2;
- * values(object);
- * // => [1, 2]
- *
- * // Modify the result cache.
- * values.cache.set(object, ['a', 'b']);
- * values(object);
- * // => ['a', 'b']
- *
- * // Replace `_.memoize.Cache`.
- * _.memoize.Cache = WeakMap;
- */
-function memoize(func, resolver) {
-  if (typeof func != 'function' || (resolver && typeof resolver != 'function')) {
-    throw new TypeError(FUNC_ERROR_TEXT);
-  }
-  var memoized = function() {
-    var args = arguments,
-        key = resolver ? resolver.apply(this, args) : args[0],
-        cache = memoized.cache;
-
-    if (cache.has(key)) {
-      return cache.get(key);
-    }
-    var result = func.apply(this, args);
-    memoized.cache = cache.set(key, result);
-    return result;
-  };
-  memoized.cache = new (memoize.Cache || MapCache);
-  return memoized;
-}
-
-// Assign cache to `_.memoize`.
-memoize.Cache = MapCache;
-
-/**
- * Performs a
- * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
- * comparison between two values to determine if they are equivalent.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to compare.
- * @param {*} other The other value to compare.
- * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
- * @example
- *
- * var object = { 'a': 1 };
- * var other = { 'a': 1 };
- *
- * _.eq(object, object);
- * // => true
- *
- * _.eq(object, other);
- * // => false
- *
- * _.eq('a', 'a');
- * // => true
- *
- * _.eq('a', Object('a'));
- * // => false
- *
- * _.eq(NaN, NaN);
- * // => true
- */
-function eq(value, other) {
-  return value === other || (value !== value && other !== other);
-}
-
-/**
- * Checks if `value` is classified as an `Array` object.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an array, else `false`.
- * @example
- *
- * _.isArray([1, 2, 3]);
- * // => true
- *
- * _.isArray(document.body.children);
- * // => false
- *
- * _.isArray('abc');
- * // => false
- *
- * _.isArray(_.noop);
- * // => false
- */
-var isArray = Array.isArray;
-
-/**
- * Checks if `value` is classified as a `Function` object.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a function, else `false`.
- * @example
- *
- * _.isFunction(_);
- * // => true
- *
- * _.isFunction(/abc/);
- * // => false
- */
-function isFunction(value) {
-  // The use of `Object#toString` avoids issues with the `typeof` operator
-  // in Safari 8-9 which returns 'object' for typed array and other constructors.
-  var tag = isObject(value) ? objectToString.call(value) : '';
-  return tag == funcTag || tag == genTag;
-}
-
-/**
- * Checks if `value` is the
- * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
- * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an object, else `false`.
- * @example
- *
- * _.isObject({});
- * // => true
- *
- * _.isObject([1, 2, 3]);
- * // => true
- *
- * _.isObject(_.noop);
- * // => true
- *
- * _.isObject(null);
- * // => false
- */
-function isObject(value) {
-  var type = typeof value;
-  return !!value && (type == 'object' || type == 'function');
-}
-
-/**
- * Checks if `value` is object-like. A value is object-like if it's not `null`
- * and has a `typeof` result of "object".
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
- * @example
- *
- * _.isObjectLike({});
- * // => true
- *
- * _.isObjectLike([1, 2, 3]);
- * // => true
- *
- * _.isObjectLike(_.noop);
- * // => false
- *
- * _.isObjectLike(null);
- * // => false
- */
-function isObjectLike(value) {
-  return !!value && typeof value == 'object';
-}
-
-/**
- * Checks if `value` is classified as a `Symbol` primitive or object.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
- * @example
- *
- * _.isSymbol(Symbol.iterator);
- * // => true
- *
- * _.isSymbol('abc');
- * // => false
- */
-function isSymbol(value) {
-  return typeof value == 'symbol' ||
-    (isObjectLike(value) && objectToString.call(value) == symbolTag);
-}
-
-/**
- * Converts `value` to a string. An empty string is returned for `null`
- * and `undefined` values. The sign of `-0` is preserved.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to process.
- * @returns {string} Returns the string.
- * @example
- *
- * _.toString(null);
- * // => ''
- *
- * _.toString(-0);
- * // => '-0'
- *
- * _.toString([1, 2, 3]);
- * // => '1,2,3'
- */
-function toString(value) {
-  return value == null ? '' : baseToString(value);
-}
-
-/**
- * Gets the value at `path` of `object`. If the resolved value is
- * `undefined`, the `defaultValue` is returned in its place.
- *
- * @static
- * @memberOf _
- * @since 3.7.0
- * @category Object
- * @param {Object} object The object to query.
- * @param {Array|string} path The path of the property to get.
- * @param {*} [defaultValue] The value returned for `undefined` resolved values.
- * @returns {*} Returns the resolved value.
- * @example
- *
- * var object = { 'a': [{ 'b': { 'c': 3 } }] };
- *
- * _.get(object, 'a[0].b.c');
- * // => 3
- *
- * _.get(object, ['a', '0', 'b', 'c']);
- * // => 3
- *
- * _.get(object, 'a.b.c', 'default');
- * // => 'default'
- */
-function get(object, path, defaultValue) {
-  var result = object == null ? undefined : baseGet(object, path);
-  return result === undefined ? defaultValue : result;
-}
-
-module.exports = get;
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {/**
@@ -14358,19 +13614,23 @@ function stubFalse() {
 
 module.exports = isEqual;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(13)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(14)(module)))
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events__ = __webpack_require__(12);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_events__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 
-const deepEqual = __webpack_require__(25);
+
+const deepEqual = __webpack_require__(26);
+
 /** Singleton of the System class shared among all instances of Monitors
  * @TODO Refactor to instance member of class.
  */
@@ -14466,20 +13726,26 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 				console.info("Skipped refreshMonitors because monitors do not change.");
 				monitorsChanged = false;
 			}
-			//console.log("getAllMonitors");
-			this.allMonitors = [];
-			var primaryMonitor = monitorInfo.primaryMonitor;
-			this.primaryMonitor = primaryMonitor;
-			primaryMonitor.whichMonitor = "primary";
 
-			if (fin.container !== "Electron") {
-				primaryMonitor.deviceScaleFactor = this.calculateMonitorScale(primaryMonitor.monitor.dipRect, primaryMonitor.monitor.scaledRect);
+			this.allMonitors = [];
+			let primaryMonitor = monitorInfo.primaryMonitor;
+			if (Object.entries(primaryMonitor).length) {
+				primaryMonitor.whichMonitor = "primary";
+				primaryMonitor.position = 0;
+				if (System.container !== "Electron") {
+					primaryMonitor.deviceScaleFactor = this.calculateMonitorScale(primaryMonitor.monitor.dipRect, primaryMonitor.monitor.scaledRect);
+				}
+				this.allMonitors.push(primaryMonitor);
+			} else {
+				// If there is no primary monitor, then the system is still in the process of updating the monitor information,
+				// so we can return and wait for the next monitor change event comes in.
+				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.System.info("There is no primary monitor in 'monitorInfo' - the system is still in the process of updating the monitor information. Returning from monitorsAndScaling -> refreshMonitors");
+				return;
 			}
-			primaryMonitor.position = 0;
-			this.allMonitors.push(primaryMonitor);
+
 			for (let i = 0; i < monitorInfo.nonPrimaryMonitors.length; i++) {
 				let monitor = monitorInfo.nonPrimaryMonitors[i];
-				if (fin.container !== "Electron") {
+				if (System.container !== "Electron") {
 					monitor.deviceScaleFactor = this.calculateMonitorScale(monitor.monitor.dipRect, monitor.monitor.scaledRect);
 				}
 				monitor.whichMonitor = i;
@@ -14513,7 +13779,7 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 	}
 
 	/**
-  * Gets the monitor on which the point is or null if not on any monitor. This assumes scaled dimensions for the monitor (For example from Openfin or WPF directly).
+  * Gets the monitor on which the point is or null if not on any monitor. This assumes scaled dimensions for the monitor (For example from electron or WPF directly).
   * @param {*} x
   * @param {*} y
   * @param {*} cb
@@ -14736,12 +14002,12 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__configUtil__ = __webpack_require__(11);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__configUtil__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system__ = __webpack_require__(3);
@@ -14843,11 +14109,11 @@ var RouterTransport = {
 			}
 		}
 
-		// if OpenFin IAB available, then add IAB to active list
-		if (fin && fin.desktop && fin.desktop.InterApplicationBus) addToActive("OpenFinBus");
+		// if IPCBus available, then add IAB to active list
+		if (__WEBPACK_IMPORTED_MODULE_2__common_system__["System"].InterApplicationBus) addToActive("IPCBus");
 
 		// If electron, always have FinsembleTransport active
-		if (fin && fin.container === "Electron") addToActive("FinsembleTransport");
+		if (__WEBPACK_IMPORTED_MODULE_2__common_system__["System"].container === "Electron") addToActive("FinsembleTransport");
 
 		// if shared worker available, then add shared-worker transport to active list
 		if (SharedWorker) addToActive("SharedWorker");
@@ -14872,7 +14138,7 @@ var RouterTransport = {
   * @returns the transport object
   */
 	getDefaultTransport: function (params, incomingMessageHandler, source, destination) {
-		return RouterTransport.getTransport(params, "OpenFinBus", incomingMessageHandler, source, destination);
+		return RouterTransport.getTransport(params, "IPCBus", incomingMessageHandler, source, destination);
 	},
 
 	/**
@@ -15027,30 +14293,30 @@ RouterTransportImplementation.SharedWorkerTransport = function (params, parentMe
 };
 
 /*
- * Implements the OpenFin Bus Transport.
+ * Implements the IPC Bus Transport.
  *
  * Required Functions (used by transport clients):
  * 		send(transport, routerMessage) -- transport object contains destination transport info; routerMessage is the message to send
  * 		identifier() -- returns transport's name
  *
- * @param {object} params unused in OpenFin transport
+ * @param {object} params unused in IPC transport
  * @param {any} parentMessageHandler callback for incoming event
  * @param {any} source either the client name or "RouterService"
  * @param {any} destination either the client name or "RouterService"
  */
-RouterTransportImplementation.OpenFinTransport = function (params, parentMessageHandler, source, destination, callback) {
+RouterTransportImplementation.IPCTransport = function (params, parentMessageHandler, source, destination, callback) {
 	var uuid = __WEBPACK_IMPORTED_MODULE_2__common_system__["System"].Application.getCurrent().uuid;
 	var self = this;
 
 	// receives incoming OpenFin bus messages then passes on to parent with correct "wrapper"
-	function openFinMessageHandler(routerMessage, senderUuid) {
+	function messageHandler(routerMessage, senderUuid) {
 		var incomingTransportInfo = { "transportID": self.identifier(), "senderUuid": senderUuid, "name": routerMessage.header.origin };
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("OpenFinTransport Incoming Transport", incomingTransportInfo, "Message", routerMessage);
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("IPCTransport Incoming Transport", incomingTransportInfo, "Message", routerMessage);
 		parentMessageHandler(incomingTransportInfo, routerMessage);
 	}
 
 	function subscribeFailure(reason) {
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("OpenFinBus Subscribe Failure: " + reason);
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("IPCBus Subscribe Failure: " + reason);
 	}
 
 	//required function for the parent (i.e. routeClient or routeService)
@@ -15068,18 +14334,18 @@ RouterTransportImplementation.OpenFinTransport = function (params, parentMessage
 			routerMessage = arguments[1];
 		}
 
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("OpenFinTransport Outgoing Transport", uuid, destTopic, "Message", routerMessage);
-		fin.desktop.InterApplicationBus.publish(destTopic, routerMessage, function () {}, function (err) {});
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("IPCTransport Outgoing Transport", uuid, destTopic, "Message", routerMessage);
+		__WEBPACK_IMPORTED_MODULE_2__common_system__["System"].InterApplicationBus.publish(destTopic, routerMessage, function () {}, function (err) {});
 	};
 
 	//required function for the parent (i.e. routeClient or routeService)
 	this.identifier = function () {
-		return "OpenFinBus";
+		return "IPCBus";
 	};
 
-	__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log(`OpenFinBus Transport Initializing for ${source}`);
-	console.log(`OpenFinBus Transport Initializing for ${source}`);
-	fin.desktop.InterApplicationBus.subscribe("*", source, openFinMessageHandler, null, subscribeFailure);
+	__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log(`IPCBus Transport Initializing for ${source}`);
+	console.log(`IPCBus Transport Initializing for ${source}`);
+	__WEBPACK_IMPORTED_MODULE_2__common_system__["System"].InterApplicationBus.subscribe("*", source, messageHandler, null, subscribeFailure);
 
 	callback(this);
 };
@@ -15097,11 +14363,12 @@ RouterTransportImplementation.OpenFinTransport = function (params, parentMessage
  * @param {any} destination either the client name or "RouterService" (unused in FinsembleTransport)
  */
 RouterTransportImplementation.FinsembleTransport = function (params, parentMessageHandler, source, destination, callback) {
-	/** @TODO - split into two separate vars for clarity. */
-	var serverAddress = __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress", __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.IAC.serverAddress", "ws://127.0.0.1:3376"));
+	const defaultServerAddress = "ws://127.0.0.1:3376";
+	const IACServerAddress = __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.IAC.serverAddress", defaultServerAddress);
+	const serverAddress = __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress", IACServerAddress);
 	const SOCKET_SERVER_ADDRESS = serverAddress + "/router"; // "router" is the socket namespace used on server
 
-	var self = this;
+	const self = this;
 
 	// receives incoming messages then passes on to parent (what's passed to parent should be same routerMessage received in send()
 	function finsembleMessageHandler(routerMessage) {
@@ -15286,7 +14553,7 @@ RouterTransportImplementation.FinsembleCloudTransport = function (params, parent
 
 // add the transports to the available/active list
 RouterTransport.addTransport("SharedWorker", RouterTransportImplementation.SharedWorkerTransport);
-RouterTransport.addTransport("OpenFinBus", RouterTransportImplementation.OpenFinTransport);
+RouterTransport.addTransport("IPCBus", RouterTransportImplementation.IPCTransport);
 RouterTransport.addTransport("FinsembleTransport", RouterTransportImplementation.FinsembleTransport);
 
 /* harmony default export */ __webpack_exports__["default"] = (RouterTransport);
@@ -15295,7 +14562,77 @@ RouterTransport.addTransport("FinsembleTransport", RouterTransportImplementation
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 28 */
+/* 29 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {var scope = (typeof global !== "undefined" && global) ||
+            (typeof self !== "undefined" && self) ||
+            window;
+var apply = Function.prototype.apply;
+
+// DOM APIs, for completeness
+
+exports.setTimeout = function() {
+  return new Timeout(apply.call(setTimeout, scope, arguments), clearTimeout);
+};
+exports.setInterval = function() {
+  return new Timeout(apply.call(setInterval, scope, arguments), clearInterval);
+};
+exports.clearTimeout =
+exports.clearInterval = function(timeout) {
+  if (timeout) {
+    timeout.close();
+  }
+};
+
+function Timeout(id, clearFn) {
+  this._id = id;
+  this._clearFn = clearFn;
+}
+Timeout.prototype.unref = Timeout.prototype.ref = function() {};
+Timeout.prototype.close = function() {
+  this._clearFn.call(scope, this._id);
+};
+
+// Does not start the time, just sets up the members needed.
+exports.enroll = function(item, msecs) {
+  clearTimeout(item._idleTimeoutId);
+  item._idleTimeout = msecs;
+};
+
+exports.unenroll = function(item) {
+  clearTimeout(item._idleTimeoutId);
+  item._idleTimeout = -1;
+};
+
+exports._unrefActive = exports.active = function(item) {
+  clearTimeout(item._idleTimeoutId);
+
+  var msecs = item._idleTimeout;
+  if (msecs >= 0) {
+    item._idleTimeoutId = setTimeout(function onTimeout() {
+      if (item._onTimeout)
+        item._onTimeout();
+    }, msecs);
+  }
+};
+
+// setimmediate attaches itself to the global object
+__webpack_require__(35);
+// On some exotic environments, it's not clear which object `setimmediate` was
+// able to install onto.  Search each possibility in the same order as the
+// `setimmediate` library.
+exports.setImmediate = (typeof self !== "undefined" && self.setImmediate) ||
+                       (typeof global !== "undefined" && global.setImmediate) ||
+                       (this && this.setImmediate);
+exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
+                         (typeof global !== "undefined" && global.clearImmediate) ||
+                         (this && this.clearImmediate);
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+
+/***/ }),
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15305,11 +14642,11 @@ RouterTransport.addTransport("FinsembleTransport", RouterTransportImplementation
 */
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const routerTransport_1 = __webpack_require__(27);
+const routerTransport_1 = __webpack_require__(28);
 const Utils = __webpack_require__(8);
-const configUtil_1 = __webpack_require__(11);
+const configUtil_1 = __webpack_require__(12);
 const validate_1 = __webpack_require__(6); // Finsemble args validator
-const userNotification_1 = __webpack_require__(20);
+const userNotification_1 = __webpack_require__(22);
 const system_1 = __webpack_require__(3);
 const logger_1 = __webpack_require__(0);
 var queue = []; // should never be used, but message sent before router ready will be queue
@@ -15337,7 +14674,7 @@ Globals.FSBLData.RouterClients = Globals.FSBLData.RouterClients || {};
  * @hideconstructor
  * @publishedName RouterClient
  * @param {string} clientName router base client name for human readable messages (window name is concatenated to baseClientName)
- * @param {string=} transportName router transport name, currently either "SharedWorker" or "OpenFinBus" (usually this is auto-configured internally but can be selected for testing or special configurations)
+ * @param {string=} transportName router transport name, currently either "SharedWorker" or "IPCBus" (usually this is auto-configured internally but can be selected for testing or special configurations)
  */
 // un-comment for optimization.
 // console.time("FinMainStartup");
@@ -15549,8 +14886,8 @@ exports.RouterClientConstructor = function (params) {
         //This is the only place we need to wait for desktop.main
         system_1.System.ready(function () {
             var finWindow = system_1.System.Window.getCurrent();
-            Logger.system.debug(`WINDOW LIFECYCLE:STARTUP: fin.main invoked in ${finWindow.name}`);
-            console.debug(`WINDOW LIFECYCLE:STARTUP: fin.main invoked in ${finWindow.name}`);
+            Logger.system.debug(`WINDOW LIFECYCLE:STARTUP: System.ready invoked in ${finWindow.name}`);
+            console.debug(`WINDOW LIFECYCLE:STARTUP: System.ready invoked in ${finWindow.name}`);
             self.startupTime = performance.now();
             // un-comment for optimization.
             // console.timeEnd("FinMainStartup");
@@ -15588,14 +14925,13 @@ exports.RouterClientConstructor = function (params) {
         var isFinished = false;
         var handshakeFailedCount = 0;
         var finConfig = manifest.finsemble;
-        var isElectron = fin && fin.container == "Electron";
         var routerParams = {
             FinsembleUUID: finConfig.FinsembleUUID,
             applicationRoot: finConfig.applicationRoot,
             routerDomainRoot: finConfig.moduleRoot,
             forceWindowTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.forceWindowTransport", {}),
             sameDomainTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.sameDomainTransport", "SharedWorker"),
-            crossDomainTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.crossDomainTransport", "OpenFinBus"),
+            crossDomainTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.crossDomainTransport", "IPCBus"),
             transportSettings: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.transportSettings", {}),
             IAC: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.IAC", {})
         };
@@ -16436,8 +15772,9 @@ exports.RouterClientConstructor = function (params) {
      *
      * @example
      *
-     * var subscribeId = RouterClient.subscribe("topicABC", function(err,notify) {
-     *		if (!err) {
+     * var subscriptionDetails = RouterClient.subscribe("topicABC", function(err, notify) {
+     *		if (err) { console.log(err); }
+     *		if (notify) {
      *			var notificationStateData = notify.data;
      *			// do something with notify data
      *  	}
@@ -16480,6 +15817,13 @@ exports.RouterClientConstructor = function (params) {
      * @example
      *
      * FSBL.Clients.RouterClient.unsubscribe(subscribeId);
+     * //Subscription details returned by RouterClient.subscribe(), which take the form:
+     * let subscriptionDetails = {
+     * 	subscribeID: "<subscribeID returned by RouterClient.subscribe>",
+     * 	topic: "topicABC"
+     * };
+     * FSBL.Clients.RouterClient.unsubscribe(subscriptionDetails);
+     *
      *
      */
     this.unsubscribe = function (subscribeIDStruct) {
@@ -16563,7 +15907,1027 @@ exports.RouterClientConstructor = function (params) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 29 */
+/* 31 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ALL_BOOT_STAGES = ["microkernel", "kernel", "authentication", "preuser", "earlyuser", "user"];
+/**
+ * Boot config element used to build a node in a dependency tree
+ */
+class BootConfigElement {
+}
+exports.BootConfigElement = BootConfigElement;
+/**
+ * Represents a ready node (i.e. all that's need to start the corresponding task/service/component)
+ */
+class BootReadyItem {
+    constructor(name, type, config) {
+        this.name = name;
+        this.type = type;
+        this.config = config;
+    }
+}
+exports.BootReadyItem = BootReadyItem;
+
+
+/***/ }),
+/* 32 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+// contains common functions -- used in multiple places in the system manager
+Object.defineProperty(exports, "__esModule", { value: true });
+const system_1 = __webpack_require__(3);
+const _constants_1 = __webpack_require__(18);
+/**
+ * Kills old applications -- used at the beginning of start
+ * @param finUUID
+ * @returns
+ */
+function killOldApplications(finUUID) {
+    const promiseResolver = async (resolve) => {
+        system_1.System.getAllApplications(async (applications) => {
+            if (applications) {
+                for (let i = 0; i < applications.length; i++) {
+                    let a = applications[i];
+                    if (a.uuid.endsWith("-" + finUUID)) {
+                        let application = system_1.System.Application.wrap(a.uuid);
+                        await system_1.System.closeApplication(application);
+                    }
+                }
+            }
+            console.log("killOldApplications: finished closing old apps");
+            resolve();
+        });
+    };
+    return new Promise(promiseResolver);
+}
+exports.killOldApplications = killOldApplications;
+/**
+ * Function to return the name of a startup status channel, given the window name
+ * @param name
+ * @returns
+ */
+function statusChannel(name) {
+    return `${_constants_1.STATUS_CHANNEL_BASE}.${name}`;
+}
+exports.statusChannel = statusChannel;
+/**
+ * Function to return the name of a checkpoint status channel, given the parent name (e.g. service name, component name) and the checkpoint name
+ * @param parentName
+ * @param checkpointName
+ * @returns
+ */
+function checkpointChannel(parentName, checkpointName) {
+    return `${_constants_1.CHECKPOINT_CHANNEL_BASE}.${parentName}.${checkpointName}`;
+}
+exports.checkpointChannel = checkpointChannel;
+
+
+/***/ }),
+/* 33 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {/**
+ * lodash (Custom Build) <https://lodash.com/>
+ * Build: `lodash modularize exports="npm" -o ./`
+ * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+ * Released under MIT license <https://lodash.com/license>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ */
+
+/** Used as the `TypeError` message for "Functions" methods. */
+var FUNC_ERROR_TEXT = 'Expected a function';
+
+/** Used to stand-in for `undefined` hash values. */
+var HASH_UNDEFINED = '__lodash_hash_undefined__';
+
+/** Used as references for various `Number` constants. */
+var INFINITY = 1 / 0;
+
+/** `Object#toString` result references. */
+var funcTag = '[object Function]',
+    genTag = '[object GeneratorFunction]',
+    symbolTag = '[object Symbol]';
+
+/** Used to match property names within property paths. */
+var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\\]|\\.)*?\1)\]/,
+    reIsPlainProp = /^\w*$/,
+    reLeadingDot = /^\./,
+    rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|$))/g;
+
+/**
+ * Used to match `RegExp`
+ * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
+ */
+var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
+
+/** Used to match backslashes in property paths. */
+var reEscapeChar = /\\(\\)?/g;
+
+/** Used to detect host constructors (Safari). */
+var reIsHostCtor = /^\[object .+?Constructor\]$/;
+
+/** Detect free variable `global` from Node.js. */
+var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
+
+/** Detect free variable `self`. */
+var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+
+/** Used as a reference to the global object. */
+var root = freeGlobal || freeSelf || Function('return this')();
+
+/**
+ * Gets the value at `key` of `object`.
+ *
+ * @private
+ * @param {Object} [object] The object to query.
+ * @param {string} key The key of the property to get.
+ * @returns {*} Returns the property value.
+ */
+function getValue(object, key) {
+  return object == null ? undefined : object[key];
+}
+
+/**
+ * Checks if `value` is a host object in IE < 9.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
+ */
+function isHostObject(value) {
+  // Many host objects are `Object` objects that can coerce to strings
+  // despite having improperly defined `toString` methods.
+  var result = false;
+  if (value != null && typeof value.toString != 'function') {
+    try {
+      result = !!(value + '');
+    } catch (e) {}
+  }
+  return result;
+}
+
+/** Used for built-in method references. */
+var arrayProto = Array.prototype,
+    funcProto = Function.prototype,
+    objectProto = Object.prototype;
+
+/** Used to detect overreaching core-js shims. */
+var coreJsData = root['__core-js_shared__'];
+
+/** Used to detect methods masquerading as native. */
+var maskSrcKey = (function() {
+  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
+  return uid ? ('Symbol(src)_1.' + uid) : '';
+}());
+
+/** Used to resolve the decompiled source of functions. */
+var funcToString = funcProto.toString;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Used to resolve the
+ * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var objectToString = objectProto.toString;
+
+/** Used to detect if a method is native. */
+var reIsNative = RegExp('^' +
+  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
+  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
+);
+
+/** Built-in value references. */
+var Symbol = root.Symbol,
+    splice = arrayProto.splice;
+
+/* Built-in method references that are verified to be native. */
+var Map = getNative(root, 'Map'),
+    nativeCreate = getNative(Object, 'create');
+
+/** Used to convert symbols to primitives and strings. */
+var symbolProto = Symbol ? Symbol.prototype : undefined,
+    symbolToString = symbolProto ? symbolProto.toString : undefined;
+
+/**
+ * Creates a hash object.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function Hash(entries) {
+  var index = -1,
+      length = entries ? entries.length : 0;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+/**
+ * Removes all key-value entries from the hash.
+ *
+ * @private
+ * @name clear
+ * @memberOf Hash
+ */
+function hashClear() {
+  this.__data__ = nativeCreate ? nativeCreate(null) : {};
+}
+
+/**
+ * Removes `key` and its value from the hash.
+ *
+ * @private
+ * @name delete
+ * @memberOf Hash
+ * @param {Object} hash The hash to modify.
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function hashDelete(key) {
+  return this.has(key) && delete this.__data__[key];
+}
+
+/**
+ * Gets the hash value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf Hash
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function hashGet(key) {
+  var data = this.__data__;
+  if (nativeCreate) {
+    var result = data[key];
+    return result === HASH_UNDEFINED ? undefined : result;
+  }
+  return hasOwnProperty.call(data, key) ? data[key] : undefined;
+}
+
+/**
+ * Checks if a hash value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf Hash
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function hashHas(key) {
+  var data = this.__data__;
+  return nativeCreate ? data[key] !== undefined : hasOwnProperty.call(data, key);
+}
+
+/**
+ * Sets the hash `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf Hash
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the hash instance.
+ */
+function hashSet(key, value) {
+  var data = this.__data__;
+  data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
+  return this;
+}
+
+// Add methods to `Hash`.
+Hash.prototype.clear = hashClear;
+Hash.prototype['delete'] = hashDelete;
+Hash.prototype.get = hashGet;
+Hash.prototype.has = hashHas;
+Hash.prototype.set = hashSet;
+
+/**
+ * Creates an list cache object.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function ListCache(entries) {
+  var index = -1,
+      length = entries ? entries.length : 0;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+/**
+ * Removes all key-value entries from the list cache.
+ *
+ * @private
+ * @name clear
+ * @memberOf ListCache
+ */
+function listCacheClear() {
+  this.__data__ = [];
+}
+
+/**
+ * Removes `key` and its value from the list cache.
+ *
+ * @private
+ * @name delete
+ * @memberOf ListCache
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function listCacheDelete(key) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  if (index < 0) {
+    return false;
+  }
+  var lastIndex = data.length - 1;
+  if (index == lastIndex) {
+    data.pop();
+  } else {
+    splice.call(data, index, 1);
+  }
+  return true;
+}
+
+/**
+ * Gets the list cache value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf ListCache
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function listCacheGet(key) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  return index < 0 ? undefined : data[index][1];
+}
+
+/**
+ * Checks if a list cache value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf ListCache
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function listCacheHas(key) {
+  return assocIndexOf(this.__data__, key) > -1;
+}
+
+/**
+ * Sets the list cache `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf ListCache
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the list cache instance.
+ */
+function listCacheSet(key, value) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  if (index < 0) {
+    data.push([key, value]);
+  } else {
+    data[index][1] = value;
+  }
+  return this;
+}
+
+// Add methods to `ListCache`.
+ListCache.prototype.clear = listCacheClear;
+ListCache.prototype['delete'] = listCacheDelete;
+ListCache.prototype.get = listCacheGet;
+ListCache.prototype.has = listCacheHas;
+ListCache.prototype.set = listCacheSet;
+
+/**
+ * Creates a map cache object to store key-value pairs.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function MapCache(entries) {
+  var index = -1,
+      length = entries ? entries.length : 0;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+/**
+ * Removes all key-value entries from the map.
+ *
+ * @private
+ * @name clear
+ * @memberOf MapCache
+ */
+function mapCacheClear() {
+  this.__data__ = {
+    'hash': new Hash,
+    'map': new (Map || ListCache),
+    'string': new Hash
+  };
+}
+
+/**
+ * Removes `key` and its value from the map.
+ *
+ * @private
+ * @name delete
+ * @memberOf MapCache
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function mapCacheDelete(key) {
+  return getMapData(this, key)['delete'](key);
+}
+
+/**
+ * Gets the map value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf MapCache
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function mapCacheGet(key) {
+  return getMapData(this, key).get(key);
+}
+
+/**
+ * Checks if a map value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf MapCache
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function mapCacheHas(key) {
+  return getMapData(this, key).has(key);
+}
+
+/**
+ * Sets the map `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf MapCache
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the map cache instance.
+ */
+function mapCacheSet(key, value) {
+  getMapData(this, key).set(key, value);
+  return this;
+}
+
+// Add methods to `MapCache`.
+MapCache.prototype.clear = mapCacheClear;
+MapCache.prototype['delete'] = mapCacheDelete;
+MapCache.prototype.get = mapCacheGet;
+MapCache.prototype.has = mapCacheHas;
+MapCache.prototype.set = mapCacheSet;
+
+/**
+ * Gets the index at which the `key` is found in `array` of key-value pairs.
+ *
+ * @private
+ * @param {Array} array The array to inspect.
+ * @param {*} key The key to search for.
+ * @returns {number} Returns the index of the matched value, else `-1`.
+ */
+function assocIndexOf(array, key) {
+  var length = array.length;
+  while (length--) {
+    if (eq(array[length][0], key)) {
+      return length;
+    }
+  }
+  return -1;
+}
+
+/**
+ * The base implementation of `_.get` without support for default values.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {Array|string} path The path of the property to get.
+ * @returns {*} Returns the resolved value.
+ */
+function baseGet(object, path) {
+  path = isKey(path, object) ? [path] : castPath(path);
+
+  var index = 0,
+      length = path.length;
+
+  while (object != null && index < length) {
+    object = object[toKey(path[index++])];
+  }
+  return (index && index == length) ? object : undefined;
+}
+
+/**
+ * The base implementation of `_.isNative` without bad shim checks.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a native function,
+ *  else `false`.
+ */
+function baseIsNative(value) {
+  if (!isObject(value) || isMasked(value)) {
+    return false;
+  }
+  var pattern = (isFunction(value) || isHostObject(value)) ? reIsNative : reIsHostCtor;
+  return pattern.test(toSource(value));
+}
+
+/**
+ * The base implementation of `_.toString` which doesn't convert nullish
+ * values to empty strings.
+ *
+ * @private
+ * @param {*} value The value to process.
+ * @returns {string} Returns the string.
+ */
+function baseToString(value) {
+  // Exit early for strings to avoid a performance hit in some environments.
+  if (typeof value == 'string') {
+    return value;
+  }
+  if (isSymbol(value)) {
+    return symbolToString ? symbolToString.call(value) : '';
+  }
+  var result = (value + '');
+  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+}
+
+/**
+ * Casts `value` to a path array if it's not one.
+ *
+ * @private
+ * @param {*} value The value to inspect.
+ * @returns {Array} Returns the cast property path array.
+ */
+function castPath(value) {
+  return isArray(value) ? value : stringToPath(value);
+}
+
+/**
+ * Gets the data for `map`.
+ *
+ * @private
+ * @param {Object} map The map to query.
+ * @param {string} key The reference key.
+ * @returns {*} Returns the map data.
+ */
+function getMapData(map, key) {
+  var data = map.__data__;
+  return isKeyable(key)
+    ? data[typeof key == 'string' ? 'string' : 'hash']
+    : data.map;
+}
+
+/**
+ * Gets the native function at `key` of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {string} key The key of the method to get.
+ * @returns {*} Returns the function if it's native, else `undefined`.
+ */
+function getNative(object, key) {
+  var value = getValue(object, key);
+  return baseIsNative(value) ? value : undefined;
+}
+
+/**
+ * Checks if `value` is a property name and not a property path.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @param {Object} [object] The object to query keys on.
+ * @returns {boolean} Returns `true` if `value` is a property name, else `false`.
+ */
+function isKey(value, object) {
+  if (isArray(value)) {
+    return false;
+  }
+  var type = typeof value;
+  if (type == 'number' || type == 'symbol' || type == 'boolean' ||
+      value == null || isSymbol(value)) {
+    return true;
+  }
+  return reIsPlainProp.test(value) || !reIsDeepProp.test(value) ||
+    (object != null && value in Object(object));
+}
+
+/**
+ * Checks if `value` is suitable for use as unique object key.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is suitable, else `false`.
+ */
+function isKeyable(value) {
+  var type = typeof value;
+  return (type == 'string' || type == 'number' || type == 'symbol' || type == 'boolean')
+    ? (value !== '__proto__')
+    : (value === null);
+}
+
+/**
+ * Checks if `func` has its source masked.
+ *
+ * @private
+ * @param {Function} func The function to check.
+ * @returns {boolean} Returns `true` if `func` is masked, else `false`.
+ */
+function isMasked(func) {
+  return !!maskSrcKey && (maskSrcKey in func);
+}
+
+/**
+ * Converts `string` to a property path array.
+ *
+ * @private
+ * @param {string} string The string to convert.
+ * @returns {Array} Returns the property path array.
+ */
+var stringToPath = memoize(function(string) {
+  string = toString(string);
+
+  var result = [];
+  if (reLeadingDot.test(string)) {
+    result.push('');
+  }
+  string.replace(rePropName, function(match, number, quote, string) {
+    result.push(quote ? string.replace(reEscapeChar, '$1') : (number || match));
+  });
+  return result;
+});
+
+/**
+ * Converts `value` to a string key if it's not a string or symbol.
+ *
+ * @private
+ * @param {*} value The value to inspect.
+ * @returns {string|symbol} Returns the key.
+ */
+function toKey(value) {
+  if (typeof value == 'string' || isSymbol(value)) {
+    return value;
+  }
+  var result = (value + '');
+  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+}
+
+/**
+ * Converts `func` to its source code.
+ *
+ * @private
+ * @param {Function} func The function to process.
+ * @returns {string} Returns the source code.
+ */
+function toSource(func) {
+  if (func != null) {
+    try {
+      return funcToString.call(func);
+    } catch (e) {}
+    try {
+      return (func + '');
+    } catch (e) {}
+  }
+  return '';
+}
+
+/**
+ * Creates a function that memoizes the result of `func`. If `resolver` is
+ * provided, it determines the cache key for storing the result based on the
+ * arguments provided to the memoized function. By default, the first argument
+ * provided to the memoized function is used as the map cache key. The `func`
+ * is invoked with the `this` binding of the memoized function.
+ *
+ * **Note:** The cache is exposed as the `cache` property on the memoized
+ * function. Its creation may be customized by replacing the `_.memoize.Cache`
+ * constructor with one whose instances implement the
+ * [`Map`](http://ecma-international.org/ecma-262/7.0/#sec-properties-of-the-map-prototype-object)
+ * method interface of `delete`, `get`, `has`, and `set`.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Function
+ * @param {Function} func The function to have its output memoized.
+ * @param {Function} [resolver] The function to resolve the cache key.
+ * @returns {Function} Returns the new memoized function.
+ * @example
+ *
+ * var object = { 'a': 1, 'b': 2 };
+ * var other = { 'c': 3, 'd': 4 };
+ *
+ * var values = _.memoize(_.values);
+ * values(object);
+ * // => [1, 2]
+ *
+ * values(other);
+ * // => [3, 4]
+ *
+ * object.a = 2;
+ * values(object);
+ * // => [1, 2]
+ *
+ * // Modify the result cache.
+ * values.cache.set(object, ['a', 'b']);
+ * values(object);
+ * // => ['a', 'b']
+ *
+ * // Replace `_.memoize.Cache`.
+ * _.memoize.Cache = WeakMap;
+ */
+function memoize(func, resolver) {
+  if (typeof func != 'function' || (resolver && typeof resolver != 'function')) {
+    throw new TypeError(FUNC_ERROR_TEXT);
+  }
+  var memoized = function() {
+    var args = arguments,
+        key = resolver ? resolver.apply(this, args) : args[0],
+        cache = memoized.cache;
+
+    if (cache.has(key)) {
+      return cache.get(key);
+    }
+    var result = func.apply(this, args);
+    memoized.cache = cache.set(key, result);
+    return result;
+  };
+  memoized.cache = new (memoize.Cache || MapCache);
+  return memoized;
+}
+
+// Assign cache to `_.memoize`.
+memoize.Cache = MapCache;
+
+/**
+ * Performs a
+ * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+ * comparison between two values to determine if they are equivalent.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to compare.
+ * @param {*} other The other value to compare.
+ * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+ * @example
+ *
+ * var object = { 'a': 1 };
+ * var other = { 'a': 1 };
+ *
+ * _.eq(object, object);
+ * // => true
+ *
+ * _.eq(object, other);
+ * // => false
+ *
+ * _.eq('a', 'a');
+ * // => true
+ *
+ * _.eq('a', Object('a'));
+ * // => false
+ *
+ * _.eq(NaN, NaN);
+ * // => true
+ */
+function eq(value, other) {
+  return value === other || (value !== value && other !== other);
+}
+
+/**
+ * Checks if `value` is classified as an `Array` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an array, else `false`.
+ * @example
+ *
+ * _.isArray([1, 2, 3]);
+ * // => true
+ *
+ * _.isArray(document.body.children);
+ * // => false
+ *
+ * _.isArray('abc');
+ * // => false
+ *
+ * _.isArray(_.noop);
+ * // => false
+ */
+var isArray = Array.isArray;
+
+/**
+ * Checks if `value` is classified as a `Function` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a function, else `false`.
+ * @example
+ *
+ * _.isFunction(_);
+ * // => true
+ *
+ * _.isFunction(/abc/);
+ * // => false
+ */
+function isFunction(value) {
+  // The use of `Object#toString` avoids issues with the `typeof` operator
+  // in Safari 8-9 which returns 'object' for typed array and other constructors.
+  var tag = isObject(value) ? objectToString.call(value) : '';
+  return tag == funcTag || tag == genTag;
+}
+
+/**
+ * Checks if `value` is the
+ * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+ * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+ * @example
+ *
+ * _.isObject({});
+ * // => true
+ *
+ * _.isObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isObject(_.noop);
+ * // => true
+ *
+ * _.isObject(null);
+ * // => false
+ */
+function isObject(value) {
+  var type = typeof value;
+  return !!value && (type == 'object' || type == 'function');
+}
+
+/**
+ * Checks if `value` is object-like. A value is object-like if it's not `null`
+ * and has a `typeof` result of "object".
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+ * @example
+ *
+ * _.isObjectLike({});
+ * // => true
+ *
+ * _.isObjectLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isObjectLike(_.noop);
+ * // => false
+ *
+ * _.isObjectLike(null);
+ * // => false
+ */
+function isObjectLike(value) {
+  return !!value && typeof value == 'object';
+}
+
+/**
+ * Checks if `value` is classified as a `Symbol` primitive or object.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+ * @example
+ *
+ * _.isSymbol(Symbol.iterator);
+ * // => true
+ *
+ * _.isSymbol('abc');
+ * // => false
+ */
+function isSymbol(value) {
+  return typeof value == 'symbol' ||
+    (isObjectLike(value) && objectToString.call(value) == symbolTag);
+}
+
+/**
+ * Converts `value` to a string. An empty string is returned for `null`
+ * and `undefined` values. The sign of `-0` is preserved.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to process.
+ * @returns {string} Returns the string.
+ * @example
+ *
+ * _.toString(null);
+ * // => ''
+ *
+ * _.toString(-0);
+ * // => '-0'
+ *
+ * _.toString([1, 2, 3]);
+ * // => '1,2,3'
+ */
+function toString(value) {
+  return value == null ? '' : baseToString(value);
+}
+
+/**
+ * Gets the value at `path` of `object`. If the resolved value is
+ * `undefined`, the `defaultValue` is returned in its place.
+ *
+ * @static
+ * @memberOf _
+ * @since 3.7.0
+ * @category Object
+ * @param {Object} object The object to query.
+ * @param {Array|string} path The path of the property to get.
+ * @param {*} [defaultValue] The value returned for `undefined` resolved values.
+ * @returns {*} Returns the resolved value.
+ * @example
+ *
+ * var object = { 'a': [{ 'b': { 'c': 3 } }] };
+ *
+ * _.get(object, 'a[0].b.c');
+ * // => 3
+ *
+ * _.get(object, ['a', '0', 'b', 'c']);
+ * // => 3
+ *
+ * _.get(object, 'a.b.c', 'default');
+ * // => 'default'
+ */
+function get(object, path, defaultValue) {
+  var result = object == null ? undefined : baseGet(object, path);
+  return result === undefined ? defaultValue : result;
+}
+
+module.exports = get;
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+
+/***/ }),
+/* 34 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -16620,7 +16984,7 @@ var SystemSettings = function () {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 30 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
@@ -16813,77 +17177,7 @@ var SystemSettings = function () {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(1)))
 
 /***/ }),
-/* 31 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {var scope = (typeof global !== "undefined" && global) ||
-            (typeof self !== "undefined" && self) ||
-            window;
-var apply = Function.prototype.apply;
-
-// DOM APIs, for completeness
-
-exports.setTimeout = function() {
-  return new Timeout(apply.call(setTimeout, scope, arguments), clearTimeout);
-};
-exports.setInterval = function() {
-  return new Timeout(apply.call(setInterval, scope, arguments), clearInterval);
-};
-exports.clearTimeout =
-exports.clearInterval = function(timeout) {
-  if (timeout) {
-    timeout.close();
-  }
-};
-
-function Timeout(id, clearFn) {
-  this._id = id;
-  this._clearFn = clearFn;
-}
-Timeout.prototype.unref = Timeout.prototype.ref = function() {};
-Timeout.prototype.close = function() {
-  this._clearFn.call(scope, this._id);
-};
-
-// Does not start the time, just sets up the members needed.
-exports.enroll = function(item, msecs) {
-  clearTimeout(item._idleTimeoutId);
-  item._idleTimeout = msecs;
-};
-
-exports.unenroll = function(item) {
-  clearTimeout(item._idleTimeoutId);
-  item._idleTimeout = -1;
-};
-
-exports._unrefActive = exports.active = function(item) {
-  clearTimeout(item._idleTimeoutId);
-
-  var msecs = item._idleTimeout;
-  if (msecs >= 0) {
-    item._idleTimeoutId = setTimeout(function onTimeout() {
-      if (item._onTimeout)
-        item._onTimeout();
-    }, msecs);
-  }
-};
-
-// setimmediate attaches itself to the global object
-__webpack_require__(30);
-// On some exotic environments, it's not clear which object `setimmediate` was
-// able to install onto.  Search each possibility in the same order as the
-// `setimmediate` library.
-exports.setImmediate = (typeof self !== "undefined" && self.setImmediate) ||
-                       (typeof global !== "undefined" && global.setImmediate) ||
-                       (this && this.setImmediate);
-exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
-                         (typeof global !== "undefined" && global.clearImmediate) ||
-                         (this && this.clearImmediate);
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
-
-/***/ }),
-/* 32 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16893,13 +17187,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
-const dependencyManager_1 = __webpack_require__(14);
+const dependencyManager_1 = __webpack_require__(17);
 const routerClientInstance_1 = __webpack_require__(5);
 const logger_1 = __webpack_require__(0);
-const async_1 = __webpack_require__(9);
+const systemManagerClient_1 = __webpack_require__(7);
 const system_1 = __webpack_require__(3);
-const Constants = __webpack_require__(10);
-const { SERVICE_INITIALIZING_CHANNEL, SERVICE_READY_CHANNEL, SERVICE_CLOSING_CHANNEL, SERVICE_CLOSED_CHANNEL, SERVICE_STOP_CHANNEL } = Constants;
+const Constants = __webpack_require__(11);
+const async_1 = __webpack_require__(9);
+const { SERVICE_INITIALIZING_CHANNEL, SERVICE_READY_CHANNEL, SERVICE_QUERY_READY_CHANNEL, SERVICE_CLOSING_CHANNEL, SERVICE_CLOSED_CHANNEL, SERVICE_STOP_CHANNEL } = Constants;
 const defaultBaseServiceParams = {
     startupDependencies: {
         services: [],
@@ -16911,11 +17206,14 @@ const defaultBaseServiceParams = {
     addOFWrapper: false,
     name: window.name
 };
-/*
+/**
  * @introduction
  * <h2>Base Service</h2>
- * Creates an instance of the Base Service which all service must inherit. Services are spawned from your *service.json* file and managed by a helper thread - the **Service Manager**.
- * Services communicate their status and receive status of other service through the Service Manager.
+ *
+ * The Base Service is available with any of Finsemble's advanced packages.
+ *
+ * Creates an instance of the Base Service which all service must inherit. Services are spawned from your <i>service.json</i> file and managed by a helper thread - the <b>Service Manager</b>.
+ * Services communicate their status and receive status of other services through the Service Manager.
  * Services have an initial handshake with the Service Manager on load, and then either go online or wait for dependant services to come online.
  * Service initialization is completely asynchronous, which allows all services to load at the same time, as long as their dependencies have been met.
  * @constructor
@@ -16928,8 +17226,6 @@ class BaseService {
         this.shutdownDependencies = params.shutdownDependencies;
         this.Logger = logger_1.default;
         this.RouterClient = routerClientInstance_1.default;
-        //This will be set to true after the debugServiceDelay is met. Defaults to 0, but developers can up it if they need to jump in and add breakpoints and are on a bad computer.
-        this.waitedLongEnough = false;
         //this.parentUuid = System.Application.getCurrent().uuid;
         this.onBaseServiceReadyCB = null;
         this.setOnConnectionCompleteCB = null;
@@ -16952,6 +17248,7 @@ class BaseService {
     * @private
     */
     waitForDependencies() {
+        var self = this;
         //For backwards compat. note Start used to be invoked after the constructor.
         //note do this later
         if (this.started)
@@ -16969,19 +17266,43 @@ class BaseService {
         }
         function onRouterReady(done) {
             routerClientInstance_1.default.onReady(function () {
+                // Here is the responder to allow each client to handshake with its service to make sure its ready
+                routerClientInstance_1.default.addResponder(SERVICE_QUERY_READY_CHANNEL(self.name), (err, message) => {
+                    if (self.status = "ready") {
+                        message.sendQueryResponse(null);
+                    }
+                    else {
+                        message.sendQueryResponse("service not ready");
+                    }
+                });
                 routerClientInstance_1.default.transmit(SERVICE_INITIALIZING_CHANNEL, { name: service.name });
                 window.addEventListener("beforeunload", service.RouterClient.disconnectAll);
                 logger_1.default.system.debug("APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start.onRouterReady");
                 done();
             });
         }
+        // supports option to delay the debug based on service config's debugServiceDelay value (passed in through custom data).
+        function debugDelay(done) {
+            const debugServiceDelay = service.customData.debugServiceDelay || 0;
+            logger_1.default.system.debug(`Custom Data: ${service.name} custom data`, service.customData);
+            if (!Number.isInteger(debugServiceDelay)) {
+                const errorMsg = `debugDelay has an illegal value ("${debugServiceDelay}") for ${service.name}. Value must be an integer.`;
+                logger_1.default.system.error(`APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start: ${errorMsg}`);
+                systemManagerClient_1.default.systemLog({ error: true }, errorMsg);
+            }
+            else if (debugServiceDelay > 0) {
+                logger_1.default.system.debug(`APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start.debugDelay: ${service.name} startup will delayed by ${debugServiceDelay} milliseconds for debugging`);
+            }
+            // invoke done() after optional debug delay
+            setTimeout(done, debugServiceDelay);
+        }
         function readyToGo(done) {
-            logger_1.default.system.debug("APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start.readyToGo");
+            logger_1.default.system.debug(`APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start.readyToGo ${service.name}`);
             console.log(performance.now(), "ReadyToGo called");
             console.log("Startup Dependencies for", service.name, service.startupDependencies);
             console.log("Shutdown Dependencies for", service.name, service.shutdownDependencies);
-            service.waitedLongEnough = true;
             dependencyManager_1.FSBLDependencyManagerSingleton.shutdown.waitFor(service.shutdownDependencies, service.handleShutdown);
+            logger_1.default.system.debug(`APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start.readyToGo after wait ${service.name}`);
             routerClientInstance_1.default.transmit(`${system_1.System.Window.getCurrent().name}.onSpawned`, {});
             //`done` invoked when all dependencies are up
             let dependency = dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor(service.startupDependencies, done);
@@ -17006,6 +17327,7 @@ class BaseService {
                 onRouterReady,
                 cacheCustomData,
                 showDeveloperTools,
+                debugDelay,
                 readyToGo
             ], () => {
                 resolve();
@@ -17019,13 +17341,14 @@ class BaseService {
     setOnline() {
         if (this.status !== "ready") {
             console.log("Setting service online", this.name);
-            logger_1.default.system.log("APPLICATION LIFECYCLE:STARTUP:SERVICE ONLINE", this.name);
-            routerClientInstance_1.default.transmit(SERVICE_READY_CHANNEL, { serviceName: this.name }); // notify service manager
             this.RouterClient.addListener(SERVICE_STOP_CHANNEL + "." + this.name, (err, response) => {
                 this;
                 dependencyManager_1.FSBLDependencyManagerSingleton.shutdown.checkDependencies();
             });
             this.status = "ready";
+            routerClientInstance_1.default.transmit(SERVICE_READY_CHANNEL, { serviceName: this.name }); // notify service manager
+            logger_1.default.system.log("APPLICATION LIFECYCLE:STARTUP:SERVICE ONLINE", this.name);
+            systemManagerClient_1.default.publishBootStatus(this.name, "services", "completed");
         }
     }
     /**
@@ -17054,6 +17377,11 @@ class BaseService {
             }
         });
     }
+    /**
+     * Conduct operations when the base service becomes ready.
+     *
+     * @param {function} func Any function of code desired to execute when ready.
+     */
     onBaseServiceReady(func) {
         if (this.status === "initializing") {
             //onBaseServiceReady is backwards-compatibility stuff.
@@ -17067,7 +17395,7 @@ class BaseService {
     }
     /**
      * Really only for shutdown right now. Simple array that gets looped through on shutdown.
-     * @param {string} listenerType
+     * @param {string} listenerType Any event identifier the service provides to operate with.
      * @param {function} callback The callback to be invoked after the method completes successfully.
      */
     addEventListener(listenerType, callback) {
@@ -17088,6 +17416,7 @@ class BaseService {
      * @private
     */
     handleShutdown(err, message) {
+        logger_1.default.system.debug("BaseService.handleShutdown");
         var self = this;
         function handleShutdownAction(handler, done) {
             let cleanup = async_1.asyncify(handler);
@@ -17167,14 +17496,14 @@ function fixParams(params) {
 
 
 /***/ }),
-/* 33 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const baseClient_1 = __webpack_require__(7);
-const StoreModel_1 = __webpack_require__(43);
+const baseClient_1 = __webpack_require__(10);
+const StoreModel_1 = __webpack_require__(47);
 /** I'm not sure why we previously deferred requiring StoreModel, but we did.
   * I've tried to stay as true to the original implementation as possible. -- Daniel 12/19/18 */
 let _StoreModel;
@@ -17203,7 +17532,7 @@ function removeGlobalStore(params, cb) {
 /**
  *
  * @introduction
- * <h2>Distributed Store Client</h2>
+ * <h2>Distributed Store Client (Finsemble Flow)</h2>
  * The Distributed Store Client handles creating, retrieving, and destroying stores. Stores are used to save and retrieve data either locally or globally.
  * This data is not persisted. You can add listeners at multiple levels (store or field), and get the updated data as it's updated in the store.
  * Fields are stored within the store as key/value pair. For more information, see the <a href="tutorial-DistributedStore.html">Distributed Store tutorial</a>.
@@ -17225,9 +17554,11 @@ class DistributedStoreClient extends baseClient_1._BaseClient {
         this.ls = localStore;
     }
     /**
-     * Get a store. If no store is set, you will get the global Finsemble store. If global is not set, Finsemble will check local first then check global.
+     * Retrieve a store if it exists in the local scope, otherwise from the global scope.
+     *
+     * @param {object} params
      * @param {String} params.store The name of the store.
-     * @param {boolean} params.global Whether a store is accessible outside of the component it's created in.
+     * @param {boolean} params.global Get the store only from the global scope.
      * @param {function} cb -  Will return the value if found.
      * @returns {StoreModel} - returns the store
      * @example
@@ -17313,9 +17644,7 @@ class DistributedStoreClient extends baseClient_1._BaseClient {
 }
 ;
 var storeClient = new DistributedStoreClient({
-    startupDependencies: {
-        services: ["dataStoreService"]
-    },
+    startupDependencies: {},
     onReady: function (cb) {
         _StoreModel = StoreModel_1.default;
         storeClient.load(cb);
@@ -17327,7 +17656,7 @@ exports.default = storeClient;
 
 
 /***/ }),
-/* 34 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {var __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -34444,10 +34773,10 @@ exports.default = storeClient;
   }
 }.call(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(13)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(14)(module)))
 
 /***/ }),
-/* 35 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -34455,15 +34784,15 @@ exports.default = storeClient;
 Object.defineProperty(exports, "__esModule", { value: true });
 const routerClientInstance_1 = __webpack_require__(5);
 const logger_1 = __webpack_require__(0);
-const distributedStoreClient_1 = __webpack_require__(33);
-const storageClient_1 = __webpack_require__(21);
+const distributedStoreClient_1 = __webpack_require__(37);
+const storageClient_1 = __webpack_require__(25);
 const util = __webpack_require__(8);
-const WindowEventManager_1 = __webpack_require__(48);
-const constants = __webpack_require__(10);
-const FinsembleEvent_1 = __webpack_require__(47);
+const WindowEventManager_1 = __webpack_require__(54);
+const constants = __webpack_require__(11);
+const FinsembleEvent_1 = __webpack_require__(53);
 const system_1 = __webpack_require__(3);
 /** This import syntax helps the compiler infer the types. */
-const clone = __webpack_require__(49);
+const clone = __webpack_require__(55);
 distributedStoreClient_1.default.initialize();
 storageClient_1.default.initialize();
 const BOUNDS_SET = "bounds-set";
@@ -34528,7 +34857,7 @@ class FinsembleWindow {
     //allows backwards compatibility.
     standardizeEventName(event) {
         switch (event) {
-            //all of these should be deprecated in 3.5ish.
+            // all of these should be deprecated in 3.5ish.
             case "bounds-set":
             case "stoppedMoving":
                 return "bounds-change-end";
@@ -34620,9 +34949,6 @@ class FinsembleWindow {
     listenForBoundsSet() {
         this.eventManager.listenForRemoteEvents(["bounds-change-start", "bounds-changing", "bounds-change-end"]);
     }
-    animate(params = {}, callback = Function.prototype) {
-        this.queryWindowService("animate", params, callback);
-    }
     getWindowStore(cb) {
         if (window._FSBLCache.windowStore) {
             return cb(window._FSBLCache.windowStore);
@@ -34635,7 +34961,7 @@ class FinsembleWindow {
     doConstruction(params) {
         //TODO this is the same as wrap (eventually this should spawn)
         if (!params.setWindowType && !params.windowType) { //Default WindowType
-            params.windowType = "OpenFinWindow";
+            params.windowType = "WebWindow";
         }
         if (params.windowType) { //We need to make a specific kind of Window
             params.setWindowType = params.windowType;
@@ -34685,7 +35011,7 @@ class FinsembleWindow {
         if (!response || !response.data || typeof response.data !== "string")
             return;
         //this.windowOptions.title = response.data;
-        this.eventManager.trigger("title-changed", {
+        this.eventManager.emit("title-changed", {
             title: response.data
         });
     }
@@ -34796,9 +35122,9 @@ class FinsembleWindow {
             let wrap = null;
             if (typeof window._FSBLCache.windowAttempts[params.name] === "undefined")
                 window._FSBLCache.windowAttempts[params.name] = 0;
-            //OpenfinApplication is essentially just an openfinWindow in its own process. We can wrap it just like a window.
-            if (!params.setWindowType && !identifier.windowType || identifier.windowType === "OpenFinApplication") { //Default WindowType
-                identifier.windowType = "OpenFinWindow";
+            // WebApplication is essentially just an WebWindow in its own process. We can wrap it just like a window.
+            if (!params.setWindowType && !identifier.windowType || identifier.windowType === "WebApplication") { //Default WindowType
+                identifier.windowType = "WebWindow";
             }
             //Top level keeps important info (e.g., uuid, name, windowType).
             let paramsForWindow = Object.assign({}, identifier);
@@ -34968,6 +35294,22 @@ class FinsembleWindow {
     bringToFront(params, callback) {
         this.queryWindowService("bringToFront", params, callback);
     }
+    /**
+     * Sets the alwaysOnTop state for the window.
+     * @param params Objecting representing the new alwaysOnTop state.
+     * @param callback Callback accepting two values: a (possible) error object and the alwaysOnTop value for the window.
+     */
+    setAlwaysOnTop(params, callback) {
+        this.queryWindowService("setAlwaysOnTop", params, callback);
+    }
+    /**
+     * Returns the alwaysOnTop for the window.
+     * @param params This parameter is ignored.
+     * @param callback Callback invoked with the alwaysOnTop state for the window.
+     */
+    isAlwaysOnTop(params, callback) {
+        this.queryWindowService("isAlwaysOnTop", {}, callback);
+    }
     isShowing(params, callback) {
         this.queryWindowService("isShowing", params, callback);
     }
@@ -35006,6 +35348,9 @@ class FinsembleWindow {
             logger_1.default.system.debug("WRAP CLOSE. Public close initiated for", this.name);
             callback();
         });
+    }
+    animate(params = {}, callback = Function.prototype) {
+        this.queryWindowService("animate", params, callback);
     }
     /**
      *Register a window with docking. Use this if you don't want to use the full initialization function
@@ -35171,7 +35516,7 @@ class FinsembleWindow {
      * @param {function} cb Callback
      */
     getMonitor(cb) {
-        routerClientInstance_1.default.query("DockingService.getMonitorForWindow", { windowIdentifier: this.identifier }, (err, message) => message ? cb(message.data) : cb());
+        routerClientInstance_1.default.query("DockingService.getMonitorForWindow", { windowIdentifier: this.identifier }, (err, message) => (message ? cb(message.data) : cb()));
     }
     /**
      * Given params, will return the component state. Either the params to search for, or the entire state.
@@ -35291,9 +35636,19 @@ class FinsembleWindow {
                     else {
                         logger_1.default.system.error("FinsembleWindow.setParent error", err);
                     }
+                    /** DH 11/8/2019
+                     * There is an intrinsic race between stacks and grouping:
+                     * The stack is the group, not the children, so the parent might
+                     * not be correct before the update arrives. This publish ensures
+                     * that there is at least one publish _afer_ the parent has been set.
+                     */
+                    routerClientInstance_1.default.transmit(constants.DOCKING.REQUEST_PUBLISH, null);
                     this.settingParent = false;
-                    this.eventManager.trigger("parent-set", { parentName: this.parentWindow.name });
-                    cb(err, wrappedStackedWindow);
+                    const parentSettingDone = () => {
+                        this.removeEventListener("parent-set", parentSettingDone);
+                        cb(err, wrappedStackedWindow);
+                    };
+                    this.addEventListener("parent-set", parentSettingDone);
                 });
             });
         }
@@ -35338,7 +35693,7 @@ class FinsembleWindow {
      */
     clearParent() {
         logger_1.default.system.debug("FinsembleWindow.clearParent", this.parentWindow);
-        this.eventManager.trigger("parent-unset", {
+        this.eventManager.emit("parent-unset", {
             parentName: this.parentWindow.name
         });
         this.parentWindow = null;
@@ -35547,7 +35902,7 @@ FinsembleWindow.isStartupApplication = async function (windowName) {
     // We cannot wrap the service manager.
     // No need to do these checks if we're in a window that lives in the startup app.
     if (manifest) {
-        switch (fin.container) {
+        switch (system_1.System.container) {
             case "Electron":
                 isStartupApplication = manifest && manifest.startup_app && manifest.startup_app.name === windowName;
                 break;
@@ -35593,14 +35948,15 @@ FinsembleWindow._windowReady = function (windowName) {
     return new Promise(promiseResolver);
 };
 exports.FinsembleWindow = FinsembleWindow;
+// @TODO - Process Monitor uses finWindow.getParentApplication. We should implement that here.
 
 
 /***/ }),
-/* 36 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var rng = __webpack_require__(18);
-var bytesToUuid = __webpack_require__(17);
+var rng = __webpack_require__(20);
+var bytesToUuid = __webpack_require__(19);
 
 function v4(options, buf, offset) {
   var i = buf && offset || 0;
@@ -35631,12 +35987,12 @@ module.exports = v4;
 
 
 /***/ }),
-/* 37 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-const pTry = __webpack_require__(39);
+const pTry = __webpack_require__(43);
 
 const pLimit = concurrency => {
 	if (concurrency < 1) {
@@ -35690,7 +36046,7 @@ module.exports.default = pLimit;
 
 
 /***/ }),
-/* 38 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -36200,7 +36556,7 @@ module.exports = pick;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
-/* 39 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -36216,11 +36572,11 @@ module.exports.default = pTry;
 
 
 /***/ }),
-/* 40 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var v1 = __webpack_require__(19);
-var v4 = __webpack_require__(36);
+var v1 = __webpack_require__(21);
+var v4 = __webpack_require__(40);
 
 var uuid = v4;
 uuid.v1 = v1;
@@ -36230,7 +36586,7 @@ module.exports = uuid;
 
 
 /***/ }),
-/* 41 */
+/* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -36240,13 +36596,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
-const baseClient_1 = __webpack_require__(7);
-const windowClient_1 = __webpack_require__(44);
+const baseClient_1 = __webpack_require__(10);
+const windowClient_1 = __webpack_require__(48);
 const util = __webpack_require__(8);
 const validate_1 = __webpack_require__(6); // Finsemble args validator
 const system_1 = __webpack_require__(3);
 const logger_1 = __webpack_require__(0);
-const FinsembleWindow_1 = __webpack_require__(35);
+const FinsembleWindow_1 = __webpack_require__(39);
 /** The global `window` object. We cast it to a specific interface here to be
  * explicit about what Finsemble-related properties it may have. */
 const Globals = window;
@@ -36256,7 +36612,7 @@ const Globals = window;
  *
  * @typedef WindowIdentifier
  * @property {string} [windowName] The name of the physical HTML window, or a reference to a native window that was launched with Assimilation service
- * @property {string} [uuid] Optional uuid of a particular OpenFin application process
+ * @property {string} [uuid] Optional uuid of a particular application process
  * @property {string} [componentType] The type of component
  * @property {number|string} [monitor] The number of the monitor. Potentially used to disambiguate multiple components with the same name (for searches only)
  */
@@ -36270,22 +36626,12 @@ const Globals = window;
  * @property {string} name The name of the window (sometimes randomly assigned).
  * @property {string} componentType The type of component (from <i>components.json</i>).
  */
-/**
- *
- * A convenient assembly of native JavaScript window, `OpenFin` window and windowDescriptor.
- *
- * @typedef RawWindowResult
- * @property {WindowDescriptor} windowDescriptor The window descriptor.
- * @property {fin.desktop.Window} finWindow The `OpenFin` window.
- * @property {Window} browserWindow The native JavaScript window.
- *
- */
 // A map of related menus that is kept by handleToggle.
 var okayToOpenMenu = {};
 /**
  *
  * @introduction
- * <h2>Launcher Client</h2>
+ * <h2>Launcher Client (Finsemble Workspaces)</h2>
  *
  * The Launcher Client handles spawning windows of all kinds.
  * Finsemble provides the architecture to launch, resize, and reposition any component, whether native, modern, or third-party.
@@ -36359,14 +36705,15 @@ class LauncherClient extends baseClient_1._BaseClient {
      * **monitorRect** - The full dimensions for the monitor. <br>
      * **availableRect** - The dimensions for the available space on the monitor (less the Windows task bar). <br>
      * **unclaimedRect** - The dimensions for available monitor space less any space claimed by components (such as the Toolbar). <br>
+     * **position** - The position of the monitor, numerically from zero to X. Primary monitor is zero. <br>
+     * **whichMonitor** - Contains the string "primary" if it is the primary monitor. <br>
      *
-     * Each of these is supplemented with the following additional members:
+     * The dimensions are supplemented with the following additional members:
      *
      * **width** - The width as calculated (right - left). <br>
      * **height** - The height as calculated (bottom - top). <br>
-     * **position** - The position of the monitor, numerically from zero to X. Primary monitor is zero. <br>
-     * **whichMonitor** - Contains the string "primary" if it is the primary monitor.
      *
+     * @param {object} params
      * @param  {WindowIdentifier} params.windowIdentifier The windowIdentifier to get the monitorInfo. If undefined, then the current window.
      * @param  {number|string} params.monitor If passed then a specific monitor is identified. Valid values include:
      *
@@ -36489,22 +36836,20 @@ class LauncherClient extends baseClient_1._BaseClient {
         this.showWindow(windowIdentifier, params, onDisplayed);
     }
     /**
-     * Displays a window and relocates/resizes it according to the values contained in params.
+     * Displays a window and relocates/resizes it according to the values contained in parameters. If the specified window is in a group or tabbed, it will be unsnapped/ungrouped/untabbed from the other windows.
+     * 	 * If invoked on a tabbed window or a window in a group, the window will be removed from the tab/group.
      *
      * @param {WindowIdentifier} windowIdentifier A windowIdentifier. This is an object containing windowName and componentType. If windowName is not given, Finsemble will try to find it by componentType.
      * @param {object} params Parameters. These are the same as {@link LauncherClient#spawn} with the following exceptions:
      * @param {any} [params.monitor] Same as spawn() except that null or undefined means the window should not be moved to a different monitor.
      * @param {number | string} [params.left] Same as spawn() except that null or undefined means the window should not be moved from current horizontal location.
      * @param {number | string} [params.top] Same as spawn() except that null or undefined means the window should not be moved from current vertical location.
-     * @param {boolean} [params.spawnIfNotFound=false] If true, then spawns a new window if the requested one cannot be found.
-     * *Note, only works if the windowIdentifier contains a componentType.*
-     * @param {boolean} [params.autoFocus] If true, window will focus when first shown.
      * @param {boolean} [params.slave] Cannot be set for an existing window. Will only go into effect if the window is spawned.
      * (In other words, only use this in conjunction with spawnIfNotFound).
      * @param {Function} cb Callback to be invoked after function is completed. Callback contains an object with the following information:
-     * <b>windowIdentifier</b> - The {@link WindowIdentifier} for the new window.
-     * <b>windowDescriptor</b> - The {@link WindowDescriptor} of the new window.
-     * <b>finWindow</b> - An `OpenFin` window referencing the new window.
+     * <b>windowIdentifier</b> - The <a href="tutorial-ComponentTypesAndWindowNames.html">WindowIdentifier</a> for the new window.
+     * <b>windowDescriptor</b> - The <a href="tutorial-ComponentTypesAndWindowNames.html">WindowDescriptor</a> of the new window.
+     * <b>finWindow</b> - A <code>finWindow</code> object referencing the new window.
      * @example
      * FSBL.Clients.LauncherClient.showWindow({windowName: "Welcome Component-86-3416-Finsemble", componentType: "Welcome Component"}, {spawnIfNotFound: true});
      */
@@ -36546,7 +36891,7 @@ class LauncherClient extends baseClient_1._BaseClient {
      *
      * The launcher parameters mimic CSS window positioning.
      * For instance, to set a full size window use `left=0`,`top=0`,`right=0`,`bottom=0`.
-     * This is functionally equivalent to: left=0,top=0,width="100%",height="100%"
+     * This is functionally equivalent to: left=0,top=0,width="100%",height="100%".
      *
      * @since 2.4.1 Added params.windowType (deprecated params.native), params.path, params.alias, params.argumentsAsQueryString - These are all for launching native apps.
      * @since 3.7.0 Added "affinity" parameter
@@ -36580,34 +36925,6 @@ class LauncherClient extends baseClient_1._BaseClient {
             });
         };
         return new Promise(promiseResolver);
-    }
-    /**
-     * Returns an object that provides raw access to a remote window.
-     * It returns an object that contains references to the Finsemble windowDescriptor, to
-     * the `OpenFin` window, and to the native JavaScript (browser) window.
-     *
-     * *This will only work for windows that are launched using the Finsemble Launcher API.*
-     *
-     * As in any browser, you will not be able to manipulate a window that has been launched
-     * cross domain or in a separate physical application (separate process). Caution
-     * should be taken to prevent a window from being closed by the user if you plan on
-     * referencing it directly. Due to these inherent limitations we strongly advise against a
-     * paradigm of directly manipulating remote windows through JavaScript. Instead leverage the
-     * RouterClient to communicate between windows and to use an event based paradigm!
-     *
-     * @param  {object} params Parameters
-     * @param {string} params.windowName The name of the window to access.
-     * @return {RawWindowResult} An object containing windowDescriptor, finWindow, and browserWindow. Or null if window isn't found.
-     * @deprecated Finsemble now uses a splintering agent which disconnects windows from the main launcher.
-     * It becomes impossible to access raw windows. See LauncherClient.getActiveDescriptors() and Util.getFinWindow()
-     * @private
-     */
-    getRawWindow(params) {
-        var launcher = window.opener;
-        if (launcher.name !== "launcherService") {
-            logger_1.default.system.warn("LauncherClient.getNativeWindow: window not opened by Launcher Service");
-        }
-        return launcher.activeWindows.getWindow(params.windowName);
     }
     /**
      * @private
@@ -36778,12 +37095,16 @@ class LauncherClient extends baseClient_1._BaseClient {
      */
     getComponentsThatCanReceiveDataTypes(params, cb = Function.prototype) {
         validate_1.default.args(cb, "function=");
-        if (params.dataTypes && !Array.isArray(params.dataTypes)) {
-            params.dataTypes = [params.dataTypes];
-        }
-        validate_1.default.args(params.dataTypes, "array");
         const promiseResolver = (resolve) => {
-            this.routerClient.query("LauncherService.getComponentsThatCanReceiveDataTypes", params, function (err, response) {
+            if (!params || !params.dataTypes) {
+                const err = "Invalid params. Expected: {dataTypes: string[]}";
+                cb(err);
+                return resolve({ err });
+            }
+            if (!Array.isArray(params.dataTypes)) {
+                params.dataTypes = [params.dataTypes];
+            }
+            this.routerClient.query("LauncherService.getComponentsThatCanReceiveDataTypes", params, (err, response) => {
                 cb(err, response.data);
                 resolve({ err, data: response.data });
             });
@@ -36824,6 +37145,8 @@ class LauncherClient extends baseClient_1._BaseClient {
         return Promise.resolve();
     }
     /**
+     * @deprecated as of 4.0.0, may be removed in the future
+     *
      * Minimizes all but a specific list or group of windows. Either groupName or windowList must be specified.
      * @param params
      * @param {Array.<string | Object>} [params.windowList] Optional. An array of window names or window identifiers. Not to be used with componentType.
@@ -36839,6 +37162,8 @@ class LauncherClient extends baseClient_1._BaseClient {
      * @private
      */
     hyperFocus(params, cb = Function.prototype) {
+        logger_1.default.system.warn("hyperFocus is deprecated as of version 4.0.0. This functionality may be removed in a future release");
+        console.warn("hyperFocus is deprecated as of version 4.0.0. This functionality may be removed in a future release");
         validate_1.default.args(cb, "function=");
         if (params.windowList && !Array.isArray(params.windowList)) {
             params.windowList = [params.windowList];
@@ -37084,9 +37409,6 @@ function constructInstance(params) {
         params.windowClient = windowClient_1.default;
     return new LauncherClient({
         clients: params,
-        startupDependencies: {
-            services: ["windowService"],
-        },
         onReady: function (cb) {
             logger_1.default.system.debug("launcherClient ready", window.name);
             logger_1.default.perf.debug("LauncherClientReadyTime", "stop");
@@ -37101,7 +37423,7 @@ exports.default = launcherClient;
 
 
 /***/ }),
-/* 42 */
+/* 46 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -37230,16 +37552,16 @@ function removeChildMapping(mapping, field) {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 43 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const async_1 = __webpack_require__(9);
-const storeUtils = __webpack_require__(42);
+const storeUtils = __webpack_require__(46);
 const logger_1 = __webpack_require__(0);
-const baseClient_1 = __webpack_require__(7);
+const baseClient_1 = __webpack_require__(10);
 /** The global `window` object. We cast it to a specific interface here to be
  * explicit about what Finsemble-related properties it may have. */
 const Globals = window;
@@ -37395,6 +37717,7 @@ class StoreModel extends baseClient_1._BaseClient {
     ;
     /**
      * Get a value from the store. If global is not set, we'll check local first then we'll check global. Returns the value of the field. If no callback is given and the value is local, this will run synchronously.
+     * @param {object|string} params The field where the value is stored.
      * @param {String} params.field The field where the value is stored.
      * @param {StandardCallback} cb Will return the value if found.
      * @returns {any} The value of the field. If no callback is given and the value is local, this will run synchronous
@@ -37763,7 +38086,7 @@ exports.default = StoreModel;
 
 
 /***/ }),
-/* 44 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -37773,20 +38096,20 @@ Object.defineProperty(exports, "__esModule", { value: true });
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
-const storageClient_1 = __webpack_require__(21);
-const hotkeysClient_1 = __webpack_require__(45);
+const storageClient_1 = __webpack_require__(25);
+const hotkeysClient_1 = __webpack_require__(51);
 const util = __webpack_require__(8);
 const system_1 = __webpack_require__(3);
-const baseClient_1 = __webpack_require__(7);
+const baseClient_1 = __webpack_require__(10);
 const logger_1 = __webpack_require__(0);
 const validate_1 = __webpack_require__(6); // Finsemble args validator
-const FinsembleWindow_1 = __webpack_require__(35);
-const configUtil_1 = __webpack_require__(11);
+const FinsembleWindow_1 = __webpack_require__(39);
+const configUtil_1 = __webpack_require__(12);
 const async_1 = __webpack_require__(9);
 const routerClientInstance_1 = __webpack_require__(5);
-const lodashGet = __webpack_require__(24);
+const lodashGet = __webpack_require__(33);
 // DH 3/6/2019 - @TODO - All uses of this should be replaced with calls to the WindowStorageManager
-const constants_1 = __webpack_require__(10);
+const constants_1 = __webpack_require__(11);
 const configClient_1 = __webpack_require__(15);
 var finsembleWindow;
 /**
@@ -37836,7 +38159,7 @@ function removeClass(el, className) {
 /**
  *
  *@introduction
-  <h2>Window Client</h2>
+  <h2>Window Client (Finsemble Workspaces)</h2>
   ----------
  * The Window Client is primarily responsible for managing the `windowState` (the window's bounds) and `componentState` (data inside of your component).
  * The reference below is provided in case you'd like to manually trigger events.
@@ -37900,7 +38223,6 @@ class WindowClient extends baseClient_1._BaseClient {
         this.onWindowMaximized = this.onWindowMaximized.bind(this);
         this.onWindowBlurred = this.onWindowBlurred.bind(this);
         this.onWindowFocused = this.onWindowFocused.bind(this);
-        this.onParentSet = this.onParentSet.bind(this);
         this.onMinimizedRestored = this.onMinimizedRestored.bind(this);
         this.onWindowMinimized = this.onWindowMinimized.bind(this);
         this.close = this.close.bind(this);
@@ -37910,7 +38232,6 @@ class WindowClient extends baseClient_1._BaseClient {
     }
     /**
      * This function is fired every time the window's bounds change. It saves the window's position.
-     * @param {object} bounds
      * @private
      */
     onWindowRestored() {
@@ -37953,15 +38274,8 @@ class WindowClient extends baseClient_1._BaseClient {
         finsembleWindow.addEventListener("restored", this.onMinimizedRestored);
     }
     /**
-     * Handles the event that fires when the finsemble window's parent is set.
-     * @private
-     * @param evt the event itself, which is ignored.  Any time a parent is set, force a group data update.
-     */
-    onParentSet(evt) {
-        this.requestGroupDataPublish();
-    }
-    /**
      * Returns a list of the groups this window is in, if any.
+     * @private
      */
     getWindowGroups() {
         return this.windowGroups;
@@ -37983,18 +38297,12 @@ class WindowClient extends baseClient_1._BaseClient {
     }
     ;
     /**
-     * Requests an updated group data message.
-     * @private
-     */
-    requestGroupDataPublish() {
-        this.routerClient.transmit("DockingService.requestGroupDataPublish");
-    }
-    /**
      * Closes window. Defaults are to remove the window from the workspace if the user presses the X button, but not if the window is closed via an app-level request (e.g., switching workspaces, so all windows need to close).
      * @param {object} params
      * @param {boolean} params.removeFromWorkspace Whether to remove the window from the workspace.
      * @param {boolean} params.closeWindow Whether to close the window. On shutdown this method is called, but the Window Service actually closes the window.
      * @param {boolean} params.userInitiated Whether the user clicked the X, or if the system asked the window to close.
+     * @param {boolean} params.ignoreParent Whether or not to update the parent (stack) window when closing.
      * @param {function} cb The callback to be invoked after the method completes successfully.
      * @example
      * //Close window and remove from workspace (e.g., user closes the window).
@@ -38155,6 +38463,7 @@ class WindowClient extends baseClient_1._BaseClient {
      *
      * Saves the window's state. Rarely called manually, as it's called every time your window moves.
      * @param {Object} bounds optional param.
+     * @param {boolean} setActiveWorkspaceDirty
      * @example <caption>The code below is the bulk of our listener for the <code>bounds-changed</code> event from the window. Every time the <code>bounds-changed</code> event is fired (when the window is resized or moved), we save the window's state. The first few lines just prevent the window from being dropped behind the toolbar.</caption>
      *finWindow.addEventListener('disabled-frame-bounds-changed', function (bounds) {
      * 	if (bounds.top < 45) {
@@ -38222,15 +38531,13 @@ class WindowClient extends baseClient_1._BaseClient {
     ;
     /**
      * Sets whether window is always on top. By default, this is false.
+     * @param {boolean} alwaysOnTop The new mode for the window's alwaysOnTop option to be set to.
      * @param {function} cb Optional callback to be invoked after the method completes successfully.
      * @example
      * FSBL.Clients.WindowClient.setAlwaysOnTop(true);
      */
     setAlwaysOnTop(alwaysOnTop, cb) {
-        finsembleWindow.updateOptions({ options: { alwaysOnTop: alwaysOnTop } }, () => {
-            if (cb)
-                cb();
-        });
+        finsembleWindow.setAlwaysOnTop({ alwaysOnTop }, cb);
     }
     /**
      * Restores window from a maximized or minimized state.
@@ -38301,7 +38608,6 @@ class WindowClient extends baseClient_1._BaseClient {
         finsembleWindow.removeEventListener("focused", this.onWindowFocused);
         finsembleWindow.removeEventListener("close-requested", this.close);
         finsembleWindow.removeEventListener("minimized", this.onWindowMinimized);
-        finsembleWindow.removeEventListener("parent-set", this.onParentSet);
     }
     ;
     /**
@@ -38311,6 +38617,7 @@ class WindowClient extends baseClient_1._BaseClient {
      * @private
      */
     injectDOM(headerHeight) {
+        logger_1.default.system.debug("injectDOM", headerHeight);
         //for the aesthetics.
         if (document.getElementById("FSBLHeader")) {
             return;
@@ -38328,6 +38635,7 @@ class WindowClient extends baseClient_1._BaseClient {
     ;
     /**
      * Injects the windowTitleBar into the window.
+     * @param {InjectHeaderParams} params
      * @param {function} cb Callback function
      * @return {object} Reference to a RouterClient.query
      * @private
@@ -38352,6 +38660,7 @@ class WindowClient extends baseClient_1._BaseClient {
     ;
     /**
      * Given a field, this function retrieves app state. If no params are given, the full state is returned.
+     * @param {object} params
      * @param {string} params.field Field to retrieve.
      * @param {Array.<string>} params.fields Fields to retrieve.
      * @param {string} params.windowName Window whose component state you are retreiving. If null, the default is to the calling window.
@@ -38418,11 +38727,11 @@ class WindowClient extends baseClient_1._BaseClient {
     ;
     /**
      * Given a field, this function sets and persists app state.
-     * @param {object} params
-     * @param {string} params.field field
-     * @param {Array.<string>} params.fields fields
+     * @param {object} params Object of data to be saved
+     * @param {string} params.field The key name of the field to be saved. Required if not using `fields`.
+     * @param {Array.<object>} params.fields An array of objects with `field` and `value` keys to be saved.
      * @param {string} params.windowName Name of the component whose state you are setting. Defaults to the calling window.
-     * @param {any} params.value Value of the data being saved
+     * @param {any} params.value Value of the data being saved. Required if not using `fields`.
      * @param {function} cb The callback to be invoked after the method completes successfully.
      * @example <caption>The example below shows how we save our chart layout when it changes.</caption>
      * var s = stx.exportLayout(true);
@@ -38475,9 +38784,9 @@ class WindowClient extends baseClient_1._BaseClient {
     }
     /**
      * Given a field, this function removes it from app state.
-     * @param {object} params
-     * @param {string} params.field field
-     * @param {Array.<string>} params.fields fields
+     * @param {object} params Object of data to be removed
+     * @param {string} params.field The key name of the field to be saved. Required if not using `fields`.
+     * @param {Array.<object>} params.fields An array of objects with `field` keys to be removed.
      * @param {string} params.windowName The name of the window to remove component state from
      * @param {function} cb The callback to be invoked after the method completes successfully.
      * @example <caption>The example below shows how we would remove our chart layout when it no longer needed.</caption>
@@ -38540,7 +38849,7 @@ class WindowClient extends baseClient_1._BaseClient {
             name: windowName,
             uuid: uuid,
             options: params || {},
-            windowType: "OpenFinWindow"
+            windowType: "WebWindow"
         }, () => {
             this.startedRegistrationWithDocking = false;
             if (this.deregisterPlease) {
@@ -38700,6 +39009,7 @@ class WindowClient extends baseClient_1._BaseClient {
         // components."*".component.inject|preload="windowTitleBar.js" <-- set the windowTitleBar
         // components."welcome".component.inject|preload="windowTitleBar.js" <-- override the windowTitleBar
         // Everything from here down then goes into windowTitleBar.jsx inside FSBLReady()
+        logger_1.default.system.debug("injectHeader", params);
         let self = this;
         if (this.hasHeader)
             return;
@@ -38721,6 +39031,7 @@ class WindowClient extends baseClient_1._BaseClient {
         else {
             params = Object.assign(defaultParams, params);
         }
+        logger_1.default.system.debug("injectHeader 2", params);
         this.injectDOM(params.forceHeaderHeight);
         // initialize but if child of a stacked window then don't register with docking
         //finsembleWindow.getParent();
@@ -38736,7 +39047,7 @@ class WindowClient extends baseClient_1._BaseClient {
         document.body.appendChild(node);
     }
     /**
-     * If we spawned this openfin app from our parent application, we listen on that application for certain events that might fire _if_ our parent goes down. If the parent goes down, we want to kill its children as well.
+     * If we spawned this app from our parent application, we listen on that application for certain events that might fire _if_ our parent goes down. If the parent goes down, we want to kill its children as well.
      * @private
      */
     checkIfChildApp() {
@@ -38839,7 +39150,6 @@ class WindowClient extends baseClient_1._BaseClient {
         finsembleWindow.addEventListener("blurred", this.onWindowBlurred);
         // On focus add a border to the window
         finsembleWindow.addEventListener("focused", this.onWindowFocused);
-        finsembleWindow.addEventListener("parent-set", this.onParentSet);
         if (typeof FSBL !== "undefined") {
             FSBL.onShutdown(() => {
                 logger_1.default.system.info("WINDOW LIFECYCLE:SHUTDOWN: FSBL.onShutdown start");
@@ -38905,7 +39215,7 @@ class WindowClient extends baseClient_1._BaseClient {
     }
     /**
      * Retrieves data that was set with <a href="LauncherClient.html#spawn">LauncherClient.spawn</a>.
-     * @return {object} The data or empty object if no data was set. *Note, this will never return null or undefined.*
+     * @return {object} The data provided from the component config when spawned.
      */
     getSpawnData() {
         if (!this.options.customData) {
@@ -38928,7 +39238,7 @@ class WindowClient extends baseClient_1._BaseClient {
     ;
     /**
      * For the DOM element that has been passed in, this function returns a bounding box that is relative
-     * to the OpenFin virtual monitor space. That is, it returns the position of the DOM element on the desktop.
+     * to the virtual monitor space. That is, it returns the position of the DOM element on the desktop.
      * @param {HTMLElement|string} element A selector or HTMLElement
      * @private
      * @todo convert to use monitor util function and make sure current bounds are correct. For some windows (e.g., toolbars/menus that don't track their own bounds because they don't have drag regions), options.default will represent the data _on spawn_, not the bounds when the function is called.
@@ -38977,7 +39287,7 @@ class WindowClient extends baseClient_1._BaseClient {
     ;
     /**
      * Returns the window identifier for the current component.
-     * @returns {windowIdentifier}
+     * @returns {WindowIdentifier}
      */
     getWindowIdentifier() {
         var componentType = null;
@@ -39006,7 +39316,8 @@ class WindowClient extends baseClient_1._BaseClient {
     }
     ;
     /**
-     * Returns the bounds for the current window.
+     * Returns the object defining bounds for the current window including the position of the left and right edges measured in pixels from the left edge of the monitor, the top and bottom edges measured in pixels from the top edge, and the width and height of the component in pixels.
+     * Please note that this method differs from the right and bottom coordinates passed to LauncherClient.spawn(); those are measured from the right and bottom edges of the screen.
      * @param {StandardCallback} cb The callback to be invoked after the method completes successfully.
      */
     getBounds(cb) {
@@ -39018,6 +39329,7 @@ class WindowClient extends baseClient_1._BaseClient {
     /**
      * This is used by the Finsemble window title bar when a tab is dragged for tiling or tabbing.
      * @param {*} params - <code>params.windowIdentifier</code> is required.
+     * @param {WindowIdentifier} params.windowIdentifier The Finsemble identifier for the target window.
      * @param {*} cb The callback to be invoked after the method completes successfully.
      */
     startTilingOrTabbing(params, cb = Function.prototype) {
@@ -39026,9 +39338,25 @@ class WindowClient extends baseClient_1._BaseClient {
     }
     ;
     /**
+     * Begin programmatically moving the window; the first parameter is a mouse event. Until `stopMovingWindow` is invoked, the window will follow the user's mouse. This should be invoked inside of a `mouseDown` event handler.
+     */
+    startMovingWindow(event) {
+        const currentWindow = fin.desktop.Window.getCurrent();
+        currentWindow.startMovingWindow(event);
+    }
+    /**
+     * Stops moving a window that was sent in motion via `startMovingWindow`.
+     */
+    stopMovingWindow() {
+        const currentWindow = fin.desktop.Window.getCurrent();
+        currentWindow.stopMovingWindow();
+    }
+    /**
      * This is used to cancel a tabbing or tiling operation.
-     * @param {*} params - Put <code>windowIdentifier</code> in <code>params.windowIdentifier</code>. If not provided, must set <code>params.waitForIdentifier</code> true.
-     * @param {*} cb - The callback to be invoked after the method completes successfully.
+     *
+     * @param {object} params
+     * @param {WindowIdentifier} params.windowIdentifier The Finsemble identifier for the window.
+     * @param {Function} cb - The callback to be invoked after the method completes successfully.
      */
     cancelTilingOrTabbing(params, cb = Function.prototype) {
         console.debug("CancelTilingOrTabbing");
@@ -39039,6 +39367,7 @@ class WindowClient extends baseClient_1._BaseClient {
     /**
      * This is used to let Finsemble know which window is being dragged. <code>params.windowIdentifier</code> must be the identifier of the tab being dragged. This is only used if the identifier is unknown when <code>startTilingOrTabbing</code> is called.
      * @param {*} params - The <code>windowIdentifier</code> is required.
+     * @param {WindowIdentifier} params.windowIdentifier The Finsemble identifier for the target window.
      * @param {*} cb - The callback to be invoked after the method completes successfully.
      */
     sendIdentifierForTilingOrTabbing(params, cb = Function.prototype) {
@@ -39294,6 +39623,7 @@ class WindowClient extends baseClient_1._BaseClient {
                     return callback();
                 }
                 customData = finsembleWindow.windowOptions.customData;
+                logger_1.default.system.debug("getInitialOptions", customData);
                 if (customData) {
                     isCompoundWindow = lodashGet(customData, 'window.compound', false);
                     if (customData.cssOverride) {
@@ -39332,6 +39662,7 @@ class WindowClient extends baseClient_1._BaseClient {
                         else {
                             // Window doesn't support header injection (i.e. dialogModal, toolbar, searchMenu, etc)
                             // so we don't need to inject header and bump window content's fixed elements
+                            self.hasHeader = true;
                             done();
                         }
                     },
@@ -39520,7 +39851,7 @@ class WindowClient extends baseClient_1._BaseClient {
 }
 var windowClient = new WindowClient({
     startupDependencies: {
-        services: ["storageService", "windowService"]
+        clients: ["storageClient"]
     },
     onReady: function (cb) {
         windowClient.start(cb);
@@ -39531,7 +39862,549 @@ exports.default = windowClient;
 
 
 /***/ }),
-/* 45 */
+/* 49 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__clients_logger__);
+
+
+class BoxMath {
+	static isPointOnSegment(point, segment) {
+		//y = mx + b;
+		//Equation above transforms into this:
+		//(y - y1)	 x - x1
+		//-------- = --------
+		//y2 - y1 	 x2 - x1
+
+		//which is this:
+		//(y - y1) * (x2 - x1) = (x - x1) * ( y2 - y1)
+		var x = point.x,
+		    y = point.y,
+		    x1 = segment.min.x,
+		    x2 = segment.max.x,
+		    y1 = segment.min.y,
+		    y2 = segment.max.y;
+
+		var isInBounds = x >= x1 && x <= x2 && y >= y1 && y <= y2;
+		//The equation above will tell us whether the point is on the line, assuming it has no start and end. This checks to see if the point is within the beginning and end of the segment. If not, it can't be on our segment.
+		if (!isInBounds) {
+			return false;
+		}
+		var isOnLine = (y - y1) * (x1 - x2) === (x - x1) * (y1 - y2);
+		return isOnLine;
+	}
+
+	/**
+ * @function {function name}
+ * @param  {type} req {description}
+ * @return {type} {description}
+ */
+	static getVertices(req) {
+		return [
+		//top left
+		{
+			x: req.left,
+			y: req.top,
+			label: "topLeft"
+		},
+		//top right
+		{
+			x: req.right,
+			y: req.top,
+			label: "topRight"
+		}, {
+			x: req.right,
+			y: req.bottom,
+			label: "bottomRight"
+		}, {
+			x: req.left,
+			y: req.bottom,
+			label: "bottomLeft"
+		}];
+	}
+
+	/**
+ * @function {function name}
+ * @param  {type} segment {description}
+ * @return {type} {description}
+ */
+	static getVertexOnSegment(segment) {
+		for (let vertex in this.vertices) {
+			if (BoxMath.isPointOnSegment(this.vertices[vertex], segment)) {
+				return vertex;
+			}
+		}
+		return false;
+	}
+
+	/**
+ * @function {function name}
+ * @param  {type} bounds     {description}
+ * @param  {type} bufferSize {description}
+ * @return {type} {description}
+ */
+	static getSnappingRegions(bounds, bufferSize = 0) {
+		let { left, top, right, bottom } = bounds;
+		let leftMinusBuffer = left - bufferSize,
+		    leftPlusBuffer = left + bufferSize,
+		    topMinusBuffer = top - bufferSize,
+		    topPlusBuffer = top + bufferSize,
+		    rightMinusBuffer = right - bufferSize,
+		    rightPlusBuffer = right + bufferSize,
+		    bottomPlusBuffer = bottom + bufferSize,
+		    bottomMinusBuffer = bottom - bufferSize;
+		return {
+			topLeft: {
+				min: {
+					x: leftMinusBuffer,
+					y: topMinusBuffer
+				},
+				max: {
+					x: leftPlusBuffer,
+					y: top
+				}
+			},
+			topRight: {
+				min: {
+					x: rightMinusBuffer,
+					y: topMinusBuffer
+				},
+				max: {
+					x: rightPlusBuffer,
+					y: top
+				}
+			},
+			rightTop: {
+				min: {
+					x: right,
+					y: top
+				},
+				max: {
+					x: rightPlusBuffer,
+					y: topPlusBuffer
+				}
+			},
+			rightBottom: {
+				min: {
+					x: right,
+					y: bottomMinusBuffer
+				},
+				max: {
+					x: rightPlusBuffer,
+					y: bottom
+				}
+			},
+
+			bottomLeft: {
+				min: {
+					x: leftMinusBuffer,
+					y: bottom
+				},
+				max: {
+					x: leftPlusBuffer,
+					y: bottomPlusBuffer
+				}
+			},
+			bottomRight: {
+				min: {
+					x: rightMinusBuffer,
+					y: bottom
+				},
+				max: {
+					x: rightPlusBuffer,
+					y: bottomPlusBuffer
+				}
+			},
+			leftTop: {
+				min: {
+					x: leftMinusBuffer,
+					y: top
+				},
+				max: {
+					x: left,
+					y: topPlusBuffer
+				}
+			},
+			leftBottom: {
+				min: {
+					x: leftMinusBuffer,
+					y: bottomMinusBuffer
+				},
+				max: {
+					x: left,
+					y: bottom
+				}
+			},
+			left: {
+				min: {
+					x: leftMinusBuffer,
+					y: topMinusBuffer
+				},
+				max: {
+					x: leftPlusBuffer,
+					y: bottomPlusBuffer
+				}
+			},
+			bottom: {
+				min: {
+					x: leftMinusBuffer,
+					y: bottom
+				},
+				max: {
+					x: rightPlusBuffer,
+					y: bottomPlusBuffer
+				}
+			},
+			right: {
+				min: {
+					x: rightMinusBuffer,
+					y: topPlusBuffer
+				},
+				max: {
+					x: rightPlusBuffer,
+					y: bottomPlusBuffer
+				}
+			},
+			top: {
+				min: {
+					x: left,
+					y: topMinusBuffer
+				},
+				max: {
+					x: right,
+					y: top
+				}
+			},
+			inner: {
+				min: {
+					x: left,
+					y: top
+				},
+				max: {
+					x: right,
+					y: bottom
+				}
+			}
+		};
+	}
+
+	/**
+ * @function {function name}
+ * @param  {type} bounds {description}
+ * @return {type} {description}
+ */
+	static getWindowBoundingBox(bounds) {
+		return {
+			min: {
+				x: bounds.left,
+				y: bounds.top
+			},
+			max: {
+				x: bounds.right,
+				y: bounds.bottom
+			}
+		};
+	}
+
+	static between(params) {
+		var min = params.min,
+		    max = params.max,
+		    num = params.num,
+		    inclusive = params.inclusive;
+		if (inclusive) {
+			return num >= min && num <= max;
+		}
+		return num > min && num < max;
+	}
+
+	/**
+ * @function {function name}
+ * @param  {type} window1 {description}
+ * @param  {type} window2 {description}
+ * @return {type} {description}
+ */
+	static intersectBoundingBoxes(window1, window2) {
+		if (window1.max.x < window2.min.x) {
+			return false;
+		} // 1 is left of 2
+		if (window1.min.x > window2.max.x) {
+			return false;
+		} // 1 is right of 2
+		if (window1.max.y < window2.min.y) {
+			return false;
+		} // 1 is above 2
+		if (window1.min.y > window2.max.y) {
+			return false;
+		} // 1 is below 2
+		return true; // boxes overlap
+	}
+
+	/**
+ * @function {function name}
+ * @param  {type} num {description}
+ * @param  {type} pct {description}
+ * @return {type} {description}
+ */
+	static getPct(num, pct) {
+		return pct * num;
+	}
+
+	/**
+ * @function {function name}
+ * @param  {type} num {description}
+ * @param  {type} pct {description}
+ * @return {type} {description}
+ */
+	static scaleProportionately(num, pct) {
+		return Math.floor(num + this.getPct(num, pct));
+	}
+
+	/**
+ * @function {function name}
+ * @param  {type} num1 {description}
+ * @param  {type} num2 {description}
+ * @return {type} {description}
+ */
+	static getPercentChange(num1, num2) {
+		var pctChange = Math.abs((num1 - num2) / num1);
+		if (num2 < num1) {
+			pctChange = -pctChange;
+		}
+		return pctChange;
+	}
+
+	/**
+  * Gets the area of the overlap between two rectangles.
+  * @param {*} rect1
+  * @param {*} rect2
+  */
+	static getOverlap(rect1, rect2) {
+		let x_overlap = Math.max(0, Math.min(rect1.right, rect2.right) - Math.max(rect1.left, rect2.left));
+		let y_overlap = Math.max(0, Math.min(rect1.bottom, rect2.bottom) - Math.max(rect1.top, rect2.top));
+		return x_overlap * y_overlap;
+	}
+
+	/**
+  * Checks if point is in box (inclusive)
+  * @param {*} point
+  * @param {*} box
+  */
+	static isPointInBox(point, box) {
+		if (point.left) point.x = point.left;
+		if (point.top) point.y = point.top;
+		if (!box.right) box.right = box.left + box.width;
+		if (!box.bottom) box.bottom = box.top + box.height;
+		if (point.x >= box.left && point.x <= box.right && point.y >= box.top && point.y <= box.bottom) {
+			return true;
+		}
+		return false;
+	}
+	/**
+  * Clip A with B. return where the boxes don't intersect.
+  * @param {DockableBox} rectA
+  * @param {DockableBox} rectB
+  *
+  * @memberof BoxMath
+  */
+	static clipRect(rectA, rectB, edge) {
+		let clip = rectA;
+		let corners = this.getVertices(rectB);
+		//This array will hold the corners of the clipping rectangle that are within the clipped rectangle's boundaries.
+		let cornersInBox = [];
+		for (let i = 0; i < corners.length; i++) {
+			let corner = corners[i];
+			corner.label = corner.label.toLowerCase();
+			//The goal here is to detect which edges of the clipping box exists within the clipped box's boundaries - EXCLUDING the edges of the clipped box.
+
+			/**
+    * The A = B + C. In other words, it's our hole. B is the window that we're using to fill the hole.
+    *
+   		In this case, A and B share their top right and top left corners. ALl we care about here is the bottom left and bottom right of B.
+   		The result of this function is C.
+    		+-------------------+
+   		|                   |
+   		|                   |
+   		|                   |
+   		|                   |
+   		|         B         |
+   		|                   |
+   		|                   |
+   		|                   |
+   		+-------------------+
+   		|                   |
+   		|                   |
+   		|                   |
+   		|                   |
+   		|         C         |
+   		|                   |
+   		|                   |
+   		|                   |
+   		|                   |
+   		|                   |
+   		+-------------------+
+    * */
+
+			//The block of code below kicks out any points on B that are corners on A.
+			if (this.isPointInBox(corner, rectA)) {
+				if (corner.label === "bottomright" && corner.y === rectA.bottom && corner.x === rectA.right) {
+					continue;
+				}
+
+				if (corner.label === "bottomleft" && corner.y === rectA.bottom && corner.x === rectA.left) {
+					continue;
+				}
+
+				if (corner.label === "topleft" && corner.x === rectA.left && corner.y === rectA.top) {
+					continue;
+				}
+
+				if (corner.label === "topright" && corner.x === rectA.right && corner.y === rectA.top) {
+					continue;
+				}
+				cornersInBox.push(corner.label);
+			}
+		}
+
+		/**
+   * Going back to our example earlier. Remember, A is the larger box that encompasses B and C. In this case, only two corners are within A. (bottom left, bottom right).
+  		+-------------------+
+  		|                   |
+  		|                   |
+  		|                   |
+  		|                   |
+  		|         B         |
+  		|                   |
+  		|                   |
+  		|                   |
+  		+-------------------+
+  		|                   |
+  		|                   |
+  		|                   |
+  		|                   |
+  		|         C         |
+  		|                   |
+  		|                   |
+  		|                   |
+  		|                   |
+  		|                   |
+  		+-------------------+
+  	* */
+		if (cornersInBox.length === 2) {
+			//left edge is in box.
+			if (cornersInBox.includes("topleft") && cornersInBox.includes("bottomleft")) {
+				clip.right = rectB.left;
+			} else if (cornersInBox.includes("topright") && cornersInBox.includes("bottomright")) {
+				clip.left = rectB.right;
+			} else {
+				if (cornersInBox.includes("topleft") && cornersInBox.includes("topright")) {
+					clip.bottom = rectB.top;
+				} else if (cornersInBox.includes("bottomleft") && cornersInBox.includes("bottomright")) {
+					clip.top = rectB.bottom;
+				}
+			}
+		} else {
+			/****
+   * In this case, A is the wide horizontal box. B is the tall vertical box. Their bottom left corners align at point X.
+   *  In this case, only one corner (bottom left of B) is within the bounds of A.
+   				    B
+           +------------------+
+   		|                  |
+   		|                  |
+   		|                  |
+   		|                  |
+   		|                  |
+   		|                  |
+   		|                  |
+   		|                  |
+   		|                  |
+   		|                  |
+   		|                  |
+   		+---------------------------------------------------------------------+
+   		|                  |                                                  |
+   		|                  |                                                  |
+   		|                  |                                                  |
+   		|                  |                  CLIP                            |  A
+   		|                  |                                                  |
+   		|                  |                                                  |
+   		+------------------+--------------------------------------------------+
+   	   X
+    */
+
+			const ISLEFTORRIGHT = edge === "left" || edge === "right";
+			const ISTOPORBOTTOM = edge === "top" || edge === "bottom";
+			if (cornersInBox.includes("topleft")) {
+
+				if (ISTOPORBOTTOM) {
+					clip.right = rectB.left;
+					if (rectB.top > rectA.bottom) {
+						clip.bottom = rectB.top;
+					}
+				} else {
+					clip.left = rectB.left;
+					if (rectB.top < rectA.bottom) {
+						clip.bottom = rectB.top;
+					}
+				}
+			} else if (cornersInBox.includes("topright")) {
+				if (ISTOPORBOTTOM) {
+					clip.left = rectB.right;
+					if (rectB.top > rectA.bottom) {
+						clip.bottom = rectB.top;
+					}
+				} else {
+					clip.right = rectB.right;
+					if (rectB.top < rectA.bottom) {
+						clip.bottom = rectB.top;
+					}
+				}
+			} else if (cornersInBox.includes("bottomleft")) {
+
+				if (ISLEFTORRIGHT) {
+					if (rectB.bottom > rectA.top) {
+						clip.top = rectB.bottom;
+					}
+				} else {
+					clip.right = rectB.left;
+					if (rectB.bottom < rectA.top) {
+						clip.top = rectB.bottom;
+					}
+				}
+			} else {
+
+				if (ISLEFTORRIGHT) {
+					if (rectB.bottom > rectA.top) {
+						clip.top = rectB.bottom;
+					}
+				} else {
+					clip.left = rectB.right;
+					if (rectB.bottom < rectA.top) {
+						clip.top = rectB.bottom;
+					}
+				}
+			}
+		}
+
+		clip.width = clip.right - clip.left;
+		clip.height = clip.bottom - clip.top;
+		return clip;
+	}
+
+}
+/* harmony default export */ __webpack_exports__["a"] = (BoxMath);
+
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\boxMath.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\boxMath.js"); } } })();
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
+
+/***/ }),
+/* 50 */
+/***/ (function(module, exports) {
+
+module.exports = {"dictionary":{"0":"0","1":"1","2":"2","3":"3","4":"4","5":"5","6":"6","7":"7","8":"8","9":"9","backspace":"backspace","bs":"backspace","bksp":"backspace","tab":"tab","escape":"escape","esc":"escape","clear":"clear","enter":"enter","return":"enter","shift":"shift","shft":"shift","lshift":"shift","lshft":"shift","left shift":"shift","leftshift":"shift","rshift":"shift","rshft":"shift","right shift":"shift","rightshift":"shift","control":"control","ctrl":"control","alt":"alt","alternate":"alt","pause":"pause","caps lock":"caps lock","capslock":"caps lock","spacebar":"spacebar","space":"spacebar","space bar":"space","page up":"page up","pgup":"page up","pg up":"page up","page down":"page down","pgdn":"page down","pg dn":"page down","end":"end","home":"home","left arrow":"left arrow","left":"left arrow","up arrow":"up arrow","up":"up arrow","right arrow":"right arrow","right":"right arrow","down arrow":"down arrow","down":"down arrow","select":"select","slct":"select","print":"print","prnt":"print","execute":"execute","print screen":"print screen","printscreen":"print screen","print scrn":"print screen","printscrn":"print screen","prnt scrn":"print screen","prntscrn":"print screen","prt scrn":"print screen","prtscrn":"print screen","prt scn":"print screen","prtscn":"print screen","prt scr":"print screen","prtscr":"print screen","prt sc":"print screen","prtsc":"print screen","pr sc":"print screen","prsc":"print screen","insert":"insert","ins":"insert","delete":"delete","del":"delete","help":"help","a":"a","b":"b","c":"c","d":"d","e":"e","f":"f","g":"g","h":"h","i":"i","j":"j","k":"k","l":"l","m":"m","n":"n","o":"o","p":"p","q":"q","r":"r","s":"s","t":"t","u":"u","v":"v","w":"w","x":"x","y":"y","z":"z","windows":"windows","left windows":"windows","right windows":"windows","applications":"applications","computer sleep":"computer sleep","sleep":"computer sleep","numpad 0":"0","numpad 1":"1","numpad 2":"2","numpad 3":"3","numpad 4":"4","numpad 5":"5","numpad 6":"6","numpad 7":"7","numpad 8":"8","numpad 9":"9","f1":"f1","fn1":"f1","function 1":"f1","f2":"f2","fn2":"f2","function 2":"f2","f3":"f3","fn3":"f3","function 3":"f3","f4":"f4","fn4":"f4","function 4":"f4","f5":"f5","fn5":"f5","function 5":"f5","f6":"f6","fn6":"f6","function 6":"f6","f7":"f7","fn7":"f7","function 7":"f7","f8":"f8","fn8":"f8","function 8":"f8","f9":"f9","fn9":"f9","function 9":"f9","f10":"f10","fn10":"f10","function 10":"f10","f11":"f11","fn11":"f11","function 11":"f11","f12":"f12","fn12":"f12","function 12":"f12","f13":"f13","fn":"f13","function 13":"f13","f14":"f14","fn14":"f14","function 14":"f14","f15":"f15","fn15":"f15","function 15":"f15","f16":"f16","fn16":"f16","function 16":"f16","num lock":"num lock","numlock":"num lock","number lock":"num lock","numeric lock":"num lock","scroll lock":"scroll lock","sclk":"scroll lock","scrlk":"scroll lock","slk":"scroll lock","menu":"menu","*":"*","+":"+","-":"-","/":"/",";":";","=":"=",",":",","_":"-",".":".","`":"`","[":"[","]":"]","'":"'"},"assimilationMap":{"1":"lmb","2":"rmb","4":"mmb","8":"backspace","9":"tab","13":"enter","16":"shift","17":"control","18":"alt","19":"pause","20":"caps lock","27":"escape","32":"spacebar","33":"page up","34":"page down","35":"end","36":"home","37":"left arrow","38":"up arrow","39":"right arrow","40":"down arrow","41":"select","42":"print","43":"execute","44":"print screen","45":"insert","46":"delete","47":"help","48":"0","49":"1","50":"2","51":"3","52":"4","53":"5","54":"6","55":"7","56":"8","57":"9","65":"a","66":"b","67":"c","68":"d","69":"e","70":"f","71":"g","72":"h","73":"i","74":"j","75":"k","76":"l","77":"m","78":"n","79":"o","80":"p","81":"q","82":"r","83":"s","84":"t","85":"u","86":"v","87":"w","88":"x","89":"y","90":"z","91":"windows","92":"windows","93":"applications","95":"computer sleep","96":"0","97":"1","98":"2","99":"3","100":"4","101":"5","102":"6","103":"7","104":"8","105":"9","106":"*","107":"+","109":"-","111":"/","112":"f1","113":"f2","114":"f3","115":"f4","116":"f5","117":"f6","118":"f7","119":"f8","120":"f9","121":"f10","122":"f11","123":"f12","124":"f13","125":"f14","126":"f15","127":"f16","144":"num lock","145":"scroll lock","160":"shift","161":"shift","162":"control","163":"control","164":"alt","165":"alt","186":";","187":"=","188":",","189":"-","190":".","191":"/","192":"`","219":"[","220":"\\","221":"]","222":"\\","223":"'","//note, backtick and apostrophe":"are reversed on uk and us keyboards"}}
+
+/***/ }),
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -39541,25 +40414,21 @@ exports.default = windowClient;
 * All rights reserved.
 */
 Object.defineProperty(exports, "__esModule", { value: true });
-/*
-Overview of how this works:
--hotkeys are added/removed via methods, passing an array of strings representing keys pressed, a handler method, and (optionally) a callback
-
--When adding a hotkey, a node js event emitter is created on the client side to trigger the hotkey handler, and a router message is sent to the service to register the key combination with the window name on the client side. Multiple hotkeys may be created for the same key combination, so long as they have different handler functions.
-
--When the service detects that all of the keys in the hotkey combination are pressed, it sends a message on the "HotkeyTriggered" channel (the method for this is "ListenForHotkeys") which contains the list of all windows registered with that hotkey combination. The client then reads the list of windows, and checks if it's one of those windows. If it is, it fires off the node js event emitter that was registered for that hotkey.
-
--Removing a hotkey clears the corresponding event emitter, and also sends a router message to the service to remove its window id from the array of windows registered for the hotkey combination - if the window is registered with that hotkey combination multiple times, it will only remove one, allowing other hotkeys on the same window with the same key combination to still be registered.
-
+/**
+ * Overview of how this works:
+ * - hotkeys are added/removed via methods, passing an array of strings representing keys pressed, a handler method, and (optionally) a callback
+ * - When adding a hotkey, a node js event emitter is created on the client side to trigger the hotkey handler, and a router message is sent to the service to register the key combination with the window name on the client side. Multiple hotkeys may be created for the same key combination, so long as they have different handler functions.
+ * - When the service detects that all of the keys in the hotkey combination are pressed, it sends a message on the "HotkeyTriggered" channel (the method for this is "ListenForHotkeys") which contains the list of all windows registered with that hotkey combination. The client then reads the list of windows, and checks if it's one of those windows. If it is, it fires off the node js event emitter that was registered for that hotkey.
+ * - Removing a hotkey clears the corresponding event emitter, and also sends a router message to the service to remove its window id from the array of windows registered for the hotkey combination - if the window is registered with that hotkey combination multiple times, it will only remove one, allowing other hotkeys on the same window with the same key combination to still be registered.
 */
-const baseClient_1 = __webpack_require__(7);
+const baseClient_1 = __webpack_require__(10);
 const routerClientInstance_1 = __webpack_require__(5);
 const logger_1 = __webpack_require__(0);
-const keyMap = __webpack_require__(46).dictionary;
+const keyMap = __webpack_require__(50).dictionary;
 /** The global `window` object. We cast it to a specific interface here to be
  * explicit about what Finsemble-related properties it may have. */
 const Globals = window;
-const events_1 = __webpack_require__(12);
+const events_1 = __webpack_require__(13);
 var eventEmitter = new events_1.EventEmitter();
 /**
  * Translates an array representing a key combination, each element of which represents a key, using keyDict, an object containing key-value pairs where the untranslated key representations are the keys, and the translated versions ready to be used by the service are the values.
@@ -39685,6 +40554,24 @@ Keystroke.prototype.initialize = function () {
 };
 // Used to keep track of which browser key combinations are registered locally
 var registeredBrowserKeys = [];
+/**
+ * @introduction
+ *
+ * <h2>Hotkey Client (Finsemble Flow)</h2>
+ *
+ * This module contains the Hotkey Client, used for registering hotkey combinations and their respective handler functions with Finsemble.
+ *
+ * The client can handle two types of hotkeys: **local hotkeys**, for which the handlers will only fire when the window which defined the hotkey is in focus, and **global hotkeys**, which will fire regardless of what window is in focus.
+ *
+ * For more information, see the [Hotkey tutorial](tutorial-Hotkeys.html).
+ *
+ *
+ *
+ * @constructor
+ * @hideconstructor
+ * @publishedName HotkeyClient
+ * @param {*} params
+ */
 class HotkeyClient extends baseClient_1._BaseClient {
     constructor(params) {
         super(params);
@@ -39850,9 +40737,6 @@ class HotkeyClient extends baseClient_1._BaseClient {
     }
 }
 var hotkeyClient = new HotkeyClient({
-    startupDependencies: {
-        services: ["hotkeysService"]
-    },
     onReady: function (cb) {
         if (cb) {
             cb();
@@ -39866,19 +40750,628 @@ exports.default = hotkeyClient;
 
 
 /***/ }),
-/* 46 */
-/***/ (function(module, exports) {
+/* 52 */
+/***/ (function(module, exports, __webpack_require__) {
 
-module.exports = {"dictionary":{"0":"0","1":"1","2":"2","3":"3","4":"4","5":"5","6":"6","7":"7","8":"8","9":"9","backspace":"backspace","bs":"backspace","bksp":"backspace","tab":"tab","escape":"escape","esc":"escape","clear":"clear","enter":"enter","return":"enter","shift":"shift","shft":"shift","lshift":"shift","lshft":"shift","left shift":"shift","leftshift":"shift","rshift":"shift","rshft":"shift","right shift":"shift","rightshift":"shift","control":"control","ctrl":"control","alt":"alt","alternate":"alt","pause":"pause","caps lock":"caps lock","capslock":"caps lock","spacebar":"spacebar","space":"spacebar","space bar":"space","page up":"page up","pgup":"page up","pg up":"page up","page down":"page down","pgdn":"page down","pg dn":"page down","end":"end","home":"home","left arrow":"left arrow","left":"left arrow","up arrow":"up arrow","up":"up arrow","right arrow":"right arrow","right":"right arrow","down arrow":"down arrow","down":"down arrow","select":"select","slct":"select","print":"print","prnt":"print","execute":"execute","print screen":"print screen","printscreen":"print screen","print scrn":"print screen","printscrn":"print screen","prnt scrn":"print screen","prntscrn":"print screen","prt scrn":"print screen","prtscrn":"print screen","prt scn":"print screen","prtscn":"print screen","prt scr":"print screen","prtscr":"print screen","prt sc":"print screen","prtsc":"print screen","pr sc":"print screen","prsc":"print screen","insert":"insert","ins":"insert","delete":"delete","del":"delete","help":"help","a":"a","b":"b","c":"c","d":"d","e":"e","f":"f","g":"g","h":"h","i":"i","j":"j","k":"k","l":"l","m":"m","n":"n","o":"o","p":"p","q":"q","r":"r","s":"s","t":"t","u":"u","v":"v","w":"w","x":"x","y":"y","z":"z","windows":"windows","left windows":"windows","right windows":"windows","applications":"applications","computer sleep":"computer sleep","sleep":"computer sleep","numpad 0":"0","numpad 1":"1","numpad 2":"2","numpad 3":"3","numpad 4":"4","numpad 5":"5","numpad 6":"6","numpad 7":"7","numpad 8":"8","numpad 9":"9","f1":"f1","fn1":"f1","function 1":"f1","f2":"f2","fn2":"f2","function 2":"f2","f3":"f3","fn3":"f3","function 3":"f3","f4":"f4","fn4":"f4","function 4":"f4","f5":"f5","fn5":"f5","function 5":"f5","f6":"f6","fn6":"f6","function 6":"f6","f7":"f7","fn7":"f7","function 7":"f7","f8":"f8","fn8":"f8","function 8":"f8","f9":"f9","fn9":"f9","function 9":"f9","f10":"f10","fn10":"f10","function 10":"f10","f11":"f11","fn11":"f11","function 11":"f11","f12":"f12","fn12":"f12","function 12":"f12","f13":"f13","fn":"f13","function 13":"f13","f14":"f14","fn14":"f14","function 14":"f14","f15":"f15","fn15":"f15","function 15":"f15","f16":"f16","fn16":"f16","function 16":"f16","num lock":"num lock","numlock":"num lock","number lock":"num lock","numeric lock":"num lock","scroll lock":"scroll lock","sclk":"scroll lock","scrlk":"scroll lock","slk":"scroll lock","menu":"menu","*":"*","+":"+","-":"-","/":"/",";":";","=":"=",",":",","_":"-",".":".","`":"`","[":"[","]":"]","'":"'"},"assimilationMap":{"1":"lmb","2":"rmb","4":"mmb","8":"backspace","9":"tab","13":"enter","16":"shift","17":"control","18":"alt","19":"pause","20":"caps lock","27":"escape","32":"spacebar","33":"page up","34":"page down","35":"end","36":"home","37":"left arrow","38":"up arrow","39":"right arrow","40":"down arrow","41":"select","42":"print","43":"execute","44":"print screen","45":"insert","46":"delete","47":"help","48":"0","49":"1","50":"2","51":"3","52":"4","53":"5","54":"6","55":"7","56":"8","57":"9","65":"a","66":"b","67":"c","68":"d","69":"e","70":"f","71":"g","72":"h","73":"i","74":"j","75":"k","76":"l","77":"m","78":"n","79":"o","80":"p","81":"q","82":"r","83":"s","84":"t","85":"u","86":"v","87":"w","88":"x","89":"y","90":"z","91":"windows","92":"windows","93":"applications","95":"computer sleep","96":"0","97":"1","98":"2","99":"3","100":"4","101":"5","102":"6","103":"7","104":"8","105":"9","106":"*","107":"+","109":"-","111":"/","112":"f1","113":"f2","114":"f3","115":"f4","116":"f5","117":"f6","118":"f7","119":"f8","120":"f9","121":"f10","122":"f11","123":"f12","124":"f13","125":"f14","126":"f15","127":"f16","144":"num lock","145":"scroll lock","160":"shift","161":"shift","162":"control","163":"control","164":"alt","165":"alt","186":";","187":"=","188":",","189":"-","190":".","191":"/","192":"`","219":"[","220":"\\","221":"]","222":"\\","223":"'","//note, backtick and apostrophe":"are reversed on uk and us keyboards"}}
+"use strict";
+
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+Object.defineProperty(exports, "__esModule", { value: true });
+const baseClient_1 = __webpack_require__(10);
+const Util = __webpack_require__(8);
+const validate_1 = __webpack_require__(6);
+const logger_1 = __webpack_require__(0);
+const constants_1 = __webpack_require__(11);
+/**
+ * @introduction
+ * <h2>Workspace Client (Finsemble Workspaces)</h2>
+ * ----------
+ * The Workspace Client manages all calls to load, save, rename, and delete workspaces.
+ *
+ *
+ * The Workspace Client uses the <code>windowIdentifier</code> parameter. <a href="tutorial-ComponentTypesAndWindowNames.html">Learn more about them here</a>.
+ *
+ *
+ * See the <a href=tutorial-Workspaces.html>Workspace tutorial</a> for an overview of using the Workspace Client.
+ *
+ * @hideConstructor true
+ * @constructor
+ * @summary You don't need to ever invoke the constructor. This is done for you when WindowClient is added to the FSBL object.
+ */
+class WorkspaceClient extends baseClient_1._BaseClient {
+    constructor(params) {
+        super(params);
+        /**
+            * List of all workspaces within the application.
+            * @type {Array.<Object>}
+            */
+        this.workspaces = [];
+        //Backward Compatibility
+        this.setWorkspaces = this.setWorkspaceOrder;
+        /**
+         * @private
+         */
+        this.createNewWorkspace = this.createWorkspace; //Backward Compatibility
+        this.getWorkspaceDefinition = this.export; //Backward Compatibility
+        this.addWorkspaceDefinition = this.import; //Backward Compatibility
+        this.saveWorkspaceTemplateToConfigFile = this.exportToFile;
+        validate_1.default.args(params, "object=") && params && validate_1.default.args2("params.onReady", params.onReady, "function=");
+    }
+    // Helper function to handle response from service
+    _serviceResponseHandler(err, response, resolve, reject, cb = Function.prototype) {
+        if (err) {
+            reject(new Error(err));
+            return cb(err);
+        }
+        if (!response)
+            response = { data: null };
+        resolve(response.data);
+        cb(null, response.data);
+    }
+    /// CORE SAVE API - Currently Private. Eventually these will handle all saves. Workspace will just be a data provider.
+    /**
+     * Saves Data Globally to the Active Workspace (e.g. ComponentState, WindowList etc.)
+     * @param {object} params
+     * @param {string} params.field
+     * @param {object} params.value
+     * @param {FinsembleCallbackFunction} cb
+     */
+    saveGlobalData(params, cb) {
+        logger_1.default.system.debug("WorkspaceClient.saveGlobalData", params);
+        const saveGlobalDataPromiseResolver = (resolve, reject) => {
+            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SAVE_GLOBAL_DATA, params, (err, response) => {
+                this._serviceResponseHandler(err, response, resolve, reject, cb);
+            });
+        };
+        return new Promise(saveGlobalDataPromiseResolver);
+    }
+    /**
+     * Saves View Specific Data (e.g. ComponentState, WindowList etc.) to the Currently Active Workspace View or all Views
+     * When a window state changes, on
+     * @param {object} params
+     * @param {string} params.field
+     * @param {object} params.value
+     * @param {boolean} params.saveToAllViews
+     * @param {FinsembleCallbackFunction} cb
+     */
+    saveViewData(params, cb) {
+        logger_1.default.system.debug("WorkspaceClient.saveViewData", params);
+        const saveViewDataPromiseResolver = (resolve, reject) => {
+            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SAVE_VIEW_DATA, params, (err, response) => {
+                this._serviceResponseHandler(err, response, resolve, reject, cb);
+            });
+        };
+        return new Promise(saveViewDataPromiseResolver);
+    }
+    // This is unnecessary. Window Service should call SaveGlobalData, saveViewData
+    /**
+     * Adds window to active workspace.
+     * @private
+     * @param {object} params
+     * @param {string} params.name Window name
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     */
+    addWindow(params, cb = Function.prototype) {
+        validate_1.default.args(params, "object", cb, "function=") && params && validate_1.default.args2("params.name", params.name, "string");
+        this.routerClient.query("WorkspaceService.addWindow", params, (err, response) => {
+            logger_1.default.system.log(`WORKSPACE LIFECYCLE: Window added:WorkspaceClient.addWindow: Name (${params.name})`);
+            cb(err, response);
+        });
+    }
+    /**
+     * Removes window from active workspace.
+     * @private
+     * @param {object} params
+     * @param {string} params.name Window name
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example <caption>This method removes a window from a workspace. It is rarely called by the developer. It is called when a window that is using the window manager is closed. That way, the next time the app is loaded, that window is not spawned.</caption>
+     * FSBL.Clients.WorkspaceClient.removeWindow({ name:windowName }, function(err, response) {
+     * 	//do something after removing the window.
+     * });
+     */
+    removeWindow(params, cb = Function.prototype) {
+        validate_1.default.args(params, "object", cb, "function=") && validate_1.default.args2("params.name", params.name, "string");
+        this.routerClient.query("WorkspaceService.removeWindow", params, (err, response) => {
+            if (err) {
+                return logger_1.default.system.error(err);
+            }
+            logger_1.default.system.log(`WORKSPACE LIFECYCLE:WorkspaceClient.removeWindow:Window removed: Name (${params.name})`);
+            if (response) {
+                cb(err, response.data);
+            }
+            else {
+                cb(err, null);
+            }
+        });
+    }
+    // Window Related Workspace Functions. Eventually these need to move to the Window Service
+    /**
+     * This method is an experimental feature in Finsemble Labs. Calling this method automatically arranges all windows on the user's screen into a grid-like pattern.
+     * @param {object} params Parameters
+     * @param {string | undefined} params.monitor Same options as <a href="LauncherClient.html#showWindow">LauncherClient.showWindow</a>. Default is monitor of calling window.
+     * @param {* | undefined} params.monitorDimensions The surface area of the monitor to arrange over. If not defined defaults to the unclaimed area of the current monitor.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example
+     * FSBL.Clients.WorkspaceClient.autoArrange(function(err, response) {
+     * 		//do something after the auto-arrange, maybe make all of the windows flash or notify the user that their monitor is now tidy.
+     * });
+     */
+    autoArrange(params, cb = Function.prototype) {
+        validate_1.default.args(params, "object", cb, "function=");
+        params = params ? params : {};
+        Util.getMyWindowIdentifier((myWindowIdentifier) => {
+            FSBL.Clients.LauncherClient.getMonitorInfo({
+                windowIdentifier: myWindowIdentifier
+            }, (err, dimensions) => {
+                params.monitorDimensions = dimensions.unclaimedRect;
+                params.monitorDimensions.name = dimensions.name;
+                this.routerClient.query("DockingService.autoArrange", params, cb);
+            });
+        });
+    }
+    /**
+     * Minimizes all windows.
+     * @param {object} params
+     * @param {string} 	params.monitor Same options as <a href="LauncherClient.html#showWindow">LauncherClient.showWindow</a> except that "all" will work for all monitors. Defaults to all.
+     * @param {* | undefined} params.windowIdentifier The Finsemble identifier structure for the window triggering the request.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example
+     * FSBL.Clients.WorkspaceClient.bringWindowsToFront();
+     */
+    minimizeAll(params, cb = Function.prototype) {
+        validate_1.default.args(params, "object", cb, "function=");
+        params = params ? params : { monitor: "all" };
+        Util.getMyWindowIdentifier((myWindowIdentifier) => {
+            if (!params.windowIdentifier) {
+                params.windowIdentifier = myWindowIdentifier;
+            }
+            this.routerClient.query("WorkspaceService.minimizeAll", params, cb);
+        });
+    }
+    /**
+     * Brings all windows to the front.
+     * @param {object} params
+     * @param {string} 	params.monitor Same options as <a href="LauncherClient.html#showWindow">LauncherClient.showWindow</a> except that "all" will work for all monitors. Defaults to the monitor for the current window.
+     * @param {* | undefined} params.windowIdentifier The Finsemble identifier for the target window. If not provided, defaults to the current window.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example
+     * FSBL.Clients.WorkspaceClient.bringWindowsToFront();
+     */
+    bringWindowsToFront(params, cb = Function.prototype) {
+        validate_1.default.args(params, "object", cb, "function=");
+        params = params ? params : { monitor: "all" };
+        Util.getMyWindowIdentifier((myWindowIdentifier) => {
+            if (!params.windowIdentifier) {
+                params.windowIdentifier = myWindowIdentifier;
+            }
+            this.routerClient.query("WorkspaceService.bringWindowsToFront", params, cb);
+        });
+    }
+    /**
+     * Gets the currently active workspace.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example <caption>This function is useful for setting the initial state of a menu or dialog. It is used in the toolbar component to set the initial state.</caption>
+     *
+     * FSBL.Clients.WorkspaceClient.getActiveWorkspace((err, response) => {
+     * 	// do something with the response.
+     * });
+     */
+    async getActiveWorkspace(cb) {
+        logger_1.default.system.debug("WorkspaceClient.getActiveWorkspace");
+        const result = (await this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.GET_ACTIVE_WORKSPACE, {})).response;
+        this.activeWorkspace = result.data;
+        if (result.data.err) {
+            if (cb)
+                cb(result.data.err);
+            throw new Error(result.data.err);
+        }
+        if (cb)
+            cb(null, result);
+        return result;
+    }
+    /**
+     * Returns the list of saved workspaces.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example <caption>This function is useful for setting the initial state of a menu or dialog.</caption>
+     *
+     * FSBL.Clients.WorkspaceClient.getActiveWorkspace((err, response) => {
+     * 	//setState is a React component method.
+     * 	self.setState({
+     * 		workspaces: response
+     * 	});
+     * });
+     */
+    getWorkspaces(cb) {
+        validate_1.default.args(cb, "function=");
+        logger_1.default.system.debug("WorkspaceClient.getWorkspaces");
+        const getWorkspacesPromiseResolver = async (resolve, reject) => {
+            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.GET_WORKSPACES, {}, (err, response) => {
+                this._serviceResponseHandler(err, response, resolve, reject, cb);
+            });
+        };
+        return new Promise(getWorkspacesPromiseResolver);
+    }
+    /**
+     * @private
+     *
+     * @param {*} params
+     * @param {*} cb
+     * @returns
+     * @memberof WorkspaceClient
+     */
+    setWorkspaceOrder(params, cb) {
+        let { workspaces } = params;
+        validate_1.default.args(cb, "function");
+        logger_1.default.system.debug("WorkspaceClient.setWorkspaceOrder", params);
+        const setWorkspaceOrderPromiseResolver = (resolve, reject) => {
+            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SET_WORKSPACE_ORDER, params.workspaces || params, (err, response) => {
+                this._serviceResponseHandler(err, response, resolve, reject, cb);
+            });
+        };
+        return new Promise(setWorkspaceOrderPromiseResolver);
+    }
+    /**
+     * Removes a workspace. Either the workspace object or its name must be provided.
+     * @param {object} params
+     * @param {object | undefined} 	params.workspace The workspace data object.
+     * @param {string} 	params.workspace.name The workspace name removal is requested for.
+     * @param {string | undefined} 	params.name The workspace name removal is requested for.
+     * @param {function} cb Callback to fire after 'Finsemble.WorkspaceService.update' is transmitted.
+     * @example <caption>This function removes 'My Workspace' from the main menu and the default storage tied to the application.</caption>
+     * FSBL.Clients.WorkspaceClient.remove({
+     * 	name: 'My Workspace'
+     * }, function(err, response) {
+     * 	//You typically won't do anything here. If you'd like to do something when a workspace change happens, we suggest listening on the `Finsemble.WorkspaceService.update` channel.
+     * });
+     */
+    remove(params, cb = Function.prototype) {
+        validate_1.default.args(params, "object", cb, "function=") && !(params.name || params.workspace) && validate_1.default.args2("params.name", params.name, "string");
+        logger_1.default.system.debug("WorkspaceClient.remove", params);
+        const removePromiseResolver = (resolve, reject) => {
+            if (!params.name) {
+                params.name = params.workspace.name;
+                // we dont need to send workspace objects over the router if not needed.
+                delete params.workspace;
+            }
+            // Cannot remove active workspace.
+            if (params.name === this.activeWorkspace.name) {
+                logger_1.default.system.error("APPLICATION LIFECYCLE:  Cannot remove active workspace: WorkspaceClient.remove:attempt to remove active workspace name:" + this.activeWorkspace.name);
+                let err = "Cannot remove active workspace";
+                return this._serviceResponseHandler(err, null, resolve, reject, cb);
+            }
+            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.REMOVE, params, (err, response) => {
+                this._serviceResponseHandler(err, response, resolve, reject, cb);
+            });
+        };
+        return new Promise(removePromiseResolver);
+    }
+    /**
+     * Renames the workspace with the provided name. Also removes all references in storage to the old workspace's name.
+     * @param {object} params
+     * @param {string} params.oldName Name of workspace to rename.
+     * @param {string} params.newName What to rename the workspace to.
+     * @param {boolean} params.removeOldWorkspace Whether to remove references to old workspace after renaming.
+     * @param {boolean} params.overwriteExisting Whether to overwrite an existing workspace.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example <caption>This method is used to rename workspaces. It is used in the main Menu component.</caption>
+     * FSBL.Clients.WorkspaceClient.rename({
+     * 	oldName: 'My Workspace',
+     * 	newName: 'The best workspace',
+     * 	removeOldWorkspace: true,
+     * }, function(err, response) {
+     * 	//Do something.
+     * });
+     */
+    rename(params, cb = Function.prototype) {
+        validate_1.default.args(params, "object", cb, "function=") && validate_1.default.args2("params.oldName", params.oldName, "string", "params.newName", params.newName, "string");
+        logger_1.default.system.debug("WorkspaceClient.rename", params);
+        const renamePromiseResolver = (resolve, reject) => {
+            if (!params.overwriteExisting && this.workspaceExists(params.newName)) {
+                let err = "Workspace Already Exists";
+                return this._serviceResponseHandler(err, null, resolve, reject, cb);
+            }
+            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.RENAME, params, (err, response) => {
+                this._serviceResponseHandler(err, response, resolve, reject, cb);
+            });
+        };
+        return new Promise(renamePromiseResolver);
+    }
+    /**
+     * Makes a clone (i.e. copy) of the workspace.  The active workspace is not affected.
+     * @private
+     * @param {object} params
+     * @param {string} params.name Name of workspace to clone.
+     * @param {string} params.newName Name of workspace to clone.
+     * @param {function} cb cb(err,response) with response set to the name of the cloned workspace if no error
+     * @example <caption>This method is used to clone workspaces. </caption>
+     * FSBL.Clients.WorkspaceClient.clone({
+     * 	name: 'The best workspace'
+     * }, function(err, response) {
+     * 	//Do something.
+     * });
+     */
+    // Keeping for backward compatibility
+    clone(params, cb = Function.prototype) {
+        validate_1.default.args(params, "object", cb, "function=") && validate_1.default.args2("params.name", params.name, "string");
+        delete params.name;
+        if (!params.newName) {
+            params.newName = params.name + "_clone";
+        }
+        params.removeOldWorkspace = false;
+        return this.rename({
+            removeOldWorkspace: false,
+            newName: params.newName,
+            oldName: params.name
+        }, cb);
+    }
+    ;
+    /**
+     * Saves the currently saved workspace. Changes to the <code>activeWorkspace</code> are made on every change automatically.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example <caption>This function persists the currently active workspace.</caption>
+     * FSBL.Clients.WorkspaceClient.save(function(err, response) {
+     * 	//Do something.
+     * });
+     */
+    save(cb = Function.prototype) {
+        logger_1.default.system.debug("WorkspaceClient.save");
+        const savePromiseResolver = (resolve, reject) => {
+            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SAVE, {}, (err, response) => {
+                this._serviceResponseHandler(err, response, resolve, reject, cb);
+            });
+        };
+        return new Promise(savePromiseResolver);
+    }
+    /**
+     * Helper that tells us whether a workspace with this name exists.
+     * @private
+     */
+    workspaceExists(workspaceName) {
+        validate_1.default.args(workspaceName, "string");
+        for (var i = 0; i < this.workspaces.length; i++) {
+            if (workspaceName === this.workspaces[i].name) {
+                return true;
+            }
+        }
+        return false;
+    }
+    /**
+     *
+     * Saves the currently active workspace with the provided name.
+     * @param {object} params
+     * @param {string} params.name The new name you want to save the workspace under.
+     * @param {string} params.force Whether to overwrite a workspace already saved with the provided name.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example <caption>This function persists the currently active workspace with the provided name.</caption>
+     * FSBL.Clients.WorkspaceClient.saveAs({
+     * 	name: 'My Workspace',
+     * }, function(err, response) {
+     * 	//Do something.
+     * });
+     */
+    saveAs(params, cb = Function.prototype) {
+        validate_1.default.args(params, "object", cb, "function=") && validate_1.default.args2("params.name", params.name, "string");
+        logger_1.default.system.debug("WorkspaceClient.saveAs", params);
+        const saveAsPromiseResolver = (resolve, reject) => {
+            if (!params.force && this.workspaceExists(params.name)) {
+                return this._serviceResponseHandler("Workspace Already Exists", null, resolve, reject, cb);
+            }
+            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SAVE_AS, params, (err, response) => {
+                this._serviceResponseHandler(err, response, resolve, reject, cb);
+            });
+        };
+        return new Promise(saveAsPromiseResolver);
+    }
+    /**
+     * Switches to a workspace.
+     * @param {object} params
+     * @param {string} 	params.name The name of the workspace you want to switch to.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     * @example <caption>This function loads the workspace 'My Workspace' from the storage tied to the application.</caption>
+     * FSBL.Clients.WorkspaceClient.switchTo({
+     * 	name: 'My Workspace',
+     * }, function(err, response) {
+     * 	//Do something.
+     * });
+     */
+    async switchTo(params, cb = Function.prototype) {
+        validate_1.default.args(params, "object", cb, "function") && validate_1.default.args2("params.name", params.name, "string");
+        logger_1.default.system.debug("WorkspaceClient.switchTo", params);
+        const result = await this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SWITCH_TO, params);
+        if (result.err) {
+            cb(result.err, null);
+            throw new Error(result.err);
+        }
+        cb(result);
+        return result;
+    }
+    /**
+     * @private
+     * ALPHA - Subject to breaking change in coming minor releases.
+     * Sets the stored state of a given window in the active workspace. `state` may include
+     * keys for `windowData`, `componentState`, or both; the state of each key will be completely
+     * overwritten by the provided state. If the update results in dirtying change, the active
+     * workspace will be marked dirty (or, if autosave is on, persisted directly to storage).
+     */
+    async _setWindowState(params) {
+        logger_1.default.system.debug("WorkspaceClient.setWindowData", params);
+        return this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SET_WINDOW_STATE, params);
+    }
+    /**
+     * @private
+     * ALPHA - Subject to breaking change in coming minor releases.
+     * Retrieves the given window from storage, retrieving the requested state variables
+     * (`"componentState"` and/or `"windowData"`).
+     */
+    async _getWindowState(params) {
+        logger_1.default.system.debug("WorkspaceClient.getWindowData", params);
+        return this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.GET_WINDOW_STATE, params);
+    }
+    /**
+     * Checks to see if the workspace is dirty, i.e., if its state has been changed since the last save. If it's already dirty, the window doesn't need to compare its state to the saved state.
+     *
+     * @param {Function} cb <code>cb(err,response)</code> with response set to true if dirty and false otherwise (when no error).
+     *
+     * @example <caption>This function will let you know if the <code>activeWorkspace</code> is dirty.</caption>
+     * FSBL.Clients.WorkspaceClient.isWorkspaceDirty(function(err, response) {
+     * 		//Do something like prompt the user if they'd like to save the currently loaded workspace before switching.
+     * });
+     */
+    isWorkspaceDirty(cb) {
+        validate_1.default.args(cb, "function");
+        logger_1.default.system.debug("WorkspaceClient.isWorkspaceDirty");
+        const isWorkspaceDirtyPromiseResolver = (resolve, reject) => {
+            this._serviceResponseHandler(null, { data: this.activeWorkspace.isDirty }, resolve, reject, cb);
+        };
+        return new Promise(isWorkspaceDirtyPromiseResolver);
+    }
+    /**
+     * Creates a new workspace, returning a promise for the final name of
+     * the new workspace as a string. After creation, if "switchAfterCreation" is true,
+     * the new workspace becomes the active workspace.
+     *
+     * If the requested name already exists, a new workspace will be created
+     * with the form "[name] (1)" (or "[name] (2)", etc.)
+     *
+     * @param {string} workspaceName Name for new workspace.
+     * @param {object} params Optional params
+     * @param {boolean} params.switchAfterCreation Whether to switch to the new workspace after creating it.
+     * @param {function} cb <code>cb(err,response)</code> With response, set to new workspace object if no error.
+     * @example <caption>This function creates the workspace 'My Workspace'.</caption>
+     * FSBL.Clients.WorkspaceClient.createWorkspace(function(err, response) {
+     *		if (!err) {}
+     *			//Do something like notify the user that the workspace has been created.
+     *		}
+     * });
+     */
+    async createWorkspace(workspaceName, params, cb = (err, result) => { }) {
+        logger_1.default.system.log(`WorkspaceClient: Creating Workspace Request for name "${workspaceName}"`);
+        const finalName = (await this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.NEW_WORKSPACE, { workspaceName })).response.data;
+        if (params.switchAfterCreation !== false) {
+            await this.switchTo({ name: finalName });
+        }
+        const result = { workspaceName: finalName };
+        cb(null, result);
+        return result;
+    }
+    /**
+     * Gets a workspace definition in JSON form.
+     *
+     * @param {object} params
+     * @param {string} params.workspaceName The name of the workspace you want to export.
+     * @param {function} cb <code>callback(error, workspaceDefinition)</code>
+     * @example <caption>FSBL.Clients.WorkspaceClient.export({'workspaceName:': 'linker'}, function(err, worskpaceDefinition) {
+     *
+     * //do something with the workspace definition
+     * })'; </caption>
+     */
+    export(params, cb) {
+        validate_1.default.args(params, "object", cb, "function") && validate_1.default.args2("params.workspaceName", params.workspaceName, "string");
+        logger_1.default.system.debug("WorkspaceClient.export", params);
+        const exportPromiseResolver = (resolve, reject) => {
+            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.EXPORT, params, (err, response) => {
+                let workspaceExport = {};
+                workspaceExport[params.workspaceName] = response.data;
+                this._serviceResponseHandler(err, { data: workspaceExport }, resolve, reject, cb);
+            });
+        };
+        return new Promise(exportPromiseResolver);
+    }
+    /**
+     * Adds a workspace definition to the list of available workspaces.
+     *
+     * @param {object} params
+     * @param {object} params.workspaceJSONDefinition The JSON for the workspace definition, as exported by the User Preferences menu in Finsemble Connect.
+     * @param {boolean} params.force Whether to overwrite any workspace of the same name that already exists
+     * @param {function=} cb <code>cb(err)</code> where the operation was successful if !err; otherwise, err carries diagnostics
+     *
+     */
+    async import(params, cb) {
+        validate_1.default.args(params, "object", cb, "function=") && validate_1.default.args2("params.workspaceJSONDefinition", params.workspaceJSONDefinition, "object");
+        logger_1.default.system.debug("WorkspaceClient.import", params);
+        const result = (await this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.IMPORT, params)).response.data;
+        if (result && result.err) {
+            cb(result.err);
+            throw new Error(result.err);
+        }
+        if (cb)
+            cb(null, result);
+        return result;
+    }
+    /**
+     * Saves one mor more template defintions in a selected file. Note the
+     * end user is prompted to identify file location during this save
+     * operation. The file can optionally be imported during config
+     * initialization (see importConfig) although this requires administration
+     * support on the configuration/server side. The file can also be read
+     * using readWorkspaceTemplateFromConfigFile();
+     *
+     * @param {object} params
+     * @param {object} params.workspaceTemplateDefinition legal template definition returned by either
+     * getWorkspaceTemplateDefinition() or convertWorkspaceDefinitionToTemplate()
+     * @private
+     */
+    exportToFile(params) {
+        // TODO: Make it possible to export both workspaces and templates.
+        logger_1.default.system.info("workspaceClient.saveWorkspaceTemplateToConfigFile", params);
+        validate_1.default.args(params, "object") && validate_1.default.args2("params.workspaceTemplateDefinition", params.workspaceTemplateDefinition, "object");
+        var workspaceTemplateDefinition = params.workspaceTemplateDefinition;
+        if (typeof workspaceTemplateDefinition === "object") {
+            var templateName = Object.keys(workspaceTemplateDefinition)[0];
+            if (templateName && workspaceTemplateDefinition[templateName].templateDefinitionFlag) { // confirm the object is a template definition
+                var exportConfig = { workspaceTemplates: workspaceTemplateDefinition };
+                FSBL.ConfigUtils.promptAndSaveJSONToLocalFile("workspaceConfig-" + templateName, exportConfig);
+            }
+            else {
+                logger_1.default.system.error("workspaceClient.saveWorkspaceTemplateToConfigFile. Input is not a legal template");
+            }
+        }
+        else {
+            logger_1.default.system.error("workspaceClient.saveWorkspaceTemplateToConfigFile: Input is not a legal object");
+        }
+    }
+    /**
+     * Initializes listeners and sets default data on the WorkspaceClient object.
+     * @private
+     */
+    async start(cb) {
+        /**
+         * Initializes the workspace's state.
+         */
+        this.routerClient.subscribe("Finsemble.WorkspaceService.update", (err, response) => {
+            logger_1.default.system.debug("workspaceClient init subscribe response", err, response);
+            if (err) {
+                logger_1.default.system.error(err);
+                return;
+            }
+            this.activeWorkspace = response.data.activeWorkspace;
+            this.workspaces = response.data.workspaces;
+            if (cb) {
+                cb();
+            }
+        });
+    }
+}
+var workspaceClient = new WorkspaceClient({
+    onReady: (cb) => {
+        workspaceClient.start(cb);
+    },
+    name: "workspaceClient"
+});
+exports.default = workspaceClient;
+
 
 /***/ }),
-/* 47 */
+/* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const events_1 = __webpack_require__(12);
+const events_1 = __webpack_require__(13);
 /**
  * Notes:
  * Client calls finsembleWindow.addEventListener("event", handler)
@@ -39945,7 +41438,7 @@ exports.FinsembleEvent = FinsembleEvent;
 
 
 /***/ }),
-/* 48 */
+/* 54 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -39953,7 +41446,7 @@ exports.FinsembleEvent = FinsembleEvent;
 Object.defineProperty(exports, "__esModule", { value: true });
 const routerClientInstance_1 = __webpack_require__(5);
 const logger_1 = __webpack_require__(0);
-const events_1 = __webpack_require__(12);
+const events_1 = __webpack_require__(13);
 class WindowEventManager extends events_1.EventEmitter {
     /**
     * Array of events that we're subscribed to remotely. When receiving a remote event, the event manager will emit a local event.
@@ -40028,8 +41521,8 @@ class WindowEventManager extends events_1.EventEmitter {
             }
             //todo need to accommodate wrap-state-changed events in here...maybe?
             let data = { eventName, name: this.windowName };
-            if (eventName.includes("bounds") || eventName.includes("parent")) {
-                //bounds events need to push out more data than just name/eventName. ...response.data will destructure the object and copy them into this new object.
+            if (eventName.includes("bounds") || eventName.includes("parent") || eventName.includes("alwaysOnTop")) {
+                // bounds events need to push out more data than just name/eventName. ...response.data will destructure the object and copy them into this new object.
                 data = Object.assign({ eventName }, response.data);
             }
             if (!response.originatedHere()) {
@@ -40117,7 +41610,7 @@ exports.WindowEventManager = WindowEventManager;
 
 
 /***/ }),
-/* 49 */
+/* 55 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {/**
@@ -41869,1257 +43362,10 @@ function stubFalse() {
 
 module.exports = cloneDeep;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(13)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(14)(module)))
 
 /***/ }),
-/* 50 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__clients_logger__);
-
-
-class BoxMath {
-	static isPointOnSegment(point, segment) {
-		//y = mx + b;
-		//Equation above transforms into this:
-		//(y - y1)	 x - x1
-		//-------- = --------
-		//y2 - y1 	 x2 - x1
-
-		//which is this:
-		//(y - y1) * (x2 - x1) = (x - x1) * ( y2 - y1)
-		var x = point.x,
-		    y = point.y,
-		    x1 = segment.min.x,
-		    x2 = segment.max.x,
-		    y1 = segment.min.y,
-		    y2 = segment.max.y;
-
-		var isInBounds = x >= x1 && x <= x2 && y >= y1 && y <= y2;
-		//The equation above will tell us whether the point is on the line, assuming it has no start and end. This checks to see if the point is within the beginning and end of the segment. If not, it can't be on our segment.
-		if (!isInBounds) {
-			return false;
-		}
-		var isOnLine = (y - y1) * (x1 - x2) === (x - x1) * (y1 - y2);
-		return isOnLine;
-	}
-
-	/**
- * @function {function name}
- * @param  {type} req {description}
- * @return {type} {description}
- */
-	static getVertices(req) {
-		return [
-		//top left
-		{
-			x: req.left,
-			y: req.top,
-			label: "topLeft"
-		},
-		//top right
-		{
-			x: req.right,
-			y: req.top,
-			label: "topRight"
-		}, {
-			x: req.right,
-			y: req.bottom,
-			label: "bottomRight"
-		}, {
-			x: req.left,
-			y: req.bottom,
-			label: "bottomLeft"
-		}];
-	}
-
-	/**
- * @function {function name}
- * @param  {type} segment {description}
- * @return {type} {description}
- */
-	static getVertexOnSegment(segment) {
-		for (let vertex in this.vertices) {
-			if (BoxMath.isPointOnSegment(this.vertices[vertex], segment)) {
-				return vertex;
-			}
-		}
-		return false;
-	}
-
-	/**
- * @function {function name}
- * @param  {type} bounds     {description}
- * @param  {type} bufferSize {description}
- * @return {type} {description}
- */
-	static getSnappingRegions(bounds, bufferSize = 0) {
-		let { left, top, right, bottom } = bounds;
-		let leftMinusBuffer = left - bufferSize,
-		    leftPlusBuffer = left + bufferSize,
-		    topMinusBuffer = top - bufferSize,
-		    topPlusBuffer = top + bufferSize,
-		    rightMinusBuffer = right - bufferSize,
-		    rightPlusBuffer = right + bufferSize,
-		    bottomPlusBuffer = bottom + bufferSize,
-		    bottomMinusBuffer = bottom - bufferSize;
-		return {
-			topLeft: {
-				min: {
-					x: leftMinusBuffer,
-					y: topMinusBuffer
-				},
-				max: {
-					x: leftPlusBuffer,
-					y: top
-				}
-			},
-			topRight: {
-				min: {
-					x: rightMinusBuffer,
-					y: topMinusBuffer
-				},
-				max: {
-					x: rightPlusBuffer,
-					y: top
-				}
-			},
-			rightTop: {
-				min: {
-					x: right,
-					y: top
-				},
-				max: {
-					x: rightPlusBuffer,
-					y: topPlusBuffer
-				}
-			},
-			rightBottom: {
-				min: {
-					x: right,
-					y: bottomMinusBuffer
-				},
-				max: {
-					x: rightPlusBuffer,
-					y: bottom
-				}
-			},
-
-			bottomLeft: {
-				min: {
-					x: leftMinusBuffer,
-					y: bottom
-				},
-				max: {
-					x: leftPlusBuffer,
-					y: bottomPlusBuffer
-				}
-			},
-			bottomRight: {
-				min: {
-					x: rightMinusBuffer,
-					y: bottom
-				},
-				max: {
-					x: rightPlusBuffer,
-					y: bottomPlusBuffer
-				}
-			},
-			leftTop: {
-				min: {
-					x: leftMinusBuffer,
-					y: top
-				},
-				max: {
-					x: left,
-					y: topPlusBuffer
-				}
-			},
-			leftBottom: {
-				min: {
-					x: leftMinusBuffer,
-					y: bottomMinusBuffer
-				},
-				max: {
-					x: left,
-					y: bottom
-				}
-			},
-			left: {
-				min: {
-					x: leftMinusBuffer,
-					y: topMinusBuffer
-				},
-				max: {
-					x: leftPlusBuffer,
-					y: bottomPlusBuffer
-				}
-			},
-			bottom: {
-				min: {
-					x: leftMinusBuffer,
-					y: bottom
-				},
-				max: {
-					x: rightPlusBuffer,
-					y: bottomPlusBuffer
-				}
-			},
-			right: {
-				min: {
-					x: rightMinusBuffer,
-					y: topPlusBuffer
-				},
-				max: {
-					x: rightPlusBuffer,
-					y: bottomPlusBuffer
-				}
-			},
-			top: {
-				min: {
-					x: left,
-					y: topMinusBuffer
-				},
-				max: {
-					x: right,
-					y: top
-				}
-			},
-			inner: {
-				min: {
-					x: left,
-					y: top
-				},
-				max: {
-					x: right,
-					y: bottom
-				}
-			}
-		};
-	}
-
-	/**
- * @function {function name}
- * @param  {type} bounds {description}
- * @return {type} {description}
- */
-	static getWindowBoundingBox(bounds) {
-		return {
-			min: {
-				x: bounds.left,
-				y: bounds.top
-			},
-			max: {
-				x: bounds.right,
-				y: bounds.bottom
-			}
-		};
-	}
-
-	static between(params) {
-		var min = params.min,
-		    max = params.max,
-		    num = params.num,
-		    inclusive = params.inclusive;
-		if (inclusive) {
-			return num >= min && num <= max;
-		}
-		return num > min && num < max;
-	}
-
-	/**
- * @function {function name}
- * @param  {type} window1 {description}
- * @param  {type} window2 {description}
- * @return {type} {description}
- */
-	static intersectBoundingBoxes(window1, window2) {
-		if (window1.max.x < window2.min.x) {
-			return false;
-		} // 1 is left of 2
-		if (window1.min.x > window2.max.x) {
-			return false;
-		} // 1 is right of 2
-		if (window1.max.y < window2.min.y) {
-			return false;
-		} // 1 is above 2
-		if (window1.min.y > window2.max.y) {
-			return false;
-		} // 1 is below 2
-		return true; // boxes overlap
-	}
-
-	/**
- * @function {function name}
- * @param  {type} num {description}
- * @param  {type} pct {description}
- * @return {type} {description}
- */
-	static getPct(num, pct) {
-		return pct * num;
-	}
-
-	/**
- * @function {function name}
- * @param  {type} num {description}
- * @param  {type} pct {description}
- * @return {type} {description}
- */
-	static scaleProportionately(num, pct) {
-		return Math.floor(num + this.getPct(num, pct));
-	}
-
-	/**
- * @function {function name}
- * @param  {type} num1 {description}
- * @param  {type} num2 {description}
- * @return {type} {description}
- */
-	static getPercentChange(num1, num2) {
-		var pctChange = Math.abs((num1 - num2) / num1);
-		if (num2 < num1) {
-			pctChange = -pctChange;
-		}
-		return pctChange;
-	}
-
-	/**
-  * Gets the area of the overlap between two rectangles.
-  * @param {*} rect1
-  * @param {*} rect2
-  */
-	static getOverlap(rect1, rect2) {
-		let x_overlap = Math.max(0, Math.min(rect1.right, rect2.right) - Math.max(rect1.left, rect2.left));
-		let y_overlap = Math.max(0, Math.min(rect1.bottom, rect2.bottom) - Math.max(rect1.top, rect2.top));
-		return x_overlap * y_overlap;
-	}
-
-	/**
-  * Checks if point is in box (inclusive)
-  * @param {*} point
-  * @param {*} box
-  */
-	static isPointInBox(point, box) {
-		if (point.left) point.x = point.left;
-		if (point.top) point.y = point.top;
-		if (!box.right) box.right = box.left + box.width;
-		if (!box.bottom) box.bottom = box.top + box.height;
-		if (point.x >= box.left && point.x <= box.right && point.y >= box.top && point.y <= box.bottom) {
-			return true;
-		}
-		return false;
-	}
-	/**
-  * Clip A with B. return where the boxes don't intersect.
-  * @param {DockableBox} rectA
-  * @param {DockableBox} rectB
-  *
-  * @memberof BoxMath
-  */
-	static clipRect(rectA, rectB, edge) {
-		let clip = rectA;
-		let corners = this.getVertices(rectB);
-		//This array will hold the corners of the clipping rectangle that are within the clipped rectangle's boundaries.
-		let cornersInBox = [];
-		for (let i = 0; i < corners.length; i++) {
-			let corner = corners[i];
-			corner.label = corner.label.toLowerCase();
-			//The goal here is to detect which edges of the clipping box exists within the clipped box's boundaries - EXCLUDING the edges of the clipped box.
-
-			/**
-    * The A = B + C. In other words, it's our hole. B is the window that we're using to fill the hole.
-    *
-   		In this case, A and B share their top right and top left corners. ALl we care about here is the bottom left and bottom right of B.
-   		The result of this function is C.
-    		+-------------------+
-   		|                   |
-   		|                   |
-   		|                   |
-   		|                   |
-   		|         B         |
-   		|                   |
-   		|                   |
-   		|                   |
-   		+-------------------+
-   		|                   |
-   		|                   |
-   		|                   |
-   		|                   |
-   		|         C         |
-   		|                   |
-   		|                   |
-   		|                   |
-   		|                   |
-   		|                   |
-   		+-------------------+
-    * */
-
-			//The block of code below kicks out any points on B that are corners on A.
-			if (this.isPointInBox(corner, rectA)) {
-				if (corner.label === "bottomright" && corner.y === rectA.bottom && corner.x === rectA.right) {
-					continue;
-				}
-
-				if (corner.label === "bottomleft" && corner.y === rectA.bottom && corner.x === rectA.left) {
-					continue;
-				}
-
-				if (corner.label === "topleft" && corner.x === rectA.left && corner.y === rectA.top) {
-					continue;
-				}
-
-				if (corner.label === "topright" && corner.x === rectA.right && corner.y === rectA.top) {
-					continue;
-				}
-				cornersInBox.push(corner.label);
-			}
-		}
-
-		/**
-   * Going back to our example earlier. Remember, A is the larger box that encompasses B and C. In this case, only two corners are within A. (bottom left, bottom right).
-  		+-------------------+
-  		|                   |
-  		|                   |
-  		|                   |
-  		|                   |
-  		|         B         |
-  		|                   |
-  		|                   |
-  		|                   |
-  		+-------------------+
-  		|                   |
-  		|                   |
-  		|                   |
-  		|                   |
-  		|         C         |
-  		|                   |
-  		|                   |
-  		|                   |
-  		|                   |
-  		|                   |
-  		+-------------------+
-  	* */
-		if (cornersInBox.length === 2) {
-			//left edge is in box.
-			if (cornersInBox.includes("topleft") && cornersInBox.includes("bottomleft")) {
-				clip.right = rectB.left;
-			} else if (cornersInBox.includes("topright") && cornersInBox.includes("bottomright")) {
-				clip.left = rectB.right;
-			} else {
-				if (cornersInBox.includes("topleft") && cornersInBox.includes("topright")) {
-					clip.bottom = rectB.top;
-				} else if (cornersInBox.includes("bottomleft") && cornersInBox.includes("bottomright")) {
-					clip.top = rectB.bottom;
-				}
-			}
-		} else {
-			/****
-   * In this case, A is the wide horizontal box. B is the tall vertical box. Their bottom left corners align at point X.
-   *  In this case, only one corner (bottom left of B) is within the bounds of A.
-   				    B
-           +------------------+
-   		|                  |
-   		|                  |
-   		|                  |
-   		|                  |
-   		|                  |
-   		|                  |
-   		|                  |
-   		|                  |
-   		|                  |
-   		|                  |
-   		|                  |
-   		+---------------------------------------------------------------------+
-   		|                  |                                                  |
-   		|                  |                                                  |
-   		|                  |                                                  |
-   		|                  |                  CLIP                            |  A
-   		|                  |                                                  |
-   		|                  |                                                  |
-   		+------------------+--------------------------------------------------+
-   	   X
-    */
-
-			const ISLEFTORRIGHT = edge === "left" || edge === "right";
-			const ISTOPORBOTTOM = edge === "top" || edge === "bottom";
-			if (cornersInBox.includes("topleft")) {
-
-				if (ISTOPORBOTTOM) {
-					clip.right = rectB.left;
-					if (rectB.top > rectA.bottom) {
-						clip.bottom = rectB.top;
-					}
-				} else {
-					clip.left = rectB.left;
-					if (rectB.top < rectA.bottom) {
-						clip.bottom = rectB.top;
-					}
-				}
-			} else if (cornersInBox.includes("topright")) {
-				if (ISTOPORBOTTOM) {
-					clip.left = rectB.right;
-					if (rectB.top > rectA.bottom) {
-						clip.bottom = rectB.top;
-					}
-				} else {
-					clip.right = rectB.right;
-					if (rectB.top < rectA.bottom) {
-						clip.bottom = rectB.top;
-					}
-				}
-			} else if (cornersInBox.includes("bottomleft")) {
-
-				if (ISLEFTORRIGHT) {
-					if (rectB.bottom > rectA.top) {
-						clip.top = rectB.bottom;
-					}
-				} else {
-					clip.right = rectB.left;
-					if (rectB.bottom < rectA.top) {
-						clip.top = rectB.bottom;
-					}
-				}
-			} else {
-
-				if (ISLEFTORRIGHT) {
-					if (rectB.bottom > rectA.top) {
-						clip.top = rectB.bottom;
-					}
-				} else {
-					clip.left = rectB.right;
-					if (rectB.bottom < rectA.top) {
-						clip.top = rectB.bottom;
-					}
-				}
-			}
-		}
-
-		clip.width = clip.right - clip.left;
-		clip.height = clip.bottom - clip.top;
-		return clip;
-	}
-
-}
-/* harmony default export */ __webpack_exports__["a"] = (BoxMath);
-
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\boxMath.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\Docking\\boxMath.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
-
-/***/ }),
-/* 51 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-Object.defineProperty(exports, "__esModule", { value: true });
-const baseClient_1 = __webpack_require__(7);
-const Util = __webpack_require__(8);
-const validate_1 = __webpack_require__(6);
-const logger_1 = __webpack_require__(0);
-const constants_1 = __webpack_require__(10);
-/**
- * @introduction
- * <h2>Workspace Client</h2>
- * ----------
- * The Workspace Client manages all calls to load, save, rename, and delete workspaces.
- *
- *
- * The Workspace Client uses the <code>windowIdentifier</code> parameter. <a href="tutorial-ComponentTypesAndWindowNames.html">Learn more about them here</a>.
- *
- *
- * See the <a href=tutorial-Workspaces.html>Workspace tutorial</a> for an overview of using the Workspace Client.
- *
- * @hideConstructor true
- * @constructor
- * @summary You don't need to ever invoke the constructor. This is done for you when WindowClient is added to the FSBL object.
- */
-class WorkspaceClient extends baseClient_1._BaseClient {
-    constructor(params) {
-        super(params);
-        /**
-            * List of all workspaces within the application.
-            * @type {Array.<Object>}
-            */
-        this.workspaces = [];
-        //Backward Compatibility
-        this.setWorkspaces = this.setWorkspaceOrder;
-        /**
-         * @private
-         */
-        this.createNewWorkspace = this.createWorkspace; //Backward Compatibility
-        this.getWorkspaceDefinition = this.export; //Backward Compatibility
-        this.addWorkspaceDefinition = this.import; //Backward Compatibility
-        this.saveWorkspaceTemplateToConfigFile = this.exportToFile;
-        validate_1.default.args(params, "object=") && params && validate_1.default.args2("params.onReady", params.onReady, "function=");
-    }
-    // Helper function to handle response from service
-    _serviceResponseHandler(err, response, resolve, reject, cb = Function.prototype) {
-        if (err) {
-            reject(new Error(err));
-            return cb(err);
-        }
-        if (!response)
-            response = { data: null };
-        resolve(response.data);
-        cb(null, response.data);
-    }
-    /// CORE SAVE API - Currently Private. Eventually these will handle all saves. Workspace will just be a data provider.
-    /**
-     * Saves Data Globally to the Active Workspace (e.g. ComponentState, WindowList etc.)
-     * @param {object} params
-     * @param {string} params.field
-     * @param {object} params.value
-     * @param {FinsembleCallbackFunction} cb
-     */
-    saveGlobalData(params, cb) {
-        logger_1.default.system.debug("WorkspaceClient.saveGlobalData", params);
-        const saveGlobalDataPromiseResolver = (resolve, reject) => {
-            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SAVE_GLOBAL_DATA, params, (err, response) => {
-                this._serviceResponseHandler(err, response, resolve, reject, cb);
-            });
-        };
-        return new Promise(saveGlobalDataPromiseResolver);
-    }
-    /**
-     * Saves View Specific Data (e.g. ComponentState, WindowList etc.) to the Currently Active Workspace View or all Views
-     * When a window state changes, on
-     * @param {object} params
-     * @param {string} params.field
-     * @param {object} params.value
-     * @param {boolean} params.saveToAllViews
-     * @param {FinsembleCallbackFunction} cb
-     */
-    saveViewData(params, cb) {
-        logger_1.default.system.debug("WorkspaceClient.saveViewData", params);
-        const saveViewDataPromiseResolver = (resolve, reject) => {
-            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SAVE_VIEW_DATA, params, (err, response) => {
-                this._serviceResponseHandler(err, response, resolve, reject, cb);
-            });
-        };
-        return new Promise(saveViewDataPromiseResolver);
-    }
-    // This is unnecessary. Window Service should call SaveGlobalData, saveViewData
-    /**
-     * Adds window to active workspace.
-     * @private
-     * @param {object} params
-     * @param {string} params.name Window name
-     * @param {function} cb The callback to be invoked after the method completes successfully.
-     */
-    addWindow(params, cb = Function.prototype) {
-        validate_1.default.args(params, "object", cb, "function=") && params && validate_1.default.args2("params.name", params.name, "string");
-        this.routerClient.query("WorkspaceService.addWindow", params, (err, response) => {
-            logger_1.default.system.log(`WORKSPACE LIFECYCLE: Window added:WorkspaceClient.addWindow: Name (${params.name})`);
-            cb(err, response);
-        });
-    }
-    /**
-     * Removes window from active workspace.
-     * @private
-     * @param {object} params
-     * @param {string} params.name Window name
-     * @param {function} cb The callback to be invoked after the method completes successfully.
-     * @example <caption>This method removes a window from a workspace. It is rarely called by the developer. It is called when a window that is using the window manager is closed. That way, the next time the app is loaded, that window is not spawned.</caption>
-     * FSBL.Clients.WorkspaceClient.removeWindow({ name:windowName }, function(err, response) {
-     * 	//do something after removing the window.
-     * });
-     */
-    removeWindow(params, cb = Function.prototype) {
-        validate_1.default.args(params, "object", cb, "function=") && validate_1.default.args2("params.name", params.name, "string");
-        this.routerClient.query("WorkspaceService.removeWindow", params, (err, response) => {
-            if (err) {
-                return logger_1.default.system.error(err);
-            }
-            logger_1.default.system.log(`WORKSPACE LIFECYCLE:WorkspaceClient.removeWindow:Window removed: Name (${params.name})`);
-            if (response) {
-                cb(err, response.data);
-            }
-            else {
-                cb(err, null);
-            }
-        });
-    }
-    // Window Related Workspace Functions. Eventually these need to move to the Window Service
-    /**
-     * Auto arranges all windows on the user's screen.
-     * @param {object} params Parameters
-     * });
-     * @param {string} params.monitor Same options as <a href="LauncherClient.html#showWindow">LauncherClient.showWindow</a>. Default is monitor of calling window.
-     * @param {function} cb The callback to be invoked after the method completes successfully.
-     * @example
-     * FSBL.Clients.WorkspaceClient.autoArrange(function(err, response) {
-     * 		//do something after the auto-arrange, maybe make all of the windows flash or notify the user that their monitor is now tidy.
-     * });
-     */
-    autoArrange(params, cb = Function.prototype) {
-        validate_1.default.args(params, "object", cb, "function=");
-        params = params ? params : {};
-        Util.getMyWindowIdentifier((myWindowIdentifier) => {
-            FSBL.Clients.LauncherClient.getMonitorInfo({
-                windowIdentifier: myWindowIdentifier
-            }, (err, dimensions) => {
-                params.monitorDimensions = dimensions.unclaimedRect;
-                params.monitorDimensions.name = dimensions.name;
-                this.routerClient.query("DockingService.autoArrange", params, cb);
-            });
-        });
-    }
-    /**
-     * Minimizes all windows.
-     * @param {object} params
-     * @param {string} 	[params.monitor="all"] Same options as <a href="LauncherClient.html#showWindow">LauncherClient.showWindow</a> except that "all" will work for all monitors. Defaults to all.
-     * @param {function} cb The callback to be invoked after the method completes successfully.
-     * @example
-     * FSBL.Clients.WorkspaceClient.bringWindowsToFront();
-     */
-    minimizeAll(params, cb = Function.prototype) {
-        validate_1.default.args(params, "object", cb, "function=");
-        params = params ? params : { monitor: "all" };
-        Util.getMyWindowIdentifier((myWindowIdentifier) => {
-            if (!params.windowIdentifier) {
-                params.windowIdentifier = myWindowIdentifier;
-            }
-            this.routerClient.query("WorkspaceService.minimizeAll", params, cb);
-        });
-    }
-    /**
-     * Brings all windows to the front.
-     * @param {object} params
-     * @param {string} 	params.monitor Same options as <a href="LauncherClient.html#showWindow">LauncherClient.showWindow</a> except that "all" will work for all monitors. Defaults to the monitor for the current window.
-     * @param {function} cb The callback to be invoked after the method completes successfully.
-     * @example
-     * FSBL.Clients.WorkspaceClient.bringWindowsToFront();
-     */
-    bringWindowsToFront(params, cb = Function.prototype) {
-        validate_1.default.args(params, "object", cb, "function=");
-        params = params ? params : { monitor: "all" };
-        Util.getMyWindowIdentifier((myWindowIdentifier) => {
-            if (!params.windowIdentifier) {
-                params.windowIdentifier = myWindowIdentifier;
-            }
-            this.routerClient.query("WorkspaceService.bringWindowsToFront", params, cb);
-        });
-    }
-    /**
-     * Gets the currently active workspace.
-     * @param {function} cb The callback to be invoked after the method completes successfully.
-     * @example <caption>This function is useful for setting the initial state of a menu or dialog. It is used in the toolbar component to set the initial state.</caption>
-     *
-     * FSBL.Clients.WorkspaceClient.getActiveWorkspace((err, response) => {
-     * 	// do something with the response.
-     * });
-     */
-    async getActiveWorkspace(cb) {
-        logger_1.default.system.debug("WorkspaceClient.getActiveWorkspace");
-        const result = (await this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.GET_ACTIVE_WORKSPACE, {})).response;
-        this.activeWorkspace = result.data;
-        if (result.data.err) {
-            if (cb)
-                cb(result.data.err);
-            throw new Error(result.data.err);
-        }
-        if (cb)
-            cb(null, result);
-        return result;
-    }
-    /**
-     * Returns the list of saved workspaces.
-     * @param {function} cb The callback to be invoked after the method completes successfully.
-     * @example <caption>This function is useful for setting the initial state of a menu or dialog.</caption>
-     *
-     * FSBL.Clients.WorkspaceClient.getActiveWorkspace((err, response) => {
-     * 	//setState is a React component method.
-     * 	self.setState({
-     * 		workspaces: response
-     * 	});
-     * });
-     */
-    getWorkspaces(cb) {
-        validate_1.default.args(cb, "function=");
-        logger_1.default.system.debug("WorkspaceClient.getWorkspaces");
-        const getWorkspacesPromiseResolver = (resolve, reject) => {
-            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.GET_WORKSPACES, {}, (err, response) => {
-                this._serviceResponseHandler(err, response, resolve, reject, cb);
-            });
-        };
-        return new Promise(getWorkspacesPromiseResolver);
-    }
-    /**
-     * @private
-     *
-     * @param {*} params
-     * @param {*} cb
-     * @returns
-     * @memberof WorkspaceClient
-     */
-    setWorkspaceOrder(params, cb) {
-        let { workspaces } = params;
-        validate_1.default.args(cb, "function");
-        logger_1.default.system.debug("WorkspaceClient.setWorkspaceOrder", params);
-        const setWorkspaceOrderPromiseResolver = (resolve, reject) => {
-            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SET_WORKSPACE_ORDER, params.workspaces || params, (err, response) => {
-                this._serviceResponseHandler(err, response, resolve, reject, cb);
-            });
-        };
-        return new Promise(setWorkspaceOrderPromiseResolver);
-    }
-    /**
-     * Removes a workspace. Either the workspace object or its name must be provided.
-     * @param {object} params
-     * @param {Object} 	params.workspace Workspace
-     * @param {string} 	params.workspace.name Workspace Name
-     * @param {string} 	params.name Workspace Name
-     * @param {function} cb Callback to fire after 'Finsemble.WorkspaceService.update' is transmitted.
-     * @example <caption>This function removes 'My Workspace' from the main menu and the default storage tied to the application.</caption>
-     * FSBL.Clients.WorkspaceClient.remove({
-     * 	name: 'My Workspace'
-     * }, function(err, response) {
-     * 	//You typically won't do anything here. If you'd like to do something when a workspace change happens, we suggest listening on the `Finsemble.WorkspaceService.update` channel.
-     * });
-     */
-    remove(params, cb = Function.prototype) {
-        validate_1.default.args(params, "object", cb, "function=") && !(params.name || params.workspace) && validate_1.default.args2("params.name", params.name, "string");
-        logger_1.default.system.debug("WorkspaceClient.remove", params);
-        const removePromiseResolver = (resolve, reject) => {
-            if (!params.name) {
-                params.name = params.workspace.name;
-                // we dont need to send workspace objects over the router if not needed.
-                delete params.workspace;
-            }
-            // Cannot remove active workspace.
-            if (params.name === this.activeWorkspace.name) {
-                logger_1.default.system.error("APPLICATION LIFECYCLE:  Cannot remove active workspace: WorkspaceClient.remove:attempt to remove active workspace name:" + this.activeWorkspace.name);
-                let err = "Cannot remove active workspace";
-                return this._serviceResponseHandler(err, null, resolve, reject, cb);
-            }
-            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.REMOVE, params, (err, response) => {
-                this._serviceResponseHandler(err, response, resolve, reject, cb);
-            });
-        };
-        return new Promise(removePromiseResolver);
-    }
-    /**
-     * Renames the workspace with the provided name. Also removes all references in storage to the old workspace's name.
-     * @param {object} params
-     * @param {string} params.oldName Name of workspace to rename.
-     * @param {string} params.newName What to rename the workspace to.
-     * @param {boolean} params.removeOldWorkspace Whether to remove references to old workspace after renaming.
-     * @param {boolean} params.overwriteExisting Whether to overwrite an existing workspace.
-     * @param {function} cb The callback to be invoked after the method completes successfully.
-     * @example <caption>This method is used to rename workspaces. It is used in the main Menu component.</caption>
-     * FSBL.Clients.WorkspaceClient.rename({
-     * 	oldName: 'My Workspace',
-     * 	newName: 'The best workspace',
-     * 	removeOldWorkspace: true,
-     * }, function(err, response) {
-     * 	//Do something.
-     * });
-     */
-    rename(params, cb = Function.prototype) {
-        validate_1.default.args(params, "object", cb, "function=") && validate_1.default.args2("params.oldName", params.oldName, "string", "params.newName", params.newName, "string");
-        logger_1.default.system.debug("WorkspaceClient.rename", params);
-        const renamePromiseResolver = (resolve, reject) => {
-            if (!params.overwriteExisting && this.workspaceExists(params.newName)) {
-                let err = "Workspace Already Exists";
-                return this._serviceResponseHandler(err, null, resolve, reject, cb);
-            }
-            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.RENAME, params, (err, response) => {
-                this._serviceResponseHandler(err, response, resolve, reject, cb);
-            });
-        };
-        return new Promise(renamePromiseResolver);
-    }
-    /**
-     * Makes a clone (i.e. copy) of the workspace.  The active workspace is not affected.
-     * @private
-     * @param {object} params
-     * @param {string} params.name Name of workspace to clone.
-     * @param {string} params.newName Name of workspace to clone.
-     * @param {function} cb cb(err,response) with response set to the name of the cloned workspace if no error
-     * @example <caption>This method is used to clone workspaces. </caption>
-     * FSBL.Clients.WorkspaceClient.clone({
-     * 	name: 'The best workspace'
-     * }, function(err, response) {
-     * 	//Do something.
-     * });
-     */
-    // Keeping for backward compatibility
-    clone(params, cb = Function.prototype) {
-        validate_1.default.args(params, "object", cb, "function=") && validate_1.default.args2("params.name", params.name, "string");
-        delete params.name;
-        if (!params.newName) {
-            params.newName = params.name + "_clone";
-        }
-        params.removeOldWorkspace = false;
-        return this.rename({
-            removeOldWorkspace: false,
-            newName: params.newName,
-            oldName: params.name
-        }, cb);
-    }
-    ;
-    /**
-     * Saves the currently saved workspace. Changes to the <code>activeWorkspace</code> are made on every change automatically.
-     * @param {function} cb The callback to be invoked after the method completes successfully.
-     * @example <caption>This function persists the currently active workspace.</caption>
-     * FSBL.Clients.WorkspaceClient.save(function(err, response) {
-     * 	//Do something.
-     * });
-     */
-    save(cb = Function.prototype) {
-        logger_1.default.system.debug("WorkspaceClient.save");
-        const savePromiseResolver = (resolve, reject) => {
-            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SAVE, {}, (err, response) => {
-                this._serviceResponseHandler(err, response, resolve, reject, cb);
-            });
-        };
-        return new Promise(savePromiseResolver);
-    }
-    /**
-     * Helper that tells us whether a workspace with this name exists.
-     * @private
-     */
-    workspaceExists(workspaceName) {
-        validate_1.default.args(workspaceName, "string");
-        for (var i = 0; i < this.workspaces.length; i++) {
-            if (workspaceName === this.workspaces[i].name) {
-                return true;
-            }
-        }
-        return false;
-    }
-    /**
-     *
-     * Saves the currently active workspace with the provided name.
-     * @param {object} params
-     * @param {string} params.name The new name you want to save the workspace under.
-     * @param {string} params.force Whether to overwrite a workspace already saved with the provided name.
-     * @param {function} cb The callback to be invoked after the method completes successfully.
-     * @example <caption>This function persists the currently active workspace with the provided name.</caption>
-     * FSBL.Clients.WorkspaceClient.saveAs({
-     * 	name: 'My Workspace',
-     * }, function(err, response) {
-     * 	//Do something.
-     * });
-     */
-    saveAs(params, cb = Function.prototype) {
-        validate_1.default.args(params, "object", cb, "function=") && validate_1.default.args2("params.name", params.name, "string");
-        logger_1.default.system.debug("WorkspaceClient.saveAs", params);
-        const saveAsPromiseResolver = (resolve, reject) => {
-            if (!params.force && this.workspaceExists(params.name)) {
-                return this._serviceResponseHandler("Workspace Already Exists", null, resolve, reject, cb);
-            }
-            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SAVE_AS, params, (err, response) => {
-                this._serviceResponseHandler(err, response, resolve, reject, cb);
-            });
-        };
-        return new Promise(saveAsPromiseResolver);
-    }
-    /**
-     * Switches to a workspace.
-     * @param {object} params
-     * @param {string} 	params.name The name of the workspace you want to switch to.
-     * @param {function} cb The callback to be invoked after the method completes successfully.
-     * @example <caption>This function loads the workspace 'My Workspace' from the storage tied to the application.</caption>
-     * FSBL.Clients.WorkspaceClient.switchTo({
-     * 	name: 'My Workspace',
-     * }, function(err, response) {
-     * 	//Do something.
-     * });
-     */
-    async switchTo(params, cb = Function.prototype) {
-        validate_1.default.args(params, "object", cb, "function") && validate_1.default.args2("params.name", params.name, "string");
-        logger_1.default.system.debug("WorkspaceClient.switchTo", params);
-        const result = await this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SWITCH_TO, params);
-        if (result.err) {
-            cb(result.err, null);
-            throw new Error(result.err);
-        }
-        cb(result);
-        return result;
-    }
-    /**
-     * @private
-     * ALPHA - Subject to breaking change in coming minor releases.
-     * Sets the stored state of a given window in the active workspace. `state` may include
-     * keys for `windowData`, `componentState`, or both; the state of each key will be completely
-     * overwritten by the provided state. If the update results in dirtying change, the active
-     * workspace will be marked dirty (or, if autosave is on, persisted directly to storage).
-     */
-    async _setWindowState(params) {
-        logger_1.default.system.debug("WorkspaceClient.setWindowData", params);
-        return this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.SET_WINDOW_STATE, params);
-    }
-    /**
-     * @private
-     * ALPHA - Subject to breaking change in coming minor releases.
-     * Retrieves the given window from storage, retrieving the requested state variables
-     * (`"componentState"` and/or `"windowData"`).
-     */
-    async _getWindowState(params) {
-        logger_1.default.system.debug("WorkspaceClient.getWindowData", params);
-        return this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.GET_WINDOW_STATE, params);
-    }
-    /**
-     * Checks to see if the workspace is dirty, i.e., if its state has been changed since the last save. If it's already dirty, the window doesn't need to compare its state to the saved state.
-     *
-     * @param {Function} cb <code>cb(err,response)</code> with response set to true if dirty and false otherwise (when no error).
-     *
-     * @example <caption>This function will let you know if the <code>activeWorkspace</code> is dirty.</caption>
-     * FSBL.Clients.WorkspaceClient.isWorkspaceDirty(function(err, response) {
-     * 		//Do something like prompt the user if they'd like to save the currently loaded workspace before switching.
-     * });
-     */
-    isWorkspaceDirty(cb) {
-        validate_1.default.args(cb, "function");
-        logger_1.default.system.debug("WorkspaceClient.isWorkspaceDirty");
-        const isWorkspaceDirtyPromiseResolver = (resolve, reject) => {
-            this._serviceResponseHandler(null, { data: this.activeWorkspace.isDirty }, resolve, reject, cb);
-        };
-        return new Promise(isWorkspaceDirtyPromiseResolver);
-    }
-    /**
-     * Creates a new workspace, returning a promise for the final name of
-     * the new workspace as a string. After creation, if "switchAfterCreation" is true,
-     * the new workspace becomes the active workspace.
-     *
-     * If the requested name already exists, a new workspace will be created
-     * with the form "[name] (1)" (or "[name] (2)", etc.)
-     *
-     * @param {String} workspaceName Name for new workspace.
-     * @param {Object} params Optional params
-     * @param {boolean} params.switchAfterCreation Whether to switch to the new workspace after creating it.
-     * @param {Function} cb <code>cb(err,response)</code> With response, set to new workspace object if no error.
-     * @example <caption>This function creates the workspace 'My Workspace'.</caption>
-     * FSBL.Clients.WorkspaceClient.createWorkspace(function(err, response) {
-     *		if (!err) {}
-     *			//Do something like notify the user that the workspace has been created.
-     *		}
-     * });
-     */
-    async createWorkspace(workspaceName, params, cb = (err, result) => { }) {
-        logger_1.default.system.log(`WorkspaceClient: Creating Workspace Request for name "${workspaceName}"`);
-        const finalName = (await this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.NEW_WORKSPACE, { workspaceName })).response.data;
-        if (params.switchAfterCreation !== false) {
-            await this.switchTo({ name: finalName });
-        }
-        const result = { workspaceName: finalName };
-        cb(null, result);
-        return result;
-    }
-    /**
-     * Gets a workspace definition in JSON form.
-     *
-     * @param {object} params
-     * @param {string} params.workspaceName The name of the workspace you want to export.
-     * @param {function} cb <code>callback(error, workspaceDefinition)</code>
-     * @example <caption>FSBL.Clients.WorkspaceClient.export({'workspaceName:': 'linker'}, function(err, worskpaceDefinition) {
-     *
-     * //do something with the workspace definition
-     * })'; </caption>
-     */
-    export(params, cb) {
-        validate_1.default.args(params, "object", cb, "function") && validate_1.default.args2("params.workspaceName", params.workspaceName, "string");
-        logger_1.default.system.debug("WorkspaceClient.export", params);
-        const exportPromiseResolver = (resolve, reject) => {
-            this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.EXPORT, params, (err, response) => {
-                let workspaceExport = {};
-                workspaceExport[params.workspaceName] = response.data;
-                this._serviceResponseHandler(err, { data: workspaceExport }, resolve, reject, cb);
-            });
-        };
-        return new Promise(exportPromiseResolver);
-    }
-    /**
-     * Adds a workspace definition to the list of available workspaces.
-     *
-     * @param {object} params
-     * @param {object} params.workspaceJSONDefinition JSON for workspace definition
-     * @param {boolean} params.force Whether to overwrite any workspace of the same name that already exists
-     * @param {function=} cb <code>cb(err)</code> where the operation was successful if !err; otherwise, err carries diagnostics
-     *
-     */
-    async import(params, cb) {
-        validate_1.default.args(params, "object", cb, "function=") && validate_1.default.args2("params.workspaceJSONDefinition", params.workspaceJSONDefinition, "object");
-        logger_1.default.system.debug("WorkspaceClient.import", params);
-        const result = (await this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.IMPORT, params)).response.data;
-        if (result && result.err) {
-            cb(result.err);
-            throw new Error(result.err);
-        }
-        if (cb)
-            cb(null, result);
-        return result;
-    }
-    /**
-     * Saves one mor more template defintions in a selected file. Note the
-     * end user is prompted to identify file location during this save
-     * operation. The file can optionally be imported during config
-     * initialization (see importConfig) although this requires administration
-     * support on the configuration/server side. The file can also be read
-     * using readWorkspaceTemplateFromConfigFile();
-     *
-     * @param {object} params
-     * @param {object} params.workspaceTemplateDefinition legal template definition returned by either
-     * getWorkspaceTemplateDefinition() or convertWorkspaceDefinitionToTemplate()
-     * @private
-     */
-    exportToFile(params) {
-        // TODO: Make it possible to export both workspaces and templates.
-        logger_1.default.system.info("workspaceClient.saveWorkspaceTemplateToConfigFile", params);
-        validate_1.default.args(params, "object") && validate_1.default.args2("params.workspaceTemplateDefinition", params.workspaceTemplateDefinition, "object");
-        var workspaceTemplateDefinition = params.workspaceTemplateDefinition;
-        if (typeof workspaceTemplateDefinition === "object") {
-            var templateName = Object.keys(workspaceTemplateDefinition)[0];
-            if (templateName && workspaceTemplateDefinition[templateName].templateDefinitionFlag) { // confirm the object is a template definition
-                var exportConfig = { workspaceTemplates: workspaceTemplateDefinition };
-                FSBL.ConfigUtils.promptAndSaveJSONToLocalFile("workspaceConfig-" + templateName, exportConfig);
-            }
-            else {
-                logger_1.default.system.error("workspaceClient.saveWorkspaceTemplateToConfigFile. Input is not a legal template");
-            }
-        }
-        else {
-            logger_1.default.system.error("workspaceClient.saveWorkspaceTemplateToConfigFile: Input is not a legal object");
-        }
-    }
-    /**
-     * Initializes listeners and sets default data on the WorkspaceClient object.
-     * @private
-     */
-    async start(cb) {
-        /**
-         * Initializes the workspace's state.
-         */
-        this.routerClient.subscribe("Finsemble.WorkspaceService.update", (err, response) => {
-            logger_1.default.system.debug("workspaceClient init subscribe response", err, response);
-            if (err) {
-                logger_1.default.system.error(err);
-                return;
-            }
-            this.activeWorkspace = response.data.activeWorkspace;
-            this.workspaces = response.data.workspaces;
-            if (cb) {
-                cb();
-            }
-        });
-    }
-}
-var workspaceClient = new WorkspaceClient({
-    startupDependencies: {
-        services: ["workspaceService"],
-        clients: []
-    },
-    onReady: (cb) => {
-        workspaceClient.start(cb);
-    },
-    name: "workspaceClient"
-});
-exports.default = workspaceClient;
-
-
-/***/ }),
-/* 52 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
-    if (true) {
-        !(__WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
-				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
-				(__WEBPACK_AMD_DEFINE_FACTORY__.call(exports, __webpack_require__, exports, module)) :
-				__WEBPACK_AMD_DEFINE_FACTORY__),
-				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-    } else if (typeof exports === 'object') {
-        module.exports = factory();
-    } else {
-        root.deepmerge = factory();
-    }
-}(this, function () {
-
-function isMergeableObject(val) {
-    var nonNullObject = val && typeof val === 'object'
-
-    return nonNullObject
-        && Object.prototype.toString.call(val) !== '[object RegExp]'
-        && Object.prototype.toString.call(val) !== '[object Date]'
-}
-
-function emptyTarget(val) {
-    return Array.isArray(val) ? [] : {}
-}
-
-function cloneIfNecessary(value, optionsArgument) {
-    var clone = optionsArgument && optionsArgument.clone === true
-    return (clone && isMergeableObject(value)) ? deepmerge(emptyTarget(value), value, optionsArgument) : value
-}
-
-function defaultArrayMerge(target, source, optionsArgument) {
-    var destination = target.slice()
-    source.forEach(function(e, i) {
-        if (typeof destination[i] === 'undefined') {
-            destination[i] = cloneIfNecessary(e, optionsArgument)
-        } else if (isMergeableObject(e)) {
-            destination[i] = deepmerge(target[i], e, optionsArgument)
-        } else if (target.indexOf(e) === -1) {
-            destination.push(cloneIfNecessary(e, optionsArgument))
-        }
-    })
-    return destination
-}
-
-function mergeObject(target, source, optionsArgument) {
-    var destination = {}
-    if (isMergeableObject(target)) {
-        Object.keys(target).forEach(function (key) {
-            destination[key] = cloneIfNecessary(target[key], optionsArgument)
-        })
-    }
-    Object.keys(source).forEach(function (key) {
-        if (!isMergeableObject(source[key]) || !target[key]) {
-            destination[key] = cloneIfNecessary(source[key], optionsArgument)
-        } else {
-            destination[key] = deepmerge(target[key], source[key], optionsArgument)
-        }
-    })
-    return destination
-}
-
-function deepmerge(target, source, optionsArgument) {
-    var array = Array.isArray(source);
-    var options = optionsArgument || { arrayMerge: defaultArrayMerge }
-    var arrayMerge = options.arrayMerge || defaultArrayMerge
-
-    if (array) {
-        return Array.isArray(target) ? arrayMerge(target, source, optionsArgument) : cloneIfNecessary(source, optionsArgument)
-    } else {
-        return mergeObject(target, source, optionsArgument)
-    }
-}
-
-deepmerge.all = function deepmergeAll(array, optionsArgument) {
-    if (!Array.isArray(array) || array.length < 2) {
-        throw new Error('first argument should be an array with at least two elements')
-    }
-
-    // we are sure there are at least 2 values, so it is safe to have no initial value
-    return array.reduce(function(prev, next) {
-        return deepmerge(prev, next, optionsArgument)
-    })
-}
-
-return deepmerge
-
-}));
-
-
-/***/ }),
-/* 53 */
+/* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -43133,19 +43379,19 @@ return deepmerge
 Object.defineProperty(exports, "__esModule", { value: true });
 const routerClientInstance_1 = __webpack_require__(5);
 const logger_1 = __webpack_require__(0);
-const events_1 = __webpack_require__(12);
+const events_1 = __webpack_require__(13);
 const util = __webpack_require__(8);
-const merge = __webpack_require__(52);
-const WindowEventManager_1 = __webpack_require__(48);
-const constants = __webpack_require__(10);
-const FinsembleEvent_1 = __webpack_require__(47);
+const merge = __webpack_require__(57);
+const WindowEventManager_1 = __webpack_require__(54);
+const constants = __webpack_require__(11);
+const FinsembleEvent_1 = __webpack_require__(53);
 const system_1 = __webpack_require__(3);
-const constants_1 = __webpack_require__(10);
+const constants_1 = __webpack_require__(11);
 //This is bad. I don't like it. But without this, the typescript compiler complains. Our clients are just functions that 'inherit' via BaseClient.call. Typescript isn't smart enough to infer the BaseClient's methods, so if you call StorageClient.initialize, it complains.
 //This will go away as we move those things into proper classes.
-const distributedStoreClient_1 = __webpack_require__(33);
-const storageClient_1 = __webpack_require__(21);
-const workspaceClient_1 = __webpack_require__(51);
+const distributedStoreClient_1 = __webpack_require__(37);
+const storageClient_1 = __webpack_require__(25);
+const workspaceClient_1 = __webpack_require__(52);
 distributedStoreClient_1.default.initialize();
 storageClient_1.default.initialize();
 const BOUNDS_SET = "bounds-set";
@@ -43197,7 +43443,7 @@ class BaseWindow extends events_1.EventEmitter {
         this.wrapStateChangeSubscription = routerClientInstance_1.default.subscribe("Finsemble.Component.State." + this.name, this.handleWrapStateChange);
         this.eventManager = new WindowEventManager_1.WindowEventManager({ name: this.name });
         this.finishedMove = true;
-        // Prevents duplicate calls to maximize from corrupting the window state for OpenfinWindow and stackedWindow implementations
+        // Prevents duplicate calls to maximize from corrupting the window state for WebWindow and stackedWindow implementations
         this.isMaximizing = false;
     }
     windowServiceChannelName(channelTopic) { let name = this.name || this.windowName; return `WindowService-Request-${channelTopic}`; }
@@ -43230,7 +43476,7 @@ class BaseWindow extends events_1.EventEmitter {
     doConstruction(params) {
         //TODO this is the same as wrap (eventually this should spawn)
         if (!params.setWindowType && !params.windowType) { //Default WindowType
-            params.windowType = "OpenFinWindow";
+            params.windowType = "WebWindow";
         }
         if (params.windowType) { //We need to make a specific kind of Window
             params.setWindowType = params.windowType;
@@ -43392,9 +43638,9 @@ class BaseWindow extends events_1.EventEmitter {
             let wrap = null;
             if (typeof window._FSBLCache.windowAttempts[params.name] === "undefined")
                 window._FSBLCache.windowAttempts[params.name] = 0;
-            //OpenfinApplication is essentially just an openfinWindow in its own process. We can wrap it just like a window.
-            if (!params.setWindowType && !identifier.windowType || identifier.windowType === "OpenFinApplication") { //Default WindowType
-                identifier.windowType = "OpenFinWindow";
+            //WebApplication is essentially just an WebWindow in its own process. We can wrap it just like a window.
+            if (!params.setWindowType && !identifier.windowType || identifier.windowType === "WebApplication") { //Default WindowType
+                identifier.windowType = "WebWindow";
             }
             //Top level keeps important info (e.g., uuid, name, windowType).
             let paramsForWindow = Object.assign({}, identifier);
@@ -43424,7 +43670,7 @@ class BaseWindow extends events_1.EventEmitter {
         return `${system_1.System.Window.getCurrent().name}.removeWrap.${name}`;
     }
     handleWrapRemoveRequest() {
-        //wrap is the openfin or stacked window. if the removeListeners function exists, we remove all listeners we added during the lifecycle of that window wrapper.
+        //wrap is the Web or stacked window. if the removeListeners function exists, we remove all listeners we added during the lifecycle of that window wrapper.
         if (this.removeListeners) {
             this.removeListeners();
         }
@@ -43662,9 +43908,9 @@ class BaseWindow extends events_1.EventEmitter {
     }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Core Private Window Functions: generally should only be directly invoked by the WindowService (an exception is _close)
-    // Note: These private window functions can also optionally be invoked from the derived class definition.  See openfinWindowWrapper _minimize for example.
+    // Note: These private window functions can also optionally be invoked from the derived class definition.  See WebWindowWrapper _minimize for example.
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow).  All base function follow same template.
+    // Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow).  All base function follow same template.
     // If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
     _minimize(params, cb = Function.prototype) {
         logger_1.default.system.debug("BaseWindow._minimize", params);
@@ -43681,7 +43927,7 @@ class BaseWindow extends events_1.EventEmitter {
             cb(null, { shouldContinue: true });
         }
     }
-    // Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+    // Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
     // If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
     _maximize(params, cb = Function.prototype) {
         logger_1.default.system.debug("BaseWindow._maximize", params);
@@ -43698,7 +43944,7 @@ class BaseWindow extends events_1.EventEmitter {
             cb(null, { shouldContinue: true });
         }
     }
-    // Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+    // Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
     // If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
     _restore(params, cb = Function.prototype) {
         logger_1.default.system.debug("BaseWindow._restore", params);
@@ -43730,7 +43976,7 @@ class BaseWindow extends events_1.EventEmitter {
             cb(null, { shouldContinue: true });
         }
     }
-    // Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+    // Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
     // If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
     _focus(params, cb = Function.prototype) {
         logger_1.default.system.debug("BaseWindow._focus", params);
@@ -43747,7 +43993,7 @@ class BaseWindow extends events_1.EventEmitter {
             cb(null, { shouldContinue: true });
         }
     }
-    // Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+    // Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
     // If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
     _bringToFront(params, cb = Function.prototype) {
         logger_1.default.system.debug("BaseWindow._bringToFront", params);
@@ -43764,7 +44010,7 @@ class BaseWindow extends events_1.EventEmitter {
             cb(null, { shouldContinue: true });
         }
     }
-    // Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+    // Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
     // If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
     _isShowing(params, cb = Function.prototype) {
         logger_1.default.system.debug("BaseWindow._isShowing", params);
@@ -43781,7 +44027,7 @@ class BaseWindow extends events_1.EventEmitter {
             cb(null, { shouldContinue: true });
         }
     }
-    // Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+    // Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
     // If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
     _setBounds(params, cb = Function.prototype) {
         logger_1.default.system.verbose("BaseWindow._setBounds", params);
@@ -43805,7 +44051,7 @@ class BaseWindow extends events_1.EventEmitter {
             cb(null, { shouldContinue: true });
         }
     }
-    // Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+    // Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
     // If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
     _getBounds(params, cb) {
         logger_1.default.system.verbose("BaseWindow._getBounds", params);
@@ -43839,7 +44085,7 @@ class BaseWindow extends events_1.EventEmitter {
             cb(null, { shouldContinue: true }); // if should continue, bounds will be calculated by derived class
         }
     }
-    // Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+    // Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
     // If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
     _updateOptions(params, cb = Function.prototype) {
         logger_1.default.system.debug("BaseWindow._updateOptions", params);
@@ -43856,7 +44102,7 @@ class BaseWindow extends events_1.EventEmitter {
             cb(null, { shouldContinue: true });
         }
     }
-    // Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+    // Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
     // If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
     _hide(params, cb = Function.prototype) {
         logger_1.default.system.debug("BaseWindow._hide", params);
@@ -43873,7 +44119,7 @@ class BaseWindow extends events_1.EventEmitter {
             cb(null, { shouldContinue: true });
         }
     }
-    // Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+    // Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
     // If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
     _show(params, cb = Function.prototype) {
         logger_1.default.system.debug("BaseWindow._show", params);
@@ -43890,7 +44136,7 @@ class BaseWindow extends events_1.EventEmitter {
             cb(null, { shouldContinue: true });
         }
     }
-    // Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+    // Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
     // If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
     //@todo fully document this function
     /**
@@ -43906,7 +44152,7 @@ class BaseWindow extends events_1.EventEmitter {
         if (params.fromSystem) {
             // If the close is initiated from a system close (i.e. close from the taskbar or using the hotkey) and we're closing a stacked window, close the entire stacked window.
             // Except for when a native window is part of that stack and the system close is initiated on the native window, in which case we only close the native window instead of the whole stack.
-            // fromSystem is only set by the openfinWindowWrapper in _systemClosed. It is not set by other kinds of windows.
+            // fromSystem is only set by the WebWindowWrapper in _systemClosed. It is not set by other kinds of windows.
             if (parentWindow && parentWindow.componentType.toLowerCase() === "stackedwindow") {
                 params = {};
                 params.removeFromWorkspace = true;
@@ -43934,7 +44180,7 @@ class BaseWindow extends events_1.EventEmitter {
             cb(null, { shouldContinue: true });
         }
     }
-    // Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+    // Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
     // If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
     _alwaysOnTop(params, cb = Function.prototype) {
         logger_1.default.system.debug("BaseWindow._alwaysOnTop", params);
@@ -43951,7 +44197,16 @@ class BaseWindow extends events_1.EventEmitter {
             cb(null, { shouldContinue: true });
         }
     }
-    // Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+    /**
+     * Returns the alwaysOnTop state for the window.
+     * @param params This parameter is ignored.
+     * @param cb A callback accepting two arguments: an error object (which is always `null` for this method), and a boolean value representing the alwaysOnTop state.
+     */
+    _isAlwaysOnTop(params = {}, cb = Function.prototype) {
+        cb(null, Boolean(this.windowOptions.alwaysOnTop));
+        return Boolean(this.windowOptions.alwaysOnTop);
+    }
+    // Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
     // If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
     _setOpacity(params, cb = Function.prototype) {
         logger_1.default.system.debug("BaseWindow._setOpacity", params);
@@ -43968,7 +44223,7 @@ class BaseWindow extends events_1.EventEmitter {
             cb(null, { shouldContinue: true });
         }
     }
-    // Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+    // Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
     // If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
     _saveWindowOptions(params, cb = Function.prototype) {
         logger_1.default.system.debug("BaseWindow._saveWindowOptions", params);
@@ -44434,7 +44689,7 @@ class BaseWindow extends events_1.EventEmitter {
     clearParent() {
         logger_1.default.system.debug("BaseWindow.clearParent");
         this.parentWindow = null;
-        this.emit("clearParent", this.parentWindow);
+        this.eventManager.trigger("parent-unset", this.parentWindow);
     }
     setTitle(title) {
         logger_1.default.system.debug("Title change", title);
@@ -44492,11 +44747,138 @@ exports.BaseWindow = BaseWindow;
 
 
 /***/ }),
-/* 54 */
+/* 57 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
+    if (true) {
+        !(__WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
+				(__WEBPACK_AMD_DEFINE_FACTORY__.call(exports, __webpack_require__, exports, module)) :
+				__WEBPACK_AMD_DEFINE_FACTORY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+    } else if (typeof exports === 'object') {
+        module.exports = factory();
+    } else {
+        root.deepmerge = factory();
+    }
+}(this, function () {
+
+function isMergeableObject(val) {
+    var nonNullObject = val && typeof val === 'object'
+
+    return nonNullObject
+        && Object.prototype.toString.call(val) !== '[object RegExp]'
+        && Object.prototype.toString.call(val) !== '[object Date]'
+}
+
+function emptyTarget(val) {
+    return Array.isArray(val) ? [] : {}
+}
+
+function cloneIfNecessary(value, optionsArgument) {
+    var clone = optionsArgument && optionsArgument.clone === true
+    return (clone && isMergeableObject(value)) ? deepmerge(emptyTarget(value), value, optionsArgument) : value
+}
+
+function defaultArrayMerge(target, source, optionsArgument) {
+    var destination = target.slice()
+    source.forEach(function(e, i) {
+        if (typeof destination[i] === 'undefined') {
+            destination[i] = cloneIfNecessary(e, optionsArgument)
+        } else if (isMergeableObject(e)) {
+            destination[i] = deepmerge(target[i], e, optionsArgument)
+        } else if (target.indexOf(e) === -1) {
+            destination.push(cloneIfNecessary(e, optionsArgument))
+        }
+    })
+    return destination
+}
+
+function mergeObject(target, source, optionsArgument) {
+    var destination = {}
+    if (isMergeableObject(target)) {
+        Object.keys(target).forEach(function (key) {
+            destination[key] = cloneIfNecessary(target[key], optionsArgument)
+        })
+    }
+    Object.keys(source).forEach(function (key) {
+        if (!isMergeableObject(source[key]) || !target[key]) {
+            destination[key] = cloneIfNecessary(source[key], optionsArgument)
+        } else {
+            destination[key] = deepmerge(target[key], source[key], optionsArgument)
+        }
+    })
+    return destination
+}
+
+function deepmerge(target, source, optionsArgument) {
+    var array = Array.isArray(source);
+    var options = optionsArgument || { arrayMerge: defaultArrayMerge }
+    var arrayMerge = options.arrayMerge || defaultArrayMerge
+
+    if (array) {
+        return Array.isArray(target) ? arrayMerge(target, source, optionsArgument) : cloneIfNecessary(source, optionsArgument)
+    } else {
+        return mergeObject(target, source, optionsArgument)
+    }
+}
+
+deepmerge.all = function deepmergeAll(array, optionsArgument) {
+    if (!Array.isArray(array) || array.length < 2) {
+        throw new Error('first argument should be an array with at least two elements')
+    }
+
+    // we are sure there are at least 2 values, so it is safe to have no initial value
+    return array.reduce(function(prev, next) {
+        return deepmerge(prev, next, optionsArgument)
+    })
+}
+
+return deepmerge
+
+}));
+
+
+/***/ }),
+/* 58 */
+/***/ (function(module, exports) {
+
+if (typeof Object.create === 'function') {
+  // implementation from standard node.js 'util' module
+  module.exports = function inherits(ctor, superCtor) {
+    if (superCtor) {
+      ctor.super_ = superCtor
+      ctor.prototype = Object.create(superCtor.prototype, {
+        constructor: {
+          value: ctor,
+          enumerable: false,
+          writable: true,
+          configurable: true
+        }
+      })
+    }
+  };
+} else {
+  // old school shim for old browsers
+  module.exports = function inherits(ctor, superCtor) {
+    if (superCtor) {
+      ctor.super_ = superCtor
+      var TempCtor = function () {}
+      TempCtor.prototype = superCtor.prototype
+      ctor.prototype = new TempCtor()
+      ctor.prototype.constructor = ctor
+    }
+  }
+}
+
+
+/***/ }),
+/* 59 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__boxMath__ = __webpack_require__(50);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__boxMath__ = __webpack_require__(49);
 
 class DockableBox {
 	constructor(bounds) {
@@ -45054,14 +45436,14 @@ class DockableBox {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 55 */
+/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const ObjectPool_1 = __webpack_require__(58);
-const WindowPool_1 = __webpack_require__(67);
+const ObjectPool_1 = __webpack_require__(63);
+const WindowPool_1 = __webpack_require__(77);
 const logger_1 = __webpack_require__(0);
 const dependencies = {
     Logger: logger_1.default
@@ -45079,7 +45461,7 @@ exports.DockingPoolSingleton = DockingPoolSingleton;
 
 
 /***/ }),
-/* 56 */
+/* 61 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -45131,8 +45513,144 @@ const SPLIT_HANDLE_MAP = {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 57 */,
-/* 58 */
+/* 62 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// a duplex stream is just a stream that is both readable and writable.
+// Since JS doesn't have multiple prototypal inheritance, this class
+// prototypally inherits from Readable, and then parasitically from
+// Writable.
+
+
+
+/*<replacement>*/
+
+var pna = __webpack_require__(68);
+/*</replacement>*/
+
+/*<replacement>*/
+var objectKeys = Object.keys || function (obj) {
+  var keys = [];
+  for (var key in obj) {
+    keys.push(key);
+  }return keys;
+};
+/*</replacement>*/
+
+module.exports = Duplex;
+
+/*<replacement>*/
+var util = Object.create(__webpack_require__(65));
+util.inherits = __webpack_require__(58);
+/*</replacement>*/
+
+var Readable = __webpack_require__(96);
+var Writable = __webpack_require__(98);
+
+util.inherits(Duplex, Readable);
+
+{
+  // avoid scope creep, the keys array can then be collected
+  var keys = objectKeys(Writable.prototype);
+  for (var v = 0; v < keys.length; v++) {
+    var method = keys[v];
+    if (!Duplex.prototype[method]) Duplex.prototype[method] = Writable.prototype[method];
+  }
+}
+
+function Duplex(options) {
+  if (!(this instanceof Duplex)) return new Duplex(options);
+
+  Readable.call(this, options);
+  Writable.call(this, options);
+
+  if (options && options.readable === false) this.readable = false;
+
+  if (options && options.writable === false) this.writable = false;
+
+  this.allowHalfOpen = true;
+  if (options && options.allowHalfOpen === false) this.allowHalfOpen = false;
+
+  this.once('end', onend);
+}
+
+Object.defineProperty(Duplex.prototype, 'writableHighWaterMark', {
+  // making it explicit this property is not enumerable
+  // because otherwise some prototype manipulation in
+  // userland will fail
+  enumerable: false,
+  get: function () {
+    return this._writableState.highWaterMark;
+  }
+});
+
+// the no-half-open enforcer
+function onend() {
+  // if we allow half-open state, or if the writable side ended,
+  // then we're ok.
+  if (this.allowHalfOpen || this._writableState.ended) return;
+
+  // no more data can be written.
+  // But allow more writes to happen in this tick.
+  pna.nextTick(onEndNT, this);
+}
+
+function onEndNT(self) {
+  self.end();
+}
+
+Object.defineProperty(Duplex.prototype, 'destroyed', {
+  get: function () {
+    if (this._readableState === undefined || this._writableState === undefined) {
+      return false;
+    }
+    return this._readableState.destroyed && this._writableState.destroyed;
+  },
+  set: function (value) {
+    // we ignore the value if the stream
+    // has not been initialized yet
+    if (this._readableState === undefined || this._writableState === undefined) {
+      return;
+    }
+
+    // backward compatibility, the user is explicitly
+    // managing destroyed
+    this._readableState.destroyed = value;
+    this._writableState.destroyed = value;
+  }
+});
+
+Duplex.prototype._destroy = function (err, cb) {
+  this.push(null);
+  this.end();
+
+  pna.nextTick(cb, err);
+};
+
+/***/ }),
+/* 63 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -45193,7 +45711,1918 @@ exports.ObjectPool = ObjectPool;
 
 
 /***/ }),
-/* 59 */
+/* 64 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(global) {/*!
+ * The buffer module from node.js, for the browser.
+ *
+ * @author   Feross Aboukhadijeh <http://feross.org>
+ * @license  MIT
+ */
+/* eslint-disable no-proto */
+
+
+
+var base64 = __webpack_require__(144)
+var ieee754 = __webpack_require__(148)
+var isArray = __webpack_require__(90)
+
+exports.Buffer = Buffer
+exports.SlowBuffer = SlowBuffer
+exports.INSPECT_MAX_BYTES = 50
+
+/**
+ * If `Buffer.TYPED_ARRAY_SUPPORT`:
+ *   === true    Use Uint8Array implementation (fastest)
+ *   === false   Use Object implementation (most compatible, even IE6)
+ *
+ * Browsers that support typed arrays are IE 10+, Firefox 4+, Chrome 7+, Safari 5.1+,
+ * Opera 11.6+, iOS 4.2+.
+ *
+ * Due to various browser bugs, sometimes the Object implementation will be used even
+ * when the browser supports typed arrays.
+ *
+ * Note:
+ *
+ *   - Firefox 4-29 lacks support for adding new properties to `Uint8Array` instances,
+ *     See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438.
+ *
+ *   - Chrome 9-10 is missing the `TypedArray.prototype.subarray` function.
+ *
+ *   - IE10 has a broken `TypedArray.prototype.subarray` function which returns arrays of
+ *     incorrect length in some situations.
+
+ * We detect these buggy browsers and set `Buffer.TYPED_ARRAY_SUPPORT` to `false` so they
+ * get the Object implementation, which is slower but behaves correctly.
+ */
+Buffer.TYPED_ARRAY_SUPPORT = global.TYPED_ARRAY_SUPPORT !== undefined
+  ? global.TYPED_ARRAY_SUPPORT
+  : typedArraySupport()
+
+/*
+ * Export kMaxLength after typed array support is determined.
+ */
+exports.kMaxLength = kMaxLength()
+
+function typedArraySupport () {
+  try {
+    var arr = new Uint8Array(1)
+    arr.__proto__ = {__proto__: Uint8Array.prototype, foo: function () { return 42 }}
+    return arr.foo() === 42 && // typed array instances can be augmented
+        typeof arr.subarray === 'function' && // chrome 9-10 lack `subarray`
+        arr.subarray(1, 1).byteLength === 0 // ie10 has broken `subarray`
+  } catch (e) {
+    return false
+  }
+}
+
+function kMaxLength () {
+  return Buffer.TYPED_ARRAY_SUPPORT
+    ? 0x7fffffff
+    : 0x3fffffff
+}
+
+function createBuffer (that, length) {
+  if (kMaxLength() < length) {
+    throw new RangeError('Invalid typed array length')
+  }
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    // Return an augmented `Uint8Array` instance, for best performance
+    that = new Uint8Array(length)
+    that.__proto__ = Buffer.prototype
+  } else {
+    // Fallback: Return an object instance of the Buffer class
+    if (that === null) {
+      that = new Buffer(length)
+    }
+    that.length = length
+  }
+
+  return that
+}
+
+/**
+ * The Buffer constructor returns instances of `Uint8Array` that have their
+ * prototype changed to `Buffer.prototype`. Furthermore, `Buffer` is a subclass of
+ * `Uint8Array`, so the returned instances will have all the node `Buffer` methods
+ * and the `Uint8Array` methods. Square bracket notation works as expected -- it
+ * returns a single octet.
+ *
+ * The `Uint8Array` prototype remains unmodified.
+ */
+
+function Buffer (arg, encodingOrOffset, length) {
+  if (!Buffer.TYPED_ARRAY_SUPPORT && !(this instanceof Buffer)) {
+    return new Buffer(arg, encodingOrOffset, length)
+  }
+
+  // Common case.
+  if (typeof arg === 'number') {
+    if (typeof encodingOrOffset === 'string') {
+      throw new Error(
+        'If encoding is specified then the first argument must be a string'
+      )
+    }
+    return allocUnsafe(this, arg)
+  }
+  return from(this, arg, encodingOrOffset, length)
+}
+
+Buffer.poolSize = 8192 // not used by this implementation
+
+// TODO: Legacy, not needed anymore. Remove in next major version.
+Buffer._augment = function (arr) {
+  arr.__proto__ = Buffer.prototype
+  return arr
+}
+
+function from (that, value, encodingOrOffset, length) {
+  if (typeof value === 'number') {
+    throw new TypeError('"value" argument must not be a number')
+  }
+
+  if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) {
+    return fromArrayBuffer(that, value, encodingOrOffset, length)
+  }
+
+  if (typeof value === 'string') {
+    return fromString(that, value, encodingOrOffset)
+  }
+
+  return fromObject(that, value)
+}
+
+/**
+ * Functionally equivalent to Buffer(arg, encoding) but throws a TypeError
+ * if value is a number.
+ * Buffer.from(str[, encoding])
+ * Buffer.from(array)
+ * Buffer.from(buffer)
+ * Buffer.from(arrayBuffer[, byteOffset[, length]])
+ **/
+Buffer.from = function (value, encodingOrOffset, length) {
+  return from(null, value, encodingOrOffset, length)
+}
+
+if (Buffer.TYPED_ARRAY_SUPPORT) {
+  Buffer.prototype.__proto__ = Uint8Array.prototype
+  Buffer.__proto__ = Uint8Array
+  if (typeof Symbol !== 'undefined' && Symbol.species &&
+      Buffer[Symbol.species] === Buffer) {
+    // Fix subarray() in ES2016. See: https://github.com/feross/buffer/pull/97
+    Object.defineProperty(Buffer, Symbol.species, {
+      value: null,
+      configurable: true
+    })
+  }
+}
+
+function assertSize (size) {
+  if (typeof size !== 'number') {
+    throw new TypeError('"size" argument must be a number')
+  } else if (size < 0) {
+    throw new RangeError('"size" argument must not be negative')
+  }
+}
+
+function alloc (that, size, fill, encoding) {
+  assertSize(size)
+  if (size <= 0) {
+    return createBuffer(that, size)
+  }
+  if (fill !== undefined) {
+    // Only pay attention to encoding if it's a string. This
+    // prevents accidentally sending in a number that would
+    // be interpretted as a start offset.
+    return typeof encoding === 'string'
+      ? createBuffer(that, size).fill(fill, encoding)
+      : createBuffer(that, size).fill(fill)
+  }
+  return createBuffer(that, size)
+}
+
+/**
+ * Creates a new filled Buffer instance.
+ * alloc(size[, fill[, encoding]])
+ **/
+Buffer.alloc = function (size, fill, encoding) {
+  return alloc(null, size, fill, encoding)
+}
+
+function allocUnsafe (that, size) {
+  assertSize(size)
+  that = createBuffer(that, size < 0 ? 0 : checked(size) | 0)
+  if (!Buffer.TYPED_ARRAY_SUPPORT) {
+    for (var i = 0; i < size; ++i) {
+      that[i] = 0
+    }
+  }
+  return that
+}
+
+/**
+ * Equivalent to Buffer(num), by default creates a non-zero-filled Buffer instance.
+ * */
+Buffer.allocUnsafe = function (size) {
+  return allocUnsafe(null, size)
+}
+/**
+ * Equivalent to SlowBuffer(num), by default creates a non-zero-filled Buffer instance.
+ */
+Buffer.allocUnsafeSlow = function (size) {
+  return allocUnsafe(null, size)
+}
+
+function fromString (that, string, encoding) {
+  if (typeof encoding !== 'string' || encoding === '') {
+    encoding = 'utf8'
+  }
+
+  if (!Buffer.isEncoding(encoding)) {
+    throw new TypeError('"encoding" must be a valid string encoding')
+  }
+
+  var length = byteLength(string, encoding) | 0
+  that = createBuffer(that, length)
+
+  var actual = that.write(string, encoding)
+
+  if (actual !== length) {
+    // Writing a hex string, for example, that contains invalid characters will
+    // cause everything after the first invalid character to be ignored. (e.g.
+    // 'abxxcd' will be treated as 'ab')
+    that = that.slice(0, actual)
+  }
+
+  return that
+}
+
+function fromArrayLike (that, array) {
+  var length = array.length < 0 ? 0 : checked(array.length) | 0
+  that = createBuffer(that, length)
+  for (var i = 0; i < length; i += 1) {
+    that[i] = array[i] & 255
+  }
+  return that
+}
+
+function fromArrayBuffer (that, array, byteOffset, length) {
+  array.byteLength // this throws if `array` is not a valid ArrayBuffer
+
+  if (byteOffset < 0 || array.byteLength < byteOffset) {
+    throw new RangeError('\'offset\' is out of bounds')
+  }
+
+  if (array.byteLength < byteOffset + (length || 0)) {
+    throw new RangeError('\'length\' is out of bounds')
+  }
+
+  if (byteOffset === undefined && length === undefined) {
+    array = new Uint8Array(array)
+  } else if (length === undefined) {
+    array = new Uint8Array(array, byteOffset)
+  } else {
+    array = new Uint8Array(array, byteOffset, length)
+  }
+
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    // Return an augmented `Uint8Array` instance, for best performance
+    that = array
+    that.__proto__ = Buffer.prototype
+  } else {
+    // Fallback: Return an object instance of the Buffer class
+    that = fromArrayLike(that, array)
+  }
+  return that
+}
+
+function fromObject (that, obj) {
+  if (Buffer.isBuffer(obj)) {
+    var len = checked(obj.length) | 0
+    that = createBuffer(that, len)
+
+    if (that.length === 0) {
+      return that
+    }
+
+    obj.copy(that, 0, 0, len)
+    return that
+  }
+
+  if (obj) {
+    if ((typeof ArrayBuffer !== 'undefined' &&
+        obj.buffer instanceof ArrayBuffer) || 'length' in obj) {
+      if (typeof obj.length !== 'number' || isnan(obj.length)) {
+        return createBuffer(that, 0)
+      }
+      return fromArrayLike(that, obj)
+    }
+
+    if (obj.type === 'Buffer' && isArray(obj.data)) {
+      return fromArrayLike(that, obj.data)
+    }
+  }
+
+  throw new TypeError('First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.')
+}
+
+function checked (length) {
+  // Note: cannot use `length < kMaxLength()` here because that fails when
+  // length is NaN (which is otherwise coerced to zero.)
+  if (length >= kMaxLength()) {
+    throw new RangeError('Attempt to allocate Buffer larger than maximum ' +
+                         'size: 0x' + kMaxLength().toString(16) + ' bytes')
+  }
+  return length | 0
+}
+
+function SlowBuffer (length) {
+  if (+length != length) { // eslint-disable-line eqeqeq
+    length = 0
+  }
+  return Buffer.alloc(+length)
+}
+
+Buffer.isBuffer = function isBuffer (b) {
+  return !!(b != null && b._isBuffer)
+}
+
+Buffer.compare = function compare (a, b) {
+  if (!Buffer.isBuffer(a) || !Buffer.isBuffer(b)) {
+    throw new TypeError('Arguments must be Buffers')
+  }
+
+  if (a === b) return 0
+
+  var x = a.length
+  var y = b.length
+
+  for (var i = 0, len = Math.min(x, y); i < len; ++i) {
+    if (a[i] !== b[i]) {
+      x = a[i]
+      y = b[i]
+      break
+    }
+  }
+
+  if (x < y) return -1
+  if (y < x) return 1
+  return 0
+}
+
+Buffer.isEncoding = function isEncoding (encoding) {
+  switch (String(encoding).toLowerCase()) {
+    case 'hex':
+    case 'utf8':
+    case 'utf-8':
+    case 'ascii':
+    case 'latin1':
+    case 'binary':
+    case 'base64':
+    case 'ucs2':
+    case 'ucs-2':
+    case 'utf16le':
+    case 'utf-16le':
+      return true
+    default:
+      return false
+  }
+}
+
+Buffer.concat = function concat (list, length) {
+  if (!isArray(list)) {
+    throw new TypeError('"list" argument must be an Array of Buffers')
+  }
+
+  if (list.length === 0) {
+    return Buffer.alloc(0)
+  }
+
+  var i
+  if (length === undefined) {
+    length = 0
+    for (i = 0; i < list.length; ++i) {
+      length += list[i].length
+    }
+  }
+
+  var buffer = Buffer.allocUnsafe(length)
+  var pos = 0
+  for (i = 0; i < list.length; ++i) {
+    var buf = list[i]
+    if (!Buffer.isBuffer(buf)) {
+      throw new TypeError('"list" argument must be an Array of Buffers')
+    }
+    buf.copy(buffer, pos)
+    pos += buf.length
+  }
+  return buffer
+}
+
+function byteLength (string, encoding) {
+  if (Buffer.isBuffer(string)) {
+    return string.length
+  }
+  if (typeof ArrayBuffer !== 'undefined' && typeof ArrayBuffer.isView === 'function' &&
+      (ArrayBuffer.isView(string) || string instanceof ArrayBuffer)) {
+    return string.byteLength
+  }
+  if (typeof string !== 'string') {
+    string = '' + string
+  }
+
+  var len = string.length
+  if (len === 0) return 0
+
+  // Use a for loop to avoid recursion
+  var loweredCase = false
+  for (;;) {
+    switch (encoding) {
+      case 'ascii':
+      case 'latin1':
+      case 'binary':
+        return len
+      case 'utf8':
+      case 'utf-8':
+      case undefined:
+        return utf8ToBytes(string).length
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return len * 2
+      case 'hex':
+        return len >>> 1
+      case 'base64':
+        return base64ToBytes(string).length
+      default:
+        if (loweredCase) return utf8ToBytes(string).length // assume utf8
+        encoding = ('' + encoding).toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+Buffer.byteLength = byteLength
+
+function slowToString (encoding, start, end) {
+  var loweredCase = false
+
+  // No need to verify that "this.length <= MAX_UINT32" since it's a read-only
+  // property of a typed array.
+
+  // This behaves neither like String nor Uint8Array in that we set start/end
+  // to their upper/lower bounds if the value passed is out of range.
+  // undefined is handled specially as per ECMA-262 6th Edition,
+  // Section 13.3.3.7 Runtime Semantics: KeyedBindingInitialization.
+  if (start === undefined || start < 0) {
+    start = 0
+  }
+  // Return early if start > this.length. Done here to prevent potential uint32
+  // coercion fail below.
+  if (start > this.length) {
+    return ''
+  }
+
+  if (end === undefined || end > this.length) {
+    end = this.length
+  }
+
+  if (end <= 0) {
+    return ''
+  }
+
+  // Force coersion to uint32. This will also coerce falsey/NaN values to 0.
+  end >>>= 0
+  start >>>= 0
+
+  if (end <= start) {
+    return ''
+  }
+
+  if (!encoding) encoding = 'utf8'
+
+  while (true) {
+    switch (encoding) {
+      case 'hex':
+        return hexSlice(this, start, end)
+
+      case 'utf8':
+      case 'utf-8':
+        return utf8Slice(this, start, end)
+
+      case 'ascii':
+        return asciiSlice(this, start, end)
+
+      case 'latin1':
+      case 'binary':
+        return latin1Slice(this, start, end)
+
+      case 'base64':
+        return base64Slice(this, start, end)
+
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return utf16leSlice(this, start, end)
+
+      default:
+        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
+        encoding = (encoding + '').toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+
+// The property is used by `Buffer.isBuffer` and `is-buffer` (in Safari 5-7) to detect
+// Buffer instances.
+Buffer.prototype._isBuffer = true
+
+function swap (b, n, m) {
+  var i = b[n]
+  b[n] = b[m]
+  b[m] = i
+}
+
+Buffer.prototype.swap16 = function swap16 () {
+  var len = this.length
+  if (len % 2 !== 0) {
+    throw new RangeError('Buffer size must be a multiple of 16-bits')
+  }
+  for (var i = 0; i < len; i += 2) {
+    swap(this, i, i + 1)
+  }
+  return this
+}
+
+Buffer.prototype.swap32 = function swap32 () {
+  var len = this.length
+  if (len % 4 !== 0) {
+    throw new RangeError('Buffer size must be a multiple of 32-bits')
+  }
+  for (var i = 0; i < len; i += 4) {
+    swap(this, i, i + 3)
+    swap(this, i + 1, i + 2)
+  }
+  return this
+}
+
+Buffer.prototype.swap64 = function swap64 () {
+  var len = this.length
+  if (len % 8 !== 0) {
+    throw new RangeError('Buffer size must be a multiple of 64-bits')
+  }
+  for (var i = 0; i < len; i += 8) {
+    swap(this, i, i + 7)
+    swap(this, i + 1, i + 6)
+    swap(this, i + 2, i + 5)
+    swap(this, i + 3, i + 4)
+  }
+  return this
+}
+
+Buffer.prototype.toString = function toString () {
+  var length = this.length | 0
+  if (length === 0) return ''
+  if (arguments.length === 0) return utf8Slice(this, 0, length)
+  return slowToString.apply(this, arguments)
+}
+
+Buffer.prototype.equals = function equals (b) {
+  if (!Buffer.isBuffer(b)) throw new TypeError('Argument must be a Buffer')
+  if (this === b) return true
+  return Buffer.compare(this, b) === 0
+}
+
+Buffer.prototype.inspect = function inspect () {
+  var str = ''
+  var max = exports.INSPECT_MAX_BYTES
+  if (this.length > 0) {
+    str = this.toString('hex', 0, max).match(/.{2}/g).join(' ')
+    if (this.length > max) str += ' ... '
+  }
+  return '<Buffer ' + str + '>'
+}
+
+Buffer.prototype.compare = function compare (target, start, end, thisStart, thisEnd) {
+  if (!Buffer.isBuffer(target)) {
+    throw new TypeError('Argument must be a Buffer')
+  }
+
+  if (start === undefined) {
+    start = 0
+  }
+  if (end === undefined) {
+    end = target ? target.length : 0
+  }
+  if (thisStart === undefined) {
+    thisStart = 0
+  }
+  if (thisEnd === undefined) {
+    thisEnd = this.length
+  }
+
+  if (start < 0 || end > target.length || thisStart < 0 || thisEnd > this.length) {
+    throw new RangeError('out of range index')
+  }
+
+  if (thisStart >= thisEnd && start >= end) {
+    return 0
+  }
+  if (thisStart >= thisEnd) {
+    return -1
+  }
+  if (start >= end) {
+    return 1
+  }
+
+  start >>>= 0
+  end >>>= 0
+  thisStart >>>= 0
+  thisEnd >>>= 0
+
+  if (this === target) return 0
+
+  var x = thisEnd - thisStart
+  var y = end - start
+  var len = Math.min(x, y)
+
+  var thisCopy = this.slice(thisStart, thisEnd)
+  var targetCopy = target.slice(start, end)
+
+  for (var i = 0; i < len; ++i) {
+    if (thisCopy[i] !== targetCopy[i]) {
+      x = thisCopy[i]
+      y = targetCopy[i]
+      break
+    }
+  }
+
+  if (x < y) return -1
+  if (y < x) return 1
+  return 0
+}
+
+// Finds either the first index of `val` in `buffer` at offset >= `byteOffset`,
+// OR the last index of `val` in `buffer` at offset <= `byteOffset`.
+//
+// Arguments:
+// - buffer - a Buffer to search
+// - val - a string, Buffer, or number
+// - byteOffset - an index into `buffer`; will be clamped to an int32
+// - encoding - an optional encoding, relevant is val is a string
+// - dir - true for indexOf, false for lastIndexOf
+function bidirectionalIndexOf (buffer, val, byteOffset, encoding, dir) {
+  // Empty buffer means no match
+  if (buffer.length === 0) return -1
+
+  // Normalize byteOffset
+  if (typeof byteOffset === 'string') {
+    encoding = byteOffset
+    byteOffset = 0
+  } else if (byteOffset > 0x7fffffff) {
+    byteOffset = 0x7fffffff
+  } else if (byteOffset < -0x80000000) {
+    byteOffset = -0x80000000
+  }
+  byteOffset = +byteOffset  // Coerce to Number.
+  if (isNaN(byteOffset)) {
+    // byteOffset: it it's undefined, null, NaN, "foo", etc, search whole buffer
+    byteOffset = dir ? 0 : (buffer.length - 1)
+  }
+
+  // Normalize byteOffset: negative offsets start from the end of the buffer
+  if (byteOffset < 0) byteOffset = buffer.length + byteOffset
+  if (byteOffset >= buffer.length) {
+    if (dir) return -1
+    else byteOffset = buffer.length - 1
+  } else if (byteOffset < 0) {
+    if (dir) byteOffset = 0
+    else return -1
+  }
+
+  // Normalize val
+  if (typeof val === 'string') {
+    val = Buffer.from(val, encoding)
+  }
+
+  // Finally, search either indexOf (if dir is true) or lastIndexOf
+  if (Buffer.isBuffer(val)) {
+    // Special case: looking for empty string/buffer always fails
+    if (val.length === 0) {
+      return -1
+    }
+    return arrayIndexOf(buffer, val, byteOffset, encoding, dir)
+  } else if (typeof val === 'number') {
+    val = val & 0xFF // Search for a byte value [0-255]
+    if (Buffer.TYPED_ARRAY_SUPPORT &&
+        typeof Uint8Array.prototype.indexOf === 'function') {
+      if (dir) {
+        return Uint8Array.prototype.indexOf.call(buffer, val, byteOffset)
+      } else {
+        return Uint8Array.prototype.lastIndexOf.call(buffer, val, byteOffset)
+      }
+    }
+    return arrayIndexOf(buffer, [ val ], byteOffset, encoding, dir)
+  }
+
+  throw new TypeError('val must be string, number or Buffer')
+}
+
+function arrayIndexOf (arr, val, byteOffset, encoding, dir) {
+  var indexSize = 1
+  var arrLength = arr.length
+  var valLength = val.length
+
+  if (encoding !== undefined) {
+    encoding = String(encoding).toLowerCase()
+    if (encoding === 'ucs2' || encoding === 'ucs-2' ||
+        encoding === 'utf16le' || encoding === 'utf-16le') {
+      if (arr.length < 2 || val.length < 2) {
+        return -1
+      }
+      indexSize = 2
+      arrLength /= 2
+      valLength /= 2
+      byteOffset /= 2
+    }
+  }
+
+  function read (buf, i) {
+    if (indexSize === 1) {
+      return buf[i]
+    } else {
+      return buf.readUInt16BE(i * indexSize)
+    }
+  }
+
+  var i
+  if (dir) {
+    var foundIndex = -1
+    for (i = byteOffset; i < arrLength; i++) {
+      if (read(arr, i) === read(val, foundIndex === -1 ? 0 : i - foundIndex)) {
+        if (foundIndex === -1) foundIndex = i
+        if (i - foundIndex + 1 === valLength) return foundIndex * indexSize
+      } else {
+        if (foundIndex !== -1) i -= i - foundIndex
+        foundIndex = -1
+      }
+    }
+  } else {
+    if (byteOffset + valLength > arrLength) byteOffset = arrLength - valLength
+    for (i = byteOffset; i >= 0; i--) {
+      var found = true
+      for (var j = 0; j < valLength; j++) {
+        if (read(arr, i + j) !== read(val, j)) {
+          found = false
+          break
+        }
+      }
+      if (found) return i
+    }
+  }
+
+  return -1
+}
+
+Buffer.prototype.includes = function includes (val, byteOffset, encoding) {
+  return this.indexOf(val, byteOffset, encoding) !== -1
+}
+
+Buffer.prototype.indexOf = function indexOf (val, byteOffset, encoding) {
+  return bidirectionalIndexOf(this, val, byteOffset, encoding, true)
+}
+
+Buffer.prototype.lastIndexOf = function lastIndexOf (val, byteOffset, encoding) {
+  return bidirectionalIndexOf(this, val, byteOffset, encoding, false)
+}
+
+function hexWrite (buf, string, offset, length) {
+  offset = Number(offset) || 0
+  var remaining = buf.length - offset
+  if (!length) {
+    length = remaining
+  } else {
+    length = Number(length)
+    if (length > remaining) {
+      length = remaining
+    }
+  }
+
+  // must be an even number of digits
+  var strLen = string.length
+  if (strLen % 2 !== 0) throw new TypeError('Invalid hex string')
+
+  if (length > strLen / 2) {
+    length = strLen / 2
+  }
+  for (var i = 0; i < length; ++i) {
+    var parsed = parseInt(string.substr(i * 2, 2), 16)
+    if (isNaN(parsed)) return i
+    buf[offset + i] = parsed
+  }
+  return i
+}
+
+function utf8Write (buf, string, offset, length) {
+  return blitBuffer(utf8ToBytes(string, buf.length - offset), buf, offset, length)
+}
+
+function asciiWrite (buf, string, offset, length) {
+  return blitBuffer(asciiToBytes(string), buf, offset, length)
+}
+
+function latin1Write (buf, string, offset, length) {
+  return asciiWrite(buf, string, offset, length)
+}
+
+function base64Write (buf, string, offset, length) {
+  return blitBuffer(base64ToBytes(string), buf, offset, length)
+}
+
+function ucs2Write (buf, string, offset, length) {
+  return blitBuffer(utf16leToBytes(string, buf.length - offset), buf, offset, length)
+}
+
+Buffer.prototype.write = function write (string, offset, length, encoding) {
+  // Buffer#write(string)
+  if (offset === undefined) {
+    encoding = 'utf8'
+    length = this.length
+    offset = 0
+  // Buffer#write(string, encoding)
+  } else if (length === undefined && typeof offset === 'string') {
+    encoding = offset
+    length = this.length
+    offset = 0
+  // Buffer#write(string, offset[, length][, encoding])
+  } else if (isFinite(offset)) {
+    offset = offset | 0
+    if (isFinite(length)) {
+      length = length | 0
+      if (encoding === undefined) encoding = 'utf8'
+    } else {
+      encoding = length
+      length = undefined
+    }
+  // legacy write(string, encoding, offset, length) - remove in v0.13
+  } else {
+    throw new Error(
+      'Buffer.write(string, encoding, offset[, length]) is no longer supported'
+    )
+  }
+
+  var remaining = this.length - offset
+  if (length === undefined || length > remaining) length = remaining
+
+  if ((string.length > 0 && (length < 0 || offset < 0)) || offset > this.length) {
+    throw new RangeError('Attempt to write outside buffer bounds')
+  }
+
+  if (!encoding) encoding = 'utf8'
+
+  var loweredCase = false
+  for (;;) {
+    switch (encoding) {
+      case 'hex':
+        return hexWrite(this, string, offset, length)
+
+      case 'utf8':
+      case 'utf-8':
+        return utf8Write(this, string, offset, length)
+
+      case 'ascii':
+        return asciiWrite(this, string, offset, length)
+
+      case 'latin1':
+      case 'binary':
+        return latin1Write(this, string, offset, length)
+
+      case 'base64':
+        // Warning: maxLength not taken into account in base64Write
+        return base64Write(this, string, offset, length)
+
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return ucs2Write(this, string, offset, length)
+
+      default:
+        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
+        encoding = ('' + encoding).toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+
+Buffer.prototype.toJSON = function toJSON () {
+  return {
+    type: 'Buffer',
+    data: Array.prototype.slice.call(this._arr || this, 0)
+  }
+}
+
+function base64Slice (buf, start, end) {
+  if (start === 0 && end === buf.length) {
+    return base64.fromByteArray(buf)
+  } else {
+    return base64.fromByteArray(buf.slice(start, end))
+  }
+}
+
+function utf8Slice (buf, start, end) {
+  end = Math.min(buf.length, end)
+  var res = []
+
+  var i = start
+  while (i < end) {
+    var firstByte = buf[i]
+    var codePoint = null
+    var bytesPerSequence = (firstByte > 0xEF) ? 4
+      : (firstByte > 0xDF) ? 3
+      : (firstByte > 0xBF) ? 2
+      : 1
+
+    if (i + bytesPerSequence <= end) {
+      var secondByte, thirdByte, fourthByte, tempCodePoint
+
+      switch (bytesPerSequence) {
+        case 1:
+          if (firstByte < 0x80) {
+            codePoint = firstByte
+          }
+          break
+        case 2:
+          secondByte = buf[i + 1]
+          if ((secondByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0x1F) << 0x6 | (secondByte & 0x3F)
+            if (tempCodePoint > 0x7F) {
+              codePoint = tempCodePoint
+            }
+          }
+          break
+        case 3:
+          secondByte = buf[i + 1]
+          thirdByte = buf[i + 2]
+          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0xF) << 0xC | (secondByte & 0x3F) << 0x6 | (thirdByte & 0x3F)
+            if (tempCodePoint > 0x7FF && (tempCodePoint < 0xD800 || tempCodePoint > 0xDFFF)) {
+              codePoint = tempCodePoint
+            }
+          }
+          break
+        case 4:
+          secondByte = buf[i + 1]
+          thirdByte = buf[i + 2]
+          fourthByte = buf[i + 3]
+          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80 && (fourthByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0xF) << 0x12 | (secondByte & 0x3F) << 0xC | (thirdByte & 0x3F) << 0x6 | (fourthByte & 0x3F)
+            if (tempCodePoint > 0xFFFF && tempCodePoint < 0x110000) {
+              codePoint = tempCodePoint
+            }
+          }
+      }
+    }
+
+    if (codePoint === null) {
+      // we did not generate a valid codePoint so insert a
+      // replacement char (U+FFFD) and advance only 1 byte
+      codePoint = 0xFFFD
+      bytesPerSequence = 1
+    } else if (codePoint > 0xFFFF) {
+      // encode to utf16 (surrogate pair dance)
+      codePoint -= 0x10000
+      res.push(codePoint >>> 10 & 0x3FF | 0xD800)
+      codePoint = 0xDC00 | codePoint & 0x3FF
+    }
+
+    res.push(codePoint)
+    i += bytesPerSequence
+  }
+
+  return decodeCodePointsArray(res)
+}
+
+// Based on http://stackoverflow.com/a/22747272/680742, the browser with
+// the lowest limit is Chrome, with 0x10000 args.
+// We go 1 magnitude less, for safety
+var MAX_ARGUMENTS_LENGTH = 0x1000
+
+function decodeCodePointsArray (codePoints) {
+  var len = codePoints.length
+  if (len <= MAX_ARGUMENTS_LENGTH) {
+    return String.fromCharCode.apply(String, codePoints) // avoid extra slice()
+  }
+
+  // Decode in chunks to avoid "call stack size exceeded".
+  var res = ''
+  var i = 0
+  while (i < len) {
+    res += String.fromCharCode.apply(
+      String,
+      codePoints.slice(i, i += MAX_ARGUMENTS_LENGTH)
+    )
+  }
+  return res
+}
+
+function asciiSlice (buf, start, end) {
+  var ret = ''
+  end = Math.min(buf.length, end)
+
+  for (var i = start; i < end; ++i) {
+    ret += String.fromCharCode(buf[i] & 0x7F)
+  }
+  return ret
+}
+
+function latin1Slice (buf, start, end) {
+  var ret = ''
+  end = Math.min(buf.length, end)
+
+  for (var i = start; i < end; ++i) {
+    ret += String.fromCharCode(buf[i])
+  }
+  return ret
+}
+
+function hexSlice (buf, start, end) {
+  var len = buf.length
+
+  if (!start || start < 0) start = 0
+  if (!end || end < 0 || end > len) end = len
+
+  var out = ''
+  for (var i = start; i < end; ++i) {
+    out += toHex(buf[i])
+  }
+  return out
+}
+
+function utf16leSlice (buf, start, end) {
+  var bytes = buf.slice(start, end)
+  var res = ''
+  for (var i = 0; i < bytes.length; i += 2) {
+    res += String.fromCharCode(bytes[i] + bytes[i + 1] * 256)
+  }
+  return res
+}
+
+Buffer.prototype.slice = function slice (start, end) {
+  var len = this.length
+  start = ~~start
+  end = end === undefined ? len : ~~end
+
+  if (start < 0) {
+    start += len
+    if (start < 0) start = 0
+  } else if (start > len) {
+    start = len
+  }
+
+  if (end < 0) {
+    end += len
+    if (end < 0) end = 0
+  } else if (end > len) {
+    end = len
+  }
+
+  if (end < start) end = start
+
+  var newBuf
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    newBuf = this.subarray(start, end)
+    newBuf.__proto__ = Buffer.prototype
+  } else {
+    var sliceLen = end - start
+    newBuf = new Buffer(sliceLen, undefined)
+    for (var i = 0; i < sliceLen; ++i) {
+      newBuf[i] = this[i + start]
+    }
+  }
+
+  return newBuf
+}
+
+/*
+ * Need to make sure that buffer isn't trying to write out of bounds.
+ */
+function checkOffset (offset, ext, length) {
+  if ((offset % 1) !== 0 || offset < 0) throw new RangeError('offset is not uint')
+  if (offset + ext > length) throw new RangeError('Trying to access beyond buffer length')
+}
+
+Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var val = this[offset]
+  var mul = 1
+  var i = 0
+  while (++i < byteLength && (mul *= 0x100)) {
+    val += this[offset + i] * mul
+  }
+
+  return val
+}
+
+Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) {
+    checkOffset(offset, byteLength, this.length)
+  }
+
+  var val = this[offset + --byteLength]
+  var mul = 1
+  while (byteLength > 0 && (mul *= 0x100)) {
+    val += this[offset + --byteLength] * mul
+  }
+
+  return val
+}
+
+Buffer.prototype.readUInt8 = function readUInt8 (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 1, this.length)
+  return this[offset]
+}
+
+Buffer.prototype.readUInt16LE = function readUInt16LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  return this[offset] | (this[offset + 1] << 8)
+}
+
+Buffer.prototype.readUInt16BE = function readUInt16BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  return (this[offset] << 8) | this[offset + 1]
+}
+
+Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return ((this[offset]) |
+      (this[offset + 1] << 8) |
+      (this[offset + 2] << 16)) +
+      (this[offset + 3] * 0x1000000)
+}
+
+Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset] * 0x1000000) +
+    ((this[offset + 1] << 16) |
+    (this[offset + 2] << 8) |
+    this[offset + 3])
+}
+
+Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var val = this[offset]
+  var mul = 1
+  var i = 0
+  while (++i < byteLength && (mul *= 0x100)) {
+    val += this[offset + i] * mul
+  }
+  mul *= 0x80
+
+  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
+
+  return val
+}
+
+Buffer.prototype.readIntBE = function readIntBE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var i = byteLength
+  var mul = 1
+  var val = this[offset + --i]
+  while (i > 0 && (mul *= 0x100)) {
+    val += this[offset + --i] * mul
+  }
+  mul *= 0x80
+
+  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
+
+  return val
+}
+
+Buffer.prototype.readInt8 = function readInt8 (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 1, this.length)
+  if (!(this[offset] & 0x80)) return (this[offset])
+  return ((0xff - this[offset] + 1) * -1)
+}
+
+Buffer.prototype.readInt16LE = function readInt16LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  var val = this[offset] | (this[offset + 1] << 8)
+  return (val & 0x8000) ? val | 0xFFFF0000 : val
+}
+
+Buffer.prototype.readInt16BE = function readInt16BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  var val = this[offset + 1] | (this[offset] << 8)
+  return (val & 0x8000) ? val | 0xFFFF0000 : val
+}
+
+Buffer.prototype.readInt32LE = function readInt32LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset]) |
+    (this[offset + 1] << 8) |
+    (this[offset + 2] << 16) |
+    (this[offset + 3] << 24)
+}
+
+Buffer.prototype.readInt32BE = function readInt32BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset] << 24) |
+    (this[offset + 1] << 16) |
+    (this[offset + 2] << 8) |
+    (this[offset + 3])
+}
+
+Buffer.prototype.readFloatLE = function readFloatLE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+  return ieee754.read(this, offset, true, 23, 4)
+}
+
+Buffer.prototype.readFloatBE = function readFloatBE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+  return ieee754.read(this, offset, false, 23, 4)
+}
+
+Buffer.prototype.readDoubleLE = function readDoubleLE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 8, this.length)
+  return ieee754.read(this, offset, true, 52, 8)
+}
+
+Buffer.prototype.readDoubleBE = function readDoubleBE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 8, this.length)
+  return ieee754.read(this, offset, false, 52, 8)
+}
+
+function checkInt (buf, value, offset, ext, max, min) {
+  if (!Buffer.isBuffer(buf)) throw new TypeError('"buffer" argument must be a Buffer instance')
+  if (value > max || value < min) throw new RangeError('"value" argument is out of bounds')
+  if (offset + ext > buf.length) throw new RangeError('Index out of range')
+}
+
+Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) {
+    var maxBytes = Math.pow(2, 8 * byteLength) - 1
+    checkInt(this, value, offset, byteLength, maxBytes, 0)
+  }
+
+  var mul = 1
+  var i = 0
+  this[offset] = value & 0xFF
+  while (++i < byteLength && (mul *= 0x100)) {
+    this[offset + i] = (value / mul) & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) {
+    var maxBytes = Math.pow(2, 8 * byteLength) - 1
+    checkInt(this, value, offset, byteLength, maxBytes, 0)
+  }
+
+  var i = byteLength - 1
+  var mul = 1
+  this[offset + i] = value & 0xFF
+  while (--i >= 0 && (mul *= 0x100)) {
+    this[offset + i] = (value / mul) & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 1, 0xff, 0)
+  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
+  this[offset] = (value & 0xff)
+  return offset + 1
+}
+
+function objectWriteUInt16 (buf, value, offset, littleEndian) {
+  if (value < 0) value = 0xffff + value + 1
+  for (var i = 0, j = Math.min(buf.length - offset, 2); i < j; ++i) {
+    buf[offset + i] = (value & (0xff << (8 * (littleEndian ? i : 1 - i)))) >>>
+      (littleEndian ? i : 1 - i) * 8
+  }
+}
+
+Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value & 0xff)
+    this[offset + 1] = (value >>> 8)
+  } else {
+    objectWriteUInt16(this, value, offset, true)
+  }
+  return offset + 2
+}
+
+Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 8)
+    this[offset + 1] = (value & 0xff)
+  } else {
+    objectWriteUInt16(this, value, offset, false)
+  }
+  return offset + 2
+}
+
+function objectWriteUInt32 (buf, value, offset, littleEndian) {
+  if (value < 0) value = 0xffffffff + value + 1
+  for (var i = 0, j = Math.min(buf.length - offset, 4); i < j; ++i) {
+    buf[offset + i] = (value >>> (littleEndian ? i : 3 - i) * 8) & 0xff
+  }
+}
+
+Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset + 3] = (value >>> 24)
+    this[offset + 2] = (value >>> 16)
+    this[offset + 1] = (value >>> 8)
+    this[offset] = (value & 0xff)
+  } else {
+    objectWriteUInt32(this, value, offset, true)
+  }
+  return offset + 4
+}
+
+Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 24)
+    this[offset + 1] = (value >>> 16)
+    this[offset + 2] = (value >>> 8)
+    this[offset + 3] = (value & 0xff)
+  } else {
+    objectWriteUInt32(this, value, offset, false)
+  }
+  return offset + 4
+}
+
+Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) {
+    var limit = Math.pow(2, 8 * byteLength - 1)
+
+    checkInt(this, value, offset, byteLength, limit - 1, -limit)
+  }
+
+  var i = 0
+  var mul = 1
+  var sub = 0
+  this[offset] = value & 0xFF
+  while (++i < byteLength && (mul *= 0x100)) {
+    if (value < 0 && sub === 0 && this[offset + i - 1] !== 0) {
+      sub = 1
+    }
+    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) {
+    var limit = Math.pow(2, 8 * byteLength - 1)
+
+    checkInt(this, value, offset, byteLength, limit - 1, -limit)
+  }
+
+  var i = byteLength - 1
+  var mul = 1
+  var sub = 0
+  this[offset + i] = value & 0xFF
+  while (--i >= 0 && (mul *= 0x100)) {
+    if (value < 0 && sub === 0 && this[offset + i + 1] !== 0) {
+      sub = 1
+    }
+    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 1, 0x7f, -0x80)
+  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
+  if (value < 0) value = 0xff + value + 1
+  this[offset] = (value & 0xff)
+  return offset + 1
+}
+
+Buffer.prototype.writeInt16LE = function writeInt16LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value & 0xff)
+    this[offset + 1] = (value >>> 8)
+  } else {
+    objectWriteUInt16(this, value, offset, true)
+  }
+  return offset + 2
+}
+
+Buffer.prototype.writeInt16BE = function writeInt16BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 8)
+    this[offset + 1] = (value & 0xff)
+  } else {
+    objectWriteUInt16(this, value, offset, false)
+  }
+  return offset + 2
+}
+
+Buffer.prototype.writeInt32LE = function writeInt32LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value & 0xff)
+    this[offset + 1] = (value >>> 8)
+    this[offset + 2] = (value >>> 16)
+    this[offset + 3] = (value >>> 24)
+  } else {
+    objectWriteUInt32(this, value, offset, true)
+  }
+  return offset + 4
+}
+
+Buffer.prototype.writeInt32BE = function writeInt32BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
+  if (value < 0) value = 0xffffffff + value + 1
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 24)
+    this[offset + 1] = (value >>> 16)
+    this[offset + 2] = (value >>> 8)
+    this[offset + 3] = (value & 0xff)
+  } else {
+    objectWriteUInt32(this, value, offset, false)
+  }
+  return offset + 4
+}
+
+function checkIEEE754 (buf, value, offset, ext, max, min) {
+  if (offset + ext > buf.length) throw new RangeError('Index out of range')
+  if (offset < 0) throw new RangeError('Index out of range')
+}
+
+function writeFloat (buf, value, offset, littleEndian, noAssert) {
+  if (!noAssert) {
+    checkIEEE754(buf, value, offset, 4, 3.4028234663852886e+38, -3.4028234663852886e+38)
+  }
+  ieee754.write(buf, value, offset, littleEndian, 23, 4)
+  return offset + 4
+}
+
+Buffer.prototype.writeFloatLE = function writeFloatLE (value, offset, noAssert) {
+  return writeFloat(this, value, offset, true, noAssert)
+}
+
+Buffer.prototype.writeFloatBE = function writeFloatBE (value, offset, noAssert) {
+  return writeFloat(this, value, offset, false, noAssert)
+}
+
+function writeDouble (buf, value, offset, littleEndian, noAssert) {
+  if (!noAssert) {
+    checkIEEE754(buf, value, offset, 8, 1.7976931348623157E+308, -1.7976931348623157E+308)
+  }
+  ieee754.write(buf, value, offset, littleEndian, 52, 8)
+  return offset + 8
+}
+
+Buffer.prototype.writeDoubleLE = function writeDoubleLE (value, offset, noAssert) {
+  return writeDouble(this, value, offset, true, noAssert)
+}
+
+Buffer.prototype.writeDoubleBE = function writeDoubleBE (value, offset, noAssert) {
+  return writeDouble(this, value, offset, false, noAssert)
+}
+
+// copy(targetBuffer, targetStart=0, sourceStart=0, sourceEnd=buffer.length)
+Buffer.prototype.copy = function copy (target, targetStart, start, end) {
+  if (!start) start = 0
+  if (!end && end !== 0) end = this.length
+  if (targetStart >= target.length) targetStart = target.length
+  if (!targetStart) targetStart = 0
+  if (end > 0 && end < start) end = start
+
+  // Copy 0 bytes; we're done
+  if (end === start) return 0
+  if (target.length === 0 || this.length === 0) return 0
+
+  // Fatal error conditions
+  if (targetStart < 0) {
+    throw new RangeError('targetStart out of bounds')
+  }
+  if (start < 0 || start >= this.length) throw new RangeError('sourceStart out of bounds')
+  if (end < 0) throw new RangeError('sourceEnd out of bounds')
+
+  // Are we oob?
+  if (end > this.length) end = this.length
+  if (target.length - targetStart < end - start) {
+    end = target.length - targetStart + start
+  }
+
+  var len = end - start
+  var i
+
+  if (this === target && start < targetStart && targetStart < end) {
+    // descending copy from end
+    for (i = len - 1; i >= 0; --i) {
+      target[i + targetStart] = this[i + start]
+    }
+  } else if (len < 1000 || !Buffer.TYPED_ARRAY_SUPPORT) {
+    // ascending copy from start
+    for (i = 0; i < len; ++i) {
+      target[i + targetStart] = this[i + start]
+    }
+  } else {
+    Uint8Array.prototype.set.call(
+      target,
+      this.subarray(start, start + len),
+      targetStart
+    )
+  }
+
+  return len
+}
+
+// Usage:
+//    buffer.fill(number[, offset[, end]])
+//    buffer.fill(buffer[, offset[, end]])
+//    buffer.fill(string[, offset[, end]][, encoding])
+Buffer.prototype.fill = function fill (val, start, end, encoding) {
+  // Handle string cases:
+  if (typeof val === 'string') {
+    if (typeof start === 'string') {
+      encoding = start
+      start = 0
+      end = this.length
+    } else if (typeof end === 'string') {
+      encoding = end
+      end = this.length
+    }
+    if (val.length === 1) {
+      var code = val.charCodeAt(0)
+      if (code < 256) {
+        val = code
+      }
+    }
+    if (encoding !== undefined && typeof encoding !== 'string') {
+      throw new TypeError('encoding must be a string')
+    }
+    if (typeof encoding === 'string' && !Buffer.isEncoding(encoding)) {
+      throw new TypeError('Unknown encoding: ' + encoding)
+    }
+  } else if (typeof val === 'number') {
+    val = val & 255
+  }
+
+  // Invalid ranges are not set to a default, so can range check early.
+  if (start < 0 || this.length < start || this.length < end) {
+    throw new RangeError('Out of range index')
+  }
+
+  if (end <= start) {
+    return this
+  }
+
+  start = start >>> 0
+  end = end === undefined ? this.length : end >>> 0
+
+  if (!val) val = 0
+
+  var i
+  if (typeof val === 'number') {
+    for (i = start; i < end; ++i) {
+      this[i] = val
+    }
+  } else {
+    var bytes = Buffer.isBuffer(val)
+      ? val
+      : utf8ToBytes(new Buffer(val, encoding).toString())
+    var len = bytes.length
+    for (i = 0; i < end - start; ++i) {
+      this[i + start] = bytes[i % len]
+    }
+  }
+
+  return this
+}
+
+// HELPER FUNCTIONS
+// ================
+
+var INVALID_BASE64_RE = /[^+\/0-9A-Za-z-_]/g
+
+function base64clean (str) {
+  // Node strips out invalid characters like \n and \t from the string, base64-js does not
+  str = stringtrim(str).replace(INVALID_BASE64_RE, '')
+  // Node converts strings with length < 2 to ''
+  if (str.length < 2) return ''
+  // Node allows for non-padded base64 strings (missing trailing ===), base64-js does not
+  while (str.length % 4 !== 0) {
+    str = str + '='
+  }
+  return str
+}
+
+function stringtrim (str) {
+  if (str.trim) return str.trim()
+  return str.replace(/^\s+|\s+$/g, '')
+}
+
+function toHex (n) {
+  if (n < 16) return '0' + n.toString(16)
+  return n.toString(16)
+}
+
+function utf8ToBytes (string, units) {
+  units = units || Infinity
+  var codePoint
+  var length = string.length
+  var leadSurrogate = null
+  var bytes = []
+
+  for (var i = 0; i < length; ++i) {
+    codePoint = string.charCodeAt(i)
+
+    // is surrogate component
+    if (codePoint > 0xD7FF && codePoint < 0xE000) {
+      // last char was a lead
+      if (!leadSurrogate) {
+        // no lead yet
+        if (codePoint > 0xDBFF) {
+          // unexpected trail
+          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+          continue
+        } else if (i + 1 === length) {
+          // unpaired lead
+          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+          continue
+        }
+
+        // valid lead
+        leadSurrogate = codePoint
+
+        continue
+      }
+
+      // 2 leads in a row
+      if (codePoint < 0xDC00) {
+        if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+        leadSurrogate = codePoint
+        continue
+      }
+
+      // valid surrogate pair
+      codePoint = (leadSurrogate - 0xD800 << 10 | codePoint - 0xDC00) + 0x10000
+    } else if (leadSurrogate) {
+      // valid bmp char, but last char was a lead
+      if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+    }
+
+    leadSurrogate = null
+
+    // encode utf8
+    if (codePoint < 0x80) {
+      if ((units -= 1) < 0) break
+      bytes.push(codePoint)
+    } else if (codePoint < 0x800) {
+      if ((units -= 2) < 0) break
+      bytes.push(
+        codePoint >> 0x6 | 0xC0,
+        codePoint & 0x3F | 0x80
+      )
+    } else if (codePoint < 0x10000) {
+      if ((units -= 3) < 0) break
+      bytes.push(
+        codePoint >> 0xC | 0xE0,
+        codePoint >> 0x6 & 0x3F | 0x80,
+        codePoint & 0x3F | 0x80
+      )
+    } else if (codePoint < 0x110000) {
+      if ((units -= 4) < 0) break
+      bytes.push(
+        codePoint >> 0x12 | 0xF0,
+        codePoint >> 0xC & 0x3F | 0x80,
+        codePoint >> 0x6 & 0x3F | 0x80,
+        codePoint & 0x3F | 0x80
+      )
+    } else {
+      throw new Error('Invalid code point')
+    }
+  }
+
+  return bytes
+}
+
+function asciiToBytes (str) {
+  var byteArray = []
+  for (var i = 0; i < str.length; ++i) {
+    // Node's code seems to be doing this and not & 0x7F..
+    byteArray.push(str.charCodeAt(i) & 0xFF)
+  }
+  return byteArray
+}
+
+function utf16leToBytes (str, units) {
+  var c, hi, lo
+  var byteArray = []
+  for (var i = 0; i < str.length; ++i) {
+    if ((units -= 2) < 0) break
+
+    c = str.charCodeAt(i)
+    hi = c >> 8
+    lo = c % 256
+    byteArray.push(lo)
+    byteArray.push(hi)
+  }
+
+  return byteArray
+}
+
+function base64ToBytes (str) {
+  return base64.toByteArray(base64clean(str))
+}
+
+function blitBuffer (src, dst, offset, length) {
+  for (var i = 0; i < length; ++i) {
+    if ((i + offset >= dst.length) || (i >= src.length)) break
+    dst[i + offset] = src[i]
+  }
+  return i
+}
+
+function isnan (val) {
+  return val !== val // eslint-disable-line no-self-compare
+}
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+
+/***/ }),
+/* 65 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(Buffer) {// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// NOTE: These type checking functions intentionally don't use `instanceof`
+// because it is fragile and can be easily faked with `Object.create()`.
+
+function isArray(arg) {
+  if (Array.isArray) {
+    return Array.isArray(arg);
+  }
+  return objectToString(arg) === '[object Array]';
+}
+exports.isArray = isArray;
+
+function isBoolean(arg) {
+  return typeof arg === 'boolean';
+}
+exports.isBoolean = isBoolean;
+
+function isNull(arg) {
+  return arg === null;
+}
+exports.isNull = isNull;
+
+function isNullOrUndefined(arg) {
+  return arg == null;
+}
+exports.isNullOrUndefined = isNullOrUndefined;
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+exports.isNumber = isNumber;
+
+function isString(arg) {
+  return typeof arg === 'string';
+}
+exports.isString = isString;
+
+function isSymbol(arg) {
+  return typeof arg === 'symbol';
+}
+exports.isSymbol = isSymbol;
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+exports.isUndefined = isUndefined;
+
+function isRegExp(re) {
+  return objectToString(re) === '[object RegExp]';
+}
+exports.isRegExp = isRegExp;
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+exports.isObject = isObject;
+
+function isDate(d) {
+  return objectToString(d) === '[object Date]';
+}
+exports.isDate = isDate;
+
+function isError(e) {
+  return (objectToString(e) === '[object Error]' || e instanceof Error);
+}
+exports.isError = isError;
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+exports.isFunction = isFunction;
+
+function isPrimitive(arg) {
+  return arg === null ||
+         typeof arg === 'boolean' ||
+         typeof arg === 'number' ||
+         typeof arg === 'string' ||
+         typeof arg === 'symbol' ||  // ES6 symbol
+         typeof arg === 'undefined';
+}
+exports.isPrimitive = isPrimitive;
+
+exports.isBuffer = Buffer.isBuffer;
+
+function objectToString(o) {
+  return Object.prototype.toString.call(o);
+}
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(64).Buffer))
+
+/***/ }),
+/* 66 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -45577,384 +48006,16 @@ module.exports = debounce;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
-/* 60 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_async__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_async___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_async__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__constants__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__constants___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__constants__);
-
-
-/** Singleton of the Logger class shared among all instances of ObjectPool
- * @TODO Refactor to instance member of class.
- */
-let Logger;
-const groupStates = {
-	NORMAL: 0,
-	MINIMIZING: 1,
-	MINIMIZED: 2,
-	RESTORING: 3
-};
-class WindowGroup {
-	/**
-  *
-  * @param {object} params Params
-  * @param {string} params.name name of the group
-  * @param {object} params.windows array of windows in the group
-  * @param {object} dependencies Dependency object that provides a Logger.
-  * @param {Logger} dependencies.Logger
-  */
-	constructor(params, dependencies) {
-		Logger = dependencies.Logger;
-		this.name = params.name;
-		this.groupState = groupStates.NORMAL;
-		this.GROUPSTATES = groupStates;
-		this.isAlwaysOnTop = false;
-		if (params.windows) {
-			this.windows = params.windows;
-		} else {
-			this.windows = {};
-		}
-	}
-
-	destroy() {
-		delete this.windows;
-		delete this.name;
-	}
-
-	setWindows(windows) {
-		this.windows = windows;
-	}
-
-	getWindows() {
-		return this.windows;
-	}
-
-	addWindow(win) {
-		Logger.system.debug("windowGroup.addWindow", win.name);
-		this.windows[win.name] = win;
-		if (this.isMovable) win.alwaysOnTop(this.isAlwaysOnTop);
-	}
-
-	/**
-  *
-  * @param {*} arr either a window name or window identifier or a list of window names or identifiers
-  */
-	removeWindows(arr, cb = Function.prototype) {
-		var windowName;
-		if (!Array.isArray(arr)) {
-			arr = [arr];
-		}
-		var self = this;
-		arr.forEach(function (win) {
-			if (typeof win === "string" || win instanceof String) {
-				windowName = win;
-			} else {
-				windowName = win.windowName || win.name;
-			}
-			Logger.system.debug("windowGroup.removeWindows", windowName);
-
-			if (this.windows[windowName]) {
-				delete self.windows[windowName];
-			} else {
-				return;
-			}
-		}, this);
-		cb();
-	}
-
-	/**
-  *
-  * @param {*} win either a window name or window identifier
-  */
-	getWindow(win) {
-		if (typeof win === "string" || win instanceof String) {
-			//we have a window name
-			return this.windows[win];
-		} // we have an identifier
-		if (win && (win.windowName || win.name)) {
-			return this.windows[win.windowName || win.name];
-		}
-		return null;
-	}
-
-	getWindowNames() {
-		let names = [];
-		for (let name in this.windows) {
-			names.push(name);
-		}
-		return names;
-	}
-
-	addWindows(arr) {
-		if (!Array.isArray(arr)) {
-			arr = [arr];
-		}
-		var self = this;
-		arr.forEach(function (win) {
-			Logger.system.debug("windowGroup.addWindows", win.name);
-
-			self.windows[win.name] = win;
-			if (this.isMovable) win.alwaysOnTop(this.isAlwaysOnTop);
-		}, this);
-	}
-
-	getWindowArray() {
-		let arr = [];
-		for (let windowName in this.windows) {
-			arr.push(this.windows[windowName]);
-		}
-		return arr;
-	}
-
-	minimizeAll() {
-		if (this.groupState == groupStates.RESTORING) {
-			this.interruptRestore = true;
-			this.groupState = groupStates.NORMAL;
-		}
-		if (this.groupState !== groupStates.NORMAL) return;
-		this.groupState = groupStates.MINIMIZING;
-		for (let windowName in this.windows) {
-			let win = this.windows[windowName];
-			if (win.windowState != __WEBPACK_IMPORTED_MODULE_1__constants__["WINDOWSTATE"].MINIMIZED) win.minimize();
-		}
-		this.groupState = groupStates.MINIMIZED;
-		this.interruptRestore = false;
-	}
-
-	minimize(params) {
-		if (!params) {
-			return this.minimizeAll();
-		}
-		let { windowList, componentType } = params;
-		if (componentType) windowList = this.findAllByComponentType(componentType);
-
-		for (let w of windowList) {
-			let win;
-			if (!(typeof w === "string" || w instanceof String)) {
-				win = this.getWindow(w.windowName || w.name);
-			} else {
-				win = this.getWindow(w);
-			}
-			if (win && win.windowState != __WEBPACK_IMPORTED_MODULE_1__constants__["WINDOWSTATE"].MINIMIZED) {
-				win.minimize();
-			}
-		}
-	}
-
-	restoreAll(cb = Function.prototype) {
-		if (this.groupState !== groupStates.MINIMIZED) return cb();
-		var self = this;
-		this.groupState = groupStates.RESTORING;
-		function restoreWindow(windowName, done) {
-			if (self.interruptRestore) return done("restore interrupted");
-			let win = self.windows[windowName];
-			if (win.restore) {
-				// if win.win exists, we're in a dockableGroup of dockalbeWindows
-				let windowState = win.win ? win.win.windowState : win.windowState;
-				if (windowState != __WEBPACK_IMPORTED_MODULE_1__constants__["WINDOWSTATE"].NORMAL) {
-					// The dockableWindow only takes a single parameter...a callback.
-					if (win.win) {
-						win.restore(done);
-					} else {
-						// All other window wraps accept 2 params for restore.
-						win.restore({}, done);
-					}
-				} else {
-					done();
-				}
-			} else {
-				Logger.system.error(windowName + " does not implement restore");
-				done();
-			}
-		}
-		__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0_async__["forEach"])(Object.keys(this.windows), restoreWindow, function (err, data) {
-			self.interruptRestore = false;
-			if (!err) {
-				self.groupState = groupStates.NORMAL;
-			}
-			cb(err, data);
-		});
-	}
-	//takes an array of window names.
-	restore(params, cb) {
-		let { windowList } = params;
-		var self = this;
-		function restoreWindow(windowName, done) {
-			let win = self.windows[windowName];
-			if (win.restore) {
-				self.windows[windowName].restore({}, done);
-			} else {
-				Logger.system.error(windowName + " does not implement restore");
-				done();
-			}
-		}
-		__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0_async__["forEach"])(windowList, restoreWindow, cb);
-	}
-
-	// Bring all windows to top. Also sets the state of the group to always on top and new windows added to the group inherit the state of thw window
-	allAlwaysOnTop(alwaysOnTop) {
-		this.isAlwaysOnTop = alwaysOnTop;
-		this.alwaysOnTop({ windowList: Object.keys(this.windows), restoreWindows: true, alwaysOnTop: alwaysOnTop });
-	}
-
-	// Set specific windows to top. Generally should call allAlwaysOnTop
-	alwaysOnTop(params) {
-		if (!params || params && Object.keys(params).length === 0) {
-			params = { windowList: Object.keys(this.windows), restoreWindows: true };
-		}
-		let { windowList, componentType } = params;
-		if (windowList && typeof windowList[0] !== "string") {
-			windowList = windowList.map(win => win.windowName);
-		}
-		if (componentType) windowList = this.findAllByComponentType(componentType);
-		var self = this;
-		if (!windowList) windowList = Object.keys(this.windows);
-		for (let w in windowList) {
-			let win;
-			if (Array.isArray(windowList)) w = windowList[w];
-
-			if (!(typeof w === "string" || w instanceof String)) {
-				win = self.getWindow(w.windowName || w.name);
-			} else {
-				win = self.getWindow(w);
-			}
-			if (win) {
-				win.alwaysOnTop(params.alwaysOnTop);
-			}
-		}
-	}
-
-	/**
-  * Brings a group of windows to the front (BTF). In other words, puts those windows on top of any other windows so that they can be seen
-  * @param {object} params
-  * @param {bool=true} params.restoreWindows If true then windows will attempt to be restored (un-minimized) before being brought to front
-  * @param {array} params.windowList The list of windows to BTF. Defaults to the windows that are in this window group. This can be a list of window names, or a list of actual window instances.
-  * @param {string} params.componentType Optionally provide a componentType to BTF only those windows of that type in the list of windows.
-  */
-	bringToFront(params, cb = Function.prototype) {
-		var self = this;
-		if (!params) params = {};
-		if (typeof params.restoreWindows == "undefined") params.restoreWindows = true;
-
-		// TODO, [terry] this "windowList" logic is copy and pasted many times in windowGroup.js. It should be in a helper function.
-		let { windowList, componentType } = params;
-		// Determine if the windowList is a list of window names, or a list of actual windows (in which case we extract the name)
-		if (windowList && typeof windowList[0] !== "string") {
-			windowList = windowList.map(win => win.windowName);
-		}
-
-		// Get all windows *in this group* of this component type, then convert them into an array of strings to be passed into the other group functions.
-		if (componentType) {
-			windowList = [];
-			let windows = this.findAllByComponentType(componentType);
-			windows.forEach(win => {
-				if (win && win.name) {
-					windowList.push(win.name);
-				}
-			});
-		}
-
-		// Default to the windows in this group, actually the most common case
-		if (!windowList) windowList = Object.keys(this.windows);
-
-		function doBTF() {
-			// TODO, [terry] this chunk of code is repeated three times in windowGroup.js. It should be abstracted away
-			// TODO, [Sidd] this code now uses async, previously was not using using the callback properly. Make all group functions do this
-
-			__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0_async__["each"])(windowList, (w, callback) => {
-				let win;
-				//if (Array.isArray(windowList)) w = windowList[w];
-
-				if (!(typeof w === "string" || w instanceof String)) {
-					win = self.getWindow(w.windowName || w.name);
-				} else {
-					win = self.getWindow(w);
-				}
-				if (win) {
-					win.bringToFront(callback);
-				} else {
-					callback();
-				}
-			}, () => {
-				cb();
-			});
-		}
-
-		if (params.restoreWindows) {
-			if (typeof windowList[0] !== "string") {
-				windowList = Object.keys(windowList);
-			}
-			this.restore({ windowList }, doBTF);
-		} else {
-			doBTF();
-		}
-	}
-
-	hyperFocus(params) {
-		let windowList = params.windowList;
-		// If we got a list of identifiers, convert to names
-		for (let w in windowList) {
-			let win = windowList[w];
-			if (!(typeof win === "string" || win instanceof String)) {
-				windowList[w] = win.windowName || win.name;
-			}
-		}
-
-		// If we are trying to hyper focus a stack make sure to also include the children
-		for (let windowName in this.windows) {
-			let win = this.getWindow(windowName);
-			let parent = win.getParent();
-			// If window is in a stack and the stack is in the windowList but this window is not, add it.
-			if (parent && windowList.includes(parent.name) && !windowList.includes(windowName)) {
-				windowList.push(windowName);
-			}
-		}
-
-		for (let windowName in this.windows) {
-			if (!windowList.includes(windowName)) {
-				this.windows[windowName].minimize();
-			} else {
-				this.windows[windowName].restore(() => {
-					this.windows[windowName].bringToFront();
-				});
-			}
-		}
-	}
-
-	findAllByComponentType(componentType) {
-		var windowList = [];
-		for (let windowName in this.windows) {
-			let theWindow = this.windows[windowName];
-			let descriptor = theWindow.windowDescriptor;
-			if (componentType === (descriptor.component ? descriptor.component.type : descriptor.customData.component.type)) {
-				//TODO - figure out why this is different in some cases
-				windowList.push(this.windows[windowName]);
-			}
-		}
-		return windowList;
-	}
-
-}
-/* harmony export (immutable) */ __webpack_exports__["a"] = WindowGroup;
-
-
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\window\\windowGroup.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\window\\windowGroup.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
-
-/***/ }),
-/* 61 */
+/* 67 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const storageClient_1 = __webpack_require__(21);
-const disentangledUtils_1 = __webpack_require__(22);
+const storageClient_1 = __webpack_require__(25);
+const disentangledUtils_1 = __webpack_require__(23);
 const util_1 = __webpack_require__(8);
-const constants_1 = __webpack_require__(10);
+const constants_1 = __webpack_require__(11);
 const logger_1 = __webpack_require__(0);
 const { ACTIVE_WORKSPACE, CACHE_STORAGE_TOPIC, STORAGE_TOPIC } = constants_1.WORKSPACE;
 exports.GET_WINDOW_STATE_ERROR = (win, ws = ACTIVE_WORKSPACE) => `No Window State found for window "${win}" in workspace "${ws}"`;
@@ -46104,23 +48165,408 @@ exports.WindowStorageManager = WindowStorageManager;
 
 
 /***/ }),
-/* 62 */,
-/* 63 */
+/* 68 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process) {
+
+if (typeof process === 'undefined' ||
+    !process.version ||
+    process.version.indexOf('v0.') === 0 ||
+    process.version.indexOf('v1.') === 0 && process.version.indexOf('v1.8.') !== 0) {
+  module.exports = { nextTick: nextTick };
+} else {
+  module.exports = process
+}
+
+function nextTick(fn, arg1, arg2, arg3) {
+  if (typeof fn !== 'function') {
+    throw new TypeError('"callback" argument must be a function');
+  }
+  var len = arguments.length;
+  var args, i;
+  switch (len) {
+  case 0:
+  case 1:
+    return process.nextTick(fn);
+  case 2:
+    return process.nextTick(function afterTickOne() {
+      fn.call(null, arg1);
+    });
+  case 3:
+    return process.nextTick(function afterTickTwo() {
+      fn.call(null, arg1, arg2);
+    });
+  case 4:
+    return process.nextTick(function afterTickThree() {
+      fn.call(null, arg1, arg2, arg3);
+    });
+  default:
+    args = new Array(len - 1);
+    i = 0;
+    while (i < args.length) {
+      args[i++] = arguments[i];
+    }
+    return process.nextTick(function afterTick() {
+      fn.apply(null, args);
+    });
+  }
+}
+
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
+
+/***/ }),
+/* 69 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_async__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_async___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_async__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__constants__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__constants___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__constants__);
+
+
+/** Singleton of the Logger class shared among all instances of ObjectPool
+ * @TODO Refactor to instance member of class.
+ */
+let Logger;
+const groupStates = {
+	NORMAL: 0,
+	MINIMIZING: 1,
+	MINIMIZED: 2,
+	RESTORING: 3
+};
+class WindowGroup {
+	/**
+  *
+  * @param {object} params Params
+  * @param {string} params.name name of the group
+  * @param {object} params.windows array of windows in the group
+  * @param {object} dependencies Dependency object that provides a Logger.
+  * @param {Logger} dependencies.Logger
+  */
+	constructor(params, dependencies) {
+		Logger = dependencies.Logger;
+		this.name = params.name;
+		this.groupState = groupStates.NORMAL;
+		this.GROUPSTATES = groupStates;
+		if (params.windows) {
+			this.windows = params.windows;
+		} else {
+			this.windows = {};
+		}
+	}
+
+	destroy() {
+		delete this.windows;
+		delete this.name;
+	}
+
+	setWindows(windows) {
+		this.windows = windows;
+	}
+
+	getWindows() {
+		return this.windows;
+	}
+
+	addWindow(win) {
+		Logger.system.debug("windowGroup.addWindow", win.name);
+		this.windows[win.name] = win;
+	}
+
+	/**
+  *
+  * @param {*} arr either a window name or window identifier or a list of window names or identifiers
+  */
+	removeWindows(arr, cb = Function.prototype) {
+		var windowName;
+		if (!Array.isArray(arr)) {
+			arr = [arr];
+		}
+		var self = this;
+		arr.forEach(function (win) {
+			if (typeof win === "string" || win instanceof String) {
+				windowName = win;
+			} else {
+				windowName = win.windowName || win.name;
+			}
+			Logger.system.debug("windowGroup.removeWindows", windowName);
+
+			if (this.windows[windowName]) {
+				delete self.windows[windowName];
+			} else {
+				return;
+			}
+		}, this);
+		cb();
+	}
+
+	/**
+  *
+  * @param {*} win either a window name or window identifier
+  */
+	getWindow(win) {
+		if (typeof win === "string" || win instanceof String) {
+			//we have a window name
+			return this.windows[win];
+		} // we have an identifier
+		if (win && (win.windowName || win.name)) {
+			return this.windows[win.windowName || win.name];
+		}
+		return null;
+	}
+
+	getWindowNames() {
+		let names = [];
+		for (let name in this.windows) {
+			names.push(name);
+		}
+		return names;
+	}
+
+	addWindows(arr) {
+		if (!Array.isArray(arr)) {
+			arr = [arr];
+		}
+		var self = this;
+		arr.forEach(function (win) {
+			Logger.system.debug("windowGroup.addWindows", win.name);
+
+			self.windows[win.name] = win;
+		}, this);
+	}
+
+	getWindowArray() {
+		let arr = [];
+		for (let windowName in this.windows) {
+			arr.push(this.windows[windowName]);
+		}
+		return arr;
+	}
+
+	minimizeAll() {
+		if (this.groupState == groupStates.RESTORING) {
+			this.interruptRestore = true;
+			this.groupState = groupStates.NORMAL;
+		}
+		if (this.groupState !== groupStates.NORMAL) return;
+		this.groupState = groupStates.MINIMIZING;
+		for (let windowName in this.windows) {
+			let win = this.windows[windowName];
+			if (win.windowState != __WEBPACK_IMPORTED_MODULE_1__constants__["WINDOWSTATE"].MINIMIZED) win.minimize();
+		}
+		this.groupState = groupStates.MINIMIZED;
+		this.interruptRestore = false;
+	}
+
+	minimize(params) {
+		if (!params) {
+			return this.minimizeAll();
+		}
+		let { windowList, componentType } = params;
+		if (componentType) windowList = this.findAllByComponentType(componentType);
+
+		for (let w of windowList) {
+			let win;
+			if (!(typeof w === "string" || w instanceof String)) {
+				win = this.getWindow(w.windowName || w.name);
+			} else {
+				win = this.getWindow(w);
+			}
+			if (win && win.windowState != __WEBPACK_IMPORTED_MODULE_1__constants__["WINDOWSTATE"].MINIMIZED) {
+				win.minimize();
+			}
+		}
+	}
+
+	restoreAll(cb = Function.prototype) {
+		if (this.groupState !== groupStates.MINIMIZED) return cb();
+		var self = this;
+		this.groupState = groupStates.RESTORING;
+		function restoreWindow(windowName, done) {
+			if (self.interruptRestore) return done("restore interrupted");
+			let win = self.windows[windowName];
+			if (win.restore) {
+				// if win.win exists, we're in a dockableGroup of dockalbeWindows
+				let windowState = win.win ? win.win.windowState : win.windowState;
+				if (windowState != __WEBPACK_IMPORTED_MODULE_1__constants__["WINDOWSTATE"].NORMAL) {
+					// The dockableWindow only takes a single parameter...a callback.
+					if (win.win) {
+						win.restore(done);
+					} else {
+						// All other window wraps accept 2 params for restore.
+						win.restore({}, done);
+					}
+				} else {
+					done();
+				}
+			} else {
+				Logger.system.error(windowName + " does not implement restore");
+				done();
+			}
+		}
+		__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0_async__["forEach"])(Object.keys(this.windows), restoreWindow, function (err, data) {
+			self.interruptRestore = false;
+			if (!err) {
+				self.groupState = groupStates.NORMAL;
+			}
+			cb(err, data);
+		});
+	}
+	//takes an array of window names.
+	restore(params, cb) {
+		let { windowList } = params;
+		var self = this;
+		function restoreWindow(windowName, done) {
+			let win = self.windows[windowName];
+			if (win.restore) {
+				self.windows[windowName].restore({}, done);
+			} else {
+				Logger.system.error(windowName + " does not implement restore");
+				done();
+			}
+		}
+		__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0_async__["forEach"])(windowList, restoreWindow, cb);
+	}
+
+	/**
+  * Brings a group of windows to the front (BTF). In other words, puts those windows on top of any other windows so that they can be seen
+  * @param {object} params
+  * @param {bool=true} params.restoreWindows If true then windows will attempt to be restored (un-minimized) before being brought to front
+  * @param {array} params.windowList The list of windows to BTF. Defaults to the windows that are in this window group. This can be a list of window names, or a list of actual window instances.
+  * @param {string} params.componentType Optionally provide a componentType to BTF only those windows of that type in the list of windows.
+  */
+	bringToFront(params, cb = Function.prototype) {
+		var self = this;
+		if (!params) params = {};
+		if (typeof params.restoreWindows == "undefined") params.restoreWindows = true;
+
+		// TODO, [terry] this "windowList" logic is copy and pasted many times in windowGroup.js. It should be in a helper function.
+		let { windowList, componentType } = params;
+		// Determine if the windowList is a list of window names, or a list of actual windows (in which case we extract the name)
+		if (windowList && typeof windowList[0] !== "string") {
+			windowList = windowList.map(win => win.windowName);
+		}
+
+		// Get all windows *in this group* of this component type, then convert them into an array of strings to be passed into the other group functions.
+		if (componentType) {
+			windowList = [];
+			let windows = this.findAllByComponentType(componentType);
+			windows.forEach(win => {
+				if (win && win.name) {
+					windowList.push(win.name);
+				}
+			});
+		}
+
+		// Default to the windows in this group, actually the most common case
+		if (!windowList) windowList = Object.keys(this.windows);
+
+		function doBTF() {
+			// TODO, [terry] this chunk of code is repeated three times in windowGroup.js. It should be abstracted away
+			// TODO, [Sidd] this code now uses async, previously was not using using the callback properly. Make all group functions do this
+
+			__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0_async__["each"])(windowList, (w, callback) => {
+				let win;
+				//if (Array.isArray(windowList)) w = windowList[w];
+
+				if (!(typeof w === "string" || w instanceof String)) {
+					win = self.getWindow(w.windowName || w.name);
+				} else {
+					win = self.getWindow(w);
+				}
+				if (win) {
+					win.bringToFront(callback);
+				} else {
+					callback();
+				}
+			}, () => {
+				cb();
+			});
+		}
+
+		if (params.restoreWindows) {
+			if (typeof windowList[0] !== "string") {
+				windowList = Object.keys(windowList);
+			}
+			this.restore({ windowList }, doBTF);
+		} else {
+			doBTF();
+		}
+	}
+
+	hyperFocus(params) {
+		let windowList = params.windowList;
+		// If we got a list of identifiers, convert to names
+		for (let w in windowList) {
+			let win = windowList[w];
+			if (!(typeof win === "string" || win instanceof String)) {
+				windowList[w] = win.windowName || win.name;
+			}
+		}
+
+		// If we are trying to hyper focus a stack make sure to also include the children
+		for (let windowName in this.windows) {
+			let win = this.getWindow(windowName);
+			let parent = win.getParent();
+			// If window is in a stack and the stack is in the windowList but this window is not, add it.
+			if (parent && windowList.includes(parent.name) && !windowList.includes(windowName)) {
+				windowList.push(windowName);
+			}
+		}
+
+		for (let windowName in this.windows) {
+			if (!windowList.includes(windowName)) {
+				this.windows[windowName].minimize();
+			} else {
+				this.windows[windowName].restore(() => {
+					this.windows[windowName].bringToFront();
+				});
+			}
+		}
+	}
+
+	findAllByComponentType(componentType) {
+		var windowList = [];
+		for (let windowName in this.windows) {
+			let theWindow = this.windows[windowName];
+			let descriptor = theWindow.windowDescriptor;
+			if (componentType === (descriptor.component ? descriptor.component.type : descriptor.customData.component.type)) {
+				//TODO - figure out why this is different in some cases
+				windowList.push(this.windows[windowName]);
+			}
+		}
+		return windowList;
+	}
+
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = WindowGroup;
+
+
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\common\\window\\windowGroup.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\common\\window\\windowGroup.js"); } } })();
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
+
+/***/ }),
+/* 70 */,
+/* 71 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__BaseWindow__ = __webpack_require__(53);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__BaseWindow__ = __webpack_require__(56);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__BaseWindow___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__BaseWindow__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__openfinWindowWrapper__ = __webpack_require__(170);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__externalWindowWrapper__ = __webpack_require__(169);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__stackedWindowWrapper__ = __webpack_require__(171);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__WebWindowWrapper__ = __webpack_require__(195);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__externalWindowWrapper__ = __webpack_require__(196);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__stackedWindowWrapper__ = __webpack_require__(197);
 
 
 
 
 
-__WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].registerType("OpenFinWindow", __WEBPACK_IMPORTED_MODULE_1__openfinWindowWrapper__["a" /* default */]);
+__WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].registerType("WebWindow", __WEBPACK_IMPORTED_MODULE_1__WebWindowWrapper__["a" /* default */]);
 __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].registerType("NativeWindow", __WEBPACK_IMPORTED_MODULE_2__externalWindowWrapper__["a" /* default */]);
 __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].registerType("StackedWindow", __WEBPACK_IMPORTED_MODULE_3__stackedWindowWrapper__["a" /* default */]);
 
@@ -46132,7 +48578,75 @@ const FinsembleWindowInternal = __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseW
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 64 */
+/* 72 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* eslint-disable node/no-deprecated-api */
+var buffer = __webpack_require__(64)
+var Buffer = buffer.Buffer
+
+// alternative to using Object.keys for old browsers
+function copyProps (src, dst) {
+  for (var key in src) {
+    dst[key] = src[key]
+  }
+}
+if (Buffer.from && Buffer.alloc && Buffer.allocUnsafe && Buffer.allocUnsafeSlow) {
+  module.exports = buffer
+} else {
+  // Copy properties from require('buffer')
+  copyProps(buffer, exports)
+  exports.Buffer = SafeBuffer
+}
+
+function SafeBuffer (arg, encodingOrOffset, length) {
+  return Buffer(arg, encodingOrOffset, length)
+}
+
+// Copy static methods from Buffer
+copyProps(Buffer, SafeBuffer)
+
+SafeBuffer.from = function (arg, encodingOrOffset, length) {
+  if (typeof arg === 'number') {
+    throw new TypeError('Argument must not be a number')
+  }
+  return Buffer(arg, encodingOrOffset, length)
+}
+
+SafeBuffer.alloc = function (size, fill, encoding) {
+  if (typeof size !== 'number') {
+    throw new TypeError('Argument must be a number')
+  }
+  var buf = Buffer(size)
+  if (fill !== undefined) {
+    if (typeof encoding === 'string') {
+      buf.fill(fill, encoding)
+    } else {
+      buf.fill(fill)
+    }
+  } else {
+    buf.fill(0)
+  }
+  return buf
+}
+
+SafeBuffer.allocUnsafe = function (size) {
+  if (typeof size !== 'number') {
+    throw new TypeError('Argument must be a number')
+  }
+  return Buffer(size)
+}
+
+SafeBuffer.allocUnsafeSlow = function (size) {
+  if (typeof size !== 'number') {
+    throw new TypeError('Argument must be a number')
+  }
+  return buffer.SlowBuffer(size)
+}
+
+
+/***/ }),
+/* 73 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -46213,15 +48727,16 @@ if (finWindow.name === thisApp.window.name)
 
 
 /***/ }),
-/* 65 */,
-/* 66 */,
-/* 67 */
+/* 74 */,
+/* 75 */,
+/* 76 */,
+/* 77 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const ObjectPool_1 = __webpack_require__(58);
+const ObjectPool_1 = __webpack_require__(63);
 class WindowPool extends ObjectPool_1.ObjectPool {
     *iterator() {
         for (let windowName in this.objects) {
@@ -46236,22 +48751,24 @@ exports.WindowPool = WindowPool;
 
 
 /***/ }),
-/* 68 */,
-/* 69 */,
-/* 70 */,
-/* 71 */,
-/* 72 */,
-/* 73 */
+/* 78 */,
+/* 79 */,
+/* 80 */,
+/* 81 */,
+/* 82 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_window_windowGroup__ = __webpack_require__(60);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__dockableBox__ = __webpack_require__(54);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__constants__ = __webpack_require__(56);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__boxMath__ = __webpack_require__(50);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_lodash_debounce__ = __webpack_require__(59);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_lodash_debounce___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_lodash_debounce__);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_window_windowGroup__ = __webpack_require__(69);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__dockableBox__ = __webpack_require__(59);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_disentangledUtils__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_disentangledUtils___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__common_disentangledUtils__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__constants__ = __webpack_require__(61);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__boxMath__ = __webpack_require__(49);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_lodash_debounce__ = __webpack_require__(66);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_lodash_debounce___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_lodash_debounce__);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 
 
 
@@ -46263,21 +48780,6 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
  */
 let Logger;
 const debounceTime = 300;
-const clone = function (obj) {
-	//This has been tested a good amount. Previous to this commit we were using a mix of deepmerge and JSON.parse(JSON.stringify()).
-	//Trying lodash.deepclone made my tests take 2-3s.
-	//JSON.parse everywhere made them take ~ 1s.
-	//Using JSON.parse on arrays and deep merge on objects makes them take 7-900ms.
-	if (Array.isArray(obj)) {
-		return obj.slice();
-	}
-	try {
-		return JSON.parse(JSON.stringify(obj));
-	} catch (e) {
-		Logger.system.error("clone error", e);
-		return e;
-	}
-};
 
 class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGroup__["a" /* WindowGroup */] {
 	/**
@@ -46295,6 +48797,11 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 		this.setMinimums(config);
 		this.name = config.name;
 		this.isMovable = typeof config.isMovable !== "undefined" ? config.isMovable : false;
+		/** A mapping from window names to their previous alwaysOnTop state.
+   * Allows us to set window back to the way they were when they leave
+   * the group.
+   */
+		this.ungroupedAlwaysOnTopState = config.ungroupedAlwaysOnTopState || {};
 		this.windowBoundingBox = {
 			min: {
 				x: 0,
@@ -46312,21 +48819,49 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 		this.dockableBox = new __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* default */]();
 		this.inheritDockableBox();
 		this.removeWindow = this.removeWindow.bind(this);
-
+		this.handleAlwaysOnTopChange = this.handleAlwaysOnTopChange.bind(this);
 		// Will wait 300 ms after every request before moving the group. This gives time for events to arrive from the other windows in the group
 		// The function will only be called after this amount of time has passed with no requests.
 		// Since the OS doesn't care if a group stays together, we need to move the group after the OS is finished moving all windows
-		this.performDeferredSystemMove = __WEBPACK_IMPORTED_MODULE_4_lodash_debounce___default()(this.performDeferredSystemMove.bind(this), debounceTime);
+		this.performDeferredSystemMove = __WEBPACK_IMPORTED_MODULE_5_lodash_debounce___default()(this.performDeferredSystemMove.bind(this), debounceTime);
 		this.deferredWindowMoves = [];
 	}
 
 	/**
+  * Fired when the alwaysOnTop of a window in the group changes.
+  * Sets all windows in the group to the new value.
+  */
+	handleAlwaysOnTopChange({ data: { alwaysOnTop } }) {
+		for (const groupWin of Object.values(this.windows)) {
+			const currentAlwaysOnTop = groupWin.isAlwaysOnTop();
+			if (currentAlwaysOnTop != alwaysOnTop) groupWin.alwaysOnTop(alwaysOnTop);
+		}
+	}
+
+	/**
+  * Returns the JSON representation of the group (stored on the workspace).
+  */
+	getJSON() {
+		const windowNames = this.getWindowNames();
+		const topRightWindow = windowNames.length ? this.getMoveAnchor("BottomLeft").name : null;
+
+		return {
+			windowNames,
+			isMovable: this.isMovable,
+			isAlwaysOnTop: this.isAlwaysOnTop,
+			topRightWindow,
+			isARectangle: this.isARectangle(),
+			ungroupedAlwaysOnTopState: this.ungroupedAlwaysOnTopState
+		};
+	}
+
+	/**
   * Responds to system events when the OS has moved a group. Every time a window in this group triggers this function a shared array will
-  * be updated with that window and it's bounds. After each update, request the group move. 
+  * be updated with that window and it's bounds. After each update, request the group move.
   * If this function is triggered again within a certain time, the group move will continue to be delayed until enough time passes without
-  * any windows events. Ideally the group will only move when all windows in the group with changes have responded to events. 
+  * any windows events. Ideally the group will only move when all windows in the group with changes have responded to events.
   * @param {*} windowObject - Contains the window name and it's updated bounds
-  * @param {*} calculator - an instance of docking calculator 
+  * @param {*} calculator - an instance of docking calculator
   */
 	deferSystemMove(windowObject, calculator) {
 		this.deferredWindowMoves.push(windowObject);
@@ -46336,8 +48871,8 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 	/**
   * Requests the group move. Uses an array of windows in the group and their bounds to choose which window's bounds to use for the group move.
   * Intended to move a group after the monitor configuration has changed as the OS may not keep the group intact when it is moved.
-  * 
-  * @param {*} calculator 
+  *
+  * @param {*} calculator
   * @param {*} deferredWindowMoves array of windowobjects to be used for the move.
   */
 	performDeferredSystemMove(calculator, deferredWindowMoves) {
@@ -46370,9 +48905,9 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 		}
 		// When a group straddles a monitor the OS will move the overlapping windows fully onto one monitor.
 		// This causes the group to break because we don't allow grouping on monitor edge.
-		// In some cases, the move anchor will be unchanged, even though other windows in the group have moved. 
+		// In some cases, the move anchor will be unchanged, even though other windows in the group have moved.
 		// This just means the old bounds of the move anchor are still valid.
-		// By shifting the bounds by one pixel, we insure that the move request is processed, and the group will 
+		// By shifting the bounds by one pixel, we insure that the move request is processed, and the group will
 		// be fully attached.
 		Object.keys(bounds).forEach(key => {
 			if (["right", "left", "top", "bottom"].includes(key)) bounds[key]++;
@@ -46400,7 +48935,7 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 	}
 	addWindow(win) {
 		if (Object.keys(this.windows).length === 0) {
-			this.windowBoundingBox = clone(win.windowBoundingBox);
+			this.windowBoundingBox = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__common_disentangledUtils__["clone"])(win.windowBoundingBox, Logger.system.error);
 		}
 		if (this.isMovable) win.win._updateOptions({
 			options: {
@@ -46408,8 +48943,33 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 			}
 		});
 		super.addWindows(win);
+
 		this.updateBounds();
 		if (this.isMovable) this.bringToFront({ restoreWindows: false });
+
+		// alwaysOnTop setup
+		if (this.isMovable) {
+			win.win.addEventListener("alwaysOnTop", this.handleAlwaysOnTopChange);
+			const winIsAlwaysOnTop = win.isAlwaysOnTop();
+			// Keep a record of the windows prev alwaysOnTop state
+			// In the case of reloading a workspace, the names will already be there,
+			// and we don't want to clobber the old state.
+			if (!(win.name in this.ungroupedAlwaysOnTopState)) {
+				this.ungroupedAlwaysOnTopState[win.name] = winIsAlwaysOnTop;
+			}
+			// If, after adding this window, any of the windows in the group are alwaysOnTop
+			// then all of the windows need to be alwaysOnTop.
+			const anyWindowsAlwaysOnTop = Object.values(this.windows).some(groupWin => groupWin.isAlwaysOnTop());
+			if (anyWindowsAlwaysOnTop) {
+				if (winIsAlwaysOnTop) {
+					// If this window is already on top, we still need to check the other windows.
+					this.handleAlwaysOnTopChange({ data: { alwaysOnTop: true } });
+				} else {
+					// Otherwise, we need to set this window to always on top.
+					win.alwaysOnTop(true);
+				}
+			}
+		}
 	}
 
 	updateBounds() {
@@ -46454,8 +49014,8 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 		let windowList = this.getWindows();
 		for (let windowName in windowList) {
 			let win = this.getWindow(windowName);
-			for (let i = 0; i < __WEBPACK_IMPORTED_MODULE_2__constants__["EDGES"].length; i++) {
-				let edge = __WEBPACK_IMPORTED_MODULE_2__constants__["EDGES"][i];
+			for (let i = 0; i < __WEBPACK_IMPORTED_MODULE_3__constants__["EDGES"].length; i++) {
+				let edge = __WEBPACK_IMPORTED_MODULE_3__constants__["EDGES"][i];
 				if (win[edge] === this[edge]) {
 					windowsOnSegment[win.name] = win;
 				}
@@ -46654,13 +49214,28 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
  * @param  {type} name {description}
  * @return {type} {description}
  */
-	removeWindow(name) {
-		let win = this.getWindow(name);
-		if (this.isMovable) win.win._updateOptions({
-			options: {
-				"taskbarIconGroup": win.win.uuid
+	removeWindow(name, updateAOT = true) {
+		const win = this.getWindow(name);
+		if (this.isMovable) {
+			win.win._updateOptions({
+				options: {
+					taskbarIconGroup: win.win.uuid
+				}
+			});
+
+			// Clean up alwaysOnTop state
+			// remove the listener
+			// Set the window's alwaysOnTop back to its previous state.
+			win.win.removeEventListener("alwaysOnTop", this.handleAlwaysOnTopChange);
+			if (updateAOT) {
+				win.alwaysOnTop(this.ungroupedAlwaysOnTopState[win.name]);
 			}
-		});
+			// On workspace reload, the window will be removed then added back.
+			// We want the ungroupedAlwaysOnTopState to stick around in that case,
+			// so we don't delete it from the object on remove. Window names are unique
+			// so there's no risk of collision.
+		}
+
 		super.removeWindows(name);
 		this.updateBounds();
 	}
@@ -46727,7 +49302,7 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 		splitHandle.forEach(handle => {
 			groupIter = calculator.groupWindowIterator(this);
 			//cleans up the edges of the group in case rounding error messed us up.
-			var oppEdge = __WEBPACK_IMPORTED_MODULE_2__constants__["OPPOSITE_EDGE_MAP"][handle];
+			var oppEdge = __WEBPACK_IMPORTED_MODULE_3__constants__["OPPOSITE_EDGE_MAP"][handle];
 			for (var win of groupIter) {
 				var moveRequest = movements[win.name];
 				if (win.onGroupEdge && win.onGroupEdge[oppEdge] && moveRequest[oppEdge] !== newBounds[oppEdge]) {
@@ -46792,7 +49367,7 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 				Logger.system.warn("INVESTIGATE: No win passed to doTheConga");
 				return;
 			}
-			var oppEdge = __WEBPACK_IMPORTED_MODULE_2__constants__["OPPOSITE_EDGE_MAP"][handle];
+			var oppEdge = __WEBPACK_IMPORTED_MODULE_3__constants__["OPPOSITE_EDGE_MAP"][handle];
 
 			for (var i = 0, len = win.snappedWindows.length; i < len; i++) {
 				var snappedWindowObj = win.snappedWindows[i];
@@ -46859,23 +49434,23 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 
 		let anchorPoint = {};
 		//The "Anchor" Is where the group is offset by. It's a point. Top/left is a misnomer. After scaling, each window will be shifted by deltaX and deltaY, where the delta is the distance between that window's top left and the anchor's point.
-		if (__WEBPACK_IMPORTED_MODULE_2__constants__["EDGES"].includes(anchor)) {
+		if (__WEBPACK_IMPORTED_MODULE_3__constants__["EDGES"].includes(anchor)) {
 			anchorPoint.top = newBounds.top;
 			anchorPoint.left = newBounds.left;
 			switch (anchor) {
 				case "left":
-					//When resizing from the left, we want to make sure the right edge of the group doesn't move.
+					// When resizing from the left, we want to make sure the right edge of the group doesn't move.
 					anchorPoint.left = newBounds.right;
 					break;
 				case "top":
-					//When resizing from the top, we want to make sure the bottom edge of the group doesn't move.
+					// When resizing from the top, we want to make sure the bottom edge of the group doesn't move.
 					anchorPoint.top = newBounds.bottom;
 					break;
 			}
-		} else if (__WEBPACK_IMPORTED_MODULE_2__constants__["CORNERS"].includes(anchor)) {
+		} else if (__WEBPACK_IMPORTED_MODULE_3__constants__["CORNERS"].includes(anchor)) {
 			//Get the opposite corner; that's the anchor.
 			//e.g., when resizing from the top right, the bottom left shouldn't move at all.
-			let corner = corners[__WEBPACK_IMPORTED_MODULE_2__constants__["OPPOSITE_EDGE_MAP"][anchor]];
+			let corner = corners[__WEBPACK_IMPORTED_MODULE_3__constants__["OPPOSITE_EDGE_MAP"][anchor]];
 			anchorPoint = {
 				top: corner.y,
 				left: corner.x
@@ -46971,7 +49546,7 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 			return [];
 		}
 
-		var oppEdge = __WEBPACK_IMPORTED_MODULE_2__constants__["OPPOSITE_EDGE_MAP"][edge];
+		var oppEdge = __WEBPACK_IMPORTED_MODULE_3__constants__["OPPOSITE_EDGE_MAP"][edge];
 		var windowSegment = win.getEdges("obj", includeCorners)[edge];
 
 		for (let windowName in this.windows) {
@@ -46980,7 +49555,9 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 				continue;
 			}
 			let segment = possibleSnapper.getEdges("obj", includeCorners)[oppEdge];
+
 			var shouldPush = false;
+
 			let points = [{
 				name: possibleSnapper.name,
 				val: segment.min
@@ -46994,12 +49571,13 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 				name: win.name,
 				val: windowSegment.max
 			}];
+
 			if (["top", "bottom"].includes(edge)) {
 				if (segment.min.y !== windowSegment.min.y) {
 					continue;
 				}
 				points = points.sort((a, b) => {
-					return a.val.x > b.val.x;
+					return b.val.x - a.val.x;
 				});
 			}
 
@@ -47008,12 +49586,14 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 					continue;
 				}
 				points = points.sort((a, b) => {
-					return a.val.y > b.val.y;
+					return b.val.y - a.val.y;
 				});
 			}
+
 			if (points[0].name !== points[1].name) {
 				shouldPush = true;
 			}
+
 			if (shouldPush) {
 				let snapObj = {
 					name: possibleSnapper.name,
@@ -47052,7 +49632,7 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 		const calculator = this.getWindow(candidates[0].name).calculator;
 
 		//Bounding box is needed for `sharesAnEdgeWith`.
-		myHole.windowBoundingBox = __WEBPACK_IMPORTED_MODULE_3__boxMath__["a" /* default */].getWindowBoundingBox(myHole);
+		myHole.windowBoundingBox = __WEBPACK_IMPORTED_MODULE_4__boxMath__["a" /* default */].getWindowBoundingBox(myHole);
 
 		//If the hole takes up the whole width or whole height of the group, we should scale the remaining windows to fill the hole.
 		if ((myHole.width === this.width || myHole.height === this.height) && this.sharesAnEdgeWith(myHole)) {
@@ -47145,7 +49725,7 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 					this.fillAttempts = 0;
 					return;
 				}
-				let leftovers = __WEBPACK_IMPORTED_MODULE_3__boxMath__["a" /* default */].clipRect(myHole, new __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* default */](newBounds), impactedEdge);
+				let leftovers = __WEBPACK_IMPORTED_MODULE_4__boxMath__["a" /* default */].clipRect(myHole, new __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* default */](newBounds), impactedEdge);
 				this.fillHole(leftovers);
 			} else {
 				calculator.onMouseUp();
@@ -47156,7 +49736,7 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 	}
 
 	moveTo(bounds, cb = Function.prototype) {
-		//System moves should already have an anchor window defined. For other moves set choose the top-left window. 
+		//System moves should already have an anchor window defined. For other moves set choose the top-left window.
 		if (!bounds.anchor) {
 			Logger.system.verbose("dockableGroup.moveTo: No bounds anchor predefined, defaulting to bottomRight move anchor");
 			bounds.anchor = this.getMoveAnchor("BottomRight");
@@ -47187,7 +49767,7 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 		});
 		let cornersNotOnEdges = uniqueCorners.filter(corner => {
 			let otherEdges = edges.filter(edge => edge.window !== corner.window);
-			return !otherEdges.some(edge => __WEBPACK_IMPORTED_MODULE_3__boxMath__["a" /* default */].isPointOnSegment(corner, edge));
+			return !otherEdges.some(edge => __WEBPACK_IMPORTED_MODULE_4__boxMath__["a" /* default */].isPointOnSegment(corner, edge));
 		});
 		return cornersNotOnEdges;
 	}
@@ -47430,11 +50010,11 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 74 */
+/* 83 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__boxMath__ = __webpack_require__(50);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__boxMath__ = __webpack_require__(49);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
 
@@ -47781,20 +50361,20 @@ function DockableMonitor(params) {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 75 */
+/* 84 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__boxMath__ = __webpack_require__(50);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__dockableBox__ = __webpack_require__(54);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_disentangledUtils__ = __webpack_require__(22);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__boxMath__ = __webpack_require__(49);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__dockableBox__ = __webpack_require__(59);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_disentangledUtils__ = __webpack_require__(23);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_disentangledUtils___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__common_disentangledUtils__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_lodash_get__ = __webpack_require__(24);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_lodash_get__ = __webpack_require__(33);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_lodash_get___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_lodash_get__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_storageClient__ = __webpack_require__(21);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_storageClient__ = __webpack_require__(25);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_storageClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__clients_storageClient__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__common_util__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_constants__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_constants__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_constants___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6__common_constants__);
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
@@ -47821,7 +50401,7 @@ let System;
  */
 let calculator;
 //Need config service in order to see if a particular window is dockable presentationalComponents -> components.Toolbar.component.dockable = true?
-const _throttle = __webpack_require__(23);
+const _throttle = __webpack_require__(24);
 
 //defaults for the openfin version.
 /*var OF_VERSION = {
@@ -47843,7 +50423,7 @@ var warningsSent = {
 class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* default */] {
 	/**
   *
-  * @param {*} win Window object; OpenfinWindow, ExternalWindow, etc.
+  * @param {*} win Window object; WebWindow, ExternalWindow, etc.
   * @param {bounds} bounds initial bounds for the window.
   * @param {object} dependencies Dependency object that provides the calculator, System, and Logger.
   * @param {DockingCalculator} dependencies.calculator
@@ -49022,6 +51602,18 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 		}
 	}
 
+	/**
+  * Returns the present alwaysOnTop status of the window.
+  *
+  * NOTE: This only reflects Finsemble's internal representation
+  * of the alwaysOnTop status, not the container/OS. When changing the status,
+  * Finsemble's status changes before the underlying container, causing them
+  * to briefly become out of sync.
+  */
+	isAlwaysOnTop() {
+		return this.win._isAlwaysOnTop();
+	}
+
 	bringToFront() {
 		//window.methodCalls["bringToFront"]++;
 		try {
@@ -49126,23 +51718,23 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 76 */
+/* 85 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(global, process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__dockableMonitor__ = __webpack_require__(74);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__dockableGroup__ = __webpack_require__(73);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__dockableBox__ = __webpack_require__(54);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__boxMath__ = __webpack_require__(50);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__maskBoundsCalculator__ = __webpack_require__(77);
+/* WEBPACK VAR INJECTION */(function(global, process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__dockableMonitor__ = __webpack_require__(83);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__dockableGroup__ = __webpack_require__(82);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__dockableBox__ = __webpack_require__(59);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__boxMath__ = __webpack_require__(49);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__maskBoundsCalculator__ = __webpack_require__(86);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__maskBoundsCalculator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__maskBoundsCalculator__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_async__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_async___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_async__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Common_Pools_PoolSingletons__ = __webpack_require__(55);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Common_Pools_PoolSingletons__ = __webpack_require__(60);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Common_Pools_PoolSingletons___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6__Common_Pools_PoolSingletons__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_disentangledUtils__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_disentangledUtils__ = __webpack_require__(23);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_disentangledUtils___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7__common_disentangledUtils__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__constants__ = __webpack_require__(56);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__constants__ = __webpack_require__(61);
 
 
 
@@ -49602,9 +52194,9 @@ class DockingCalculator {
 			throw new Error("Window not found");
 		}
 
-		//When we mouse down on a dockable component, we need to store the monitor its on immediately. 
-		//Sometimes, in a multi-monitor configuration, when the window undocks it will momentarily 
-		//jump to another monitor (since the grabber when docked is always near a monitor edge). 
+		//When we mouse down on a dockable component, we need to store the monitor its on immediately.
+		//Sometimes, in a multi-monitor configuration, when the window undocks it will momentarily
+		//jump to another monitor (since the grabber when docked is always near a monitor edge).
 		//To prevent the moveAllWindowsOutOfClaimedSpace calculation from using the
 		//wrong monitor, we store it on the window to remove it later.
 		if (this.movingWindow.isDockableComponent && this.movingWindow.isDocked) {
@@ -49749,7 +52341,7 @@ class DockingCalculator {
 	/**
  * When the user lifts her mouse, this is fired. It cleans up opacity, shows windows if we were moving a group, and cleans up global variables.
  *
- * @param {} params - Optional. Possible parameters: 
+ * @param {} params - Optional. Possible parameters:
  *									systemMoved: If true, indicates the OS initiated the group move
  *									triggeredByAutoArrange: If true, indicate the move was initiated by auto-arrange
  */
@@ -50489,7 +53081,9 @@ class DockingCalculator {
 					continue;
 				}
 				let segment = possibleSnapper.getEdges("obj", includeCorners)[oppEdge];
+
 				var shouldPush = false;
+
 				let points = [{
 					name: possibleSnapper.name,
 					val: segment.min
@@ -50503,12 +53097,13 @@ class DockingCalculator {
 					name: win.name,
 					val: windowSegment.max
 				}];
+
 				if (["top", "bottom"].includes(edge)) {
 					if (segment.min.y !== windowSegment.min.y) {
 						continue;
 					}
 					points = points.sort((a, b) => {
-						return a.val.x > b.val.x;
+						return b.val.x - a.val.x;
 					});
 				}
 
@@ -50517,12 +53112,14 @@ class DockingCalculator {
 						continue;
 					}
 					points = points.sort((a, b) => {
-						return a.val.y > b.val.y;
+						return b.val.y - a.val.y;
 					});
 				}
+
 				if (points[0].name !== points[1].name) {
 					shouldPush = true;
 				}
+
 				if (shouldPush) {
 					if (debug) {
 						Logger.system.debug("forceObjectsToLogger", windowSegment, segment, win.name, possibleSnapper.name, edge);
@@ -50901,7 +53498,7 @@ class DockingCalculator {
 	}
 
 	/**
-  * Returns a list of 'rawMonitors' from openfin. These are only available when they are actually passed into the DockableMonitor when its instantiated.
+  * Returns a list of 'rawMonitors' from the container. These are only available when they are actually passed into the DockableMonitor when its instantiated.
   */
 	getRawMonitors() {
 		let rawMonitors = [];
@@ -51107,7 +53704,7 @@ class DockingCalculator {
 	/**
   * Removes a window from a group. When tiling, we do not delete groups with only one window. We could be doing an operation on a group with two windows, and we want to retain group membership so that hole-filling works appropriately.
   */
-	removeWindowFromGroup(windowName, groupName, deleteGroupsWithOneWindow = true) {
+	removeWindowFromGroup(windowName, groupName, deleteGroupsWithOneWindow = true, updateAOT = true) {
 		if (debug) {
 			Logger.system.debug("forceObjectsToLogger", "removing window from group", windowName, groupName);
 		}
@@ -51121,9 +53718,9 @@ class DockingCalculator {
 			return;
 		}
 
-		group.removeWindow(win.name);
+		group.removeWindow(win.name, updateAOT);
 		if (deleteGroupsWithOneWindow && group.getWindowNames().length === 1) {
-			this.removeWindowFromGroup(group.getWindowNames()[0], group.name);
+			this.removeWindowFromGroup(group.getWindowNames()[0], group.name, true, updateAOT);
 			this.removeGroup(group.name);
 		}
 	}
@@ -51202,12 +53799,12 @@ class DockingCalculator {
 		if (group.isMovable) {
 			let movableGroup = this.getMovableGroup(win.name);
 			if (movableGroup) {
-				this.removeWindowFromGroup(win.name, movableGroup.name);
+				this.removeWindowFromGroup(win.name, movableGroup.name, true, false);
 			}
 		} else {
 			let immobileGroup = this.getImmobileGroup(win.name);
 			if (immobileGroup) {
-				this.removeWindowFromGroup(win.name, immobileGroup.name);
+				this.removeWindowFromGroup(win.name, immobileGroup.name, true, false);
 			}
 		}
 
@@ -52721,7 +55318,6 @@ class DockingCalculator {
 
 		for (let i = 0, len = movingWindowSnappedWindows.length; i < len; i++) {
 			let snapObj = movingWindowSnappedWindows[i];
-
 			var snappedWindow = self.getWindow(snapObj.name);
 			let newBounds = movements[snapObj.name] ? movements[snapObj.name] : snappedWindow.getBounds();
 			newBounds.name = snapObj.name;
@@ -53380,7 +55976,7 @@ class DockingCalculator {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(4), __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 77 */
+/* 86 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(process) {// Wanted to do ES6 export but that didn't work in current WP configurations, not sure why
@@ -53461,71 +56057,2732 @@ function mousePosToBounds(mousePosition) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 78 */,
-/* 79 */,
-/* 80 */,
-/* 81 */,
-/* 82 */,
-/* 83 */,
-/* 84 */,
-/* 85 */,
-/* 86 */,
 /* 87 */,
 /* 88 */,
 /* 89 */,
-/* 90 */,
+/* 90 */
+/***/ (function(module, exports) {
+
+var toString = {}.toString;
+
+module.exports = Array.isArray || function (arr) {
+  return toString.call(arr) == '[object Array]';
+};
+
+
+/***/ }),
 /* 91 */,
 /* 92 */,
 /* 93 */,
 /* 94 */,
 /* 95 */,
-/* 96 */,
-/* 97 */,
-/* 98 */,
-/* 99 */,
-/* 100 */,
+/* 96 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(global, process) {// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+
+/*<replacement>*/
+
+var pna = __webpack_require__(68);
+/*</replacement>*/
+
+module.exports = Readable;
+
+/*<replacement>*/
+var isArray = __webpack_require__(90);
+/*</replacement>*/
+
+/*<replacement>*/
+var Duplex;
+/*</replacement>*/
+
+Readable.ReadableState = ReadableState;
+
+/*<replacement>*/
+var EE = __webpack_require__(13).EventEmitter;
+
+var EElistenerCount = function (emitter, type) {
+  return emitter.listeners(type).length;
+};
+/*</replacement>*/
+
+/*<replacement>*/
+var Stream = __webpack_require__(100);
+/*</replacement>*/
+
+/*<replacement>*/
+
+var Buffer = __webpack_require__(72).Buffer;
+var OurUint8Array = global.Uint8Array || function () {};
+function _uint8ArrayToBuffer(chunk) {
+  return Buffer.from(chunk);
+}
+function _isUint8Array(obj) {
+  return Buffer.isBuffer(obj) || obj instanceof OurUint8Array;
+}
+
+/*</replacement>*/
+
+/*<replacement>*/
+var util = Object.create(__webpack_require__(65));
+util.inherits = __webpack_require__(58);
+/*</replacement>*/
+
+/*<replacement>*/
+var debugUtil = __webpack_require__(212);
+var debug = void 0;
+if (debugUtil && debugUtil.debuglog) {
+  debug = debugUtil.debuglog('stream');
+} else {
+  debug = function () {};
+}
+/*</replacement>*/
+
+var BufferList = __webpack_require__(199);
+var destroyImpl = __webpack_require__(99);
+var StringDecoder;
+
+util.inherits(Readable, Stream);
+
+var kProxyEvents = ['error', 'close', 'destroy', 'pause', 'resume'];
+
+function prependListener(emitter, event, fn) {
+  // Sadly this is not cacheable as some libraries bundle their own
+  // event emitter implementation with them.
+  if (typeof emitter.prependListener === 'function') return emitter.prependListener(event, fn);
+
+  // This is a hack to make sure that our error handler is attached before any
+  // userland ones.  NEVER DO THIS. This is here only because this code needs
+  // to continue to work with older versions of Node.js that do not include
+  // the prependListener() method. The goal is to eventually remove this hack.
+  if (!emitter._events || !emitter._events[event]) emitter.on(event, fn);else if (isArray(emitter._events[event])) emitter._events[event].unshift(fn);else emitter._events[event] = [fn, emitter._events[event]];
+}
+
+function ReadableState(options, stream) {
+  Duplex = Duplex || __webpack_require__(62);
+
+  options = options || {};
+
+  // Duplex streams are both readable and writable, but share
+  // the same options object.
+  // However, some cases require setting options to different
+  // values for the readable and the writable sides of the duplex stream.
+  // These options can be provided separately as readableXXX and writableXXX.
+  var isDuplex = stream instanceof Duplex;
+
+  // object stream flag. Used to make read(n) ignore n and to
+  // make all the buffer merging and length checks go away
+  this.objectMode = !!options.objectMode;
+
+  if (isDuplex) this.objectMode = this.objectMode || !!options.readableObjectMode;
+
+  // the point at which it stops calling _read() to fill the buffer
+  // Note: 0 is a valid value, means "don't call _read preemptively ever"
+  var hwm = options.highWaterMark;
+  var readableHwm = options.readableHighWaterMark;
+  var defaultHwm = this.objectMode ? 16 : 16 * 1024;
+
+  if (hwm || hwm === 0) this.highWaterMark = hwm;else if (isDuplex && (readableHwm || readableHwm === 0)) this.highWaterMark = readableHwm;else this.highWaterMark = defaultHwm;
+
+  // cast to ints.
+  this.highWaterMark = Math.floor(this.highWaterMark);
+
+  // A linked list is used to store data chunks instead of an array because the
+  // linked list can remove elements from the beginning faster than
+  // array.shift()
+  this.buffer = new BufferList();
+  this.length = 0;
+  this.pipes = null;
+  this.pipesCount = 0;
+  this.flowing = null;
+  this.ended = false;
+  this.endEmitted = false;
+  this.reading = false;
+
+  // a flag to be able to tell if the event 'readable'/'data' is emitted
+  // immediately, or on a later tick.  We set this to true at first, because
+  // any actions that shouldn't happen until "later" should generally also
+  // not happen before the first read call.
+  this.sync = true;
+
+  // whenever we return null, then we set a flag to say
+  // that we're awaiting a 'readable' event emission.
+  this.needReadable = false;
+  this.emittedReadable = false;
+  this.readableListening = false;
+  this.resumeScheduled = false;
+
+  // has it been destroyed
+  this.destroyed = false;
+
+  // Crypto is kind of old and crusty.  Historically, its default string
+  // encoding is 'binary' so we have to make this configurable.
+  // Everything else in the universe uses 'utf8', though.
+  this.defaultEncoding = options.defaultEncoding || 'utf8';
+
+  // the number of writers that are awaiting a drain event in .pipe()s
+  this.awaitDrain = 0;
+
+  // if true, a maybeReadMore has been scheduled
+  this.readingMore = false;
+
+  this.decoder = null;
+  this.encoding = null;
+  if (options.encoding) {
+    if (!StringDecoder) StringDecoder = __webpack_require__(104).StringDecoder;
+    this.decoder = new StringDecoder(options.encoding);
+    this.encoding = options.encoding;
+  }
+}
+
+function Readable(options) {
+  Duplex = Duplex || __webpack_require__(62);
+
+  if (!(this instanceof Readable)) return new Readable(options);
+
+  this._readableState = new ReadableState(options, this);
+
+  // legacy
+  this.readable = true;
+
+  if (options) {
+    if (typeof options.read === 'function') this._read = options.read;
+
+    if (typeof options.destroy === 'function') this._destroy = options.destroy;
+  }
+
+  Stream.call(this);
+}
+
+Object.defineProperty(Readable.prototype, 'destroyed', {
+  get: function () {
+    if (this._readableState === undefined) {
+      return false;
+    }
+    return this._readableState.destroyed;
+  },
+  set: function (value) {
+    // we ignore the value if the stream
+    // has not been initialized yet
+    if (!this._readableState) {
+      return;
+    }
+
+    // backward compatibility, the user is explicitly
+    // managing destroyed
+    this._readableState.destroyed = value;
+  }
+});
+
+Readable.prototype.destroy = destroyImpl.destroy;
+Readable.prototype._undestroy = destroyImpl.undestroy;
+Readable.prototype._destroy = function (err, cb) {
+  this.push(null);
+  cb(err);
+};
+
+// Manually shove something into the read() buffer.
+// This returns true if the highWaterMark has not been hit yet,
+// similar to how Writable.write() returns true if you should
+// write() some more.
+Readable.prototype.push = function (chunk, encoding) {
+  var state = this._readableState;
+  var skipChunkCheck;
+
+  if (!state.objectMode) {
+    if (typeof chunk === 'string') {
+      encoding = encoding || state.defaultEncoding;
+      if (encoding !== state.encoding) {
+        chunk = Buffer.from(chunk, encoding);
+        encoding = '';
+      }
+      skipChunkCheck = true;
+    }
+  } else {
+    skipChunkCheck = true;
+  }
+
+  return readableAddChunk(this, chunk, encoding, false, skipChunkCheck);
+};
+
+// Unshift should *always* be something directly out of read()
+Readable.prototype.unshift = function (chunk) {
+  return readableAddChunk(this, chunk, null, true, false);
+};
+
+function readableAddChunk(stream, chunk, encoding, addToFront, skipChunkCheck) {
+  var state = stream._readableState;
+  if (chunk === null) {
+    state.reading = false;
+    onEofChunk(stream, state);
+  } else {
+    var er;
+    if (!skipChunkCheck) er = chunkInvalid(state, chunk);
+    if (er) {
+      stream.emit('error', er);
+    } else if (state.objectMode || chunk && chunk.length > 0) {
+      if (typeof chunk !== 'string' && !state.objectMode && Object.getPrototypeOf(chunk) !== Buffer.prototype) {
+        chunk = _uint8ArrayToBuffer(chunk);
+      }
+
+      if (addToFront) {
+        if (state.endEmitted) stream.emit('error', new Error('stream.unshift() after end event'));else addChunk(stream, state, chunk, true);
+      } else if (state.ended) {
+        stream.emit('error', new Error('stream.push() after EOF'));
+      } else {
+        state.reading = false;
+        if (state.decoder && !encoding) {
+          chunk = state.decoder.write(chunk);
+          if (state.objectMode || chunk.length !== 0) addChunk(stream, state, chunk, false);else maybeReadMore(stream, state);
+        } else {
+          addChunk(stream, state, chunk, false);
+        }
+      }
+    } else if (!addToFront) {
+      state.reading = false;
+    }
+  }
+
+  return needMoreData(state);
+}
+
+function addChunk(stream, state, chunk, addToFront) {
+  if (state.flowing && state.length === 0 && !state.sync) {
+    stream.emit('data', chunk);
+    stream.read(0);
+  } else {
+    // update the buffer info.
+    state.length += state.objectMode ? 1 : chunk.length;
+    if (addToFront) state.buffer.unshift(chunk);else state.buffer.push(chunk);
+
+    if (state.needReadable) emitReadable(stream);
+  }
+  maybeReadMore(stream, state);
+}
+
+function chunkInvalid(state, chunk) {
+  var er;
+  if (!_isUint8Array(chunk) && typeof chunk !== 'string' && chunk !== undefined && !state.objectMode) {
+    er = new TypeError('Invalid non-string/buffer chunk');
+  }
+  return er;
+}
+
+// if it's past the high water mark, we can push in some more.
+// Also, if we have no data yet, we can stand some
+// more bytes.  This is to work around cases where hwm=0,
+// such as the repl.  Also, if the push() triggered a
+// readable event, and the user called read(largeNumber) such that
+// needReadable was set, then we ought to push more, so that another
+// 'readable' event will be triggered.
+function needMoreData(state) {
+  return !state.ended && (state.needReadable || state.length < state.highWaterMark || state.length === 0);
+}
+
+Readable.prototype.isPaused = function () {
+  return this._readableState.flowing === false;
+};
+
+// backwards compatibility.
+Readable.prototype.setEncoding = function (enc) {
+  if (!StringDecoder) StringDecoder = __webpack_require__(104).StringDecoder;
+  this._readableState.decoder = new StringDecoder(enc);
+  this._readableState.encoding = enc;
+  return this;
+};
+
+// Don't raise the hwm > 8MB
+var MAX_HWM = 0x800000;
+function computeNewHighWaterMark(n) {
+  if (n >= MAX_HWM) {
+    n = MAX_HWM;
+  } else {
+    // Get the next highest power of 2 to prevent increasing hwm excessively in
+    // tiny amounts
+    n--;
+    n |= n >>> 1;
+    n |= n >>> 2;
+    n |= n >>> 4;
+    n |= n >>> 8;
+    n |= n >>> 16;
+    n++;
+  }
+  return n;
+}
+
+// This function is designed to be inlinable, so please take care when making
+// changes to the function body.
+function howMuchToRead(n, state) {
+  if (n <= 0 || state.length === 0 && state.ended) return 0;
+  if (state.objectMode) return 1;
+  if (n !== n) {
+    // Only flow one buffer at a time
+    if (state.flowing && state.length) return state.buffer.head.data.length;else return state.length;
+  }
+  // If we're asking for more than the current hwm, then raise the hwm.
+  if (n > state.highWaterMark) state.highWaterMark = computeNewHighWaterMark(n);
+  if (n <= state.length) return n;
+  // Don't have enough
+  if (!state.ended) {
+    state.needReadable = true;
+    return 0;
+  }
+  return state.length;
+}
+
+// you can override either this method, or the async _read(n) below.
+Readable.prototype.read = function (n) {
+  debug('read', n);
+  n = parseInt(n, 10);
+  var state = this._readableState;
+  var nOrig = n;
+
+  if (n !== 0) state.emittedReadable = false;
+
+  // if we're doing read(0) to trigger a readable event, but we
+  // already have a bunch of data in the buffer, then just trigger
+  // the 'readable' event and move on.
+  if (n === 0 && state.needReadable && (state.length >= state.highWaterMark || state.ended)) {
+    debug('read: emitReadable', state.length, state.ended);
+    if (state.length === 0 && state.ended) endReadable(this);else emitReadable(this);
+    return null;
+  }
+
+  n = howMuchToRead(n, state);
+
+  // if we've ended, and we're now clear, then finish it up.
+  if (n === 0 && state.ended) {
+    if (state.length === 0) endReadable(this);
+    return null;
+  }
+
+  // All the actual chunk generation logic needs to be
+  // *below* the call to _read.  The reason is that in certain
+  // synthetic stream cases, such as passthrough streams, _read
+  // may be a completely synchronous operation which may change
+  // the state of the read buffer, providing enough data when
+  // before there was *not* enough.
+  //
+  // So, the steps are:
+  // 1. Figure out what the state of things will be after we do
+  // a read from the buffer.
+  //
+  // 2. If that resulting state will trigger a _read, then call _read.
+  // Note that this may be asynchronous, or synchronous.  Yes, it is
+  // deeply ugly to write APIs this way, but that still doesn't mean
+  // that the Readable class should behave improperly, as streams are
+  // designed to be sync/async agnostic.
+  // Take note if the _read call is sync or async (ie, if the read call
+  // has returned yet), so that we know whether or not it's safe to emit
+  // 'readable' etc.
+  //
+  // 3. Actually pull the requested chunks out of the buffer and return.
+
+  // if we need a readable event, then we need to do some reading.
+  var doRead = state.needReadable;
+  debug('need readable', doRead);
+
+  // if we currently have less than the highWaterMark, then also read some
+  if (state.length === 0 || state.length - n < state.highWaterMark) {
+    doRead = true;
+    debug('length less than watermark', doRead);
+  }
+
+  // however, if we've ended, then there's no point, and if we're already
+  // reading, then it's unnecessary.
+  if (state.ended || state.reading) {
+    doRead = false;
+    debug('reading or ended', doRead);
+  } else if (doRead) {
+    debug('do read');
+    state.reading = true;
+    state.sync = true;
+    // if the length is currently zero, then we *need* a readable event.
+    if (state.length === 0) state.needReadable = true;
+    // call internal read method
+    this._read(state.highWaterMark);
+    state.sync = false;
+    // If _read pushed data synchronously, then `reading` will be false,
+    // and we need to re-evaluate how much data we can return to the user.
+    if (!state.reading) n = howMuchToRead(nOrig, state);
+  }
+
+  var ret;
+  if (n > 0) ret = fromList(n, state);else ret = null;
+
+  if (ret === null) {
+    state.needReadable = true;
+    n = 0;
+  } else {
+    state.length -= n;
+  }
+
+  if (state.length === 0) {
+    // If we have nothing in the buffer, then we want to know
+    // as soon as we *do* get something into the buffer.
+    if (!state.ended) state.needReadable = true;
+
+    // If we tried to read() past the EOF, then emit end on the next tick.
+    if (nOrig !== n && state.ended) endReadable(this);
+  }
+
+  if (ret !== null) this.emit('data', ret);
+
+  return ret;
+};
+
+function onEofChunk(stream, state) {
+  if (state.ended) return;
+  if (state.decoder) {
+    var chunk = state.decoder.end();
+    if (chunk && chunk.length) {
+      state.buffer.push(chunk);
+      state.length += state.objectMode ? 1 : chunk.length;
+    }
+  }
+  state.ended = true;
+
+  // emit 'readable' now to make sure it gets picked up.
+  emitReadable(stream);
+}
+
+// Don't emit readable right away in sync mode, because this can trigger
+// another read() call => stack overflow.  This way, it might trigger
+// a nextTick recursion warning, but that's not so bad.
+function emitReadable(stream) {
+  var state = stream._readableState;
+  state.needReadable = false;
+  if (!state.emittedReadable) {
+    debug('emitReadable', state.flowing);
+    state.emittedReadable = true;
+    if (state.sync) pna.nextTick(emitReadable_, stream);else emitReadable_(stream);
+  }
+}
+
+function emitReadable_(stream) {
+  debug('emit readable');
+  stream.emit('readable');
+  flow(stream);
+}
+
+// at this point, the user has presumably seen the 'readable' event,
+// and called read() to consume some data.  that may have triggered
+// in turn another _read(n) call, in which case reading = true if
+// it's in progress.
+// However, if we're not ended, or reading, and the length < hwm,
+// then go ahead and try to read some more preemptively.
+function maybeReadMore(stream, state) {
+  if (!state.readingMore) {
+    state.readingMore = true;
+    pna.nextTick(maybeReadMore_, stream, state);
+  }
+}
+
+function maybeReadMore_(stream, state) {
+  var len = state.length;
+  while (!state.reading && !state.flowing && !state.ended && state.length < state.highWaterMark) {
+    debug('maybeReadMore read 0');
+    stream.read(0);
+    if (len === state.length)
+      // didn't get any data, stop spinning.
+      break;else len = state.length;
+  }
+  state.readingMore = false;
+}
+
+// abstract method.  to be overridden in specific implementation classes.
+// call cb(er, data) where data is <= n in length.
+// for virtual (non-string, non-buffer) streams, "length" is somewhat
+// arbitrary, and perhaps not very meaningful.
+Readable.prototype._read = function (n) {
+  this.emit('error', new Error('_read() is not implemented'));
+};
+
+Readable.prototype.pipe = function (dest, pipeOpts) {
+  var src = this;
+  var state = this._readableState;
+
+  switch (state.pipesCount) {
+    case 0:
+      state.pipes = dest;
+      break;
+    case 1:
+      state.pipes = [state.pipes, dest];
+      break;
+    default:
+      state.pipes.push(dest);
+      break;
+  }
+  state.pipesCount += 1;
+  debug('pipe count=%d opts=%j', state.pipesCount, pipeOpts);
+
+  var doEnd = (!pipeOpts || pipeOpts.end !== false) && dest !== process.stdout && dest !== process.stderr;
+
+  var endFn = doEnd ? onend : unpipe;
+  if (state.endEmitted) pna.nextTick(endFn);else src.once('end', endFn);
+
+  dest.on('unpipe', onunpipe);
+  function onunpipe(readable, unpipeInfo) {
+    debug('onunpipe');
+    if (readable === src) {
+      if (unpipeInfo && unpipeInfo.hasUnpiped === false) {
+        unpipeInfo.hasUnpiped = true;
+        cleanup();
+      }
+    }
+  }
+
+  function onend() {
+    debug('onend');
+    dest.end();
+  }
+
+  // when the dest drains, it reduces the awaitDrain counter
+  // on the source.  This would be more elegant with a .once()
+  // handler in flow(), but adding and removing repeatedly is
+  // too slow.
+  var ondrain = pipeOnDrain(src);
+  dest.on('drain', ondrain);
+
+  var cleanedUp = false;
+  function cleanup() {
+    debug('cleanup');
+    // cleanup event handlers once the pipe is broken
+    dest.removeListener('close', onclose);
+    dest.removeListener('finish', onfinish);
+    dest.removeListener('drain', ondrain);
+    dest.removeListener('error', onerror);
+    dest.removeListener('unpipe', onunpipe);
+    src.removeListener('end', onend);
+    src.removeListener('end', unpipe);
+    src.removeListener('data', ondata);
+
+    cleanedUp = true;
+
+    // if the reader is waiting for a drain event from this
+    // specific writer, then it would cause it to never start
+    // flowing again.
+    // So, if this is awaiting a drain, then we just call it now.
+    // If we don't know, then assume that we are waiting for one.
+    if (state.awaitDrain && (!dest._writableState || dest._writableState.needDrain)) ondrain();
+  }
+
+  // If the user pushes more data while we're writing to dest then we'll end up
+  // in ondata again. However, we only want to increase awaitDrain once because
+  // dest will only emit one 'drain' event for the multiple writes.
+  // => Introduce a guard on increasing awaitDrain.
+  var increasedAwaitDrain = false;
+  src.on('data', ondata);
+  function ondata(chunk) {
+    debug('ondata');
+    increasedAwaitDrain = false;
+    var ret = dest.write(chunk);
+    if (false === ret && !increasedAwaitDrain) {
+      // If the user unpiped during `dest.write()`, it is possible
+      // to get stuck in a permanently paused state if that write
+      // also returned false.
+      // => Check whether `dest` is still a piping destination.
+      if ((state.pipesCount === 1 && state.pipes === dest || state.pipesCount > 1 && indexOf(state.pipes, dest) !== -1) && !cleanedUp) {
+        debug('false write response, pause', src._readableState.awaitDrain);
+        src._readableState.awaitDrain++;
+        increasedAwaitDrain = true;
+      }
+      src.pause();
+    }
+  }
+
+  // if the dest has an error, then stop piping into it.
+  // however, don't suppress the throwing behavior for this.
+  function onerror(er) {
+    debug('onerror', er);
+    unpipe();
+    dest.removeListener('error', onerror);
+    if (EElistenerCount(dest, 'error') === 0) dest.emit('error', er);
+  }
+
+  // Make sure our error handler is attached before userland ones.
+  prependListener(dest, 'error', onerror);
+
+  // Both close and finish should trigger unpipe, but only once.
+  function onclose() {
+    dest.removeListener('finish', onfinish);
+    unpipe();
+  }
+  dest.once('close', onclose);
+  function onfinish() {
+    debug('onfinish');
+    dest.removeListener('close', onclose);
+    unpipe();
+  }
+  dest.once('finish', onfinish);
+
+  function unpipe() {
+    debug('unpipe');
+    src.unpipe(dest);
+  }
+
+  // tell the dest that it's being piped to
+  dest.emit('pipe', src);
+
+  // start the flow if it hasn't been started already.
+  if (!state.flowing) {
+    debug('pipe resume');
+    src.resume();
+  }
+
+  return dest;
+};
+
+function pipeOnDrain(src) {
+  return function () {
+    var state = src._readableState;
+    debug('pipeOnDrain', state.awaitDrain);
+    if (state.awaitDrain) state.awaitDrain--;
+    if (state.awaitDrain === 0 && EElistenerCount(src, 'data')) {
+      state.flowing = true;
+      flow(src);
+    }
+  };
+}
+
+Readable.prototype.unpipe = function (dest) {
+  var state = this._readableState;
+  var unpipeInfo = { hasUnpiped: false };
+
+  // if we're not piping anywhere, then do nothing.
+  if (state.pipesCount === 0) return this;
+
+  // just one destination.  most common case.
+  if (state.pipesCount === 1) {
+    // passed in one, but it's not the right one.
+    if (dest && dest !== state.pipes) return this;
+
+    if (!dest) dest = state.pipes;
+
+    // got a match.
+    state.pipes = null;
+    state.pipesCount = 0;
+    state.flowing = false;
+    if (dest) dest.emit('unpipe', this, unpipeInfo);
+    return this;
+  }
+
+  // slow case. multiple pipe destinations.
+
+  if (!dest) {
+    // remove all.
+    var dests = state.pipes;
+    var len = state.pipesCount;
+    state.pipes = null;
+    state.pipesCount = 0;
+    state.flowing = false;
+
+    for (var i = 0; i < len; i++) {
+      dests[i].emit('unpipe', this, unpipeInfo);
+    }return this;
+  }
+
+  // try to find the right one.
+  var index = indexOf(state.pipes, dest);
+  if (index === -1) return this;
+
+  state.pipes.splice(index, 1);
+  state.pipesCount -= 1;
+  if (state.pipesCount === 1) state.pipes = state.pipes[0];
+
+  dest.emit('unpipe', this, unpipeInfo);
+
+  return this;
+};
+
+// set up data events if they are asked for
+// Ensure readable listeners eventually get something
+Readable.prototype.on = function (ev, fn) {
+  var res = Stream.prototype.on.call(this, ev, fn);
+
+  if (ev === 'data') {
+    // Start flowing on next tick if stream isn't explicitly paused
+    if (this._readableState.flowing !== false) this.resume();
+  } else if (ev === 'readable') {
+    var state = this._readableState;
+    if (!state.endEmitted && !state.readableListening) {
+      state.readableListening = state.needReadable = true;
+      state.emittedReadable = false;
+      if (!state.reading) {
+        pna.nextTick(nReadingNextTick, this);
+      } else if (state.length) {
+        emitReadable(this);
+      }
+    }
+  }
+
+  return res;
+};
+Readable.prototype.addListener = Readable.prototype.on;
+
+function nReadingNextTick(self) {
+  debug('readable nexttick read 0');
+  self.read(0);
+}
+
+// pause() and resume() are remnants of the legacy readable stream API
+// If the user uses them, then switch into old mode.
+Readable.prototype.resume = function () {
+  var state = this._readableState;
+  if (!state.flowing) {
+    debug('resume');
+    state.flowing = true;
+    resume(this, state);
+  }
+  return this;
+};
+
+function resume(stream, state) {
+  if (!state.resumeScheduled) {
+    state.resumeScheduled = true;
+    pna.nextTick(resume_, stream, state);
+  }
+}
+
+function resume_(stream, state) {
+  if (!state.reading) {
+    debug('resume read 0');
+    stream.read(0);
+  }
+
+  state.resumeScheduled = false;
+  state.awaitDrain = 0;
+  stream.emit('resume');
+  flow(stream);
+  if (state.flowing && !state.reading) stream.read(0);
+}
+
+Readable.prototype.pause = function () {
+  debug('call pause flowing=%j', this._readableState.flowing);
+  if (false !== this._readableState.flowing) {
+    debug('pause');
+    this._readableState.flowing = false;
+    this.emit('pause');
+  }
+  return this;
+};
+
+function flow(stream) {
+  var state = stream._readableState;
+  debug('flow', state.flowing);
+  while (state.flowing && stream.read() !== null) {}
+}
+
+// wrap an old-style stream as the async data source.
+// This is *not* part of the readable stream interface.
+// It is an ugly unfortunate mess of history.
+Readable.prototype.wrap = function (stream) {
+  var _this = this;
+
+  var state = this._readableState;
+  var paused = false;
+
+  stream.on('end', function () {
+    debug('wrapped end');
+    if (state.decoder && !state.ended) {
+      var chunk = state.decoder.end();
+      if (chunk && chunk.length) _this.push(chunk);
+    }
+
+    _this.push(null);
+  });
+
+  stream.on('data', function (chunk) {
+    debug('wrapped data');
+    if (state.decoder) chunk = state.decoder.write(chunk);
+
+    // don't skip over falsy values in objectMode
+    if (state.objectMode && (chunk === null || chunk === undefined)) return;else if (!state.objectMode && (!chunk || !chunk.length)) return;
+
+    var ret = _this.push(chunk);
+    if (!ret) {
+      paused = true;
+      stream.pause();
+    }
+  });
+
+  // proxy all the other methods.
+  // important when wrapping filters and duplexes.
+  for (var i in stream) {
+    if (this[i] === undefined && typeof stream[i] === 'function') {
+      this[i] = function (method) {
+        return function () {
+          return stream[method].apply(stream, arguments);
+        };
+      }(i);
+    }
+  }
+
+  // proxy certain important events.
+  for (var n = 0; n < kProxyEvents.length; n++) {
+    stream.on(kProxyEvents[n], this.emit.bind(this, kProxyEvents[n]));
+  }
+
+  // when we try to consume some more bytes, simply unpause the
+  // underlying stream.
+  this._read = function (n) {
+    debug('wrapped _read', n);
+    if (paused) {
+      paused = false;
+      stream.resume();
+    }
+  };
+
+  return this;
+};
+
+Object.defineProperty(Readable.prototype, 'readableHighWaterMark', {
+  // making it explicit this property is not enumerable
+  // because otherwise some prototype manipulation in
+  // userland will fail
+  enumerable: false,
+  get: function () {
+    return this._readableState.highWaterMark;
+  }
+});
+
+// exposed for testing purposes only.
+Readable._fromList = fromList;
+
+// Pluck off n bytes from an array of buffers.
+// Length is the combined lengths of all the buffers in the list.
+// This function is designed to be inlinable, so please take care when making
+// changes to the function body.
+function fromList(n, state) {
+  // nothing buffered
+  if (state.length === 0) return null;
+
+  var ret;
+  if (state.objectMode) ret = state.buffer.shift();else if (!n || n >= state.length) {
+    // read it all, truncate the list
+    if (state.decoder) ret = state.buffer.join('');else if (state.buffer.length === 1) ret = state.buffer.head.data;else ret = state.buffer.concat(state.length);
+    state.buffer.clear();
+  } else {
+    // read part of list
+    ret = fromListPartial(n, state.buffer, state.decoder);
+  }
+
+  return ret;
+}
+
+// Extracts only enough buffered data to satisfy the amount requested.
+// This function is designed to be inlinable, so please take care when making
+// changes to the function body.
+function fromListPartial(n, list, hasStrings) {
+  var ret;
+  if (n < list.head.data.length) {
+    // slice is the same for buffers and strings
+    ret = list.head.data.slice(0, n);
+    list.head.data = list.head.data.slice(n);
+  } else if (n === list.head.data.length) {
+    // first chunk is a perfect match
+    ret = list.shift();
+  } else {
+    // result spans more than one buffer
+    ret = hasStrings ? copyFromBufferString(n, list) : copyFromBuffer(n, list);
+  }
+  return ret;
+}
+
+// Copies a specified amount of characters from the list of buffered data
+// chunks.
+// This function is designed to be inlinable, so please take care when making
+// changes to the function body.
+function copyFromBufferString(n, list) {
+  var p = list.head;
+  var c = 1;
+  var ret = p.data;
+  n -= ret.length;
+  while (p = p.next) {
+    var str = p.data;
+    var nb = n > str.length ? str.length : n;
+    if (nb === str.length) ret += str;else ret += str.slice(0, n);
+    n -= nb;
+    if (n === 0) {
+      if (nb === str.length) {
+        ++c;
+        if (p.next) list.head = p.next;else list.head = list.tail = null;
+      } else {
+        list.head = p;
+        p.data = str.slice(nb);
+      }
+      break;
+    }
+    ++c;
+  }
+  list.length -= c;
+  return ret;
+}
+
+// Copies a specified amount of bytes from the list of buffered data chunks.
+// This function is designed to be inlinable, so please take care when making
+// changes to the function body.
+function copyFromBuffer(n, list) {
+  var ret = Buffer.allocUnsafe(n);
+  var p = list.head;
+  var c = 1;
+  p.data.copy(ret);
+  n -= p.data.length;
+  while (p = p.next) {
+    var buf = p.data;
+    var nb = n > buf.length ? buf.length : n;
+    buf.copy(ret, ret.length - n, 0, nb);
+    n -= nb;
+    if (n === 0) {
+      if (nb === buf.length) {
+        ++c;
+        if (p.next) list.head = p.next;else list.head = list.tail = null;
+      } else {
+        list.head = p;
+        p.data = buf.slice(nb);
+      }
+      break;
+    }
+    ++c;
+  }
+  list.length -= c;
+  return ret;
+}
+
+function endReadable(stream) {
+  var state = stream._readableState;
+
+  // If we get here before consuming all the bytes, then that is a
+  // bug in node.  Should never happen.
+  if (state.length > 0) throw new Error('"endReadable()" called on non-empty stream');
+
+  if (!state.endEmitted) {
+    state.ended = true;
+    pna.nextTick(endReadableNT, state, stream);
+  }
+}
+
+function endReadableNT(state, stream) {
+  // Check that we didn't get one last unshift.
+  if (!state.endEmitted && state.length === 0) {
+    state.endEmitted = true;
+    stream.readable = false;
+    stream.emit('end');
+  }
+}
+
+function indexOf(xs, x) {
+  for (var i = 0, l = xs.length; i < l; i++) {
+    if (xs[i] === x) return i;
+  }
+  return -1;
+}
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(1)))
+
+/***/ }),
+/* 97 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// a transform stream is a readable/writable stream where you do
+// something with the data.  Sometimes it's called a "filter",
+// but that's not a great name for it, since that implies a thing where
+// some bits pass through, and others are simply ignored.  (That would
+// be a valid example of a transform, of course.)
+//
+// While the output is causally related to the input, it's not a
+// necessarily symmetric or synchronous transformation.  For example,
+// a zlib stream might take multiple plain-text writes(), and then
+// emit a single compressed chunk some time in the future.
+//
+// Here's how this works:
+//
+// The Transform stream has all the aspects of the readable and writable
+// stream classes.  When you write(chunk), that calls _write(chunk,cb)
+// internally, and returns false if there's a lot of pending writes
+// buffered up.  When you call read(), that calls _read(n) until
+// there's enough pending readable data buffered up.
+//
+// In a transform stream, the written data is placed in a buffer.  When
+// _read(n) is called, it transforms the queued up data, calling the
+// buffered _write cb's as it consumes chunks.  If consuming a single
+// written chunk would result in multiple output chunks, then the first
+// outputted bit calls the readcb, and subsequent chunks just go into
+// the read buffer, and will cause it to emit 'readable' if necessary.
+//
+// This way, back-pressure is actually determined by the reading side,
+// since _read has to be called to start processing a new chunk.  However,
+// a pathological inflate type of transform can cause excessive buffering
+// here.  For example, imagine a stream where every byte of input is
+// interpreted as an integer from 0-255, and then results in that many
+// bytes of output.  Writing the 4 bytes {ff,ff,ff,ff} would result in
+// 1kb of data being output.  In this case, you could write a very small
+// amount of input, and end up with a very large amount of output.  In
+// such a pathological inflating mechanism, there'd be no way to tell
+// the system to stop doing the transform.  A single 4MB write could
+// cause the system to run out of memory.
+//
+// However, even in such a pathological case, only a single written chunk
+// would be consumed, and then the rest would wait (un-transformed) until
+// the results of the previous transformed chunk were consumed.
+
+
+
+module.exports = Transform;
+
+var Duplex = __webpack_require__(62);
+
+/*<replacement>*/
+var util = Object.create(__webpack_require__(65));
+util.inherits = __webpack_require__(58);
+/*</replacement>*/
+
+util.inherits(Transform, Duplex);
+
+function afterTransform(er, data) {
+  var ts = this._transformState;
+  ts.transforming = false;
+
+  var cb = ts.writecb;
+
+  if (!cb) {
+    return this.emit('error', new Error('write callback called multiple times'));
+  }
+
+  ts.writechunk = null;
+  ts.writecb = null;
+
+  if (data != null) // single equals check for both `null` and `undefined`
+    this.push(data);
+
+  cb(er);
+
+  var rs = this._readableState;
+  rs.reading = false;
+  if (rs.needReadable || rs.length < rs.highWaterMark) {
+    this._read(rs.highWaterMark);
+  }
+}
+
+function Transform(options) {
+  if (!(this instanceof Transform)) return new Transform(options);
+
+  Duplex.call(this, options);
+
+  this._transformState = {
+    afterTransform: afterTransform.bind(this),
+    needTransform: false,
+    transforming: false,
+    writecb: null,
+    writechunk: null,
+    writeencoding: null
+  };
+
+  // start out asking for a readable event once data is transformed.
+  this._readableState.needReadable = true;
+
+  // we have implemented the _read method, and done the other things
+  // that Readable wants before the first _read call, so unset the
+  // sync guard flag.
+  this._readableState.sync = false;
+
+  if (options) {
+    if (typeof options.transform === 'function') this._transform = options.transform;
+
+    if (typeof options.flush === 'function') this._flush = options.flush;
+  }
+
+  // When the writable side finishes, then flush out anything remaining.
+  this.on('prefinish', prefinish);
+}
+
+function prefinish() {
+  var _this = this;
+
+  if (typeof this._flush === 'function') {
+    this._flush(function (er, data) {
+      done(_this, er, data);
+    });
+  } else {
+    done(this, null, null);
+  }
+}
+
+Transform.prototype.push = function (chunk, encoding) {
+  this._transformState.needTransform = false;
+  return Duplex.prototype.push.call(this, chunk, encoding);
+};
+
+// This is the part where you do stuff!
+// override this function in implementation classes.
+// 'chunk' is an input chunk.
+//
+// Call `push(newChunk)` to pass along transformed output
+// to the readable side.  You may call 'push' zero or more times.
+//
+// Call `cb(err)` when you are done with this chunk.  If you pass
+// an error, then that'll put the hurt on the whole operation.  If you
+// never call cb(), then you'll never get another chunk.
+Transform.prototype._transform = function (chunk, encoding, cb) {
+  throw new Error('_transform() is not implemented');
+};
+
+Transform.prototype._write = function (chunk, encoding, cb) {
+  var ts = this._transformState;
+  ts.writecb = cb;
+  ts.writechunk = chunk;
+  ts.writeencoding = encoding;
+  if (!ts.transforming) {
+    var rs = this._readableState;
+    if (ts.needTransform || rs.needReadable || rs.length < rs.highWaterMark) this._read(rs.highWaterMark);
+  }
+};
+
+// Doesn't matter what the args are here.
+// _transform does all the work.
+// That we got here means that the readable side wants more data.
+Transform.prototype._read = function (n) {
+  var ts = this._transformState;
+
+  if (ts.writechunk !== null && ts.writecb && !ts.transforming) {
+    ts.transforming = true;
+    this._transform(ts.writechunk, ts.writeencoding, ts.afterTransform);
+  } else {
+    // mark that we need a transform, so that any data that comes in
+    // will get processed, now that we've asked for it.
+    ts.needTransform = true;
+  }
+};
+
+Transform.prototype._destroy = function (err, cb) {
+  var _this2 = this;
+
+  Duplex.prototype._destroy.call(this, err, function (err2) {
+    cb(err2);
+    _this2.emit('close');
+  });
+};
+
+function done(stream, er, data) {
+  if (er) return stream.emit('error', er);
+
+  if (data != null) // single equals check for both `null` and `undefined`
+    stream.push(data);
+
+  // if there's nothing in the write buffer, then that means
+  // that nothing more will ever be provided
+  if (stream._writableState.length) throw new Error('Calling transform done when ws.length != 0');
+
+  if (stream._transformState.transforming) throw new Error('Calling transform done when still transforming');
+
+  return stream.push(null);
+}
+
+/***/ }),
+/* 98 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process, setImmediate, global) {// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// A bit simpler than readable streams.
+// Implement an async ._write(chunk, encoding, cb), and it'll handle all
+// the drain event emission and buffering.
+
+
+
+/*<replacement>*/
+
+var pna = __webpack_require__(68);
+/*</replacement>*/
+
+module.exports = Writable;
+
+/* <replacement> */
+function WriteReq(chunk, encoding, cb) {
+  this.chunk = chunk;
+  this.encoding = encoding;
+  this.callback = cb;
+  this.next = null;
+}
+
+// It seems a linked list but it is not
+// there will be only 2 of these for each stream
+function CorkedRequest(state) {
+  var _this = this;
+
+  this.next = null;
+  this.entry = null;
+  this.finish = function () {
+    onCorkedFinish(_this, state);
+  };
+}
+/* </replacement> */
+
+/*<replacement>*/
+var asyncWrite = !process.browser && ['v0.10', 'v0.9.'].indexOf(process.version.slice(0, 5)) > -1 ? setImmediate : pna.nextTick;
+/*</replacement>*/
+
+/*<replacement>*/
+var Duplex;
+/*</replacement>*/
+
+Writable.WritableState = WritableState;
+
+/*<replacement>*/
+var util = Object.create(__webpack_require__(65));
+util.inherits = __webpack_require__(58);
+/*</replacement>*/
+
+/*<replacement>*/
+var internalUtil = {
+  deprecate: __webpack_require__(210)
+};
+/*</replacement>*/
+
+/*<replacement>*/
+var Stream = __webpack_require__(100);
+/*</replacement>*/
+
+/*<replacement>*/
+
+var Buffer = __webpack_require__(72).Buffer;
+var OurUint8Array = global.Uint8Array || function () {};
+function _uint8ArrayToBuffer(chunk) {
+  return Buffer.from(chunk);
+}
+function _isUint8Array(obj) {
+  return Buffer.isBuffer(obj) || obj instanceof OurUint8Array;
+}
+
+/*</replacement>*/
+
+var destroyImpl = __webpack_require__(99);
+
+util.inherits(Writable, Stream);
+
+function nop() {}
+
+function WritableState(options, stream) {
+  Duplex = Duplex || __webpack_require__(62);
+
+  options = options || {};
+
+  // Duplex streams are both readable and writable, but share
+  // the same options object.
+  // However, some cases require setting options to different
+  // values for the readable and the writable sides of the duplex stream.
+  // These options can be provided separately as readableXXX and writableXXX.
+  var isDuplex = stream instanceof Duplex;
+
+  // object stream flag to indicate whether or not this stream
+  // contains buffers or objects.
+  this.objectMode = !!options.objectMode;
+
+  if (isDuplex) this.objectMode = this.objectMode || !!options.writableObjectMode;
+
+  // the point at which write() starts returning false
+  // Note: 0 is a valid value, means that we always return false if
+  // the entire buffer is not flushed immediately on write()
+  var hwm = options.highWaterMark;
+  var writableHwm = options.writableHighWaterMark;
+  var defaultHwm = this.objectMode ? 16 : 16 * 1024;
+
+  if (hwm || hwm === 0) this.highWaterMark = hwm;else if (isDuplex && (writableHwm || writableHwm === 0)) this.highWaterMark = writableHwm;else this.highWaterMark = defaultHwm;
+
+  // cast to ints.
+  this.highWaterMark = Math.floor(this.highWaterMark);
+
+  // if _final has been called
+  this.finalCalled = false;
+
+  // drain event flag.
+  this.needDrain = false;
+  // at the start of calling end()
+  this.ending = false;
+  // when end() has been called, and returned
+  this.ended = false;
+  // when 'finish' is emitted
+  this.finished = false;
+
+  // has it been destroyed
+  this.destroyed = false;
+
+  // should we decode strings into buffers before passing to _write?
+  // this is here so that some node-core streams can optimize string
+  // handling at a lower level.
+  var noDecode = options.decodeStrings === false;
+  this.decodeStrings = !noDecode;
+
+  // Crypto is kind of old and crusty.  Historically, its default string
+  // encoding is 'binary' so we have to make this configurable.
+  // Everything else in the universe uses 'utf8', though.
+  this.defaultEncoding = options.defaultEncoding || 'utf8';
+
+  // not an actual buffer we keep track of, but a measurement
+  // of how much we're waiting to get pushed to some underlying
+  // socket or file.
+  this.length = 0;
+
+  // a flag to see when we're in the middle of a write.
+  this.writing = false;
+
+  // when true all writes will be buffered until .uncork() call
+  this.corked = 0;
+
+  // a flag to be able to tell if the onwrite cb is called immediately,
+  // or on a later tick.  We set this to true at first, because any
+  // actions that shouldn't happen until "later" should generally also
+  // not happen before the first write call.
+  this.sync = true;
+
+  // a flag to know if we're processing previously buffered items, which
+  // may call the _write() callback in the same tick, so that we don't
+  // end up in an overlapped onwrite situation.
+  this.bufferProcessing = false;
+
+  // the callback that's passed to _write(chunk,cb)
+  this.onwrite = function (er) {
+    onwrite(stream, er);
+  };
+
+  // the callback that the user supplies to write(chunk,encoding,cb)
+  this.writecb = null;
+
+  // the amount that is being written when _write is called.
+  this.writelen = 0;
+
+  this.bufferedRequest = null;
+  this.lastBufferedRequest = null;
+
+  // number of pending user-supplied write callbacks
+  // this must be 0 before 'finish' can be emitted
+  this.pendingcb = 0;
+
+  // emit prefinish if the only thing we're waiting for is _write cbs
+  // This is relevant for synchronous Transform streams
+  this.prefinished = false;
+
+  // True if the error was already emitted and should not be thrown again
+  this.errorEmitted = false;
+
+  // count buffered requests
+  this.bufferedRequestCount = 0;
+
+  // allocate the first CorkedRequest, there is always
+  // one allocated and free to use, and we maintain at most two
+  this.corkedRequestsFree = new CorkedRequest(this);
+}
+
+WritableState.prototype.getBuffer = function getBuffer() {
+  var current = this.bufferedRequest;
+  var out = [];
+  while (current) {
+    out.push(current);
+    current = current.next;
+  }
+  return out;
+};
+
+(function () {
+  try {
+    Object.defineProperty(WritableState.prototype, 'buffer', {
+      get: internalUtil.deprecate(function () {
+        return this.getBuffer();
+      }, '_writableState.buffer is deprecated. Use _writableState.getBuffer ' + 'instead.', 'DEP0003')
+    });
+  } catch (_) {}
+})();
+
+// Test _writableState for inheritance to account for Duplex streams,
+// whose prototype chain only points to Readable.
+var realHasInstance;
+if (typeof Symbol === 'function' && Symbol.hasInstance && typeof Function.prototype[Symbol.hasInstance] === 'function') {
+  realHasInstance = Function.prototype[Symbol.hasInstance];
+  Object.defineProperty(Writable, Symbol.hasInstance, {
+    value: function (object) {
+      if (realHasInstance.call(this, object)) return true;
+      if (this !== Writable) return false;
+
+      return object && object._writableState instanceof WritableState;
+    }
+  });
+} else {
+  realHasInstance = function (object) {
+    return object instanceof this;
+  };
+}
+
+function Writable(options) {
+  Duplex = Duplex || __webpack_require__(62);
+
+  // Writable ctor is applied to Duplexes, too.
+  // `realHasInstance` is necessary because using plain `instanceof`
+  // would return false, as no `_writableState` property is attached.
+
+  // Trying to use the custom `instanceof` for Writable here will also break the
+  // Node.js LazyTransform implementation, which has a non-trivial getter for
+  // `_writableState` that would lead to infinite recursion.
+  if (!realHasInstance.call(Writable, this) && !(this instanceof Duplex)) {
+    return new Writable(options);
+  }
+
+  this._writableState = new WritableState(options, this);
+
+  // legacy.
+  this.writable = true;
+
+  if (options) {
+    if (typeof options.write === 'function') this._write = options.write;
+
+    if (typeof options.writev === 'function') this._writev = options.writev;
+
+    if (typeof options.destroy === 'function') this._destroy = options.destroy;
+
+    if (typeof options.final === 'function') this._final = options.final;
+  }
+
+  Stream.call(this);
+}
+
+// Otherwise people can pipe Writable streams, which is just wrong.
+Writable.prototype.pipe = function () {
+  this.emit('error', new Error('Cannot pipe, not readable'));
+};
+
+function writeAfterEnd(stream, cb) {
+  var er = new Error('write after end');
+  // TODO: defer error events consistently everywhere, not just the cb
+  stream.emit('error', er);
+  pna.nextTick(cb, er);
+}
+
+// Checks that a user-supplied chunk is valid, especially for the particular
+// mode the stream is in. Currently this means that `null` is never accepted
+// and undefined/non-string values are only allowed in object mode.
+function validChunk(stream, state, chunk, cb) {
+  var valid = true;
+  var er = false;
+
+  if (chunk === null) {
+    er = new TypeError('May not write null values to stream');
+  } else if (typeof chunk !== 'string' && chunk !== undefined && !state.objectMode) {
+    er = new TypeError('Invalid non-string/buffer chunk');
+  }
+  if (er) {
+    stream.emit('error', er);
+    pna.nextTick(cb, er);
+    valid = false;
+  }
+  return valid;
+}
+
+Writable.prototype.write = function (chunk, encoding, cb) {
+  var state = this._writableState;
+  var ret = false;
+  var isBuf = !state.objectMode && _isUint8Array(chunk);
+
+  if (isBuf && !Buffer.isBuffer(chunk)) {
+    chunk = _uint8ArrayToBuffer(chunk);
+  }
+
+  if (typeof encoding === 'function') {
+    cb = encoding;
+    encoding = null;
+  }
+
+  if (isBuf) encoding = 'buffer';else if (!encoding) encoding = state.defaultEncoding;
+
+  if (typeof cb !== 'function') cb = nop;
+
+  if (state.ended) writeAfterEnd(this, cb);else if (isBuf || validChunk(this, state, chunk, cb)) {
+    state.pendingcb++;
+    ret = writeOrBuffer(this, state, isBuf, chunk, encoding, cb);
+  }
+
+  return ret;
+};
+
+Writable.prototype.cork = function () {
+  var state = this._writableState;
+
+  state.corked++;
+};
+
+Writable.prototype.uncork = function () {
+  var state = this._writableState;
+
+  if (state.corked) {
+    state.corked--;
+
+    if (!state.writing && !state.corked && !state.finished && !state.bufferProcessing && state.bufferedRequest) clearBuffer(this, state);
+  }
+};
+
+Writable.prototype.setDefaultEncoding = function setDefaultEncoding(encoding) {
+  // node::ParseEncoding() requires lower case.
+  if (typeof encoding === 'string') encoding = encoding.toLowerCase();
+  if (!(['hex', 'utf8', 'utf-8', 'ascii', 'binary', 'base64', 'ucs2', 'ucs-2', 'utf16le', 'utf-16le', 'raw'].indexOf((encoding + '').toLowerCase()) > -1)) throw new TypeError('Unknown encoding: ' + encoding);
+  this._writableState.defaultEncoding = encoding;
+  return this;
+};
+
+function decodeChunk(state, chunk, encoding) {
+  if (!state.objectMode && state.decodeStrings !== false && typeof chunk === 'string') {
+    chunk = Buffer.from(chunk, encoding);
+  }
+  return chunk;
+}
+
+Object.defineProperty(Writable.prototype, 'writableHighWaterMark', {
+  // making it explicit this property is not enumerable
+  // because otherwise some prototype manipulation in
+  // userland will fail
+  enumerable: false,
+  get: function () {
+    return this._writableState.highWaterMark;
+  }
+});
+
+// if we're already writing something, then just put this
+// in the queue, and wait our turn.  Otherwise, call _write
+// If we return false, then we need a drain event, so set that flag.
+function writeOrBuffer(stream, state, isBuf, chunk, encoding, cb) {
+  if (!isBuf) {
+    var newChunk = decodeChunk(state, chunk, encoding);
+    if (chunk !== newChunk) {
+      isBuf = true;
+      encoding = 'buffer';
+      chunk = newChunk;
+    }
+  }
+  var len = state.objectMode ? 1 : chunk.length;
+
+  state.length += len;
+
+  var ret = state.length < state.highWaterMark;
+  // we must ensure that previous needDrain will not be reset to false.
+  if (!ret) state.needDrain = true;
+
+  if (state.writing || state.corked) {
+    var last = state.lastBufferedRequest;
+    state.lastBufferedRequest = {
+      chunk: chunk,
+      encoding: encoding,
+      isBuf: isBuf,
+      callback: cb,
+      next: null
+    };
+    if (last) {
+      last.next = state.lastBufferedRequest;
+    } else {
+      state.bufferedRequest = state.lastBufferedRequest;
+    }
+    state.bufferedRequestCount += 1;
+  } else {
+    doWrite(stream, state, false, len, chunk, encoding, cb);
+  }
+
+  return ret;
+}
+
+function doWrite(stream, state, writev, len, chunk, encoding, cb) {
+  state.writelen = len;
+  state.writecb = cb;
+  state.writing = true;
+  state.sync = true;
+  if (writev) stream._writev(chunk, state.onwrite);else stream._write(chunk, encoding, state.onwrite);
+  state.sync = false;
+}
+
+function onwriteError(stream, state, sync, er, cb) {
+  --state.pendingcb;
+
+  if (sync) {
+    // defer the callback if we are being called synchronously
+    // to avoid piling up things on the stack
+    pna.nextTick(cb, er);
+    // this can emit finish, and it will always happen
+    // after error
+    pna.nextTick(finishMaybe, stream, state);
+    stream._writableState.errorEmitted = true;
+    stream.emit('error', er);
+  } else {
+    // the caller expect this to happen before if
+    // it is async
+    cb(er);
+    stream._writableState.errorEmitted = true;
+    stream.emit('error', er);
+    // this can emit finish, but finish must
+    // always follow error
+    finishMaybe(stream, state);
+  }
+}
+
+function onwriteStateUpdate(state) {
+  state.writing = false;
+  state.writecb = null;
+  state.length -= state.writelen;
+  state.writelen = 0;
+}
+
+function onwrite(stream, er) {
+  var state = stream._writableState;
+  var sync = state.sync;
+  var cb = state.writecb;
+
+  onwriteStateUpdate(state);
+
+  if (er) onwriteError(stream, state, sync, er, cb);else {
+    // Check if we're actually ready to finish, but don't emit yet
+    var finished = needFinish(state);
+
+    if (!finished && !state.corked && !state.bufferProcessing && state.bufferedRequest) {
+      clearBuffer(stream, state);
+    }
+
+    if (sync) {
+      /*<replacement>*/
+      asyncWrite(afterWrite, stream, state, finished, cb);
+      /*</replacement>*/
+    } else {
+      afterWrite(stream, state, finished, cb);
+    }
+  }
+}
+
+function afterWrite(stream, state, finished, cb) {
+  if (!finished) onwriteDrain(stream, state);
+  state.pendingcb--;
+  cb();
+  finishMaybe(stream, state);
+}
+
+// Must force callback to be called on nextTick, so that we don't
+// emit 'drain' before the write() consumer gets the 'false' return
+// value, and has a chance to attach a 'drain' listener.
+function onwriteDrain(stream, state) {
+  if (state.length === 0 && state.needDrain) {
+    state.needDrain = false;
+    stream.emit('drain');
+  }
+}
+
+// if there's something in the buffer waiting, then process it
+function clearBuffer(stream, state) {
+  state.bufferProcessing = true;
+  var entry = state.bufferedRequest;
+
+  if (stream._writev && entry && entry.next) {
+    // Fast case, write everything using _writev()
+    var l = state.bufferedRequestCount;
+    var buffer = new Array(l);
+    var holder = state.corkedRequestsFree;
+    holder.entry = entry;
+
+    var count = 0;
+    var allBuffers = true;
+    while (entry) {
+      buffer[count] = entry;
+      if (!entry.isBuf) allBuffers = false;
+      entry = entry.next;
+      count += 1;
+    }
+    buffer.allBuffers = allBuffers;
+
+    doWrite(stream, state, true, state.length, buffer, '', holder.finish);
+
+    // doWrite is almost always async, defer these to save a bit of time
+    // as the hot path ends with doWrite
+    state.pendingcb++;
+    state.lastBufferedRequest = null;
+    if (holder.next) {
+      state.corkedRequestsFree = holder.next;
+      holder.next = null;
+    } else {
+      state.corkedRequestsFree = new CorkedRequest(state);
+    }
+    state.bufferedRequestCount = 0;
+  } else {
+    // Slow case, write chunks one-by-one
+    while (entry) {
+      var chunk = entry.chunk;
+      var encoding = entry.encoding;
+      var cb = entry.callback;
+      var len = state.objectMode ? 1 : chunk.length;
+
+      doWrite(stream, state, false, len, chunk, encoding, cb);
+      entry = entry.next;
+      state.bufferedRequestCount--;
+      // if we didn't call the onwrite immediately, then
+      // it means that we need to wait until it does.
+      // also, that means that the chunk and cb are currently
+      // being processed, so move the buffer counter past them.
+      if (state.writing) {
+        break;
+      }
+    }
+
+    if (entry === null) state.lastBufferedRequest = null;
+  }
+
+  state.bufferedRequest = entry;
+  state.bufferProcessing = false;
+}
+
+Writable.prototype._write = function (chunk, encoding, cb) {
+  cb(new Error('_write() is not implemented'));
+};
+
+Writable.prototype._writev = null;
+
+Writable.prototype.end = function (chunk, encoding, cb) {
+  var state = this._writableState;
+
+  if (typeof chunk === 'function') {
+    cb = chunk;
+    chunk = null;
+    encoding = null;
+  } else if (typeof encoding === 'function') {
+    cb = encoding;
+    encoding = null;
+  }
+
+  if (chunk !== null && chunk !== undefined) this.write(chunk, encoding);
+
+  // .end() fully uncorks
+  if (state.corked) {
+    state.corked = 1;
+    this.uncork();
+  }
+
+  // ignore unnecessary end() calls.
+  if (!state.ending && !state.finished) endWritable(this, state, cb);
+};
+
+function needFinish(state) {
+  return state.ending && state.length === 0 && state.bufferedRequest === null && !state.finished && !state.writing;
+}
+function callFinal(stream, state) {
+  stream._final(function (err) {
+    state.pendingcb--;
+    if (err) {
+      stream.emit('error', err);
+    }
+    state.prefinished = true;
+    stream.emit('prefinish');
+    finishMaybe(stream, state);
+  });
+}
+function prefinish(stream, state) {
+  if (!state.prefinished && !state.finalCalled) {
+    if (typeof stream._final === 'function') {
+      state.pendingcb++;
+      state.finalCalled = true;
+      pna.nextTick(callFinal, stream, state);
+    } else {
+      state.prefinished = true;
+      stream.emit('prefinish');
+    }
+  }
+}
+
+function finishMaybe(stream, state) {
+  var need = needFinish(state);
+  if (need) {
+    prefinish(stream, state);
+    if (state.pendingcb === 0) {
+      state.finished = true;
+      stream.emit('finish');
+    }
+  }
+  return need;
+}
+
+function endWritable(stream, state, cb) {
+  state.ending = true;
+  finishMaybe(stream, state);
+  if (cb) {
+    if (state.finished) pna.nextTick(cb);else stream.once('finish', cb);
+  }
+  state.ended = true;
+  stream.writable = false;
+}
+
+function onCorkedFinish(corkReq, state, err) {
+  var entry = corkReq.entry;
+  corkReq.entry = null;
+  while (entry) {
+    var cb = entry.callback;
+    state.pendingcb--;
+    cb(err);
+    entry = entry.next;
+  }
+  if (state.corkedRequestsFree) {
+    state.corkedRequestsFree.next = corkReq;
+  } else {
+    state.corkedRequestsFree = corkReq;
+  }
+}
+
+Object.defineProperty(Writable.prototype, 'destroyed', {
+  get: function () {
+    if (this._writableState === undefined) {
+      return false;
+    }
+    return this._writableState.destroyed;
+  },
+  set: function (value) {
+    // we ignore the value if the stream
+    // has not been initialized yet
+    if (!this._writableState) {
+      return;
+    }
+
+    // backward compatibility, the user is explicitly
+    // managing destroyed
+    this._writableState.destroyed = value;
+  }
+});
+
+Writable.prototype.destroy = destroyImpl.destroy;
+Writable.prototype._undestroy = destroyImpl.undestroy;
+Writable.prototype._destroy = function (err, cb) {
+  this.end();
+  cb(err);
+};
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1), __webpack_require__(29).setImmediate, __webpack_require__(4)))
+
+/***/ }),
+/* 99 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/*<replacement>*/
+
+var pna = __webpack_require__(68);
+/*</replacement>*/
+
+// undocumented cb() API, needed for core, not for public API
+function destroy(err, cb) {
+  var _this = this;
+
+  var readableDestroyed = this._readableState && this._readableState.destroyed;
+  var writableDestroyed = this._writableState && this._writableState.destroyed;
+
+  if (readableDestroyed || writableDestroyed) {
+    if (cb) {
+      cb(err);
+    } else if (err && (!this._writableState || !this._writableState.errorEmitted)) {
+      pna.nextTick(emitErrorNT, this, err);
+    }
+    return this;
+  }
+
+  // we set destroyed to true before firing error callbacks in order
+  // to make it re-entrance safe in case destroy() is called within callbacks
+
+  if (this._readableState) {
+    this._readableState.destroyed = true;
+  }
+
+  // if this is a duplex stream mark the writable part as destroyed as well
+  if (this._writableState) {
+    this._writableState.destroyed = true;
+  }
+
+  this._destroy(err || null, function (err) {
+    if (!cb && err) {
+      pna.nextTick(emitErrorNT, _this, err);
+      if (_this._writableState) {
+        _this._writableState.errorEmitted = true;
+      }
+    } else if (cb) {
+      cb(err);
+    }
+  });
+
+  return this;
+}
+
+function undestroy() {
+  if (this._readableState) {
+    this._readableState.destroyed = false;
+    this._readableState.reading = false;
+    this._readableState.ended = false;
+    this._readableState.endEmitted = false;
+  }
+
+  if (this._writableState) {
+    this._writableState.destroyed = false;
+    this._writableState.ended = false;
+    this._writableState.ending = false;
+    this._writableState.finished = false;
+    this._writableState.errorEmitted = false;
+  }
+}
+
+function emitErrorNT(self, err) {
+  self.emit('error', err);
+}
+
+module.exports = {
+  destroy: destroy,
+  undestroy: undestroy
+};
+
+/***/ }),
+/* 100 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(13).EventEmitter;
+
+
+/***/ }),
 /* 101 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(96);
+exports.Stream = exports;
+exports.Readable = exports;
+exports.Writable = __webpack_require__(98);
+exports.Duplex = __webpack_require__(62);
+exports.Transform = __webpack_require__(97);
+exports.PassThrough = __webpack_require__(198);
+
+
+/***/ }),
+/* 102 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {exports.fetch = isFunction(global.fetch) && isFunction(global.ReadableStream)
+
+exports.writableStream = isFunction(global.WritableStream)
+
+exports.abortController = isFunction(global.AbortController)
+
+exports.blobConstructor = false
+try {
+	new Blob([new ArrayBuffer(1)])
+	exports.blobConstructor = true
+} catch (e) {}
+
+// The xhr request to example.com may violate some restrictive CSP configurations,
+// so if we're running in a browser that supports `fetch`, avoid calling getXHR()
+// and assume support for certain features below.
+var xhr
+function getXHR () {
+	// Cache the xhr value
+	if (xhr !== undefined) return xhr
+
+	if (global.XMLHttpRequest) {
+		xhr = new global.XMLHttpRequest()
+		// If XDomainRequest is available (ie only, where xhr might not work
+		// cross domain), use the page location. Otherwise use example.com
+		// Note: this doesn't actually make an http request.
+		try {
+			xhr.open('GET', global.XDomainRequest ? '/' : 'https://example.com')
+		} catch(e) {
+			xhr = null
+		}
+	} else {
+		// Service workers don't have XHR
+		xhr = null
+	}
+	return xhr
+}
+
+function checkTypeSupport (type) {
+	var xhr = getXHR()
+	if (!xhr) return false
+	try {
+		xhr.responseType = type
+		return xhr.responseType === type
+	} catch (e) {}
+	return false
+}
+
+// For some strange reason, Safari 7.0 reports typeof global.ArrayBuffer === 'object'.
+// Safari 7.1 appears to have fixed this bug.
+var haveArrayBuffer = typeof global.ArrayBuffer !== 'undefined'
+var haveSlice = haveArrayBuffer && isFunction(global.ArrayBuffer.prototype.slice)
+
+// If fetch is supported, then arraybuffer will be supported too. Skip calling
+// checkTypeSupport(), since that calls getXHR().
+exports.arraybuffer = exports.fetch || (haveArrayBuffer && checkTypeSupport('arraybuffer'))
+
+// These next two tests unavoidably show warnings in Chrome. Since fetch will always
+// be used if it's available, just return false for these to avoid the warnings.
+exports.msstream = !exports.fetch && haveSlice && checkTypeSupport('ms-stream')
+exports.mozchunkedarraybuffer = !exports.fetch && haveArrayBuffer &&
+	checkTypeSupport('moz-chunked-arraybuffer')
+
+// If fetch is supported, then overrideMimeType will be supported too. Skip calling
+// getXHR().
+exports.overrideMimeType = exports.fetch || (getXHR() ? isFunction(getXHR().overrideMimeType) : false)
+
+exports.vbArray = isFunction(global.VBArray)
+
+function isFunction (value) {
+	return typeof value === 'function'
+}
+
+xhr = null // Help gc
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+
+/***/ }),
+/* 103 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(process, Buffer, global) {var capability = __webpack_require__(102)
+var inherits = __webpack_require__(58)
+var stream = __webpack_require__(101)
+
+var rStates = exports.readyStates = {
+	UNSENT: 0,
+	OPENED: 1,
+	HEADERS_RECEIVED: 2,
+	LOADING: 3,
+	DONE: 4
+}
+
+var IncomingMessage = exports.IncomingMessage = function (xhr, response, mode, fetchTimer) {
+	var self = this
+	stream.Readable.call(self)
+
+	self._mode = mode
+	self.headers = {}
+	self.rawHeaders = []
+	self.trailers = {}
+	self.rawTrailers = []
+
+	// Fake the 'close' event, but only once 'end' fires
+	self.on('end', function () {
+		// The nextTick is necessary to prevent the 'request' module from causing an infinite loop
+		process.nextTick(function () {
+			self.emit('close')
+		})
+	})
+
+	if (mode === 'fetch') {
+		self._fetchResponse = response
+
+		self.url = response.url
+		self.statusCode = response.status
+		self.statusMessage = response.statusText
+		
+		response.headers.forEach(function (header, key){
+			self.headers[key.toLowerCase()] = header
+			self.rawHeaders.push(key, header)
+		})
+
+		if (capability.writableStream) {
+			var writable = new WritableStream({
+				write: function (chunk) {
+					return new Promise(function (resolve, reject) {
+						if (self._destroyed) {
+							reject()
+						} else if(self.push(new Buffer(chunk))) {
+							resolve()
+						} else {
+							self._resumeFetch = resolve
+						}
+					})
+				},
+				close: function () {
+					global.clearTimeout(fetchTimer)
+					if (!self._destroyed)
+						self.push(null)
+				},
+				abort: function (err) {
+					if (!self._destroyed)
+						self.emit('error', err)
+				}
+			})
+
+			try {
+				response.body.pipeTo(writable).catch(function (err) {
+					global.clearTimeout(fetchTimer)
+					if (!self._destroyed)
+						self.emit('error', err)
+				})
+				return
+			} catch (e) {} // pipeTo method isn't defined. Can't find a better way to feature test this
+		}
+		// fallback for when writableStream or pipeTo aren't available
+		var reader = response.body.getReader()
+		function read () {
+			reader.read().then(function (result) {
+				if (self._destroyed)
+					return
+				if (result.done) {
+					global.clearTimeout(fetchTimer)
+					self.push(null)
+					return
+				}
+				self.push(new Buffer(result.value))
+				read()
+			}).catch(function (err) {
+				global.clearTimeout(fetchTimer)
+				if (!self._destroyed)
+					self.emit('error', err)
+			})
+		}
+		read()
+	} else {
+		self._xhr = xhr
+		self._pos = 0
+
+		self.url = xhr.responseURL
+		self.statusCode = xhr.status
+		self.statusMessage = xhr.statusText
+		var headers = xhr.getAllResponseHeaders().split(/\r?\n/)
+		headers.forEach(function (header) {
+			var matches = header.match(/^([^:]+):\s*(.*)/)
+			if (matches) {
+				var key = matches[1].toLowerCase()
+				if (key === 'set-cookie') {
+					if (self.headers[key] === undefined) {
+						self.headers[key] = []
+					}
+					self.headers[key].push(matches[2])
+				} else if (self.headers[key] !== undefined) {
+					self.headers[key] += ', ' + matches[2]
+				} else {
+					self.headers[key] = matches[2]
+				}
+				self.rawHeaders.push(matches[1], matches[2])
+			}
+		})
+
+		self._charset = 'x-user-defined'
+		if (!capability.overrideMimeType) {
+			var mimeType = self.rawHeaders['mime-type']
+			if (mimeType) {
+				var charsetMatch = mimeType.match(/;\s*charset=([^;])(;|$)/)
+				if (charsetMatch) {
+					self._charset = charsetMatch[1].toLowerCase()
+				}
+			}
+			if (!self._charset)
+				self._charset = 'utf-8' // best guess
+		}
+	}
+}
+
+inherits(IncomingMessage, stream.Readable)
+
+IncomingMessage.prototype._read = function () {
+	var self = this
+
+	var resolve = self._resumeFetch
+	if (resolve) {
+		self._resumeFetch = null
+		resolve()
+	}
+}
+
+IncomingMessage.prototype._onXHRProgress = function () {
+	var self = this
+
+	var xhr = self._xhr
+
+	var response = null
+	switch (self._mode) {
+		case 'text:vbarray': // For IE9
+			if (xhr.readyState !== rStates.DONE)
+				break
+			try {
+				// This fails in IE8
+				response = new global.VBArray(xhr.responseBody).toArray()
+			} catch (e) {}
+			if (response !== null) {
+				self.push(new Buffer(response))
+				break
+			}
+			// Falls through in IE8	
+		case 'text':
+			try { // This will fail when readyState = 3 in IE9. Switch mode and wait for readyState = 4
+				response = xhr.responseText
+			} catch (e) {
+				self._mode = 'text:vbarray'
+				break
+			}
+			if (response.length > self._pos) {
+				var newData = response.substr(self._pos)
+				if (self._charset === 'x-user-defined') {
+					var buffer = new Buffer(newData.length)
+					for (var i = 0; i < newData.length; i++)
+						buffer[i] = newData.charCodeAt(i) & 0xff
+
+					self.push(buffer)
+				} else {
+					self.push(newData, self._charset)
+				}
+				self._pos = response.length
+			}
+			break
+		case 'arraybuffer':
+			if (xhr.readyState !== rStates.DONE || !xhr.response)
+				break
+			response = xhr.response
+			self.push(new Buffer(new Uint8Array(response)))
+			break
+		case 'moz-chunked-arraybuffer': // take whole
+			response = xhr.response
+			if (xhr.readyState !== rStates.LOADING || !response)
+				break
+			self.push(new Buffer(new Uint8Array(response)))
+			break
+		case 'ms-stream':
+			response = xhr.response
+			if (xhr.readyState !== rStates.LOADING)
+				break
+			var reader = new global.MSStreamReader()
+			reader.onprogress = function () {
+				if (reader.result.byteLength > self._pos) {
+					self.push(new Buffer(new Uint8Array(reader.result.slice(self._pos))))
+					self._pos = reader.result.byteLength
+				}
+			}
+			reader.onload = function () {
+				self.push(null)
+			}
+			// reader.onerror = ??? // TODO: this
+			reader.readAsArrayBuffer(response)
+			break
+	}
+
+	// The ms-stream case handles end separately in reader.onload()
+	if (self._xhr.readyState === rStates.DONE && self._mode !== 'ms-stream') {
+		self.push(null)
+	}
+}
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1), __webpack_require__(64).Buffer, __webpack_require__(4)))
+
+/***/ }),
+/* 104 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+
+/*<replacement>*/
+
+var Buffer = __webpack_require__(72).Buffer;
+/*</replacement>*/
+
+var isEncoding = Buffer.isEncoding || function (encoding) {
+  encoding = '' + encoding;
+  switch (encoding && encoding.toLowerCase()) {
+    case 'hex':case 'utf8':case 'utf-8':case 'ascii':case 'binary':case 'base64':case 'ucs2':case 'ucs-2':case 'utf16le':case 'utf-16le':case 'raw':
+      return true;
+    default:
+      return false;
+  }
+};
+
+function _normalizeEncoding(enc) {
+  if (!enc) return 'utf8';
+  var retried;
+  while (true) {
+    switch (enc) {
+      case 'utf8':
+      case 'utf-8':
+        return 'utf8';
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return 'utf16le';
+      case 'latin1':
+      case 'binary':
+        return 'latin1';
+      case 'base64':
+      case 'ascii':
+      case 'hex':
+        return enc;
+      default:
+        if (retried) return; // undefined
+        enc = ('' + enc).toLowerCase();
+        retried = true;
+    }
+  }
+};
+
+// Do not cache `Buffer.isEncoding` when checking encoding names as some
+// modules monkey-patch it to support additional encodings
+function normalizeEncoding(enc) {
+  var nenc = _normalizeEncoding(enc);
+  if (typeof nenc !== 'string' && (Buffer.isEncoding === isEncoding || !isEncoding(enc))) throw new Error('Unknown encoding: ' + enc);
+  return nenc || enc;
+}
+
+// StringDecoder provides an interface for efficiently splitting a series of
+// buffers into a series of JS strings without breaking apart multi-byte
+// characters.
+exports.StringDecoder = StringDecoder;
+function StringDecoder(encoding) {
+  this.encoding = normalizeEncoding(encoding);
+  var nb;
+  switch (this.encoding) {
+    case 'utf16le':
+      this.text = utf16Text;
+      this.end = utf16End;
+      nb = 4;
+      break;
+    case 'utf8':
+      this.fillLast = utf8FillLast;
+      nb = 4;
+      break;
+    case 'base64':
+      this.text = base64Text;
+      this.end = base64End;
+      nb = 3;
+      break;
+    default:
+      this.write = simpleWrite;
+      this.end = simpleEnd;
+      return;
+  }
+  this.lastNeed = 0;
+  this.lastTotal = 0;
+  this.lastChar = Buffer.allocUnsafe(nb);
+}
+
+StringDecoder.prototype.write = function (buf) {
+  if (buf.length === 0) return '';
+  var r;
+  var i;
+  if (this.lastNeed) {
+    r = this.fillLast(buf);
+    if (r === undefined) return '';
+    i = this.lastNeed;
+    this.lastNeed = 0;
+  } else {
+    i = 0;
+  }
+  if (i < buf.length) return r ? r + this.text(buf, i) : this.text(buf, i);
+  return r || '';
+};
+
+StringDecoder.prototype.end = utf8End;
+
+// Returns only complete characters in a Buffer
+StringDecoder.prototype.text = utf8Text;
+
+// Attempts to complete a partial non-UTF-8 character using bytes from a Buffer
+StringDecoder.prototype.fillLast = function (buf) {
+  if (this.lastNeed <= buf.length) {
+    buf.copy(this.lastChar, this.lastTotal - this.lastNeed, 0, this.lastNeed);
+    return this.lastChar.toString(this.encoding, 0, this.lastTotal);
+  }
+  buf.copy(this.lastChar, this.lastTotal - this.lastNeed, 0, buf.length);
+  this.lastNeed -= buf.length;
+};
+
+// Checks the type of a UTF-8 byte, whether it's ASCII, a leading byte, or a
+// continuation byte. If an invalid byte is detected, -2 is returned.
+function utf8CheckByte(byte) {
+  if (byte <= 0x7F) return 0;else if (byte >> 5 === 0x06) return 2;else if (byte >> 4 === 0x0E) return 3;else if (byte >> 3 === 0x1E) return 4;
+  return byte >> 6 === 0x02 ? -1 : -2;
+}
+
+// Checks at most 3 bytes at the end of a Buffer in order to detect an
+// incomplete multi-byte UTF-8 character. The total number of bytes (2, 3, or 4)
+// needed to complete the UTF-8 character (if applicable) are returned.
+function utf8CheckIncomplete(self, buf, i) {
+  var j = buf.length - 1;
+  if (j < i) return 0;
+  var nb = utf8CheckByte(buf[j]);
+  if (nb >= 0) {
+    if (nb > 0) self.lastNeed = nb - 1;
+    return nb;
+  }
+  if (--j < i || nb === -2) return 0;
+  nb = utf8CheckByte(buf[j]);
+  if (nb >= 0) {
+    if (nb > 0) self.lastNeed = nb - 2;
+    return nb;
+  }
+  if (--j < i || nb === -2) return 0;
+  nb = utf8CheckByte(buf[j]);
+  if (nb >= 0) {
+    if (nb > 0) {
+      if (nb === 2) nb = 0;else self.lastNeed = nb - 3;
+    }
+    return nb;
+  }
+  return 0;
+}
+
+// Validates as many continuation bytes for a multi-byte UTF-8 character as
+// needed or are available. If we see a non-continuation byte where we expect
+// one, we "replace" the validated continuation bytes we've seen so far with
+// a single UTF-8 replacement character ('\ufffd'), to match v8's UTF-8 decoding
+// behavior. The continuation byte check is included three times in the case
+// where all of the continuation bytes for a character exist in the same buffer.
+// It is also done this way as a slight performance increase instead of using a
+// loop.
+function utf8CheckExtraBytes(self, buf, p) {
+  if ((buf[0] & 0xC0) !== 0x80) {
+    self.lastNeed = 0;
+    return '\ufffd';
+  }
+  if (self.lastNeed > 1 && buf.length > 1) {
+    if ((buf[1] & 0xC0) !== 0x80) {
+      self.lastNeed = 1;
+      return '\ufffd';
+    }
+    if (self.lastNeed > 2 && buf.length > 2) {
+      if ((buf[2] & 0xC0) !== 0x80) {
+        self.lastNeed = 2;
+        return '\ufffd';
+      }
+    }
+  }
+}
+
+// Attempts to complete a multi-byte UTF-8 character using bytes from a Buffer.
+function utf8FillLast(buf) {
+  var p = this.lastTotal - this.lastNeed;
+  var r = utf8CheckExtraBytes(this, buf, p);
+  if (r !== undefined) return r;
+  if (this.lastNeed <= buf.length) {
+    buf.copy(this.lastChar, p, 0, this.lastNeed);
+    return this.lastChar.toString(this.encoding, 0, this.lastTotal);
+  }
+  buf.copy(this.lastChar, p, 0, buf.length);
+  this.lastNeed -= buf.length;
+}
+
+// Returns all complete UTF-8 characters in a Buffer. If the Buffer ended on a
+// partial character, the character's bytes are buffered until the required
+// number of bytes are available.
+function utf8Text(buf, i) {
+  var total = utf8CheckIncomplete(this, buf, i);
+  if (!this.lastNeed) return buf.toString('utf8', i);
+  this.lastTotal = total;
+  var end = buf.length - (total - this.lastNeed);
+  buf.copy(this.lastChar, 0, end);
+  return buf.toString('utf8', i, end);
+}
+
+// For UTF-8, a replacement character is added when ending on a partial
+// character.
+function utf8End(buf) {
+  var r = buf && buf.length ? this.write(buf) : '';
+  if (this.lastNeed) return r + '\ufffd';
+  return r;
+}
+
+// UTF-16LE typically needs two bytes per character, but even if we have an even
+// number of bytes available, we need to check if we end on a leading/high
+// surrogate. In that case, we need to wait for the next two bytes in order to
+// decode the last character properly.
+function utf16Text(buf, i) {
+  if ((buf.length - i) % 2 === 0) {
+    var r = buf.toString('utf16le', i);
+    if (r) {
+      var c = r.charCodeAt(r.length - 1);
+      if (c >= 0xD800 && c <= 0xDBFF) {
+        this.lastNeed = 2;
+        this.lastTotal = 4;
+        this.lastChar[0] = buf[buf.length - 2];
+        this.lastChar[1] = buf[buf.length - 1];
+        return r.slice(0, -1);
+      }
+    }
+    return r;
+  }
+  this.lastNeed = 1;
+  this.lastTotal = 2;
+  this.lastChar[0] = buf[buf.length - 1];
+  return buf.toString('utf16le', i, buf.length - 1);
+}
+
+// For UTF-16LE we do not explicitly append special replacement characters if we
+// end on a partial character, we simply let v8 handle that.
+function utf16End(buf) {
+  var r = buf && buf.length ? this.write(buf) : '';
+  if (this.lastNeed) {
+    var end = this.lastTotal - this.lastNeed;
+    return r + this.lastChar.toString('utf16le', 0, end);
+  }
+  return r;
+}
+
+function base64Text(buf, i) {
+  var n = (buf.length - i) % 3;
+  if (n === 0) return buf.toString('base64', i);
+  this.lastNeed = 3 - n;
+  this.lastTotal = 3;
+  if (n === 1) {
+    this.lastChar[0] = buf[buf.length - 1];
+  } else {
+    this.lastChar[0] = buf[buf.length - 2];
+    this.lastChar[1] = buf[buf.length - 1];
+  }
+  return buf.toString('base64', i, buf.length - n);
+}
+
+function base64End(buf) {
+  var r = buf && buf.length ? this.write(buf) : '';
+  if (this.lastNeed) return r + this.lastChar.toString('base64', 0, 3 - this.lastNeed);
+  return r;
+}
+
+// Pass bytes on through for single-byte encodings (e.g. ascii, latin1, hex)
+function simpleWrite(buf) {
+  return buf.toString(this.encoding);
+}
+
+function simpleEnd(buf) {
+  return buf && buf.length ? this.write(buf) : '';
+}
+
+/***/ }),
+/* 105 */,
+/* 106 */,
+/* 107 */,
+/* 108 */,
+/* 109 */,
+/* 110 */,
+/* 111 */,
+/* 112 */,
+/* 113 */,
+/* 114 */,
+/* 115 */,
+/* 116 */,
+/* 117 */,
+/* 118 */,
+/* 119 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__baseService__ = __webpack_require__(32);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__baseService__ = __webpack_require__(36);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__baseService___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__baseService__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_async__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_async___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_async__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_dependencyManager__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_dependencyManager___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__common_dependencyManager__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_distributedStoreClient__ = __webpack_require__(33);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_distributedStoreClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__clients_distributedStoreClient__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__Docking_dockingMain__ = __webpack_require__(160);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Launcher_launcher__ = __webpack_require__(119);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Launcher_launcher___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6__Launcher_launcher__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__ServiceEntryPoints_setupAllEntryPoints__ = __webpack_require__(166);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__StackedWindowManager_stackedWindowManager__ = __webpack_require__(124);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__StackedWindowManager_stackedWindowManager___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8__StackedWindowManager_stackedWindowManager__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__clients_configClient__ = __webpack_require__(15);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__clients_configClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9__clients_configClient__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__clients_logger__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10__clients_logger__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__clients_distributedStoreClient__ = __webpack_require__(37);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__clients_distributedStoreClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__clients_distributedStoreClient__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Docking_dockingMain__ = __webpack_require__(186);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__Launcher_launcher__ = __webpack_require__(137);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__Launcher_launcher___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5__Launcher_launcher__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__ServiceEntryPoints_setupAllEntryPoints__ = __webpack_require__(192);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__StackedWindowManager_stackedWindowManager__ = __webpack_require__(142);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__StackedWindowManager_stackedWindowManager___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7__StackedWindowManager_stackedWindowManager__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__clients_configClient__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__clients_configClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8__clients_configClient__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__clients_logger__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9__clients_logger__);
+
+
+
+
+__WEBPACK_IMPORTED_MODULE_3__clients_distributedStoreClient___default.a.initialize();
 
 
 
 
 
+__WEBPACK_IMPORTED_MODULE_3__clients_distributedStoreClient___default.a.initialize();
 
 
+__WEBPACK_IMPORTED_MODULE_8__clients_configClient___default.a.initialize();
 
 
-
-__WEBPACK_IMPORTED_MODULE_4__clients_distributedStoreClient___default.a.initialize();
-
-
-__WEBPACK_IMPORTED_MODULE_9__clients_configClient___default.a.initialize();
-
-
-__WEBPACK_IMPORTED_MODULE_10__clients_logger___default.a.start();
+__WEBPACK_IMPORTED_MODULE_9__clients_logger___default.a.start();
 
 class WindowService extends __WEBPACK_IMPORTED_MODULE_0__baseService__["BaseService"] {
 	constructor(params) {
@@ -53537,23 +58794,23 @@ class WindowService extends __WEBPACK_IMPORTED_MODULE_0__baseService__["BaseServ
 	}
 
 	initialize(manifest, callback) {
-		__WEBPACK_IMPORTED_MODULE_10__clients_logger___default.a.system.debug("WindowService.initialize start");
+		__WEBPACK_IMPORTED_MODULE_9__clients_logger___default.a.system.debug("WindowService.initialize start");
 
 		window.RouterClient = __WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a;
 
-		window.stackedWindowManager = __WEBPACK_IMPORTED_MODULE_8__StackedWindowManager_stackedWindowManager___default.a;
+		window.stackedWindowManager = __WEBPACK_IMPORTED_MODULE_7__StackedWindowManager_stackedWindowManager___default.a;
 		window.stackedWindowManager.initialize(manifest.finsemble); // pass in available config so stacked window has on startup (without having to query)
 
-		let dockingMain = new __WEBPACK_IMPORTED_MODULE_5__Docking_dockingMain__["a" /* default */](this.params, {
-			Logger: __WEBPACK_IMPORTED_MODULE_10__clients_logger___default.a
+		let dockingMain = new __WEBPACK_IMPORTED_MODULE_4__Docking_dockingMain__["a" /* default */](this.params, {
+			Logger: __WEBPACK_IMPORTED_MODULE_9__clients_logger___default.a
 		});
 		window.DockingMain = dockingMain;
 
-		let launcher = new __WEBPACK_IMPORTED_MODULE_6__Launcher_launcher__["Launcher"](manifest, stackedWindowManager);
+		let launcher = new __WEBPACK_IMPORTED_MODULE_5__Launcher_launcher__["Launcher"](manifest, stackedWindowManager);
 		window.launcher = launcher;
 
 		// setup external interfaces (i.e. the API supported by the window service)
-		let setupAllEntryPoints = new __WEBPACK_IMPORTED_MODULE_7__ServiceEntryPoints_setupAllEntryPoints__["a" /* ServiceEntryPoints */](manifest, dockingMain, launcher, window.stackedWindowManager);
+		let setupAllEntryPoints = new __WEBPACK_IMPORTED_MODULE_6__ServiceEntryPoints_setupAllEntryPoints__["a" /* ServiceEntryPoints */](manifest, dockingMain, launcher, window.stackedWindowManager);
 		window.setupAllEntryPoints = setupAllEntryPoints;
 
 		// an ordered initialization -- on completion the window service is ready
@@ -53591,7 +58848,7 @@ var serviceInstance = new WindowService({
 });
 
 serviceInstance.onBaseServiceReady(function (callback) {
-	__WEBPACK_IMPORTED_MODULE_9__clients_configClient___default.a.getValues(null, (err, manifest) => {
+	__WEBPACK_IMPORTED_MODULE_8__clients_configClient___default.a.getValues(null, (err, manifest) => {
 		serviceInstance.initialize(manifest, callback);
 	});
 });
@@ -53605,18 +58862,18 @@ serviceInstance.start();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 102 */,
-/* 103 */,
-/* 104 */,
-/* 105 */,
-/* 106 */,
-/* 107 */,
-/* 108 */,
-/* 109 */,
-/* 110 */,
-/* 111 */,
-/* 112 */,
-/* 113 */
+/* 120 */,
+/* 121 */,
+/* 122 */,
+/* 123 */,
+/* 124 */,
+/* 125 */,
+/* 126 */,
+/* 127 */,
+/* 128 */,
+/* 129 */,
+/* 130 */,
+/* 131 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -53652,16 +58909,22 @@ exports.MockDockableWindow = MockDockableWindow;
 
 
 /***/ }),
-/* 114 */
+/* 132 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const util = __webpack_require__(8);
-const merge = __webpack_require__(52);
+const merge = __webpack_require__(57);
 const logger_1 = __webpack_require__(0);
 exports.default = {
+    /**
+     * If the component has a security policy specified, we check to see that it exists.
+     * If it does, we return that.
+     * If not, we return the default security policy based on whether it's same or cross domain.
+     * @param descriptor
+     */
     getSecurityPolicy(descriptor, finsembleConfig) {
         let policyDefinedPermissions = null;
         if (descriptor.securityPolicy) {
@@ -53672,8 +58935,9 @@ exports.default = {
         }
         // If we make it down here, either the component doesn't have a security policy or
         // the policy that the component wants to use is not part of our config.
-        // Below, we decide which policy we should apply for the component.
-        const isCrossDomain = util.crossDomain(descriptor.url);
+        // Below, we decide which policy we should apply for the component. If there is no URL
+        // set on the component, we will treat it like a crossDomain component security-wise.
+        const isCrossDomain = descriptor.url ? util.crossDomain(descriptor.url) : true;
         let policy = finsembleConfig.securityPolicyRules.sameDomain;
         if (isCrossDomain) {
             policy = finsembleConfig.securityPolicyRules.crossDomain;
@@ -53762,13 +59026,13 @@ exports.default = {
 
 
 /***/ }),
-/* 115 */
+/* 133 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const disentangledUtils_1 = __webpack_require__(22);
+const disentangledUtils_1 = __webpack_require__(23);
 const util_1 = __webpack_require__(8);
 const logger_1 = __webpack_require__(0);
 logger_1.default.start();
@@ -53900,7 +59164,7 @@ exports.splitWindowMoves = splitWindowMoves;
 
 
 /***/ }),
-/* 116 */
+/* 134 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -53908,7 +59172,7 @@ exports.splitWindowMoves = splitWindowMoves;
 Object.defineProperty(exports, "__esModule", { value: true });
 function LauncherDefaults() {
     // We must provide a clean slate of properties otherwise new windows will spawn with the same
-    // properties as the main window (from the openfin manifest). Here we set reasonable defaults
+    // properties as the main window (from the manifest). Here we set reasonable defaults
     // for every window. We allow some properties to carry through from the manifest (such as cornerRounding).
     //
     // A developer can then override any of *these* values by specifying an "options" entry in the component
@@ -54062,7 +59326,7 @@ exports.UNKNOWN_DEFAULT_CONFIG = {
 
 
 /***/ }),
-/* 117 */
+/* 135 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -54130,7 +59394,7 @@ exports.WrapManager = new WrapManagerSingleton();
 
 
 /***/ }),
-/* 118 */
+/* 136 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -54138,12 +59402,12 @@ exports.WrapManager = new WrapManagerSingleton();
 Object.defineProperty(exports, "__esModule", { value: true });
 const routerClientInstance_1 = __webpack_require__(5);
 const logger_1 = __webpack_require__(0);
-const FinsembleWindowInternal_1 = __webpack_require__(63);
-const distributedStoreClient_1 = __webpack_require__(33);
-const SplinterAgentPool_1 = __webpack_require__(168);
-const WrapManager_1 = __webpack_require__(117);
-const PoolSingletons_1 = __webpack_require__(55);
-const SplinterAgentSlave_1 = __webpack_require__(64);
+const FinsembleWindowInternal_1 = __webpack_require__(71);
+const distributedStoreClient_1 = __webpack_require__(37);
+const SplinterAgentPool_1 = __webpack_require__(194);
+const WrapManager_1 = __webpack_require__(135);
+const PoolSingletons_1 = __webpack_require__(60);
+const SplinterAgentSlave_1 = __webpack_require__(73);
 const async_1 = __webpack_require__(9);
 const util = __webpack_require__(8);
 const system_1 = __webpack_require__(3);
@@ -54255,9 +59519,9 @@ class CreateSplinterAndInject {
         logger_1.default.system.debug("CreateSplinterAndInject.processConfig");
         const promiseResolver = async (resolve) => {
             var splinteringConfig = this.finsembleConfig.splinteringConfig;
-            let { versionObject } = await util.getOpenfinVersion();
-            //Due to a bug in chromium 53, we can't splinter _and_ spawn child windows (quickly) without crashing render processes. This was fixed somewhere between chromium 53 and 56, and the bug does not present in OF version 8.
-            this.ALLOW_SPLINTERING = versionObject.major > 7 && fin.container !== "Electron" && splinteringConfig.enabled;
+            let { versionObject } = await util.getContainerVersion();
+            //Due to a bug in chromium 53, we can't splinter _and_ spawn child windows (quickly) without crashing render processes. This was fixed somewhere between chromium 53 and 56.
+            this.ALLOW_SPLINTERING = versionObject.major > 7 && system_1.System.container !== "Electron" && splinteringConfig.enabled;
             resolve();
         };
         return new Promise(promiseResolver);
@@ -54305,10 +59569,10 @@ class CreateSplinterAndInject {
             // If we don't do this, then chromium creates them as new applications under the sheets but they don't show up in process monitor.
             // A developer can set isolateCrossDomainComponents=false to override this behavior if for some reason they need to.
             var dontIsolateCrossDomain = (this.finsembleConfig.isolateCrossDomainComponents === false);
-            if (windowType === "OpenFinWindow" && !dontIsolateCrossDomain) {
+            if (windowType === "WebWindow" && !dontIsolateCrossDomain) {
                 //Push cross domain windows into their own process.
                 if (util.crossDomain(windowDescriptor.url)) {
-                    windowType = "OpenFinApplication";
+                    windowType = "WebApplication";
                 }
             }
             windowDescriptor.windowType = windowType;
@@ -54331,18 +59595,18 @@ class CreateSplinterAndInject {
                     var { data } = await this.spawnExternalWindow(windowDescriptor);
                     WrapManager_1.WrapManager.setUuid(result.windowIdentifier.windowName, data.uuid);
                     break;
-                case "OpenFinWindow":
+                case "WebWindow":
                     if (this.ALLOW_SPLINTERING) {
                         logger_1.default.system.debug("WindowService.doSpawn-time splinter", windowType, windowDescriptor.name);
                         var { data } = await this.splinter(windowDescriptor);
                     }
                     else {
-                        var { data } = await this.spawnOpenFinWindow(windowDescriptor);
+                        var { data } = await this.spawnWebWindow(windowDescriptor);
                     }
                     WrapManager_1.WrapManager.setUuid(result.windowIdentifier.windowName, data.uuid);
                     break;
-                case "OpenFinApplication":
-                    var { data } = await this.spawnOpenfinApplication(windowDescriptor);
+                case "WebApplication":
+                    var { data } = await this.spawnWebApplication(windowDescriptor);
                     WrapManager_1.WrapManager.setUuid(result.windowIdentifier.windowName, data.uuid);
                     break;
                 case "StackedWindow":
@@ -54385,8 +59649,8 @@ class CreateSplinterAndInject {
         };
         return new Promise(promiseResolver);
     }
-    // Spawns an OpenFin window
-    spawnOpenFinWindow(windowDescriptor) {
+    // Spawns an Web window
+    spawnWebWindow(windowDescriptor) {
         // This will ensure that the window is actually opened before returning. Seemingly an OpenFin bug means we
         // can't rely on new System.Window callback. We believe this exhibits for cross-domain windows.
         const promiseResolver = (resolve) => {
@@ -54409,9 +59673,9 @@ class CreateSplinterAndInject {
         };
         return new Promise(promiseResolver);
     }
-    // Spawns a new openfin application.
-    spawnOpenfinApplication(componentConfig) {
-        let descriptor = this.compileOpenfinApplicationDescriptor(componentConfig);
+    // Spawns a new Web application.
+    spawnWebApplication(componentConfig) {
+        let descriptor = this.compileWebApplicationDescriptor(componentConfig);
         const self = this;
         const promiseResolver = (resolve) => {
             let fw;
@@ -54425,21 +59689,19 @@ class CreateSplinterAndInject {
                 self.injectMindControl(descriptor, fw);
                 resolve({ err: null, data: fw });
             };
-            let finApp = new system_1.System.Application(descriptor, function onAppCreated() {
+            const onAppCreated = () => {
                 routerClientInstance_1.default.addListener(descriptor.name + ".onSpawned", onAppSpawned);
-                /** Because we mess with the `this` of System.Application,
-                 * the compiler gets confused, so we have to cast to the right thing.
-                 */
                 finApp.run();
-            }, function createAppError(err) {
-                logger_1.default.system.error("Failed to create openfin Application", err);
+            };
+            const finApp = new system_1.System.Application(descriptor, onAppCreated, (err) => {
+                logger_1.default.system.error("Failed to create Web Application", err);
             });
         };
         return new Promise(promiseResolver);
     }
-    compileOpenfinApplicationDescriptor(componentConfig) {
+    compileWebApplicationDescriptor(componentConfig) {
         componentConfig.uuid = componentConfig.name;
-        // If a window is specified to have windowType 'application' or 'OpenfinApplication', it should be in an isolated
+        // If a window is specified to have windowType 'application' or 'WebApplication', it should be in an isolated
         // process. This means that it cannot have an affinity. If this line is removed, FEA thinks that the window is both
         // an application _and_ grouped with other windows in the same affinity. This causes all manner of strange bugs.
         // For example, if three components that are both windowType 'application', and in an affinity are spawned, and
@@ -54531,7 +59793,7 @@ class CreateSplinterAndInject {
             /** If we're running in Electron, splintering is not efficient, and is replaced instead with affinities, so
              * we short circuit splintering here.
              */
-            if (fin.container === "Electron") {
+            if (system_1.System.container === "Electron") {
                 logger_1.default.system.debug("CreateSplinterAndInject: Detected Electron environment. Short-circuiting splintering.");
                 resolve();
                 return;
@@ -54636,7 +59898,7 @@ exports.CreateSplinterAndInject = CreateSplinterAndInject;
 
 
 /***/ }),
-/* 119 */
+/* 137 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -54647,29 +59909,31 @@ Object.defineProperty(exports, "__esModule", { value: true });
 * All rights reserved.
 */
 const util = __webpack_require__(8);
-const disentangledUtils_1 = __webpack_require__(22);
+const disentangledUtils_1 = __webpack_require__(23);
 const system_1 = __webpack_require__(3);
 const logger_1 = __webpack_require__(0);
 const configClient_1 = __webpack_require__(15);
-const configUtil_1 = __webpack_require__(11);
-const workspaceClient_1 = __webpack_require__(51);
+configClient_1.default.initialize();
+const configUtil_1 = __webpack_require__(12);
+const workspaceClient_1 = __webpack_require__(52);
 const routerClientInstance_1 = __webpack_require__(5);
-const distributedStoreClient_1 = __webpack_require__(33);
-const launcherGroup_1 = __webpack_require__(164);
-const FinsembleWindowInternal_1 = __webpack_require__(63);
-const createSplinterAndInject_1 = __webpack_require__(118);
-const LauncherDefaults_1 = __webpack_require__(116);
+const distributedStoreClient_1 = __webpack_require__(37);
+distributedStoreClient_1.default.initialize();
+const launcherGroup_1 = __webpack_require__(190);
+const FinsembleWindowInternal_1 = __webpack_require__(71);
+const createSplinterAndInject_1 = __webpack_require__(136);
+const LauncherDefaults_1 = __webpack_require__(134);
 const async_1 = __webpack_require__(9);
-const lodash_difference_1 = __webpack_require__(128);
-const lodash_1 = __webpack_require__(34);
-const merge = __webpack_require__(52);
+const lodash_difference_1 = __webpack_require__(150);
+const lodash_1 = __webpack_require__(38);
+const merge = __webpack_require__(57);
 // For regression testing
-__webpack_require__(163);
-const constants_1 = __webpack_require__(10);
-const disentangledUtils_2 = __webpack_require__(22);
-const spawnUtils_1 = __webpack_require__(114);
-const clone = __webpack_require__(49);
-const lodashGet = __webpack_require__(24);
+__webpack_require__(189);
+const constants_1 = __webpack_require__(11);
+const disentangledUtils_2 = __webpack_require__(23);
+const spawnUtils_1 = __webpack_require__(132);
+const clone = __webpack_require__(55);
+const lodashGet = __webpack_require__(33);
 ;
 var activeWindows = new launcherGroup_1.LauncherGroup({
     name: "LauncherService.allWindows",
@@ -55386,7 +60650,7 @@ class Launcher {
             // unknown component. If the component is native, the url is removed by the merge from
             // params.options (params.options.window does not have a url...).
             // We delete the windowType on both objects so that WPF/Native applications
-            // are spawned as unknown HTML5 applications. Otherwise, the spawn requests
+            // are spawned as unknown Web applications. Otherwise, the spawn requests
             // go off into the ether and prevent workspaces from loading properly.
             if (config.component && config.component.isUnknownComponent) {
                 windowDescriptor.url = config.window.url;
@@ -55411,6 +60675,49 @@ class Launcher {
         windowDescriptor.execJSWhitelist.push(system_1.System.Window.getCurrent().name);
         windowDescriptor.customData.manifest = this.rawManifest; // pass in custom data so router can use
         logger_1.default.system.debug("Launcher.compileWindowDescriptor", windowDescriptor);
+        // Preload the titlebar if component supports FSBLHeader and
+        // deliveryMechanism is set to "preload" under -
+        // Window Manager entry in configs/config.json
+        // Check for customData.window.compound
+        const isCompoundWindow = lodashGet(windowDescriptor, 'customData.window.compound', false);
+        // Check for customData.Window Manager.FSBLHeader
+        const componentSupportsHeader = !isCompoundWindow && lodashGet(windowDescriptor, ['customData', 'foreign',
+            'components', 'Window Manager', 'FSBLHeader'], false);
+        // Get the delivery mechanism value from config
+        const deliveryMechanism = this.finsembleConfig['Window Manager'].deliveryMechanism;
+        // Make sure that component supports header and the delivery mechanism is set to "preload"
+        if (componentSupportsHeader && deliveryMechanism === constants_1.DELIVERY_MECHANISM.PRELOAD) {
+            let url = this._generateURL(Components['windowTitleBar'].window.url);
+            // push into the preloadScripts array
+            if (windowDescriptor.preloadScripts.findIndex(obj => obj.url === url) === -1) {
+                windowDescriptor.preloadScripts.push({ url: url });
+            }
+            // preload is a shallow copy of preloadScripts but when loaded from another workspace they can point to different addresses in memory
+            if (windowDescriptor.preload.findIndex(obj => obj.url === url) === -1) {
+                windowDescriptor.preload.push({ url: url });
+            }
+        }
+        // TODO, [Terry] persistURL logic should be in the workspace-service, not in launcher service.
+        //[Ryan] the logic should sit in the workspace client( although I think we actually do it in the window client right now)
+        if (params.spawnedByWorkspaceService) {
+            let persistURL = configUtil_1.ConfigUtilInstance.getDefault(config.foreign, "foreign.services.workspace.persistURL", this.persistURL);
+            let persistPath = configUtil_1.ConfigUtilInstance.getDefault(config.foreign, "foreign.services.workspace.persistPath", this.persistPath);
+            /** DH 3/11/2019
+             * We store the fact that a component had its URL swapped with the unknown component URL
+             * on the windowDescriptor itself. Therefore, if that prop is true, we need to swap the
+             * current URL with the one found in config. This logic will likely need to remain here
+             * (where we have access to the component's config), regardless of where the persistURL
+             * logic lands.*/
+            const isUnknownComponent = lodash_1.get(params, "options.customData.component.isUnknownComponent");
+            if (!persistURL || isUnknownComponent) {
+                windowDescriptor.url = config.window.url;
+            }
+            if (!persistPath || isUnknownComponent) {
+                windowDescriptor.path = config.window.path;
+            }
+        }
+        // Make sure the URL of the windowDescriptor is set before you get the security policy. Otherwise the security policy
+        // is going to set to the most restrictive ones for the component by default.
         windowDescriptor.securityPolicy = spawnUtils_1.default.getSecurityPolicy(windowDescriptor, this.finsembleConfig);
         windowDescriptor.permissions = spawnUtils_1.default.getPermissions(windowDescriptor, this.finsembleConfig);
         return windowDescriptor;
@@ -55682,11 +60989,15 @@ class Launcher {
         return returnObj;
     }
     /**
-     * Returns an map of components that can receive specific data types based on "advertiseReceivers" in the component config
-     *
-     * @param {array} dataTypes A list of dataTypes (string)
-     */
+ * Returns an map of components that can receive specific data types based on "advertiseReceivers" in the component config
+ *
+ * @param {array} dataTypes A list of dataTypes (string)
+ */
     getComponentsThatCanReceiveDataTypes(dataTypes) {
+        if (!dataTypes || !Array.isArray(dataTypes)) {
+            logger_1.default.system.error("Invalid dataTypes passed to getComponentsThatCanReceiveDataTypes");
+            return {};
+        }
         var componentsThatCanReceiveDataTypes = {};
         for (var c in Components) {
             var component = Components[c];
@@ -55784,10 +61095,15 @@ class Launcher {
         };
         configClient_1.default.addListener({ field: "finsemble.components" }, this.onComponentListChanged.bind(this));
         configClient_1.default.addListener({ field: "finsemble.cssOverridePath" }, onCSSOverridePathChanged);
-        let { data: config } = await configClient_1.default.getValues(null);
-        this.appConfig = config;
-        this.finsembleConfig = config.finsemble; // replace manifest version of finsemble with processed version
-        this.persistURL = configUtil_1.ConfigUtilInstance.getDefault(config.finsemble, "finsemble.servicesConfig.workspace.persistURL", false);
+        let { err, data: config } = await configClient_1.default.getValues(null);
+        if (err) {
+            logger_1.default.system.error(err);
+        }
+        else {
+            this.appConfig = config;
+            this.finsembleConfig = config.finsemble; // replace manifest version of finsemble with processed version
+            this.persistURL = configUtil_1.ConfigUtilInstance.getDefault(config.finsemble, "finsemble.servicesConfig.workspace.persistURL", false);
+        }
         cb();
     }
     /**
@@ -56611,11 +61927,16 @@ class Launcher {
             activeWindow = self.componentFinder(windowIdentifier);
         }
         if (activeWindow) { //window was found
+            // Remove the window from the Stack
+            if (activeWindow.parentWindow) {
+                activeWindow.parentWindow.removeWindow({ windowIdentifier: windowIdentifier }, err => logger_1.default.system.error("Launcher.ShowWindow Remove from Stack", err));
+            }
+            // Remove the window from docking group
+            routerClientInstance_1.default.query("DockingService.leaveGroup", { name: windowIdentifier.windowName }, (err, response) => { });
             let { data: bounds } = await activeWindow._getBounds();
-            windowIdentifier = activeWindow.windowIdentifier;
             // The next 3 lines are needed because the windowIdentifier coming in from the client API is not guaranteed to have all of the information that we need in order to identify the window.
             // All that's needed to retrieve a window is a name. We need to know the componentType to derive default configs for this component.
-            windowIdentifier = activeWindow.windowIdentifier;
+            windowIdentifier = (windowIdentifier in activeWindow) ? activeWindow.windowIdentifier : windowIdentifier;
             windowIdentifier.componentType = activeWindow.componentType;
             params.windowIdentifier = windowIdentifier;
             //By default, return the first monitor. This method will be overwritten if the call requires a specific monitor.
@@ -56685,6 +62006,9 @@ class Launcher {
                 else if (params.monitor === "mine") { // asked to spawn on same monitor as parent
                     monitorFinder = relativeMonitorFinder;
                 }
+            }
+            else {
+                params.monitor = "mine";
             }
             let monitor = await monitorFinder();
             // Adjust parameters to what deriveBounds expects
@@ -56783,7 +62107,10 @@ class Launcher {
                     //If the show call doesn't prohibit autofocus, focus it. Search does this when showing search results.
                     if (params.autoFocus !== false) {
                         //This is so that any click elsewhere will hide the window.
-                        activeWindow.focus();
+                        if ('focus' in activeWindow) {
+                            activeWindow.focus();
+                        }
+                        ;
                     }
                     //@todo, when docking is rewritten and the window wraps get more love, put this functionality into a the wrappers. Right now they don't have the router and I'm unsure how things are working with multiple routers in the same window.
                     routerClientInstance_1.default.transmit("DockingService.updateWindowLocation", { windowName: windowIdentifier.windowName, location: dockingDescriptor });
@@ -56992,7 +62319,7 @@ class Launcher {
             this.spawnOnAllMonitors(component, params, cb);
             return;
         }
-        //get default OpenFin config.
+        //get default config.
         var baseDescriptor = new LauncherDefaults_1.default().windowDescriptor;
         if (params.options) {
             baseDescriptor = merge(baseDescriptor, params.options);
@@ -57236,7 +62563,7 @@ logger_1.default.start();
 
 
 /***/ }),
-/* 120 */
+/* 138 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -57246,6 +62573,7 @@ const routerClientInstance_1 = __webpack_require__(5);
 const logger_1 = __webpack_require__(0);
 class LauncherEntry {
     constructor(manifest, launcher) {
+        this.moduleReady = false;
         this.manifest = manifest;
         this.launcher = launcher;
         this.bindAllFunctions();
@@ -57254,7 +62582,9 @@ class LauncherEntry {
     async initialize(done) {
         done();
     }
-    windowServiceChannelName(channelTopic) { return `WindowService-Request-${channelTopic}`; }
+    setReady() {
+        this.moduleReady = true;
+    }
     bindAllFunctions() {
         let self = this;
         for (let name of Object.getOwnPropertyNames(Object.getPrototypeOf(self))) {
@@ -57269,45 +62599,60 @@ class LauncherEntry {
     }
     definePubicInterface() {
         // Note: More Cleanup To Do: better to have all the router message handling done here, with pure calls into to the launcher (i.e. not passing in router message to launcher).
-        // So for now using the launcher code close to as-is, although had to do some refactoring for this interface
+        // So for now using the laucher code close to as-is, although had to do some refactoring for this interface
         logger_1.default.system.debug(`LauncherEntry.definePubicInterface`);
         routerClientInstance_1.default.addPubSubResponder("Launcher.WindowList", []);
         routerClientInstance_1.default.addResponder("LauncherService.addWindowToGroups", (err, message) => {
+            this.moduleReady || logger_1.default.system.error("windowService Launcher invoked before ready", message);
             this.launcher.addWindowToGroups(message.data);
             message.sendQueryResponse(null, "success");
         });
-        routerClientInstance_1.default.addResponder("LauncherService.deleteWindowGroup", this.launcher.deleteWindowGroup.bind(this));
+        routerClientInstance_1.default.addResponder("LauncherService.deleteWindowGroup", (err, message) => {
+            this.moduleReady || logger_1.default.system.error("windowService Launcher invoked before ready", message);
+            this.launcher.deleteWindowGroup(err, message);
+        });
         routerClientInstance_1.default.addResponder("Launcher.componentList", (err, message) => {
+            this.moduleReady || logger_1.default.system.error("windowService Launcher invoked before ready", message);
             let components = this.launcher.getComponents();
             message.sendQueryResponse(err, components);
         });
-        routerClientInstance_1.default.addResponder("LauncherService.createWindowGroup", this.launcher.createWindowGroup.bind(this));
+        routerClientInstance_1.default.addResponder("LauncherService.createWindowGroup", (err, message) => {
+            this.moduleReady || logger_1.default.system.error("windowService Launcher invoked before ready", message);
+            this.launcher.createWindowGroup(err, message);
+        });
         routerClientInstance_1.default.addResponder("LauncherService.getGroupsForWindow", (err, message) => {
+            this.moduleReady || logger_1.default.system.error("windowService Launcher invoked before ready", message);
             message.sendQueryResponse(null, this.launcher.getGroupsForWindow(message.data));
         });
         routerClientInstance_1.default.addResponder("Launcher.getActiveDescriptors", (err, message) => {
+            this.moduleReady || logger_1.default.system.error("windowService Launcher invoked before ready", message);
             message.sendQueryResponse(null, this.launcher.getActiveDescriptors());
         });
         routerClientInstance_1.default.addResponder("LauncherService.getComponentsThatCanReceiveDataTypes", (err, message) => {
+            this.moduleReady || logger_1.default.system.error("windowService Launcher invoked before ready", message);
             message.sendQueryResponse(null, this.launcher.getComponentsThatCanReceiveDataTypes(message.data.dataTypes));
         });
         routerClientInstance_1.default.addResponder("Launcher.getMonitorInfo", (err, message) => {
+            this.moduleReady || logger_1.default.system.error("windowService Launcher invoked before ready", message);
             logger_1.default.system.debug("LauncherEntry.getMonitorInfo request" + JSON.stringify(message));
             this.launcher.getMonitorInfo(message.data, function (err, response) {
                 message.sendQueryResponse(err, response);
             });
         });
         routerClientInstance_1.default.addResponder("Launcher.getMonitorInfoAll", (err, message) => {
+            this.moduleReady || logger_1.default.system.error("windowService Launcher invoked before ready", message);
             logger_1.default.system.debug("LauncherEntry.getMonitorInfoAll request" + JSON.stringify(message));
             this.launcher.getMonitorInfoAll((err, monitors) => {
                 message.sendQueryResponse(err, monitors);
             });
         });
         routerClientInstance_1.default.addResponder("Launcher.removeComponent", (err, message) => {
+            this.moduleReady || logger_1.default.system.error("windowService Launcher invoked before ready", message);
             this.launcher.remove(message.data.name);
             message.sendQueryResponse(err, message.data);
         });
         routerClientInstance_1.default.addResponder("Launcher.showWindow", (err, message) => {
+            this.moduleReady || logger_1.default.system.error("windowService Launcher invoked before ready", message);
             //@todo only return after the window is ready...if asked to
             logger_1.default.system.debug("LauncherEntry.showWindow request" + JSON.stringify(message));
             this.launcher.showWindow(message.data.windowIdentifier, message.data, function (err, descriptor) {
@@ -57315,6 +62660,7 @@ class LauncherEntry {
             });
         });
         routerClientInstance_1.default.addResponder("Launcher.spawn", (err, message) => {
+            this.moduleReady || logger_1.default.system.error("windowService Launcher invoked before ready", message);
             // The requester is the window name of whoever requested the spawn.
             // That window is allowed to call executeJavaScript on the wrap.
             if (!message.data.options)
@@ -57326,6 +62672,7 @@ class LauncherEntry {
             });
         });
         routerClientInstance_1.default.addResponder("Launcher.userDefinedComponentUpdate", (err, message) => {
+            this.moduleReady || logger_1.default.system.error("windowService Launcher invoked before ready", message);
             function respond(error, response) {
                 message.sendQueryResponse(error, response);
             }
@@ -57337,6 +62684,7 @@ class LauncherEntry {
             }
         });
         routerClientInstance_1.default.addResponder("LauncherService.addWindowsToGroup", (err, message) => {
+            this.moduleReady || logger_1.default.system.error("windowService Launcher invoked before ready", message);
             let errString = this.launcher.addWindowsToGroups(message.data);
             if (errString) {
                 message.sendQueryResponse(errString);
@@ -57346,10 +62694,12 @@ class LauncherEntry {
             }
         });
         routerClientInstance_1.default.addResponder("LauncherService.getWindowsInGroup", (err, message) => {
+            this.moduleReady || logger_1.default.system.error("windowService Launcher invoked before ready", message);
             let windowList = this.launcher.getWindowsInGroup(message.data.groupName);
             message.sendQueryResponse(null, windowList);
         });
         routerClientInstance_1.default.addResponder("LauncherService.removeWindowsFromGroup", (err, message) => {
+            this.moduleReady || logger_1.default.system.error("windowService Launcher invoked before ready", message);
             let errString = this.launcher.removeWindowsFromGroup(message.data);
             if (errString) {
                 message.sendQueryResponse(errString);
@@ -57359,7 +62709,8 @@ class LauncherEntry {
             }
         });
         routerClientInstance_1.default.addResponder("LauncherService.bringWindowsToFront", (err, message) => {
-            let errString = this.launcher.bringWindowsToFront(err, message);
+            this.moduleReady || logger_1.default.system.error("windowService Launcher invoked before ready", message);
+            let errString = this.launcher.bringWindowsToFront(null, message);
             if (errString) {
                 message.sendQueryResponse(errString);
             }
@@ -57367,12 +62718,28 @@ class LauncherEntry {
                 message.sendQueryResponse(null, "Success");
             }
         });
-        routerClientInstance_1.default.addListener("LauncherService.hyperFocus", this.launcher.hyperFocus.bind(this));
-        routerClientInstance_1.default.addListener("LauncherService.minimizeWindows", this.launcher.minimizeWindows.bind(this));
-        routerClientInstance_1.default.addListener("LauncherService.restart", this.launcher.restart);
-        routerClientInstance_1.default.addResponder("LauncherService.registerComponent", this.launcher.registerComponent.bind(this.launcher));
-        routerClientInstance_1.default.addResponder("LauncherService.unRegisterComponent", this.launcher.unRegisterComponent.bind(this.launcher));
+        routerClientInstance_1.default.addListener("LauncherService.hyperFocus", (err, message) => {
+            this.moduleReady || logger_1.default.system.error("windowService Launcher invoked before ready", message);
+            this.launcher.hyperFocus(err, message);
+        });
+        routerClientInstance_1.default.addListener("LauncherService.minimizeWindows", (err, message) => {
+            this.moduleReady || logger_1.default.system.error("windowService Launcher invoked before ready", message);
+            this.launcher.minimizeWindows(err, message);
+        });
+        routerClientInstance_1.default.addListener("LauncherService.restart", (err, message) => {
+            this.moduleReady || logger_1.default.system.error("windowService Launcher invoked before ready", message);
+            this.launcher.restart(err, message);
+        });
+        routerClientInstance_1.default.addResponder("LauncherService.registerComponent", (err, message) => {
+            this.moduleReady || logger_1.default.system.error("windowService Launcher invoked before ready", message);
+            this.launcher.registerComponent(err, message);
+        });
+        routerClientInstance_1.default.addResponder("LauncherService.unRegisterComponent", (err, message) => {
+            this.moduleReady || logger_1.default.system.error("windowService Launcher invoked before ready", message);
+            this.launcher.unRegisterComponent(err, message);
+        });
         routerClientInstance_1.default.addListener("Launcher.resetSpawnStagger", (err, message) => {
+            this.moduleReady || logger_1.default.system.error("windowService Launcher invoked before ready", message);
             this.launcher.resetSpawnStagger(message.data);
         });
     }
@@ -57381,7 +62748,7 @@ exports.LauncherEntry = LauncherEntry;
 
 
 /***/ }),
-/* 121 */
+/* 139 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -57397,6 +62764,7 @@ const routerClientInstance_1 = __webpack_require__(5);
 const logger_1 = __webpack_require__(0);
 class TabbingEntry {
     constructor(stackedWindowManager) {
+        this.moduleReady = false;
         this.stackedWindowManager = stackedWindowManager;
         this.bindAllFunctions();
     }
@@ -57405,6 +62773,9 @@ class TabbingEntry {
         console.debug("TabbingEntry.initialize");
         this.setupStackedWindowManagerListeners();
         done();
+    }
+    setReady() {
+        this.moduleReady = true;
     }
     shutdown(done) {
         done();
@@ -57424,7 +62795,8 @@ class TabbingEntry {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     setupInterfaceListener(methodName, methodFunction) {
         logger_1.default.system.debug(`TabbingEntry.setupInterfaceListener for ${methodName}`);
-        routerClientInstance_1.default.addResponder(`StackedWindow.${methodName}`, function (err, queryMessage) {
+        routerClientInstance_1.default.addResponder(`StackedWindow.${methodName}`, (err, queryMessage) => {
+            this.moduleReady || logger_1.default.system.error("windowService StackedWindow Management invoked before ready", methodName, queryMessage);
             if (err) {
                 logger_1.default.system.error(`StackedWindow.${methodName} addResponder failed: ${err}`);
             }
@@ -57456,7 +62828,7 @@ exports.TabbingEntry = TabbingEntry;
 
 
 /***/ }),
-/* 122 */
+/* 140 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -57466,6 +62838,7 @@ const routerClientInstance_1 = __webpack_require__(5);
 const logger_1 = __webpack_require__(0);
 class WindowCreateEntry {
     constructor(manifest, launcher) {
+        this.moduleReady = false;
         this.manifest = manifest;
         this.launcher = launcher;
         this.finsembleConfig = manifest.finsemble;
@@ -57474,6 +62847,9 @@ class WindowCreateEntry {
     }
     initialize(done) {
         done();
+    }
+    setReady() {
+        this.moduleReady = true;
     }
     windowServiceChannelName(channelTopic) { return `WindowService-Request-${channelTopic}`; }
     bindAllFunctions() {
@@ -57497,6 +62873,7 @@ class WindowCreateEntry {
     }
     // probably only a temporary routine -- currently supports public wrapper
     async getWindowIdentifier(queryError, queryMessage) {
+        this.moduleReady || logger_1.default.system.error("windowService window creation invoked before ready", queryMessage);
         logger_1.default.system.debug(`WindowService-Request-getWindowIdentifier for ${queryMessage.data.windowName}`, queryMessage.data);
         this.launcher.createSplinterAndInject.getWindowIdentifier(queryMessage.data, (err, data) => {
             queryMessage.sendQueryResponse(err, data);
@@ -57504,6 +62881,7 @@ class WindowCreateEntry {
     }
     // may replace with preload
     async injectTitleBar(queryError, queryMessage) {
+        this.moduleReady || logger_1.default.system.error("windowService window creation invoked before ready", queryMessage);
         logger_1.default.system.debug(`"WindowService-Request-injectTitleBar for ${queryMessage.data.config.name}`, queryMessage.data);
         this.launcher.createSplinterAndInject.injectTitleBar(queryMessage.data, (err, data) => {
             queryMessage.sendQueryResponse(err, data);
@@ -57514,7 +62892,7 @@ exports.WindowCreateEntry = WindowCreateEntry;
 
 
 /***/ }),
-/* 123 */
+/* 141 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -57522,13 +62900,15 @@ exports.WindowCreateEntry = WindowCreateEntry;
 Object.defineProperty(exports, "__esModule", { value: true });
 const routerClientInstance_1 = __webpack_require__(5);
 const logger_1 = __webpack_require__(0);
-const Constants = __webpack_require__(10);
-const MockDockableWindow_1 = __webpack_require__(113);
-const PoolSingletons_1 = __webpack_require__(55);
-const workspaceClient_1 = __webpack_require__(51);
-const constants_1 = __webpack_require__(10);
+const Constants = __webpack_require__(11);
+const MockDockableWindow_1 = __webpack_require__(131);
+const PoolSingletons_1 = __webpack_require__(60);
+const workspaceClient_1 = __webpack_require__(52);
+const constants_1 = __webpack_require__(11);
+const { REMOTE_FOCUS, SET_ALWAYS_ON_TOP, IS_ALWAYS_ON_TOP } = constants_1.WINDOW_SERVICE_REQUESTS;
 class WindowPrimitives {
     constructor(dockingMain, launcher) {
+        this.moduleReady = false;
         this.dockingMain = dockingMain;
         this.launcher = launcher;
         this.bindAllFunctions();
@@ -57537,6 +62917,9 @@ class WindowPrimitives {
     initialize(done) {
         this.definePubicInterface_Window();
         done();
+    }
+    setReady() {
+        this.moduleReady = true;
     }
     windowServiceChannelName(channelTopic) { return `WindowService-Request-${channelTopic}`; }
     bindAllFunctions() {
@@ -57570,7 +62953,8 @@ class WindowPrimitives {
         routerClientInstance_1.default.addResponder(this.windowServiceChannelName("hide"), this.hideHandler);
         routerClientInstance_1.default.addResponder(this.windowServiceChannelName("show"), this.showHandler);
         routerClientInstance_1.default.addResponder(this.windowServiceChannelName("showAt"), this.showAtHandler);
-        routerClientInstance_1.default.addResponder(this.windowServiceChannelName("alwaysOnTop"), this.alwaysOnTopHandler);
+        routerClientInstance_1.default.addResponder(SET_ALWAYS_ON_TOP, this.setAlwaysOnTopHandler);
+        routerClientInstance_1.default.addResponder(IS_ALWAYS_ON_TOP, this.isAlwaysOnTopHandler);
         routerClientInstance_1.default.addResponder(this.windowServiceChannelName("setOpacity"), this.setOpacityHandler);
         routerClientInstance_1.default.addResponder(this.windowServiceChannelName("close"), this.closeHandler);
         routerClientInstance_1.default.addResponder(this.windowServiceChannelName("isShowing"), this.isShowingHandler);
@@ -57583,10 +62967,11 @@ class WindowPrimitives {
         routerClientInstance_1.default.addResponder(this.windowServiceChannelName("getComponentState"), this.getComponentStateHandler);
         routerClientInstance_1.default.addResponder(this.windowServiceChannelName("setParent"), this.setParentHandler);
         routerClientInstance_1.default.addResponder("DockingService.getMonitorForWindow", this.getMonitorForWindowHandler);
-        routerClientInstance_1.default.addListener(constants_1.REMOTE_FOCUS, this.handleRemoteFocus);
+        routerClientInstance_1.default.addListener(REMOTE_FOCUS, this.handleRemoteFocus);
     }
     // housekeeping function used in each of the public window-wrapper handlers below
     publicWindowHandlerPreface(method, queryError, queryMessage) {
+        this.moduleReady || logger_1.default.system.error("windowService window primative invoked before ready", method, queryMessage);
         var okay = true;
         let params = queryMessage.data;
         let { windowIdentifier, eventName, guid } = queryMessage.data;
@@ -57736,6 +63121,7 @@ class WindowPrimitives {
      * @memberof WindowPrimitives
      */
     async getMonitorForWindowHandler(queryError, queryMessage) {
+        this.moduleReady || logger_1.default.system.error("windowService window primative invoked before ready", queryMessage);
         let { windowIdentifier } = queryMessage.data;
         let callback = queryMessage.sendQueryResponse;
         let dockableWindow = this.dockingMain.getWindow(windowIdentifier.windowName, false);
@@ -57957,12 +63343,23 @@ class WindowPrimitives {
             callback(`unidentified window name: ${windowIdentifier.name}`, null);
         }
     }
-    async alwaysOnTopHandler(queryError, queryMessage) {
+    async setAlwaysOnTopHandler(queryError, queryMessage) {
         let { windowIdentifier } = this.publicWindowHandlerPreface("alwaysOnTop", queryError, queryMessage);
         let callback = queryMessage.sendQueryResponse;
         let wrap = PoolSingletons_1.WindowPoolSingleton.get(windowIdentifier.name);
         if (wrap) {
             wrap._alwaysOnTop(queryMessage.data, callback);
+        }
+        else {
+            callback(`unidentified window name: ${windowIdentifier.name}`, null);
+        }
+    }
+    async isAlwaysOnTopHandler(queryError, queryMessage) {
+        let { windowIdentifier } = this.publicWindowHandlerPreface("isAlwaysOnTop", queryError, queryMessage);
+        let callback = queryMessage.sendQueryResponse;
+        let wrap = PoolSingletons_1.WindowPoolSingleton.get(windowIdentifier.name);
+        if (wrap) {
+            wrap._isAlwaysOnTop(null, callback);
         }
         else {
             callback(`unidentified window name: ${windowIdentifier.name}`, null);
@@ -58057,6 +63454,7 @@ class WindowPrimitives {
         }
     }
     async closeHandler(queryError, queryMessage) {
+        this.moduleReady || logger_1.default.system.error("windowService window primitive invoked before ready", queryMessage);
         const { windowIdentifier } = this.publicWindowHandlerPreface("close", queryError, queryMessage);
         const delayInterrupters = (eventName, afterSetup) => {
             const delayers = {};
@@ -58195,7 +63593,7 @@ exports.WindowPrimitives = WindowPrimitives;
 
 
 /***/ }),
-/* 124 */
+/* 142 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -58209,15 +63607,15 @@ exports.WindowPrimitives = WindowPrimitives;
 Object.defineProperty(exports, "__esModule", { value: true });
 const routerClientInstance_1 = __webpack_require__(5);
 const logger_1 = __webpack_require__(0);
-const FinsembleWindow_1 = __webpack_require__(35);
-const BaseWindow_1 = __webpack_require__(53);
-const FinsembleWindowInternal_1 = __webpack_require__(63);
-const distributedStoreClient_1 = __webpack_require__(33);
-const configUtil_1 = __webpack_require__(11);
+const FinsembleWindow_1 = __webpack_require__(39);
+const BaseWindow_1 = __webpack_require__(56);
+const FinsembleWindowInternal_1 = __webpack_require__(71);
+const distributedStoreClient_1 = __webpack_require__(37);
+const configUtil_1 = __webpack_require__(12);
 const async_1 = __webpack_require__(9);
-const _throttle = __webpack_require__(23);
-const constants = __webpack_require__(10);
-const PoolSingletons_1 = __webpack_require__(55);
+const _throttle = __webpack_require__(24);
+const constants = __webpack_require__(11);
+const PoolSingletons_1 = __webpack_require__(60);
 /** @TODO - This should be unnecessary. DistributedStoreClient.initialize should be idempotent,
  * and then we can remove this odd shielding of it behind this "if" statement. */
 if (!window.DistributedStoreClient) {
@@ -58444,7 +63842,7 @@ class StackedWindowManager {
         this.setupInterfaceListener("show", this.show);
         this.setupInterfaceListener("close", this.close);
         this.setupInterfaceListener("reorder", this.reorder);
-        this.setupInterfaceListener("alwaysOnTop", this.alwaysOnTop);
+        this.setupInterfaceListener("alwaysOnTop", this.setAlwaysOnTop);
         // this.setupInterfaceListener("setOpacity", this.setOpacity);
         routerClientInstance_1.default.addResponder("StackedWindow.setOpacity", (err, queryMessage) => {
             if (err) {
@@ -58469,15 +63867,28 @@ class StackedWindowManager {
     }
     async visibleChildEventHandler(stackedWindowName, stackWrap, eventObject) {
         let event = eventObject.data;
-        if (event.eventName === "bounds-change-end") {
-            await this.saveStore({
-                windowName: stackedWindowName,
-                name: stackedWindowName,
-                windowType: "StackedWindow"
-            }, { closing: false });
+        const stackedWindowIdentifier = {
+            windowName: stackedWindowName,
+            name: stackedWindowName,
+            windowType: "StackedWindow"
+        };
+        switch (event.eventName) {
+            case "bounds-change-end":
+                await this.saveStore(stackedWindowIdentifier, { closing: false });
+                stackWrap.eventManager.trigger(event.eventName, event);
+                logger_1.default.system.verbose("StackedWindowManager transmitting event", event.eventName, this.eventChannelName(stackedWindowName, event.eventName), event);
+                break;
+            case "alwaysOnTop":
+                await this.setAlwaysOnTop({
+                    stackedWindowIdentifier,
+                    alwaysOnTop: event.alwaysOnTop
+                });
+                break;
+            default:
+                stackWrap.eventManager.trigger(event.eventName, event);
+                logger_1.default.system.verbose("StackedWindowManager transmitting event", event.eventName, this.eventChannelName(stackedWindowName, event.eventName), event);
+                break;
         }
-        logger_1.default.system.verbose("StackedWindowManager transmitting event", event.eventName, this.eventChannelName(stackedWindowName, event.eventName), event);
-        stackWrap.eventManager.trigger(event.eventName, event);
     }
     ;
     addChildEventListener(stackedWindowName, childName, childWrapper) {
@@ -58696,6 +64107,9 @@ class StackedWindowManager {
                         FinsembleWindowInternal_1.FinsembleWindowInternal.getInstance(windowIdentifier, async (err, wrappedWindow) => {
                             //@todo failure point - no wrap callback.
                             this.childWindow[windowIdentifier.windowName] = wrappedWindow; // save the wrapper for quick use
+                            // save alwaysOnTop state so that when the window leaves the stack, its original alwaysOnTop state is restored
+                            if (typeof windowIdentifier.alwaysOnTop !== "boolean")
+                                windowIdentifier.alwaysOnTop = wrappedWindow._isAlwaysOnTop();
                             // if stacked window doesn't have a visible window, then make this window being added the visible window
                             if (!thisStackRecord.visibleWindowIdentifier) {
                                 let { err, data: bounds } = await wrappedWindow._getBounds();
@@ -58754,6 +64168,9 @@ class StackedWindowManager {
                             routerClientInstance_1.default.publish(`Finsemble.parentChange.${windowIdentifier.windowName}`, { type: "Added", stackedWindowIdentifier });
                             //Publish Exists event right after the Added event because windows use this event type to track parent state.
                             routerClientInstance_1.default.publish(`Finsemble.parentChange.${windowIdentifier.windowName}`, { type: "Exists", stackedWindowIdentifier });
+                            await this.makeStackAlwaysOnTopIfNeeded({
+                                stackedWindowIdentifier
+                            });
                             callback(err);
                             err ? reject(err) : resolve();
                         });
@@ -58767,6 +64184,19 @@ class StackedWindowManager {
             }); // subscription handle
         };
         return new Promise(promiseResolver);
+    }
+    /**
+     * This will make a stack always on top if any child is always on top.
+     */
+    async makeStackAlwaysOnTopIfNeeded(params) {
+        const thisStackRecord = this.storeCache[params.stackedWindowIdentifier.windowName];
+        const alwaysOnTop = thisStackRecord.childWindowIdentifiers.some(({ windowName }) => this.childWindow[windowName]._isAlwaysOnTop());
+        if (alwaysOnTop) {
+            await this.setAlwaysOnTop({
+                stackedWindowIdentifier: params.stackedWindowIdentifier,
+                alwaysOnTop
+            });
+        }
     }
     triggerEvent(params, cb) {
         FinsembleWindowInternal_1.FinsembleWindowInternal.getInstance({ stackedWindowManager: this, name: params.windowIdentifier.windowName }, (err, wrap) => {
@@ -58880,8 +64310,16 @@ class StackedWindowManager {
             logger_1.default.system.debug("StackedWindowManager.removeWindow", params, thisStackRecord);
             var err = null;
             if (thisStackRecord) {
-                thisStackRecord.childWindowIdentifiers = thisStackRecord.childWindowIdentifiers.filter(item => item.windowName !== windowIdentifier.windowName); // remove child window
                 let childWrapper = this.childWindow[windowIdentifier.windowName];
+                // remove child window
+                for (let i = 0; i < thisStackRecord.childWindowIdentifiers.length; i++) {
+                    const item = thisStackRecord.childWindowIdentifiers[i];
+                    if (item.windowName === windowIdentifier.windowName) {
+                        childWrapper._alwaysOnTop({ alwaysOnTop: item.alwaysOnTop });
+                        thisStackRecord.childWindowIdentifiers.splice(i, 1);
+                        break;
+                    }
+                }
                 childWrapper.clearParent(); // remove parent setting from child being remove
                 delete this.childNameToSID[windowIdentifier.windowName]; // remove child's mapping to parent stackedWindowIdentifier
                 if (thisStackRecord.visibleWindowIdentifier && thisStackRecord.visibleWindowIdentifier.windowName === windowIdentifier.windowName) {
@@ -58988,7 +64426,7 @@ class StackedWindowManager {
                      * If the close event is sent from the system (i.e. user is closing a stacked window from the taskbar), tell the wrapper to not show the error
                      * when attempting to close that window (because the window is already closed from the system).
                      * For now we're still calling this function even if it's a system close because we need some way to close a slacked window from the
-                     * taskbar. We can also change the event name we pass into "this.setupSystemListener" in case of a system close in the openfinWindowWrapper file from
+                     * taskbar. We can also change the event name we pass into "this.setupSystemListener" in case of a system close in the WebWindowWrapper file from
                      * 'closed' to 'system-closed' so we don't have to close twice. But we decided it's a big change and we should go with a less risky approach in this bug fixing PR.
                      */
                     suppressError: params.fromSystem,
@@ -59478,31 +64916,37 @@ class StackedWindowManager {
             this.deleteWindow(params, callback);
         }
     }
-    // stacked window alwaysOnTop (invoked remotely through stacked window wrapper)
-    alwaysOnTop(params, callback) {
-        logger_1.default.system.debug("StackedWindowManager.alwaysOnTop", params);
-        // if operating on StackedWindow then operation should apply to the visible window
-        if (this.operatingDirectlyOnStackedWindow(params)) {
-            var thisStackRecord = this.storeCache[params.stackedWindowIdentifier.windowName];
-            if (thisStackRecord) {
-                params.windowIdentifier = thisStackRecord.visibleWindowIdentifier;
+    /**
+     * set Stack to be always on top. Makes all children of the stack always on top and triggers the alwaysOnTop event for the stack
+     */
+    setAlwaysOnTop(params, callback = Function.prototype) {
+        const setAlwaysOnTopPromiseResolver = (resolve) => {
+            logger_1.default.system.debug("StackedWindowManager.setAlwaysOnTop", params);
+            // if operating on StackedWindow then operation should apply to the visible window
+            if (this.operatingDirectlyOnStackedWindow(params)) {
+                var thisStackRecord = this.storeCache[params.stackedWindowIdentifier.windowName];
+                if (!thisStackRecord) {
+                    logger_1.default.system.warn("ignoring command because StackedWindow undefined (probably okay due to its recent close)", params);
+                    resolve();
+                    return callback("undefined window");
+                }
             }
-            else {
-                logger_1.default.system.warn("ignoring command because StackedWindow undefined (probably okay due to its recent close)", params);
-                return callback("undefined window");
-            }
-        }
-        if (this.isShowing(params)) {
-            var visibleWindow = this.childWindow[params.windowIdentifier.windowName];
             params.invokedByParent = true; // prevents wrapper function from recalling parent (causing a loop)
-            if (visibleWindow._alwaysOnTop) {
-                visibleWindow._alwaysOnTop(params); // invoke function on active window's wrapper
+            for (const childWindowIdentifier of thisStackRecord.childWindowIdentifiers) {
+                const childWindow = this.childWindow[childWindowIdentifier.windowName];
+                childWindow._alwaysOnTop(params);
             }
-        }
-        else {
-            logger_1.default.system.error(`StackedWindowManager Warning: alwaysOnTop received for hidden window ${params.windowIdentifier.windowName}`);
-        }
-        callback(null);
+            FinsembleWindowInternal_1.FinsembleWindowInternal.getInstance({ name: thisStackRecord.name }, (err, stackedWindow) => {
+                if (stackedWindow.alwaysOnTop !== params.alwaysOnTop) {
+                    stackedWindow.alwaysOnTop = params.alwaysOnTop;
+                    stackedWindow.eventManager.trigger("alwaysOnTop", { alwaysOnTop: params.alwaysOnTop });
+                    logger_1.default.system.verbose("StackedWindowManager transmitting event", "alwaysOnTop", this.eventChannelName(thisStackRecord.name, "alwaysOnTop"), event);
+                }
+                callback(null);
+                resolve();
+            });
+        };
+        return new Promise(setAlwaysOnTopPromiseResolver);
     }
     // stacked window setOpacity (invoked remotely through stacked window wrapper)
     setOpacity(params, callback = Function.prototype) {
@@ -59679,9 +65123,329 @@ exports.default = serviceInstance;
 
 
 /***/ }),
-/* 125 */,
-/* 126 */,
-/* 127 */
+/* 143 */,
+/* 144 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+exports.byteLength = byteLength
+exports.toByteArray = toByteArray
+exports.fromByteArray = fromByteArray
+
+var lookup = []
+var revLookup = []
+var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
+
+var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+for (var i = 0, len = code.length; i < len; ++i) {
+  lookup[i] = code[i]
+  revLookup[code.charCodeAt(i)] = i
+}
+
+// Support decoding URL-safe base64 strings, as Node.js does.
+// See: https://en.wikipedia.org/wiki/Base64#URL_applications
+revLookup['-'.charCodeAt(0)] = 62
+revLookup['_'.charCodeAt(0)] = 63
+
+function getLens (b64) {
+  var len = b64.length
+
+  if (len % 4 > 0) {
+    throw new Error('Invalid string. Length must be a multiple of 4')
+  }
+
+  // Trim off extra bytes after placeholder bytes are found
+  // See: https://github.com/beatgammit/base64-js/issues/42
+  var validLen = b64.indexOf('=')
+  if (validLen === -1) validLen = len
+
+  var placeHoldersLen = validLen === len
+    ? 0
+    : 4 - (validLen % 4)
+
+  return [validLen, placeHoldersLen]
+}
+
+// base64 is 4/3 + up to two characters of the original data
+function byteLength (b64) {
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+}
+
+function _byteLength (b64, validLen, placeHoldersLen) {
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+}
+
+function toByteArray (b64) {
+  var tmp
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
+
+  var arr = new Arr(_byteLength(b64, validLen, placeHoldersLen))
+
+  var curByte = 0
+
+  // if there are placeholders, only get up to the last complete 4 chars
+  var len = placeHoldersLen > 0
+    ? validLen - 4
+    : validLen
+
+  var i
+  for (i = 0; i < len; i += 4) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 18) |
+      (revLookup[b64.charCodeAt(i + 1)] << 12) |
+      (revLookup[b64.charCodeAt(i + 2)] << 6) |
+      revLookup[b64.charCodeAt(i + 3)]
+    arr[curByte++] = (tmp >> 16) & 0xFF
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  if (placeHoldersLen === 2) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 2) |
+      (revLookup[b64.charCodeAt(i + 1)] >> 4)
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  if (placeHoldersLen === 1) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 10) |
+      (revLookup[b64.charCodeAt(i + 1)] << 4) |
+      (revLookup[b64.charCodeAt(i + 2)] >> 2)
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  return arr
+}
+
+function tripletToBase64 (num) {
+  return lookup[num >> 18 & 0x3F] +
+    lookup[num >> 12 & 0x3F] +
+    lookup[num >> 6 & 0x3F] +
+    lookup[num & 0x3F]
+}
+
+function encodeChunk (uint8, start, end) {
+  var tmp
+  var output = []
+  for (var i = start; i < end; i += 3) {
+    tmp =
+      ((uint8[i] << 16) & 0xFF0000) +
+      ((uint8[i + 1] << 8) & 0xFF00) +
+      (uint8[i + 2] & 0xFF)
+    output.push(tripletToBase64(tmp))
+  }
+  return output.join('')
+}
+
+function fromByteArray (uint8) {
+  var tmp
+  var len = uint8.length
+  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
+  var parts = []
+  var maxChunkLength = 16383 // must be multiple of 3
+
+  // go through the array every three bytes, we'll deal with trailing stuff later
+  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
+    parts.push(encodeChunk(
+      uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)
+    ))
+  }
+
+  // pad the end with zeros, but make sure to not forget the extra bytes
+  if (extraBytes === 1) {
+    tmp = uint8[len - 1]
+    parts.push(
+      lookup[tmp >> 2] +
+      lookup[(tmp << 4) & 0x3F] +
+      '=='
+    )
+  } else if (extraBytes === 2) {
+    tmp = (uint8[len - 2] << 8) + uint8[len - 1]
+    parts.push(
+      lookup[tmp >> 10] +
+      lookup[(tmp >> 4) & 0x3F] +
+      lookup[(tmp << 2) & 0x3F] +
+      '='
+    )
+  }
+
+  return parts.join('')
+}
+
+
+/***/ }),
+/* 145 */
+/***/ (function(module, exports) {
+
+module.exports = {
+  "100": "Continue",
+  "101": "Switching Protocols",
+  "102": "Processing",
+  "200": "OK",
+  "201": "Created",
+  "202": "Accepted",
+  "203": "Non-Authoritative Information",
+  "204": "No Content",
+  "205": "Reset Content",
+  "206": "Partial Content",
+  "207": "Multi-Status",
+  "208": "Already Reported",
+  "226": "IM Used",
+  "300": "Multiple Choices",
+  "301": "Moved Permanently",
+  "302": "Found",
+  "303": "See Other",
+  "304": "Not Modified",
+  "305": "Use Proxy",
+  "307": "Temporary Redirect",
+  "308": "Permanent Redirect",
+  "400": "Bad Request",
+  "401": "Unauthorized",
+  "402": "Payment Required",
+  "403": "Forbidden",
+  "404": "Not Found",
+  "405": "Method Not Allowed",
+  "406": "Not Acceptable",
+  "407": "Proxy Authentication Required",
+  "408": "Request Timeout",
+  "409": "Conflict",
+  "410": "Gone",
+  "411": "Length Required",
+  "412": "Precondition Failed",
+  "413": "Payload Too Large",
+  "414": "URI Too Long",
+  "415": "Unsupported Media Type",
+  "416": "Range Not Satisfiable",
+  "417": "Expectation Failed",
+  "418": "I'm a teapot",
+  "421": "Misdirected Request",
+  "422": "Unprocessable Entity",
+  "423": "Locked",
+  "424": "Failed Dependency",
+  "425": "Unordered Collection",
+  "426": "Upgrade Required",
+  "428": "Precondition Required",
+  "429": "Too Many Requests",
+  "431": "Request Header Fields Too Large",
+  "451": "Unavailable For Legal Reasons",
+  "500": "Internal Server Error",
+  "501": "Not Implemented",
+  "502": "Bad Gateway",
+  "503": "Service Unavailable",
+  "504": "Gateway Timeout",
+  "505": "HTTP Version Not Supported",
+  "506": "Variant Also Negotiates",
+  "507": "Insufficient Storage",
+  "508": "Loop Detected",
+  "509": "Bandwidth Limit Exceeded",
+  "510": "Not Extended",
+  "511": "Network Authentication Required"
+}
+
+
+/***/ }),
+/* 146 */,
+/* 147 */,
+/* 148 */
+/***/ (function(module, exports) {
+
+exports.read = function (buffer, offset, isLE, mLen, nBytes) {
+  var e, m
+  var eLen = (nBytes * 8) - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var nBits = -7
+  var i = isLE ? (nBytes - 1) : 0
+  var d = isLE ? -1 : 1
+  var s = buffer[offset + i]
+
+  i += d
+
+  e = s & ((1 << (-nBits)) - 1)
+  s >>= (-nBits)
+  nBits += eLen
+  for (; nBits > 0; e = (e * 256) + buffer[offset + i], i += d, nBits -= 8) {}
+
+  m = e & ((1 << (-nBits)) - 1)
+  e >>= (-nBits)
+  nBits += mLen
+  for (; nBits > 0; m = (m * 256) + buffer[offset + i], i += d, nBits -= 8) {}
+
+  if (e === 0) {
+    e = 1 - eBias
+  } else if (e === eMax) {
+    return m ? NaN : ((s ? -1 : 1) * Infinity)
+  } else {
+    m = m + Math.pow(2, mLen)
+    e = e - eBias
+  }
+  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
+}
+
+exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
+  var e, m, c
+  var eLen = (nBytes * 8) - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
+  var i = isLE ? 0 : (nBytes - 1)
+  var d = isLE ? 1 : -1
+  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
+
+  value = Math.abs(value)
+
+  if (isNaN(value) || value === Infinity) {
+    m = isNaN(value) ? 1 : 0
+    e = eMax
+  } else {
+    e = Math.floor(Math.log(value) / Math.LN2)
+    if (value * (c = Math.pow(2, -e)) < 1) {
+      e--
+      c *= 2
+    }
+    if (e + eBias >= 1) {
+      value += rt / c
+    } else {
+      value += rt * Math.pow(2, 1 - eBias)
+    }
+    if (value * c >= 2) {
+      e++
+      c /= 2
+    }
+
+    if (e + eBias >= eMax) {
+      m = 0
+      e = eMax
+    } else if (e + eBias >= 1) {
+      m = ((value * c) - 1) * Math.pow(2, mLen)
+      e = e + eBias
+    } else {
+      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
+      e = 0
+    }
+  }
+
+  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
+
+  e = (e << mLen) | m
+  eLen += mLen
+  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
+
+  buffer[offset + i - d] |= s * 128
+}
+
+
+/***/ }),
+/* 149 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {/**
@@ -61441,10 +67205,10 @@ function stubFalse() {
 
 module.exports = clone;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(13)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(14)(module)))
 
 /***/ }),
-/* 128 */
+/* 150 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -62621,28 +68385,6 @@ module.exports = difference;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
-/* 129 */,
-/* 130 */,
-/* 131 */,
-/* 132 */,
-/* 133 */,
-/* 134 */,
-/* 135 */,
-/* 136 */,
-/* 137 */,
-/* 138 */,
-/* 139 */,
-/* 140 */,
-/* 141 */,
-/* 142 */,
-/* 143 */,
-/* 144 */,
-/* 145 */,
-/* 146 */,
-/* 147 */,
-/* 148 */,
-/* 149 */,
-/* 150 */,
 /* 151 */,
 /* 152 */,
 /* 153 */,
@@ -62652,37 +68394,795 @@ module.exports = difference;
 /* 157 */,
 /* 158 */,
 /* 159 */,
-/* 160 */
+/* 160 */,
+/* 161 */,
+/* 162 */,
+/* 163 */,
+/* 164 */,
+/* 165 */,
+/* 166 */,
+/* 167 */,
+/* 168 */,
+/* 169 */,
+/* 170 */,
+/* 171 */,
+/* 172 */,
+/* 173 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(module, global) {var __WEBPACK_AMD_DEFINE_RESULT__;/*! https://mths.be/punycode v1.4.1 by @mathias */
+;(function(root) {
+
+	/** Detect free variables */
+	var freeExports = typeof exports == 'object' && exports &&
+		!exports.nodeType && exports;
+	var freeModule = typeof module == 'object' && module &&
+		!module.nodeType && module;
+	var freeGlobal = typeof global == 'object' && global;
+	if (
+		freeGlobal.global === freeGlobal ||
+		freeGlobal.window === freeGlobal ||
+		freeGlobal.self === freeGlobal
+	) {
+		root = freeGlobal;
+	}
+
+	/**
+	 * The `punycode` object.
+	 * @name punycode
+	 * @type Object
+	 */
+	var punycode,
+
+	/** Highest positive signed 32-bit float value */
+	maxInt = 2147483647, // aka. 0x7FFFFFFF or 2^31-1
+
+	/** Bootstring parameters */
+	base = 36,
+	tMin = 1,
+	tMax = 26,
+	skew = 38,
+	damp = 700,
+	initialBias = 72,
+	initialN = 128, // 0x80
+	delimiter = '-', // '\x2D'
+
+	/** Regular expressions */
+	regexPunycode = /^xn--/,
+	regexNonASCII = /[^\x20-\x7E]/, // unprintable ASCII chars + non-ASCII chars
+	regexSeparators = /[\x2E\u3002\uFF0E\uFF61]/g, // RFC 3490 separators
+
+	/** Error messages */
+	errors = {
+		'overflow': 'Overflow: input needs wider integers to process',
+		'not-basic': 'Illegal input >= 0x80 (not a basic code point)',
+		'invalid-input': 'Invalid input'
+	},
+
+	/** Convenience shortcuts */
+	baseMinusTMin = base - tMin,
+	floor = Math.floor,
+	stringFromCharCode = String.fromCharCode,
+
+	/** Temporary variable */
+	key;
+
+	/*--------------------------------------------------------------------------*/
+
+	/**
+	 * A generic error utility function.
+	 * @private
+	 * @param {String} type The error type.
+	 * @returns {Error} Throws a `RangeError` with the applicable error message.
+	 */
+	function error(type) {
+		throw new RangeError(errors[type]);
+	}
+
+	/**
+	 * A generic `Array#map` utility function.
+	 * @private
+	 * @param {Array} array The array to iterate over.
+	 * @param {Function} callback The function that gets called for every array
+	 * item.
+	 * @returns {Array} A new array of values returned by the callback function.
+	 */
+	function map(array, fn) {
+		var length = array.length;
+		var result = [];
+		while (length--) {
+			result[length] = fn(array[length]);
+		}
+		return result;
+	}
+
+	/**
+	 * A simple `Array#map`-like wrapper to work with domain name strings or email
+	 * addresses.
+	 * @private
+	 * @param {String} domain The domain name or email address.
+	 * @param {Function} callback The function that gets called for every
+	 * character.
+	 * @returns {Array} A new string of characters returned by the callback
+	 * function.
+	 */
+	function mapDomain(string, fn) {
+		var parts = string.split('@');
+		var result = '';
+		if (parts.length > 1) {
+			// In email addresses, only the domain name should be punycoded. Leave
+			// the local part (i.e. everything up to `@`) intact.
+			result = parts[0] + '@';
+			string = parts[1];
+		}
+		// Avoid `split(regex)` for IE8 compatibility. See #17.
+		string = string.replace(regexSeparators, '\x2E');
+		var labels = string.split('.');
+		var encoded = map(labels, fn).join('.');
+		return result + encoded;
+	}
+
+	/**
+	 * Creates an array containing the numeric code points of each Unicode
+	 * character in the string. While JavaScript uses UCS-2 internally,
+	 * this function will convert a pair of surrogate halves (each of which
+	 * UCS-2 exposes as separate characters) into a single code point,
+	 * matching UTF-16.
+	 * @see `punycode.ucs2.encode`
+	 * @see <https://mathiasbynens.be/notes/javascript-encoding>
+	 * @memberOf punycode.ucs2
+	 * @name decode
+	 * @param {String} string The Unicode input string (UCS-2).
+	 * @returns {Array} The new array of code points.
+	 */
+	function ucs2decode(string) {
+		var output = [],
+		    counter = 0,
+		    length = string.length,
+		    value,
+		    extra;
+		while (counter < length) {
+			value = string.charCodeAt(counter++);
+			if (value >= 0xD800 && value <= 0xDBFF && counter < length) {
+				// high surrogate, and there is a next character
+				extra = string.charCodeAt(counter++);
+				if ((extra & 0xFC00) == 0xDC00) { // low surrogate
+					output.push(((value & 0x3FF) << 10) + (extra & 0x3FF) + 0x10000);
+				} else {
+					// unmatched surrogate; only append this code unit, in case the next
+					// code unit is the high surrogate of a surrogate pair
+					output.push(value);
+					counter--;
+				}
+			} else {
+				output.push(value);
+			}
+		}
+		return output;
+	}
+
+	/**
+	 * Creates a string based on an array of numeric code points.
+	 * @see `punycode.ucs2.decode`
+	 * @memberOf punycode.ucs2
+	 * @name encode
+	 * @param {Array} codePoints The array of numeric code points.
+	 * @returns {String} The new Unicode string (UCS-2).
+	 */
+	function ucs2encode(array) {
+		return map(array, function(value) {
+			var output = '';
+			if (value > 0xFFFF) {
+				value -= 0x10000;
+				output += stringFromCharCode(value >>> 10 & 0x3FF | 0xD800);
+				value = 0xDC00 | value & 0x3FF;
+			}
+			output += stringFromCharCode(value);
+			return output;
+		}).join('');
+	}
+
+	/**
+	 * Converts a basic code point into a digit/integer.
+	 * @see `digitToBasic()`
+	 * @private
+	 * @param {Number} codePoint The basic numeric code point value.
+	 * @returns {Number} The numeric value of a basic code point (for use in
+	 * representing integers) in the range `0` to `base - 1`, or `base` if
+	 * the code point does not represent a value.
+	 */
+	function basicToDigit(codePoint) {
+		if (codePoint - 48 < 10) {
+			return codePoint - 22;
+		}
+		if (codePoint - 65 < 26) {
+			return codePoint - 65;
+		}
+		if (codePoint - 97 < 26) {
+			return codePoint - 97;
+		}
+		return base;
+	}
+
+	/**
+	 * Converts a digit/integer into a basic code point.
+	 * @see `basicToDigit()`
+	 * @private
+	 * @param {Number} digit The numeric value of a basic code point.
+	 * @returns {Number} The basic code point whose value (when used for
+	 * representing integers) is `digit`, which needs to be in the range
+	 * `0` to `base - 1`. If `flag` is non-zero, the uppercase form is
+	 * used; else, the lowercase form is used. The behavior is undefined
+	 * if `flag` is non-zero and `digit` has no uppercase form.
+	 */
+	function digitToBasic(digit, flag) {
+		//  0..25 map to ASCII a..z or A..Z
+		// 26..35 map to ASCII 0..9
+		return digit + 22 + 75 * (digit < 26) - ((flag != 0) << 5);
+	}
+
+	/**
+	 * Bias adaptation function as per section 3.4 of RFC 3492.
+	 * https://tools.ietf.org/html/rfc3492#section-3.4
+	 * @private
+	 */
+	function adapt(delta, numPoints, firstTime) {
+		var k = 0;
+		delta = firstTime ? floor(delta / damp) : delta >> 1;
+		delta += floor(delta / numPoints);
+		for (/* no initialization */; delta > baseMinusTMin * tMax >> 1; k += base) {
+			delta = floor(delta / baseMinusTMin);
+		}
+		return floor(k + (baseMinusTMin + 1) * delta / (delta + skew));
+	}
+
+	/**
+	 * Converts a Punycode string of ASCII-only symbols to a string of Unicode
+	 * symbols.
+	 * @memberOf punycode
+	 * @param {String} input The Punycode string of ASCII-only symbols.
+	 * @returns {String} The resulting string of Unicode symbols.
+	 */
+	function decode(input) {
+		// Don't use UCS-2
+		var output = [],
+		    inputLength = input.length,
+		    out,
+		    i = 0,
+		    n = initialN,
+		    bias = initialBias,
+		    basic,
+		    j,
+		    index,
+		    oldi,
+		    w,
+		    k,
+		    digit,
+		    t,
+		    /** Cached calculation results */
+		    baseMinusT;
+
+		// Handle the basic code points: let `basic` be the number of input code
+		// points before the last delimiter, or `0` if there is none, then copy
+		// the first basic code points to the output.
+
+		basic = input.lastIndexOf(delimiter);
+		if (basic < 0) {
+			basic = 0;
+		}
+
+		for (j = 0; j < basic; ++j) {
+			// if it's not a basic code point
+			if (input.charCodeAt(j) >= 0x80) {
+				error('not-basic');
+			}
+			output.push(input.charCodeAt(j));
+		}
+
+		// Main decoding loop: start just after the last delimiter if any basic code
+		// points were copied; start at the beginning otherwise.
+
+		for (index = basic > 0 ? basic + 1 : 0; index < inputLength; /* no final expression */) {
+
+			// `index` is the index of the next character to be consumed.
+			// Decode a generalized variable-length integer into `delta`,
+			// which gets added to `i`. The overflow checking is easier
+			// if we increase `i` as we go, then subtract off its starting
+			// value at the end to obtain `delta`.
+			for (oldi = i, w = 1, k = base; /* no condition */; k += base) {
+
+				if (index >= inputLength) {
+					error('invalid-input');
+				}
+
+				digit = basicToDigit(input.charCodeAt(index++));
+
+				if (digit >= base || digit > floor((maxInt - i) / w)) {
+					error('overflow');
+				}
+
+				i += digit * w;
+				t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
+
+				if (digit < t) {
+					break;
+				}
+
+				baseMinusT = base - t;
+				if (w > floor(maxInt / baseMinusT)) {
+					error('overflow');
+				}
+
+				w *= baseMinusT;
+
+			}
+
+			out = output.length + 1;
+			bias = adapt(i - oldi, out, oldi == 0);
+
+			// `i` was supposed to wrap around from `out` to `0`,
+			// incrementing `n` each time, so we'll fix that now:
+			if (floor(i / out) > maxInt - n) {
+				error('overflow');
+			}
+
+			n += floor(i / out);
+			i %= out;
+
+			// Insert `n` at position `i` of the output
+			output.splice(i++, 0, n);
+
+		}
+
+		return ucs2encode(output);
+	}
+
+	/**
+	 * Converts a string of Unicode symbols (e.g. a domain name label) to a
+	 * Punycode string of ASCII-only symbols.
+	 * @memberOf punycode
+	 * @param {String} input The string of Unicode symbols.
+	 * @returns {String} The resulting Punycode string of ASCII-only symbols.
+	 */
+	function encode(input) {
+		var n,
+		    delta,
+		    handledCPCount,
+		    basicLength,
+		    bias,
+		    j,
+		    m,
+		    q,
+		    k,
+		    t,
+		    currentValue,
+		    output = [],
+		    /** `inputLength` will hold the number of code points in `input`. */
+		    inputLength,
+		    /** Cached calculation results */
+		    handledCPCountPlusOne,
+		    baseMinusT,
+		    qMinusT;
+
+		// Convert the input in UCS-2 to Unicode
+		input = ucs2decode(input);
+
+		// Cache the length
+		inputLength = input.length;
+
+		// Initialize the state
+		n = initialN;
+		delta = 0;
+		bias = initialBias;
+
+		// Handle the basic code points
+		for (j = 0; j < inputLength; ++j) {
+			currentValue = input[j];
+			if (currentValue < 0x80) {
+				output.push(stringFromCharCode(currentValue));
+			}
+		}
+
+		handledCPCount = basicLength = output.length;
+
+		// `handledCPCount` is the number of code points that have been handled;
+		// `basicLength` is the number of basic code points.
+
+		// Finish the basic string - if it is not empty - with a delimiter
+		if (basicLength) {
+			output.push(delimiter);
+		}
+
+		// Main encoding loop:
+		while (handledCPCount < inputLength) {
+
+			// All non-basic code points < n have been handled already. Find the next
+			// larger one:
+			for (m = maxInt, j = 0; j < inputLength; ++j) {
+				currentValue = input[j];
+				if (currentValue >= n && currentValue < m) {
+					m = currentValue;
+				}
+			}
+
+			// Increase `delta` enough to advance the decoder's <n,i> state to <m,0>,
+			// but guard against overflow
+			handledCPCountPlusOne = handledCPCount + 1;
+			if (m - n > floor((maxInt - delta) / handledCPCountPlusOne)) {
+				error('overflow');
+			}
+
+			delta += (m - n) * handledCPCountPlusOne;
+			n = m;
+
+			for (j = 0; j < inputLength; ++j) {
+				currentValue = input[j];
+
+				if (currentValue < n && ++delta > maxInt) {
+					error('overflow');
+				}
+
+				if (currentValue == n) {
+					// Represent delta as a generalized variable-length integer
+					for (q = delta, k = base; /* no condition */; k += base) {
+						t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
+						if (q < t) {
+							break;
+						}
+						qMinusT = q - t;
+						baseMinusT = base - t;
+						output.push(
+							stringFromCharCode(digitToBasic(t + qMinusT % baseMinusT, 0))
+						);
+						q = floor(qMinusT / baseMinusT);
+					}
+
+					output.push(stringFromCharCode(digitToBasic(q, 0)));
+					bias = adapt(delta, handledCPCountPlusOne, handledCPCount == basicLength);
+					delta = 0;
+					++handledCPCount;
+				}
+			}
+
+			++delta;
+			++n;
+
+		}
+		return output.join('');
+	}
+
+	/**
+	 * Converts a Punycode string representing a domain name or an email address
+	 * to Unicode. Only the Punycoded parts of the input will be converted, i.e.
+	 * it doesn't matter if you call it on a string that has already been
+	 * converted to Unicode.
+	 * @memberOf punycode
+	 * @param {String} input The Punycoded domain name or email address to
+	 * convert to Unicode.
+	 * @returns {String} The Unicode representation of the given Punycode
+	 * string.
+	 */
+	function toUnicode(input) {
+		return mapDomain(input, function(string) {
+			return regexPunycode.test(string)
+				? decode(string.slice(4).toLowerCase())
+				: string;
+		});
+	}
+
+	/**
+	 * Converts a Unicode string representing a domain name or an email address to
+	 * Punycode. Only the non-ASCII parts of the domain name will be converted,
+	 * i.e. it doesn't matter if you call it with a domain that's already in
+	 * ASCII.
+	 * @memberOf punycode
+	 * @param {String} input The domain name or email address to convert, as a
+	 * Unicode string.
+	 * @returns {String} The Punycode representation of the given domain name or
+	 * email address.
+	 */
+	function toASCII(input) {
+		return mapDomain(input, function(string) {
+			return regexNonASCII.test(string)
+				? 'xn--' + encode(string)
+				: string;
+		});
+	}
+
+	/*--------------------------------------------------------------------------*/
+
+	/** Define the public API */
+	punycode = {
+		/**
+		 * A string representing the current Punycode.js version number.
+		 * @memberOf punycode
+		 * @type String
+		 */
+		'version': '1.4.1',
+		/**
+		 * An object of methods to convert from JavaScript's internal character
+		 * representation (UCS-2) to Unicode code points, and back.
+		 * @see <https://mathiasbynens.be/notes/javascript-encoding>
+		 * @memberOf punycode
+		 * @type Object
+		 */
+		'ucs2': {
+			'decode': ucs2decode,
+			'encode': ucs2encode
+		},
+		'decode': decode,
+		'encode': encode,
+		'toASCII': toASCII,
+		'toUnicode': toUnicode
+	};
+
+	/** Expose `punycode` */
+	// Some AMD build optimizers, like r.js, check for specific condition patterns
+	// like the following:
+	if (
+		true
+	) {
+		!(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
+			return punycode;
+		}.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	} else if (freeExports && freeModule) {
+		if (module.exports == freeExports) {
+			// in Node.js, io.js, or RingoJS v0.8.0+
+			freeModule.exports = punycode;
+		} else {
+			// in Narwhal or RingoJS v0.7.0-
+			for (key in punycode) {
+				punycode.hasOwnProperty(key) && (freeExports[key] = punycode[key]);
+			}
+		}
+	} else {
+		// in Rhino or a web browser
+		root.punycode = punycode;
+	}
+
+}(this));
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(14)(module), __webpack_require__(4)))
+
+/***/ }),
+/* 174 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+
+// If obj.hasOwnProperty has been overridden, then calling
+// obj.hasOwnProperty(prop) will break.
+// See: https://github.com/joyent/node/issues/1707
+function hasOwnProperty(obj, prop) {
+  return Object.prototype.hasOwnProperty.call(obj, prop);
+}
+
+module.exports = function(qs, sep, eq, options) {
+  sep = sep || '&';
+  eq = eq || '=';
+  var obj = {};
+
+  if (typeof qs !== 'string' || qs.length === 0) {
+    return obj;
+  }
+
+  var regexp = /\+/g;
+  qs = qs.split(sep);
+
+  var maxKeys = 1000;
+  if (options && typeof options.maxKeys === 'number') {
+    maxKeys = options.maxKeys;
+  }
+
+  var len = qs.length;
+  // maxKeys <= 0 means that we should not limit keys count
+  if (maxKeys > 0 && len > maxKeys) {
+    len = maxKeys;
+  }
+
+  for (var i = 0; i < len; ++i) {
+    var x = qs[i].replace(regexp, '%20'),
+        idx = x.indexOf(eq),
+        kstr, vstr, k, v;
+
+    if (idx >= 0) {
+      kstr = x.substr(0, idx);
+      vstr = x.substr(idx + 1);
+    } else {
+      kstr = x;
+      vstr = '';
+    }
+
+    k = decodeURIComponent(kstr);
+    v = decodeURIComponent(vstr);
+
+    if (!hasOwnProperty(obj, k)) {
+      obj[k] = v;
+    } else if (isArray(obj[k])) {
+      obj[k].push(v);
+    } else {
+      obj[k] = [obj[k], v];
+    }
+  }
+
+  return obj;
+};
+
+var isArray = Array.isArray || function (xs) {
+  return Object.prototype.toString.call(xs) === '[object Array]';
+};
+
+
+/***/ }),
+/* 175 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+
+var stringifyPrimitive = function(v) {
+  switch (typeof v) {
+    case 'string':
+      return v;
+
+    case 'boolean':
+      return v ? 'true' : 'false';
+
+    case 'number':
+      return isFinite(v) ? v : '';
+
+    default:
+      return '';
+  }
+};
+
+module.exports = function(obj, sep, eq, name) {
+  sep = sep || '&';
+  eq = eq || '=';
+  if (obj === null) {
+    obj = undefined;
+  }
+
+  if (typeof obj === 'object') {
+    return map(objectKeys(obj), function(k) {
+      var ks = encodeURIComponent(stringifyPrimitive(k)) + eq;
+      if (isArray(obj[k])) {
+        return map(obj[k], function(v) {
+          return ks + encodeURIComponent(stringifyPrimitive(v));
+        }).join(sep);
+      } else {
+        return ks + encodeURIComponent(stringifyPrimitive(obj[k]));
+      }
+    }).join(sep);
+
+  }
+
+  if (!name) return '';
+  return encodeURIComponent(stringifyPrimitive(name)) + eq +
+         encodeURIComponent(stringifyPrimitive(obj));
+};
+
+var isArray = Array.isArray || function (xs) {
+  return Object.prototype.toString.call(xs) === '[object Array]';
+};
+
+function map (xs, f) {
+  if (xs.map) return xs.map(f);
+  var res = [];
+  for (var i = 0; i < xs.length; i++) {
+    res.push(f(xs[i], i));
+  }
+  return res;
+}
+
+var objectKeys = Object.keys || function (obj) {
+  var res = [];
+  for (var key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) res.push(key);
+  }
+  return res;
+};
+
+
+/***/ }),
+/* 176 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+exports.decode = exports.parse = __webpack_require__(174);
+exports.encode = exports.stringify = __webpack_require__(175);
+
+
+/***/ }),
+/* 177 */,
+/* 178 */,
+/* 179 */,
+/* 180 */,
+/* 181 */,
+/* 182 */,
+/* 183 */,
+/* 184 */,
+/* 185 */,
+/* 186 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_dependencyManager__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_dependencyManager___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__common_dependencyManager__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common_util__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_async__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_async___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_async__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__ = __webpack_require__(76);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__WindowAbstractions_FinsembleWindowInternal__ = __webpack_require__(63);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__MultiWindowFeatures_autoArrange__ = __webpack_require__(165);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_system__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7__common_system__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__dockableWindow__ = __webpack_require__(75);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__boxMath__ = __webpack_require__(50);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__clients_launcherClient__ = __webpack_require__(41);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__clients_launcherClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10__clients_launcherClient__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__clients_configClient__ = __webpack_require__(15);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__clients_configClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_11__clients_configClient__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__clients_logger__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_12__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__common_constants__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__common_constants___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_13__common_constants__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__common_window_windowGroup__ = __webpack_require__(60);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15_lodash__ = __webpack_require__(34);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15_lodash___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_15_lodash__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__monitorUpdateHandler__ = __webpack_require__(115);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__monitorUpdateHandler___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_16__monitorUpdateHandler__);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_util__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_async__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_async___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_async__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__dockingCalculator__ = __webpack_require__(85);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__WindowAbstractions_FinsembleWindowInternal__ = __webpack_require__(71);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__MultiWindowFeatures_autoArrange__ = __webpack_require__(191);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_system__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6__common_system__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__dockableWindow__ = __webpack_require__(84);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__boxMath__ = __webpack_require__(49);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__clients_launcherClient__ = __webpack_require__(45);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__clients_launcherClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9__clients_launcherClient__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__clients_configClient__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__clients_configClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10__clients_configClient__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__clients_logger__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_11__clients_logger__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__common_constants__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__common_constants___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_12__common_constants__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13_lodash__ = __webpack_require__(38);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13_lodash___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_13_lodash__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__monitorUpdateHandler__ = __webpack_require__(133);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__monitorUpdateHandler___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_14__monitorUpdateHandler__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__common_systemManagerClient__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__common_systemManagerClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_15__common_systemManagerClient__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__clients_workspaceClient__ = __webpack_require__(52);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__clients_workspaceClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_16__clients_workspaceClient__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_17_http__ = __webpack_require__(200);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_17_http___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_17_http__);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
@@ -62700,11 +69200,11 @@ window.methodCalls = {};
 
 
 
-__WEBPACK_IMPORTED_MODULE_10__clients_launcherClient___default.a.initialize();
+__WEBPACK_IMPORTED_MODULE_9__clients_launcherClient___default.a.initialize();
 
-__WEBPACK_IMPORTED_MODULE_11__clients_configClient___default.a.initialize();
+__WEBPACK_IMPORTED_MODULE_10__clients_configClient___default.a.initialize();
 
-__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.start();
+__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.start();
 var DockingMain_AUTO_ARRANGE_CHANNEL = "DockingService.AutoarrangeStatus";
 var serviceConfig = {};
 var groupData = {};
@@ -62712,7 +69212,11 @@ var groupData = {};
 
 
 
-const APPLICATION_STATE_CHANNEL = __WEBPACK_IMPORTED_MODULE_13__common_constants__["APPLICATION_STATE_CHANNEL"];
+const APPLICATION_STATE_CHANNEL = __WEBPACK_IMPORTED_MODULE_12__common_constants__["APPLICATION_STATE_CHANNEL"];
+
+
+
+
 //Paste this into a toolbar's console.
 // [1,2,3,4,5].forEach(num => FSBL.Clients.LauncherClient.spawn("Welcome Component", {name: "window" + num, addToWorkspace: true}))
 
@@ -62728,7 +69232,7 @@ const clone = function (obj) {
 	try {
 		return JSON.parse(JSON.stringify(obj));
 	} catch (e) {
-		__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.error("clone error", e);
+		__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("clone error", e);
 		return e;
 	}
 };
@@ -62738,7 +69242,7 @@ let CALCULATOR = {};
  * @constructor
  */
 
-class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /* default */] {
+class DockingMain extends __WEBPACK_IMPORTED_MODULE_3__dockingCalculator__["a" /* default */] {
 	/** @alias DockingMain# */
 
 	constructor(params, dependencies) {
@@ -62755,7 +69259,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		CALCULATOR.removeWindow = super.removeWindow.bind(this);
 		CALCULATOR.getBoundsOfGroupWindows = super.getBoundsOfGroupWindows.bind(this);
 		CALCULATOR.cleanupSharedEdges = super.cleanupSharedEdges.bind(this);
-		this.AutoArrange = new __WEBPACK_IMPORTED_MODULE_6__MultiWindowFeatures_autoArrange__["a" /* default */]({
+		this.AutoArrange = new __WEBPACK_IMPORTED_MODULE_5__MultiWindowFeatures_autoArrange__["a" /* default */]({
 			DockingCalculator: this
 		});
 		//for reverting autoarrange
@@ -62773,7 +69277,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		this.defaultHeight = params.defaultHeight;
 		this.defaultWidth = params.defaultWidth;
 
-		__WEBPACK_IMPORTED_MODULE_1__common_util__["Monitors"].on("monitors-changed", this.monitorsChanged.bind(this));
+		__WEBPACK_IMPORTED_MODULE_0__common_util__["Monitors"].on("monitors-changed", this.monitorsChanged.bind(this));
 
 		this.activeWorkspace = { name: "" };
 		this.bindAllFunctions();
@@ -62802,12 +69306,12 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		    tiling = true;
 
 		if (serviceConfig.hasOwnProperty("tabbing") && serviceConfig.tabbing.hasOwnProperty("enabled")) {
-			__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Setting tabbing prop based on config state: " + serviceConfig.tabbing.enabled);
+			__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Setting tabbing prop based on config state: " + serviceConfig.tabbing.enabled);
 			tabbing = serviceConfig.tabbing.enabled;
 		}
 
 		if (serviceConfig.hasOwnProperty("tiling") && serviceConfig.tiling.hasOwnProperty("enabled")) {
-			__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Setting tiling prop based on config state: " + serviceConfig.tiling.enabled);
+			__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Setting tiling prop based on config state: " + serviceConfig.tiling.enabled);
 			tiling = serviceConfig.tiling.enabled;
 		}
 
@@ -62822,26 +69326,18 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
   * @param {boolean} triggeredByAutoArrange True if the move was triggered by auto arrange. If the move was triggered by auto arrange, we don't want to delete cached window positions.
   */
 	onMoveComplete(win, triggeredByAutoArrange) {
-		let { monitor } = win;
-
-		if (!triggeredByAutoArrange && this.cachedPositions[monitor.name] && this.cachedPositions[monitor.name][win.name]) {
-			delete this.cachedPositions[monitor.name][win.name];
+		//If an autoarrangeable window is moved, and the move isn't triggered by auto arrange, we want to wipe the status
+		if (!triggeredByAutoArrange) {
+			this.resetAutoArrangeForAWindowsMonitor(win);
 		}
 
 		this.tellWindowsToSaveLocation();
 		this.updateGroupData();
-
-		//If an autoarrangeable window is moved, and the move isn't trigerred by auto arrange, we want to wipe the status
-		if (!triggeredByAutoArrange && this.AutoArrange.isArranged[monitor.name] && this.getWindow(win.name).win.allowAutoArrange) {
-			this.AutoArrange.isArranged[monitor.name] = false;
-			this.cachedPositions[monitor.name] = {};
-			this.sendAutoArrangeStatusUpdate();
-		}
 	}
 
 	updateGroupData() {
 		const changed = this._updateGroupData();
-		__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Publishing Group Update: DockingCalc.updateGroupData");
+		__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Publishing Group Update: DockingCalc.updateGroupData");
 		if (changed) {
 			this.publishGroupUpdate();
 		}
@@ -62887,16 +69383,17 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		if (self.registrationPending[windowName]) {
 			let deregisterArgs = { err, response }; // save original args to use when later unregistering
 			self.deregistrationPending[windowName] = deregisterArgs;
-			__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.info("deregisterWindow: creating pending deregistration", windowName);
+			__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.info("deregisterWindow: creating pending deregistration", windowName);
 		} else {
 			// no registration pending so continue with deregistration
 			let registeredWindows = self.getWindowNames();
-			__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.info("Trying to deregisterWindow", windowName);
+			__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.info("Trying to deregisterWindow", windowName);
 			if (!registeredWindows.includes(windowName)) {
-				__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Window tried to deregister, but never registered", windowName);
+				__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Window tried to deregister, but never registered", windowName);
 				return;
 			}
 			let win = self.getWindow(windowName);
+			self.AutoArrange.reconcileStackDeletionWithAutoArrangedWindows(win);
 
 			if (response.data.removeFromWorkspace) {
 				let bounds = win.getBounds();
@@ -62908,13 +69405,13 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 				self.wipeSnapRelationships(windowName);
 				self.removeWindow(windowName);
 				if (movableGroup && fillHoleInGroup) {
-					__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("docking.deregisterWindow", windowName, movableGroup, fillHoleInGroup);
+					__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("docking.deregisterWindow", windowName, movableGroup, fillHoleInGroup);
 					console.debug("docking.deregisterWindow", windowName, movableGroup, fillHoleInGroup);
 					movableGroup.fillHole(bounds);
 					self.cleanupGroupGaps(movableGroup);
 					self.buildSnapRelationshipsForGroup(movableGroup);
 				} else {
-					__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("docking.deregisterWindow fix option", windowName, movableGroup, fillHoleInGroup);
+					__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("docking.deregisterWindow fix option", windowName, movableGroup, fillHoleInGroup);
 					console.debug("docking.deregisterWindow fix option", windowName, movableGroup, fillHoleInGroup);
 					[movableGroup, immobileGroup].forEach(grp => grp && self.fixGroupMembership(grp));
 				}
@@ -62932,8 +69429,47 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 				self.onMoveComplete(win);
 			}
 
-			__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.info("deregisterWindow: complete", windowName);
-			__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Docking: Registered Windows", Object.keys(self.getWindows()));
+			__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.info("deregisterWindow: complete", windowName);
+			__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Docking: Registered Windows", Object.keys(self.getWindows()));
+		}
+	}
+
+	/**
+  * Given a window name, reset the auto arrange status for the monitor that window is on
+  * @param {object | string} window A window name or docking window object
+  */
+	resetAutoArrangeForAWindowsMonitor(window) {
+		let win;
+
+		if (typeof window === "string" || window.hasOwnProperty("name")) {
+			//If window is a string or has a name property we can use it to get the window
+			const name = window.hasOwnProperty("name") ? window.name : window;
+			win = this.getWindow(name);
+
+			//Window might have already deregistered. Check to see if a window was returned
+			if (!win) {
+				//If the window wasn't found return
+				return;
+			}
+		}
+
+		const { monitor } = win;
+
+		if (!monitor) {
+			//If the monitor for the given window can't be found the auto arrange status reset will not succeed; return			
+			return;
+		}
+
+		/*
+  	12/11/19 JC - Previously, this was unthought of, but when a window is closed the auto arrange status should be wiped.
+  	Otherwise you end up with a case where you can auto arrange some windows, close a window in that arrangement, and
+  	now your auto arrange status is still true but clicking auto arrange will re-arrange, not restore, the remaining windows.
+  */
+		if (this.AutoArrange.isArranged[monitor.name] && win.win.allowAutoArrange !== false) {
+			this.AutoArrange.isArranged[monitor.name] = false;
+			delete this.cachedPositions[monitor.name][win.name];
+			this.cachedPositions[monitor.name] = {};
+			this.sendAutoArrangeStatusUpdate();
 		}
 	}
 
@@ -62974,6 +69510,9 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 
 	//If a window closes uncleanly, we will clean up docking.
 	onWindowClosed(err, response) {
+		if (response.data.name.indexOf("StackedWindow") === -1) {
+			this.resetAutoArrangeForAWindowsMonitor(response.data.name);
+		}
 		this.deregisterWindow(this, null, response);
 		this.updateGroupData();
 	}
@@ -62985,16 +69524,17 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 	createRouterEndpoints() {
 		var self = this;
 		this.dockableWindows = {};
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.subscribe(__WEBPACK_IMPORTED_MODULE_13__common_constants__["WORKSPACE"].UPDATE_PUBSUB, function (err, response) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.subscribe(__WEBPACK_IMPORTED_MODULE_12__common_constants__["WORKSPACE"].UPDATE_PUBSUB, function (err, response) {
 			if (response.data.reason === "workspace:load:dataRetrieved" || response.data.reason === "workspace:load:finished" || response.data.reason === "rename") {
 				self.handleWorkspaceUpdate(err, response);
 			}
 		});
 
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addListener("DockingService.showAtMousePosition", (err, response) => {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addListener("DockingService.showAtMousePosition", (err, response) => {
+			this.dockingReady || __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking API invoked before ready", response);
 			let windowIdentifier = response.data;
 			let win = self.getWindow(windowIdentifier.windowName);
-			fin.desktop.System.getMousePosition(position => {
+			__WEBPACK_IMPORTED_MODULE_6__common_system__["System"].getMousePosition((err, position) => {
 				//Here we generate a fake event to move the window where we want it to go. This will cause docking to go through its typical event loop, undock the window, and everything else the user expects.
 				let bounds = win.getBounds();
 
@@ -63018,7 +69558,8 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		//RouterClient.addResponder(CHANNELS.register, this.addToRegistrationQueue);
 
 		// Handler for incoming docking registration request for specified window.
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addResponder("DockingService.registerWindow", function (err, message) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addResponder("DockingService.registerWindow", function (err, message) {
+			self.dockingReady || __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking API invoked before ready", message);
 			var data = message.data;
 			if (self.getWindow(data.name)) {
 				//If the window has already registered with docking, it does not need to register again
@@ -63031,23 +69572,23 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 			// if a deregistration is pending (i.e. waiting on previous registration to complete), then this new registration and pending deregistration cancels each other
 			// this case improbably case can only happen with a rapid series of a register followed by deregister and another register, all before the first register completes
 			if (self.deregistrationPending[data.name]) {
-				__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.info("registerWindow: incoming registration cancelled by pending deregistration", data.name);
+				__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.info("registerWindow: incoming registration cancelled by pending deregistration", data.name);
 				delete self.deregistrationPending[data.name];
 			} else {
-				__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.info("registerWindow: starting registration", data.name);
+				__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.info("registerWindow: starting registration", data.name);
 				self.registrationPending[data.name] = true; // mark pending registration (needed to handle deregisterWindow because register is async, leaving a timing gap)
 
-				if (!data.windowType) data.windowType = "OpenFinWindow";
-				__WEBPACK_IMPORTED_MODULE_5__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].getInstance(data, (err, windowWrap) => {
+				if (!data.windowType) data.windowType = "WebWindow";
+				__WEBPACK_IMPORTED_MODULE_4__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].getInstance(data, (err, windowWrap) => {
 					if (err || windowWrap === null) {
-						__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.error("Docking: registerWindow. addWindow err", message.data.name, err);
+						__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking: registerWindow. addWindow err", message.data.name, err);
 						return;
 					}
 					if (message.data.options && message.data.options.canGroup === false) {
 						self.addToGroupBlacklist(data.name);
 					}
 
-					__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.info("Docking: registerWindow. addWindow", message.data.name, message.data);
+					__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.info("Docking: registerWindow. addWindow", message.data.name, message.data);
 					let dockingOptions = new DefaultDockingOptions(data, self.MINIMUM_HEIGHT, self.MINIMUM_WIDTH);
 
 					windowWrap.dockingOptions = dockingOptions;
@@ -63076,8 +69617,8 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 
 						self.moveWindowOutOfClaimedSpaceByName(data.name, true);
 
-						__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.info("registerWindow: registration complete", data.name);
-						__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Docking: Registered Windows", Object.keys(self.getWindows()));
+						__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.info("registerWindow: registration complete", data.name);
+						__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Docking: Registered Windows", Object.keys(self.getWindows()));
 
 						// registration complete so can clear marker for pending registration; deregistrationWindow looks for this same marker
 						delete self.registrationPending[data.name];
@@ -63087,8 +69628,9 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 							let deregisterArgs = self.deregistrationPending[data.name]; // get the original deregister arguments
 							self.deregisterWindow(self, deregisterArgs.err, deregisterArgs.response); // process the pending deregister
 							delete self.deregistrationPending[data.name]; // pending deregistration has been processed so delete
-							__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.info("deregisterWindow: pending deregistration processed", data.name);
+							__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.info("deregisterWindow: pending deregistration processed", data.name);
 						}
+						self.AutoArrange.reconcileStackCreationWithAutoArrangedWindows(data);
 					});
 				});
 			}
@@ -63097,13 +69639,14 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		/**
    * Not sure we'll need this any more since we have the wrappers. Leaving in until we can clarify.
    */
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addPubSubResponder(/WindowMove.*/, {});
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addPubSubResponder(/WindowMove.*/, {});
 
 		//Here we set the initial state of the two group topics (WORKSPACE_GROUP_UPDATE is the old/legacy one)
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addPubSubResponder(__WEBPACK_IMPORTED_MODULE_13__common_constants__["DOCKING"].GROUP_UPDATE, this.buildGroupUpdate());
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addPubSubResponder(__WEBPACK_IMPORTED_MODULE_13__common_constants__["DOCKING"].WORKSPACE_GROUP_UPDATE, this.buildWorkspaceGroupUpdate());
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addPubSubResponder(__WEBPACK_IMPORTED_MODULE_12__common_constants__["DOCKING"].GROUP_UPDATE, this.buildGroupUpdate());
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addPubSubResponder(__WEBPACK_IMPORTED_MODULE_12__common_constants__["DOCKING"].WORKSPACE_GROUP_UPDATE, this.buildWorkspaceGroupUpdate());
 
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addResponder("DockingService.moveWindow", (err, message) => {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addResponder("DockingService.moveWindow", (err, message) => {
+			this.dockingReady || __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking API invoked before ready", message);
 			if (Object.keys(message.data).length) {
 				//don't throw an error if window isn't found.
 				if (!self.getWindow(message.name, false)) {
@@ -63119,48 +69662,58 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		/**
    * When groupMode changes in a toolbar (or any component), it uses PubSub to publish a state change.
    */
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addPubSubResponder("DockingService.groupMode", {});
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addPubSubResponder("DockingService.groupMode", {});
 
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.subscribe("WindowMoved", (err, response) => {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.subscribe("WindowMoved", (err, response) => {
 			//this.onMouseUp();
 		});
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.subscribe("monitorInfo", function (err, response) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.subscribe("monitorInfo", function (err, response) {
 			self.updateMonitorInfo(response.data);
 		});
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addResponder("DockingService.getGroupMode", function (err, message) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addResponder("DockingService.getGroupMode", function (err, message) {
+			self.dockingReady || __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking API invoked before ready", message);
 			message.sendQueryResponse(null, self.getGroupMode());
 		});
 
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addResponder("DockingService.getBounds", function (err, message) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addResponder("DockingService.getBounds", function (err, message) {
+			self.dockingReady || __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking API invoked before ready", message);
 			self.getBounds(message.data, function (err, bounds) {
 				message.sendQueryResponse(err, bounds);
 			});
 		});
 
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addListener("DockingService.toggleGroupMode", function (err, message) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addListener("DockingService.toggleGroupMode", function (err, message) {
+			self.dockingReady || __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking API invoked before ready", message);
 			var groupMode = self.getGroupMode();
 			groupMode.enabled = !groupMode.enabled;
 			self.setGroupMode(groupMode);
 		});
 
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addListener("DockingService.updateWindowLocation", function (err, message) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addListener("DockingService.updateWindowLocation", function (err, message) {
+			self.dockingReady || __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking API invoked before ready", message);
 			var updateWindow = self.getWindow(message.data.windowName, false);
 			//we get updates for _every_ window when their location changes via launcherClient.showWindow. Even if they aren't registered with docking. This if statement prevents errors from showing up in the logger.
 			if (updateWindow) {
 				updateWindow.setBounds(message.data.location);
 			}
 		});
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addListener("DockingService.hyperfocusGroup", function (err, message) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addListener("DockingService.hyperfocusGroup", function (err, message) {
+			__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.warn("hyperFocus is deprecated as of version 4.0.0. This functionality may be removed in a future release");
+			console.warn("hyperFocus is deprecated as of version 4.0.0. This functionality may be removed in a future release");
+
+			self.dockingReady || __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking API invoked before ready", message);
 			DockingMain.hyperFocus(message.data);
 		});
 
 		/**
    * Auto-arrange doesn't throw disable-frame-bounds-changed events, since it uses `setBounds` under the hood. So this will just go through the windows and update their positions.
    */
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addListener("DockingService.updateWindowPositions", function (err, response) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addListener("DockingService.updateWindowPositions", function (err, response) {
+			self.dockingReady || __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking API invoked before ready", response);
 			self.updateWindowPositions();
 		});
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addListener("DockingService.formGroup", function (err, response) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addListener("DockingService.formGroup", function (err, response) {
+			self.dockingReady || __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking API invoked before ready", response);
 			self.formGroup(response.data.windowName, { isMovable: true });
 			self.updateGroupData();
 			//Logger.system.debug("Publishing Group Update: FormGroup");
@@ -63168,7 +69721,8 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		/**
    * Called from the launcherClient after `spawn` is invoked. Will group two or more windows.
    */
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addResponder("DockingService.groupWindows", function (err, message) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addResponder("DockingService.groupWindows", function (err, message) {
+			self.dockingReady || __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking API invoked before ready", message);
 			self.groupWindows(message.data, function (err) {
 				self.updateGroupData();
 				//Logger.system.debug("Publishing Group Update: GroupWindows");
@@ -63179,7 +69733,8 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 			});
 		});
 		//@todo put this in a real function...
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addResponder("DockingService.leaveGroup", function (err, response) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addResponder("DockingService.leaveGroup", function (err, response) {
+			self.dockingReady || __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking API invoked before ready", response);
 			let windowName = response.data.name;
 			let movableGroup = self.getMovableGroup(windowName);
 			let immovableGroup = self.getImmobileGroup(windowName);
@@ -63218,7 +69773,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 			}
 
 			if (!self.groupMode.undockDisbandsEntireGroup) {
-				__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("LeaveGroup, adding window back to docking.", leavingWindow.name);
+				__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("LeaveGroup, adding window back to docking.", leavingWindow.name);
 				CALCULATOR.addWindow(leavingWindow.name, leavingWindow);
 			}
 
@@ -63235,7 +69790,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 			response.sendQueryResponse(null, groupList);
 		});
 
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addResponder("DockingService.getWindowsInGroup", function (err, response) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addResponder("DockingService.getWindowsInGroup", function (err, response) {
 			let grp = self.getGroup(response.data.groupName);
 			if (err) return response.sendQueryResponse(err, null);
 
@@ -63249,7 +69804,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 			response.sendQueryResponse(error, windowList);
 		});
 
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addResponder("DockingService.getGroupObjectsForWindow", (err, response) => {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addResponder("DockingService.getGroupObjectsForWindow", (err, response) => {
 			let win = self.getWindow(response.data.name || response.data.windowName);
 			if (win) {
 				let responseObject = win.groupNames.map(groupName => {
@@ -63263,14 +69818,14 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 			}
 			response.sendQueryResponse("window not found");
 		});
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addResponder("DockingService.getGroupsForWindow", function (err, response) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addResponder("DockingService.getGroupsForWindow", function (err, response) {
 			let win = self.getWindow(response.data.name || response.data.windowName);
 			if (win) {
 				return response.sendQueryResponse(null, win.getGroupNames());
 			}
 			response.sendQueryResponse("window not found");
 		});
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addListener("DockingService.joinGroup", function (err, response) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addListener("DockingService.joinGroup", function (err, response) {
 			self.addWindowToGroup({
 				groupName: response.data.groupName,
 				win: self.getWindow(response.data.name)
@@ -63278,7 +69833,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 			self.updateGroupData();
 		});
 
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addListener("DockingService.requestGroupDataPublish", function (error, response) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addListener(__WEBPACK_IMPORTED_MODULE_12__common_constants__["DOCKING"].REQUEST_PUBLISH, function (error, response) {
 			self.publishGroupUpdate();
 		});
 
@@ -63288,17 +69843,20 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 
 		//RouterClient.addListener(CHANNELS.deregister, this.addToRegistrationQueue);
 
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addListener("DockingService.deregisterWindow", function (err, response) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addListener("DockingService.deregisterWindow", function (err, response) {
+			self.dockingReady || __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking API invoked before ready");
 			self.deregisterWindow(self, err, response);
 		});
 
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addResponder("DockingService.maximizeWindow", function (err, message) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addResponder("DockingService.maximizeWindow", function (err, message) {
+			self.dockingReady || __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking API invoked before ready", message);
 			self.maximizeWindow(message.data, function (bounds) {
 				self.sendQueryResponse(message, bounds);
 			});
 		});
 
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addResponder("DockingService.restoreFromMaximize", function (err, message) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addResponder("DockingService.restoreFromMaximize", function (err, message) {
+			self.dockingReady || __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking API invoked before ready", message);
 			if (self.getWindow(message.data.name)) {
 				self.restoreFromMaximize(message.data, function () {
 					self.sendQueryResponse(message);
@@ -63308,11 +69866,13 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 			}
 		});
 
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addListener("DockingService.constituteGroups", function () {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addListener("DockingService.constituteGroups", function () {
+			self.dockingReady || __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking API invoked before ready");
 			self.constituteGroups();
 		});
 
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addResponder("DockingService.autoArrange", function (err, message) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addResponder("DockingService.autoArrange", function (err, message) {
+			self.dockingReady || __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking API invoked before ready", message);
 			if (!message.data.monitorDimensions.name) {
 				message.sendQueryResponse(new Error("No monitor name supplied to autoArrange"), null);
 				return;
@@ -63325,27 +69885,42 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 				message.sendQueryResponse(null, "success");
 			});
 		});
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addPubSubResponder(DockingMain_AUTO_ARRANGE_CHANNEL, {});
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addPubSubResponder(DockingMain_AUTO_ARRANGE_CHANNEL, {});
 
 		/* Tabbing and Tiling */
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addListener("DockingService.startTilingOrTabbing", this.startTilingOrTabbing);
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addListener("DockingService.startTilingOrTabbing", (err, message) => {
+			this.dockingReady || __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking API invoked before ready", message);
+			this.startTilingOrTabbing(err, message);
+		});
 
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addResponder("DockingService.stopTilingOrTabbing", (err, message) => {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addResponder("DockingService.stopTilingOrTabbing", (err, message) => {
+			this.dockingReady || __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking API invoked before ready", message);
 			this.stopTilingOrTabbing(err, message, () => {
 				message.sendQueryResponse(true);
 			});
 		});
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addListener("DockingService.identifierForTilingOrTabbing", this.identifierForTilingOrTabbing);
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addListener("DockingService.cancelTilingOrTabbing", this.cancelTilingOrTabbing);
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addListener("DockingService.identifierForTilingOrTabbing", (err, message) => {
+			this.dockingReady || __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking API invoked before ready", message);
+			this.identifierForTilingOrTabbing(err, message);
+		});
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addListener("DockingService.cancelTilingOrTabbing", (err, message) => {
+			this.dockingReady || __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking API invoked before ready", message);
+			this.cancelTilingOrTabbing(err, message);
+		});
 		/* End Tabbing and Tiling */
 
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.subscribe(APPLICATION_STATE_CHANNEL, (err, response) => {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.subscribe(APPLICATION_STATE_CHANNEL, (err, response) => {
 			this.applicationState = response.data.state;
+		});
+
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addListener("DockingService.wipeAutoArrange", (err, message) => {
+			this.resetAutoArrangeForAWindowsMonitor(message.data.win);
 		});
 
 		//Monitor information is now managed by docking (for simplicity of claiming/unclaiming space). This is just to get the information when it changes. getMonitorInfoAll in the launcher comes here now.
 		var self = this;
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.addResponder("DockingService.getMonitorsFromDocking", function (err, message) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.addResponder("DockingService.getMonitorsFromDocking", function (err, message) {
+			self.dockingReady || __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking API invoked before ready", message);
 			let monitors = self.getRawMonitors();
 			message.sendQueryResponse(null, { monitors });
 		});
@@ -63413,8 +69988,8 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 
 		return _asyncToGenerator(function* () {
 			const rawMonitors = eventData.monitors;
-			__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Monitors-changed: monitors-changed event received. Monitors from the event:", rawMonitors);
-			const adjustedMonitors = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__monitorUpdateHandler__["addUnclaimedRectToRawMonitor"])(rawMonitors);
+			__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Monitors-changed: monitors-changed event received. Monitors from the event:", rawMonitors);
+			const adjustedMonitors = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__monitorUpdateHandler__["addUnclaimedRectToRawMonitor"])(rawMonitors);
 			const adjustedBoundsPromiseList = [];
 			const dockedWindowBoundsPromiseList = [];
 			const windowNames = _this.getWindowNames();
@@ -63424,13 +69999,13 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 
 			// Request the updated information in the format required for assimilation
 			const formattedMonitorInfo = yield new Promise(function (resolve) {
-				__WEBPACK_IMPORTED_MODULE_7__common_system__["System"].getMonitorInfo(resolve);
+				__WEBPACK_IMPORTED_MODULE_6__common_system__["System"].getMonitorInfo(resolve);
 			});
 
 			// Send the updated Monitor Info to Assimilation. It needs this information to calculate scaling
-			const { err } = yield __WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.query("Assimilation.setMonitorInfo", formattedMonitorInfo);
+			const { err } = yield __WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.query("Assimilation.setMonitorInfo", formattedMonitorInfo);
 			if (err) {
-				__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.error("Error sending MonitorInfo to Assimilation", err);
+				__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Error sending MonitorInfo to Assimilation", err);
 			}
 
 			// Dock to the toolbar first so the unclaimedRect will be updated by the time the other windows get their bounds.
@@ -63439,7 +70014,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 			windowNames.forEach(function (windowName) {
 				let win = _this.getWindow(windowName);
 				if (win.isDocked) {
-					dockedWindowBoundsPromiseList.push(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__monitorUpdateHandler__["deriveWindowPosition"])({ win, moveableGroup: null }));
+					dockedWindowBoundsPromiseList.push(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__monitorUpdateHandler__["deriveWindowPosition"])({ win, moveableGroup: null }));
 				}
 			});
 			let dockedWindows = yield Promise.all(dockedWindowBoundsPromiseList);
@@ -63454,14 +70029,14 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 				if (win.isMinimized) return;
 				// Batch the resulting bounds for windows in a group. Groups bounds need to be sent all at once and windows can take different amounts of time to get their updated bounds
 				const movableGroup = _this.getMovableGroup(win.name);
-				adjustedBoundsPromiseList.push(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__monitorUpdateHandler__["deriveWindowPosition"])({ win, movableGroup }));
+				adjustedBoundsPromiseList.push(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__monitorUpdateHandler__["deriveWindowPosition"])({ win, movableGroup }));
 			});
 
 			// Wait for updated bounds for all windows before performing any move actions
 			let adjustedBoundsList = yield Promise.all(adjustedBoundsPromiseList);
 
 			// Split the returned list by type into moved windows in a group and all other non-docked windows that should move
-			const { groupMoves, nonGroupMoves } = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__monitorUpdateHandler__["splitWindowMoves"])(adjustedBoundsList);
+			const { groupMoves, nonGroupMoves } = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__monitorUpdateHandler__["splitWindowMoves"])(adjustedBoundsList);
 
 			const groupNames = Object.keys(groupMoves);
 			// Use the updated bounds for each window in the group to choose where to move the group
@@ -63526,12 +70101,12 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 	getUpdatedOrNewMonitor(win, systemMonitors) {
 		const monitor = this.getUpdatedWindowMonitorIfItExists(win.monitor);
 		if (monitor) {
-			__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.verbose(`Monitors-changed: The current monitor for the ${win.name} still exists.`);
+			__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.verbose(`Monitors-changed: The current monitor for the ${win.name} still exists.`);
 			return monitor;
 		}
 		// Chooses the monitor that the window shares the most bounds with. If there is a tie or the window is not on any monitor the last monitor in the array will be chosen
 		const newMonitor = this.getMonitorByMajority(win, systemMonitors);
-		__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.verbose(`Monitors-changed: window ${win.name}'s current monitor no longer present, new monitor is ${win.monitor}`);
+		__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.verbose(`Monitors-changed: window ${win.name}'s current monitor no longer present, new monitor is ${win.monitor}`);
 		// Find the equivalent monitor from the list of current dockable monitors
 		return Object.values(this.getMonitors()).find(dockingMon => dockingMon.rawMonitor.deviceId === newMonitor.deviceId) || {};
 	}
@@ -63587,7 +70162,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 			height: win.height
 		};
 		// Update the bounds before we dock the window so it will dock to the correct place
-		__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.verbose("Monitors-changed: setting bounds for docked toolbar", dockedBounds);
+		__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.verbose("Monitors-changed: setting bounds for docked toolbar", dockedBounds);
 		win.setBounds(dockedBounds);
 		// Remove the old claimed space for the window and dock it to the new position.
 		// This function will perform both actions without setting isDocked to false. Setting isDocked to false
@@ -63648,7 +70223,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 			}, isDockableWindowAction);
 		});
 
-		__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("MONITOR: Docking.monitorUpdate", monitorUpdate);
+		__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("MONITOR: Docking.monitorUpdate", monitorUpdate);
 		super.updateMonitorInfo(monitorUpdate);
 		self.setBufferSize(serviceConfig.BUFFER_SIZE);
 	}
@@ -63705,6 +70280,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 			monitorBounds.height = monitorBounds.bottom - monitorBounds.top;
 		}
 		win.win.startMove();
+		this.resetAutoArrangeForAWindowsMonitor(win);
 		win.setBounds(monitorBounds, function () {
 			win.isMaximized = true;
 			win.isMaximizing = false;
@@ -63741,7 +70317,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
     */
 			win.setBounds(monitorBounds);
 		}, function (err) {
-			__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.error(err);
+			__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error(err);
 		});
 	}
 
@@ -63755,7 +70331,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		win.isMaximized = false;
 		let bounds = win.cachedBounds && Object.keys(win.cachedBounds).length ? win.cachedBounds : win.getBounds();
 		// Only changes the window position if there has been a monitor change. We don't want the window to restore off monitor
-		bounds = __WEBPACK_IMPORTED_MODULE_1__common_util__["adjustBoundsToBeOnMonitor"](bounds);
+		bounds = __WEBPACK_IMPORTED_MODULE_0__common_util__["adjustBoundsToBeOnMonitor"](bounds);
 		win.win.startMove();
 		win.setBounds(bounds, function () {
 			win.cachedBounds = {};
@@ -63792,7 +70368,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 				cb();
 			}
 		}, function (err) {
-			__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.error(err);
+			__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error(err);
 		});
 	}
 
@@ -63839,7 +70415,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		//If a window reloads, it may try to add itself to the dockingCalc twice.
 		//2nd param doesn't throw error if we can't find the window.
 		if (this.getWindow(win.name, false)) {
-			__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Docking:addWindow reload immediate resolve");
+			__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Docking:addWindow reload immediate resolve");
 			return Promise.resolve(self.getWindow(win.name));
 		}
 
@@ -63851,17 +70427,17 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 				}
 				if (!bounds) {
 					Promise.reject(err);
-					return __WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.error("No bounds returned from wrap.getBounds", win.name, err);
+					return __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("No bounds returned from wrap.getBounds", win.name, err);
 				}
 				//@todo, why not get bounds inside of the constructor? Would at least get rid of one param.
 
-				let dockableWindow = new __WEBPACK_IMPORTED_MODULE_8__dockableWindow__["a" /* default */](win, bounds, {
+				let dockableWindow = new __WEBPACK_IMPORTED_MODULE_7__dockableWindow__["a" /* default */](win, bounds, {
 					calculator: self,
-					Logger: __WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a,
-					System: __WEBPACK_IMPORTED_MODULE_7__common_system__["System"]
+					Logger: __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a,
+					System: __WEBPACK_IMPORTED_MODULE_6__common_system__["System"]
 				}, serviceConfig.assimilationEnabled);
 
-				__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Docking:calling addWindow on the calculator", win.name, bounds);
+				__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Docking:calling addWindow on the calculator", win.name, bounds);
 				//@todo, why not get the name from the dockableWindow?
 
 
@@ -63884,26 +70460,8 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 				dockableWindow.win.addEventListener("closed", e => self.onWindowClosedHandler(e));
 
 				calcAddWindow(win.name, dockableWindow);
-				dockableWindow.win.addListener("alwaysOnTop", self.setGroupAlwaysOnTop); // TODO: need to do something about somehow combining our event
 				resolve(dockableWindow);
 			});
-		});
-	}
-
-	/* do not bind this function */
-	setGroupAlwaysOnTop(params) {
-		// if there are no params, this is called from an event and the context is in "this".
-		if (!params) params = {};
-		if (!params.name) params.name = this.name;
-		if (!params.uuid) params.uuid = this.uuid;
-		let dockableWindow = window.DockingMain.getWindow(params.name); // cannot bind this function and lose context. Using the global here.
-		if (dockableWindow.isMinimized) return;
-		dockableWindow.groupNames.forEach(groupName => {
-			let grp = window.DockingMain.getGroup(groupName);
-			if (grp.isMovable) {
-				grp.allAlwaysOnTop(params.alwaysOnTop);
-				window.DockingMain.updateGroupData();
-			}
 		});
 	}
 
@@ -63912,7 +70470,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		let self = this;
 		let dockableWindow = self.getWindow(params.name);
 		if (!dockableWindow) {
-			return __WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.warn("SetWindowMinimized called on window not registered for movement.", params.name);
+			return __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.warn("SetWindowMinimized called on window not registered for movement.", params.name);
 		}
 		dockableWindow.isMinimized = true;
 		// If Window is in group, minimize the group:
@@ -63922,6 +70480,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 				grp.minimizeAll();
 			}
 		});
+		this.resetAutoArrangeForAWindowsMonitor(dockableWindow);
 	}
 
 	setWindowRestored(event) {
@@ -63929,7 +70488,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		let self = this;
 		let dockableWindow = self.getWindow(params.name);
 		if (!dockableWindow) {
-			return __WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.warn("SetWindowRestored called on window not registered for movement.", params.name);
+			return __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.warn("SetWindowRestored called on window not registered for movement.", params.name);
 		}
 		dockableWindow.isMinimized = false;
 		// If Window is in group, restore the group:
@@ -63948,6 +70507,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 				});
 			}
 		});
+		this.resetAutoArrangeForAWindowsMonitor(dockableWindow);
 	}
 	setWindowFocused(event) {
 		let params = event.data;
@@ -63955,7 +70515,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		let dockableWindow = self.getWindow(params.name);
 		if (!dockableWindow) return;
 		setTimeout(() => {
-			if (dockableWindow.win.windowState !== __WEBPACK_IMPORTED_MODULE_5__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].WINDOWSTATE.NORMAL) return;
+			if (dockableWindow.win.windowState !== __WEBPACK_IMPORTED_MODULE_4__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].WINDOWSTATE.NORMAL) return;
 
 			//win.removeEventListener is async. When reloading a workspace, the window is closed, and un-registers with docking.
 			//We remove the event listeners from the openfin windows for focus, shown, etc.
@@ -63990,85 +70550,88 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		dockableWindow.groupNames.forEach(groupName => {
 			let grp = this.getGroup(groupName);
 			if (grp.isMovable) {
-				__WEBPACK_IMPORTED_MODULE_10__clients_launcherClient___default.a.hyperFocus({ windowList: grp.getWindowNames() });
+				__WEBPACK_IMPORTED_MODULE_9__clients_launcherClient___default.a.hyperFocus({ windowList: grp.getWindowNames() });
 			}
 		});
 	}
 
-	createGroupMask() {
-		let self = this;
-		__WEBPACK_IMPORTED_MODULE_10__clients_launcherClient___default.a.showWindow({ name: "Docking Move Mask", componentType: "Docking Move Mask" }, {
-			name: "Docking Move Mask",
-			spawnIfNotFound: true,
-			options: {
-				autoShow: false
-			}
-		}, (() => {
-			var _ref = _asyncToGenerator(function* (err, response) {
-				let { wrap: groupMask } = yield __WEBPACK_IMPORTED_MODULE_5__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].getInstance({ name: "Docking Move Mask", waitForReady: true });
-				groupMask._getBounds(function (err, bounds) {
-					var mask = new __WEBPACK_IMPORTED_MODULE_8__dockableWindow__["a" /* default */](groupMask, bounds, {
-						calculator: self,
-						Logger: __WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a,
-						System: __WEBPACK_IMPORTED_MODULE_7__common_system__["System"]
+	initiateGroupMaskCreation() {
+		// when component is started, it's workspace client will try to access the workspace service, so wait until workspace is up before creating this mask
+		__WEBPACK_IMPORTED_MODULE_15__common_systemManagerClient___default.a.waitForStartup("workspaceService", () => {
+			let self = this;
+			__WEBPACK_IMPORTED_MODULE_9__clients_launcherClient___default.a.showWindow({ name: "Docking Move Mask", componentType: "Docking Move Mask" }, {
+				name: "Docking Move Mask",
+				spawnIfNotFound: true,
+				options: {
+					autoShow: false
+				}
+			}, (() => {
+				var _ref = _asyncToGenerator(function* (err, response) {
+					let { wrap: groupMask } = yield __WEBPACK_IMPORTED_MODULE_4__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].getInstance({ name: "Docking Move Mask", waitForReady: true });
+					groupMask._getBounds(function (err, bounds) {
+						var mask = new __WEBPACK_IMPORTED_MODULE_7__dockableWindow__["a" /* default */](groupMask, bounds, {
+							calculator: self,
+							Logger: __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a,
+							System: __WEBPACK_IMPORTED_MODULE_6__common_system__["System"]
+						});
+						mask.canGroup = false;
+						self.groupMask = mask;
 					});
-					mask.canGroup = false;
-					self.groupMask = mask;
 				});
-			});
 
-			return function (_x, _x2) {
-				return _ref.apply(this, arguments);
-			};
-		})());
+				return function (_x, _x2) {
+					return _ref.apply(this, arguments);
+				};
+			})());
 
-		__WEBPACK_IMPORTED_MODULE_10__clients_launcherClient___default.a.showWindow({ name: "dialogModal", componentType: "dialogModal" }, {
-			name: "dialogModal",
-			spawnIfNotFound: true,
-			options: {
-				autoShow: false
-			}
-		}, (() => {
-			var _ref2 = _asyncToGenerator(function* (err, response) {
-				__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("ModalScrim1: Getting Modal Scrim Wrap");
-				var { wrap: modalScrim } = yield __WEBPACK_IMPORTED_MODULE_5__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].getInstance({ name: "dialogModal", waitForReady: true });
-				__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("ModalScrim2: Got Modal Scrim Wrap");
-				__WEBPACK_IMPORTED_MODULE_7__common_system__["System"].getMonitorInfo(function (info) {
-					__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("ModalScrim3: Monitor Info");
-					let bounds = info.virtualScreen;
-					bounds.width = bounds.right - bounds.left;
-					bounds.height = bounds.bottom - bounds.top;
-					let initialBounds = {
-						left: bounds.left - 40,
-						top: bounds.top - 40,
-						width: 40,
-						height: 40,
-						right: bounds.left,
-						bottom: bounds.top
-					};
-					modalScrim._setBounds({ bounds: initialBounds }, function () {
-						__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("ModalScrim4: Set bounds");
-						modalScrim._show(function () {
-							modalScrim._hide();
-						}); // This is to address an openfin bug related to flashing while showing the first time.
-						modalScrim._setBounds({ bounds }, function () {
-							__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("ModalScrim5: assigning to this.modal scrim");
-							var modal = new __WEBPACK_IMPORTED_MODULE_8__dockableWindow__["a" /* default */](modalScrim, bounds, {
-								calculator: self,
-								Logger: __WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a,
-								System: __WEBPACK_IMPORTED_MODULE_7__common_system__["System"]
+			__WEBPACK_IMPORTED_MODULE_9__clients_launcherClient___default.a.showWindow({ name: "dialogModal", componentType: "dialogModal" }, {
+				name: "dialogModal",
+				spawnIfNotFound: true,
+				options: {
+					autoShow: false
+				}
+			}, (() => {
+				var _ref2 = _asyncToGenerator(function* (err, response) {
+					__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("ModalScrim1: Getting Modal Scrim Wrap");
+					var { wrap: modalScrim } = yield __WEBPACK_IMPORTED_MODULE_4__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].getInstance({ name: "dialogModal", waitForReady: true });
+					__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("ModalScrim2: Got Modal Scrim Wrap");
+					__WEBPACK_IMPORTED_MODULE_6__common_system__["System"].getMonitorInfo(function (info) {
+						__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("ModalScrim3: Monitor Info");
+						let bounds = info.virtualScreen;
+						bounds.width = bounds.right - bounds.left;
+						bounds.height = bounds.bottom - bounds.top;
+						let initialBounds = {
+							left: bounds.left - 40,
+							top: bounds.top - 40,
+							width: 40,
+							height: 40,
+							right: bounds.left,
+							bottom: bounds.top
+						};
+						modalScrim._setBounds({ bounds: initialBounds }, function () {
+							__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("ModalScrim4: Set bounds");
+							modalScrim._show(function () {
+								modalScrim._hide();
+							}); // This is to address an openfin bug related to flashing while showing the first time.
+							modalScrim._setBounds({ bounds }, function () {
+								__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("ModalScrim5: assigning to this.modalscrim");
+								var modal = new __WEBPACK_IMPORTED_MODULE_7__dockableWindow__["a" /* default */](modalScrim, bounds, {
+									calculator: self,
+									Logger: __WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a,
+									System: __WEBPACK_IMPORTED_MODULE_6__common_system__["System"]
+								});
+								modal.canGroup = false;
+								self.modalScrim = modal;
 							});
-							modal.canGroup = false;
-							self.modalScrim = modal;
 						});
 					});
 				});
-			});
 
-			return function (_x3, _x4) {
-				return _ref2.apply(this, arguments);
-			};
-		})());
+				return function (_x3, _x4) {
+					return _ref2.apply(this, arguments);
+				};
+			})());
+		});
 	}
 
 	removeWindow(windowName) {
@@ -64085,9 +70648,6 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		dockableWindow.win.removeEventListener("closed", self.onWindowClosedHandler);
 
 		super.removeWindow(windowName);
-		if (this.cachedPositions[dockableWindow.monitor.name][windowName]) {
-			delete this.cachedPositions[dockableWindow.monitor.name][windowName];
-		}
 	}
 
 	/**
@@ -64098,7 +70658,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		if (typeof DEBUG === "undefined") {
 			DEBUG = false;
 		}
-		__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.log("Docking initialization", serviceConfig);
+		__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.log("Docking initialization", serviceConfig);
 		this.setTilingOrTabbingEnabled(serviceConfig);
 		this.setWindowsAeroSnap(serviceConfig);
 		this.setAllowGroupsToSnap(serviceConfig.ALLOW_GROUPS_TO_SNAP);
@@ -64107,7 +70667,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		this.setBufferSize(serviceConfig.BUFFER_SIZE);
 		this.setSnappingOpacity(serviceConfig.SNAPPING_OPACITY);
 		this.setResizeThrottlePeriod(serviceConfig.RESIZE_EVENT_THROTTLE_PERIOD);
-		this.setRouterClient(__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a);
+		this.setRouterClient(__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a);
 		this.setGlobalMinimums(serviceConfig);
 	}
 
@@ -64121,7 +70681,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 
 	setGroupMode(groupMode) {
 		super.setGroupMode(groupMode);
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.publish("DockingService.groupMode", groupMode);
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.publish("DockingService.groupMode", groupMode);
 	}
 
 	setWindowsAeroSnap(serviceConfig) {
@@ -64204,7 +70764,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		box += "|             |             |            |\n";
 		box += "|             |             |            |\n";
 		box += "+----------------------------------------+\n";
-		__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.log(box);
+		__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.log(box);
 	}
 
 	/**
@@ -64221,9 +70781,9 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 				//Will trigger the bounds-change-end event.
 				win.win.stopMove();
 				//old code, for backwards compat. The toolbar uses this.
-				__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.transmit(win.name + ".bounds-change-end", { bounds });
+				__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.transmit(win.name + ".bounds-change-end", { bounds });
 			}
-			//win.win is the underlying wrapper. win is the dockableWindow. win.win is the openfinWindowWrapper
+			//win.win is the underlying wrapper. win is the dockableWindow. win.win is the WebWindowWrapper
 			win.win._saveWindowOptions();
 		}
 	}
@@ -64233,7 +70793,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 	tellWindowsToUpdateLocation() {
 		let windowIter = this.dockingPool.iterator();
 		for (let win of windowIter) {
-			__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.transmit("DockingService." + win.name, { command: "updateWindowLocation", bounds: win.getBounds() });
+			__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.transmit("DockingService." + win.name, { command: "updateWindowLocation", bounds: win.getBounds() });
 		}
 	}
 
@@ -64245,22 +70805,11 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		let groups = this.getGroups();
 		let groupUpdate = {};
 
-		for (var groupName in groups) {
-			let group = groups[groupName],
-			    windowNames = group.getWindowNames(),
-
-			//This shouldn't happen -- but just in case.
-			topRightWindow = windowNames.length ? group.getMoveAnchor("BottomLeft").name : null;
-
-			groupUpdate[groupName] = {
-				windowNames: windowNames,
-				isMovable: group.isMovable,
-				isAlwaysOnTop: group.isAlwaysOnTop,
-				topRightWindow: topRightWindow,
-				isARectangle: group.isARectangle()
-			};
+		for (const groupName in groups) {
+			const group = groups[groupName];
+			groupUpdate[groupName] = group.getJSON();
 		}
-		const changed = !__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15_lodash__["isEqual"])(groupUpdate, groupData);
+		const changed = !__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13_lodash__["isEqual"])(groupUpdate, groupData);
 		if (changed) {
 			groupData = groupUpdate;
 		}
@@ -64272,7 +70821,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
   */
 	publishGroupUpdate() {
 		let self = this;
-		__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Publishing Group Update:", groupData);
+		__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Publishing Group Update:", groupData);
 		/**
    * DH 3/18/2019 - It's very strange that this workspace concern
    * is published from within docking; however, we have to keep it
@@ -64280,13 +70829,13 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
    * depends on this update). When we can afford a break, this should
    * go.
    */
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.publish(__WEBPACK_IMPORTED_MODULE_13__common_constants__["DOCKING"].WORKSPACE_GROUP_UPDATE, self.buildWorkspaceGroupUpdate());
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.publish(__WEBPACK_IMPORTED_MODULE_13__common_constants__["DOCKING"].GROUP_UPDATE, self.buildGroupUpdate());
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.publish(__WEBPACK_IMPORTED_MODULE_12__common_constants__["DOCKING"].WORKSPACE_GROUP_UPDATE, self.buildWorkspaceGroupUpdate());
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.publish(__WEBPACK_IMPORTED_MODULE_12__common_constants__["DOCKING"].GROUP_UPDATE, self.buildGroupUpdate());
 	}
 
 	handleWorkspaceUpdate(err, response) {
 		let self = this;
-		__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("HANDLING WORKSPACE UPDATE");
+		__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("HANDLING WORKSPACE UPDATE");
 		var data = response.data;
 		// The first publish is empty.
 		if (!data || !data.activeWorkspace) {
@@ -64294,7 +70843,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		}
 		this.activeWorkspace = data.activeWorkspace;
 		groupData = data.activeWorkspace.groups || {};
-		__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Publishing Group Update: HandleWorkspaceUpdate");
+		__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Publishing Group Update: HandleWorkspaceUpdate");
 		self.publishGroupUpdate();
 		self.moveCount = 0;
 	}
@@ -64324,7 +70873,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
   * @todo, this will eventually be monitor-specific.
   */
 	sendAutoArrangeStatusUpdate() {
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.publish(DockingMain_AUTO_ARRANGE_CHANNEL, {
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.publish(DockingMain_AUTO_ARRANGE_CHANNEL, {
 			isAutoArranged: this.AutoArrange.isArranged
 		});
 	}
@@ -64347,7 +70896,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
   * Get bounds for a window.
   */
 	getBounds(params, cb = Function.prototype) {
-		__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug(".getBounds", params);
+		__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug(".getBounds", params);
 		let win = this.getWindow(params.name);
 		var bounds = null;
 		if (win) {
@@ -64357,7 +70906,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 			cb("Window is not registered with Docking. No bounds retrieved.", null);
 		}
 
-		__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug(".getBounds return", bounds);
+		__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug(".getBounds return", bounds);
 		return bounds;
 	}
 
@@ -64381,8 +70930,8 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 			let group = groups[g];
 			let win = group.getWindow(group.getWindowNames()[0]);
 			if (!win) continue;
-			if (win.win.windowState === __WEBPACK_IMPORTED_MODULE_5__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].WINDOWSTATE.MINIMIZED) continue;
-			if (__WEBPACK_IMPORTED_MODULE_9__boxMath__["a" /* default */].isPointInBox(mousePosition, group.getBounds())) {
+			if (win.win.windowState === __WEBPACK_IMPORTED_MODULE_4__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].WINDOWSTATE.MINIMIZED) continue;
+			if (__WEBPACK_IMPORTED_MODULE_8__boxMath__["a" /* default */].isPointInBox(mousePosition, group.getBounds())) {
 				if (group.isMovable) movableGroups.push(group);else immobileGroups.push(group);
 			}
 		}
@@ -64401,8 +70950,8 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		let mouseWindows = [];
 		for (var w in windows) {
 			let win = windows[w];
-			if (win.win.windowState === __WEBPACK_IMPORTED_MODULE_5__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].WINDOWSTATE.MINIMIZED) continue;
-			if (mousePosition && win && __WEBPACK_IMPORTED_MODULE_9__boxMath__["a" /* default */].isPointInBox(mousePosition, win.getBounds())) {
+			if (win.win.windowState === __WEBPACK_IMPORTED_MODULE_4__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].WINDOWSTATE.MINIMIZED) continue;
+			if (mousePosition && win && __WEBPACK_IMPORTED_MODULE_8__boxMath__["a" /* default */].isPointInBox(mousePosition, win.getBounds())) {
 				mouseWindows.push(win);
 			}
 		}
@@ -64419,7 +70968,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		this.mouseTracking = true;
 		this.mouseTracker.callback = cb;
 		this.mouseTracker.interval = setInterval(() => {
-			__WEBPACK_IMPORTED_MODULE_7__common_system__["System"].getMousePosition((err, mousePosition) => {
+			__WEBPACK_IMPORTED_MODULE_6__common_system__["System"].getMousePosition((err, mousePosition) => {
 				if (!this.mouseTracker) this.mouseTracker = {};
 				if (!err) this.mouseTracker.mousePosition = mousePosition;
 				cb(err, mousePosition);
@@ -64496,10 +71045,10 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 	}
 
 	identifierForTilingOrTabbing(err, response) {
-		__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("identifierForTilingOrTabbing got identifier", response.data.windowIdentifier);
-		__WEBPACK_IMPORTED_MODULE_5__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].getInstance({ name: response.data.windowIdentifier.windowName }, (err, windowWrap) => {
+		__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("identifierForTilingOrTabbing got identifier", response.data.windowIdentifier);
+		__WEBPACK_IMPORTED_MODULE_4__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].getInstance({ name: response.data.windowIdentifier.windowName }, (err, windowWrap) => {
 			this.tilingAndTabbingWindow = windowWrap;
-			__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("identifierForTilingOrTabbing got wrap", windowWrap.name);
+			__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("identifierForTilingOrTabbing got wrap", windowWrap.name);
 		});
 	}
 
@@ -64511,7 +71060,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		if (!sourceWin && !response.data.waitForIdentifier) {
 			let sourceDockableWindow = this.getWindow(windowIdentifier.windowName);
 			if (!sourceDockableWindow) {
-				__WEBPACK_IMPORTED_MODULE_5__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].getInstance({ name: windowIdentifier.windowName }, (err, windowWrap) => {
+				__WEBPACK_IMPORTED_MODULE_4__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].getInstance({ name: windowIdentifier.windowName }, (err, windowWrap) => {
 					return this.startTilingOrTabbing(err, response, windowWrap);
 				});
 				return;
@@ -64522,12 +71071,12 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		if (!sourceWin && response.data.componentType && typeof avoidOrigin === "undefined") {
 			if (!this.configCache) this.configCache = {};
 			if (!this.configCache[response.data.componentType]) {
-				return __WEBPACK_IMPORTED_MODULE_11__clients_configClient___default.a.getValue({ field: "finsemble.components." + response.data.componentType + ".window" }, (err, config) => {
+				return __WEBPACK_IMPORTED_MODULE_10__clients_configClient___default.a.getValue({ field: "finsemble.components." + response.data.componentType + ".window" }, (err, config) => {
 					this.configCache[response.data.componentType] = {
 						width: config.width ? config.width : 800,
 						height: config.height ? config.height : 600
 					};
-					__WEBPACK_IMPORTED_MODULE_5__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].getInstance({ name: response.header.origin.replace("RouterClient.", "") }, (err, originWrap) => {
+					__WEBPACK_IMPORTED_MODULE_4__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].getInstance({ name: response.header.origin.replace("RouterClient.", "") }, (err, originWrap) => {
 						originWrap.getBounds((err, bounds) => {
 							this.avoidOrigin = true;
 							this.originBounds = bounds;
@@ -64536,7 +71085,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 					});
 				});
 			}
-			return __WEBPACK_IMPORTED_MODULE_5__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].getInstance({ name: response.header.origin.replace("RouterClient.", "") }, (err, originWrap) => {
+			return __WEBPACK_IMPORTED_MODULE_4__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].getInstance({ name: response.header.origin.replace("RouterClient.", "") }, (err, originWrap) => {
 				originWrap.getBounds((err, bounds) => {
 					this.avoidOrigin = true;
 					this.originBounds = bounds;
@@ -64546,8 +71095,8 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		}
 
 		let sourceParentWindow = sourceWin ? sourceWin.parentWindow : null;
-		__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("StartTilingOrTabbing");
-		__WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a.transmit("FinsembleTilingStart");
+		__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("StartTilingOrTabbing");
+		__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a.transmit("FinsembleTilingStart");
 		//this.showModalScrim();
 		let self = this;
 		/**
@@ -64806,7 +71355,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 	}
 
 	cancelTilingOrTabbing(err, response) {
-		__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("CancelTilingOrTabbing");
+		__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("CancelTilingOrTabbing");
 		this.operation = null;
 		this.stopTrackingMouse((err, mousePosition) => {});
 	}
@@ -64827,7 +71376,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 			for (let w in windows) {
 				let win = windows[w];
 				if (!win.groupNames.includes(group.name)) {
-					__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.warn("Group thinks it has window. Window doesn't think so", group.name, win.name);
+					__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.warn("Group thinks it has window. Window doesn't think so", group.name, win.name);
 				}
 			}
 		}
@@ -64838,7 +71387,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 			for (let g in window.groupNames) {
 				let group = this.getGroup(g);
 				if (!group.getWindow(win.name)) {
-					__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.warn("Window thinks it is group. Group doesn't think so", group.name, win.name);
+					__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.warn("Window thinks it is group. Group doesn't think so", group.name, win.name);
 				}
 			}
 		}
@@ -64856,7 +71405,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 				this.tilingAndTabbingWindow = null;
 			} else {
 				return setTimeout(() => {
-					__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("StopTilingOrTabbing.actualStopTilingOrTabbing waiting for window");
+					__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("StopTilingOrTabbing.actualStopTilingOrTabbing waiting for window");
 					this.actualStopTilingOrTabbing(params, callback);
 				}, 100);
 			}
@@ -64865,15 +71414,15 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		sourceWindow = this.getWindow(operation.sourceWindowName);
 
 		//take what the user sent on dragend
-		__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("StopTilingOrTabbing.actualStopTilingOrTabbing", operation.sourceWindowName, mousePosition);
+		__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("StopTilingOrTabbing.actualStopTilingOrTabbing", operation.sourceWindowName, mousePosition);
 
 		if (!sourceWindow) {
 			//detaching from tabbing so window is not registered with docking
-			__WEBPACK_IMPORTED_MODULE_5__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].getInstance({ name: operation.sourceWindowName }, (err, windowWrap) => {
-				__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("StopTilingOrTabbing.no source window. Adding to docking.", operation.sourceWindowName);
+			__WEBPACK_IMPORTED_MODULE_4__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].getInstance({ name: operation.sourceWindowName }, (err, windowWrap) => {
+				__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("StopTilingOrTabbing.no source window. Adding to docking.", operation.sourceWindowName);
 				this.addWindow(windowWrap).then(() => {
 					this.checkIfWindowIsInGroup(windowWrap.name);
-					__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("StopTilingOrTabbing.recursive call");
+					__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("StopTilingOrTabbing.recursive call");
 					this.actualStopTilingOrTabbing(params, callback);
 				});
 			});
@@ -64904,8 +71453,6 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 				}
 			}
 		}
-		//Make sure hidden tabs come back to life.
-		sourceWindow.show({ saveState: true });
 		self.hideGroupMask();
 		//When we call request-move, docking will stp if the window is between two snapping regions. By temporarily reducing the buffer size, we prevent inadvertent snaps and move our window to where we calculated it should go.
 		const BUFFER = this.bufferSize;
@@ -64913,7 +71460,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		let parent = sourceWindow.win.parentWindow;
 		switch (operation.type) {
 			case "tiling":
-				__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing case Tiling", err, operation);
+				__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing case Tiling", err, operation);
 
 				let groupNames;
 				let placement = this.checkShortCircuits(operation.newBounds.maskBounds, operation.newBounds.maskBounds);
@@ -64928,7 +71475,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 
 				switch (operation.tileWith) {
 					case "group":
-						__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing case GROUP", "removeWindow", sourceWindow.name, err);
+						__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing case GROUP", "removeWindow", sourceWindow.name, err);
 						CALCULATOR.removeWindow(sourceWindow.name, false);
 						/*if (sourceWindow.groupNames.includes(operation.group.name)) { //remove window from group before scaling group
       	this.removeWindowFromGroup(sourceWindow.name, operation.group.name);
@@ -64967,11 +71514,11 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 								break;
 						}
 						groupNames = [operation.group.name];
-						__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing case GROUP", "addWindow", sourceWindow.name);
+						__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing case GROUP", "addWindow", sourceWindow.name);
 						CALCULATOR.addWindow(sourceWindow.name, sourceWindow);
 						break;
 					case "window":
-						__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing case window", "removeWindow", operation);
+						__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing case window", "removeWindow", operation);
 						//If the scale short circuits, we'll want to shift the window's placement to reflect the actual group bounds instead of what we planned for.
 						switch (operation.edge) {
 							case "right":
@@ -65001,12 +71548,12 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 				//this.buildSnapRelationships(sourceWindow);
 				Object.assign(sourceMoveRequest, placement);
 
-				__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing requestMove 0", sourceMoveRequest);
+				__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing requestMove 0", sourceMoveRequest);
 
 				if (groupNames && groupNames.length) {
 					// If target is already part of a group or merging with a group
 					this.requestMove(sourceMoveRequest, bounds => {
-						__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing requestMove 1", bounds);
+						__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing requestMove 1", bounds);
 
 						if (bounds && !bounds.finished) return;
 						for (var g of groupNames) {
@@ -65031,7 +71578,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 				} else {
 					// If target is not part of a group
 					this.requestMove(sourceMoveRequest, bounds => {
-						__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing requestMove 2", bounds);
+						__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing requestMove 2", bounds);
 						if (bounds && !bounds.finished) return;
 						let group = this.addWindowToGroup({
 							win: operation.window,
@@ -65053,7 +71600,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 
 				break;
 			case "swapping":
-				__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing case swapping", operation);
+				__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing case swapping", operation);
 				let sourceWindowNewBounds = operation.window.getBounds();
 				let targetWindowNewBounds = sourceWindow.getBounds();
 
@@ -65081,7 +71628,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 
 				if (parent) {
 					//detaching from tabs (TODO: detaching from tabbed window in docked group)
-					__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing case detaching with parent", operation, newBounds, parent.name);
+					__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing case detaching with parent", operation, newBounds, parent.name);
 
 					/*
      	If remove window breaks, try this code, which was from master. We couldn't figure out which to take.
@@ -65096,7 +71643,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 					parent._removeWindow({ showWindow: true, windowIdentifier: sourceWindow.win.identifier });
 					sourceWindow.setBounds(newBounds);
 				}
-				__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing case detaching no parent", operation, newBounds);
+				__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing case detaching no parent", operation, newBounds);
 
 				this.removeWindowFromAllGroups(sourceWindow, false);
 
@@ -65114,7 +71661,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 				//this.buildSnapRelationships(sourceWindow);
 				break;
 			case "tabbing":
-				__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing case tabbing break", operation ? operation.type : null);
+				__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing case tabbing break", operation ? operation.type : null);
 				// If old window was in a group, fill holes for that group
 				Object.assign(sourceMoveRequest, sourceWindow.getBounds());
 				/** We want to remove the source window from all its groups.
@@ -65164,7 +71711,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 
 	stopTilingOrTabbing(err, response, callback) {
 		this.hideModalScrim();
-		__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing start", err, response, this.operation ? this.operation.type : null);
+		__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Docking:stopTilingOrTabbing start", err, response, this.operation ? this.operation.type : null);
 
 		if (!this.operation) return;
 		let op = this.operation;
@@ -65174,11 +71721,11 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		}
 
 		/* Show Window at Last Scrim Position */
-		__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("Stop tiling or tabbing");
+		__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("Stop tiling or tabbing");
 		this.stopTrackingMouse((err, mousePosition) => {
 			mousePosition = response.data.mousePosition || mousePosition;
 			if (op.type === "swapping" && op.sourceWindowName) {
-				__WEBPACK_IMPORTED_MODULE_5__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].getInstance({ name: op.sourceWindowName }, (err, windowWrap) => {
+				__WEBPACK_IMPORTED_MODULE_4__WindowAbstractions_FinsembleWindowInternal__["FinsembleWindowInternal"].getInstance({ name: op.sourceWindowName }, (err, windowWrap) => {
 					//replace the sourceWindowName with the parent's name. This way the whole stacked group gets swapped instead of the individual tab.
 					if (windowWrap.parentWindow) {
 						op.sourceWindowName = windowWrap.parentWindow.name;
@@ -65206,7 +71753,7 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 		let { win, location, oldBounds, unchangedDockState, action } = params;
 
 		location = location || "top";
-		__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.debug("dockingMain.handleMonitorSpaceChange HANDLE MONITOR SPACE CHANGES", params);
+		__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.debug("dockingMain.handleMonitorSpaceChange HANDLE MONITOR SPACE CHANGES", params);
 
 		location = location.trim().toUpperCase(); //since "top" !== "TOP"
 		let dockableWin = this.getWindow(win.name);
@@ -65249,9 +71796,9 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 				}
 			}
 			let adjustedMonitor = this.adjustClaimedSpace({ action, dockableWin, dockableMonitor, location });
-			__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.debug("Replacing monitor at index: ", monIndex);
-			__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.debug("replacing: ", monitors[monIndex].unclaimedRect);
-			__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.debug("changing to: ", adjustedMonitor.unclaimedRect);
+			__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.debug("Replacing monitor at index: ", monIndex);
+			__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.debug("replacing: ", monitors[monIndex].unclaimedRect);
+			__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.debug("changing to: ", adjustedMonitor.unclaimedRect);
 			monitors.splice(monIndex, 1, adjustedMonitor);
 			this.updateMonitorInfo(monitors, true);
 			if (action === "dock") this.moveAllWindowsOutOfClaimedSpace(dockableWin, monitors);
@@ -65260,14 +71807,12 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 
 	initialize(done) {
 		var self = this;
-		window.RouterClient = __WEBPACK_IMPORTED_MODULE_3__clients_routerClientInstance___default.a;
+		window.RouterClient = __WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default.a;
 		this.createRouterEndpoints();
-		//The launcherService waits for the windowService. We need to create our group mask, but not before we can route the request through LauncherService.spawn.
-		__WEBPACK_IMPORTED_MODULE_10__clients_launcherClient___default.a.onReady(() => {
-			this.createGroupMask();
-		});
-		__WEBPACK_IMPORTED_MODULE_2_async___default.a.parallel([function setupDockingCalculator(done) {
-			__WEBPACK_IMPORTED_MODULE_11__clients_configClient___default.a.getValue({ field: "finsemble" }, function (err, response) {
+		this.initiateGroupMaskCreation();
+
+		__WEBPACK_IMPORTED_MODULE_1_async___default.a.parallel([function setupDockingCalculator(done) {
+			__WEBPACK_IMPORTED_MODULE_10__clients_configClient___default.a.getValue({ field: "finsemble" }, function (err, response) {
 				serviceConfig = response.services.windowService.config || response.services.dockingService.config; //Finsemble config
 				/* Assimilation config can come from the defaults (/finsemble/configs/core/services.json),
     client-configured servicesConfig, or in betaFeatures config (deprecated).  */
@@ -65276,9 +71821,9 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 				const defaultAssim = response.services.assimilationService.config;
 				serviceConfig.assimilationEnabled = Object.assign(defaultAssim, servicesConfigAssim || betaAssim);
 				if (response.docking) {
-					__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.warn("Docking is no longer supported as a top level prop. Expected under serviceConfigs.");
+					__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.warn("Docking is no longer supported as a top level prop. Expected under serviceConfigs.");
 				} else if (response.betaFeatures.docking) {
-					__WEBPACK_IMPORTED_MODULE_12__clients_logger___default.a.system.error("Docking is no longer a beta feature. A docking prop was expected under serviceConfigs.");
+					__WEBPACK_IMPORTED_MODULE_11__clients_logger___default.a.system.error("Docking is no longer a beta feature. A docking prop was expected under serviceConfigs.");
 				}
 
 				//right place is servicesConfig, old place was top-level config. Otherwise we use an empty object that gets merged with finsemble defaults.
@@ -65309,8 +71854,8 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 				done();
 			});
 		}, function initializeMonitors(done) {
-			__WEBPACK_IMPORTED_MODULE_1__common_util__["getAllMonitors"](res => {
-				//Iterating through the product of util.getAllMonitors to set the unclaimedRect equal to availableRect. getAllMonitors returns openfinMonitors which do not contain unclaimedRect
+			__WEBPACK_IMPORTED_MODULE_0__common_util__["getAllMonitors"](res => {
+				//Iterating through the product of util.getAllMonitors to set the unclaimedRect equal to availableRect. getAllMonitors returns monitors which do not contain unclaimedRect
 				res = res.map(monitor => {
 					let mon = monitor;
 					mon.unclaimedRect = clone(mon.availableRect);
@@ -65319,7 +71864,10 @@ class DockingMain extends __WEBPACK_IMPORTED_MODULE_4__dockingCalculator__["a" /
 				self.updateMonitorInfo(res);
 				done();
 			});
-		}], done);
+		}], () => {
+			self.dockingReady = true;
+			done();
+		});
 	}
 }
 
@@ -65363,14 +71911,14 @@ function DefaultDockingOptions(configData, MIN_HEIGHT, MIN_WIDTH) {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 161 */,
-/* 162 */,
-/* 163 */
+/* 187 */,
+/* 188 */,
+/* 189 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_launcherClient__ = __webpack_require__(41);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_launcherClient__ = __webpack_require__(45);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_launcherClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__clients_launcherClient__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_async__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_async___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_async__);
@@ -66008,7 +72556,7 @@ window.Tester = {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 164 */
+/* 190 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -66017,9 +72565,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_async___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_async__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__services_window_WindowAbstractions_BaseWindow__ = __webpack_require__(53);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__services_window_WindowAbstractions_BaseWindow__ = __webpack_require__(56);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__services_window_WindowAbstractions_BaseWindow___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__services_window_WindowAbstractions_BaseWindow__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_window_windowGroup__ = __webpack_require__(60);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_window_windowGroup__ = __webpack_require__(69);
 
 
 
@@ -66273,23 +72821,23 @@ class LauncherGroup extends __WEBPACK_IMPORTED_MODULE_3__common_window_windowGro
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 165 */
+/* 191 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_async__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_async___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_async__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__WindowAbstractions_BaseWindow__ = __webpack_require__(53);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__WindowAbstractions_BaseWindow__ = __webpack_require__(56);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__WindowAbstractions_BaseWindow___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__WindowAbstractions_BaseWindow__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_launcherClient__ = __webpack_require__(41);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_launcherClient__ = __webpack_require__(45);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_launcherClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_launcherClient__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_workspaceClient__ = __webpack_require__(51);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_workspaceClient__ = __webpack_require__(52);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_workspaceClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__clients_workspaceClient__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__common_windowStorageManager__ = __webpack_require__(61);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__common_windowStorageManager__ = __webpack_require__(67);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__common_windowStorageManager___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5__common_windowStorageManager__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_disentangledUtils__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_disentangledUtils__ = __webpack_require__(23);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_disentangledUtils___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6__common_disentangledUtils__);
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
@@ -66403,53 +72951,66 @@ class AutoArrange {
 
 	/**
   * @private
-  * @param {LauncherClient~windowDescriptor} windowDescriptor
+  * @param {LauncherClient~windowDescriptor} win
   * @param {monitorDimensions} monitorDimensions
   * @returns {boolean} Whether window is on the current monitor.
   */
-	windowOnMonitor(windowDescriptor, monitorDimensions) {
+	windowOnMonitor(win, monitorDimensions) {
 		//if right or left edge is within the window's bounds.
-		return windowDescriptor.monitor.name === monitorDimensions.name;
+		return win.monitor.name === monitorDimensions.name;
 	}
 
+	// returns the windows on the monitor that will be auto arranged
 	getWindowsOnMonitor(windowDescriptorList, monitorDimensions) {
 		let self = this;
-		let descriptors = windowDescriptorList.filter((obj, ind) => {
-			if (!obj) {
-				// this should not be needed but temporary fix for cleanup
-				__WEBPACK_IMPORTED_MODULE_3__clients_logger___default.a.system.warn("autoarrange.getWindowsOnMonitor: unexpected null object");
-				return false;
-			}
-			//2nd param says to not throw the error if the window isn't found.
-			let win = self.DockingCalculator.getWindow(obj.name, false);
-			if (!win) {
-				return false;
-			}
-			if (obj.windowType === "OpenFinWindow") {
-				try {
-					let isArrangeable = obj.customData.foreign.services.dockingService.isArrangeable;
-					if (typeof obj.customData.foreign.services.dockingService.isArrangable !== "undefined") {
-						__WEBPACK_IMPORTED_MODULE_3__clients_logger___default.a.system.warn("isArrangable was a typo. It will be deprecated in Finsemble 2.0 in favor of isArrangeable");
-						isArrangeable = obj.customData.foreign.services.dockingService.isArrangable;
-					}
 
-					if (isArrangeable) {
-						return self.windowOnMonitor(win, monitorDimensions);
+		// first filter out windows that are not auto arrangeable
+		let descriptors = windowDescriptorList.filter((obj, ind) => {
+			// filter result is true if window is auto-arrangeable; result is false if not arrangeable
+			let result;
+
+			if (!obj) {
+				__WEBPACK_IMPORTED_MODULE_3__clients_logger___default.a.system.warn("autoarrange.getWindowsOnMonitor: unexpected null object");
+				result = false;
+			} else if (!self.DockingCalculator.getWindow(obj.name, false)) {
+				__WEBPACK_IMPORTED_MODULE_3__clients_logger___default.a.system.warn("autoarrange.getWindowsOnMonitor: window unknown");
+				result = false;
+			} else {
+				try {
+					// currently these fields up to dockingService and windowService are always defined (but even if not, the catch would insure correct behavior)
+					let isArrangeableDeprecated1 = obj.customData.foreign.services.dockingService.isArrangeable;
+					let isArrangeableDeprecated2 = obj.customData.foreign.services.dockingService.isArrangable;
+					let allowAutoArrange = obj.customData.foreign.services.windowService.allowAutoArrange;
+
+					if (typeof allowAutoArrange !== "undefined") {
+						// if current config defined then it will take precedence over deprecated configs
+						result = allowAutoArrange;
+					} else if (typeof isArrangeableDeprecated1 !== "undefined") {
+						// if deprecated config defined then it will take precedence over the older deprecated config
+						result = isArrangeableDeprecated1;
+					} else if (typeof isArrangeableDeprecated2 !== "undefined") {
+						// if old deprecated config defined use it (since newer ones aren't defined)
+						result = isArrangeableDeprecated2;
+					} else {
+						// otherwise the default is true
+						result = true;
 					}
-					return false;
 				} catch (e) {
-					return false;
+					// given error was thrown then the config wasn't defined, so default is true
+					result = true;
 				}
 			}
-			return self.windowOnMonitor(win, monitorDimensions);
+
+			return result;
 		});
 
 		let windowsOnMonitor = [];
+		// only capture the arrangeable windows that are on the monitor
 		for (let i = 0; i < descriptors.length; i++) {
 			let descriptor = descriptors[i];
 			let win = self.DockingCalculator.getWindow(descriptor.name);
 			win.monitor = self.DockingCalculator.getMonitorForWindow(win);
-			if (!self.DockingCalculator.cachedPositions[win.monitor.name][win.name]) {
+			if (this.windowOnMonitor(win, monitorDimensions) && !self.DockingCalculator.cachedPositions[win.monitor.name][win.name]) {
 				self.DockingCalculator.cachedPositions[win.monitor.name][win.name] = {
 					uuid: win.uuid,
 					left: win.left,
@@ -66459,16 +73020,16 @@ class AutoArrange {
 					height: win.height,
 					width: win.width
 				};
-			}
 
-			windowsOnMonitor.push({
-				name: win.name,
-				ar: win.width / win.height,
-				top: parseInt(win.top),
-				bottom: parseInt(win.bottom),
-				left: parseInt(win.left),
-				right: parseInt(win.right)
-			});
+				windowsOnMonitor.push({
+					name: win.name,
+					ar: win.width / win.height,
+					top: parseInt(win.top),
+					bottom: parseInt(win.bottom),
+					left: parseInt(win.left),
+					right: parseInt(win.right)
+				});
+			}
 		}
 
 		// before arranging, sort window list based on location to influence final arrangement;
@@ -66487,6 +73048,7 @@ class AutoArrange {
 			}
 			return result;
 		});
+
 		windowsOnMonitor.forEach(function (finWin, windex) {
 			let wrap = self.DockingCalculator.getWindow(finWin.name);
 			// only restore minimized windows
@@ -66499,15 +73061,131 @@ class AutoArrange {
 	}
 
 	/**
+  * Get windowData for all windows in the active workspace
+  */
+	getAllWindowsInActiveWorkspace() {
+		return _asyncToGenerator(function* () {
+			const windowNamesFromActiveWorkspace = (yield __WEBPACK_IMPORTED_MODULE_4__clients_workspaceClient___default.a.getActiveWorkspace()).data.windows;
+			return yield __WEBPACK_IMPORTED_MODULE_5__common_windowStorageManager__["WindowStorageManager"].getManyStates("windowData", windowNamesFromActiveWorkspace);
+		})();
+	}
+
+	/**
+  * Retrieves information about the passed in StackedWindow
+  * @param {*} win 
+  */
+	retrieveInformationForStackReconciliation(win) {
+		var _this = this;
+
+		return _asyncToGenerator(function* () {
+			if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_6__common_disentangledUtils__["isStackedWindow"])(win) && !win.name.includes("StackedWindow")) {
+				//Skip reconciliation logic if registering/deregistering window is not a stack
+				return {};
+			}
+
+			const stackName = win.windowName || win.name;
+
+			if (!stackName) {
+				//The rest of this function will error if the passed in object is missing a name
+				return;
+			}
+
+			//Get all the windows in the active workspace
+			const allWindowsInWorkspace = yield _this.getAllWindowsInActiveWorkspace();
+
+			//From all windows, determine the parent stack window of this window
+			let parentStack = Object.values(allWindowsInWorkspace).find(function (winFromWorkspace) {
+				return winFromWorkspace.name === stackName;
+			});
+
+			return {
+				stack: parentStack,
+				stackName
+			};
+		})();
+	}
+
+	/**
+ * Given a window, if its a StackedWindow, this will search the monitor's auto arrange cache for any children of the stack
+ * and replace the cache representation with the StackedWindow
+ * @param {*} win 
+ */
+	reconcileStackCreationWithAutoArrangedWindows(win) {
+		var _this2 = this;
+
+		return _asyncToGenerator(function* () {
+			const self = _this2;
+
+			const reconciliationInformation = yield _this2.retrieveInformationForStackReconciliation(win);
+			const { stack: parentStack, stackName } = reconciliationInformation;
+
+			if (parentStack) {
+				let stackReconciled = false;
+				const children = parentStack.childWindowIdentifiers || parentStack.data.windowIdentifiers;
+				for (let i = 0; i < children.length; i++) {
+					if (stackReconciled) break;
+
+					const childWindowIdentifierName = children[i].windowName || children[i].name;
+					const stackWindow = self.DockingCalculator.getWindow(stackName);
+
+					// If the cachedPosition exists make the swap
+					if (self.DockingCalculator.cachedPositions[stackWindow.monitor.name][childWindowIdentifierName]) {
+						const newWindowBounds = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_6__common_disentangledUtils__["clone"])(self.DockingCalculator.cachedPositions[stackWindow.monitor.name][childWindowIdentifierName]);
+						delete self.DockingCalculator.cachedPositions[stackWindow.monitor.name][childWindowIdentifierName];
+						newWindowBounds.uuid = stackWindow.uuid;
+						self.DockingCalculator.cachedPositions[stackWindow.monitor.name][stackName] = newWindowBounds;
+						stackReconciled = true;
+						break;
+					}
+				}
+			}
+		})();
+	}
+
+	/**
+  * Given a window, if its a StackedWindow, this will search the monitor's auto arrange cache for the remaining window
+  * in that stack and will replace the auto arrange cache with the remaining window
+  * @param {*} win 
+  */
+	reconcileStackDeletionWithAutoArrangedWindows(win) {
+		var _this3 = this;
+
+		return _asyncToGenerator(function* () {
+			const self = _this3;
+
+			const reconciliationInformation = yield _this3.retrieveInformationForStackReconciliation(win);
+			const { stack: parentStack, stackName } = reconciliationInformation;
+
+			if (parentStack) {
+				const children = parentStack.childWindowIdentifiers || parentStack.data.windowIdentifiers;
+				if (children.length === 1) {
+					// If there is only one child remaining this stack window will be destroyed. Replace 
+					// the auto arrange cache of the stacked window with the window that remains
+					const childIdentifier = children[0];
+					const childWindow = self.DockingCalculator.getWindow(childIdentifier.name);
+
+					// If the cachedPosition exists make the swap
+					if (self.DockingCalculator.cachedPositions[childWindow.monitor.name][stackName]) {
+						const newWindowBounds = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_6__common_disentangledUtils__["clone"])(self.DockingCalculator.cachedPositions[childWindow.monitor.name][stackName]);
+						delete self.DockingCalculator.cachedPositions[childWindow.monitor.name][stackName];
+						newWindowBounds.uuid = childIdentifier.uuid;
+						self.DockingCalculator.cachedPositions[childWindow.monitor.name][childIdentifier.name] = newWindowBounds;
+					}
+				}
+			}
+		})();
+	}
+
+	/**
   * Arranges all windows in the current workspace that are visible on the current monitor. For more about the algorithm used to distribute windows across rows, see {@link https://medium.com/@jtreitz/the-algorithm-for-a-perfectly-balanced-photo-gallery-914c94a5d8af#.c09v4fn1e this post}. The algorithm chooses the number of rows by taking the square root of the number of windows on the monitor and rounding down. 3 windows results in 1 row. 4 windows results in 2 rows. 8 windows will be arranged across 2 rows. 9 windows will be arranged across 3 rows. Other breakpoints are 16, 25, and 36.
   * @param {Object} monitorDimensions Monitor dimensions of a given monitor. This value is passed
   * in from {@link util#getMonitorInfo}.
   */
 	arrange(monitorDimensions, allMonitors, cb) {
-		var _this = this;
+		var _this4 = this;
 
 		return _asyncToGenerator(function* () {
-			let self = _this;
+			let self = _this4;
 			if (self.isArranged[monitorDimensions.name]) {
 				/*
     	11/7/19 JC - Previously this was toggling the status (!<currentStatus>). If we're reverting,
@@ -66532,8 +73210,7 @@ class AutoArrange {
 			//Workspace returns a list of windows, including StackedWindows.
 			//This will have duplicates as each window in stack will also appear as
 			//an individual window in the list
-			const windowNamesFromActiveWorkspace = (yield __WEBPACK_IMPORTED_MODULE_4__clients_workspaceClient___default.a.getActiveWorkspace()).data.windows;
-			const windowsFromActiveWorkspace = yield __WEBPACK_IMPORTED_MODULE_5__common_windowStorageManager__["WindowStorageManager"].getManyStates("windowData", windowNamesFromActiveWorkspace);
+			const windowsFromActiveWorkspace = yield _this4.getAllWindowsInActiveWorkspace();
 
 			//Keep track of a list of windows which are children to another window
 			let childrenWindows = [];
@@ -66564,7 +73241,7 @@ class AutoArrange {
 			let windowsOnMonitor = self.getWindowsOnMonitor(windowsFromActiveWorkspaceFiltered, monitorDimensions);
 
 			//A concatenation of windows and groups built into singular objects
-			//so they can be treated as 'boxes to rearrange' wrather than individual windows
+			//so they can be treated as 'boxes to rearrange' rather than individual windows
 			let boxesToArrange = [];
 
 			//This is an array of 'windows' that are actually a group of windows.
@@ -66623,25 +73300,6 @@ class AutoArrange {
 
 			//Add the array of groupWindows to the array already containing loner windows
 			boxesToArrange = boxesToArrange.concat(groupBoxes);
-
-			// if we only have a single box to arrange, just send it a restore / maximize event
-			if (boxesToArrange.length === 1) {
-				const win = self.DockingCalculator.getWindow(boxesToArrange[0].name);
-				// let native windows autoarrange using the default code path using setBounds.
-				// calling _maximize on a native window and then following up with a click of maximize
-				// button results in the notepad maximizing fully over the toolbar.
-				const isNotNativeWindow = win && win.win.windowType !== "NativeWindow";
-				if (isNotNativeWindow) {
-					// @early exit
-					// if window is maximized, restore, otherwise, maximize
-					if (win.win.getIsMaximized()) {
-						win.win._restore();
-						return cb();
-					}
-					win.win._maximize();
-					return cb();
-				}
-			}
 
 			//Number of rows is determined by the square root of the number of windows on the monitor.
 			//This gives us a preference for N x N grids. If you have 9 windows, you get 3 rows.
@@ -66746,28 +73404,6 @@ class AutoArrange {
 		const windowObjectsToRevert = self.DockingCalculator.cachedPositions[monitorDimensions.name];
 		const namesOfWindowsToRevert = Object.keys(windowObjectsToRevert);
 
-		// if we only have a single window to revert, just use restore / maximize logic
-		if (namesOfWindowsToRevert.length === 1) {
-			const win = self.DockingCalculator.getWindow(namesOfWindowsToRevert[0]);
-			// let native windows autoarrange using the default code path using setBounds.
-			// calling _maximize on a native window and then following up with a click of maximize
-			// button results in the notepad maximizing fully over the toolbar.
-			const isNotNativeWindow = win && win.win.windowType !== "NativeWindow";
-			if (isNotNativeWindow) {
-				// @early exit
-				if (win.win.getIsMaximized()) {
-					// if we are maximized, restore to maintain a predictable user experience.
-					// this is an inversion of the typical auto arrange / revert logic to maintain UX.
-					// without this, a user can maximize, and click auto arrange twice, the second arrange
-					// will have no effect. This prevents that possibility.
-					win.win._restore();
-					return cb();
-				}
-				win.win._maximize();
-				return cb();
-			}
-		}
-
 		__WEBPACK_IMPORTED_MODULE_0_async___default.a.each(namesOfWindowsToRevert, revertWindow, onLocationReverted);
 
 		function revertWindow(windowName, done) {
@@ -66800,6 +73436,7 @@ class AutoArrange {
 				self.DockingCalculator.buildSnapRelationships(dockableWindow);
 				self.DockingCalculator.checkGroupMembership(dockableWindow);
 				dockableWindow.win.stopMove();
+				delete self.DockingCalculator.cachedPositions[monitorDimensions.name][windowName];
 			});
 
 			self.DockingCalculator.updateGroupData();
@@ -66817,19 +73454,19 @@ class AutoArrange {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 166 */
+/* 192 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__windowPrimitivesEntryPoints__ = __webpack_require__(123);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__windowPrimitivesEntryPoints__ = __webpack_require__(141);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__windowPrimitivesEntryPoints___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__windowPrimitivesEntryPoints__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__windowCreateEntryPoints__ = __webpack_require__(122);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__windowCreateEntryPoints__ = __webpack_require__(140);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__windowCreateEntryPoints___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__windowCreateEntryPoints__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__tabbingEntryPoints__ = __webpack_require__(121);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__tabbingEntryPoints__ = __webpack_require__(139);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__tabbingEntryPoints___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__tabbingEntryPoints__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__launcherEntryPoints__ = __webpack_require__(120);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__launcherEntryPoints__ = __webpack_require__(138);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__launcherEntryPoints___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__launcherEntryPoints__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_async__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_async___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_async__);
@@ -66867,6 +73504,10 @@ class ServiceEntryPoints {
 			this.finsembleTabbingEntry.initialize(finish);
 		}], () => {
 			__WEBPACK_IMPORTED_MODULE_0__clients_logger___default.a.system.debug("ServiceEntryPoints.initialize done");
+			this.finsembleLauncherEntry.setReady();
+			this.finsembleWindowPrimitivesEntry.setReady();
+			this.finsembleWindowCreateEntry.setReady();
+			this.finsembleTabbingEntry.setReady();
 			done();
 		});
 	}
@@ -66893,11 +73534,11 @@ class ServiceEntryPoints {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 167 */
+/* 193 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events__ = __webpack_require__(12);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_events__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
@@ -66905,7 +73546,7 @@ class ServiceEntryPoints {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_routerClientInstance__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_system__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__common_system__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__common_window_FinsembleWindow__ = __webpack_require__(35);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__common_window_FinsembleWindow__ = __webpack_require__(39);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__common_window_FinsembleWindow___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__common_window_FinsembleWindow__);
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
@@ -67084,7 +73725,7 @@ class SplinterAgent extends __WEBPACK_IMPORTED_MODULE_0_events___default.a.Event
 				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.info(`Window spawned and connected to the agent. Adding window to global store. ${windowDescriptor.name}`);
 
 				// This is where spawned windows get initially added to the global window store used for wrapping windows
-				let identifier = { name: windowDescriptor.name, uuid: windowDescriptor.uuid, windowType: "OpenFinWindow" }; // this is the minimum set of information required to build a window wrapper
+				let identifier = { name: windowDescriptor.name, uuid: windowDescriptor.uuid, windowType: "WebWindow" }; // this is the minimum set of information required to build a window wrapper
 				//windowDescriptor.identifier = identifier;
 
 				// minimize the footprint of stuff in the store - this is the only thing needed from the manifest (used in asyncConnectToEventRouter in the routerClient)
@@ -67154,21 +73795,21 @@ class SplinterAgent extends __WEBPACK_IMPORTED_MODULE_0_events___default.a.Event
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 168 */
+/* 194 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events__ = __webpack_require__(12);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_events__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__SplinterAgent__ = __webpack_require__(167);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__common_disentangledUtils__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__SplinterAgent__ = __webpack_require__(193);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__common_disentangledUtils__ = __webpack_require__(23);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__common_disentangledUtils___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__common_disentangledUtils__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_lodash_clone__ = __webpack_require__(127);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_lodash_clone__ = __webpack_require__(149);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_lodash_clone___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_lodash_clone__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_async__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_async___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_async__);
@@ -67493,7 +74134,1212 @@ class SplinterAgentPool extends __WEBPACK_IMPORTED_MODULE_0_events___default.a.E
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 169 */
+/* 195 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__BaseWindow__ = __webpack_require__(56);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__BaseWindow___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__BaseWindow__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_configClient__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_configClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_configClient__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_configUtil__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__common_userNotification__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__clients_logger__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5__clients_logger__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_system__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6__common_system__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_constants__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_constants___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7__common_constants__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_p_limit__ = __webpack_require__(41);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_p_limit___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8_p_limit__);
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
+
+
+
+__WEBPACK_IMPORTED_MODULE_2__clients_configClient___default.a.initialize();
+
+
+
+const BOUNDS_SET = "bounds-set";
+
+
+
+
+function isNumeric(n) {
+	return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
+/**
+ * WebWindow
+ */
+class WebWindow extends __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"] {
+	/**
+  *
+  * @param {*} params
+  * @param {finWindow} [params.finWindow] If not provided, must provide uuid
+  * @param {string} [params.uuid] If not provided, must provide finWindow
+  * @param {string} [params.name]
+  */
+	constructor(params) {
+		super(params);
+		this.name = params.name || params.windowName;
+		this.uuid = params.uuid;
+		this.focused = false;
+
+		if (params.finWindow) {
+			this.finWindow = params.finWindow;
+			this.uuid = this.finWindow.uuid;
+			if (!this.name) this.name = this.finWindow.name;
+		}
+
+		if (!this.finWindow && this.uuid) {
+			this.uuid = params.uuid;
+			this.finWindow = __WEBPACK_IMPORTED_MODULE_6__common_system__["System"].Window.wrap(params.uuid, this.name);
+		}
+		this._listeners = {};
+		//whether to notify the user that we failed to close the window if it times out.
+		this.throwNotificationOnFailedClose = false;
+		this.windowIdentifier = { windowName: this.name, uuid: this.uuid };
+		this.wrapFunctions();
+		this.windowOptions = {};
+		this.setMyOptions = this.setMyOptions.bind(this);
+		this.setCloseTimeout = this.setCloseTimeout.bind(this);
+		this.windowState = __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.NORMAL;
+		this.eventChannelName = this.eventChannelName.bind(this);
+		this.handleBoundsSet = this.handleBoundsSet.bind(this);
+		this.setupSystemBoundsChangedEvent = this.setupSystemBoundsChangedEvent.bind(this);
+		this.windowsKeyAction = this.windowsKeyAction.bind(this);
+		this._restore = this._restore.bind(this);
+		this.setParent = super.setParent.bind(this);
+		this.getParent = super.getParent.bind(this);
+		this.canMinimize = true;
+		this.canMaximize = true;
+		this.setMinimizeAbility = this.setMinimizeAbility.bind(this);
+		this.setMaximizeAbility = this.setMaximizeAbility.bind(this);
+		//On destruct, we'll go through all the listeners that we've added to the router and remove them
+		//@todo investigate a routerClient for each wrapper, so on destruct we can just RouterClient.disconnectALl without removing everything from the physical tab/browser window it's running in
+		this.RouterHandlers = {};
+		this.addListeners = this.addListeners.bind(this);
+		this.removeListeners = this.removeListeners.bind(this);
+		this.listeningFor = []; // keeps track of Finsemble window event listeners and prevents duplicates
+		this.addedSystemListeners = {}; // keeps track of the system event listeners that the Finsemble event listeners translate to and makes sure there are no duplicates
+		this._systemClosed = this._systemClosed.bind(this);
+		this._systemMaximized = this._systemMaximized.bind(this);
+		this._systemRestored = this._systemRestored.bind(this);
+		this._getBoundsFromSystem = this._getBoundsFromSystem.bind(this);
+		//This boolean is set to true when the window is closed by the operating system (outside of finsemble).
+		this.closing = false;
+
+		this.setBoundsFromFinsemble = false;
+		this.windowsKeyDown = false; //Tracks wether the windows key is being held down. When the windows key is pressed inside a window a router message is dispatched to change this prop. Only when the opposite action fires from the router will this value change back.
+		this.lastWindowsKeyUp = 0;
+		this._isMaximized = false;
+		/**
+   * Queue for alwaysOnTop and bringToFront.
+   *
+   * DH 11/15/2019 - I found during testing that if these operations aren't
+   * controlled, they frequently clobber each other, we send mixed signals,
+   * such that the OS thinks the window is AOT while Finsemble doesn't.
+   */
+		this.aotQueue = __WEBPACK_IMPORTED_MODULE_8_p_limit___default()(1);
+		this.addListeners();
+	}
+
+	setIsMaximized(value) {
+		if (typeof value !== "boolean") {
+			__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.error("Cannot set isMaximized to a non-boolean value. Assuming false");
+			value = false;
+		}
+
+		if (this.parentWindow) {
+			this.parentWindow.isMaximized = value;
+		}
+
+		this._isMaximized = value;
+	}
+
+	getIsMaximized() {
+		if (this.parentWindow) {
+			return this.parentWindow.isMaximized;
+		}
+
+		return this._isMaximized;
+	}
+
+	_addEventListener(params, handler = Function.prototype) {
+		let { eventName } = params;
+		this.addEventListener(eventName, handler);
+	}
+
+	_removeEventListener(params, handler = Function.prototype) {
+		let { eventName } = params;
+		this.removeEventListener(eventName, handler);
+	}
+
+	removeEventListener(params, handler = Function.prototype) {
+		super.removeEventListener(params.eventName || params, handler);
+
+		// TODO: Need to modify so that we keep track of all added listeners and remove them cleanly. Not sure how addEVentListener even does anything.
+	}
+
+	/**
+  * Make sure that only one event is added for system listeners that someone requests. These events are cleaned up when "addedSystemListeners" are removed.
+  * @param {string} systemEvent
+  * @param {Function} handler
+  */
+	setupSystemListener(systemEvent, handler) {
+		if (!this.addedSystemListeners[systemEvent]) {
+			this.addedSystemListeners[systemEvent] = handler;
+			this.finWindow.addEventListener(systemEvent, handler);
+		}
+	}
+
+	addEventListener(event, handler = Function.prototype) {
+		// This makes sure that the handlers are triggered for each event and get removed when someone removes the handler
+		super.addEventListener(event, handler);
+
+		// For some events, add listeners in the finWindow so that we can then propagate the event to the rest of the system. These are only added one time.
+		if (!this.listeningFor.includes(event)) {
+			this.listeningFor.push(event);
+			switch (event) {
+				case "bounds-change-request":
+					// translate disabled-frame-bounds-changing into a bounds-change-request event expected by the rest of the system.
+					this.setupSystemListener("disabled-frame-bounds-changing", this.onDisabledFrameBoundsChanging.bind(this));
+					break;
+				case "bounds-changed":
+					this.setupSystemListener("disabled-frame-bounds-changed", this.onDisabledFrameBoundsChanged.bind(this));
+					break;
+				case "system-bounds-changed":
+					this.setupSystemListener("bounds-changed", this.setupSystemBoundsChangedEvent.bind(this));
+					break;
+				case "system-maximized":
+					this.setupSystemListener("maximized", () => this.eventManager.trigger("system-maximized"));
+					break;
+				case "system-restored":
+					this.setupSystemListener("restored", () => this.eventManager.trigger("system-restored"));
+					break;
+				case "blurred":
+				case "focused":
+				case "hidden":
+				case "shown":
+				case "minimized":
+				// case "close-requested": <- using our custom close-requested event.
+				// case "closed": <- using custom close-event.
+				case "crashed":
+					// keep track of events we're listening for so we don't add multiple listeners on the window. don't want to trigger more than a single remote event per single local event. Said differently, if we add this generic handler N times, the event will be triggered N times.
+
+					// `super.addEventListener` will make sure that any events emitted by this wrapper are caught. However, we won't emit any events that we aren't listening to on the primitive window (in this case, the underlying finWindow).
+					// So, when someone adds a listener(e.g., focus), we listen for the primitive to emit the event. At that point, the derived class will emit, and the handler will be fired.
+					this.setupSystemListener(event, this.onNativeEvent.bind(this, event));
+					break;
+				// 'system-closed' is a made up event. It means 'a closed event was emitted on the underlying window primitive that we weren't expecting'.
+				// This will happen when the user closes via the taskbar or via alt + f4.
+				case "system-closed":
+					this.setupSystemListener("closed", () => this.eventManager.trigger("system-closed"));
+					break;
+				default:
+					__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("Listener added to Web wrap, Handler not passed to primitive. Using finsemble event instead.", event);
+					break;
+			}
+		}
+	}
+
+	checkIfBoundsAreTheSame(bounds1, bounds2) {
+		if (bounds1 && bounds2) {
+			return bounds1.top === bounds2.top && bounds1.left === bounds2.left && bounds1.height === bounds2.height && bounds1.width === bounds2.width;
+		}
+		return false;
+	}
+
+	/**
+  * Sets up listeners for system-bounds-changed events. Currently only responds to aero snap moves
+  */
+	setupSystemBoundsChangedEvent(evt) {
+		var _this = this;
+
+		return _asyncToGenerator(function* () {
+			__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.verbose("bounds-changed event", evt);
+			// If a setBounds call was made by Finsemble, do not trigger this event. The intent of this is to catch things like moves made by windows keyboard shortcuts or direct calls from OF.
+			// dockableWindow deals with these. For stacks, this event is propagated to the stack.
+			if (_this.setBoundsFromFinsemble && _this.checkIfBoundsAreTheSame(evt, _this.requestedBounds)) {
+				_this.setBoundsFromFinsemble = false;
+				return;
+			}
+			if (!_this.finishedMove) return;
+			if (_this.windowsKeyDown) {
+				// If windows key is down, user is using shortcuts to position windows. Delay triggering the event until keyup.
+				_this.windowsKeyUpHandler = function () {
+					if (_this.windowState === __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MAXIMIZED) {
+						_this.windowState = __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.NORMAL;
+						_this.eventManager.trigger("restored");
+					}
+					evt.action = __WEBPACK_IMPORTED_MODULE_7__common_constants__["MOVE_REASON"].AERO_KEY;
+					_this.eventManager.trigger("system-bounds-changed", _extends({}, evt));
+					// We set a global flag here that is available to all windowWrappers and docking. Aerosnapped windows fire a lot of spurious move events that need to be caught.
+					// TODO - it maybe possible that a static method might be able to deal with this instead.
+					window.aeroMode = true;
+				};
+			} else if (window.aeroMode) {
+				// this is for a window that is chosen from preview and is the only case except the initial aerosnap that needs to be dealt with.
+				if (_this.windowState === __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MAXIMIZED) {
+					_this.windowState = __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.NORMAL;
+					_this.eventManager.trigger("restored");
+				}
+				evt.action = __WEBPACK_IMPORTED_MODULE_7__common_constants__["MOVE_REASON"].AERO_KEY;
+				_this.eventManager.trigger("system-bounds-changed", _extends({}, evt));
+				window.aeroMode = false;
+			}
+		})();
+	}
+
+	/** Some windows should never be allowed to maximize (e.g, the toolbar).
+  * However, until we have a way of preventing the maximize event at the
+  * OS level, the event will still happen. When this occurs our solution
+  * is to immediately restore it again.
+ */
+	_systemMaximized() {
+		let win = this;
+		if (win.canMaximize === false) {
+			win._restore({ checkMaximize: false, checkMinimize: false });
+			return;
+		}
+		// Finsemble maximize is different from OF maximize.
+		// If a window gets maximized by the system (double click taskbar), we should make Finsemble maximize happen
+		// If we are already maximized (finsemble maximized, not OF maximized), we are restoring.
+		if (this.parentWindow) {
+			win = this.parentWindow;
+		}
+		if (win.windowState === __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MAXIMIZED) {
+			win._restore();
+		} else {
+			win._maximize();
+		}
+	}
+
+	// When a native event fires:
+	_systemRestored() {
+		var _this2 = this;
+
+		return _asyncToGenerator(function* () {
+			let win = _this2;
+			// Maximize happens we resize the window under the titlebar, which causes restore to fire.
+			// We only want to actually deal with restore when the window is minimized previously
+			if (_this2.parentWindow) win = _this2.parentWindow;
+
+			if (win.windowState !== __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MINIMIZED) {
+				return;
+			}
+			if (win.getIsMaximized() === true) {
+				win._maximize();
+				return;
+			}
+
+			let { data: bounds } = yield win._getBounds();
+			// Triggers an event that specified that the window was restored from the system
+			bounds.action = __WEBPACK_IMPORTED_MODULE_7__common_constants__["MOVE_REASON"].SYSTEM_RESTORED;
+			_this2.eventManager.trigger("system-bounds-changed", _extends({}, bounds));
+
+			win.windowState = __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.NORMAL;
+			win.setIsMaximized(false);
+			win.eventManager.trigger("restored");
+		})();
+	}
+
+	// When a native event fires:
+	onNativeEvent(eventName) {
+		this.eventManager.trigger(eventName);
+	}
+
+	addListeners() {
+		this.addEventListener("minimized", () => {
+			this.windowState = __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MINIMIZED;
+		});
+		this.addEventListener("restored", () => {
+			this.windowState = __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.NORMAL;
+		});
+		this.addEventListener("maximized", () => {
+			this.windowState = __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MAXIMIZED;
+		});
+		this.addEventListener("system-maximized", this._systemMaximized);
+		this.addEventListener("system-restored", this._systemRestored);
+		this.addEventListener("system-closed", this._systemClosed);
+		const UPDATE_OPTIONS_CHANNEL = this.name + ".updateOptions";
+		const onUpdateOptions = (err, response) => {
+			for (let o in response.data) {
+				if (this.windowOptions[o] == response.data[o]) return;
+				this.windowOptions[o] = response.data[o];
+				let dataToEmit = {
+					windowName: this.name
+				};
+				dataToEmit[o] = response.data[o];
+				this.emit(o, response.data);
+			}
+		};
+		this.RouterHandlers[UPDATE_OPTIONS_CHANNEL] = onUpdateOptions;
+		// Fire events when options are updated. e.g. alwaysOnTop
+		__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.addListener(UPDATE_OPTIONS_CHANNEL, onUpdateOptions);
+
+		// When window key is pressed, we delay the system-set-bounds event trigger to after the key goes up.
+		__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.addListener("Finsemble.WindowService.WindowsKey", this.windowsKeyAction);
+		/** DH 6/15/2019 - The OS and container maintain seperate records of
+   * which window is in focus, which can get out of sync;
+   * therefore, we have to maintain a seperate state here.
+   * Ideally this wouldn't be necessary and OS events would
+   * always bubble up to the container.
+   */
+		this.addEventListener("focused", () => {
+			this.focused = true;
+		});
+		this.addEventListener("blurred", () => {
+			this.focused = false;
+		});
+	}
+	onDisabledFrameBoundsChanged(evt) {
+		this.eventManager.trigger("bounds-changed", _extends({}, evt));
+	}
+	onDisabledFrameBoundsChanging(evt) {
+		this.eventManager.trigger("bounds-change-request", _extends({}, evt));
+	}
+	//removed because it causes an explosion of router traffic if the default is to listen for this event. If someone needs this incredibly frequently updated object, they can listen.
+	listenForBoundsSet() {
+		this.RouterHandlers[this.eventChannelName(BOUNDS_SET)] = this.handleBoundsSet;
+		__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.addListener(this.eventChannelName(BOUNDS_SET), this.handleBoundsSet);
+	}
+	handleBoundsSet(err, response) {
+		if (response.data && response.data.bounds) {
+			this.mergeBounds(response.data.bounds);
+		}
+		this.emit(BOUNDS_SET, response.data);
+	}
+	/**
+  * @param params.property property to pull from 'finsemble' and from componentConfig.
+  * @param params.componentType which component to grab local config from.
+  */
+	getGlobalAndLocalComponentConfig(params) {
+		let { property, componentType } = params;
+
+		const promiseResolver = (resolve, reject) => {
+			if (typeof componentType === "undefined") {
+				reject("params.componentType must be defined.");
+			}
+			if (typeof property === "undefined") {
+				reject("params.property is required");
+			}
+			//In case config isn't initialized when this method is called.
+			const getConfig = cb => {
+				__WEBPACK_IMPORTED_MODULE_2__clients_configClient___default.a.getValue({ field: "finsemble" }, (err, allConfig) => {
+					if (err) return reject(err);
+					let globalConfig = allConfig[property];
+					let componentConfig = allConfig.components[componentType];
+					//If we have the component config, return the property saved on that component. if not, return undefined.
+					let localConfig = componentConfig && componentConfig.foreign && componentConfig.foreign.components ? componentConfig.foreign.components[property] : undefined;
+					resolve({ localConfig, globalConfig, allConfig });
+				});
+			};
+			__WEBPACK_IMPORTED_MODULE_2__clients_configClient___default.a.onReady(getConfig);
+		};
+
+		return new Promise(promiseResolver);
+	}
+
+	setCloseTimeout() {
+		var _this3 = this;
+
+		const promiseResolver = resolve => {
+			let componentType;
+			//Have to make sure options are set. Sometimes wraps are created and then just used to close windows. Need options to know which kind of component it is..
+			this.setMyOptions(_asyncToGenerator(function* () {
+				if (_this3.windowOptions && _this3.windowOptions.customData && _this3.windowOptions.customData.component) {
+					componentType = _this3.windowOptions.customData.component.type;
+				}
+
+				//Get the global timeout and the component-specific timeout. If the component-specific exists, use it. If it doesn't, try global. If global doesn't exist, use 5000ms.
+				let { localConfig, globalConfig, allConfig } = yield _this3.getGlobalAndLocalComponentConfig({
+					property: "Window Manager",
+					componentType
+				});
+
+				let globalTimeout = globalConfig ? globalConfig.componentCloseTimeout : undefined;
+				let componentTimeout = localConfig ? localConfig.componentCloseTimeout : undefined;
+				if (typeof componentTimeout !== "undefined") {
+					_this3.closeTimeout = componentTimeout;
+				} else if (typeof globalTimeout !== "undefined") {
+					_this3.closeTimeout = globalTimeout;
+				} else {
+					_this3.closeTimeout = 5000;
+				}
+
+				_this3.throwNotificationOnFailedClose = allConfig.failedComponentCloseNotification;
+				__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.info("Close timeout set for", _this3.name, JSON.stringify(_this3.closeTimeout));
+				resolve();
+			}));
+		};
+		return new Promise(promiseResolver);
+	}
+
+	setMyOptions(cb) {
+		this.finWindow.getOptions(opts => {
+			this.windowOptions = Object.assign(opts, this.windowOptions);
+			if (!this.windowOptions) {
+				__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.error("window options is null");
+			}
+			if (cb) cb();
+		});
+	}
+
+	setMinimizeAbility(canMinimize) {
+		if (typeof canMinimize !== "boolean") {
+			__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.error("Ability to minimize cannot be a non-boolean value. Assuming true");
+			canMinimize = true;
+		}
+
+		this.canMinimize = canMinimize;
+	}
+
+	setMaximizeAbility(canMaximize) {
+		if (typeof canMaximize !== "boolean") {
+			throw new Error("Ability to maximize cannot be a non-boolean value");
+		}
+
+		this.canMaximize = canMaximize;
+	}
+
+	_updateOptions(params = {}, cb = Function.prototype) {
+
+		if (!params) params = {};
+		params = params.options || params; // TODO: This function is used differently all over the place.
+		// Permissions and security policies are protected options. They cannot be modified. Overwrite them as long as they've been set on the window.
+		// @note window options aren't set on instantiation. New functionality needs to be added to set the options on creation.
+		if (this.windowOptions && this.windowOptions.securityPolicy) {
+			params.permissions = this.windowOptions.permissions;
+			params.securityPolicy = this.windowOptions.securityPolicy;
+		}
+
+		this.callWebWindowFunction("updateOptions", params, () => {
+			this._saveWindowOptions();
+			cb();
+		});
+	}
+
+	//Had to move this because jScrambler was screwing up when we obfuscated.
+	wrapFunctions() {
+		//let self = this;
+		var WebWindowFunctionsWithoutParams = ["disableFrame", "isShowing", "getState"];
+		WebWindowFunctionsWithoutParams.forEach(f => {
+			this[f] = (params, cb) => {
+				if (typeof params === "function") {
+					cb = params;
+					params = null;
+				}
+				this.callWebWindowFunction(f, false, cb);
+			};
+		});
+
+		var WebWindowFunctionsWithoutParamsToBeWrappedInIsShowing = ["focus"];
+		WebWindowFunctionsWithoutParamsToBeWrappedInIsShowing.forEach(f => {
+			this[f] = (cb = Function.prototype) => {
+				if (["minimize", "maximize"].includes(f) && this.windowDescriptor && !this.windowDescriptor.resizable) {
+					if (cb) {
+						return cb("Cannot Perform this action on non-resizable windows");
+					}
+					return;
+				}
+				this.finWindow.isShowing(isShowing => {
+					if (isShowing) {
+						//If the method is defined on the BaseWindow, call it.
+						if (super[f]) {
+							super[f]({}, (err, response) => {
+								//if BaseWindow says it's okay for us the method to trickle down to the wrapper, great. otherwise cb.
+								if (!err && response.shouldContinue) {
+									this.callWebWindowFunction(f, false, cb);
+								} else {
+									cb();
+								}
+							});
+						} else {
+							this.callWebWindowFunction(f, false, cb);
+						}
+					} else {
+						if (cb) {
+							cb("This Window is hidden");
+						}
+					}
+				});
+			};
+		});
+	}
+
+	/**
+  * Called when a router message is received saying a windows key was pressed/released.
+  * @param {*} err Error from the router
+  * @param {*} response The response containing information about what keys were pressed
+  */
+	windowsKeyAction(err, response) {
+		let timeout;
+		let setWindowKeyDownFalse = () => {
+			this.windowsKeyDown = false;
+			this.lastWindowsKeyUp = Date.now();
+			if (this.windowsKeyUpHandler) this.windowsKeyUpHandler();
+			this.windowsKeyUpHandler = null;
+			clearTimeout(timeout);
+		};
+		if (response.data === "down") {
+			this.windowsKeyDown = true;
+			// In case we never get a key up.
+			timeout = setTimeout(setWindowKeyDownFalse, 30000);
+		} else if (response.data === "up") {
+			setWindowKeyDownFalse();
+		}
+	}
+
+	/**
+  *
+  * @param {*} functionName Name of the Web window function to call
+  * @param {*} params  The parameters to the function (except callbacks) as an array
+  * @param {*} cb The callback to be called. This is in the format function (err, response) {} and errors will be in err unlike Openfin which requires two callbacks.
+  */
+	callWebWindowFunction(functionName, params, cb = Function.prototype) {
+		//If this.closing is true, the window was closed by the operating system. When that happens, the window receives focus. If that window is part of a group, this can trigger calls to bring to front, update options, etc. These function calls will error out at the openfin level because the window has already been closed.
+		if (this.closing) return cb({
+			code: "function_dropped_window_closing",
+			message: `Window ${this.name} was closed by the operating system. Skipping call to ${functionName}`
+		});
+		if (params) {
+			if (!Array.isArray(params)) params = [params];
+			// add success callback to params
+			params.push((...args) => {
+				// fire event for updateOptions
+				if (functionName == "updateOptions") {
+					__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("callWebWindowFunction.updateOptions", params);
+					if (!params[0].dontFireEvents) {
+						__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.transmit(this.name + ".updateOptions", params[0]);
+
+						for (let o in params[0]) {
+							// in some cases (such as our bringToFront hack we dont want to fire spurious events). Also dont fire events if the option doesn't change
+							if (o == "dontFireEvents" || this.windowOptions[o] == params[0][o]) continue;
+							if (this.windowOptions[o] && typeof this.windowOptions[o] == "object" && params[0][o] && typeof params[0][o] == "object") {
+								Object.assign(this.windowOptions[o], params[0][o]);
+							} else {
+								this.windowOptions[o] = params[0][o];
+							}
+							if (!params[0].dontFireEvents) {
+								const event = {
+									windowName: this.name,
+									[o]: params[0][o]
+								};
+
+								this.eventManager.trigger(o, event);
+							}
+						}
+					}
+				}
+				// call the actual callback
+				if (cb) {
+					cb(null, args);
+				}
+			});
+
+			// add error callback to params
+			params.push(err => {
+				if (cb) {
+					err = `Error for ${this.name} from method ${functionName}: ` + err;
+					__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.error("Error in WebWindowWrapper method", functionName, err);
+					console.error(err);
+					cb(err);
+				}
+			});
+
+			// call the openfin function
+			__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("callWebWindowFunction", functionName, params);
+			this.finWindow[functionName](...params);
+		} else {
+			this.finWindow[functionName](retval => {
+				this;
+				cb(null, retval);
+			}, err => {
+				this;
+				if (cb) {
+					__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("Error in WebWindowWrapper method", functionName, err);
+					console.error(err);
+					cb(err);
+				}
+			});
+		}
+	}
+
+	/**
+  * Gets the bounds directly from Electron or Openfin. The existing getbounds function tries it's best to pass in the bounds as Finsemble knows them instead of bounds
+  * sent up from the system.
+  * This is called in cases where the OS has moved a window. In these cases we need the updated bounds from the system to update the Finsemble bounds
+  * @param {*} params
+  * @param {*} cb
+  */
+	_getBoundsFromSystem(params, cb = Function.prototype) {
+		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("WebWindowWrapper._getBoundsFromSystem", this.name, params);
+
+		const promiseResolver = resolve => {
+			// To avoid breaking current functionality or changing the api of a shared function Fea has a special function to query bounds from the system.
+			if (__WEBPACK_IMPORTED_MODULE_6__common_system__["System"].isElectron()) {
+				this.callWebWindowFunction("getBoundsFromSystem", null, (err, bounds) => {
+					cb(err, bounds);
+					return resolve({ err, data: bounds });
+				});
+			} else {
+				// openfin
+				this.callWebWindowFunction("getBounds", null, (err, bounds) => {
+					cb(err, bounds);
+					return resolve({ err, data: bounds });
+				});
+			};
+		};
+		return new Promise(promiseResolver);
+	}
+
+	_getBounds(params, cb = Function.prototype) {
+		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("WebWindowWrapper._getBounds", this.name, params);
+
+		if (typeof params === "function") {
+			cb = params;
+			params = null;
+		}
+
+		const promiseResolver = resolve => {
+			//OPENFIN BOUNDS ARE WRONG! SERIOUSLY THEY REALLY ARE WRONG! AND THIS BREAKS STACKED WINDOWS IN DOCKED GROUPS BADLY!
+			//SO PLEASE do not remove this code. it wasted a whole 4 hours figuring out why group rectangularity problems were back in cleanup.
+			//return cached bounds if we have them
+			//WE HAVE TO CACHE THEM BECAUSE WINDOWS IN STACKS ARE DEREGISTERED FROM DOCKING. AND DOCKING DOESN'T GET BOUNDS FOR THOSE WHICH IS A PROBLEM FOR STACKS. Do not eliminate this cache.
+			if (this.windowOptions && this.windowOptions.bounds) {
+				cb(null, this.windowOptions.bounds);
+				return resolve({ err: null, data: this.windowOptions.bounds });
+			} else if (isNumeric(this.windowOptions.defaultLeft) && isNumeric(this.windowOptions.defaultTop) && isNumeric(this.windowOptions.defaultHeight) && isNumeric(this.windowOptions.defaultWidth)) {
+				let bounds = {
+					top: this.windowOptions.defaultTop,
+					left: this.windowOptions.defaultLeft,
+					height: this.windowOptions.defaultHeight,
+					width: this.windowOptions.defaultWidth
+				};
+				bounds.right = bounds.left + bounds.width;
+				bounds.bottom = bounds.top + bounds.height;
+				this.windowOptions.bounds = bounds;
+				cb(null, this.windowOptions.bounds);
+				return resolve({ err: null, data: this.windowOptions.bounds });
+			}
+
+			// openfin bounds are often different from what is expected by a couple of pixels. use as last resort
+			this.callWebWindowFunction("getBounds", null, (err, bounds) => {
+				cb(err, bounds);
+				return resolve({ err, data: bounds });
+			});
+		};
+		// get bounds from docking if not
+		return new Promise(promiseResolver);
+	}
+
+	_getOptions(params, cb) {
+		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("WebWindowWrapper._getOptions", this.name, "UUID", this.uuid, params);
+		this.callWebWindowFunction("getOptions", null, (err, opts) => {
+			if (err) {
+				__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.warn("getOptions", err, params, opts);
+			}
+			if (opts && Object.keys(this.windowOptions).length) {
+				opts = Object.assign(opts, this.windowOptions);
+			} else {
+				opts = {};
+			}
+			cb(err, opts);
+		});
+	}
+
+	_hide(params, cb = Function.prototype) {
+		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("WebWindowWrapper._hide", this.name, params);
+
+		if (typeof params === "function") {
+			cb = params;
+			params = null;
+		}
+		if (params && params.invokedByParent) {
+			this.callWebWindowFunction("updateOptions", { autoShow: false }, () => {
+				this._saveWindowOptions();
+			});
+		}
+		this.callWebWindowFunction("hide", null, cb);
+	}
+
+	_show(params, cb = Function.prototype) {
+		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("WebWindowWrapper._show", this.name, params);
+		if (typeof params === "function") {
+			cb = params;
+			params = null;
+		}
+		if (params && (params.invokedByParent || params.saveState)) {
+			this.callWebWindowFunction("updateOptions", { autoShow: true }, () => {
+				this._saveWindowOptions();
+			});
+		}
+		this.callWebWindowFunction("show", null, cb);
+	}
+
+	// TABBING NOTE: Example case below showing how the parent (through the base class) can optionally inject it's behavior. Exactly where and where this is done is still TBD.
+	_minimize(params = { notifyDocking: true }) {
+		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("WebWindowWrapper._minimize", this.name, params);
+		// When we receive a minimize command, we first pass the command to the parent window. The parent window may decide to supersede. In its response, it will then set the flag "shouldContinue" to false if we shouldn't actually perform the minimizing function.
+		let self = this;
+		//Some windows cannot minimize, e.g., (toolbars);
+		if (this.canMinimize === false) return;
+		function doMinimize() {
+			self.windowState = __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MINIMIZED;
+			self.finWindow.minimize();
+		}
+
+		this.finWindow.isShowing(isShowing => {
+			if (isShowing) {
+				//todo shouldn't be necessary in the future...
+				__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.query("DockingService.windowMinimized", this.name, () => {
+					doMinimize();
+				});
+			}
+		});
+	}
+
+	_maximize(params = { notifyDocking: true }) {
+		// If windows key is down, user is using hotkeys to maximize and could potentially cancel the maximize event. So delay doing anything until the key is up.
+		if (this.windowsKeyDown) {
+			this.windowsKeyUpHandler = () => {
+				this._maximize(params);
+			};
+			return;
+		}
+
+		if (this.isMaximizing || this.windowState === __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MAXIMIZED) return;
+		this.isMaximizing = true;
+		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("WebWindowWrapper._maximize", this.name, params);
+		//Some windows cannot maximize, e.g., (toolbars);
+		if (this.canMaximize === false) return;
+		// When we receive a minimize command, we first pass the command to the parent window. The parent window may decide to supersede. In its response, it will then set the flag "shouldContinue" to false if we shouldn't actually perform the minimizing function.
+		const doMaximize = () => {
+			this.windowState = __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MAXIMIZED;
+			this.setIsMaximized(true);
+			this.eventManager.trigger("maximized");
+			this.isMaximizing = false;
+		};
+
+		if (params && params.invokedByParent) {
+			this.isMaximizing = false;
+		} else {
+			super._maximize(params, (err, response) => {
+				if (!err && response.shouldContinue) {
+					this.finWindow.isShowing(isShowing => {
+						if (isShowing) {
+							__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.query("DockingService.maximizeWindow", { name: this.name }, () => {
+								doMaximize();
+							});
+						} else {
+							this.isMaximizing = false;
+						}
+					});
+				} else {
+					this.isMaximizing = false;
+				}
+			});
+		}
+	}
+
+	// TABBING NOTE: Example case below showing how the parent (through the base class) can optionally inject it's behavior.
+	// ** Exactly where and where this for each derived window wrapper is still TBD, but easy to do/tweak. **
+	_restore(params = { checkMinimize: true, checkMaximize: true }, cb = Function.prototype) {
+		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("WebWindowWrapper._restore", this.name, params);
+		let self = this;
+		const DEFAULT_PARAMS = { checkMinimize: true, checkMaximize: true };
+		if (typeof params === "function") {
+			cb = params;
+			params = DEFAULT_PARAMS;
+		}
+
+		params = Object.assign(DEFAULT_PARAMS, params);
+
+		const iAmMaximized = this.windowState === __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MAXIMIZED;
+		const iAmMinimized = this.windowState === __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MINIMIZED;
+		const iAmNotMaximized = this.windowState !== __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MAXIMIZED;
+		//If either of the param values are undefined, default to true
+		const restrictToMinimized = params.checkMinimize || true;
+		const restrictToMaximized = params.checkMaximized || true;
+
+		super._restore(params, (err, response) => {
+			if (err || !response.shouldContinue) return cb(err);
+
+			// checkMinimize and checkMaximize are not mutually exclusive. Because a window could go down more than one of these paths, its callback could be executed twice. We don't want that, so we keep track of its invokation and only call the callback if it's not been invoked already.
+			let callbackInvoked = false;
+			const success = () => {
+				self.eventManager.trigger("restored");
+				if (!callbackInvoked) {
+					callbackInvoked = true;
+					cb();
+				}
+			};
+
+			// If we should restore minimized windows and the window is minimized, restore it.
+			if (restrictToMinimized && iAmMinimized) {
+				return this.finWindow.restore(success, err => console.error(err));
+				// If we should restore windows with any min/max state, and the window isn't maximized, we can restore this window. If the window is maximized, it has to go through a different restore flow.
+			} else if (!restrictToMinimized && iAmNotMaximized) {
+				return this.finWindow.restore(success, err => console.error(err));
+			}
+
+			if (restrictToMaximized && iAmMaximized) {
+				this.windowState = __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.NORMAL;
+				this.setIsMaximized(false);
+				__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.query("DockingService.restoreFromMaximize", {
+					name: this.name,
+					windowIdentifier: this.identifier
+				}, (err, response) => {
+					/**
+      * 5/20/19 Joe: Previously success was called regardless of error/success
+      * Added a logging message, but success will still be called either way
+      */
+					if (err) {
+						__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.error("Error querying router service for maximize restore", err);
+					}
+					success();
+				});
+			} else {
+				if (!callbackInvoked) {
+					callbackInvoked = true;
+					cb();
+				}
+			}
+		});
+	}
+
+	/** @private Not for use outside the module. */
+	_bringToFrontHelper() {
+		return new Promise((res, rej) => {
+			__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("WebWindowWrapper._bringToFront", this.name);
+
+			const doBringToFront = () => {
+				// The way we bring a window to front is by setting it to alwaysOnTop
+				// then immediately setting it to alwaysOnTop false. Obviously,
+				// we ought not do this if the window is already alwaysOnTop
+				if (!this.windowOptions.alwaysOnTop) {
+					this.eventManager.trigger("broughtToFront");
+					this._updateOptions({ alwaysOnTop: true, dontFireEvents: true }, () => {
+						this._updateOptions({ alwaysOnTop: false, dontFireEvents: true }, res);
+					});
+				} else {
+					res();
+				}
+			};
+			// If for some reason there's no windowOptions, go ahead and set them, then bring to front. I never saw this happen, but you know, just in case.
+			if (!this.windowOptions) {
+				this.setMyOptions(doBringToFront);
+			}
+			doBringToFront();
+		});
+	}
+
+	/**
+  * Brings a window to front by quickly toggling alwaysOnTop on and off.
+  * Operates on a queue such that no alwaysOnTop or bringToFront operations
+  * happen concurrently.
+  * @param {*} params
+  * @param {*} cb
+  */
+	_bringToFront(params, cb = Function.prototype) {
+		var _this4 = this;
+
+		return _asyncToGenerator(function* () {
+			yield _this4.aotQueue(function () {
+				return _this4._bringToFrontHelper();
+			});
+			cb();
+		})();
+	}
+
+	_isShowing(params, cb = Function.prototype) {
+		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("WebWindowWrapper._isShowing", this.name, params);
+		if (typeof params === "function") {
+			cb = params;
+			params = null;
+		}
+		if (params && (params.invokedByParent || params.saveState)) {
+			this.callWebWindowFunction("updateOptions", { autoShow: true }, () => {});
+		}
+		this.callWebWindowFunction("isShowing", null, cb);
+	}
+
+	_setOpacity(params, cb = Function.prototype) {
+		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("WebWindowWrapper._setOpacity", this.name, params);
+		if (typeof params === "function") {
+			cb = params;
+			params = null;
+		}
+		this.callWebWindowFunction("updateOptions", { opacity: params.opacity, dontFireEvents: true }, () => {
+			//SetOpacity is called a lot (e.g., while moving a window). On mouse up, docking sends in params to tell the value to persist. This is so the window is restored with the proper opacity.
+			if (params && params.persist) {}
+			cb();
+		});
+	}
+
+	/** @private Not for use outside the module. */
+	_alwaysOnTopHelper(alwaysOnTop) {
+		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("WebWindowWrapper._alwaysOnTop", this.name, alwaysOnTop);
+		return new Promise(res => {
+			if (this.windowOptions.alwaysOnTop !== alwaysOnTop) {
+				this.callWebWindowFunction("updateOptions", { alwaysOnTop }, () => {
+					this._saveWindowOptions();
+					res();
+				});
+			} else {
+				res();
+			}
+		});
+	}
+
+	/**
+  * Sets the window to alwaysOnTop.
+  * Operates on a queue such that no alwaysOnTop or bringToFront operations
+  * happen concurrently.
+  * @param {*} param0
+  * @param {*} cb Zero-argument callback.
+  */
+	_alwaysOnTop({ alwaysOnTop }, cb = Function.prototype) {
+		var _this5 = this;
+
+		return _asyncToGenerator(function* () {
+			yield _this5.aotQueue(function () {
+				return _this5._alwaysOnTopHelper(alwaysOnTop);
+			});
+			cb();
+		})();
+	}
+
+	setTaskbarIconGroup(taskbarIconGroup, params, cb = Function.prototype) {
+		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("WebWindowWrapper.setTaskbarIconGroup", this.name, taskbarIconGroup, params);
+		if (typeof params === "function") {
+			cb = params;
+			params = null;
+		}
+		this.callWebWindowFunction("updateOptions", { taskbarIconGroup: taskbarIconGroup }, cb);
+	}
+
+	_saveWindowOptions() {
+		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("WebWindowWrapper._saveWindowOptions", this.name, this.windowOptions.bounds);
+		if (this.windowOptions.name) {
+			this.saveCompleteWindowState(this.windowOptions);
+		} else {
+			this.setMyOptions(() => {
+				this.saveCompleteWindowState(this.windowOptions);
+			});
+		} // only save if we have the full descriptor
+	}
+
+	_setBounds(params, cb = Function.prototype) {
+		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("WebWindowWrapper._setBounds", this.name, params);
+		//if (this.name.includes("Welcome")) console.info(this.name, params.bounds);
+		if (typeof params === "function") {
+			cb = params;
+			params = null;
+		}
+		params = params || {};
+		let bounds = params.bounds;
+		super._setBounds(params);
+		let ofParams = [bounds.left, bounds.top, bounds.width, bounds.height];
+		// if (!Object.keys(this.windowOptions).length || !this.windowOptions.name) bounds.persistBounds = false;
+		this.mergeBounds(bounds);
+
+		if (bounds.persistBounds !== false) {
+			this._saveWindowOptions();
+		}
+
+		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.verbose("WebWindow.setBounds", ofParams, bounds);
+		this.eventManager.trigger("bounds-changing", _extends({}, this.windowOptions.bounds));
+		// this is to make sure we dont fire system change events when we are triggering them.
+		this.requestedBounds = bounds;
+		this.setBoundsFromFinsemble = true;
+		// sometimes the OF setBounds results in no events being fired. So clear this flag just to be safe.
+		if (this.timeout) clearTimeout(this.timeout);
+		this.timeout = setTimeout(() => {
+			this.setBoundsFromFinsemble = false;
+		}, 100);
+		this.callWebWindowFunction("setBounds", ofParams, cb);
+	}
+
+	_animate(animateParams, params, cb = Function.prototype) {
+		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("WebWindowWrapper.animate", this.name, animateParams, params);
+		if (typeof params === "function") {
+			cb = params;
+			params = null;
+		}
+		this.finWindow.animate(animateParams.transitions, animateParams.options, () => {
+			this.getBounds({}, (err, bounds) => {
+				if (animateParams.transitions.size) {
+					if (animateParams.transitions.size.width) {
+						bounds.width = animateParams.transitions.size.width;
+						bounds.right = bounds.left + bounds.width;
+					}
+					if (animateParams.transitions.size.height) {
+						bounds.height = animateParams.transitions.size.height;
+						bounds.bottom = bounds.top + bounds.height;
+					}
+				}
+				bounds.persistBounds = params.persistBounds;
+				this._setBounds({ bounds }, cb);
+			});
+		}, function (error) {
+			if (cb) cb(error);
+		});
+	}
+
+	getMousePosition(params, cb = Function.prototype) {
+		if (typeof params === "function") {
+			cb = params;
+			params = null;
+		}
+		__WEBPACK_IMPORTED_MODULE_6__common_system__["System"].getMousePosition(cb);
+	}
+
+	cacheHandlerForRemoval(event, handler) {
+		if (!this._listeners[event]) {
+			this._listeners[event] = [];
+		}
+
+		this._listeners[event].push(handler);
+	}
+
+	_showAt(position, params, cb = Function.prototype) {
+		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("WebWindowWrapper._showAt", this.name, position, params);
+		if (typeof params === "function") {
+			cb = params;
+			params = null;
+		}
+		this.callWebWindowFunction("showAt", [position.left, position.top, position.force], cb);
+	}
+
+	throwFailedCloseNotification(failureMessage) {
+		__WEBPACK_IMPORTED_MODULE_2__clients_configClient___default.a.getValue({ field: "finsemble" }, (err, finConfig) => {
+			let notificationURL = __WEBPACK_IMPORTED_MODULE_3__common_configUtil__["ConfigUtilInstance"].getDefault(finConfig, "finConfig.notificationURL", finConfig.moduleRoot + "/components/system/notification/notification.html");
+			__WEBPACK_IMPORTED_MODULE_4__common_userNotification__["default"].alert("dev", "ONCE-SINCE-STARTUP", "Window close timed out", failureMessage, { url: notificationURL });
+		});
+	}
+	_blur(params = {}, cb = Function.prototype) {
+		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("WebWindowWrapper._blur", this.name, params);
+		this.focused = false;
+		this.callWebWindowFunction("blur", null, cb);
+	}
+
+	_focus(params = {}, cb = Function.prototype) {
+		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("WebWindowWrapper._focus", this.name, params);
+		this.focused = true;
+		this.callWebWindowFunction("focus", null, cb);
+	}
+	//Invoked when out-of-bounds closes are detected. This might be an alt+f4, a close from the task bar, etc. Only happens when openfin or electron emit a closed event for the window. When we close our windows, we suppress that event.
+	_systemClosed(params = {}, cb = Function.prototype) {
+		//If we're closing, we shouldn't call focus/btf/update_options, etc. Doing so can cause errors down in openfin.
+		this.closing = true;
+		params.fromSystem = true;
+		params.removeFromWorkspace = true;
+		super.close(params, (() => {
+			var _ref2 = _asyncToGenerator(function* (err, response) {
+				cb();
+			});
+
+			return function (_x, _x2) {
+				return _ref2.apply(this, arguments);
+			};
+		})());
+	}
+	_close(params, cb = Function.prototype) {
+		var _this6 = this;
+
+		//merging all params because otherwise the params dont pass properly and remove from workspace fails
+		this.removeEventListener("system-closed", this._systemClosed);
+		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("WebWindowWrapper._close", this.name, params);
+		if (typeof params === "function") {
+			cb = params;
+			params = null;
+		}
+
+		let self = this;
+		// When we receive a close command, we first pass the command to the parent window. The parent window may decide to supersede. In its response, it will then set the flag "shouldContinue" to false if we shouldn't actually perform the close function.
+		super._close(params, (() => {
+			var _ref3 = _asyncToGenerator(function* (err, response) {
+				if (response.shouldContinue) {
+					//If the window is an application call closeApplication instead of finWindow.close
+					if (self.finWindow.uuid === self.finWindow.name) {
+						let WebApplication = __WEBPACK_IMPORTED_MODULE_6__common_system__["System"].Application.wrap(self.finWindow.uuid);
+						__WEBPACK_IMPORTED_MODULE_6__common_system__["System"].closeApplication(WebApplication, cb);
+					} else if (params.fromSystem) {
+						// Just call the callback - window is destroyed already because the system closed it
+						cb();
+					} else {
+						self.finWindow.close(true, function () {
+							cb();
+						}, function (err1) {
+							if (!params.suppressError) {
+								__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.error("ERROR CLOSING WINDOW", err1);
+							}
+							cb();
+						});
+					}
+					__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.transmit(`${_this6.windowIdentifier.windowName}.close`, params, { suppressWarnings: true });
+				} else {
+					cb();
+				}
+			});
+
+			return function (_x3, _x4) {
+				return _ref3.apply(this, arguments);
+			};
+		})());
+	}
+	//window client adds a callback here. This way, whenever close is called _anywhere_ in the system, it's passed down to the window client and cleanup can happen in the component.
+	listenForClose(cb) {
+		let listener = (err, response) => {
+			delete window._FSBLCache.windows[this.name];
+			delete window._FSBLCache.windowAttempts[this.name];
+			//If the window that the wrap belongs to is the one calling close, just call the openfin method. Otherwise, some other window is trying to close it - so we send a message to that window, which will eventually close itself.
+			__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.removeListener(`${this.windowIdentifier.windowName}.close`, listener);
+			cb(response.data);
+		};
+		__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.addListener(`${this.windowIdentifier.windowName}.close`, listener);
+	}
+
+	//Called on destruct so that we don't leave trash in the router or on the openfin window.
+	removeListeners() {
+		let channels = Object.keys(this.RouterHandlers);
+		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("WRAP Removing Listeners", channels);
+		for (let key in channels) {
+			__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.removeListener(key, this.RouterHandlers[key]);
+		}
+
+		//These are listeners added directly to the wrapped openfin window.
+		let events = Object.keys(this._listeners);
+		if (events.length) {
+			events.forEach(eventName => {
+				this._listeners[eventName].forEach(handler => {
+					this.removeEventListener(eventName, handler);
+				});
+			});
+		}
+
+		// Remove all specialty listeners added to the openfin window
+		for (let event in this.addedSystemListeners) {
+			this.finWindow.removeEventListener(event, this.addedSystemListeners[event]);
+		}
+	}
+}
+
+/* harmony default export */ __webpack_exports__["a"] = (WebWindow);
+
+ ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\WindowAbstractions\\WebWindowWrapper.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\WindowAbstractions\\WebWindowWrapper.js"); } } })();
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
+
+/***/ }),
+/* 196 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -67501,12 +75347,12 @@ class SplinterAgentPool extends __WEBPACK_IMPORTED_MODULE_0_events___default.a.E
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__clients_logger__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_workspaceClient__ = __webpack_require__(51);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_workspaceClient__ = __webpack_require__(52);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_workspaceClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_workspaceClient__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__BaseWindow__ = __webpack_require__(53);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__BaseWindow__ = __webpack_require__(56);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__BaseWindow___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__BaseWindow__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__common_util__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__common_constants__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__common_constants__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__common_constants___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5__common_constants__);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
@@ -67560,7 +75406,7 @@ class NativeWindow extends __WEBPACK_IMPORTED_MODULE_3__BaseWindow__["BaseWindow
 		this.lastRestored = 0;
 		this.executablePath = null;
 		this.descriptor = null;
-		this.spawnedByOpenFin = false;
+		this.spawnedByContainer = false;
 		this.maximizing = false;
 		this.restoreBounds = null;
 		//Saves the initial data into the workspace.
@@ -67578,8 +75424,8 @@ class NativeWindow extends __WEBPACK_IMPORTED_MODULE_3__BaseWindow__["BaseWindow
 
 	/**
   * Sends a request to assimilation for the system bounds. Waits and returns the response
-  * @param {*} params 
-  * @param {*} cb 
+  * @param {*} params
+  * @param {*} cb
   */
 	_getBoundsFromSystem(params, cb = Function.prototype) {
 		const promiseResolver = resolve => {
@@ -67801,6 +75647,7 @@ class NativeWindow extends __WEBPACK_IMPORTED_MODULE_3__BaseWindow__["BaseWindow
 				self.eventManager.trigger("minimized");
 			} else {
 				yield __WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.query("Assimilation.minimizeWindow", { name: self.windowName, key: self.key, location: self.location });
+				__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.transmit("DockingService.wipeAutoArrange", { win: self.windowName });
 			}
 
 			cb();
@@ -67861,7 +75708,7 @@ class NativeWindow extends __WEBPACK_IMPORTED_MODULE_3__BaseWindow__["BaseWindow
 							// Window restored from outside of Finsemble. If the monitor configuration has changed since the window was minimized, assimilation
 							// will have moved the window's restore position. Use these bounds to tell Finsemble the new location.
 							const onBoundsReceivedAfterRestore = function (updatedBounds) {
-								// Assimilation corrects the windows position on restore, but html windows do not. 
+								// Assimilation corrects the windows position on restore, but html windows do not.
 								// Due to this difference we need to tell finsemble to force the bounds update
 								// or Finsemble will have the wrong bounds for this window. Only checking top and left
 								// because the updated bound are coming in with 7 pixels of extra height even when no monitor change has occurred.
@@ -67999,11 +75846,22 @@ class NativeWindow extends __WEBPACK_IMPORTED_MODULE_3__BaseWindow__["BaseWindow
 		var _this3 = this;
 
 		return _asyncToGenerator(function* () {
-			if (_this3.alwaysOnTop == params.alwaysOnTop) return;
+			if (_this3.alwaysOnTop == params.alwaysOnTop) return cb();
 			_this3.alwaysOnTop = params.alwaysOnTop;
-			yield __WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.query("Assimilation.alwaysOnTop", { key: _this3.key, alwaysOnTop: params.alwaysOnTop });
+			yield __WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.query("Assimilation.alwaysOnTop", { name: _this3.windowName, alwaysonTop: params.alwaysOnTop }); // the spelling here is intentional
+			_this3.eventManager.trigger("alwaysOnTop", { alwaysOnTop: _this3.alwaysOnTop });
 			cb();
 		})();
+	}
+
+	/**
+  *
+  * Returns true if the window is always on top. False otherwise.
+  */
+	_isAlwaysOnTop(params = {}, callback = Function.prototype) {
+		this.alwaysOnTop = Boolean(this.alwaysOnTop);
+		callback(null, this.alwaysOnTop);
+		return this.alwaysOnTop;
 	}
 
 	disableFrame(cb = Function.prototype) {
@@ -68072,6 +75930,12 @@ class NativeWindow extends __WEBPACK_IMPORTED_MODULE_3__BaseWindow__["BaseWindow
 				if (!windowOptions[key]) {
 					windowOptions[key] = params[key];
 				}
+				if (key === "alwaysOnTop") {
+					if (this.alwaysOnTop !== params[key]) {
+						this.alwaysOnTop = params[key];
+						this.eventManager.trigger("alwaysOnTop", { alwaysOnTop: this.alwaysOnTop });
+					}
+				}
 			});
 		}
 
@@ -68085,1158 +75949,7 @@ class NativeWindow extends __WEBPACK_IMPORTED_MODULE_3__BaseWindow__["BaseWindow
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 170 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__BaseWindow__ = __webpack_require__(53);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__BaseWindow___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__BaseWindow__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_configClient__ = __webpack_require__(15);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_configClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_configClient__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_configUtil__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__common_userNotification__ = __webpack_require__(20);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__clients_logger__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_system__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6__common_system__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_constants__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_constants___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7__common_constants__);
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
-function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
-
-
-
-
-__WEBPACK_IMPORTED_MODULE_2__clients_configClient___default.a.initialize();
-
-
-
-const BOUNDS_SET = "bounds-set";
-
-
-
-function isNumeric(n) {
-	return !isNaN(parseFloat(n)) && isFinite(n);
-}
-
-/**
- * OpenFinWindow
- */
-class OpenFinWindow extends __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"] {
-	/**
-  *
-  * @param {*} params
-  * @param {finWindow} [params.finWindow] If not provided, must provide uuid
-  * @param {string} [params.uuid] If not provided, must provide finWindow
-  * @param {string} [params.name]
-  */
-	constructor(params) {
-		super(params);
-		this.name = params.name || params.windowName;
-		this.uuid = params.uuid;
-		this.focused = false;
-
-		if (params.finWindow) {
-			this.finWindow = params.finWindow;
-			this.uuid = this.finWindow.uuid;
-			if (!this.name) this.name = this.finWindow.name;
-		}
-
-		if (!this.finWindow && this.uuid) {
-			this.uuid = params.uuid;
-			this.finWindow = __WEBPACK_IMPORTED_MODULE_6__common_system__["System"].Window.wrap(params.uuid, this.name);
-		}
-		this._listeners = {};
-		//whether to notify the user that we failed to close the window if it times out.
-		this.throwNotificationOnFailedClose = false;
-		this.windowIdentifier = { windowName: this.name, uuid: this.uuid };
-		this.wrapFunctions();
-		this.windowOptions = {};
-		this.setMyOptions = this.setMyOptions.bind(this);
-		this.setCloseTimeout = this.setCloseTimeout.bind(this);
-		this.windowState = __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.NORMAL;
-		this.eventChannelName = this.eventChannelName.bind(this);
-		this.handleBoundsSet = this.handleBoundsSet.bind(this);
-		this.setupSystemBoundsChangedEvent = this.setupSystemBoundsChangedEvent.bind(this);
-		this.windowsKeyAction = this.windowsKeyAction.bind(this);
-		this._restore = this._restore.bind(this);
-		this.setParent = super.setParent.bind(this);
-		this.getParent = super.getParent.bind(this);
-		this.canMinimize = true;
-		this.canMaximize = true;
-		this.setMinimizeAbility = this.setMinimizeAbility.bind(this);
-		this.setMaximizeAbility = this.setMaximizeAbility.bind(this);
-		//On destruct, we'll go through all the listeners that we've added to the router and remove them
-		//@todo investigate a routerClient for each wrapper, so on destruct we can just RouterClient.disconnectALl without removing everything from the physical tab/browser window it's running in
-		this.RouterHandlers = {};
-		this.addListeners = this.addListeners.bind(this);
-		this.removeListeners = this.removeListeners.bind(this);
-		this.listeningFor = []; // keeps track of Finsemble window event listeners and prevents duplicates
-		this.addedSystemListeners = {}; // keeps track of the system event listeners that the Finsemble event listeners translate to and makes sure there are no duplicates
-		this._systemClosed = this._systemClosed.bind(this);
-		this._systemMaximized = this._systemMaximized.bind(this);
-		this._systemRestored = this._systemRestored.bind(this);
-		this._getBoundsFromSystem = this._getBoundsFromSystem.bind(this);
-		//This boolean is set to true when the window is closed by the operating system (outside of finsemble).
-		this.closing = false;
-
-		this.setBoundsFromFinsemble = false;
-		this.windowsKeyDown = false; //Tracks wether the windows key is being held down. When the windows key is pressed inside a window a router message is dispatched to change this prop. Only when the opposite action fires from the router will this value change back.
-		this.lastWindowsKeyUp = 0;
-		this._isMaximized = false;
-		this.addListeners();
-	}
-
-	setIsMaximized(value) {
-		if (typeof value !== "boolean") {
-			__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.error("Cannot set isMaximized to a non-boolean value. Assuming false");
-			value = false;
-		}
-
-		if (this.parentWindow) {
-			this.parentWindow.isMaximized = value;
-		}
-
-		this._isMaximized = value;
-	}
-
-	getIsMaximized() {
-		if (this.parentWindow) {
-			return this.parentWindow.isMaximized;
-		}
-
-		return this._isMaximized;
-	}
-
-	_addEventListener(params, handler = Function.prototype) {
-		let { eventName } = params;
-		this.addEventListener(eventName, handler);
-	}
-
-	_removeEventListener(params, handler = Function.prototype) {
-		let { eventName } = params;
-		this.removeEventListener(eventName, handler);
-	}
-
-	removeEventListener(params, handler = Function.prototype) {
-		super.removeEventListener(params.eventName || params, handler);
-
-		// TODO: Need to modify so that we keep track of all added listeners and remove them cleanly. Not sure how addEVentListener even does anything.
-	}
-
-	/**
-  * Make sure that only one event is added for system listeners that someone requests. These events are cleaned up when "addedSystemListeners" are removed.
-  * @param {string} systemEvent
-  * @param {Function} handler
-  */
-	setupSystemListener(systemEvent, handler) {
-		if (!this.addedSystemListeners[systemEvent]) {
-			this.addedSystemListeners[systemEvent] = handler;
-			this.finWindow.addEventListener(systemEvent, handler);
-		}
-	}
-
-	addEventListener(event, handler = Function.prototype) {
-		// This makes sure that the handlers are triggered for each event and get removed when someone removes the handler
-		super.addEventListener(event, handler);
-
-		// For some events, add listeners in the finWindow so that we can then propagate the event to the rest of the system. These are only added one time.
-		if (!this.listeningFor.includes(event)) {
-			this.listeningFor.push(event);
-			switch (event) {
-				case "bounds-change-request":
-					//translate disabled-frame-bounds-changing into a bounds-change-request event expected by the rest of the system.
-					this.setupSystemListener("disabled-frame-bounds-changing", this.onDisabledFrameBoundsChanging.bind(this));
-					break;
-				case "bounds-changed":
-					this.setupSystemListener("disabled-frame-bounds-changed", this.onDisabledFrameBoundsChanged.bind(this));
-					break;
-				case "system-bounds-changed":
-					this.setupSystemListener("bounds-changed", this.setupSystemBoundsChangedEvent.bind(this));
-					break;
-				case "system-maximized":
-					this.setupSystemListener("maximized", () => this.eventManager.trigger("system-maximized"));
-					break;
-				case "system-restored":
-					this.setupSystemListener("restored", () => this.eventManager.trigger("system-restored"));
-					break;
-				case "blurred":
-				case "focused":
-				case "hidden":
-				case "shown":
-				case "minimized":
-				// case "close-requested": <- using our custom close-requested event.
-				// case "closed": <- using custom close-event.
-				case "crashed":
-					//keep track of events we're listening for so we don't add multiple listeners on the openfin window. don't want to trigger more than a single remote event per single local event. Said differently, if we add this generic handler N times, the event will be triggered N times.
-
-					//`super.addEventListener` will make sure that any events emitted by this wrapper are caught. However, we won't emit any events that we aren't listening to on the primitive window (in this case, the underlying finWindow).
-					//So, when someone adds a listener(e.g., focus), we listen for the primitive to emit the event. At that point, the derived class will emit, and the handler will be fired.
-					this.setupSystemListener(event, this.onNativeEvent.bind(this, event));
-					break;
-				//'system-closed' is a made up event. It means 'a closed event was emitted on the underlying window primitive that we weren't expecting'.
-				//This will happen when the user closes via the taskbar or via alt + f4.
-				case "system-closed":
-					this.setupSystemListener("closed", () => this.eventManager.trigger("system-closed"));
-					break;
-				default:
-					__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("Listener added to openfin wrap, Handler not passed to primitive. Using finsemble event instead.", event);
-					break;
-			}
-		}
-	}
-
-	checkIfBoundsAreTheSame(bounds1, bounds2) {
-		if (bounds1 && bounds2) {
-			return bounds1.top === bounds2.top && bounds1.left === bounds2.left && bounds1.height === bounds2.height && bounds1.width === bounds2.width;
-		}
-		return false;
-	}
-
-	/**
-  * Sets up listeners for system-bounds-changed events. Currently only responds to aero snap moves
-  */
-	setupSystemBoundsChangedEvent(evt) {
-		var _this = this;
-
-		return _asyncToGenerator(function* () {
-			__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.verbose("bounds-changed event", evt);
-			// If a setBounds call was made by Finsemble, do not trigger this event. The intent of this is to catch things like moves made by windows keyboard shortcuts or direct calls from OF.
-			// dockableWindow deals with these. For stacks, this event is propagated to the stack.
-			if (_this.setBoundsFromFinsemble && _this.checkIfBoundsAreTheSame(evt, _this.requestedBounds)) {
-				_this.setBoundsFromFinsemble = false;
-				return;
-			}
-			if (!_this.finishedMove) return;
-			if (_this.windowsKeyDown) {
-				// If windows key is down, user is using shortcuts to position windows. Delay triggering the event until keyup.
-				_this.windowsKeyUpHandler = function () {
-					if (_this.windowState === __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MAXIMIZED) {
-						_this.windowState = __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.NORMAL;
-						_this.eventManager.trigger("restored");
-					}
-					evt.action = __WEBPACK_IMPORTED_MODULE_7__common_constants__["MOVE_REASON"].AERO_KEY;
-					_this.eventManager.trigger("system-bounds-changed", _extends({}, evt));
-					// We set a global flag here that is available to all windowWrappers and docking. Aerosnapped windows fire a lot of spurious move events that need to be caught.
-					// TODO - it maybe possible that a static method might be able to deal with this instead.
-					window.aeroMode = true;
-				};
-			} else if (window.aeroMode) {
-				// this is for a window that is chosen from preview and is the only case except the initial aerosnap that needs to be dealt with.
-				if (_this.windowState === __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MAXIMIZED) {
-					_this.windowState = __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.NORMAL;
-					_this.eventManager.trigger("restored");
-				}
-				evt.action = __WEBPACK_IMPORTED_MODULE_7__common_constants__["MOVE_REASON"].AERO_KEY;
-				_this.eventManager.trigger("system-bounds-changed", _extends({}, evt));
-				window.aeroMode = false;
-			}
-		})();
-	}
-
-	/** Some windows should never be allowed to maximize (e.g, the toolbar).
-  * However, until we have a way of preventing the maximize event at the
-  * OS level, the event will still happen. When this occurs our solution
-  * is to immediately restore it again.
- */
-	_systemMaximized() {
-		let win = this;
-		if (win.canMaximize === false) {
-			win._restore({ checkMaximize: false, checkMinimize: false });
-			return;
-		}
-		// Finsemble maximize is different from OF maximize.
-		// If a window gets maximized by the system (double click taskbar), we should make Finsemble maximize happen
-		// If we are already maximized (finsemble maximized, not OF maximized), we are restoring.
-		if (this.parentWindow) {
-			win = this.parentWindow;
-		}
-		if (win.windowState === __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MAXIMIZED) {
-			win._restore();
-		} else {
-			win._maximize();
-		}
-	}
-
-	// When a native OpenFin event fires:
-	_systemRestored() {
-		var _this2 = this;
-
-		return _asyncToGenerator(function* () {
-			let win = _this2;
-			// Maximize happens we resize the window under the titlebar, which causes restore to fire.
-			// We only want to actually deal with restore when the window is minimized previously
-			if (_this2.parentWindow) win = _this2.parentWindow;
-
-			if (win.windowState !== __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MINIMIZED) {
-				return;
-			}
-			if (win.getIsMaximized() === true) {
-				win._maximize();
-				return;
-			}
-
-			let { data: bounds } = yield win._getBounds();
-			// Triggers an event that specified that the window was restored from the system
-			bounds.action = __WEBPACK_IMPORTED_MODULE_7__common_constants__["MOVE_REASON"].SYSTEM_RESTORED;
-			_this2.eventManager.trigger("system-bounds-changed", _extends({}, bounds));
-
-			win.windowState = __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.NORMAL;
-			win.setIsMaximized(false);
-			win.eventManager.trigger("restored");
-		})();
-	}
-
-	// When a native OpenFin event fires:
-	onNativeEvent(eventName) {
-		this.eventManager.trigger(eventName);
-	}
-
-	addListeners() {
-		this.addEventListener("minimized", () => {
-			this.windowState = __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MINIMIZED;
-		});
-		this.addEventListener("restored", () => {
-			this.windowState = __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.NORMAL;
-		});
-		this.addEventListener("maximized", () => {
-			this.windowState = __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MAXIMIZED;
-		});
-		this.addEventListener("system-maximized", this._systemMaximized);
-		this.addEventListener("system-restored", this._systemRestored);
-		this.addEventListener("system-closed", this._systemClosed);
-		const UPDATE_OPTIONS_CHANNEL = this.name + ".updateOptions";
-		const onUpdateOptions = (err, response) => {
-			for (let o in response.data) {
-				if (this.windowOptions[o] == response.data[o]) return;
-				this.windowOptions[o] = response.data[o];
-				let dataToEmit = {
-					windowName: this.name
-				};
-				dataToEmit[o] = response.data[o];
-				this.emit(o, response.data);
-			}
-		};
-		this.RouterHandlers[UPDATE_OPTIONS_CHANNEL] = onUpdateOptions;
-		// Fire events when options are updated. e.g. alwaysOnTop
-		__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.addListener(UPDATE_OPTIONS_CHANNEL, onUpdateOptions);
-
-		// When window key is pressed, we delay the system-set-bounds event trigger to after the key goes up.
-		__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.addListener("Finsemble.WindowService.WindowsKey", this.windowsKeyAction);
-		/** DH 6/15/2019 - The OS and container maintain seperate records of
-   * which window is in focus, which can get out of sync;
-   * therefore, we have to maintain a seperate state here.
-   * Ideally this wouldn't be necessary and OS events would
-   * always bubble up to the container.
-   */
-		this.addEventListener("focused", () => {
-			this.focused = true;
-		});
-		this.addEventListener("blurred", () => {
-			this.focused = false;
-		});
-	}
-	onDisabledFrameBoundsChanged(evt) {
-		this.eventManager.trigger("bounds-changed", _extends({}, evt));
-	}
-	onDisabledFrameBoundsChanging(evt) {
-		this.eventManager.trigger("bounds-change-request", _extends({}, evt));
-	}
-	//removed because it causes an explosion of router traffic if the default is to listen for this event. If someone needs this incredibly frequently updated object, they can listen.
-	listenForBoundsSet() {
-		this.RouterHandlers[this.eventChannelName(BOUNDS_SET)] = this.handleBoundsSet;
-		__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.addListener(this.eventChannelName(BOUNDS_SET), this.handleBoundsSet);
-	}
-	handleBoundsSet(err, response) {
-		if (response.data && response.data.bounds) {
-			this.mergeBounds(response.data.bounds);
-		}
-		this.emit(BOUNDS_SET, response.data);
-	}
-	/**
-  * @param params.property property to pull from 'finsemble' and from componentConfig.
-  * @param params.componentType which component to grab local config from.
-  */
-	getGlobalAndLocalComponentConfig(params) {
-		let { property, componentType } = params;
-
-		const promiseResolver = (resolve, reject) => {
-			if (typeof componentType === "undefined") {
-				reject("params.componentType must be defined.");
-			}
-			if (typeof property === "undefined") {
-				reject("params.property is required");
-			}
-			//In case config isn't initialized when this method is called.
-			const getConfig = cb => {
-				__WEBPACK_IMPORTED_MODULE_2__clients_configClient___default.a.getValue({ field: "finsemble" }, (err, allConfig) => {
-					if (err) return reject(err);
-					let globalConfig = allConfig[property];
-					let componentConfig = allConfig.components[componentType];
-					//If we have the component config, return the property saved on that component. if not, return undefined.
-					let localConfig = componentConfig && componentConfig.foreign && componentConfig.foreign.components ? componentConfig.foreign.components[property] : undefined;
-					resolve({ localConfig, globalConfig, allConfig });
-				});
-			};
-			__WEBPACK_IMPORTED_MODULE_2__clients_configClient___default.a.onReady(getConfig);
-		};
-
-		return new Promise(promiseResolver);
-	}
-
-	setCloseTimeout() {
-		var _this3 = this;
-
-		const promiseResolver = resolve => {
-			let componentType;
-			//Have to make sure options are set. Sometimes wraps are created and then just used to close windows. Need options to know which kind of component it is..
-			this.setMyOptions(_asyncToGenerator(function* () {
-				if (_this3.windowOptions && _this3.windowOptions.customData && _this3.windowOptions.customData.component) {
-					componentType = _this3.windowOptions.customData.component.type;
-				}
-
-				//Get the global timeout and the component-specific timeout. If the component-specific exists, use it. If it doesn't, try global. If global doesn't exist, use 5000ms.
-				let { localConfig, globalConfig, allConfig } = yield _this3.getGlobalAndLocalComponentConfig({
-					property: "Window Manager",
-					componentType
-				});
-
-				let globalTimeout = globalConfig ? globalConfig.componentCloseTimeout : undefined;
-				let componentTimeout = localConfig ? localConfig.componentCloseTimeout : undefined;
-				if (typeof componentTimeout !== "undefined") {
-					_this3.closeTimeout = componentTimeout;
-				} else if (typeof globalTimeout !== "undefined") {
-					_this3.closeTimeout = globalTimeout;
-				} else {
-					_this3.closeTimeout = 5000;
-				}
-
-				_this3.throwNotificationOnFailedClose = allConfig.failedComponentCloseNotification;
-				__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.info("Close timeout set for", _this3.name, JSON.stringify(_this3.closeTimeout));
-				resolve();
-			}));
-		};
-		return new Promise(promiseResolver);
-	}
-
-	setMyOptions(cb) {
-		this.finWindow.getOptions(opts => {
-			this.windowOptions = Object.assign(opts, this.windowOptions);
-			if (!this.windowOptions) {
-				__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.error("window options is null");
-			}
-			if (cb) cb();
-		});
-	}
-
-	setMinimizeAbility(canMinimize) {
-		if (typeof canMinimize !== "boolean") {
-			__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.error("Ability to minimize cannot be a non-boolean value. Assuming true");
-			canMinimize = true;
-		}
-
-		this.canMinimize = canMinimize;
-	}
-
-	setMaximizeAbility(canMaximize) {
-		if (typeof canMaximize !== "boolean") {
-			throw new Error("Ability to maximize cannot be a non-boolean value");
-		}
-
-		this.canMaximize = canMaximize;
-	}
-
-	_updateOptions(params = {}, cb = Function.prototype) {
-
-		if (!params) params = {};
-		params = params.options || params; // TODO: This function is used differently all over the place.
-		// Permissions and security policies are protected options. They cannot be modified. Overwrite them as long as they've been set on the window.
-		// @note window options aren't set on instantiation. New functionality needs to be added to set the options on creation.
-		if (this.windowOptions && this.windowOptions.securityPolicy) {
-			params.permissions = this.windowOptions.permissions;
-			params.securityPolicy = this.windowOptions.securityPolicy;
-		}
-
-		this.callOpenFinWindowFunction("updateOptions", params, () => {
-			this._saveWindowOptions();
-			cb();
-		});
-	}
-
-	//Had to move this because jScrambler was screwing up when we obfuscated.
-	wrapFunctions() {
-		//let self = this;
-		var openFinWindowFunctionsWithoutParams = ["disableFrame", "isShowing", "getState"];
-		openFinWindowFunctionsWithoutParams.forEach(f => {
-			this[f] = (params, cb) => {
-				if (typeof params === "function") {
-					cb = params;
-					params = null;
-				}
-				this.callOpenFinWindowFunction(f, false, cb);
-			};
-		});
-
-		var openFinWindowFunctionsWithoutParamsToBeWrappedInIsShowing = ["focus"];
-		openFinWindowFunctionsWithoutParamsToBeWrappedInIsShowing.forEach(f => {
-			this[f] = (cb = Function.prototype) => {
-				if (["minimize", "maximize"].includes(f) && this.windowDescriptor && !this.windowDescriptor.resizable) {
-					if (cb) {
-						return cb("Cannot Perform this action on non-resizable windows");
-					}
-					return;
-				}
-				this.finWindow.isShowing(isShowing => {
-					if (isShowing) {
-						//If the method is defined on the BaseWindow, call it.
-						if (super[f]) {
-							super[f]({}, (err, response) => {
-								//if BaseWindow says it's okay for us the method to trickle down to the wrapper, great. otherwise cb.
-								if (!err && response.shouldContinue) {
-									this.callOpenFinWindowFunction(f, false, cb);
-								} else {
-									cb();
-								}
-							});
-						} else {
-							this.callOpenFinWindowFunction(f, false, cb);
-						}
-					} else {
-						if (cb) {
-							cb("This Window is hidden");
-						}
-					}
-				});
-			};
-		});
-	}
-
-	/**
-  * Called when a router message is received saying a windows key was pressed/released.
-  * @param {*} err Error from the router
-  * @param {*} response The response containing information about what keys were pressed
-  */
-	windowsKeyAction(err, response) {
-		let timeout;
-		let setWindowKeyDownFalse = () => {
-			this.windowsKeyDown = false;
-			this.lastWindowsKeyUp = Date.now();
-			if (this.windowsKeyUpHandler) this.windowsKeyUpHandler();
-			this.windowsKeyUpHandler = null;
-			clearTimeout(timeout);
-		};
-		if (response.data === "down") {
-			this.windowsKeyDown = true;
-			// In case we never get a key up.
-			timeout = setTimeout(setWindowKeyDownFalse, 30000);
-		} else if (response.data === "up") {
-			setWindowKeyDownFalse();
-		}
-	}
-
-	/**
-  *
-  * @param {*} functionName Name of the openFin window function to call
-  * @param {*} params  The parameters to the function (except callbacks) as an array
-  * @param {*} cb The callback to be called. This is in the format function (err, response) {} and errors will be in err unlike Openfin which requires two callbacks.
-  */
-	callOpenFinWindowFunction(functionName, params, cb = Function.prototype) {
-		//If this.closing is true, the window was closed by the operating system. When that happens, the window receives focus. If that window is part of a group, this can trigger calls to bring to front, update options, etc. These function calls will error out at the openfin level because the window has already been closed.
-		if (this.closing) return cb({
-			code: "function_dropped_window_closing",
-			message: `Window ${this.name} was closed by the operating system. Skipping call to ${functionName}`
-		});
-		if (params) {
-			if (!Array.isArray(params)) params = [params];
-			// add success callback to params
-			params.push((...args) => {
-				// fire event for updateOptions
-				if (functionName == "updateOptions") {
-					__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("callOpenFinWindowFunction.updateOptions", params);
-					if (!params[0].dontFireEvents) {
-						__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.transmit(this.name + ".updateOptions", params[0]);
-
-						for (let o in params[0]) {
-							// in some cases (such as our bringToFront hack we dont want to fire spurious events). Also dont fire events if the option doesn't change
-							if (o == "dontFireEvents" || this.windowOptions[o] == params[0][o]) continue;
-							if (this.windowOptions[o] && typeof this.windowOptions[o] == "object" && params[0][o] && typeof params[0][o] == "object") {
-								Object.assign(this.windowOptions[o], params[0][o]);
-							} else {
-								this.windowOptions[o] = params[0][o];
-							}
-							if (!params[0].dontFireEvents) {
-								this.emit(o, {
-									windowName: this.name,
-									o: params[0][o]
-								});
-							}
-						}
-					}
-				}
-				// call the actual callback
-				if (cb) {
-					cb(null, args);
-				}
-			});
-
-			// add error callback to params
-			params.push(err => {
-				if (cb) {
-					err = `OpenFin Error for ${this.name} from method ${functionName}: ` + err;
-					__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.error("Error in openfinWindowWrapper method", functionName, err);
-					console.error(err);
-					cb(err);
-				}
-			});
-
-			// call the openfin function
-			__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("xyx callOpenFinWindowFunction", functionName, params);
-			this.finWindow[functionName](...params);
-		} else {
-			this.finWindow[functionName](retval => {
-				this;
-				cb(null, retval);
-			}, err => {
-				this;
-				if (cb) {
-					__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("Error in openfinWindowWrapper method", functionName, err);
-					console.error(err);
-					cb(err);
-				}
-			});
-		}
-	}
-
-	/**
-  * Gets the bounds directly from Electron or Openfin. The existing getbounds function tries it's best to pass in the bounds as Finsemble knows them instead of bounds
-  * sent up from the system.
-  * This is called in cases where the OS has moved a window. In these cases we need the updated bounds from the system to update the Finsemble bounds
-  * @param {*} params 
-  * @param {*} cb 
-  */
-	_getBoundsFromSystem(params, cb = Function.prototype) {
-		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("OpenFinWindowWrapper._getBoundsFromSystem", this.name, params);
-
-		const promiseResolver = resolve => {
-			// To avoid breaking current functionality or changing the api of a shared function Fea has a special function to query bounds from the system.
-			if (__WEBPACK_IMPORTED_MODULE_6__common_system__["System"].isElectron()) {
-				this.callOpenFinWindowFunction("getBoundsFromSystem", null, (err, bounds) => {
-					cb(err, bounds);
-					return resolve({ err, data: bounds });
-				});
-			} else {
-				// openfin
-				this.callOpenFinWindowFunction("getBounds", null, (err, bounds) => {
-					cb(err, bounds);
-					return resolve({ err, data: bounds });
-				});
-			};
-		};
-		return new Promise(promiseResolver);
-	}
-
-	_getBounds(params, cb = Function.prototype) {
-		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("OpenFinWindowWrapper._getBounds", this.name, params);
-
-		if (typeof params === "function") {
-			cb = params;
-			params = null;
-		}
-
-		const promiseResolver = resolve => {
-			//OPENFIN BOUNDS ARE WRONG! SERIOUSLY THEY REALLY ARE WRONG! AND THIS BREAKS STACKED WINDOWS IN DOCKED GROUPS BADLY!
-			//SO PLEASE do not remove this code. it wasted a whole 4 hours figuring out why group rectangularity problems were back in cleanup.
-			//return cached bounds if we have them
-			//WE HAVE TO CACHE THEM BECAUSE WINDOWS IN STACKS ARE DEREGISTERED FROM DOCKING. AND DOCKING DOESN'T GET BOUNDS FOR THOSE WHICH IS A PROBLEM FOR STACKS. Do not eliminate this cache.
-			if (this.windowOptions && this.windowOptions.bounds) {
-				cb(null, this.windowOptions.bounds);
-				return resolve({ err: null, data: this.windowOptions.bounds });
-			} else if (isNumeric(this.windowOptions.defaultLeft) && isNumeric(this.windowOptions.defaultTop) && isNumeric(this.windowOptions.defaultHeight) && isNumeric(this.windowOptions.defaultWidth)) {
-				let bounds = {
-					top: this.windowOptions.defaultTop,
-					left: this.windowOptions.defaultLeft,
-					height: this.windowOptions.defaultHeight,
-					width: this.windowOptions.defaultWidth
-				};
-				bounds.right = bounds.left + bounds.width;
-				bounds.bottom = bounds.top + bounds.height;
-				this.windowOptions.bounds = bounds;
-				cb(null, this.windowOptions.bounds);
-				return resolve({ err: null, data: this.windowOptions.bounds });
-			}
-
-			// openfin bounds are often different from what is expected by a couple of pixels. use as last resort
-			this.callOpenFinWindowFunction("getBounds", null, (err, bounds) => {
-				cb(err, bounds);
-				return resolve({ err, data: bounds });
-			});
-		};
-		// get bounds from docking if not
-		return new Promise(promiseResolver);
-	}
-
-	_getOptions(params, cb) {
-		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("OpenFinWindowWrapper._getOptions", this.name, "UUID", this.uuid, params);
-		this.callOpenFinWindowFunction("getOptions", null, (err, opts) => {
-			if (err) {
-				__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.warn("getOptions", err, params, opts);
-			}
-			if (opts && Object.keys(this.windowOptions).length) {
-				opts = Object.assign(opts, this.windowOptions);
-			} else {
-				opts = {};
-			}
-			cb(err, opts);
-		});
-	}
-
-	_hide(params, cb = Function.prototype) {
-		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("OpenFinWindowWrapper._hide", this.name, params);
-
-		if (typeof params === "function") {
-			cb = params;
-			params = null;
-		}
-		if (params && params.invokedByParent) {
-			this.callOpenFinWindowFunction("updateOptions", { autoShow: false }, () => {
-				this._saveWindowOptions();
-			});
-		}
-		this.callOpenFinWindowFunction("hide", null, cb);
-	}
-
-	_show(params, cb = Function.prototype) {
-		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("OpenFinWindowWrapper._show", this.name, params);
-		if (typeof params === "function") {
-			cb = params;
-			params = null;
-		}
-		if (params && (params.invokedByParent || params.saveState)) {
-			this.callOpenFinWindowFunction("updateOptions", { autoShow: true }, () => {
-				this._saveWindowOptions();
-			});
-		}
-		this.callOpenFinWindowFunction("show", null, cb);
-	}
-
-	// TABBING NOTE: Example case below showing how the parent (through the base class) can optionally inject it's behavior. Exactly where and where this is done is still TBD.
-	_minimize(params = { notifyDocking: true }) {
-		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("OpenFinWindowWrapper._minimize", this.name, params);
-		// When we receive a minimize command, we first pass the command to the parent window. The parent window may decide to supersede. In its response, it will then set the flag "shouldContinue" to false if we shouldn't actually perform the minimizing function.
-		let self = this;
-		//Some windows cannot minimize, e.g., (toolbars);
-		if (this.canMinimize === false) return;
-		function doMinimize() {
-			self.windowState = __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MINIMIZED;
-			self.finWindow.minimize();
-		}
-
-		this.finWindow.isShowing(isShowing => {
-			if (isShowing) {
-				//todo shouldn't be necessary in the future...
-				__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.query("DockingService.windowMinimized", this.name, () => {
-					doMinimize();
-				});
-			}
-		});
-	}
-
-	_maximize(params = { notifyDocking: true }) {
-		// If windows key is down, user is using hotkeys to maximize and could potentially cancel the maximize event. So delay doing anything until the key is up.
-		if (this.windowsKeyDown) {
-			this.windowsKeyUpHandler = () => {
-				this._maximize(params);
-			};
-			return;
-		}
-
-		if (this.isMaximizing || this.windowState === __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MAXIMIZED) return;
-		this.isMaximizing = true;
-		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("OpenFinWindowWrapper._maximize", this.name, params);
-		//Some windows cannot maximize, e.g., (toolbars);
-		if (this.canMaximize === false) return;
-		// When we receive a minimize command, we first pass the command to the parent window. The parent window may decide to supersede. In its response, it will then set the flag "shouldContinue" to false if we shouldn't actually perform the minimizing function.
-		const doMaximize = () => {
-			this.windowState = __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MAXIMIZED;
-			this.setIsMaximized(true);
-			this.eventManager.trigger("maximized");
-			this.isMaximizing = false;
-		};
-
-		if (params && params.invokedByParent) {
-			this.isMaximizing = false;
-		} else {
-			super._maximize(params, (err, response) => {
-				if (!err && response.shouldContinue) {
-					this.finWindow.isShowing(isShowing => {
-						if (isShowing) {
-							__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.query("DockingService.maximizeWindow", { name: this.name }, () => {
-								doMaximize();
-							});
-						} else {
-							this.isMaximizing = false;
-						}
-					});
-				} else {
-					this.isMaximizing = false;
-				}
-			});
-		}
-	}
-
-	// TABBING NOTE: Example case below showing how the parent (through the base class) can optionally inject it's behavior.
-	// ** Exactly where and where this for each derived window wrapper is still TBD, but easy to do/tweak. **
-	_restore(params = { checkMinimize: true, checkMaximize: true }, cb = Function.prototype) {
-		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("OpenFinWindowWrapper._restore", this.name, params);
-		let self = this;
-		const DEFAULT_PARAMS = { checkMinimize: true, checkMaximize: true };
-		if (typeof params === "function") {
-			cb = params;
-			params = DEFAULT_PARAMS;
-		}
-
-		params = Object.assign(DEFAULT_PARAMS, params);
-
-		const iAmMaximized = this.windowState === __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MAXIMIZED;
-		const iAmMinimized = this.windowState === __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MINIMIZED;
-		const iAmNotMaximized = this.windowState !== __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.MAXIMIZED;
-		//If either of the param values are undefined, default to true
-		const restrictToMinimized = params.checkMinimize || true;
-		const restrictToMaximized = params.checkMaximized || true;
-
-		super._restore(params, (err, response) => {
-			if (err || !response.shouldContinue) return cb(err);
-
-			// checkMinimize and checkMaximize are not mutually exclusive. Because a window could go down more than one of these paths, its callback could be executed twice. We don't want that, so we keep track of its invokation and only call the callback if it's not been invoked already.
-			let callbackInvoked = false;
-			const success = () => {
-				self.eventManager.trigger("restored");
-				if (!callbackInvoked) {
-					callbackInvoked = true;
-					cb();
-				}
-			};
-
-			// If we should restore minimized windows and the window is minimized, restore it.
-			if (restrictToMinimized && iAmMinimized) {
-				return this.finWindow.restore(success, err => console.error(err));
-				// If we should restore windows with any min/max state, and the window isn't maximized, we can restore this window. If the window is maximized, it has to go through a different restore flow.
-			} else if (!restrictToMinimized && iAmNotMaximized) {
-				return this.finWindow.restore(success, err => console.error(err));
-			}
-
-			if (restrictToMaximized && iAmMaximized) {
-				this.windowState = __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindow"].WINDOWSTATE.NORMAL;
-				this.setIsMaximized(false);
-				__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.query("DockingService.restoreFromMaximize", {
-					name: this.name,
-					windowIdentifier: this.identifier
-				}, (err, response) => {
-					/**
-      * 5/20/19 Joe: Previously success was called regardless of error/success
-      * Added a logging message, but success will still be called either way
-      */
-					if (err) {
-						__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.error("Error querying router service for maximize restore", err);
-					}
-					success();
-				});
-			} else {
-				if (!callbackInvoked) {
-					callbackInvoked = true;
-					cb();
-				}
-			}
-		});
-	}
-
-	_bringToFront(params, cb = Function.prototype) {
-		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("OpenFinWindowWrapper._bringToFront", this.name, params);
-		let defaults = { restoreWindows: false };
-		if (typeof params === "function") {
-			cb = params;
-			params = defaults;
-		}
-		let doBringToFront = () => {
-			if (this.windowOptions.alwaysOnTop) return cb();
-			//let previousAOT = this.windowOptions.alwaysOnTop;
-			let callback = err => {
-				this._updateOptions({ alwaysOnTop: false, dontFireEvents: true }, err2 => {
-					cb(err2 || err);
-				});
-			};
-			this.eventManager.trigger("broughtToFront");
-			this._updateOptions({ alwaysOnTop: true, dontFireEvents: true }, callback);
-		};
-		//If for some reason there's no windowOptions, go ahead and set them, then bring to front. I never saw this happen, but you know, just in case.
-		if (!this.windowOptions) {
-			this.setMyOptions(doBringToFront);
-		}
-		doBringToFront();
-	}
-
-	_isShowing(params, cb = Function.prototype) {
-		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("OpenFinWindowWrapper._isShowing", this.name, params);
-		if (typeof params === "function") {
-			cb = params;
-			params = null;
-		}
-		if (params && (params.invokedByParent || params.saveState)) {
-			this.callOpenFinWindowFunction("updateOptions", { autoShow: true }, () => {});
-		}
-		this.callOpenFinWindowFunction("isShowing", null, cb);
-	}
-
-	_setOpacity(params, cb = Function.prototype) {
-		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("OpenFinWindowWrapper._setOpacity", this.name, params);
-		if (typeof params === "function") {
-			cb = params;
-			params = null;
-		}
-		this.callOpenFinWindowFunction("updateOptions", { opacity: params.opacity, dontFireEvents: true }, () => {
-			//SetOpacity is called a lot (e.g., while moving a window). On mouse up, docking sends in params to tell the value to persist. This is so the window is restored with the proper opacity.
-			if (params && params.persist) {}
-			cb();
-		});
-	}
-
-	_alwaysOnTop(params, cb = Function.prototype) {
-		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("OpenFinWindowWrapper._alwaysOnTop", this.name, params);
-		if (typeof params === "function") {
-			cb = params;
-			params = null;
-		}
-		if (this.windowOptions.alwaysOnTop == params.alwaysOnTop) return;
-		this.windowOptions.alwaysOnTop = params.alwaysOnTop;
-		this.callOpenFinWindowFunction("updateOptions", { alwaysOnTop: params.alwaysOnTop }, cb);
-	}
-
-	setTaskbarIconGroup(taskbarIconGroup, params, cb = Function.prototype) {
-		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("OpenFinWindowWrapper.setTaskbarIconGroup", this.name, taskbarIconGroup, params);
-		if (typeof params === "function") {
-			cb = params;
-			params = null;
-		}
-		this.callOpenFinWindowFunction("updateOptions", { taskbarIconGroup: taskbarIconGroup }, cb);
-	}
-
-	_saveWindowOptions() {
-		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("OpenFinWindowWrapper._saveWindowOptions", this.name, this.windowOptions.bounds);
-		if (this.windowOptions.name) {
-			this.saveCompleteWindowState(this.windowOptions);
-		} else {
-			this.setMyOptions(() => {
-				this.saveCompleteWindowState(this.windowOptions);
-			});
-		} // only save if we have the full descriptor
-	}
-
-	_setBounds(params, cb = Function.prototype) {
-		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("OpenFinWindowWrapper._setBounds", this.name, params);
-		//if (this.name.includes("Welcome")) console.info(this.name, params.bounds);
-		if (typeof params === "function") {
-			cb = params;
-			params = null;
-		}
-		params = params || {};
-		let bounds = params.bounds;
-		super._setBounds(params);
-		let ofParams = [bounds.left, bounds.top, bounds.width, bounds.height];
-		// if (!Object.keys(this.windowOptions).length || !this.windowOptions.name) bounds.persistBounds = false;
-		this.mergeBounds(bounds);
-
-		if (bounds.persistBounds !== false) {
-			this._saveWindowOptions();
-		}
-
-		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.verbose("OpenFinWindow.setBounds", ofParams, bounds);
-		this.eventManager.trigger("bounds-changing", _extends({}, this.windowOptions.bounds));
-		// this is to make sure we dont fire system change events when we are triggering them.
-		this.requestedBounds = bounds;
-		this.setBoundsFromFinsemble = true;
-		// sometimes the OF setBounds results in no events being fired. So clear this flag just to be safe.
-		if (this.timeout) clearTimeout(this.timeout);
-		this.timeout = setTimeout(() => {
-			this.setBoundsFromFinsemble = false;
-		}, 100);
-		this.callOpenFinWindowFunction("setBounds", ofParams, cb);
-	}
-
-	_animate(animateParams, params, cb = Function.prototype) {
-		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("OpenFinWindowWrapper.animate", this.name, animateParams, params);
-		if (typeof params === "function") {
-			cb = params;
-			params = null;
-		}
-		this.finWindow.animate(animateParams.transitions, animateParams.options, () => {
-			this.getBounds({}, (err, bounds) => {
-				if (animateParams.transitions.size) {
-					if (animateParams.transitions.size.width) {
-						bounds.width = animateParams.transitions.size.width;
-						bounds.right = bounds.left + bounds.width;
-					}
-					if (animateParams.transitions.size.height) {
-						bounds.height = animateParams.transitions.size.height;
-						bounds.bottom = bounds.top + bounds.height;
-					}
-				}
-				bounds.persistBounds = params.persistBounds;
-				this._setBounds({ bounds }, cb);
-			});
-		}, function (error) {
-			if (cb) cb(error);
-		});
-	}
-
-	getMousePosition(params, cb = Function.prototype) {
-		if (typeof params === "function") {
-			cb = params;
-			params = null;
-		}
-		__WEBPACK_IMPORTED_MODULE_6__common_system__["System"].getMousePosition(cb);
-	}
-
-	cacheHandlerForRemoval(event, handler) {
-		if (!this._listeners[event]) {
-			this._listeners[event] = [];
-		}
-
-		this._listeners[event].push(handler);
-	}
-
-	_showAt(position, params, cb = Function.prototype) {
-		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("OpenFinWindowWrapper._showAt", this.name, position, params);
-		if (typeof params === "function") {
-			cb = params;
-			params = null;
-		}
-		this.callOpenFinWindowFunction("showAt", [position.left, position.top, position.force], cb);
-	}
-
-	throwFailedCloseNotification(failureMessage) {
-		__WEBPACK_IMPORTED_MODULE_2__clients_configClient___default.a.getValue({ field: "finsemble" }, (err, finConfig) => {
-			let notificationURL = __WEBPACK_IMPORTED_MODULE_3__common_configUtil__["ConfigUtilInstance"].getDefault(finConfig, "finConfig.notificationURL", finConfig.moduleRoot + "/components/system/notification/notification.html");
-			__WEBPACK_IMPORTED_MODULE_4__common_userNotification__["default"].alert("dev", "ONCE-SINCE-STARTUP", "Window close timed out", failureMessage, { url: notificationURL });
-		});
-	}
-	_blur(params = {}, cb = Function.prototype) {
-		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("OpenFinWindowWrapper._blur", this.name, params);
-		this.focused = false;
-		this.callOpenFinWindowFunction("blur", null, cb);
-	}
-
-	_focus(params = {}, cb = Function.prototype) {
-		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("OpenFinWindowWrapper._focus", this.name, params);
-		this.focused = true;
-		this.callOpenFinWindowFunction("focus", null, cb);
-	}
-	//Invoked when out-of-bounds closes are detected. This might be an alt+f4, a close from the task bar, etc. Only happens when openfin or electron emit a closed event for the window. When we close our windows, we suppress that event.
-	_systemClosed(params = {}, cb = Function.prototype) {
-		//If we're closing, we shouldn't call focus/btf/update_options, etc. Doing so can cause errors down in openfin.
-		this.closing = true;
-		params.fromSystem = true;
-		params.removeFromWorkspace = true;
-		super.close(params, (() => {
-			var _ref2 = _asyncToGenerator(function* (err, response) {
-				cb();
-			});
-
-			return function (_x, _x2) {
-				return _ref2.apply(this, arguments);
-			};
-		})());
-	}
-	_close(params, cb = Function.prototype) {
-		var _this4 = this;
-
-		//merging all params because otherwise the params dont pass properly and remove from workspace fails
-		this.removeEventListener("system-closed", this._systemClosed);
-		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("OpenFinWindowWrapper._close", this.name, params);
-		if (typeof params === "function") {
-			cb = params;
-			params = null;
-		}
-
-		let self = this;
-		// When we receive a close command, we first pass the command to the parent window. The parent window may decide to supersede. In its response, it will then set the flag "shouldContinue" to false if we shouldn't actually perform the close function.
-		super._close(params, (() => {
-			var _ref3 = _asyncToGenerator(function* (err, response) {
-				if (response.shouldContinue) {
-					//If the window is an application call closeApplication instead of finWindow.close
-					if (self.finWindow.uuid === self.finWindow.name) {
-						let openFinApplication = __WEBPACK_IMPORTED_MODULE_6__common_system__["System"].Application.wrap(self.finWindow.uuid);
-						__WEBPACK_IMPORTED_MODULE_6__common_system__["System"].closeApplication(openFinApplication, cb);
-					} else if (params.fromSystem) {
-						// Just call the callback - window is destroyed already because the system closed it
-						cb();
-					} else {
-						self.finWindow.close(true, function () {
-							cb();
-						}, function (err1) {
-							if (!params.suppressError) {
-								__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.error("ERROR CLOSING WINDOW", err1);
-							}
-							cb();
-						});
-					}
-					__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.transmit(`${_this4.windowIdentifier.windowName}.close`, params, { suppressWarnings: true });
-				} else {
-					cb();
-				}
-			});
-
-			return function (_x3, _x4) {
-				return _ref3.apply(this, arguments);
-			};
-		})());
-	}
-	//window client adds a callback here. This way, whenever close is called _anywhere_ in the system, it's passed down to the window client and cleanup can happen in the component.
-	listenForClose(cb) {
-		let listener = (err, response) => {
-			delete window._FSBLCache.windows[this.name];
-			delete window._FSBLCache.windowAttempts[this.name];
-			//If the window that the wrap belongs to is the one calling close, just call the openfin method. Otherwise, some other window is trying to close it - so we send a message to that window, which will eventually close itself.
-			__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.removeListener(`${this.windowIdentifier.windowName}.close`, listener);
-			cb(response.data);
-		};
-		__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.addListener(`${this.windowIdentifier.windowName}.close`, listener);
-	}
-
-	//Called on destruct so that we don't leave trash in the router or on the openfin window.
-	removeListeners() {
-		let channels = Object.keys(this.RouterHandlers);
-		__WEBPACK_IMPORTED_MODULE_5__clients_logger___default.a.system.debug("WRAP Removing Listeners", channels);
-		for (let key in channels) {
-			__WEBPACK_IMPORTED_MODULE_1__clients_routerClientInstance___default.a.removeListener(key, this.RouterHandlers[key]);
-		}
-
-		//These are listeners added directly to the wrapped openfin window.
-		let events = Object.keys(this._listeners);
-		if (events.length) {
-			events.forEach(eventName => {
-				this._listeners[eventName].forEach(handler => {
-					this.removeEventListener(eventName, handler);
-				});
-			});
-		}
-
-		// Remove all specialty listeners added to the openfin window
-		for (let event in this.addedSystemListeners) {
-			this.finWindow.removeEventListener(event, this.addedSystemListeners[event]);
-		}
-	}
-}
-
-/* harmony default export */ __webpack_exports__["a"] = (OpenFinWindow);
-
- ;(function register() { /* react-hot-loader/webpack */ if (process.env.NODE_ENV !== 'production') { if (typeof __REACT_HOT_LOADER__ === 'undefined') { return; } if (typeof module.exports === 'function') { __REACT_HOT_LOADER__.register(module.exports, 'module.exports', "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\WindowAbstractions\\openfinWindowWrapper.js"); return; } for (var key in module.exports) { if (!Object.prototype.hasOwnProperty.call(module.exports, key)) { continue; } var namedExport = void 0; try { namedExport = module.exports[key]; } catch (err) { continue; } __REACT_HOT_LOADER__.register(namedExport, key, "C:\\Users\\BradC\\git\\finsemble\\src\\services\\window\\WindowAbstractions\\openfinWindowWrapper.js"); } } })();
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
-
-/***/ }),
-/* 171 */
+/* 197 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -69245,7 +75958,7 @@ class OpenFinWindow extends __WEBPACK_IMPORTED_MODULE_0__BaseWindow__["BaseWindo
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_util__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__BaseWindow__ = __webpack_require__(53);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__BaseWindow__ = __webpack_require__(56);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__BaseWindow___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__BaseWindow__);
 
 
@@ -69659,7 +76372,7 @@ class StackedWindow extends __WEBPACK_IMPORTED_MODULE_3__BaseWindow__["BaseWindo
 			params = this._privatePreface("_alwaysOnTop", params);
 			super._alwaysOnTop(params, (err, response) => {
 				if (!err && response.shouldContinue) {
-					window.stackedWindowManager.alwaysOnTop(params, (err, response) => {
+					window.stackedWindowManager.setAlwaysOnTop(params, (err, response) => {
 						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("StackedWindowManager.alwaysOnTop callback", err, response);
 						callback(err, response);
 						resolve({ err, data: response });
@@ -69671,6 +76384,16 @@ class StackedWindow extends __WEBPACK_IMPORTED_MODULE_3__BaseWindow__["BaseWindo
 			});
 		};
 		return new Promise(promiseResolver);
+	}
+
+	/**
+  *
+  * Returns true if the window is always on top. False otherwise.
+  */
+	_isAlwaysOnTop(params = {}, callback = Function.prototype) {
+		this.alwaysOnTop = Boolean(this.alwaysOnTop);
+		callback(null, this.alwaysOnTop);
+		return this.alwaysOnTop;
 	}
 
 	_setOpacity(params, callback = Function.prototype) {
@@ -69956,30 +76679,1498 @@ class StackedWindow extends __WEBPACK_IMPORTED_MODULE_3__BaseWindow__["BaseWindo
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 172 */,
-/* 173 */,
-/* 174 */,
-/* 175 */,
-/* 176 */,
-/* 177 */,
-/* 178 */,
-/* 179 */,
-/* 180 */,
-/* 181 */,
-/* 182 */,
-/* 183 */,
-/* 184 */,
-/* 185 */,
-/* 186 */,
-/* 187 */,
-/* 188 */,
-/* 189 */,
-/* 190 */,
-/* 191 */,
-/* 192 */
+/* 198 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(101);
+"use strict";
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// a passthrough stream.
+// basically just the most minimal sort of Transform stream.
+// Every written chunk gets output as-is.
+
+
+
+module.exports = PassThrough;
+
+var Transform = __webpack_require__(97);
+
+/*<replacement>*/
+var util = Object.create(__webpack_require__(65));
+util.inherits = __webpack_require__(58);
+/*</replacement>*/
+
+util.inherits(PassThrough, Transform);
+
+function PassThrough(options) {
+  if (!(this instanceof PassThrough)) return new PassThrough(options);
+
+  Transform.call(this, options);
+}
+
+PassThrough.prototype._transform = function (chunk, encoding, cb) {
+  cb(null, chunk);
+};
+
+/***/ }),
+/* 199 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Buffer = __webpack_require__(72).Buffer;
+var util = __webpack_require__(213);
+
+function copyBuffer(src, target, offset) {
+  src.copy(target, offset);
+}
+
+module.exports = function () {
+  function BufferList() {
+    _classCallCheck(this, BufferList);
+
+    this.head = null;
+    this.tail = null;
+    this.length = 0;
+  }
+
+  BufferList.prototype.push = function push(v) {
+    var entry = { data: v, next: null };
+    if (this.length > 0) this.tail.next = entry;else this.head = entry;
+    this.tail = entry;
+    ++this.length;
+  };
+
+  BufferList.prototype.unshift = function unshift(v) {
+    var entry = { data: v, next: this.head };
+    if (this.length === 0) this.tail = entry;
+    this.head = entry;
+    ++this.length;
+  };
+
+  BufferList.prototype.shift = function shift() {
+    if (this.length === 0) return;
+    var ret = this.head.data;
+    if (this.length === 1) this.head = this.tail = null;else this.head = this.head.next;
+    --this.length;
+    return ret;
+  };
+
+  BufferList.prototype.clear = function clear() {
+    this.head = this.tail = null;
+    this.length = 0;
+  };
+
+  BufferList.prototype.join = function join(s) {
+    if (this.length === 0) return '';
+    var p = this.head;
+    var ret = '' + p.data;
+    while (p = p.next) {
+      ret += s + p.data;
+    }return ret;
+  };
+
+  BufferList.prototype.concat = function concat(n) {
+    if (this.length === 0) return Buffer.alloc(0);
+    if (this.length === 1) return this.head.data;
+    var ret = Buffer.allocUnsafe(n >>> 0);
+    var p = this.head;
+    var i = 0;
+    while (p) {
+      copyBuffer(p.data, ret, i);
+      i += p.data.length;
+      p = p.next;
+    }
+    return ret;
+  };
+
+  return BufferList;
+}();
+
+if (util && util.inspect && util.inspect.custom) {
+  module.exports.prototype[util.inspect.custom] = function () {
+    var obj = util.inspect({ length: this.length });
+    return this.constructor.name + ' ' + obj;
+  };
+}
+
+/***/ }),
+/* 200 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {var ClientRequest = __webpack_require__(201)
+var response = __webpack_require__(103)
+var extend = __webpack_require__(211)
+var statusCodes = __webpack_require__(145)
+var url = __webpack_require__(208)
+
+var http = exports
+
+http.request = function (opts, cb) {
+	if (typeof opts === 'string')
+		opts = url.parse(opts)
+	else
+		opts = extend(opts)
+
+	// Normally, the page is loaded from http or https, so not specifying a protocol
+	// will result in a (valid) protocol-relative url. However, this won't work if
+	// the protocol is something else, like 'file:'
+	var defaultProtocol = global.location.protocol.search(/^https?:$/) === -1 ? 'http:' : ''
+
+	var protocol = opts.protocol || defaultProtocol
+	var host = opts.hostname || opts.host
+	var port = opts.port
+	var path = opts.path || '/'
+
+	// Necessary for IPv6 addresses
+	if (host && host.indexOf(':') !== -1)
+		host = '[' + host + ']'
+
+	// This may be a relative url. The browser should always be able to interpret it correctly.
+	opts.url = (host ? (protocol + '//' + host) : '') + (port ? ':' + port : '') + path
+	opts.method = (opts.method || 'GET').toUpperCase()
+	opts.headers = opts.headers || {}
+
+	// Also valid opts.auth, opts.mode
+
+	var req = new ClientRequest(opts)
+	if (cb)
+		req.on('response', cb)
+	return req
+}
+
+http.get = function get (opts, cb) {
+	var req = http.request(opts, cb)
+	req.end()
+	return req
+}
+
+http.ClientRequest = ClientRequest
+http.IncomingMessage = response.IncomingMessage
+
+http.Agent = function () {}
+http.Agent.defaultMaxSockets = 4
+
+http.globalAgent = new http.Agent()
+
+http.STATUS_CODES = statusCodes
+
+http.METHODS = [
+	'CHECKOUT',
+	'CONNECT',
+	'COPY',
+	'DELETE',
+	'GET',
+	'HEAD',
+	'LOCK',
+	'M-SEARCH',
+	'MERGE',
+	'MKACTIVITY',
+	'MKCOL',
+	'MOVE',
+	'NOTIFY',
+	'OPTIONS',
+	'PATCH',
+	'POST',
+	'PROPFIND',
+	'PROPPATCH',
+	'PURGE',
+	'PUT',
+	'REPORT',
+	'SEARCH',
+	'SUBSCRIBE',
+	'TRACE',
+	'UNLOCK',
+	'UNSUBSCRIBE'
+]
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+
+/***/ }),
+/* 201 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(Buffer, global, process) {var capability = __webpack_require__(102)
+var inherits = __webpack_require__(58)
+var response = __webpack_require__(103)
+var stream = __webpack_require__(101)
+var toArrayBuffer = __webpack_require__(207)
+
+var IncomingMessage = response.IncomingMessage
+var rStates = response.readyStates
+
+function decideMode (preferBinary, useFetch) {
+	if (capability.fetch && useFetch) {
+		return 'fetch'
+	} else if (capability.mozchunkedarraybuffer) {
+		return 'moz-chunked-arraybuffer'
+	} else if (capability.msstream) {
+		return 'ms-stream'
+	} else if (capability.arraybuffer && preferBinary) {
+		return 'arraybuffer'
+	} else if (capability.vbArray && preferBinary) {
+		return 'text:vbarray'
+	} else {
+		return 'text'
+	}
+}
+
+var ClientRequest = module.exports = function (opts) {
+	var self = this
+	stream.Writable.call(self)
+
+	self._opts = opts
+	self._body = []
+	self._headers = {}
+	if (opts.auth)
+		self.setHeader('Authorization', 'Basic ' + new Buffer(opts.auth).toString('base64'))
+	Object.keys(opts.headers).forEach(function (name) {
+		self.setHeader(name, opts.headers[name])
+	})
+
+	var preferBinary
+	var useFetch = true
+	if (opts.mode === 'disable-fetch' || ('requestTimeout' in opts && !capability.abortController)) {
+		// If the use of XHR should be preferred. Not typically needed.
+		useFetch = false
+		preferBinary = true
+	} else if (opts.mode === 'prefer-streaming') {
+		// If streaming is a high priority but binary compatibility and
+		// the accuracy of the 'content-type' header aren't
+		preferBinary = false
+	} else if (opts.mode === 'allow-wrong-content-type') {
+		// If streaming is more important than preserving the 'content-type' header
+		preferBinary = !capability.overrideMimeType
+	} else if (!opts.mode || opts.mode === 'default' || opts.mode === 'prefer-fast') {
+		// Use binary if text streaming may corrupt data or the content-type header, or for speed
+		preferBinary = true
+	} else {
+		throw new Error('Invalid value for opts.mode')
+	}
+	self._mode = decideMode(preferBinary, useFetch)
+	self._fetchTimer = null
+
+	self.on('finish', function () {
+		self._onFinish()
+	})
+}
+
+inherits(ClientRequest, stream.Writable)
+
+ClientRequest.prototype.setHeader = function (name, value) {
+	var self = this
+	var lowerName = name.toLowerCase()
+	// This check is not necessary, but it prevents warnings from browsers about setting unsafe
+	// headers. To be honest I'm not entirely sure hiding these warnings is a good thing, but
+	// http-browserify did it, so I will too.
+	if (unsafeHeaders.indexOf(lowerName) !== -1)
+		return
+
+	self._headers[lowerName] = {
+		name: name,
+		value: value
+	}
+}
+
+ClientRequest.prototype.getHeader = function (name) {
+	var header = this._headers[name.toLowerCase()]
+	if (header)
+		return header.value
+	return null
+}
+
+ClientRequest.prototype.removeHeader = function (name) {
+	var self = this
+	delete self._headers[name.toLowerCase()]
+}
+
+ClientRequest.prototype._onFinish = function () {
+	var self = this
+
+	if (self._destroyed)
+		return
+	var opts = self._opts
+
+	var headersObj = self._headers
+	var body = null
+	if (opts.method !== 'GET' && opts.method !== 'HEAD') {
+		if (capability.arraybuffer) {
+			body = toArrayBuffer(Buffer.concat(self._body))
+		} else if (capability.blobConstructor) {
+			body = new global.Blob(self._body.map(function (buffer) {
+				return toArrayBuffer(buffer)
+			}), {
+				type: (headersObj['content-type'] || {}).value || ''
+			})
+		} else {
+			// get utf8 string
+			body = Buffer.concat(self._body).toString()
+		}
+	}
+
+	// create flattened list of headers
+	var headersList = []
+	Object.keys(headersObj).forEach(function (keyName) {
+		var name = headersObj[keyName].name
+		var value = headersObj[keyName].value
+		if (Array.isArray(value)) {
+			value.forEach(function (v) {
+				headersList.push([name, v])
+			})
+		} else {
+			headersList.push([name, value])
+		}
+	})
+
+	if (self._mode === 'fetch') {
+		var signal = null
+		var fetchTimer = null
+		if (capability.abortController) {
+			var controller = new AbortController()
+			signal = controller.signal
+			self._fetchAbortController = controller
+
+			if ('requestTimeout' in opts && opts.requestTimeout !== 0) {
+				self._fetchTimer = global.setTimeout(function () {
+					self.emit('requestTimeout')
+					if (self._fetchAbortController)
+						self._fetchAbortController.abort()
+				}, opts.requestTimeout)
+			}
+		}
+
+		global.fetch(self._opts.url, {
+			method: self._opts.method,
+			headers: headersList,
+			body: body || undefined,
+			mode: 'cors',
+			credentials: opts.withCredentials ? 'include' : 'same-origin',
+			signal: signal
+		}).then(function (response) {
+			self._fetchResponse = response
+			self._connect()
+		}, function (reason) {
+			global.clearTimeout(self._fetchTimer)
+			if (!self._destroyed)
+				self.emit('error', reason)
+		})
+	} else {
+		var xhr = self._xhr = new global.XMLHttpRequest()
+		try {
+			xhr.open(self._opts.method, self._opts.url, true)
+		} catch (err) {
+			process.nextTick(function () {
+				self.emit('error', err)
+			})
+			return
+		}
+
+		// Can't set responseType on really old browsers
+		if ('responseType' in xhr)
+			xhr.responseType = self._mode.split(':')[0]
+
+		if ('withCredentials' in xhr)
+			xhr.withCredentials = !!opts.withCredentials
+
+		if (self._mode === 'text' && 'overrideMimeType' in xhr)
+			xhr.overrideMimeType('text/plain; charset=x-user-defined')
+
+		if ('requestTimeout' in opts) {
+			xhr.timeout = opts.requestTimeout
+			xhr.ontimeout = function () {
+				self.emit('requestTimeout')
+			}
+		}
+
+		headersList.forEach(function (header) {
+			xhr.setRequestHeader(header[0], header[1])
+		})
+
+		self._response = null
+		xhr.onreadystatechange = function () {
+			switch (xhr.readyState) {
+				case rStates.LOADING:
+				case rStates.DONE:
+					self._onXHRProgress()
+					break
+			}
+		}
+		// Necessary for streaming in Firefox, since xhr.response is ONLY defined
+		// in onprogress, not in onreadystatechange with xhr.readyState = 3
+		if (self._mode === 'moz-chunked-arraybuffer') {
+			xhr.onprogress = function () {
+				self._onXHRProgress()
+			}
+		}
+
+		xhr.onerror = function () {
+			if (self._destroyed)
+				return
+			self.emit('error', new Error('XHR error'))
+		}
+
+		try {
+			xhr.send(body)
+		} catch (err) {
+			process.nextTick(function () {
+				self.emit('error', err)
+			})
+			return
+		}
+	}
+}
+
+/**
+ * Checks if xhr.status is readable and non-zero, indicating no error.
+ * Even though the spec says it should be available in readyState 3,
+ * accessing it throws an exception in IE8
+ */
+function statusValid (xhr) {
+	try {
+		var status = xhr.status
+		return (status !== null && status !== 0)
+	} catch (e) {
+		return false
+	}
+}
+
+ClientRequest.prototype._onXHRProgress = function () {
+	var self = this
+
+	if (!statusValid(self._xhr) || self._destroyed)
+		return
+
+	if (!self._response)
+		self._connect()
+
+	self._response._onXHRProgress()
+}
+
+ClientRequest.prototype._connect = function () {
+	var self = this
+
+	if (self._destroyed)
+		return
+
+	self._response = new IncomingMessage(self._xhr, self._fetchResponse, self._mode, self._fetchTimer)
+	self._response.on('error', function(err) {
+		self.emit('error', err)
+	})
+
+	self.emit('response', self._response)
+}
+
+ClientRequest.prototype._write = function (chunk, encoding, cb) {
+	var self = this
+
+	self._body.push(chunk)
+	cb()
+}
+
+ClientRequest.prototype.abort = ClientRequest.prototype.destroy = function () {
+	var self = this
+	self._destroyed = true
+	global.clearTimeout(self._fetchTimer)
+	if (self._response)
+		self._response._destroyed = true
+	if (self._xhr)
+		self._xhr.abort()
+	else if (self._fetchAbortController)
+		self._fetchAbortController.abort()
+}
+
+ClientRequest.prototype.end = function (data, encoding, cb) {
+	var self = this
+	if (typeof data === 'function') {
+		cb = data
+		data = undefined
+	}
+
+	stream.Writable.prototype.end.call(self, data, encoding, cb)
+}
+
+ClientRequest.prototype.flushHeaders = function () {}
+ClientRequest.prototype.setTimeout = function () {}
+ClientRequest.prototype.setNoDelay = function () {}
+ClientRequest.prototype.setSocketKeepAlive = function () {}
+
+// Taken from http://www.w3.org/TR/XMLHttpRequest/#the-setrequestheader%28%29-method
+var unsafeHeaders = [
+	'accept-charset',
+	'accept-encoding',
+	'access-control-request-headers',
+	'access-control-request-method',
+	'connection',
+	'content-length',
+	'cookie',
+	'cookie2',
+	'date',
+	'dnt',
+	'expect',
+	'host',
+	'keep-alive',
+	'origin',
+	'referer',
+	'te',
+	'trailer',
+	'transfer-encoding',
+	'upgrade',
+	'via'
+]
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(64).Buffer, __webpack_require__(4), __webpack_require__(1)))
+
+/***/ }),
+/* 202 */,
+/* 203 */,
+/* 204 */,
+/* 205 */,
+/* 206 */,
+/* 207 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Buffer = __webpack_require__(64).Buffer
+
+module.exports = function (buf) {
+	// If the buffer is backed by a Uint8Array, a faster version will work
+	if (buf instanceof Uint8Array) {
+		// If the buffer isn't a subarray, return the underlying ArrayBuffer
+		if (buf.byteOffset === 0 && buf.byteLength === buf.buffer.byteLength) {
+			return buf.buffer
+		} else if (typeof buf.buffer.slice === 'function') {
+			// Otherwise we need to get a proper copy
+			return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
+		}
+	}
+
+	if (Buffer.isBuffer(buf)) {
+		// This is the slow version that will work with any Buffer
+		// implementation (even in old browsers)
+		var arrayCopy = new Uint8Array(buf.length)
+		var len = buf.length
+		for (var i = 0; i < len; i++) {
+			arrayCopy[i] = buf[i]
+		}
+		return arrayCopy.buffer
+	} else {
+		throw new Error('Argument must be a Buffer')
+	}
+}
+
+
+/***/ }),
+/* 208 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+
+var punycode = __webpack_require__(173);
+var util = __webpack_require__(209);
+
+exports.parse = urlParse;
+exports.resolve = urlResolve;
+exports.resolveObject = urlResolveObject;
+exports.format = urlFormat;
+
+exports.Url = Url;
+
+function Url() {
+  this.protocol = null;
+  this.slashes = null;
+  this.auth = null;
+  this.host = null;
+  this.port = null;
+  this.hostname = null;
+  this.hash = null;
+  this.search = null;
+  this.query = null;
+  this.pathname = null;
+  this.path = null;
+  this.href = null;
+}
+
+// Reference: RFC 3986, RFC 1808, RFC 2396
+
+// define these here so at least they only have to be
+// compiled once on the first module load.
+var protocolPattern = /^([a-z0-9.+-]+:)/i,
+    portPattern = /:[0-9]*$/,
+
+    // Special case for a simple path URL
+    simplePathPattern = /^(\/\/?(?!\/)[^\?\s]*)(\?[^\s]*)?$/,
+
+    // RFC 2396: characters reserved for delimiting URLs.
+    // We actually just auto-escape these.
+    delims = ['<', '>', '"', '`', ' ', '\r', '\n', '\t'],
+
+    // RFC 2396: characters not allowed for various reasons.
+    unwise = ['{', '}', '|', '\\', '^', '`'].concat(delims),
+
+    // Allowed by RFCs, but cause of XSS attacks.  Always escape these.
+    autoEscape = ['\''].concat(unwise),
+    // Characters that are never ever allowed in a hostname.
+    // Note that any invalid chars are also handled, but these
+    // are the ones that are *expected* to be seen, so we fast-path
+    // them.
+    nonHostChars = ['%', '/', '?', ';', '#'].concat(autoEscape),
+    hostEndingChars = ['/', '?', '#'],
+    hostnameMaxLen = 255,
+    hostnamePartPattern = /^[+a-z0-9A-Z_-]{0,63}$/,
+    hostnamePartStart = /^([+a-z0-9A-Z_-]{0,63})(.*)$/,
+    // protocols that can allow "unsafe" and "unwise" chars.
+    unsafeProtocol = {
+      'javascript': true,
+      'javascript:': true
+    },
+    // protocols that never have a hostname.
+    hostlessProtocol = {
+      'javascript': true,
+      'javascript:': true
+    },
+    // protocols that always contain a // bit.
+    slashedProtocol = {
+      'http': true,
+      'https': true,
+      'ftp': true,
+      'gopher': true,
+      'file': true,
+      'http:': true,
+      'https:': true,
+      'ftp:': true,
+      'gopher:': true,
+      'file:': true
+    },
+    querystring = __webpack_require__(176);
+
+function urlParse(url, parseQueryString, slashesDenoteHost) {
+  if (url && util.isObject(url) && url instanceof Url) return url;
+
+  var u = new Url;
+  u.parse(url, parseQueryString, slashesDenoteHost);
+  return u;
+}
+
+Url.prototype.parse = function(url, parseQueryString, slashesDenoteHost) {
+  if (!util.isString(url)) {
+    throw new TypeError("Parameter 'url' must be a string, not " + typeof url);
+  }
+
+  // Copy chrome, IE, opera backslash-handling behavior.
+  // Back slashes before the query string get converted to forward slashes
+  // See: https://code.google.com/p/chromium/issues/detail?id=25916
+  var queryIndex = url.indexOf('?'),
+      splitter =
+          (queryIndex !== -1 && queryIndex < url.indexOf('#')) ? '?' : '#',
+      uSplit = url.split(splitter),
+      slashRegex = /\\/g;
+  uSplit[0] = uSplit[0].replace(slashRegex, '/');
+  url = uSplit.join(splitter);
+
+  var rest = url;
+
+  // trim before proceeding.
+  // This is to support parse stuff like "  http://foo.com  \n"
+  rest = rest.trim();
+
+  if (!slashesDenoteHost && url.split('#').length === 1) {
+    // Try fast path regexp
+    var simplePath = simplePathPattern.exec(rest);
+    if (simplePath) {
+      this.path = rest;
+      this.href = rest;
+      this.pathname = simplePath[1];
+      if (simplePath[2]) {
+        this.search = simplePath[2];
+        if (parseQueryString) {
+          this.query = querystring.parse(this.search.substr(1));
+        } else {
+          this.query = this.search.substr(1);
+        }
+      } else if (parseQueryString) {
+        this.search = '';
+        this.query = {};
+      }
+      return this;
+    }
+  }
+
+  var proto = protocolPattern.exec(rest);
+  if (proto) {
+    proto = proto[0];
+    var lowerProto = proto.toLowerCase();
+    this.protocol = lowerProto;
+    rest = rest.substr(proto.length);
+  }
+
+  // figure out if it's got a host
+  // user@server is *always* interpreted as a hostname, and url
+  // resolution will treat //foo/bar as host=foo,path=bar because that's
+  // how the browser resolves relative URLs.
+  if (slashesDenoteHost || proto || rest.match(/^\/\/[^@\/]+@[^@\/]+/)) {
+    var slashes = rest.substr(0, 2) === '//';
+    if (slashes && !(proto && hostlessProtocol[proto])) {
+      rest = rest.substr(2);
+      this.slashes = true;
+    }
+  }
+
+  if (!hostlessProtocol[proto] &&
+      (slashes || (proto && !slashedProtocol[proto]))) {
+
+    // there's a hostname.
+    // the first instance of /, ?, ;, or # ends the host.
+    //
+    // If there is an @ in the hostname, then non-host chars *are* allowed
+    // to the left of the last @ sign, unless some host-ending character
+    // comes *before* the @-sign.
+    // URLs are obnoxious.
+    //
+    // ex:
+    // http://a@b@c/ => user:a@b host:c
+    // http://a@b?@c => user:a host:c path:/?@c
+
+    // v0.12 TODO(isaacs): This is not quite how Chrome does things.
+    // Review our test case against browsers more comprehensively.
+
+    // find the first instance of any hostEndingChars
+    var hostEnd = -1;
+    for (var i = 0; i < hostEndingChars.length; i++) {
+      var hec = rest.indexOf(hostEndingChars[i]);
+      if (hec !== -1 && (hostEnd === -1 || hec < hostEnd))
+        hostEnd = hec;
+    }
+
+    // at this point, either we have an explicit point where the
+    // auth portion cannot go past, or the last @ char is the decider.
+    var auth, atSign;
+    if (hostEnd === -1) {
+      // atSign can be anywhere.
+      atSign = rest.lastIndexOf('@');
+    } else {
+      // atSign must be in auth portion.
+      // http://a@b/c@d => host:b auth:a path:/c@d
+      atSign = rest.lastIndexOf('@', hostEnd);
+    }
+
+    // Now we have a portion which is definitely the auth.
+    // Pull that off.
+    if (atSign !== -1) {
+      auth = rest.slice(0, atSign);
+      rest = rest.slice(atSign + 1);
+      this.auth = decodeURIComponent(auth);
+    }
+
+    // the host is the remaining to the left of the first non-host char
+    hostEnd = -1;
+    for (var i = 0; i < nonHostChars.length; i++) {
+      var hec = rest.indexOf(nonHostChars[i]);
+      if (hec !== -1 && (hostEnd === -1 || hec < hostEnd))
+        hostEnd = hec;
+    }
+    // if we still have not hit it, then the entire thing is a host.
+    if (hostEnd === -1)
+      hostEnd = rest.length;
+
+    this.host = rest.slice(0, hostEnd);
+    rest = rest.slice(hostEnd);
+
+    // pull out port.
+    this.parseHost();
+
+    // we've indicated that there is a hostname,
+    // so even if it's empty, it has to be present.
+    this.hostname = this.hostname || '';
+
+    // if hostname begins with [ and ends with ]
+    // assume that it's an IPv6 address.
+    var ipv6Hostname = this.hostname[0] === '[' &&
+        this.hostname[this.hostname.length - 1] === ']';
+
+    // validate a little.
+    if (!ipv6Hostname) {
+      var hostparts = this.hostname.split(/\./);
+      for (var i = 0, l = hostparts.length; i < l; i++) {
+        var part = hostparts[i];
+        if (!part) continue;
+        if (!part.match(hostnamePartPattern)) {
+          var newpart = '';
+          for (var j = 0, k = part.length; j < k; j++) {
+            if (part.charCodeAt(j) > 127) {
+              // we replace non-ASCII char with a temporary placeholder
+              // we need this to make sure size of hostname is not
+              // broken by replacing non-ASCII by nothing
+              newpart += 'x';
+            } else {
+              newpart += part[j];
+            }
+          }
+          // we test again with ASCII char only
+          if (!newpart.match(hostnamePartPattern)) {
+            var validParts = hostparts.slice(0, i);
+            var notHost = hostparts.slice(i + 1);
+            var bit = part.match(hostnamePartStart);
+            if (bit) {
+              validParts.push(bit[1]);
+              notHost.unshift(bit[2]);
+            }
+            if (notHost.length) {
+              rest = '/' + notHost.join('.') + rest;
+            }
+            this.hostname = validParts.join('.');
+            break;
+          }
+        }
+      }
+    }
+
+    if (this.hostname.length > hostnameMaxLen) {
+      this.hostname = '';
+    } else {
+      // hostnames are always lower case.
+      this.hostname = this.hostname.toLowerCase();
+    }
+
+    if (!ipv6Hostname) {
+      // IDNA Support: Returns a punycoded representation of "domain".
+      // It only converts parts of the domain name that
+      // have non-ASCII characters, i.e. it doesn't matter if
+      // you call it with a domain that already is ASCII-only.
+      this.hostname = punycode.toASCII(this.hostname);
+    }
+
+    var p = this.port ? ':' + this.port : '';
+    var h = this.hostname || '';
+    this.host = h + p;
+    this.href += this.host;
+
+    // strip [ and ] from the hostname
+    // the host field still retains them, though
+    if (ipv6Hostname) {
+      this.hostname = this.hostname.substr(1, this.hostname.length - 2);
+      if (rest[0] !== '/') {
+        rest = '/' + rest;
+      }
+    }
+  }
+
+  // now rest is set to the post-host stuff.
+  // chop off any delim chars.
+  if (!unsafeProtocol[lowerProto]) {
+
+    // First, make 100% sure that any "autoEscape" chars get
+    // escaped, even if encodeURIComponent doesn't think they
+    // need to be.
+    for (var i = 0, l = autoEscape.length; i < l; i++) {
+      var ae = autoEscape[i];
+      if (rest.indexOf(ae) === -1)
+        continue;
+      var esc = encodeURIComponent(ae);
+      if (esc === ae) {
+        esc = escape(ae);
+      }
+      rest = rest.split(ae).join(esc);
+    }
+  }
+
+
+  // chop off from the tail first.
+  var hash = rest.indexOf('#');
+  if (hash !== -1) {
+    // got a fragment string.
+    this.hash = rest.substr(hash);
+    rest = rest.slice(0, hash);
+  }
+  var qm = rest.indexOf('?');
+  if (qm !== -1) {
+    this.search = rest.substr(qm);
+    this.query = rest.substr(qm + 1);
+    if (parseQueryString) {
+      this.query = querystring.parse(this.query);
+    }
+    rest = rest.slice(0, qm);
+  } else if (parseQueryString) {
+    // no query string, but parseQueryString still requested
+    this.search = '';
+    this.query = {};
+  }
+  if (rest) this.pathname = rest;
+  if (slashedProtocol[lowerProto] &&
+      this.hostname && !this.pathname) {
+    this.pathname = '/';
+  }
+
+  //to support http.request
+  if (this.pathname || this.search) {
+    var p = this.pathname || '';
+    var s = this.search || '';
+    this.path = p + s;
+  }
+
+  // finally, reconstruct the href based on what has been validated.
+  this.href = this.format();
+  return this;
+};
+
+// format a parsed object into a url string
+function urlFormat(obj) {
+  // ensure it's an object, and not a string url.
+  // If it's an obj, this is a no-op.
+  // this way, you can call url_format() on strings
+  // to clean up potentially wonky urls.
+  if (util.isString(obj)) obj = urlParse(obj);
+  if (!(obj instanceof Url)) return Url.prototype.format.call(obj);
+  return obj.format();
+}
+
+Url.prototype.format = function() {
+  var auth = this.auth || '';
+  if (auth) {
+    auth = encodeURIComponent(auth);
+    auth = auth.replace(/%3A/i, ':');
+    auth += '@';
+  }
+
+  var protocol = this.protocol || '',
+      pathname = this.pathname || '',
+      hash = this.hash || '',
+      host = false,
+      query = '';
+
+  if (this.host) {
+    host = auth + this.host;
+  } else if (this.hostname) {
+    host = auth + (this.hostname.indexOf(':') === -1 ?
+        this.hostname :
+        '[' + this.hostname + ']');
+    if (this.port) {
+      host += ':' + this.port;
+    }
+  }
+
+  if (this.query &&
+      util.isObject(this.query) &&
+      Object.keys(this.query).length) {
+    query = querystring.stringify(this.query);
+  }
+
+  var search = this.search || (query && ('?' + query)) || '';
+
+  if (protocol && protocol.substr(-1) !== ':') protocol += ':';
+
+  // only the slashedProtocols get the //.  Not mailto:, xmpp:, etc.
+  // unless they had them to begin with.
+  if (this.slashes ||
+      (!protocol || slashedProtocol[protocol]) && host !== false) {
+    host = '//' + (host || '');
+    if (pathname && pathname.charAt(0) !== '/') pathname = '/' + pathname;
+  } else if (!host) {
+    host = '';
+  }
+
+  if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
+  if (search && search.charAt(0) !== '?') search = '?' + search;
+
+  pathname = pathname.replace(/[?#]/g, function(match) {
+    return encodeURIComponent(match);
+  });
+  search = search.replace('#', '%23');
+
+  return protocol + host + pathname + search + hash;
+};
+
+function urlResolve(source, relative) {
+  return urlParse(source, false, true).resolve(relative);
+}
+
+Url.prototype.resolve = function(relative) {
+  return this.resolveObject(urlParse(relative, false, true)).format();
+};
+
+function urlResolveObject(source, relative) {
+  if (!source) return relative;
+  return urlParse(source, false, true).resolveObject(relative);
+}
+
+Url.prototype.resolveObject = function(relative) {
+  if (util.isString(relative)) {
+    var rel = new Url();
+    rel.parse(relative, false, true);
+    relative = rel;
+  }
+
+  var result = new Url();
+  var tkeys = Object.keys(this);
+  for (var tk = 0; tk < tkeys.length; tk++) {
+    var tkey = tkeys[tk];
+    result[tkey] = this[tkey];
+  }
+
+  // hash is always overridden, no matter what.
+  // even href="" will remove it.
+  result.hash = relative.hash;
+
+  // if the relative url is empty, then there's nothing left to do here.
+  if (relative.href === '') {
+    result.href = result.format();
+    return result;
+  }
+
+  // hrefs like //foo/bar always cut to the protocol.
+  if (relative.slashes && !relative.protocol) {
+    // take everything except the protocol from relative
+    var rkeys = Object.keys(relative);
+    for (var rk = 0; rk < rkeys.length; rk++) {
+      var rkey = rkeys[rk];
+      if (rkey !== 'protocol')
+        result[rkey] = relative[rkey];
+    }
+
+    //urlParse appends trailing / to urls like http://www.example.com
+    if (slashedProtocol[result.protocol] &&
+        result.hostname && !result.pathname) {
+      result.path = result.pathname = '/';
+    }
+
+    result.href = result.format();
+    return result;
+  }
+
+  if (relative.protocol && relative.protocol !== result.protocol) {
+    // if it's a known url protocol, then changing
+    // the protocol does weird things
+    // first, if it's not file:, then we MUST have a host,
+    // and if there was a path
+    // to begin with, then we MUST have a path.
+    // if it is file:, then the host is dropped,
+    // because that's known to be hostless.
+    // anything else is assumed to be absolute.
+    if (!slashedProtocol[relative.protocol]) {
+      var keys = Object.keys(relative);
+      for (var v = 0; v < keys.length; v++) {
+        var k = keys[v];
+        result[k] = relative[k];
+      }
+      result.href = result.format();
+      return result;
+    }
+
+    result.protocol = relative.protocol;
+    if (!relative.host && !hostlessProtocol[relative.protocol]) {
+      var relPath = (relative.pathname || '').split('/');
+      while (relPath.length && !(relative.host = relPath.shift()));
+      if (!relative.host) relative.host = '';
+      if (!relative.hostname) relative.hostname = '';
+      if (relPath[0] !== '') relPath.unshift('');
+      if (relPath.length < 2) relPath.unshift('');
+      result.pathname = relPath.join('/');
+    } else {
+      result.pathname = relative.pathname;
+    }
+    result.search = relative.search;
+    result.query = relative.query;
+    result.host = relative.host || '';
+    result.auth = relative.auth;
+    result.hostname = relative.hostname || relative.host;
+    result.port = relative.port;
+    // to support http.request
+    if (result.pathname || result.search) {
+      var p = result.pathname || '';
+      var s = result.search || '';
+      result.path = p + s;
+    }
+    result.slashes = result.slashes || relative.slashes;
+    result.href = result.format();
+    return result;
+  }
+
+  var isSourceAbs = (result.pathname && result.pathname.charAt(0) === '/'),
+      isRelAbs = (
+          relative.host ||
+          relative.pathname && relative.pathname.charAt(0) === '/'
+      ),
+      mustEndAbs = (isRelAbs || isSourceAbs ||
+                    (result.host && relative.pathname)),
+      removeAllDots = mustEndAbs,
+      srcPath = result.pathname && result.pathname.split('/') || [],
+      relPath = relative.pathname && relative.pathname.split('/') || [],
+      psychotic = result.protocol && !slashedProtocol[result.protocol];
+
+  // if the url is a non-slashed url, then relative
+  // links like ../.. should be able
+  // to crawl up to the hostname, as well.  This is strange.
+  // result.protocol has already been set by now.
+  // Later on, put the first path part into the host field.
+  if (psychotic) {
+    result.hostname = '';
+    result.port = null;
+    if (result.host) {
+      if (srcPath[0] === '') srcPath[0] = result.host;
+      else srcPath.unshift(result.host);
+    }
+    result.host = '';
+    if (relative.protocol) {
+      relative.hostname = null;
+      relative.port = null;
+      if (relative.host) {
+        if (relPath[0] === '') relPath[0] = relative.host;
+        else relPath.unshift(relative.host);
+      }
+      relative.host = null;
+    }
+    mustEndAbs = mustEndAbs && (relPath[0] === '' || srcPath[0] === '');
+  }
+
+  if (isRelAbs) {
+    // it's absolute.
+    result.host = (relative.host || relative.host === '') ?
+                  relative.host : result.host;
+    result.hostname = (relative.hostname || relative.hostname === '') ?
+                      relative.hostname : result.hostname;
+    result.search = relative.search;
+    result.query = relative.query;
+    srcPath = relPath;
+    // fall through to the dot-handling below.
+  } else if (relPath.length) {
+    // it's relative
+    // throw away the existing file, and take the new path instead.
+    if (!srcPath) srcPath = [];
+    srcPath.pop();
+    srcPath = srcPath.concat(relPath);
+    result.search = relative.search;
+    result.query = relative.query;
+  } else if (!util.isNullOrUndefined(relative.search)) {
+    // just pull out the search.
+    // like href='?foo'.
+    // Put this after the other two cases because it simplifies the booleans
+    if (psychotic) {
+      result.hostname = result.host = srcPath.shift();
+      //occationaly the auth can get stuck only in host
+      //this especially happens in cases like
+      //url.resolveObject('mailto:local1@domain1', 'local2@domain2')
+      var authInHost = result.host && result.host.indexOf('@') > 0 ?
+                       result.host.split('@') : false;
+      if (authInHost) {
+        result.auth = authInHost.shift();
+        result.host = result.hostname = authInHost.shift();
+      }
+    }
+    result.search = relative.search;
+    result.query = relative.query;
+    //to support http.request
+    if (!util.isNull(result.pathname) || !util.isNull(result.search)) {
+      result.path = (result.pathname ? result.pathname : '') +
+                    (result.search ? result.search : '');
+    }
+    result.href = result.format();
+    return result;
+  }
+
+  if (!srcPath.length) {
+    // no path at all.  easy.
+    // we've already handled the other stuff above.
+    result.pathname = null;
+    //to support http.request
+    if (result.search) {
+      result.path = '/' + result.search;
+    } else {
+      result.path = null;
+    }
+    result.href = result.format();
+    return result;
+  }
+
+  // if a url ENDs in . or .., then it must get a trailing slash.
+  // however, if it ends in anything else non-slashy,
+  // then it must NOT get a trailing slash.
+  var last = srcPath.slice(-1)[0];
+  var hasTrailingSlash = (
+      (result.host || relative.host || srcPath.length > 1) &&
+      (last === '.' || last === '..') || last === '');
+
+  // strip single dots, resolve double dots to parent dir
+  // if the path tries to go above the root, `up` ends up > 0
+  var up = 0;
+  for (var i = srcPath.length; i >= 0; i--) {
+    last = srcPath[i];
+    if (last === '.') {
+      srcPath.splice(i, 1);
+    } else if (last === '..') {
+      srcPath.splice(i, 1);
+      up++;
+    } else if (up) {
+      srcPath.splice(i, 1);
+      up--;
+    }
+  }
+
+  // if the path is allowed to go above the root, restore leading ..s
+  if (!mustEndAbs && !removeAllDots) {
+    for (; up--; up) {
+      srcPath.unshift('..');
+    }
+  }
+
+  if (mustEndAbs && srcPath[0] !== '' &&
+      (!srcPath[0] || srcPath[0].charAt(0) !== '/')) {
+    srcPath.unshift('');
+  }
+
+  if (hasTrailingSlash && (srcPath.join('/').substr(-1) !== '/')) {
+    srcPath.push('');
+  }
+
+  var isAbsolute = srcPath[0] === '' ||
+      (srcPath[0] && srcPath[0].charAt(0) === '/');
+
+  // put the host back
+  if (psychotic) {
+    result.hostname = result.host = isAbsolute ? '' :
+                                    srcPath.length ? srcPath.shift() : '';
+    //occationaly the auth can get stuck only in host
+    //this especially happens in cases like
+    //url.resolveObject('mailto:local1@domain1', 'local2@domain2')
+    var authInHost = result.host && result.host.indexOf('@') > 0 ?
+                     result.host.split('@') : false;
+    if (authInHost) {
+      result.auth = authInHost.shift();
+      result.host = result.hostname = authInHost.shift();
+    }
+  }
+
+  mustEndAbs = mustEndAbs || (result.host && srcPath.length);
+
+  if (mustEndAbs && !isAbsolute) {
+    srcPath.unshift('');
+  }
+
+  if (!srcPath.length) {
+    result.pathname = null;
+    result.path = null;
+  } else {
+    result.pathname = srcPath.join('/');
+  }
+
+  //to support request.http
+  if (!util.isNull(result.pathname) || !util.isNull(result.search)) {
+    result.path = (result.pathname ? result.pathname : '') +
+                  (result.search ? result.search : '');
+  }
+  result.auth = relative.auth || result.auth;
+  result.slashes = result.slashes || relative.slashes;
+  result.href = result.format();
+  return result;
+};
+
+Url.prototype.parseHost = function() {
+  var host = this.host;
+  var port = portPattern.exec(host);
+  if (port) {
+    port = port[0];
+    if (port !== ':') {
+      this.port = port.substr(1);
+    }
+    host = host.substr(0, host.length - port.length);
+  }
+  if (host) this.hostname = host;
+};
+
+
+/***/ }),
+/* 209 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+module.exports = {
+  isString: function(arg) {
+    return typeof(arg) === 'string';
+  },
+  isObject: function(arg) {
+    return typeof(arg) === 'object' && arg !== null;
+  },
+  isNull: function(arg) {
+    return arg === null;
+  },
+  isNullOrUndefined: function(arg) {
+    return arg == null;
+  }
+};
+
+
+/***/ }),
+/* 210 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {
+/**
+ * Module exports.
+ */
+
+module.exports = deprecate;
+
+/**
+ * Mark that a method should not be used.
+ * Returns a modified function which warns once by default.
+ *
+ * If `localStorage.noDeprecation = true` is set, then it is a no-op.
+ *
+ * If `localStorage.throwDeprecation = true` is set, then deprecated functions
+ * will throw an Error when invoked.
+ *
+ * If `localStorage.traceDeprecation = true` is set, then deprecated functions
+ * will invoke `console.trace()` instead of `console.error()`.
+ *
+ * @param {Function} fn - the function to deprecate
+ * @param {String} msg - the string to print to the console when `fn` is invoked
+ * @returns {Function} a new "deprecated" version of `fn`
+ * @api public
+ */
+
+function deprecate (fn, msg) {
+  if (config('noDeprecation')) {
+    return fn;
+  }
+
+  var warned = false;
+  function deprecated() {
+    if (!warned) {
+      if (config('throwDeprecation')) {
+        throw new Error(msg);
+      } else if (config('traceDeprecation')) {
+        console.trace(msg);
+      } else {
+        console.warn(msg);
+      }
+      warned = true;
+    }
+    return fn.apply(this, arguments);
+  }
+
+  return deprecated;
+}
+
+/**
+ * Checks `localStorage` for boolean values for the given `name`.
+ *
+ * @param {String} name
+ * @returns {Boolean}
+ * @api private
+ */
+
+function config (name) {
+  // accessing global.localStorage can trigger a DOMException in sandboxed iframes
+  try {
+    if (!global.localStorage) return false;
+  } catch (_) {
+    return false;
+  }
+  var val = global.localStorage[name];
+  if (null == val) return false;
+  return String(val).toLowerCase() === 'true';
+}
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+
+/***/ }),
+/* 211 */
+/***/ (function(module, exports) {
+
+module.exports = extend
+
+var hasOwnProperty = Object.prototype.hasOwnProperty;
+
+function extend() {
+    var target = {}
+
+    for (var i = 0; i < arguments.length; i++) {
+        var source = arguments[i]
+
+        for (var key in source) {
+            if (hasOwnProperty.call(source, key)) {
+                target[key] = source[key]
+            }
+        }
+    }
+
+    return target
+}
+
+
+/***/ }),
+/* 212 */
+/***/ (function(module, exports) {
+
+/* (ignored) */
+
+/***/ }),
+/* 213 */
+/***/ (function(module, exports) {
+
+/* (ignored) */
+
+/***/ }),
+/* 214 */,
+/* 215 */,
+/* 216 */,
+/* 217 */,
+/* 218 */,
+/* 219 */,
+/* 220 */,
+/* 221 */,
+/* 222 */,
+/* 223 */,
+/* 224 */,
+/* 225 */,
+/* 226 */,
+/* 227 */,
+/* 228 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(119);
 
 
 /***/ })

@@ -101,7 +101,7 @@ export class FinsembleWindow {
 	//allows backwards compatibility.
 	standardizeEventName(event) {
 		switch (event) {
-			//all of these should be deprecated in 3.5ish.
+			// all of these should be deprecated in 3.5ish.
 			case "bounds-set":
 			case "stoppedMoving":
 				return "bounds-change-end";
@@ -210,9 +210,6 @@ export class FinsembleWindow {
 	listenForBoundsSet() {
 		this.eventManager.listenForRemoteEvents(["bounds-change-start", "bounds-changing", "bounds-change-end"]);
 	}
-	animate(params = {}, callback = Function.prototype) {
-		this.queryWindowService("animate", params, callback);
-	}
 
 	getWindowStore(cb) {
 		if (window._FSBLCache.windowStore) {
@@ -227,7 +224,7 @@ export class FinsembleWindow {
 	doConstruction(params) {
 		//TODO this is the same as wrap (eventually this should spawn)
 		if (!params.setWindowType && !params.windowType) { //Default WindowType
-			params.windowType = "OpenFinWindow";
+			params.windowType = "WebWindow";
 		}
 		if (params.windowType) { //We need to make a specific kind of Window
 			params.setWindowType = params.windowType;
@@ -283,7 +280,7 @@ export class FinsembleWindow {
 	onTitleChanged(err, response) {
 		if (!response || !response.data || typeof response.data !== "string") return;
 		//this.windowOptions.title = response.data;
-		this.eventManager.trigger("title-changed", {
+		this.eventManager.emit("title-changed", {
 			title: response.data
 		});
 	}
@@ -426,7 +423,7 @@ export class FinsembleWindow {
 
 		// No need to do these checks if we're in a window that lives in the startup app.
 		if (manifest) {
-			switch (fin.container) {
+			switch (System.container) {
 				case "Electron":
 					isStartupApplication = manifest && manifest.startup_app && manifest.startup_app.name === windowName;
 					break;
@@ -490,9 +487,9 @@ export class FinsembleWindow {
 			let wrap: any = null;
 			if (typeof window._FSBLCache.windowAttempts[params.name] === "undefined") window._FSBLCache.windowAttempts[params.name] = 0;
 
-			//OpenfinApplication is essentially just an openfinWindow in its own process. We can wrap it just like a window.
-			if (!params.setWindowType && !identifier.windowType || identifier.windowType === "OpenFinApplication") { //Default WindowType
-				identifier.windowType = "OpenFinWindow";
+			// WebApplication is essentially just an WebWindow in its own process. We can wrap it just like a window.
+			if (!params.setWindowType && !identifier.windowType || identifier.windowType === "WebApplication") { //Default WindowType
+				identifier.windowType = "WebWindow";
 			}
 
 			//Top level keeps important info (e.g., uuid, name, windowType).
@@ -703,6 +700,24 @@ export class FinsembleWindow {
 		this.queryWindowService("bringToFront", params, callback);
 	}
 
+	/**
+	 * Sets the alwaysOnTop state for the window.
+	 * @param params Objecting representing the new alwaysOnTop state.
+	 * @param callback Callback accepting two values: a (possible) error object and the alwaysOnTop value for the window.
+	 */
+	setAlwaysOnTop(params: { alwaysOnTop: boolean }, callback: StandardCallback) {
+		this.queryWindowService("setAlwaysOnTop", params, callback);
+	}
+
+	/**
+	 * Returns the alwaysOnTop for the window.
+	 * @param params This parameter is ignored.
+	 * @param callback Callback invoked with the alwaysOnTop state for the window.
+	 */
+	isAlwaysOnTop(params: any, callback: StandardCallback) {
+		this.queryWindowService("isAlwaysOnTop", {}, callback);
+	}
+
 	isShowing(params, callback) {
 		this.queryWindowService("isShowing", params, callback);
 	}
@@ -751,6 +766,9 @@ export class FinsembleWindow {
 		});
 	}
 
+	animate(params = {}, callback = Function.prototype) {
+		this.queryWindowService("animate", params, callback);
+	}
 
 	/**
 	 *Register a window with docking. Use this if you don't want to use the full initialization function
@@ -924,8 +942,8 @@ export class FinsembleWindow {
 	getMonitor(cb) {
 
 		RouterClient.query("DockingService.getMonitorForWindow",
-			{ windowIdentifier: this.identifier }
-			, (err, message) => message ? cb(message.data) : cb());
+			{ windowIdentifier: this.identifier },
+			(err, message) => (message ? cb(message.data) : cb()));
 	}
 
 	/**
@@ -1057,9 +1075,19 @@ export class FinsembleWindow {
 					} else {
 						Logger.system.error("FinsembleWindow.setParent error", err);
 					}
+					/** DH 11/8/2019
+					 * There is an intrinsic race between stacks and grouping:
+					 * The stack is the group, not the children, so the parent might
+					 * not be correct before the update arrives. This publish ensures
+					 * that there is at least one publish _afer_ the parent has been set.
+					 */
+					RouterClient.transmit(constants.DOCKING.REQUEST_PUBLISH, null);
 					this.settingParent = false;
-					this.eventManager.trigger("parent-set", { parentName: this.parentWindow.name });
-					cb(err, wrappedStackedWindow);
+					const parentSettingDone = () => {
+						this.removeEventListener("parent-set", parentSettingDone);
+						cb(err, wrappedStackedWindow);
+					}
+					this.addEventListener("parent-set", parentSettingDone);
 				});
 			});
 
@@ -1106,7 +1134,7 @@ export class FinsembleWindow {
 	 */
 	clearParent() {
 		Logger.system.debug("FinsembleWindow.clearParent", this.parentWindow);
-		this.eventManager.trigger("parent-unset", {
+		this.eventManager.emit("parent-unset", {
 			parentName: this.parentWindow.name
 		});
 		this.parentWindow = null;
@@ -1297,3 +1325,5 @@ export class FinsembleWindow {
 		return new Promise(promiseResolver);
 	}
 }
+
+// @TODO - Process Monitor uses finWindow.getParentApplication. We should implement that here.

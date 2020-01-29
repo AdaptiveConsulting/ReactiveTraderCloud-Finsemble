@@ -7,13 +7,15 @@ import Logger from "../clients/logger";
 
 import { ConfigUtilInstance as ConfigUtil } from "./configUtil";
 import { System } from "../common/system";
+import SystemManagerClient from "./systemManagerClient";
+
 var ConfigClient = null;
 
 "use strict";
 
 /**
  * @introduction
- * <h2>Notification Client</h2>
+ * <h2>Notification Client (Finsemble Workspaces)</h2>
  *
  * Finsemble makes use of pop up (toast) notifications for communicating information to the end user in a gentler way than modal dialogs.
  * Use the Notification API to route messages so that your components can create these notifications.
@@ -55,7 +57,7 @@ var UserNotification = function () {
 	/**
 	 * Conditionally alerts the end user using a desktop notification.
 	 *
-	 * @param {string} topic Specifies a category for the notification. Topic is currently unused, but in the future it will be used to filter notifications (e.g., applying regEx's defined in config to determine which notifications are displayed). Any topic string can be specified; however "system" is the recommended topic for system notifications applicable both to end uses and to developers. "dev" is the recommended topic for notifications applicable only during development (e.g., a notification that <i>config.json</i> has an illegal value).
+	 * @param {string} topic Specifies a category for the notification. This parameter is reserved for future use; it is designed to filter notifications (e.g., applying regEx's defined in config to determine which notifications are displayed). Any topic string can be specified; however "system" is the recommended topic for system notifications applicable both to end uses and to developers. "dev" is the recommended topic for notifications applicable only during development (e.g., a notification that <i>config.json</i> has an illegal value).
 	 * @param {string} frequency Either "ALWAYS", "ONCE-SINCE-STARTUP", or "MAX-COUNT" to determine if alert should be displayed. Note, the frequencies are based on the number of notifications emitted from a window (as opposed to system wide).
 	 * @param {string} identifier Uniquely identifies this specific notification message. Used when "frequency" is set to "ONCE-SINCE-STARTUP" or "MAX-COUNT".
 	 * @param {any} message Message to display in the notification. Typically a string. Finsemble's built in templating accepts and object. See <i>../src-built-in/components/notification/notification.html<i>.
@@ -123,6 +125,7 @@ var UserNotification = function () {
 				message: message,
 				timeout: duration
 			};
+			SystemManagerClient.systemLog({ notification: true }, "Notification: " + message);
 			new System.Notification(notifyObject);
 		}
 	};

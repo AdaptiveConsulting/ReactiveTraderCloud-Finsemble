@@ -1,14 +1,39 @@
 {
 	"comment": "Core services loaded into the finsemble module",
 	"services": {
-		"startupLauncherService": {
-			"spawnAs": "window",
-			"name": "startupLauncherService",
-			"html": "$servicesRoot/startupLauncher/startupLauncher.html",
-			"file": "$servicesRoot/startupLauncher/startupLauncherService.js",
-			"category": "system"
-		},
 		"workspaceService": {
+			"bootParams": {
+				"stage": "preuser",
+				"stopOnFailure": false,
+				"autoStart": true,
+				"customFailureMessage": null,
+				"timeout": 10000,
+				"dependencies": [ "loadUserDefinedComponentsTask", "assimilationService" ],
+				"checkpoints" : {
+					"importedLegacyWorkspaces" : {
+					},
+					"workspaceConfigRead" : {
+						"dependencies": ["importedLegacyWorkspaces"]
+					},
+					"workspaceImportsComplete" : {
+						"dependencies": [ "workspaceConfigRead" ]
+					},
+					"searchRegistered" : {
+						"dependencies": [  "workspaceImportsComplete" ]
+					},
+					"preferencesRead" : {
+						"dependencies": [ "searchRegistered" ]
+					},
+					"activeWorkspaceSet" : {
+						"dependencies": [ "preferencesRead" ]
+					},
+					"workspaceLoaded" : {
+						"dependencies": [ "activeWorkspaceSet" ],
+						"timeout": 30000,
+						"postStartupCompletion": true
+					}
+				}
+			},
 			"spawnAs": "window",
 			"name": "workspaceService",
 			"html": "$servicesRoot/workspace/workspace.html",
@@ -16,6 +41,10 @@
 			"category": "system"
 		},
 		"storageService": {
+			"bootParams": {
+				"stage": "kernel",
+				"dependencies": [ "testTask_initializeSplinterAgentPool" ]
+			},
 			"spawnAs": "window",
 			"name": "storageService",
 			"html": "$servicesRoot/storage/storage.html",
@@ -23,6 +52,11 @@
 			"category": "system"
 		},
 		"linkerService": {
+			"bootParams": {
+				"stage": "kernel",
+				"dependencies": [ "windowService", "storageService" ],
+				"stopOnFailure": false
+			},
 			"spawnAs": "window",
 			"name": "linkerService",
 			"html": "$servicesRoot/linker/linker.html",
@@ -60,10 +94,12 @@
 				}
 			]
 		},
-		"loggerService": {
-			"showWarningForLogStates": ["Info", "Debug", "Verbose"]
-		},
 		"searchService": {
+			"bootParams": {
+				"stage": "kernel",
+				"dependencies": [ "windowService" ],
+				"stopOnFailure": false
+			},
 			"spawnAs": "window",
 			"name": "searchService",
 			"html": "$servicesRoot/search/search.html",
@@ -71,6 +107,10 @@
 			"category": "system"
 		},
 		"windowService": {
+			"bootParams": {
+				"stage": "kernel",
+				"dependencies": []
+			},
 			"spawnAs": "window",
 			"name": "windowService",
 			"html": "$servicesRoot/window/windowService.html",
@@ -107,6 +147,10 @@
 			"category": "system"
 		},
 		"authenticationService": {
+			"bootParams": {
+				"stage": "authentication",
+				"timeout": 36000000
+			},
 			"spawnAs": "window",
 			"name": "authenticationService",
 			"html": "$servicesRoot/authentication/authentication.html",
@@ -114,6 +158,12 @@
 			"category": "system"
 		},
 		"assimilationService": {
+			"bootParams": {
+				"stage": "preuser",
+				"dependencies": [ "windowService", "storageService" ],
+				"condition": "finsemble.servicesConfig.assimilation.enabled",
+				"stopOnFailure": false
+			},
 			"spawnAs": "window",
 			"name": "assimilationService",
 			"html": "$servicesRoot/assimilation/assimilation.html",
@@ -134,6 +184,11 @@
 			}
 		},
 		"RPCService": {
+			"bootParams": {
+				"stage": "kernel",
+				"dependencies": [ "windowService", "linkerService" ],
+				"stopOnFailure": false
+			},
 			"spawnAs": "window",
 			"active": false,
 			"name": "RPCService",
@@ -152,6 +207,11 @@
 			}
 		},
 		"hotkeysService": {
+			"bootParams": {
+				"stage": "preuser",
+				"dependencies": [ "assimilationService" ],
+				"stopOnFailure": false
+			},
 			"spawnAs": "window",
 			"name": "hotkeysService",
 			"html": "$servicesRoot/hotkeys/hotkeys.html",

@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "http://localhost:3375/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 190);
+/******/ 	return __webpack_require__(__webpack_require__.s = 226);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -85,13 +85,13 @@ var CONSOLE_DEFAULT_LOG_SETTING = { Error: true, Warn: true, Info: true, Log: tr
 const MAX_LOG_MESSAGE_SIZE = 50000;
 const OVER_LOG_SIZE_LIMIT_MESSAGE = `Log argument greater than ${MAX_LOG_MESSAGE_SIZE / 1000}KB. Check local Console to see output of the object.`;
 const MAX_QUEUE_SIZE = 5 * 1000; // maximum logger queue size; plenty of space although shouldn't need much since continuously sending to logger if working correctly;
-const throttle = __webpack_require__(23);
+const throttle = __webpack_require__(24);
 const system_1 = __webpack_require__(3);
 const localLogger_1 = __webpack_require__(16);
 /**
  * @introduction
  *
- * <h2>Logger Client</h2>
+ * <h2>Logger Client (Finsemble Workspaces)</h2>
  *
  * The Logger Client supports very efficient and configurable run-time logging to the <a href=tutorial-CentralLogger.html>Central Logger</a>.
  * Logging has a small performance overhead, so developers can liberally instrument their code with log messages for debugging and diagnostics.
@@ -1073,12 +1073,23 @@ class System {
             cb(info);
         });
     }
+    static get container() {
+        if (fin.container)
+            return fin.container;
+        return "Openfin";
+    }
+    static get fin() {
+        return e2o || fin || {};
+    }
     // static get makes this behave like a static variable. so calling system.ready is equivalent to fin.desktop.main.
     static get ready() {
         return fin.desktop.main;
     }
     static get getHostSpecs() {
         return fin.desktop.System.getHostSpecs;
+    }
+    static get InterApplicationBus() {
+        return fin.desktop.InterApplicationBus;
     }
     static get launchExternalProcess() {
         return fin.desktop.System.launchExternalProcess;
@@ -1113,6 +1124,9 @@ class System {
     }
     static get getAllWindows() {
         return fin.desktop.System.getAllWindows;
+    }
+    static get getProcessList() {
+        return fin.desktop.System.getProcessList;
     }
     static FinsembleReady(cb) {
         if (Globals.FSBL && Globals.FSBL.addEventListener) {
@@ -1210,7 +1224,7 @@ module.exports = g;
 * All rights reserved.
 */
 Object.defineProperty(exports, "__esModule", { value: true });
-const routerClientConstructor_1 = __webpack_require__(28);
+const routerClientConstructor_1 = __webpack_require__(30);
 const logger_1 = __webpack_require__(0);
 let RCConstructor = routerClientConstructor_1.RouterClientConstructor;
 /** The logger needs a router client, and the router client needs a logger.
@@ -1234,7 +1248,7 @@ exports.default = RouterClientInstance;
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__systemSettings__ = __webpack_require__(29);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__systemSettings__ = __webpack_require__(34);
 /*!
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
@@ -1415,296 +1429,180 @@ var Validate = function () {
 
 "use strict";
 
-Object.defineProperty(exports, "__esModule", { value: true });
 /*!
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
+Object.defineProperty(exports, "__esModule", { value: true });
+// NOTE: SystemManagerClient is currently located in common but accessible on FSBL.  We have not decided yet whether or not to expose it like the other clients.
 const routerClientInstance_1 = __webpack_require__(5);
-const validate_1 = __webpack_require__(6); // Finsemble args validator
 const logger_1 = __webpack_require__(0);
-const system_1 = __webpack_require__(3);
-const dependencyManager_1 = __webpack_require__(14);
+const _types_1 = __webpack_require__(31);
+const _constants_1 = __webpack_require__(18);
+const common_1 = __webpack_require__(32);
 /**
- * @introduction
- * <h2>Base Client</h2>
- * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependencies are met, either client or service, the client's `onReady` method is fired.
- *
- * We're currently halfway through migrating our clients from extending a normal function prototype to an ES6 class.
- * "_BaseClient" represents the new class, while "BaseClient" is the original function. When the migration is complete,
- * we will remove the old function and rename "_BaseClient" to "BaseClient".
- * @constructor
- * @param {Object} params
- * @param {Function} params.onReady - A function to be called after the client has initialized.
- * @param {String} params.name - The name of the client
- * @shouldBePublished false
-    @example
-    import { _BaseClient as BaseClient } from "./baseClient";
-    var NewClient = function (params) {
-        BaseClient.call(this, params);
-        var self = this;
-
-        return this;
-    };
-
-    var clientInstance = new NewClient({
-        onReady: function (cb) {
-            Logger.system.log("NewClient Online");
-            cb();
-        },
-        name:"NewClient"
-    });
-    clientInstance.requiredServices = [REPLACE_THIS_ARRAY_WITH_DEPENENCIES];
-    clientInstance.initialize();
-    module.exports = clientInstance;
-    @private
+ * Singleton API to Finsemble System Manager
  */
-class _BaseClient {
-    constructor(params) {
-        /** The current status of this service. */
-        this.status = "offline";
-        this.startupTime = 0;
-        this.initialized = false;
-        this.startupDependencies = { services: [], clients: [] };
-        /** Gets the current window. */
-        this.finsembleWindow = null;
-        /** Gets the current window name. */
-        this.windowName = "";
-        /** Queue of functions to process once the client goes online. */
-        this.clientReadyQueue = [];
-        /**
-         * @private
-         *
-         */
-        this.processClientReadyQueue = () => {
-            for (let cb of this.clientReadyQueue) {
-                cb();
-            }
-            this.clientReadyQueue = [];
-        };
-        /**
-         * @private
-         *
-         */
-        this.onReady = (cb) => {
-            this.clientReadyQueue.push(cb);
-            if (this.status === "online") {
-                this.processClientReadyQueue();
-            }
-        };
-        /** Check to see if the client can come online. We check this against the required services and clients */
-        /**
+class SystemManagerClient {
+    /**
+     * Publishes boot status for the service or component (or boot task) being started.  This method is used internally in FSBL and baseService and not directly called.
+     * @param name the name of the service or component or module
+     * @param type the type category ("services" or "components")
+     * @param state the state ("completed" or "failed")
+     *
      * @private
+     */
+    publishBootStatus(name, type, state) {
+        console.log("publishStartingStatus", name, state);
+        logger_1.default.system.debug("publishBootStatus", name, type, state);
+        routerClientInstance_1.default.publish(common_1.statusChannel(name), { name, type, state });
+    }
+    ;
+    /**
+     * Waits for a specific boot stage
+     * @param stage the name of the service (e.g. "storageService")
+     * @param when wait until either "stageEntered" or "stageCompleted"
+     * @param= [callback]
+     * @returns a promise
+     *
+     * @example
+     *
+     * 	await SystemManagerClient.waitForBootStage("authentication", "stageCompleted");
+     *
+     * 	SystemManagerClient.waitForBootStage("authentication", "stageCompleted", () => {
+     *		RouterClient.publish(Constants.APPLICATION_STATE_CHANNEL, { state: "authenticated" });
+     * 	});
      *
      */
-        this.setClientOnline = () => {
-            this.status = "online";
-            const onReadyMessage = `STARTUP:CLIENT ONLINE:${this.finWindow.name}:${this.name}`;
-            this.startupTime = window.performance.now() - this.startupTime;
-            const readyCB = () => {
-                this.logger.system.debug(onReadyMessage);
-                this.processClientReadyQueue();
-                dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(this.name);
-            };
-            if (this._onReady) {
-                this._onReady(readyCB);
+    waitForBootStage(stage, when, callback = Function.prototype) {
+        const waitForBootStageCompletionPromiseResolver = (resolve, reject) => {
+            logger_1.default.system.debug(`SystemManagerClient.waitForBootStage entry`, stage, when);
+            let stageIndex = _types_1.ALL_BOOT_STAGES.indexOf(stage);
+            if (stage === "microkernel" && when === "stageEntered") {
+                logger_1.default.system.error("Cannot wait on `stageEntered` for microkernel because router isn't up yet. So will instead wait for microkernal stage complete.");
             }
-            else {
-                readyCB();
-            }
-        };
-        /**
-         * @private
-         *
-         */
-        this.initialize = (cb = Function.prototype) => {
-            if (this.initialized)
-                return;
-            this.initialized = true;
-            this.startupTime = performance.now();
-            this.routerClient.onReady(() => {
-                // TODO, [terry] allow the finsembleWindow to be passed in, so we can support proxying windowClient in RPC
-                this.finWindow = system_1.System.Window.getCurrent();
-                this.windowName = this.finWindow.name;
-                this.logger.system.debug("Baseclient Init Router Ready", this.name);
-                dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor(this.startupDependencies, () => {
-                    cb();
-                    this.setClientOnline();
-                });
+            // receives startup state from services -- see SystemManagerClient.publishBootStatus
+            let subscribeId = routerClientInstance_1.default.subscribe(_constants_1.STAGE_CHANNEL, (err, notify) => {
+                logger_1.default.system.debug("SystemManagerClient.waitForBootStage new stage", notify.data.stage, subscribeId);
+                if (err) {
+                    logger_1.default.system.error("SystemManagerClient.waitForBootStage subscribe error", err);
+                    callback(err);
+                    reject(err);
+                }
+                else if (stageIndex === -1) { // if illegal stage was input
+                    err = "illegal stage argument";
+                    logger_1.default.system.debug("SystemManagerClient.waitForBootStage subscribe error", err, stage);
+                    callback(err);
+                    reject(err);
+                }
+                else {
+                    // note the following section handles cases where waitForBootStage might be invoked after the stage has been enter or passed
+                    let currentStageIndex = _types_1.ALL_BOOT_STAGES.indexOf(notify.data.stage);
+                    logger_1.default.system.debug(`SystemManagerClient.waitForBootStage currentStageIndex=${currentStageIndex} stageIndex=${stageIndex} wait-on-stage=${stage} this-stage=${notify.data.stage}`);
+                    // when the stage before completes (or anytime after) then done for "stageEntered"
+                    if (when === "stageEntered" && (currentStageIndex + 1) >= stageIndex) {
+                        logger_1.default.system.debug("SystemManagerClient.waitForBootStage stageEntered", stage, subscribeId, callback.name);
+                        callback();
+                        resolve();
+                        routerClientInstance_1.default.unsubscribe(subscribeId);
+                        // when current stage matches (or comes after) given stage, then done for "stageCompleted"
+                    }
+                    else if (when === "stageCompleted" && currentStageIndex >= stageIndex) {
+                        logger_1.default.system.debug("SystemManagerClient.waitForBootStage completed", stage, subscribeId);
+                        callback();
+                        resolve();
+                        routerClientInstance_1.default.unsubscribe(subscribeId);
+                    }
+                    else {
+                        logger_1.default.system.debug(`SystemManagerClient.waitForBootStage else currentStageIndex=${currentStageIndex} stageIndex=${stageIndex} `, currentStageIndex, stageIndex, stage, subscribeId);
+                    }
+                }
             });
         };
-        /**
-         * @private
-         *
-         */
-        this.onClose = (cb) => {
-            if (cb)
-                cb();
+        return new Promise(waitForBootStageCompletionPromiseResolver);
+    }
+    /**
+     * Waits for a specific service (or component or boot task) to be started
+     * @param name the name of the service (e.g. "storageService")
+     * @param= [callback]
+     * @returns a promise
+     *
+     * @example
+     *
+     * 	await SystemManagerClient.waitForStartup("configService");
+     *
+     *	SystemManagerClient.waitForStartup("dataStoreService", () => {
+     *		RouterClient.publish(Constants.APPLICATION_STATE_CHANNEL, { state: "configuring" });
+     *	});
+     *
+     */
+    waitForStartup(name, callback = Function.prototype) {
+        const waitForStartupStatePromiseResolver = (resolve, reject) => {
+            logger_1.default.system.debug(`SystemManagerClient.waitForStartup.${name}`, name);
+            // receives startup state from services -- see SystemManagerClient.publishBootStatus
+            let subscribeId = routerClientInstance_1.default.subscribe(common_1.statusChannel(name), (err, notify) => {
+                logger_1.default.system.debug("SystemManagerClient.waitForStartup subscribe", name, err, notify);
+                if (err) {
+                    logger_1.default.system.error("SystemManagerClient.waitForStartup subscribe error", err);
+                    callback(err);
+                    reject();
+                }
+                else {
+                    if (notify.data.name === name && notify.data.state === "completed") {
+                        logger_1.default.system.debug("SystemManagerClient.waitForStartup completed", name);
+                        callback();
+                        resolve();
+                        routerClientInstance_1.default.unsubscribe(subscribeId);
+                    }
+                }
+            });
         };
-        this.name = params.name;
-        this._onReady = params.onReady;
-        this.startupDependencies = params.startupDependencies || {
-            services: [],
-            clients: []
-        };
-        // @TODO - Refactor this to use DI.
-        this.logger = logger_1.default;
-        /**
-         * Reference to the RouterClient
-         */
-        this.routerClient = routerClientInstance_1.default;
+        return new Promise(waitForStartupStatePromiseResolver);
+    }
+    /**
+     * Publishes a checkpoints status. This must be done for any checkpoint so the SystemManager will know if the checkpoint succeeded or not
+     * @param parent the name of the service or component containing the checkpoint (as defined in config)
+     * @param checkpointName tthe name of the checkpoint (as defined in config)
+     * @param state the state for the checkpoint, either "completed" or "failed"
+     *
+     * @example
+     *
+     * 	SystemManagerClient.publishCheckpointState("workspaceService", "importedLegacyWorkspaces", "completed");
+     *
+     */
+    publishCheckpointState(windowName, checkpointName, state) {
+        console.log("publishCheckpoint", windowName, checkpointName, state, common_1.checkpointChannel(windowName, checkpointName));
+        logger_1.default.system.debug("publishCheckpoint", windowName, checkpointName, state, common_1.checkpointChannel(windowName, checkpointName));
+        routerClientInstance_1.default.publish(common_1.checkpointChannel(windowName, checkpointName), { windowName, checkpointName, state });
+    }
+    ;
+    /**
+     * Shows System Log window and bring its to front.
+     */
+    showSystemLog() {
+        logger_1.default.system.debug("SystemManagerClient.showSystemLog");
+        routerClientInstance_1.default.transmit(_constants_1.SHOW_SYSLOG_CHANNEL, true);
+    }
+    /**
+     * Displays message on the system log
+     * @param params gnenerally this is TBD until real system log is written
+     * @param params.error if true then the log message is an error
+     * @param params.notification if true then the log message is a notification
+     * @param message the message string to log
+     *
+     * @example
+     *
+     * 	SystemManagerClient.systemLog({ error: true}, errorMsg);
+     *  SystemManagerClient.systemLog({ notification: true }, "Notification: " + message);
+     *
+     */
+    systemLog(params, logMessage) {
+        logger_1.default.system.debug("SystemManagerClient.systemLog", params, logMessage);
+        routerClientInstance_1.default.transmit(_constants_1.SYSLOG_CHANNEL, { params, logMessage });
     }
 }
-exports._BaseClient = _BaseClient;
-/**
- * @introduction
- * <h2>Base Client</h2>
- * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependencies are met, either client or service, the client's `onReady` method is fired.
- * @constructor
- * @param {Object} params
- * @param {Function} params.onReady - A function to be called after the client has initialized.
- * @param {String} params.name - The name of the client
- * @shouldBePublished false
-    @example
-    import { _BaseClient as BaseClient } from "./baseClient";
-    var NewClient = function (params) {
-        BaseClient.call(this, params);
-        var self = this;
-
-        return this;
-    };
-
-    var clientInstance = new NewClient({
-        onReady: function (cb) {
-            Logger.system.log("NewClient Online");
-            cb();
-        },
-        name:"NewClient"
-    });
-    clientInstance.requiredServices = [REPLACE_THIS_ARRAY_WITH_DEPENENCIES];
-    clientInstance.initialize();
-    module.exports = clientInstance;
-    @private
- */
-var BaseClient = function (params) {
-    validate_1.default.args(params, "object=");
-    var self = this;
-    var status = "offline";
-    var onReady;
-    this.startupTime = 0;
-    if (params) {
-        if (params.onReady) {
-            onReady = params.onReady;
-        }
-        this.name = params.name;
-    }
-    this.initialized = false;
-    this.startupDependencies = params.startupDependencies || {
-        services: [],
-        clients: []
-    };
-    /**
-     * Reference to the RouterClient
-     *  @type {Object}
-     */
-    this.routerClient = routerClientInstance_1.default;
-    /**
-     * Gets the current openfin window - stays here for backward compatibility
-     * @type {object}
-     */
-    this.finWindow = null;
-    /**
-     * Gets the current window
-     * @type {object}
-     */
-    this.finsembleWindow = null;
-    /**
-     * Gets the current window name
-     *  @type {string}
-     */
-    this.windowName = ""; //The current window
-    /**
-     * Services the are required to be online before the service can come online
-     *  @type {Array.<Object>}
-     */
-    this.requiredServices = [];
-    /**
-     * Clients the are required to be online before the service can come online
-     *  @type {Array.<Object>}
-     */
-    this.requiredClients = [];
-    /**
-     * Queue of functions to process once the client goes online.
-     * @private
-     */
-    this.clientReadyQueue = [];
-    /**
-     * Iterates through the clientReadyQueue, invoking each call to `.ready`.
-     */
-    this.processClientReadyQueue = function () {
-        for (var i = 0; i < this.clientReadyQueue.length; i++) {
-            let callback = this.clientReadyQueue[i];
-            if (typeof callback === "function") {
-                callback();
-            }
-        }
-        this.clientReadyQueue = [];
-    };
-    /**
-     * Method for adding callbacks to each client.
-     */
-    this.onReady = function (cb) {
-        this.clientReadyQueue.push(cb);
-        if (status === "online") {
-            this.processClientReadyQueue();
-        }
-    };
-    //Check to see if the client can come online. We check this against the required services and clients
-    this.setClientOnline = function () {
-        var self = this;
-        status = "online";
-        let onReadyMessage = `STARTUP:CLIENT ONLINE:${self.finWindow.name}:${self.name}`;
-        self.startupTime = performance.now() - self.startupTime;
-        if (onReady) {
-            onReady(function () {
-                logger_1.default.system.debug(onReadyMessage);
-                self.processClientReadyQueue();
-                dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(self.name);
-            });
-        }
-        else {
-            logger_1.default.system.debug(onReadyMessage);
-            self.processClientReadyQueue();
-            dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(self.name);
-        }
-    };
-    /**
-    * Starts the process of checking services and any other function required before the client can come online
-    */
-    this.initialize = function (cb = Function.prototype) {
-        if (self.initialized) {
-            return;
-        }
-        self.initialized = true;
-        self.setClientOnline = self.setClientOnline.bind(self);
-        self.startupTime = performance.now();
-        self.routerClient.onReady(function () {
-            // TODO, [terry] allow the finsembleWindow to be passed in, so we can support proxying windowClient in RPC
-            self.finWindow = system_1.System.Window.getCurrent();
-            self.windowName = self.finWindow.name;
-            logger_1.default.system.debug("Baseclient Init Router Ready", self.name);
-            dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor({
-                services: self.startupDependencies.services || [],
-                clients: self.startupDependencies.clients || []
-            }, () => {
-                cb();
-                self.setClientOnline();
-            });
-        });
-    };
-    this.onClose = function () { };
-};
-exports.default = BaseClient;
+var systemManagerClient = new SystemManagerClient();
+exports.default = systemManagerClient;
 
 
 /***/ }),
@@ -1713,12 +1611,12 @@ exports.default = BaseClient;
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony export (immutable) */ __webpack_exports__["getOpenfinVersion"] = getOpenfinVersion;
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony export (immutable) */ __webpack_exports__["getContainerVersion"] = getContainerVersion;
 /* harmony export (immutable) */ __webpack_exports__["castToPromise"] = castToPromise;
 /* harmony export (immutable) */ __webpack_exports__["isPercentage"] = isPercentage;
 /* harmony export (immutable) */ __webpack_exports__["crossDomain"] = crossDomain;
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getAllMonitors", function() { return getAllMonitors; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getMonitorFromOpenFinXY", function() { return getMonitorFromOpenFinXY; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getMonitorFromXY", function() { return getMonitorFromXY; });
 /* harmony export (immutable) */ __webpack_exports__["getMonitorFromWindow"] = getMonitorFromWindow;
 /* harmony export (immutable) */ __webpack_exports__["getFinWindow"] = getFinWindow;
 /* harmony export (immutable) */ __webpack_exports__["getWindowDescriptor"] = getWindowDescriptor;
@@ -1741,10 +1639,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (immutable) */ __webpack_exports__["adjustWindowIfInTaskbarSpace"] = adjustWindowIfInTaskbarSpace;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__system__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__ = __webpack_require__(26);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1__ = __webpack_require__(21);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_uuid_v1__);
 /*!
  * Copyright 2017 by ChartIQ, Inc.
@@ -1768,9 +1666,9 @@ const Monitors = new __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__["a" /* de
 }*/
 
 /**
- * Gets the openfin version in object form.
+ * Gets the container version in object form.
  */
-function getOpenfinVersion(cb = Function.prototype) {
+function getContainerVersion(cb = Function.prototype) {
 	return new Promise(function (resolve /*, reject*/) {
 		__WEBPACK_IMPORTED_MODULE_0__system__["System"].getVersion(ver => {
 			let verArr = ver.split(".").map(Number);
@@ -1845,7 +1743,7 @@ function crossDomain(url) {
 };
 
 /**
- * Gets an array of monitor descriptors. Essentially rationalizing the results of OpenFin getMonitorInfo.
+ * Gets an array of monitor descriptors. Essentially rationalizing the results of getMonitorInfo.
  * into a single array with additional information added.
  *
  * whichMonitor is set to the secondary monitor number, or "primary" if the primary monitor.
@@ -1858,14 +1756,14 @@ function crossDomain(url) {
 var getAllMonitors = Monitors.getAllMonitors;
 
 /**
- * Retrieves a monitor descriptor given an absolute X Y on the OpenFin virtual screen
+ * Retrieves a monitor descriptor given an absolute X Y on the virtual screen
  * @param  {number} x The x position
  * @param  {number} y The y position
- * @param {callback-object}  cb Returns the monitor information from OpenFin.
+ * @param {callback-object}  cb Returns the monitor information from the Container.
  * "isPrimary" is set to true if it's the primary monitor.
  * null is returned if the x,y coordinates are beyond the bounds of the virtual screen.
  */
-var getMonitorFromOpenFinXY = Monitors.getMonitorFromScaledXY;
+var getMonitorFromXY = Monitors.getMonitorFromScaledXY;
 
 /**
  * Retrieves a monitor descriptor for a window. If the window straddles two monitors
@@ -1942,7 +1840,7 @@ function getFinWindow(windowIdentifier, cb) {
 		// Default to current window
 		var myWindow = __WEBPACK_IMPORTED_MODULE_0__system__["System"].Window.getCurrent();
 
-		// Get OpenFin options (windowDescriptor) for current window
+		// Get options (windowDescriptor) for current window
 		// we need this info even if we're going to reference a different window
 		myWindow.getOptions(function (options) {
 			// If windowName is provided, then find that window
@@ -2486,9 +2384,9 @@ function adjustBoundsToBeOnMonitor(bounds) {
  * @param {*} config - Object containing all possible values used to set windowTypes, some of these values may be unset depending on the execution path
  */
 function getWindowType(config) {
-	const DEFAULT_WINDOW_TYPE = "OpenFinWindow";
+	const DEFAULT_WINDOW_TYPE = "WebWindow";
 	// All possible windowTypes. Some of these values will be converted to other types
-	const validTypes = ["openfin", "assimilation", "assimilated", "native", "application", "OpenFinWindow", "NativeWindow", "FinsembleNativeWindow", "OpenFinApplication", "CompoundWindow", "StackedWindow"];
+	const validTypes = ["openfin", "assimilation", "assimilated", "native", "application", "OpenFinWindow", "NativeWindow", "FinsembleNativeWindow", "OpenFinApplication", "CompoundWindow", "WebWindow", "WebApplication", "StackedWindow"];
 	// If an invalid windowType is given, default and log an error. Note that an empty windowType
 	// is not an error case. This is to let the user know that they may have made a typo setting a type in
 	// the config file. We default to keep Finsemble from breaking, but the user may have intended to launch a
@@ -2510,10 +2408,19 @@ function getWindowType(config) {
 			ret = "FinsembleNativeWindow";
 			break;
 		case "application":
-			ret = "OpenFinApplication";
+			ret = "WebApplication";
+			break;
+		case "openFinApplication":
+			ret = "WebApplication";
+			__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.warn(`Window type ${config.windowType} deprecated. Please use WebWindow`);
+			break;
+		case "Web":
+			ret = "WebWindow";
 			break;
 		case "openfin":
-			ret = "OpenFinWindow";
+		case "openFinWindow":
+			ret = "WebWindow";
+			__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.warn(`Window type ${config.windowType} deprecated. Please use WebWindow`);
 			break;
 		case "StackedWindow":
 			ret = "StackedWindow";
@@ -2525,7 +2432,10 @@ function getWindowType(config) {
 
 	// Next handle any backward compatibility windowType inputs
 	if (config.native) ret = "NativeWindow"; //Backward Compatibility
-	if (config.type === "openfinApplication") ret = "OpenFinApplication"; //Backward Compatibility
+	if (config.type === "openfinApplication") {
+		ret = "WebApplication"; //Backward Compatibility
+		__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.warn("Window type openFinApplication deprecated. Please use WebApplication");
+	}
 	if (config.compound) ret = "CompoundWindow";
 	return ret;
 }
@@ -8017,10 +7927,307 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(13)(module), __webpack_require__(31).setImmediate, __webpack_require__(1)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(14)(module), __webpack_require__(29).setImmediate, __webpack_require__(1)))
 
 /***/ }),
 /* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+const routerClientInstance_1 = __webpack_require__(5);
+const validate_1 = __webpack_require__(6); // Finsemble args validator
+const logger_1 = __webpack_require__(0);
+const system_1 = __webpack_require__(3);
+const dependencyManager_1 = __webpack_require__(17);
+/**
+ * @introduction
+ * <h2>Base Client</h2>
+ * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependencies are met, either client or service, the client's `onReady` method is fired.
+ *
+ * We're currently halfway through migrating our clients from extending a normal function prototype to an ES6 class.
+ * "_BaseClient" represents the new class, while "BaseClient" is the original function. When the migration is complete,
+ * we will remove the old function and rename "_BaseClient" to "BaseClient".
+ * @constructor
+ * @param {Object} params
+ * @param {Function} params.onReady - A function to be called after the client has initialized.
+ * @param {String} params.name - The name of the client
+ * @shouldBePublished false
+    @example
+    import { _BaseClient as BaseClient } from "./baseClient";
+    var NewClient = function (params) {
+        BaseClient.call(this, params);
+        var self = this;
+
+        return this;
+    };
+
+    var clientInstance = new NewClient({
+        onReady: function (cb) {
+            Logger.system.log("NewClient Online");
+            cb();
+        },
+        name:"NewClient"
+    });
+    clientInstance.requiredServices = [REPLACE_THIS_ARRAY_WITH_DEPENENCIES];
+    clientInstance.initialize();
+    module.exports = clientInstance;
+    @private
+ */
+class _BaseClient {
+    constructor(params) {
+        /** The current status of this service. */
+        this.status = "offline";
+        this.startupTime = 0;
+        this.initialized = false;
+        this.startupDependencies = { services: [], clients: [] };
+        /** Gets the current window. */
+        this.finsembleWindow = null;
+        /** Gets the current window name. */
+        this.windowName = "";
+        /** Queue of functions to process once the client goes online. */
+        this.clientReadyQueue = [];
+        /**
+         * @private
+         *
+         */
+        this.processClientReadyQueue = () => {
+            for (let cb of this.clientReadyQueue) {
+                cb();
+            }
+            this.clientReadyQueue = [];
+        };
+        /**
+         * @private
+         *
+         */
+        this.onReady = (cb) => {
+            this.clientReadyQueue.push(cb);
+            if (this.status === "online") {
+                this.processClientReadyQueue();
+            }
+        };
+        /** Check to see if the client can come online. We check this against the required services and clients */
+        /**
+     * @private
+     *
+     */
+        this.setClientOnline = () => {
+            this.status = "online";
+            const onReadyMessage = `STARTUP:CLIENT ONLINE:${this.finWindow.name}:${this.name}`;
+            this.startupTime = window.performance.now() - this.startupTime;
+            const readyCB = () => {
+                this.logger.system.debug(onReadyMessage);
+                this.processClientReadyQueue();
+                dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(this.name);
+            };
+            if (this._onReady) {
+                this._onReady(readyCB);
+            }
+            else {
+                readyCB();
+            }
+        };
+        /**
+         * @private
+         *
+         */
+        this.initialize = (cb = Function.prototype) => {
+            if (this.initialized)
+                return;
+            this.initialized = true;
+            this.startupTime = performance.now();
+            this.routerClient.onReady(() => {
+                // TODO, [terry] allow the finsembleWindow to be passed in, so we can support proxying windowClient in RPC
+                this.finWindow = system_1.System.Window.getCurrent();
+                this.windowName = this.finWindow.name;
+                this.logger.system.debug("Baseclient Init Router Ready", this.name);
+                dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor(this.startupDependencies, () => {
+                    cb();
+                    this.setClientOnline();
+                });
+            });
+        };
+        /**
+         * @private
+         *
+         */
+        this.onClose = (cb) => {
+            if (cb)
+                cb();
+        };
+        this.name = params.name;
+        this._onReady = params.onReady;
+        this.startupDependencies = params.startupDependencies || {
+            services: [],
+            clients: []
+        };
+        // @TODO - Refactor this to use DI.
+        this.logger = logger_1.default;
+        /**
+         * Reference to the RouterClient
+         */
+        this.routerClient = routerClientInstance_1.default;
+    }
+}
+exports._BaseClient = _BaseClient;
+/**
+ * @introduction
+ * <h2>Base Client</h2>
+ * The Base Client is inherited by every client to provide common functionality to the clients. Clients communicate their status to each other through the Router and receive service status from the service manager. Once all dependencies are met, either client or service, the client's `onReady` method is fired.
+ * @constructor
+ * @param {Object} params
+ * @param {Function} params.onReady - A function to be called after the client has initialized.
+ * @param {String} params.name - The name of the client
+ * @shouldBePublished false
+    @example
+    import { _BaseClient as BaseClient } from "./baseClient";
+    var NewClient = function (params) {
+        BaseClient.call(this, params);
+        var self = this;
+
+        return this;
+    };
+
+    var clientInstance = new NewClient({
+        onReady: function (cb) {
+            Logger.system.log("NewClient Online");
+            cb();
+        },
+        name:"NewClient"
+    });
+    clientInstance.requiredServices = [REPLACE_THIS_ARRAY_WITH_DEPENENCIES];
+    clientInstance.initialize();
+    module.exports = clientInstance;
+    @private
+ */
+var BaseClient = function (params) {
+    validate_1.default.args(params, "object=");
+    var self = this;
+    var status = "offline";
+    var onReady;
+    this.startupTime = 0;
+    if (params) {
+        if (params.onReady) {
+            onReady = params.onReady;
+        }
+        this.name = params.name;
+    }
+    this.initialized = false;
+    this.startupDependencies = params.startupDependencies || {
+        services: [],
+        clients: []
+    };
+    /**
+     * Reference to the RouterClient
+     *  @type {Object}
+     */
+    this.routerClient = routerClientInstance_1.default;
+    /**
+     * Gets the current window - stays here for backward compatibility
+     * @type {object}
+     */
+    this.finWindow = null;
+    /**
+     * Gets the current window
+     * @type {object}
+     */
+    this.finsembleWindow = null;
+    /**
+     * Gets the current window name
+     *  @type {string}
+     */
+    this.windowName = ""; //The current window
+    /**
+     * Services the are required to be online before the service can come online
+     *  @type {Array.<Object>}
+     */
+    this.requiredServices = [];
+    /**
+     * Clients the are required to be online before the service can come online
+     *  @type {Array.<Object>}
+     */
+    this.requiredClients = [];
+    /**
+     * Queue of functions to process once the client goes online.
+     * @private
+     */
+    this.clientReadyQueue = [];
+    /**
+     * Iterates through the clientReadyQueue, invoking each call to `.ready`.
+     */
+    this.processClientReadyQueue = function () {
+        for (var i = 0; i < this.clientReadyQueue.length; i++) {
+            let callback = this.clientReadyQueue[i];
+            if (typeof callback === "function") {
+                callback();
+            }
+        }
+        this.clientReadyQueue = [];
+    };
+    /**
+     * Method for adding callbacks to each client.
+     */
+    this.onReady = function (cb) {
+        this.clientReadyQueue.push(cb);
+        if (status === "online") {
+            this.processClientReadyQueue();
+        }
+    };
+    //Check to see if the client can come online. We check this against the required services and clients
+    this.setClientOnline = function () {
+        var self = this;
+        status = "online";
+        let onReadyMessage = `STARTUP:CLIENT ONLINE:${self.finWindow.name}:${self.name}`;
+        self.startupTime = performance.now() - self.startupTime;
+        if (onReady) {
+            onReady(function () {
+                logger_1.default.system.debug(onReadyMessage);
+                self.processClientReadyQueue();
+                dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(self.name);
+            });
+        }
+        else {
+            logger_1.default.system.debug(onReadyMessage);
+            self.processClientReadyQueue();
+            dependencyManager_1.FSBLDependencyManagerSingleton.setClientOnline(self.name);
+        }
+    };
+    /**
+    * Starts the process of checking services and any other function required before the client can come online
+    */
+    this.initialize = function (cb = Function.prototype) {
+        if (self.initialized) {
+            return;
+        }
+        self.initialized = true;
+        self.setClientOnline = self.setClientOnline.bind(self);
+        self.startupTime = performance.now();
+        self.routerClient.onReady(function () {
+            // TODO, [terry] allow the finsembleWindow to be passed in, so we can support proxying windowClient in RPC
+            self.finWindow = system_1.System.Window.getCurrent();
+            self.windowName = self.finWindow.name;
+            logger_1.default.system.debug("Baseclient Init Router Ready", self.name);
+            dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor({
+                clients: self.startupDependencies.clients || []
+            }, () => {
+                cb();
+                self.setClientOnline();
+            });
+        });
+    };
+    this.onClose = function () { };
+};
+exports.default = BaseClient;
+
+
+/***/ }),
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8039,6 +8246,26 @@ exports.SERVICE_INITIALIZING_CHANNEL = "Finsemble.ServiceManager.serviceInitiali
 exports.SERVICE_READY_CHANNEL = "Finsemble.ServiceManager.serviceReady";
 exports.SERVICE_CLOSING_CHANNEL = "Finsemble.ServiceManager.serviceClosing";
 exports.SERVICE_CLOSED_CHANNEL = "Finsemble.ServiceManager.serviceClosed";
+// Naming to supports handshake betwwen each client and its corresponding service
+// Returns the handshake channel for a given service name
+exports.SERVICE_QUERY_READY_CHANNEL = (name) => { return `Finsemble.ServiceManager.queryReady.${name}`; };
+// Maps a client name to its corresponding service name.  Okay to not include all clients here -- if not here then handshake won't be done
+exports.CLIENT_SERVER_MAPPING = (name) => {
+    const MAPPING = {
+        "authenticationClient": "authenticationService",
+        "configClient": "configService",
+        "distributedStoreClient": "dataStoreService",
+        "hotkeysClient": "hotkeysService",
+        "linkerClient": "linkerService",
+        "logger": "loggerService",
+        "searchClient": "searchService",
+        "storageClient": "storageService",
+        "windowClient": "windowService",
+        "workspaceClient": "workspaceService"
+    };
+    // returns undefined if there is no mapping
+    return MAPPING[name];
+};
 //This channel is where the aggregated state of all services is sent out on.
 exports.SERVICES_STATE_CHANNEL = "Finsemble.State.Services";
 exports.WINDOWSTATE = {
@@ -8054,11 +8281,11 @@ exports.DOCKING = {
     GROUP_UPDATE: "DockingService.groupUpdate",
     // For legacy reasons, this is named Workspace, even though it's generated by docking.
     WORKSPACE_GROUP_UPDATE: "Finsemble.WorkspaceService.groupUpdate",
+    REQUEST_PUBLISH: "DockingService.requestGroupDataPublish",
 };
 // These channels are for interrupting events
 exports.EVENT_INTERRUPT_CHANNEL = "Finsemble.Event.Interrupt";
 exports.INTERRUPTIBLE_EVENTS = ["close-requested", "closed", "close-complete", "_container-close-handlers"];
-exports.REMOTE_FOCUS = "WindowService.remoteFocus";
 exports.WORKSPACE = {
     CLEAN_SHUTDOWN: "Finsemble.Workspace.cleanShutdown",
     UPDATE_PUBSUB: "Finsemble.WorkspaceService.update",
@@ -8111,6 +8338,11 @@ exports.WORKSPACE = {
         REMOVE_WINDOW: "WorkspaceService.removeWindow",
     }
 };
+exports.WINDOW_SERVICE_REQUESTS = {
+    REMOTE_FOCUS: "WindowService.remoteFocus",
+    SET_ALWAYS_ON_TOP: "WindowService-Request-setAlwaysOnTop",
+    IS_ALWAYS_ON_TOP: "WindowService-Request-isAlwaysOnTop",
+};
 exports.COMPONENT_STATE_STORAGE_TOPIC = "finsemble.componentStateStorage";
 exports.HEARTBEAT_TIMEOUT_CHANNEL = "Finsemble.WindowService.HeartbeatTimeout";
 exports.LAUNCHER_SERVICE = {
@@ -8127,7 +8359,7 @@ exports.MOVE_REASON = {
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -8236,7 +8468,7 @@ var ConfigUtil = function () {
 			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getRawManifest", application, level);
 
 			application.getManifest(function (manifest) {
-				// get raw openfin manifest
+				// get raw manifest
 				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getExpandedRawManifest: manifest retrieved. Pre-variable resolution", manifest);
 				self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables first time so can find config location
 				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getExpandedRawManifest:Complete. post-variable resolution", manifest);
@@ -8261,7 +8493,7 @@ var ConfigUtil = function () {
 		}
 
 		__WEBPACK_IMPORTED_MODULE_2__system__["System"].ready(function () {
-			// make sure openfin is ready
+			// make sure system is ready
 			var application = __WEBPACK_IMPORTED_MODULE_2__system__["System"].Application.getCurrent();
 			getRawManifest(callback, application, 1);
 		});
@@ -8275,7 +8507,7 @@ var ConfigUtil = function () {
 		}).then(function (response) {
 			return response.json();
 		}).catch(function (err) {
-			importCallback("failure importing: " + err, null);
+			importCallback(`Failure importing ${coreConfigFile}: ${err}`, null);
 		}).then(function (importObject) {
 			importCallback(null, importObject);
 		});
@@ -8287,10 +8519,10 @@ var ConfigUtil = function () {
 	this.getInitialManifest = function (callback) {
 
 		__WEBPACK_IMPORTED_MODULE_2__system__["System"].ready(function () {
-			// make sure openfin is ready
+			// make sure system is ready
 			var application = __WEBPACK_IMPORTED_MODULE_2__system__["System"].Application.getCurrent();
 			application.getManifest(function (manifest) {
-				// get raw openfin manifest
+				// get raw manifest
 				manifest.finsemble = manifest.finsemble || {}; // don't error on bad config
 				self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables first time so can find config config location
 				let CORE_CONFIG = manifest.finsemble.moduleRoot + "/configs/core/config.json"; // <<<--- here is the "hidden" core config file
@@ -8317,7 +8549,7 @@ var ConfigUtil = function () {
 						self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables with finsemble config
 						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getInitialManifest:getCoreConfig:Initial Manifest after variables Resolved", manifest);
 					} else {
-						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("ConfigUtil.getInitialManifest:getCoreConfig:failed importing into finsemble config", error);
+						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("ConfigUtil.getInitialManifest:getCoreConfig:failed importing into finsemble config.", error);
 					}
 					callback(manifest);
 				});
@@ -8572,7 +8804,7 @@ const ConfigUtilInstance = new ConfigUtil();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9025,7 +9257,7 @@ function unwrapListeners(arr) {
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -9053,457 +9285,6 @@ module.exports = function(module) {
 
 
 /***/ }),
-/* 14 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const events_1 = __webpack_require__(12);
-const routerClientInstance_1 = __webpack_require__(5);
-const STARTUP_TIMEOUT_DURATION = 10000;
-const constants_1 = __webpack_require__(10);
-/**
- * Small class to hold on to dependencies and callbacks. Also emits a timeout event that the startupManager is listening for. When it times out, the startupManager catches the event and generates a message that includes all of the offline clients and services. It then causes this class to emit an  err event that the baseService is listening for. This arrangement is set up for a couple of reasons.
- * 1. I can't use the logger in here because the logger uses the startupManager, and there'd be a circular dependency.
- * 2. FSBLDependencyManager is a singleton, and there can be multiple services living in a single window. I didn't want them all to log that they were offline if they weren't (e.g., if I'd put the emitter on the StartupManager instead of this class).
- */
-class StartupDependency extends events_1.EventEmitter {
-    constructor(params) {
-        super();
-        this.callback = params.callback;
-        this.dependencies = params.dependencies;
-        this.startupTimer = null;
-        this.setStartupTimer = this.setStartupTimer.bind(this);
-        this.clearStartupTimer = this.clearStartupTimer.bind(this);
-        this.setStartupTimer();
-    }
-    /**
-     * Removes the startup timer (because the dependency was resolved within the allotted time);
-     */
-    clearStartupTimer() {
-        clearTimeout(this.startupTimer);
-        delete this.startupTimer;
-    }
-    /**
-     * If the dependency hasn't resolved within STARTUP_TIMEOUT_DURATION, emit a timeout event that the StartupManager can catch.
-     */
-    setStartupTimer() {
-        let self = this;
-        //+ coerces the result to a number, making typescript happy.
-        this.startupTimer = +setTimeout(() => {
-            self.emit("timeout");
-        }, STARTUP_TIMEOUT_DURATION);
-    }
-}
-/**
- * Used to generate a unique ID for the list of dependencies.
- */
-function uuidv4() {
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-        var r = Math.random() * 16 | 0, v = c === "x" ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-}
-/**
- * @private
- */
-class StartupManager {
-    /**
-     * @private
-     */
-    constructor() {
-        this.servicesAreAllOnline = {};
-        this.clientsAreAllOnline = {};
-        this.onlineClients = [];
-        this.onlineServices = [];
-        this.dependencies = {};
-        this.AuthorizationCompleted = false;
-        this.startupTimers = {};
-        this.startupTimerFired = false;
-        this.bindCorrectContext();
-    }
-    /**
-     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required dependencies are ready.
-     *
-     * @param {FinsembleDependency} dependencies
-     * @param {any} callback
-     * @memberof StartupManager
-     */
-    waitFor(dependencies, callback) {
-        let id = uuidv4();
-        //Set defaults to an empty array if they aren't passed in.
-        if (!dependencies.services)
-            dependencies.services = [];
-        if (!dependencies.clients)
-            dependencies.clients = [];
-        //The dependency manager can pass in a name to the dependency. If it does, we'll use it. If not, we won't.
-        if (dependencies.clients.length) {
-            if (this.AuthorizationCompleted === false && dependencies.clients.includes("authenticationClient")) {
-                dependencies.clients.splice(dependencies.clients.indexOf("authenticationClient"), 1);
-            }
-            //Lowercase the first letter of the client.
-            dependencies.clients = dependencies.clients.map(clientName => {
-                return clientName.charAt(0).toLowerCase() + clientName.slice(1);
-            });
-        }
-        let dependency = new StartupDependency({ dependencies, callback });
-        //If the dependency times out, throw an error that the baseService can catch. It will then log out why it's not online.
-        dependency.on("timeout", () => {
-            this.onDependencyTimeout(dependency);
-        });
-        this.dependencies[id] = dependency;
-        this.checkDependencies();
-        return dependency;
-    }
-    /**
-     * This method generates a helpful error message giving possible reasons for why the service is offline. After the message is generated, it emits an event on the dependency that's passed in as a parameter. The BaseService is listening for this event, and logs the error message to the central logger.
-     * @param {Dependency} dependency
-     */
-    onDependencyTimeout(dependency) {
-        const NEW_LINE = "\n", TAB = "\u0009", BULLET = "\u2022", BULLET_POINT = NEW_LINE + TAB + BULLET, STORAGE_ADAPTER_ERROR = "The default storage adapter failed to fully initialize, or has a syntax error. Ensure that the default storage adapter is up, connected, and sending/receiving data properly.";
-        const HELPFUL_MESSAGES = {
-            preferencesService: [
-                `PreferencesService failed to start.${BULLET_POINT}Typically this is caused by a failure to retrieve data from your default storage adapter. ${STORAGE_ADAPTER_ERROR}`
-            ],
-            storageService: [
-                `StorageService failed to start. Here are some common reasons for failure:${BULLET_POINT}${STORAGE_ADAPTER_ERROR}${BULLET_POINT}The data coming back from your adapter is improperly formatted or otherwise corrupted. Try clearing your storage and restarting. If the problem persists, the issue may not be in your adapter.`
-            ],
-            routerService: [
-                "RouterService failed to start. This is a fatal error. Contact finsemble support."
-            ],
-            workspaceService: [
-                `WorkspaceService failed to start. Here are some common reasons for failure:${BULLET_POINT}${STORAGE_ADAPTER_ERROR}.${BULLET_POINT}Your active workspace is corrupted.`
-            ],
-            assimilationService: [
-                "AssimilationService failed to start. Check to see that the 'FinsembleAssimilation' is active in your taskManager. If it is, please contact finsemble support."
-            ]
-        };
-        let offlineClients = this.getOfflineClients();
-        let offlineServices = this.getOfflineServices();
-        let errorMessage = `APPLICATION LIFECYCLE:STARTUP:Dependency not online after ${STARTUP_TIMEOUT_DURATION / 1000} seconds.`;
-        if (offlineClients.length) {
-            errorMessage += ` Waiting for these clients: ${offlineClients.join(", ")}.`;
-        }
-        if (offlineServices.length) {
-            errorMessage += ` Waiting for these services: ${offlineServices.join(", ")}.`;
-        }
-        //For every service that's offline, check to see if we have any helpful messages for it. If so, iterate through the array and append to the error message.
-        offlineServices.forEach((service) => {
-            if (HELPFUL_MESSAGES[service]) {
-                HELPFUL_MESSAGES[service].forEach((msg) => {
-                    errorMessage += NEW_LINE + NEW_LINE + msg + NEW_LINE;
-                });
-                //puts a line between our helpful messages and the log stack.
-                errorMessage += NEW_LINE;
-            }
-        });
-        //The BaseService is listening for this event, and will log the errorMessage to the central logger.
-        dependency.emit("err", errorMessage);
-    }
-    /**
-     * This function loops through all of the registered dependencies and checks to see if the conditions have been met. If so, it invokes the callback and removes the reference to the dependency.
-     *
-     * @memberof StartupManager
-     */
-    checkDependencies() {
-        for (let id in this.dependencies) {
-            let dependency = this.dependencies[id];
-            let { dependencies, callback } = dependency;
-            if (dependencies.services.length && !this.servicesAreAllOnline[id]) {
-                this.servicesAreAllOnline[id] = this.checkServices(dependencies.services);
-                if (!this.servicesAreAllOnline[id]) {
-                    continue;
-                }
-            }
-            if (dependencies.clients.length && !this.clientsAreAllOnline[id]) {
-                this.clientsAreAllOnline[id] = this.checkClients(dependencies.clients);
-                if (!this.clientsAreAllOnline[id]) {
-                    continue;
-                }
-            }
-            delete this.dependencies[id];
-            dependency.clearStartupTimer();
-            if (callback) {
-                callback();
-            }
-        }
-    }
-    getOfflineClients() {
-        let offlineClients = [];
-        for (let id in this.dependencies) {
-            let { dependencies } = this.dependencies[id];
-            offlineClients = offlineClients.concat(dependencies.clients.filter((dep) => !this.onlineClients.includes(dep)));
-        }
-        //return deduped list.
-        return offlineClients.filter((client, i) => offlineClients.indexOf(client) === i);
-    }
-    getOfflineServices() {
-        let offlineServices = [];
-        for (let id in this.dependencies) {
-            let { dependencies } = this.dependencies[id];
-            offlineServices = offlineServices.concat(dependencies.services.filter((dep) => !this.onlineServices.includes(dep)));
-        }
-        return offlineServices.filter((client, i) => offlineServices.indexOf(client) === i);
-    }
-    /**
-     * Iterates through required service list, returns false if any required service is offline.
-     *
-     * @param {any} serviceList
-     * @memberof StartupManager
-     */
-    checkServices(serviceList) {
-        return serviceList.every(service => this.onlineServices.includes(service));
-    }
-    /**
-     * Iterates through required client list, returns false if any required client is offline.
-     *
-     * @param {any} clientList
-
-     * @memberof StartupManager
-     */
-    checkClients(clientList) {
-        return clientList.every(client => this.onlineClients.includes(client));
-    }
-    /**
-     * When a service comes online, we push it onto our array of online services, and run through all of the registered dependencies.
-     *
-     * @param {any} serviceName
-     * @memberof StartupManager
-     */
-    setServiceOnline(serviceName) {
-        this.onlineServices.push(serviceName);
-        this.checkDependencies();
-    }
-    /**
-     * Sets an array of services online. Only happens once at startup.
-     *
-     * @param {any} serviceList
-     * @memberof StartupManager
-     */
-    setServicesOnline(serviceList) {
-        this.onlineServices = this.onlineServices.concat(serviceList);
-        this.checkDependencies();
-    }
-    /**
-     *
-     *
-     * @param {any} clientName
-
-     * @memberof StartupManager
-     */
-    setClientOnline(clientName) {
-        //This check is done because multiple clients of the same type can be on a page.
-        if (this.onlineClients.includes(clientName)) {
-            return;
-        }
-        this.onlineClients.push(clientName);
-        this.checkDependencies();
-    }
-    /**
-     * Returns the array of online clients.
-     *
-
-     * @memberof StartupManager
-     */
-    getOnlineClients() {
-        return this.onlineClients;
-    }
-    /**
-     * Returns the array of online services.
-     *
-
-     * @memberof StartupManager
-     */
-    getOnlineServices() {
-        return this.onlineServices;
-    }
-    /**
-     * Method to make sure that `this` is correct when the callbacks are invoked.
-     *
-     * @memberof StartupManager
-     */
-    bindCorrectContext() {
-        this.checkDependencies = this.checkDependencies.bind(this);
-        this.checkServices = this.checkServices.bind(this);
-        this.checkClients = this.checkClients.bind(this);
-        this.getOfflineClients = this.getOfflineClients.bind(this);
-        this.getOfflineServices = this.getOfflineServices.bind(this);
-        this.onDependencyTimeout = this.onDependencyTimeout.bind(this);
-        this.waitFor = this.waitFor.bind(this);
-    }
-}
-/**
- * @private
- */
-class ShutdownManager {
-    /**
-     * @private
-     */
-    constructor() {
-        this.offlineServices = [];
-        this.dependencies = {};
-        this.checkDependencies = this.checkDependencies.bind(this);
-    }
-    /**
-     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required dependencies are ready.
-     *
-     * @param {FinsembleDependency} dependencies
-     * @param {any} callback
-     * @memberof StartupManager
-     */
-    waitFor(dependencies, callback) {
-        //Set defaults to an empty array if they aren't passed in.
-        if (!dependencies.services) {
-            dependencies.services = [];
-        }
-        let id = uuidv4();
-        this.dependencies[id] = { dependencies, callback };
-    }
-    /**
-     * This function loops through all of the registered dependencies and checks to see if the conditions have been met. If so, it invokes the callback and removes the reference to the dependency.
-     *
-     * @memberof ShutdownDependencies
-     */
-    checkDependencies() {
-        console.debug("checkDependencies", this.dependencies);
-        if (Object.keys(this.dependencies)) {
-            for (let id in this.dependencies) {
-                let { dependencies, callback } = this.dependencies[id];
-                console.debug("checkDependency", dependencies.services, this.offlineServices);
-                if (dependencies.services.length) {
-                    let servicesAreAllOffline = this.checkServices(dependencies.services);
-                    if (!servicesAreAllOffline) {
-                        continue;
-                    }
-                }
-                console.debug("checkDependencies callback");
-                delete this.dependencies[id];
-                if (callback) {
-                    callback();
-                }
-            }
-        }
-    }
-    /**
-     * Iterates through required service list, returns false if any required service is offline.
-     *
-     * @param {any} serviceList
-
-     * @memberof StartupManager
-     */
-    checkServices(serviceList) {
-        return serviceList.every(service => this.offlineServices.includes(service));
-    }
-    setServiceOffline(service) {
-        console.debug("setServiceOffline", service);
-        this.offlineServices.push(service);
-        this.checkDependencies();
-    }
-}
-/**
- * This is a class that handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
- * @shouldBePublished false
- * @private
- * @class FSBLDependencyManager
- */
-class FSBLDependencyManager extends events_1.EventEmitter {
-    constructor() {
-        super();
-        this.startup = new StartupManager();
-        this.shutdown = new ShutdownManager();
-        this.RouterClient = routerClientInstance_1.default;
-        this.AuthorizationCompleted = false;
-        this.bindCorrectContext();
-        this.onAuthorizationCompleted(this.startup.checkDependencies);
-        routerClientInstance_1.default.onReady(this.listenForServices);
-    }
-    /**
- * Method to make sure that `this` is correct when the callbacks are invoked.
- *
- * @memberof StartupManager
- */
-    bindCorrectContext() {
-        this.listenForServices = this.listenForServices.bind(this);
-        this.onAuthorizationCompleted = this.onAuthorizationCompleted.bind(this);
-    }
-    setClientOnline(client) {
-        this.startup.setClientOnline(client);
-    }
-    /*
-    * handler for when a service changes its state. If a service comes online or goes offline, dependencies are checked and callbacks invoked.
-    */
-    onServiceStateChange(data) {
-        let ServiceNames = Object.keys(data);
-        //Iterate through all services. If it was online but isn't anymore, set it offline. If it was offline but now is, set it online.
-        ServiceNames.forEach((serviceName) => {
-            let state = data[serviceName].state;
-            let wasOnline = this.startup.onlineServices.includes(serviceName);
-            let isOnline = state === "ready";
-            if (!wasOnline && isOnline) {
-                this.startup.setServiceOnline(serviceName);
-            }
-            if (wasOnline && !isOnline && state === "closed") {
-                this.shutdown.setServiceOffline(serviceName);
-            }
-        });
-    }
-    /**
-     * Listens on the router for services to come online. The first subscriber gets the activeServices as of object instantiation. The 2nd subscriber listens for services to come online after the object is created. We should consider make this all one subscriber, though I see the advantage of having this setup.
-     *
-     */
-    listenForServices() {
-        console.debug("dependency manager: listenForServices in " + this.name);
-        this.RouterClient.subscribe(constants_1.SERVICES_STATE_CHANNEL, (err, event) => {
-            this.onServiceStateChange(event.data);
-        });
-        // TODO: The pubsub responder doesn't seem to work here. IT works for the above when not closing.
-        this.RouterClient.addListener(constants_1.SERVICE_CLOSED_CHANNEL, (err, event) => {
-            let services = {};
-            services[event.data.name] = {
-                state: "closed"
-            };
-            this.onServiceStateChange(services);
-        });
-        this.RouterClient.subscribe(constants_1.APPLICATION_STATE_CHANNEL, (err, response) => {
-            switch (response.data.state) {
-                //authenticated will only be caught by components/services that are up before auth does its thing. Otherwise, a component/service coming up will have the 'ready' application state. In either case, we need to do the things below. But only once.
-                case "authenticated":
-                case "ready":
-                    //No need to send this message out twice.
-                    if (this.AuthorizationCompleted)
-                        break;
-                    console.debug("Authorization Completed");
-                    this.AuthorizationCompleted = true;
-                    this.startup.AuthorizationCompleted = true;
-                    this.emit("AuthorizationCompleted");
-                    break;
-                case "closing":
-                    this.shutdown.checkDependencies();
-                    break;
-            }
-        });
-    }
-    onAuthorizationCompleted(callback) {
-        if (this.AuthorizationCompleted) {
-            callback();
-        }
-        else {
-            this.addListener("AuthorizationCompleted", callback);
-        }
-    }
-}
-/**
- * This is a class that handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
- * @shouldBePublished false
- * @private
- * @class FSBLDependencyManager
- */
-exports.FSBLDependencyManagerSingleton = new FSBLDependencyManager();
-exports.default = exports.FSBLDependencyManagerSingleton;
-
-
-/***/ }),
 /* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -9515,12 +9296,13 @@ exports.default = exports.FSBLDependencyManagerSingleton;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const validate_1 = __webpack_require__(6); // Finsemble args validator
-const baseClient_1 = __webpack_require__(7);
+const baseClient_1 = __webpack_require__(10);
 const async_1 = __webpack_require__(9);
+const systemManagerClient_1 = __webpack_require__(7);
 const logger_1 = __webpack_require__(0);
 /**
  * @introduction
- * <h2>Config Client</h2>
+ * <h2>Config Client (Finsemble Connect)</h2>
  *
  * This client provides run-time access to Finsemble's configuration.
  * The Config Client functions similar to a global store created with the Distributed Store Client and offers many of the same methods.
@@ -9788,13 +9570,14 @@ class ConfigClient extends baseClient_1._BaseClient {
     }
     ;
     /**
+     * Add an array of listeners as objects or strings. If using strings, you must provide a function callback as the second parameter.
      *
-    * Add an array of listeners as objects or strings. If using strings, you must provide a function callback as the second parameter.
-    * @param {function} fn The function to be called when the observed piece of config is modified.
-    * @param {function} cb Callback to be invoked after the listeners are added.
-    * @example
-    * var myFunction = function(err,data){}
-  * FSBL.Clients.ConfigClient.addListeners(
+     * @param {listenerParam | listenerParam[] | fieldOnlyParam | string[]} params
+     * @param {function} fn The function to be called when the observed piece of config is modified.
+     * @param {function} cb Callback to be invoked after the listeners are added.
+     * @example
+     * var myFunction = function(err,data){}
+    * FSBL.Clients.ConfigClient.addListeners(
     * 	[
     * 		{ field: "field1", listener: myFunction },
     * 		{ field: "field2", listener: myFunction }
@@ -9824,7 +9607,7 @@ class ConfigClient extends baseClient_1._BaseClient {
             }
             else if (item.field) {
                 field = item.field;
-                ls = params[i].listener;
+                ls = item.listener;
             }
             var combined = "configService" + (field ? "." + field : "");
             if (!ls) {
@@ -10080,19 +9863,18 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
      * Retrieves all of the preferences set for the application.
-     * @param {Object} params Parameters to pass to getPreferences. Optional. Defaults to null and currently ignored.
      * @param {StandardCallback} callback Callback to be invoked when preferences have been retrieved from the service.
      * @example
      * FSBL.Clients.ConfigClient.getPreferences((err, preferences)=> {
      * 		//use preferences.
      * });
      */
-    getPreferences(params, callback) {
-        if (typeof params === "function") {
-            callback = params;
-            params = null;
-        }
-        this.routerClient.query("PreferencesService.getPreferences", params, function (queryErr, queryResponse) {
+    async getPreferences(callback) {
+        logger_1.default.system.debug("ConfigClient.getPreferences", callback);
+        // need to check since preferences doesn't come up until after authentication, so not always ready
+        await systemManagerClient_1.default.waitForStartup("preferencesService");
+        this.routerClient.query("PreferencesService.getPreferences", null, function (queryErr, queryResponse) {
+            logger_1.default.system.debug("ConfigClient.getPrefences response", queryResponse);
             if (callback) {
                 callback(queryErr, queryResponse ? queryResponse.data : null);
             }
@@ -10199,6 +9981,407 @@ exports.LocalLogger = LocalLogger;
 
 /***/ }),
 /* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const events_1 = __webpack_require__(13);
+const routerClientInstance_1 = __webpack_require__(5);
+const STARTUP_TIMEOUT_DURATION = 10000;
+const constants_1 = __webpack_require__(11);
+const systemManagerClient_1 = __webpack_require__(7);
+const logger_1 = __webpack_require__(0);
+/**
+ * Small class to hold on to dependencies and callbacks. Also emits a timeout event that the startupManager is listening for. When it times out, the startupManager catches the event and generates a message that includes all of the offline clients and services. It then causes this class to emit an  err event that the baseService is listening for. This arrangement is set up for a couple of reasons.
+ * 1. I can't use the logger in here because the logger uses the startupManager, and there'd be a circular dependency.
+ * 2. FSBLDependencyManager is a singleton, and there can be multiple services living in a single window. I didn't want them all to log that they were offline if they weren't (e.g., if I'd put the emitter on the StartupManager instead of this class).
+ */
+class StartupDependency extends events_1.EventEmitter {
+    constructor(params) {
+        super();
+        this.callback = params.callback;
+        this.dependencies = params.dependencies;
+        this.startupTimer = null;
+        this.setStartupTimer = this.setStartupTimer.bind(this);
+        this.clearStartupTimer = this.clearStartupTimer.bind(this);
+        this.setStartupTimer();
+    }
+    /**
+     * Removes the startup timer (because the dependency was resolved within the allotted time);
+     */
+    clearStartupTimer() {
+        clearTimeout(this.startupTimer);
+        delete this.startupTimer;
+    }
+    /**
+     * If the dependency hasn't resolved within STARTUP_TIMEOUT_DURATION, emit a timeout event that the StartupManager can catch.
+     */
+    setStartupTimer() {
+        let self = this;
+        //+ coerces the result to a number, making typescript happy.
+        this.startupTimer = +setTimeout(() => {
+            self.emit("timeout");
+        }, STARTUP_TIMEOUT_DURATION);
+    }
+}
+/**
+ * Used to generate a unique ID for the list of dependencies.
+ */
+function uuidv4() {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0, v = c === "x" ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+/**
+ * @private
+ */
+class StartupManager {
+    /**
+     * @private
+     */
+    constructor() {
+        this.servicesAreAllOnline = {};
+        this.clientsAreAllOnline = {};
+        this.onlineClients = [];
+        this.dependencies = {};
+        this.startupTimers = {};
+        this.startupTimerFired = false;
+        this.bindCorrectContext();
+    }
+    /**
+     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required dependencies are ready.
+     *
+     * @param {FinsembleDependency} dependencies
+     * @param {any} callback
+     * @memberof StartupManager
+     */
+    waitFor(dependencies, callback) {
+        let id = uuidv4();
+        //Set defaults to an empty array if they aren't passed in.
+        if (!dependencies.clients)
+            dependencies.clients = [];
+        //The dependency manager can pass in a name to the dependency. If it does, we'll use it. If not, we won't.
+        if (dependencies.clients.length) {
+            //Lowercase the first letter of the client.
+            dependencies.clients = dependencies.clients.map(clientName => {
+                return clientName.charAt(0).toLowerCase() + clientName.slice(1);
+            });
+        }
+        let dependency = new StartupDependency({ dependencies, callback });
+        //If the dependency times out, throw an error that the baseService can catch. It will then log out why it's not online.
+        dependency.on("timeout", () => {
+            this.onDependencyTimeout(dependency);
+        });
+        this.dependencies[id] = dependency;
+        this.checkDependencies();
+        return dependency;
+    }
+    /**
+     * This method generates a helpful error message giving possible reasons for why the service is offline. After the message is generated, it emits an event on the dependency that's passed in as a parameter. The BaseService is listening for this event, and logs the error message to the central logger.
+     * @param {Dependency} dependency
+     */
+    onDependencyTimeout(dependency) {
+        const NEW_LINE = "\n", TAB = "\u0009", BULLET = "\u2022", BULLET_POINT = NEW_LINE + TAB + BULLET, STORAGE_ADAPTER_ERROR = "The default storage adapter failed to fully initialize, or has a syntax error. Ensure that the default storage adapter is up, connected, and sending/receiving data properly.";
+        let offlineClients = this.getOfflineClients();
+        let errorMessage = `APPLICATION LIFECYCLE:STARTUP:Dependency not online after ${STARTUP_TIMEOUT_DURATION / 1000} seconds.`;
+        if (offlineClients.length) {
+            errorMessage += ` Waiting for these clients: ${offlineClients.join(", ")}.`;
+        }
+        //The BaseService is listening for this event, and will log the errorMessage to the central logger.
+        dependency.emit("err", errorMessage);
+    }
+    /**
+     * This function loops through all of the registered dependencies and checks to see if the conditions have been met. If so, it invokes the callback and removes the reference to the dependency.
+     *
+     * @memberof StartupManager
+     */
+    checkDependencies() {
+        for (let id in this.dependencies) {
+            let dependency = this.dependencies[id];
+            let { dependencies, callback } = dependency;
+            if (dependencies.clients.length && !this.clientsAreAllOnline[id]) {
+                this.clientsAreAllOnline[id] = this.checkClients(dependencies.clients);
+                if (!this.clientsAreAllOnline[id]) {
+                    continue;
+                }
+            }
+            delete this.dependencies[id];
+            dependency.clearStartupTimer();
+            if (callback) {
+                callback();
+            }
+        }
+    }
+    getOfflineClients() {
+        let offlineClients = [];
+        for (let id in this.dependencies) {
+            let { dependencies } = this.dependencies[id];
+            offlineClients = offlineClients.concat(dependencies.clients.filter((dep) => !this.onlineClients.includes(dep)));
+        }
+        //return deduped list.
+        return offlineClients.filter((client, i) => offlineClients.indexOf(client) === i);
+    }
+    /**
+     * Iterates through required client list, returns false if any required client is offline.
+     *
+     * @param {any} clientList
+
+     * @memberof StartupManager
+     */
+    checkClients(clientList) {
+        return clientList.every(client => this.onlineClients.includes(client));
+    }
+    /**
+     *
+     *
+     * @param {any} clientName
+
+     * @memberof StartupManager
+     */
+    setClientOnline(clientName) {
+        //This check is done because multiple clients of the same type can be on a page.
+        if (this.onlineClients.includes(clientName)) {
+            return;
+        }
+        this.onlineClients.push(clientName);
+        this.checkDependencies();
+        // Note From Mike: Must change or workaround how some client usage triggers this code even though the client's service is NOT ready.
+        // This problem happens because some services initialize their clients when the client's service hasn't been created yet, but then don't use the client until later.
+        // So although the general code is correct here, the overall result is not (specifically the queries will timeout causing delays, error logging, and potential side effects).
+        // Therefore disabling this handshake code for now -- BUT KEEP CODE COMMENTED-OUT CODE UNTIL THIS IS RESOLVED. Just to be clear, nothing breaks without this code, but this
+        // code is what generates an error when improperly using a client...so it provides a needed check.
+        // let serviceName = CLIENT_SERVER_MAPPING(clientName);
+        // if (true /*disabling*/ && serviceName) {
+        // 	console.debug("SERVICE_QUERY_READY_CHANNEL querying", clientName, SERVICE_QUERY_READY_CHANNEL(serviceName));
+        // 	// before going online make sure this client's service is ready -- it should be until there is a startup problem
+        // 	RouterClient.query(SERVICE_QUERY_READY_CHANNEL(serviceName), {}, { timeout: 500 }, (err) => {
+        // 		if (err) {
+        // 			Logger.system.error(`DependencyManager: server ${serviceName} is not ready for client ${clientName}. ${err}. Make sure dependencies client dependencies are correct.`)
+        // 		} else {
+        // 			Logger.system.debug(`DependencyManager: server ${serviceName} is ready for client ${clientName} `)
+        // 		}
+        // 		this.onlineClients.push(clientName);
+        // 		this.checkDependencies();
+        // 	});
+        // } else {
+        // 	this.onlineClients.push(clientName);
+        // 	this.checkDependencies();
+        // }
+    }
+    /**
+     * Returns the array of online clients.
+     *
+
+     * @memberof StartupManager
+     */
+    getOnlineClients() {
+        return this.onlineClients;
+    }
+    /**
+     * Method to make sure that `this` is correct when the callbacks are invoked.
+     *
+     * @memberof StartupManager
+     */
+    bindCorrectContext() {
+        this.checkDependencies = this.checkDependencies.bind(this);
+        this.checkClients = this.checkClients.bind(this);
+        this.getOfflineClients = this.getOfflineClients.bind(this);
+        this.onDependencyTimeout = this.onDependencyTimeout.bind(this);
+        this.waitFor = this.waitFor.bind(this);
+    }
+}
+/**
+ * @private
+ */
+class ShutdownManager {
+    /**
+     * @private
+     */
+    constructor() {
+        this.offlineServices = [];
+        this.dependencies = {};
+        this.checkDependencies = this.checkDependencies.bind(this);
+    }
+    /**
+     * This function and `checkDependencies` are the most important parts of this class. This function accepts a FinsembleDependency object and a callback to be invoked when all required dependencies are ready.
+     *
+     * @param {FinsembleDependency} dependencies
+     * @param {any} callback
+     * @memberof StartupManager
+     */
+    waitFor(dependencies, callback) {
+        logger_1.default.system.debug(`DependencyManager:waitFor`, dependencies);
+        //Set defaults to an empty array if they aren't passed in.
+        if (!dependencies.services) {
+            dependencies.services = [];
+        }
+        let id = uuidv4();
+        this.dependencies[id] = { dependencies, callback };
+    }
+    /**
+     * This function loops through all of the registered dependencies and checks to see if the conditions have been met. If so, it invokes the callback and removes the reference to the dependency.
+     *
+     * @memberof ShutdownDependencies
+     */
+    checkDependencies() {
+        console.debug("checkDependencies", this.dependencies);
+        if (Object.keys(this.dependencies)) {
+            for (let id in this.dependencies) {
+                let { dependencies, callback } = this.dependencies[id];
+                logger_1.default.system.debug(`DependencyManager:checkDependency`, dependencies.services, this.offlineServices);
+                if (dependencies.services.length) {
+                    let servicesAreAllOffline = this.checkServices(dependencies.services);
+                    if (!servicesAreAllOffline) {
+                        continue;
+                    }
+                }
+                console.debug("checkDependencies callback");
+                delete this.dependencies[id];
+                if (callback) {
+                    callback();
+                }
+            }
+        }
+    }
+    /**
+     * Iterates through required service list, returns false if any required service is offline.
+     *
+     * @param {any} serviceList
+
+     * @memberof ShutdownManager
+     */
+    checkServices(serviceList) {
+        return serviceList.every(service => this.offlineServices.includes(service));
+    }
+    setServiceOffline(service) {
+        logger_1.default.system.debug("setServiceOffline", service);
+        console.debug("setServiceOffline", service);
+        this.offlineServices.push(service);
+        this.checkDependencies();
+    }
+}
+/**
+ * This class handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready.
+ *
+ * The constructor is exported for the system mananger's shutDownManager so that class isn't constructed until right time in the starup process.
+ * Otherwise, this class is used as a singleton thoughout the rest of the system.
+ *
+ * @shouldBePublished false
+ * @private
+ * @class FSBLDependencyManager
+ */
+class FSBLDependencyManager extends events_1.EventEmitter {
+    constructor() {
+        super();
+        this.startup = new StartupManager();
+        this.shutdown = new ShutdownManager();
+        this.RouterClient = routerClientInstance_1.default;
+        this.AuthorizationCompleted = false;
+        this.bindCorrectContext();
+        this.onAuthorizationCompleted(this.startup.checkDependencies);
+        routerClientInstance_1.default.onReady(this.listenForServices);
+    }
+    /**
+ * Method to make sure that `this` is correct when the callbacks are invoked.
+ *
+ * @memberof StartupManager
+ */
+    bindCorrectContext() {
+        this.listenForServices = this.listenForServices.bind(this);
+        this.onAuthorizationCompleted = this.onAuthorizationCompleted.bind(this);
+    }
+    setClientOnline(client) {
+        this.startup.setClientOnline(client);
+    }
+    /*
+    * handler for when a service changes its state. If a service comes online or goes offline, dependencies are checked and callbacks invoked.
+    */
+    onServiceStateChange(data) {
+        let ServiceNames = Object.keys(data);
+        //Iterate through all services. If it was online but isn't anymore, set it offline. If it was offline but now is, set it online.
+        ServiceNames.forEach((serviceName) => {
+            let state = data[serviceName].state;
+            if (state === "closed") {
+                this.shutdown.setServiceOffline(serviceName);
+            }
+        });
+    }
+    /**
+     * Listens on the router for services to come online. The first subscriber gets the activeServices as of object instantiation. The 2nd subscriber listens for services to come online after the object is created. We should consider make this all one subscriber, though I see the advantage of having this setup.
+     *
+     */
+    listenForServices() {
+        logger_1.default.system.debug(`DependencyManager:listenForServices before wait`);
+        var listenForServicesCallback;
+        // wait until the essential parts of the microkernel stage is done so pubsub responders are available
+        systemManagerClient_1.default.waitForBootStage("kernel", "stageEntered", listenForServicesCallback = () => {
+            logger_1.default.system.debug(`DependencyManager:listenForServices after wait`);
+            this.RouterClient.subscribe(constants_1.SERVICES_STATE_CHANNEL, (err, event) => {
+                logger_1.default.system.debug(`DependencyManager:listenForServices SERVICES_STATE_CHANNEL`, event.data);
+                this.onServiceStateChange(event.data);
+            });
+            // TODO: The pubsub responder doesnt seem to work here. IT works for the above when not closing.
+            this.RouterClient.addListener(constants_1.SERVICE_CLOSED_CHANNEL, (err, event) => {
+                logger_1.default.system.debug(`DependencyManager:listenForServices SERVICE_CLOSED_CHANNEL`, event.data);
+                let services = {};
+                services[event.data.name] = {
+                    state: "closed"
+                };
+                this.onServiceStateChange(services);
+            });
+            this.RouterClient.subscribe(constants_1.APPLICATION_STATE_CHANNEL, (err, response) => {
+                switch (response.data.state) {
+                    //authenticated will only be caught by components/services that are up before auth does its thing. Otherwise, a component/service coming up will have the 'ready' application state. In either case, we need to do the things below. But only once.
+                    case "authenticated":
+                    case "ready":
+                        break;
+                    case "closing":
+                        this.shutdown.checkDependencies();
+                        break;
+                }
+            });
+        });
+    }
+    onAuthorizationCompleted(callback) {
+        if (this.AuthorizationCompleted) {
+            callback();
+        }
+        else {
+            this.addListener("AuthorizationCompleted", callback);
+        }
+    }
+}
+exports.FSBLDependencyManager = FSBLDependencyManager;
+/**
+ * This class handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
+ * @shouldBePublished false
+ * @private
+ * @class FSBLDependencyManager
+ */
+exports.FSBLDependencyManagerSingleton = new FSBLDependencyManager();
+exports.default = exports.FSBLDependencyManagerSingleton;
+
+
+/***/ }),
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ALL_BOOT_STAGES = ["microkernel", "kernel", "authentication", "preuser", "earlyuser", "user"];
+exports.CRITICAL_BOOT_STAGES = ["microkernel", "kernel", "authentication"];
+exports.SYSLOG_CHANNEL = "systemManager.systemlog";
+exports.SHOW_SYSLOG_CHANNEL = "systemManager.showSystemlog";
+exports.STATUS_CHANNEL_BASE = "systemManager.boot.status";
+exports.STAGE_CHANNEL = "systemManager.boot.stage";
+exports.CHECKPOINT_CHANNEL_BASE = "systemManager.checkpoint";
+
+
+/***/ }),
+/* 19 */
 /***/ (function(module, exports) {
 
 /**
@@ -10227,7 +10410,7 @@ module.exports = bytesToUuid;
 
 
 /***/ }),
-/* 18 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {// Unique ID creation requires a high quality random # generator.  In the
@@ -10267,14 +10450,14 @@ module.exports = rng;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
-/* 19 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Unique ID creation requires a high quality random # generator.  We feature
 // detect to determine the best RNG source, normalizing to a function that
 // returns 128-bits of randomness, since that's what's usually required
-var rng = __webpack_require__(18);
-var bytesToUuid = __webpack_require__(17);
+var rng = __webpack_require__(20);
+var bytesToUuid = __webpack_require__(19);
 
 // **`v1()` - Generate time-based UUID**
 //
@@ -10376,20 +10559,24 @@ module.exports = v1;
 
 
 /***/ }),
-/* 20 */
+/* 22 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__configUtil__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__configUtil__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__common_system__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__systemManagerClient__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__systemManagerClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__systemManagerClient__);
 /*!
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
+
+
 
 
 
@@ -10401,7 +10588,7 @@ var ConfigClient = null;
 
 /**
  * @introduction
- * <h2>Notification Client</h2>
+ * <h2>Notification Client (Finsemble Workspaces)</h2>
  *
  * Finsemble makes use of pop up (toast) notifications for communicating information to the end user in a gentler way than modal dialogs.
  * Use the Notification API to route messages so that your components can create these notifications.
@@ -10443,7 +10630,7 @@ var UserNotification = function () {
 	/**
   * Conditionally alerts the end user using a desktop notification.
   *
-  * @param {string} topic Specifies a category for the notification. Topic is currently unused, but in the future it will be used to filter notifications (e.g., applying regEx's defined in config to determine which notifications are displayed). Any topic string can be specified; however "system" is the recommended topic for system notifications applicable both to end uses and to developers. "dev" is the recommended topic for notifications applicable only during development (e.g., a notification that <i>config.json</i> has an illegal value).
+  * @param {string} topic Specifies a category for the notification. This parameter is reserved for future use; it is designed to filter notifications (e.g., applying regEx's defined in config to determine which notifications are displayed). Any topic string can be specified; however "system" is the recommended topic for system notifications applicable both to end uses and to developers. "dev" is the recommended topic for notifications applicable only during development (e.g., a notification that <i>config.json</i> has an illegal value).
   * @param {string} frequency Either "ALWAYS", "ONCE-SINCE-STARTUP", or "MAX-COUNT" to determine if alert should be displayed. Note, the frequencies are based on the number of notifications emitted from a window (as opposed to system wide).
   * @param {string} identifier Uniquely identifies this specific notification message. Used when "frequency" is set to "ONCE-SINCE-STARTUP" or "MAX-COUNT".
   * @param {any} message Message to display in the notification. Typically a string. Finsemble's built in templating accepts and object. See <i>../src-built-in/components/notification/notification.html<i>.
@@ -10513,6 +10700,7 @@ var UserNotification = function () {
 				message: message,
 				timeout: duration
 			};
+			__WEBPACK_IMPORTED_MODULE_3__systemManagerClient___default.a.systemLog({ notification: true }, "Notification: " + message);
 			new __WEBPACK_IMPORTED_MODULE_2__common_system__["System"].Notification(notifyObject);
 		}
 	};
@@ -10524,323 +10712,16 @@ var UserNotification = function () {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 21 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-/*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-Object.defineProperty(exports, "__esModule", { value: true });
-const validate_1 = __webpack_require__(6);
-const logger_1 = __webpack_require__(0);
-const baseClient_1 = __webpack_require__(7);
-const p_limit_1 = __webpack_require__(37);
-const disentangledUtils_1 = __webpack_require__(22);
-const limit = p_limit_1.default(1);
-/**
- *
- * @introduction
- * <h2>Storage Client</h2>
- *
- * The Storage Client handles saving and retrieving data for your smart desktop.
- *
- *
- *See the <a href=tutorial-storingData.html>Storing Data tutorial</a> for an overview of using the Storage Client.
- * @hideconstructor
- *  @todo add clear method
- * @constructor
- */
-class StorageClient extends baseClient_1._BaseClient {
-    constructor() {
-        super(...arguments);
-        //Did this because "delete" is a reserved keyword; for autocomplete the client is exported as a namespace with a bunch of functions and wouldn't work with a function called delete.
-        this.delete = this.remove;
-    }
-    /**
-     * Define the user name for storage (i.e., each user has unique storage).
-     * @param {Object} params
-     * @param {String} params.user The user name defined for storage.
-     * @param {StandardCallback} cb Callback to be called on success.
-     *
-     * @example
-     * FSBL.Clients.StorageClient.setUser({ user: "JohnDeere"});
-     */
-    setUser(params, cb) {
-        validate_1.default.args(params.user, "string", cb, "function=");
-        this.routerClient.query("Storage.setUser", { user: params.user }, function (err, response) {
-            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
-            logMethod("APPLICATION LIFECYCLE:StorageClient.setUser", params, err, response);
-            if (cb) {
-                cb(err, response.data);
-            }
-        });
-    }
-    ;
-    /**
-     * Specifies the data store. For normal operation this function doesn't have to be invoked -- the default data store is set in configuration.
-     * @param {Object} params
-     * @param {String} params.topic If specified then data store is set only for topic.
-     * @param {string} params.dataStore Identifies the data store (e.g. "localStorage", "redis").
-     * @param {function} cb Callback to be called on success.
-     *
-     * @example
-     * FSBL.Clients.StorageClient.setStore({topic:"finsemble", dataStore:"redis"})
-     */
-    setStore(params, cb) {
-        validate_1.default.args(params.topic, "string", params.dataStore, "string=", cb, "function=");
-        logger_1.default.system.log("APPLICATION LIFECYCLE:StorageClient.setStore", params, cb);
-        this.routerClient.query("Storage.setStore", params, (err, response) => {
-            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
-            logMethod("Storage.setStore", err, response);
-            if (cb) {
-                cb(err, response.data);
-            }
-        });
-    }
-    ;
-    /**
-     * Save a key value pair into storage.
-     * @param {Object} params
-     * @param {String} params.topic Storage topic for key being stored.
-     * @param {String} params.key The key to be stored.
-     * @param {any} params.value The value to be stored.
-     * @param {function} cb Callback to be called on success.
-     *
-     * @example
-     * FSBL.Clients.StorageClient.save({topic:"finsemble", key:"testKey", value:"testValue"})
-     */
-    save(params, cb) {
-        if (typeof params.key !== "string" || typeof params.topic !== "string") {
-            throw new Error("Values for key and topic must be strings.");
-        }
-        const promiseResolver = (resolve, reject) => {
-            validate_1.default.args(params.topic, "string", params.key, "string", params.value, "any", cb, "function=");
-            this.routerClient.query("Storage.save", params, (err, response) => {
-                const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
-                logMethod("Storage.save", err, response);
-                if (cb) {
-                    cb(err, response.data);
-                }
-                if (err) {
-                    reject({ err: err, data: null });
-                }
-                else {
-                    resolve({ err: err, data: response.data });
-                }
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    ;
-    /**
-     *
-     * @param params
-     * @private
-     */
-    save1(params) {
-        return limit(() => this.save(params));
-    }
-    /**
-     * Get a value from storage.
-     * @param {Object} params
-     * @param {String} params.key The key to get from storage.
-     * @param {String} params.topic The topic that the data is saved under.
-     * @param {function} cb Callback to be called on success.
-     *
-     * @example
-     * FSBL.Clients.StorageClient.get({ topic:"finsemble", key:"testKey" }, function(err, data) {
-     *	var myData = data;
-     * });
-     */
-    get(params, cb) {
-        if (typeof params.key !== "string" || typeof params.topic !== "string") {
-            throw new Error("Values for key and topic must be strings.");
-        }
-        const promiseResolver = (resolve, reject) => {
-            validate_1.default.args(params.topic, "string", params.key, "string", cb, "function=");
-            this.routerClient.query("Storage.get", params, (err, response) => {
-                if (err) {
-                    logger_1.default.system.error("Storage.get", err, response);
-                    cb(err, response ? response.data : null);
-                    return reject(err, response ? response.data : null);
-                }
-                logger_1.default.system.info("Storage.get", err, response);
-                if (cb)
-                    cb(err, response.data);
-                resolve(response.data);
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    ;
-    /**
-     *
-     * @param params
-     * @param cb
-     * @private
-     */
-    get1(params, cb) {
-        return limit(() => this.get(params));
-    }
-    /**
-     * Asynchronously updates provided key in storage by first retrieving the key
-     * then running a provided function on the result and re-saving its value.
-     * There’s no guarantees of consistency or atomicity
-     *
-     * @param params {any} Update storage params
-     * @param params.topic {string} The storage topic
-     * @param params.key {string} The storage key
-     * @param params.updateFn {Function} Function to run to determine the value to store
-     * @private
-     */
-    async updateStorage(params) {
-        const { topic, key, updateFn } = params;
-        const result = await this.get({ topic, key });
-        return this.save({ topic, key, value: updateFn(result) });
-    }
-    /**
-     *
-     * @param params
-     * @private
-     */
-    updateStorage1(params) {
-        return limit(() => this.updateStorage(params));
-    }
-    /**
-     * Get all keys for the topic.
-     * @param {Object} params
-     * @param {String} params.topic Topic for the keys to return.
-     * @param {String=} params.keyPrefix Filter all keys that don't start with this prefix.
-     * @param {function} cb Callback to be called on success.
-     *
-     * @example
-     * FSBL.Clients.StorageClient.keys({topic:"finsemble", keyPrefix:"test"}, function(err, data){
-     *	var myKeys = data;
-     * });
-     */
-    keys(params, cb) {
-        validate_1.default.args(params.topic, "string", cb, "function=");
-        logger_1.default.system.debug("StorageClient.keys", params, cb);
-        this.routerClient.query("Storage.keys", params, function (err, response) {
-            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
-            logMethod("Storage.keys", err, response);
-            if (cb) {
-                cb(err, response.data);
-            }
-        });
-    }
-    ;
-    /**
-     *
-     * @param params
-     * @private
-     */
-    keys1(params) {
-        return limit(() => disentangledUtils_1.promisify(this.keys.bind(this))(params));
-    }
-    /**
-     * Get a multiple values from storage based on regex.(coming soon)
-     * @param {Object} params
-     * @param {function} cb Callback to be called on success.
-     * @private
-     * @todo make this work.
-     * @example
-     * StorageClient.get({key:"testKey"});
-     */
-    getMultiple(params, cb) {
-        logger_1.default.system.info("StorageClient.getMultiple", params, cb);
-        this.routerClient.query("Storage.getMultiple", params, function (err, response) {
-            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
-            logMethod("StorageClient.getMultiple:", params, response);
-            if (cb) {
-                cb(err, response);
-            }
-        });
-    }
-    ;
-    /**
-     * Delete a value from storage.
-     * @param {Object} params
-     * @param {String} params.key The key to get from storage.
-     * @param {String} params.topic The topic that the data is saved under.
-     * @example
-     * FSBL.Clients.StorageClient.remove({ key:"testKey" })
-     */
-    remove(params, cb) {
-        const promiseResolver = (resolve, reject) => {
-            validate_1.default.args(params.topic, "string", params.key, "string", cb, "function=");
-            this.routerClient.query("Storage.delete", params, function (err, response) {
-                const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
-                logMethod("StorageClient.delete", err, response);
-                if (cb) {
-                    cb(err, response.data);
-                }
-                if (err) {
-                    reject({ err: err, data: null });
-                }
-                else {
-                    resolve({ err: err, data: response.data });
-                }
-            });
-        };
-        return new Promise(promiseResolver);
-    }
-    ;
-    /**
-     *
-     * @param params
-     * @private
-     */
-    remove1(params) {
-        return limit(() => this.remove(params));
-    }
-    /**
-     * Clears a storage adapter of all data.
-     * @param {function} cb The callback to be invoked after the method completes successfully.
-     *
-     */
-    clearCache(cb) {
-        logger_1.default.system.log("StorageClient.clearCache", cb);
-        this.routerClient.query("Storage.clearCache", null, function (err, response) {
-            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
-            logMethod("StorageClient.clearCache", err, response);
-            if (cb) {
-                cb(err, response.data);
-            }
-        });
-    }
-    ;
-}
-exports.StorageClient = StorageClient;
-;
-var storageClient = new StorageClient({
-    startupDependencies: {
-        services: ["storageService"]
-    },
-    onReady: function (cb) {
-        if (cb) {
-            cb();
-        }
-    },
-    name: "storageClient"
-});
-exports.default = storageClient;
-
-
-/***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const uuid_1 = __webpack_require__(40);
-const get = __webpack_require__(24);
-const pick = __webpack_require__(38);
-const lodash_1 = __webpack_require__(34);
+const uuid_1 = __webpack_require__(44);
+const get = __webpack_require__(33);
+const pick = __webpack_require__(42);
+const lodash_1 = __webpack_require__(38);
 //Class without deep openfin/system dependencies.
 function guuid() {
     return uuid_1.v1(); // return global uuid
@@ -11122,7 +11003,7 @@ exports.checkIfBoundsAreEqual = checkIfBoundsAreEqual;
 
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -11568,945 +11449,320 @@ module.exports = throttle;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(global) {/**
- * lodash (Custom Build) <https://lodash.com/>
- * Build: `lodash modularize exports="npm" -o ./`
- * Copyright jQuery Foundation and other contributors <https://jquery.org/>
- * Released under MIT license <https://lodash.com/license>
- * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
- * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
- */
+"use strict";
 
-/** Used as the `TypeError` message for "Functions" methods. */
-var FUNC_ERROR_TEXT = 'Expected a function';
-
-/** Used to stand-in for `undefined` hash values. */
-var HASH_UNDEFINED = '__lodash_hash_undefined__';
-
-/** Used as references for various `Number` constants. */
-var INFINITY = 1 / 0;
-
-/** `Object#toString` result references. */
-var funcTag = '[object Function]',
-    genTag = '[object GeneratorFunction]',
-    symbolTag = '[object Symbol]';
-
-/** Used to match property names within property paths. */
-var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\\]|\\.)*?\1)\]/,
-    reIsPlainProp = /^\w*$/,
-    reLeadingDot = /^\./,
-    rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|$))/g;
-
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+Object.defineProperty(exports, "__esModule", { value: true });
+const validate_1 = __webpack_require__(6);
+const logger_1 = __webpack_require__(0);
+const baseClient_1 = __webpack_require__(10);
+const p_limit_1 = __webpack_require__(41);
+const disentangledUtils_1 = __webpack_require__(23);
+const limit = p_limit_1.default(1);
 /**
- * Used to match `RegExp`
- * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
- */
-var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
-
-/** Used to match backslashes in property paths. */
-var reEscapeChar = /\\(\\)?/g;
-
-/** Used to detect host constructors (Safari). */
-var reIsHostCtor = /^\[object .+?Constructor\]$/;
-
-/** Detect free variable `global` from Node.js. */
-var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
-
-/** Detect free variable `self`. */
-var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
-
-/** Used as a reference to the global object. */
-var root = freeGlobal || freeSelf || Function('return this')();
-
-/**
- * Gets the value at `key` of `object`.
  *
- * @private
- * @param {Object} [object] The object to query.
- * @param {string} key The key of the property to get.
- * @returns {*} Returns the property value.
- */
-function getValue(object, key) {
-  return object == null ? undefined : object[key];
-}
-
-/**
- * Checks if `value` is a host object in IE < 9.
+ * @introduction
+ * <h2>Storage Client (Finsemble Connect)</h2>
  *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
- */
-function isHostObject(value) {
-  // Many host objects are `Object` objects that can coerce to strings
-  // despite having improperly defined `toString` methods.
-  var result = false;
-  if (value != null && typeof value.toString != 'function') {
-    try {
-      result = !!(value + '');
-    } catch (e) {}
-  }
-  return result;
-}
-
-/** Used for built-in method references. */
-var arrayProto = Array.prototype,
-    funcProto = Function.prototype,
-    objectProto = Object.prototype;
-
-/** Used to detect overreaching core-js shims. */
-var coreJsData = root['__core-js_shared__'];
-
-/** Used to detect methods masquerading as native. */
-var maskSrcKey = (function() {
-  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
-  return uid ? ('Symbol(src)_1.' + uid) : '';
-}());
-
-/** Used to resolve the decompiled source of functions. */
-var funcToString = funcProto.toString;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * Used to resolve the
- * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
- * of values.
- */
-var objectToString = objectProto.toString;
-
-/** Used to detect if a method is native. */
-var reIsNative = RegExp('^' +
-  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
-  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
-);
-
-/** Built-in value references. */
-var Symbol = root.Symbol,
-    splice = arrayProto.splice;
-
-/* Built-in method references that are verified to be native. */
-var Map = getNative(root, 'Map'),
-    nativeCreate = getNative(Object, 'create');
-
-/** Used to convert symbols to primitives and strings. */
-var symbolProto = Symbol ? Symbol.prototype : undefined,
-    symbolToString = symbolProto ? symbolProto.toString : undefined;
-
-/**
- * Creates a hash object.
+ * The Storage Client handles saving and retrieving data for your smart desktop.
  *
- * @private
+ *
+ *See the <a href=tutorial-storingData.html>Storing Data tutorial</a> for an overview of using the Storage Client.
+ * @hideconstructor
+ *  @todo add clear method
  * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
  */
-function Hash(entries) {
-  var index = -1,
-      length = entries ? entries.length : 0;
-
-  this.clear();
-  while (++index < length) {
-    var entry = entries[index];
-    this.set(entry[0], entry[1]);
-  }
-}
-
-/**
- * Removes all key-value entries from the hash.
- *
- * @private
- * @name clear
- * @memberOf Hash
- */
-function hashClear() {
-  this.__data__ = nativeCreate ? nativeCreate(null) : {};
-}
-
-/**
- * Removes `key` and its value from the hash.
- *
- * @private
- * @name delete
- * @memberOf Hash
- * @param {Object} hash The hash to modify.
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function hashDelete(key) {
-  return this.has(key) && delete this.__data__[key];
-}
-
-/**
- * Gets the hash value for `key`.
- *
- * @private
- * @name get
- * @memberOf Hash
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function hashGet(key) {
-  var data = this.__data__;
-  if (nativeCreate) {
-    var result = data[key];
-    return result === HASH_UNDEFINED ? undefined : result;
-  }
-  return hasOwnProperty.call(data, key) ? data[key] : undefined;
-}
-
-/**
- * Checks if a hash value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf Hash
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function hashHas(key) {
-  var data = this.__data__;
-  return nativeCreate ? data[key] !== undefined : hasOwnProperty.call(data, key);
-}
-
-/**
- * Sets the hash `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf Hash
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the hash instance.
- */
-function hashSet(key, value) {
-  var data = this.__data__;
-  data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
-  return this;
-}
-
-// Add methods to `Hash`.
-Hash.prototype.clear = hashClear;
-Hash.prototype['delete'] = hashDelete;
-Hash.prototype.get = hashGet;
-Hash.prototype.has = hashHas;
-Hash.prototype.set = hashSet;
-
-/**
- * Creates an list cache object.
- *
- * @private
- * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
- */
-function ListCache(entries) {
-  var index = -1,
-      length = entries ? entries.length : 0;
-
-  this.clear();
-  while (++index < length) {
-    var entry = entries[index];
-    this.set(entry[0], entry[1]);
-  }
-}
-
-/**
- * Removes all key-value entries from the list cache.
- *
- * @private
- * @name clear
- * @memberOf ListCache
- */
-function listCacheClear() {
-  this.__data__ = [];
-}
-
-/**
- * Removes `key` and its value from the list cache.
- *
- * @private
- * @name delete
- * @memberOf ListCache
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function listCacheDelete(key) {
-  var data = this.__data__,
-      index = assocIndexOf(data, key);
-
-  if (index < 0) {
-    return false;
-  }
-  var lastIndex = data.length - 1;
-  if (index == lastIndex) {
-    data.pop();
-  } else {
-    splice.call(data, index, 1);
-  }
-  return true;
-}
-
-/**
- * Gets the list cache value for `key`.
- *
- * @private
- * @name get
- * @memberOf ListCache
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function listCacheGet(key) {
-  var data = this.__data__,
-      index = assocIndexOf(data, key);
-
-  return index < 0 ? undefined : data[index][1];
-}
-
-/**
- * Checks if a list cache value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf ListCache
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function listCacheHas(key) {
-  return assocIndexOf(this.__data__, key) > -1;
-}
-
-/**
- * Sets the list cache `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf ListCache
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the list cache instance.
- */
-function listCacheSet(key, value) {
-  var data = this.__data__,
-      index = assocIndexOf(data, key);
-
-  if (index < 0) {
-    data.push([key, value]);
-  } else {
-    data[index][1] = value;
-  }
-  return this;
-}
-
-// Add methods to `ListCache`.
-ListCache.prototype.clear = listCacheClear;
-ListCache.prototype['delete'] = listCacheDelete;
-ListCache.prototype.get = listCacheGet;
-ListCache.prototype.has = listCacheHas;
-ListCache.prototype.set = listCacheSet;
-
-/**
- * Creates a map cache object to store key-value pairs.
- *
- * @private
- * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
- */
-function MapCache(entries) {
-  var index = -1,
-      length = entries ? entries.length : 0;
-
-  this.clear();
-  while (++index < length) {
-    var entry = entries[index];
-    this.set(entry[0], entry[1]);
-  }
-}
-
-/**
- * Removes all key-value entries from the map.
- *
- * @private
- * @name clear
- * @memberOf MapCache
- */
-function mapCacheClear() {
-  this.__data__ = {
-    'hash': new Hash,
-    'map': new (Map || ListCache),
-    'string': new Hash
-  };
-}
-
-/**
- * Removes `key` and its value from the map.
- *
- * @private
- * @name delete
- * @memberOf MapCache
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function mapCacheDelete(key) {
-  return getMapData(this, key)['delete'](key);
-}
-
-/**
- * Gets the map value for `key`.
- *
- * @private
- * @name get
- * @memberOf MapCache
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function mapCacheGet(key) {
-  return getMapData(this, key).get(key);
-}
-
-/**
- * Checks if a map value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf MapCache
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function mapCacheHas(key) {
-  return getMapData(this, key).has(key);
-}
-
-/**
- * Sets the map `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf MapCache
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the map cache instance.
- */
-function mapCacheSet(key, value) {
-  getMapData(this, key).set(key, value);
-  return this;
-}
-
-// Add methods to `MapCache`.
-MapCache.prototype.clear = mapCacheClear;
-MapCache.prototype['delete'] = mapCacheDelete;
-MapCache.prototype.get = mapCacheGet;
-MapCache.prototype.has = mapCacheHas;
-MapCache.prototype.set = mapCacheSet;
-
-/**
- * Gets the index at which the `key` is found in `array` of key-value pairs.
- *
- * @private
- * @param {Array} array The array to inspect.
- * @param {*} key The key to search for.
- * @returns {number} Returns the index of the matched value, else `-1`.
- */
-function assocIndexOf(array, key) {
-  var length = array.length;
-  while (length--) {
-    if (eq(array[length][0], key)) {
-      return length;
+class StorageClient extends baseClient_1._BaseClient {
+    constructor() {
+        super(...arguments);
+        this.clientReady = false;
+        //Did this because "delete" is a reserved keyword; for autocomplete the client is exported as a namespace with a bunch of functions and wouldn't work with a function called delete.
+        this.delete = this.remove;
     }
-  }
-  return -1;
+    /**
+     * Define the user name for storage (i.e., each user has unique storage).
+     * @param {object} params
+     * @param {string} params.user A unique key to store user data under
+     * @param {StandardCallback} cb Callback to be called on success.
+     *
+     * @example
+     * FSBL.Clients.StorageClient.setUser({ user: "JohnDeere"});
+     */
+    setUser(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
+        validate_1.default.args(params.user, "string", cb, "function=");
+        this.routerClient.query("Storage.setUser", { user: params.user }, function (err, response) {
+            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+            logMethod("APPLICATION LIFECYCLE:StorageClient.setUser", params, err, response);
+            if (cb) {
+                cb(err, response.data);
+            }
+        });
+    }
+    ;
+    /**
+     * Specifies the data store. For normal operation this function doesn't have to be invoked -- the default data store is set in configuration.
+     * @param {Object} params
+     * @param {String} params.topic If specified then data store is set only for topic.
+     * @param {string} params.dataStore Identifies the data store (e.g. "localStorage", "redis").
+     * @param {function} cb Callback to be called on success.
+     *
+     * @example
+     * FSBL.Clients.StorageClient.setStore({topic:"finsemble", dataStore:"redis"})
+     */
+    setStore(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
+        validate_1.default.args(params.topic, "string", params.dataStore, "string=", cb, "function=");
+        logger_1.default.system.log("APPLICATION LIFECYCLE:StorageClient.setStore", params, cb);
+        this.routerClient.query("Storage.setStore", params, (err, response) => {
+            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+            logMethod("Storage.setStore", err, response);
+            if (cb) {
+                cb(err, response.data);
+            }
+        });
+    }
+    ;
+    /**
+     * Save a key value pair into storage.
+     * @param {Object} params
+     * @param {String} params.topic Storage topic for key being stored.
+     * @param {String} params.key The key for the value to be stored under.
+     * @param {any} params.value The value to be stored.
+     * @param {function} cb Callback to be called on success.
+     *
+     * @example
+     * FSBL.Clients.StorageClient.save({topic:"finsemble", key:"testKey", value:"testValue"})
+     */
+    save(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
+        if (typeof params.key !== "string" || typeof params.topic !== "string") {
+            throw new Error("Values for key and topic must be strings.");
+        }
+        const promiseResolver = (resolve, reject) => {
+            validate_1.default.args(params.topic, "string", params.key, "string", params.value, "any", cb, "function=");
+            this.routerClient.query("Storage.save", params, (err, response) => {
+                const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+                logMethod("Storage.save", err, response);
+                if (cb) {
+                    cb(err, response.data);
+                }
+                if (err) {
+                    reject({ err: err, data: null });
+                }
+                else {
+                    resolve({ err: err, data: response.data });
+                }
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    ;
+    /**
+     *
+     * @param params
+     * @private
+     */
+    save1(params) {
+        return limit(() => this.save(params));
+    }
+    /**
+     * Get a value from storage.
+     * @param {Object} params
+     * @param {String} params.key The key to get from storage.
+     * @param {String} params.topic The topic that the data is saved under.
+     * @param {function} cb Callback to be called on success.
+     *
+     * @example
+     * FSBL.Clients.StorageClient.get({ topic:"finsemble", key:"testKey" }, function(err, data) {
+     *	var myData = data;
+     * });
+     */
+    get(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
+        if (typeof params.key !== "string" || typeof params.topic !== "string") {
+            throw new Error("Values for key and topic must be strings.");
+        }
+        const promiseResolver = (resolve, reject) => {
+            validate_1.default.args(params.topic, "string", params.key, "string", cb, "function=");
+            this.routerClient.query("Storage.get", params, (err, response) => {
+                if (err) {
+                    logger_1.default.system.error("Storage.get", err, response);
+                    cb(err, response ? response.data : null);
+                    return reject(err, response ? response.data : null);
+                }
+                logger_1.default.system.info("Storage.get", err, response);
+                if (cb)
+                    cb(err, response.data);
+                resolve(response.data);
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    ;
+    /**
+     *
+     * @param params
+     * @param cb
+     * @private
+     */
+    get1(params, cb) {
+        return limit(() => this.get(params));
+    }
+    /**
+     * Asynchronously updates provided key in storage by first retrieving the key
+     * then running a provided function on the result and re-saving its value.
+     * There’s no guarantees of consistency or atomicity
+     *
+     * @param params {any} Update storage params
+     * @param params.topic {string} The storage topic
+     * @param params.key {string} The storage key
+     * @param params.updateFn {Function} Function to run to determine the value to store
+     * @private
+     */
+    async updateStorage(params) {
+        const { topic, key, updateFn } = params;
+        const result = await this.get({ topic, key });
+        return this.save({ topic, key, value: updateFn(result) });
+    }
+    /**
+     *
+     * @param params
+     * @private
+     */
+    updateStorage1(params) {
+        return limit(() => this.updateStorage(params));
+    }
+    /**
+     * Get all keys for the topic.
+     * @param {Object} params
+     * @param {String} params.topic Topic for the keys to return.
+     * @param {String=} params.keyPrefix Filter all keys that don't start with this prefix.
+     * @param {function} cb Callback to be called on success.
+     *
+     * @example
+     * FSBL.Clients.StorageClient.keys({topic:"finsemble", keyPrefix:"test"}, function(err, data){
+     *	var myKeys = data;
+     * });
+     */
+    keys(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
+        validate_1.default.args(params.topic, "string", cb, "function=");
+        logger_1.default.system.debug("StorageClient.keys", params, cb);
+        this.routerClient.query("Storage.keys", params, function (err, response) {
+            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+            logMethod("Storage.keys", err, response);
+            if (cb) {
+                cb(err, response.data);
+            }
+        });
+    }
+    ;
+    /**
+     *
+     * @param params
+     * @private
+     */
+    keys1(params) {
+        return limit(() => disentangledUtils_1.promisify(this.keys.bind(this))(params));
+    }
+    /**
+     * Get a multiple values from storage based on regex.(coming soon)
+     * @param {Object} params
+     * @param {function} cb Callback to be called on success.
+     * @private
+     * @todo make this work.
+     * @example
+     * StorageClient.get({key:"testKey"});
+     */
+    getMultiple(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
+        logger_1.default.system.info("StorageClient.getMultiple", params, cb);
+        this.routerClient.query("Storage.getMultiple", params, function (err, response) {
+            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+            logMethod("StorageClient.getMultiple:", params, response);
+            if (cb) {
+                cb(err, response);
+            }
+        });
+    }
+    ;
+    /**
+     * Delete a value from storage.
+     * @param {Object} params
+     * @param {String} params.key The key to get from storage.
+     * @param {String} params.topic The topic that the data is saved under.
+     * @example
+     * FSBL.Clients.StorageClient.remove({ key:"testKey" })
+     */
+    remove(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
+        const promiseResolver = (resolve, reject) => {
+            validate_1.default.args(params.topic, "string", params.key, "string", cb, "function=");
+            this.routerClient.query("Storage.delete", params, function (err, response) {
+                const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+                logMethod("StorageClient.delete", err, response);
+                if (cb) {
+                    cb(err, response.data);
+                }
+                if (err) {
+                    reject({ err: err, data: null });
+                }
+                else {
+                    resolve({ err: err, data: response.data });
+                }
+            });
+        };
+        return new Promise(promiseResolver);
+    }
+    ;
+    /**
+     *
+     * @param params
+     * @private
+     */
+    remove1(params) {
+        return limit(() => this.remove(params));
+    }
+    /**
+     * Clears a storage adapter of all data.
+     * @param {function} cb The callback to be invoked after the method completes successfully.
+     *
+     */
+    clearCache(cb) {
+        logger_1.default.system.log("StorageClient.clearCache", cb);
+        this.routerClient.query("Storage.clearCache", null, function (err, response) {
+            const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
+            logMethod("StorageClient.clearCache", err, response);
+            if (cb) {
+                cb(err, response.data);
+            }
+        });
+    }
+    ;
 }
-
-/**
- * The base implementation of `_.get` without support for default values.
- *
- * @private
- * @param {Object} object The object to query.
- * @param {Array|string} path The path of the property to get.
- * @returns {*} Returns the resolved value.
- */
-function baseGet(object, path) {
-  path = isKey(path, object) ? [path] : castPath(path);
-
-  var index = 0,
-      length = path.length;
-
-  while (object != null && index < length) {
-    object = object[toKey(path[index++])];
-  }
-  return (index && index == length) ? object : undefined;
-}
-
-/**
- * The base implementation of `_.isNative` without bad shim checks.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a native function,
- *  else `false`.
- */
-function baseIsNative(value) {
-  if (!isObject(value) || isMasked(value)) {
-    return false;
-  }
-  var pattern = (isFunction(value) || isHostObject(value)) ? reIsNative : reIsHostCtor;
-  return pattern.test(toSource(value));
-}
-
-/**
- * The base implementation of `_.toString` which doesn't convert nullish
- * values to empty strings.
- *
- * @private
- * @param {*} value The value to process.
- * @returns {string} Returns the string.
- */
-function baseToString(value) {
-  // Exit early for strings to avoid a performance hit in some environments.
-  if (typeof value == 'string') {
-    return value;
-  }
-  if (isSymbol(value)) {
-    return symbolToString ? symbolToString.call(value) : '';
-  }
-  var result = (value + '');
-  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
-}
-
-/**
- * Casts `value` to a path array if it's not one.
- *
- * @private
- * @param {*} value The value to inspect.
- * @returns {Array} Returns the cast property path array.
- */
-function castPath(value) {
-  return isArray(value) ? value : stringToPath(value);
-}
-
-/**
- * Gets the data for `map`.
- *
- * @private
- * @param {Object} map The map to query.
- * @param {string} key The reference key.
- * @returns {*} Returns the map data.
- */
-function getMapData(map, key) {
-  var data = map.__data__;
-  return isKeyable(key)
-    ? data[typeof key == 'string' ? 'string' : 'hash']
-    : data.map;
-}
-
-/**
- * Gets the native function at `key` of `object`.
- *
- * @private
- * @param {Object} object The object to query.
- * @param {string} key The key of the method to get.
- * @returns {*} Returns the function if it's native, else `undefined`.
- */
-function getNative(object, key) {
-  var value = getValue(object, key);
-  return baseIsNative(value) ? value : undefined;
-}
-
-/**
- * Checks if `value` is a property name and not a property path.
- *
- * @private
- * @param {*} value The value to check.
- * @param {Object} [object] The object to query keys on.
- * @returns {boolean} Returns `true` if `value` is a property name, else `false`.
- */
-function isKey(value, object) {
-  if (isArray(value)) {
-    return false;
-  }
-  var type = typeof value;
-  if (type == 'number' || type == 'symbol' || type == 'boolean' ||
-      value == null || isSymbol(value)) {
-    return true;
-  }
-  return reIsPlainProp.test(value) || !reIsDeepProp.test(value) ||
-    (object != null && value in Object(object));
-}
-
-/**
- * Checks if `value` is suitable for use as unique object key.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is suitable, else `false`.
- */
-function isKeyable(value) {
-  var type = typeof value;
-  return (type == 'string' || type == 'number' || type == 'symbol' || type == 'boolean')
-    ? (value !== '__proto__')
-    : (value === null);
-}
-
-/**
- * Checks if `func` has its source masked.
- *
- * @private
- * @param {Function} func The function to check.
- * @returns {boolean} Returns `true` if `func` is masked, else `false`.
- */
-function isMasked(func) {
-  return !!maskSrcKey && (maskSrcKey in func);
-}
-
-/**
- * Converts `string` to a property path array.
- *
- * @private
- * @param {string} string The string to convert.
- * @returns {Array} Returns the property path array.
- */
-var stringToPath = memoize(function(string) {
-  string = toString(string);
-
-  var result = [];
-  if (reLeadingDot.test(string)) {
-    result.push('');
-  }
-  string.replace(rePropName, function(match, number, quote, string) {
-    result.push(quote ? string.replace(reEscapeChar, '$1') : (number || match));
-  });
-  return result;
+exports.StorageClient = StorageClient;
+;
+var storageClient = new StorageClient({
+    onReady: function (cb) {
+        if (cb) {
+            cb();
+        }
+        storageClient.clientReady = true;
+    },
+    name: "storageClient"
 });
+exports.default = storageClient;
 
-/**
- * Converts `value` to a string key if it's not a string or symbol.
- *
- * @private
- * @param {*} value The value to inspect.
- * @returns {string|symbol} Returns the key.
- */
-function toKey(value) {
-  if (typeof value == 'string' || isSymbol(value)) {
-    return value;
-  }
-  var result = (value + '');
-  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
-}
-
-/**
- * Converts `func` to its source code.
- *
- * @private
- * @param {Function} func The function to process.
- * @returns {string} Returns the source code.
- */
-function toSource(func) {
-  if (func != null) {
-    try {
-      return funcToString.call(func);
-    } catch (e) {}
-    try {
-      return (func + '');
-    } catch (e) {}
-  }
-  return '';
-}
-
-/**
- * Creates a function that memoizes the result of `func`. If `resolver` is
- * provided, it determines the cache key for storing the result based on the
- * arguments provided to the memoized function. By default, the first argument
- * provided to the memoized function is used as the map cache key. The `func`
- * is invoked with the `this` binding of the memoized function.
- *
- * **Note:** The cache is exposed as the `cache` property on the memoized
- * function. Its creation may be customized by replacing the `_.memoize.Cache`
- * constructor with one whose instances implement the
- * [`Map`](http://ecma-international.org/ecma-262/7.0/#sec-properties-of-the-map-prototype-object)
- * method interface of `delete`, `get`, `has`, and `set`.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Function
- * @param {Function} func The function to have its output memoized.
- * @param {Function} [resolver] The function to resolve the cache key.
- * @returns {Function} Returns the new memoized function.
- * @example
- *
- * var object = { 'a': 1, 'b': 2 };
- * var other = { 'c': 3, 'd': 4 };
- *
- * var values = _.memoize(_.values);
- * values(object);
- * // => [1, 2]
- *
- * values(other);
- * // => [3, 4]
- *
- * object.a = 2;
- * values(object);
- * // => [1, 2]
- *
- * // Modify the result cache.
- * values.cache.set(object, ['a', 'b']);
- * values(object);
- * // => ['a', 'b']
- *
- * // Replace `_.memoize.Cache`.
- * _.memoize.Cache = WeakMap;
- */
-function memoize(func, resolver) {
-  if (typeof func != 'function' || (resolver && typeof resolver != 'function')) {
-    throw new TypeError(FUNC_ERROR_TEXT);
-  }
-  var memoized = function() {
-    var args = arguments,
-        key = resolver ? resolver.apply(this, args) : args[0],
-        cache = memoized.cache;
-
-    if (cache.has(key)) {
-      return cache.get(key);
-    }
-    var result = func.apply(this, args);
-    memoized.cache = cache.set(key, result);
-    return result;
-  };
-  memoized.cache = new (memoize.Cache || MapCache);
-  return memoized;
-}
-
-// Assign cache to `_.memoize`.
-memoize.Cache = MapCache;
-
-/**
- * Performs a
- * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
- * comparison between two values to determine if they are equivalent.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to compare.
- * @param {*} other The other value to compare.
- * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
- * @example
- *
- * var object = { 'a': 1 };
- * var other = { 'a': 1 };
- *
- * _.eq(object, object);
- * // => true
- *
- * _.eq(object, other);
- * // => false
- *
- * _.eq('a', 'a');
- * // => true
- *
- * _.eq('a', Object('a'));
- * // => false
- *
- * _.eq(NaN, NaN);
- * // => true
- */
-function eq(value, other) {
-  return value === other || (value !== value && other !== other);
-}
-
-/**
- * Checks if `value` is classified as an `Array` object.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an array, else `false`.
- * @example
- *
- * _.isArray([1, 2, 3]);
- * // => true
- *
- * _.isArray(document.body.children);
- * // => false
- *
- * _.isArray('abc');
- * // => false
- *
- * _.isArray(_.noop);
- * // => false
- */
-var isArray = Array.isArray;
-
-/**
- * Checks if `value` is classified as a `Function` object.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a function, else `false`.
- * @example
- *
- * _.isFunction(_);
- * // => true
- *
- * _.isFunction(/abc/);
- * // => false
- */
-function isFunction(value) {
-  // The use of `Object#toString` avoids issues with the `typeof` operator
-  // in Safari 8-9 which returns 'object' for typed array and other constructors.
-  var tag = isObject(value) ? objectToString.call(value) : '';
-  return tag == funcTag || tag == genTag;
-}
-
-/**
- * Checks if `value` is the
- * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
- * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an object, else `false`.
- * @example
- *
- * _.isObject({});
- * // => true
- *
- * _.isObject([1, 2, 3]);
- * // => true
- *
- * _.isObject(_.noop);
- * // => true
- *
- * _.isObject(null);
- * // => false
- */
-function isObject(value) {
-  var type = typeof value;
-  return !!value && (type == 'object' || type == 'function');
-}
-
-/**
- * Checks if `value` is object-like. A value is object-like if it's not `null`
- * and has a `typeof` result of "object".
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
- * @example
- *
- * _.isObjectLike({});
- * // => true
- *
- * _.isObjectLike([1, 2, 3]);
- * // => true
- *
- * _.isObjectLike(_.noop);
- * // => false
- *
- * _.isObjectLike(null);
- * // => false
- */
-function isObjectLike(value) {
-  return !!value && typeof value == 'object';
-}
-
-/**
- * Checks if `value` is classified as a `Symbol` primitive or object.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
- * @example
- *
- * _.isSymbol(Symbol.iterator);
- * // => true
- *
- * _.isSymbol('abc');
- * // => false
- */
-function isSymbol(value) {
-  return typeof value == 'symbol' ||
-    (isObjectLike(value) && objectToString.call(value) == symbolTag);
-}
-
-/**
- * Converts `value` to a string. An empty string is returned for `null`
- * and `undefined` values. The sign of `-0` is preserved.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to process.
- * @returns {string} Returns the string.
- * @example
- *
- * _.toString(null);
- * // => ''
- *
- * _.toString(-0);
- * // => '-0'
- *
- * _.toString([1, 2, 3]);
- * // => '1,2,3'
- */
-function toString(value) {
-  return value == null ? '' : baseToString(value);
-}
-
-/**
- * Gets the value at `path` of `object`. If the resolved value is
- * `undefined`, the `defaultValue` is returned in its place.
- *
- * @static
- * @memberOf _
- * @since 3.7.0
- * @category Object
- * @param {Object} object The object to query.
- * @param {Array|string} path The path of the property to get.
- * @param {*} [defaultValue] The value returned for `undefined` resolved values.
- * @returns {*} Returns the resolved value.
- * @example
- *
- * var object = { 'a': [{ 'b': { 'c': 3 } }] };
- *
- * _.get(object, 'a[0].b.c');
- * // => 3
- *
- * _.get(object, ['a', '0', 'b', 'c']);
- * // => 3
- *
- * _.get(object, 'a.b.c', 'default');
- * // => 'default'
- */
-function get(object, path, defaultValue) {
-  var result = object == null ? undefined : baseGet(object, path);
-  return result === undefined ? defaultValue : result;
-}
-
-module.exports = get;
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {/**
@@ -14358,19 +13614,23 @@ function stubFalse() {
 
 module.exports = isEqual;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(13)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(14)(module)))
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events__ = __webpack_require__(12);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_events__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 
-const deepEqual = __webpack_require__(25);
+
+const deepEqual = __webpack_require__(26);
+
 /** Singleton of the System class shared among all instances of Monitors
  * @TODO Refactor to instance member of class.
  */
@@ -14466,20 +13726,26 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 				console.info("Skipped refreshMonitors because monitors do not change.");
 				monitorsChanged = false;
 			}
-			//console.log("getAllMonitors");
-			this.allMonitors = [];
-			var primaryMonitor = monitorInfo.primaryMonitor;
-			this.primaryMonitor = primaryMonitor;
-			primaryMonitor.whichMonitor = "primary";
 
-			if (fin.container !== "Electron") {
-				primaryMonitor.deviceScaleFactor = this.calculateMonitorScale(primaryMonitor.monitor.dipRect, primaryMonitor.monitor.scaledRect);
+			this.allMonitors = [];
+			let primaryMonitor = monitorInfo.primaryMonitor;
+			if (Object.entries(primaryMonitor).length) {
+				primaryMonitor.whichMonitor = "primary";
+				primaryMonitor.position = 0;
+				if (System.container !== "Electron") {
+					primaryMonitor.deviceScaleFactor = this.calculateMonitorScale(primaryMonitor.monitor.dipRect, primaryMonitor.monitor.scaledRect);
+				}
+				this.allMonitors.push(primaryMonitor);
+			} else {
+				// If there is no primary monitor, then the system is still in the process of updating the monitor information,
+				// so we can return and wait for the next monitor change event comes in.
+				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.System.info("There is no primary monitor in 'monitorInfo' - the system is still in the process of updating the monitor information. Returning from monitorsAndScaling -> refreshMonitors");
+				return;
 			}
-			primaryMonitor.position = 0;
-			this.allMonitors.push(primaryMonitor);
+
 			for (let i = 0; i < monitorInfo.nonPrimaryMonitors.length; i++) {
 				let monitor = monitorInfo.nonPrimaryMonitors[i];
-				if (fin.container !== "Electron") {
+				if (System.container !== "Electron") {
 					monitor.deviceScaleFactor = this.calculateMonitorScale(monitor.monitor.dipRect, monitor.monitor.scaledRect);
 				}
 				monitor.whichMonitor = i;
@@ -14513,7 +13779,7 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 	}
 
 	/**
-  * Gets the monitor on which the point is or null if not on any monitor. This assumes scaled dimensions for the monitor (For example from Openfin or WPF directly).
+  * Gets the monitor on which the point is or null if not on any monitor. This assumes scaled dimensions for the monitor (For example from electron or WPF directly).
   * @param {*} x
   * @param {*} y
   * @param {*} cb
@@ -14736,12 +14002,12 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__configUtil__ = __webpack_require__(11);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__configUtil__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system__ = __webpack_require__(3);
@@ -14843,11 +14109,11 @@ var RouterTransport = {
 			}
 		}
 
-		// if OpenFin IAB available, then add IAB to active list
-		if (fin && fin.desktop && fin.desktop.InterApplicationBus) addToActive("OpenFinBus");
+		// if IPCBus available, then add IAB to active list
+		if (__WEBPACK_IMPORTED_MODULE_2__common_system__["System"].InterApplicationBus) addToActive("IPCBus");
 
 		// If electron, always have FinsembleTransport active
-		if (fin && fin.container === "Electron") addToActive("FinsembleTransport");
+		if (__WEBPACK_IMPORTED_MODULE_2__common_system__["System"].container === "Electron") addToActive("FinsembleTransport");
 
 		// if shared worker available, then add shared-worker transport to active list
 		if (SharedWorker) addToActive("SharedWorker");
@@ -14872,7 +14138,7 @@ var RouterTransport = {
   * @returns the transport object
   */
 	getDefaultTransport: function (params, incomingMessageHandler, source, destination) {
-		return RouterTransport.getTransport(params, "OpenFinBus", incomingMessageHandler, source, destination);
+		return RouterTransport.getTransport(params, "IPCBus", incomingMessageHandler, source, destination);
 	},
 
 	/**
@@ -15027,30 +14293,30 @@ RouterTransportImplementation.SharedWorkerTransport = function (params, parentMe
 };
 
 /*
- * Implements the OpenFin Bus Transport.
+ * Implements the IPC Bus Transport.
  *
  * Required Functions (used by transport clients):
  * 		send(transport, routerMessage) -- transport object contains destination transport info; routerMessage is the message to send
  * 		identifier() -- returns transport's name
  *
- * @param {object} params unused in OpenFin transport
+ * @param {object} params unused in IPC transport
  * @param {any} parentMessageHandler callback for incoming event
  * @param {any} source either the client name or "RouterService"
  * @param {any} destination either the client name or "RouterService"
  */
-RouterTransportImplementation.OpenFinTransport = function (params, parentMessageHandler, source, destination, callback) {
+RouterTransportImplementation.IPCTransport = function (params, parentMessageHandler, source, destination, callback) {
 	var uuid = __WEBPACK_IMPORTED_MODULE_2__common_system__["System"].Application.getCurrent().uuid;
 	var self = this;
 
 	// receives incoming OpenFin bus messages then passes on to parent with correct "wrapper"
-	function openFinMessageHandler(routerMessage, senderUuid) {
+	function messageHandler(routerMessage, senderUuid) {
 		var incomingTransportInfo = { "transportID": self.identifier(), "senderUuid": senderUuid, "name": routerMessage.header.origin };
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("OpenFinTransport Incoming Transport", incomingTransportInfo, "Message", routerMessage);
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("IPCTransport Incoming Transport", incomingTransportInfo, "Message", routerMessage);
 		parentMessageHandler(incomingTransportInfo, routerMessage);
 	}
 
 	function subscribeFailure(reason) {
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("OpenFinBus Subscribe Failure: " + reason);
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("IPCBus Subscribe Failure: " + reason);
 	}
 
 	//required function for the parent (i.e. routeClient or routeService)
@@ -15068,18 +14334,18 @@ RouterTransportImplementation.OpenFinTransport = function (params, parentMessage
 			routerMessage = arguments[1];
 		}
 
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("OpenFinTransport Outgoing Transport", uuid, destTopic, "Message", routerMessage);
-		fin.desktop.InterApplicationBus.publish(destTopic, routerMessage, function () {}, function (err) {});
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("IPCTransport Outgoing Transport", uuid, destTopic, "Message", routerMessage);
+		__WEBPACK_IMPORTED_MODULE_2__common_system__["System"].InterApplicationBus.publish(destTopic, routerMessage, function () {}, function (err) {});
 	};
 
 	//required function for the parent (i.e. routeClient or routeService)
 	this.identifier = function () {
-		return "OpenFinBus";
+		return "IPCBus";
 	};
 
-	__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log(`OpenFinBus Transport Initializing for ${source}`);
-	console.log(`OpenFinBus Transport Initializing for ${source}`);
-	fin.desktop.InterApplicationBus.subscribe("*", source, openFinMessageHandler, null, subscribeFailure);
+	__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log(`IPCBus Transport Initializing for ${source}`);
+	console.log(`IPCBus Transport Initializing for ${source}`);
+	__WEBPACK_IMPORTED_MODULE_2__common_system__["System"].InterApplicationBus.subscribe("*", source, messageHandler, null, subscribeFailure);
 
 	callback(this);
 };
@@ -15097,11 +14363,12 @@ RouterTransportImplementation.OpenFinTransport = function (params, parentMessage
  * @param {any} destination either the client name or "RouterService" (unused in FinsembleTransport)
  */
 RouterTransportImplementation.FinsembleTransport = function (params, parentMessageHandler, source, destination, callback) {
-	/** @TODO - split into two separate vars for clarity. */
-	var serverAddress = __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress", __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.IAC.serverAddress", "ws://127.0.0.1:3376"));
+	const defaultServerAddress = "ws://127.0.0.1:3376";
+	const IACServerAddress = __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.IAC.serverAddress", defaultServerAddress);
+	const serverAddress = __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress", IACServerAddress);
 	const SOCKET_SERVER_ADDRESS = serverAddress + "/router"; // "router" is the socket namespace used on server
 
-	var self = this;
+	const self = this;
 
 	// receives incoming messages then passes on to parent (what's passed to parent should be same routerMessage received in send()
 	function finsembleMessageHandler(routerMessage) {
@@ -15286,7 +14553,7 @@ RouterTransportImplementation.FinsembleCloudTransport = function (params, parent
 
 // add the transports to the available/active list
 RouterTransport.addTransport("SharedWorker", RouterTransportImplementation.SharedWorkerTransport);
-RouterTransport.addTransport("OpenFinBus", RouterTransportImplementation.OpenFinTransport);
+RouterTransport.addTransport("IPCBus", RouterTransportImplementation.IPCTransport);
 RouterTransport.addTransport("FinsembleTransport", RouterTransportImplementation.FinsembleTransport);
 
 /* harmony default export */ __webpack_exports__["default"] = (RouterTransport);
@@ -15295,7 +14562,77 @@ RouterTransport.addTransport("FinsembleTransport", RouterTransportImplementation
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 28 */
+/* 29 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {var scope = (typeof global !== "undefined" && global) ||
+            (typeof self !== "undefined" && self) ||
+            window;
+var apply = Function.prototype.apply;
+
+// DOM APIs, for completeness
+
+exports.setTimeout = function() {
+  return new Timeout(apply.call(setTimeout, scope, arguments), clearTimeout);
+};
+exports.setInterval = function() {
+  return new Timeout(apply.call(setInterval, scope, arguments), clearInterval);
+};
+exports.clearTimeout =
+exports.clearInterval = function(timeout) {
+  if (timeout) {
+    timeout.close();
+  }
+};
+
+function Timeout(id, clearFn) {
+  this._id = id;
+  this._clearFn = clearFn;
+}
+Timeout.prototype.unref = Timeout.prototype.ref = function() {};
+Timeout.prototype.close = function() {
+  this._clearFn.call(scope, this._id);
+};
+
+// Does not start the time, just sets up the members needed.
+exports.enroll = function(item, msecs) {
+  clearTimeout(item._idleTimeoutId);
+  item._idleTimeout = msecs;
+};
+
+exports.unenroll = function(item) {
+  clearTimeout(item._idleTimeoutId);
+  item._idleTimeout = -1;
+};
+
+exports._unrefActive = exports.active = function(item) {
+  clearTimeout(item._idleTimeoutId);
+
+  var msecs = item._idleTimeout;
+  if (msecs >= 0) {
+    item._idleTimeoutId = setTimeout(function onTimeout() {
+      if (item._onTimeout)
+        item._onTimeout();
+    }, msecs);
+  }
+};
+
+// setimmediate attaches itself to the global object
+__webpack_require__(35);
+// On some exotic environments, it's not clear which object `setimmediate` was
+// able to install onto.  Search each possibility in the same order as the
+// `setimmediate` library.
+exports.setImmediate = (typeof self !== "undefined" && self.setImmediate) ||
+                       (typeof global !== "undefined" && global.setImmediate) ||
+                       (this && this.setImmediate);
+exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
+                         (typeof global !== "undefined" && global.clearImmediate) ||
+                         (this && this.clearImmediate);
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+
+/***/ }),
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15305,11 +14642,11 @@ RouterTransport.addTransport("FinsembleTransport", RouterTransportImplementation
 */
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const routerTransport_1 = __webpack_require__(27);
+const routerTransport_1 = __webpack_require__(28);
 const Utils = __webpack_require__(8);
-const configUtil_1 = __webpack_require__(11);
+const configUtil_1 = __webpack_require__(12);
 const validate_1 = __webpack_require__(6); // Finsemble args validator
-const userNotification_1 = __webpack_require__(20);
+const userNotification_1 = __webpack_require__(22);
 const system_1 = __webpack_require__(3);
 const logger_1 = __webpack_require__(0);
 var queue = []; // should never be used, but message sent before router ready will be queue
@@ -15337,7 +14674,7 @@ Globals.FSBLData.RouterClients = Globals.FSBLData.RouterClients || {};
  * @hideconstructor
  * @publishedName RouterClient
  * @param {string} clientName router base client name for human readable messages (window name is concatenated to baseClientName)
- * @param {string=} transportName router transport name, currently either "SharedWorker" or "OpenFinBus" (usually this is auto-configured internally but can be selected for testing or special configurations)
+ * @param {string=} transportName router transport name, currently either "SharedWorker" or "IPCBus" (usually this is auto-configured internally but can be selected for testing or special configurations)
  */
 // un-comment for optimization.
 // console.time("FinMainStartup");
@@ -15549,8 +14886,8 @@ exports.RouterClientConstructor = function (params) {
         //This is the only place we need to wait for desktop.main
         system_1.System.ready(function () {
             var finWindow = system_1.System.Window.getCurrent();
-            Logger.system.debug(`WINDOW LIFECYCLE:STARTUP: fin.main invoked in ${finWindow.name}`);
-            console.debug(`WINDOW LIFECYCLE:STARTUP: fin.main invoked in ${finWindow.name}`);
+            Logger.system.debug(`WINDOW LIFECYCLE:STARTUP: System.ready invoked in ${finWindow.name}`);
+            console.debug(`WINDOW LIFECYCLE:STARTUP: System.ready invoked in ${finWindow.name}`);
             self.startupTime = performance.now();
             // un-comment for optimization.
             // console.timeEnd("FinMainStartup");
@@ -15588,14 +14925,13 @@ exports.RouterClientConstructor = function (params) {
         var isFinished = false;
         var handshakeFailedCount = 0;
         var finConfig = manifest.finsemble;
-        var isElectron = fin && fin.container == "Electron";
         var routerParams = {
             FinsembleUUID: finConfig.FinsembleUUID,
             applicationRoot: finConfig.applicationRoot,
             routerDomainRoot: finConfig.moduleRoot,
             forceWindowTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.forceWindowTransport", {}),
             sameDomainTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.sameDomainTransport", "SharedWorker"),
-            crossDomainTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.crossDomainTransport", "OpenFinBus"),
+            crossDomainTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.crossDomainTransport", "IPCBus"),
             transportSettings: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.transportSettings", {}),
             IAC: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.IAC", {})
         };
@@ -16436,8 +15772,9 @@ exports.RouterClientConstructor = function (params) {
      *
      * @example
      *
-     * var subscribeId = RouterClient.subscribe("topicABC", function(err,notify) {
-     *		if (!err) {
+     * var subscriptionDetails = RouterClient.subscribe("topicABC", function(err, notify) {
+     *		if (err) { console.log(err); }
+     *		if (notify) {
      *			var notificationStateData = notify.data;
      *			// do something with notify data
      *  	}
@@ -16480,6 +15817,13 @@ exports.RouterClientConstructor = function (params) {
      * @example
      *
      * FSBL.Clients.RouterClient.unsubscribe(subscribeId);
+     * //Subscription details returned by RouterClient.subscribe(), which take the form:
+     * let subscriptionDetails = {
+     * 	subscribeID: "<subscribeID returned by RouterClient.subscribe>",
+     * 	topic: "topicABC"
+     * };
+     * FSBL.Clients.RouterClient.unsubscribe(subscriptionDetails);
+     *
      *
      */
     this.unsubscribe = function (subscribeIDStruct) {
@@ -16563,7 +15907,1027 @@ exports.RouterClientConstructor = function (params) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 29 */
+/* 31 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ALL_BOOT_STAGES = ["microkernel", "kernel", "authentication", "preuser", "earlyuser", "user"];
+/**
+ * Boot config element used to build a node in a dependency tree
+ */
+class BootConfigElement {
+}
+exports.BootConfigElement = BootConfigElement;
+/**
+ * Represents a ready node (i.e. all that's need to start the corresponding task/service/component)
+ */
+class BootReadyItem {
+    constructor(name, type, config) {
+        this.name = name;
+        this.type = type;
+        this.config = config;
+    }
+}
+exports.BootReadyItem = BootReadyItem;
+
+
+/***/ }),
+/* 32 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+// contains common functions -- used in multiple places in the system manager
+Object.defineProperty(exports, "__esModule", { value: true });
+const system_1 = __webpack_require__(3);
+const _constants_1 = __webpack_require__(18);
+/**
+ * Kills old applications -- used at the beginning of start
+ * @param finUUID
+ * @returns
+ */
+function killOldApplications(finUUID) {
+    const promiseResolver = async (resolve) => {
+        system_1.System.getAllApplications(async (applications) => {
+            if (applications) {
+                for (let i = 0; i < applications.length; i++) {
+                    let a = applications[i];
+                    if (a.uuid.endsWith("-" + finUUID)) {
+                        let application = system_1.System.Application.wrap(a.uuid);
+                        await system_1.System.closeApplication(application);
+                    }
+                }
+            }
+            console.log("killOldApplications: finished closing old apps");
+            resolve();
+        });
+    };
+    return new Promise(promiseResolver);
+}
+exports.killOldApplications = killOldApplications;
+/**
+ * Function to return the name of a startup status channel, given the window name
+ * @param name
+ * @returns
+ */
+function statusChannel(name) {
+    return `${_constants_1.STATUS_CHANNEL_BASE}.${name}`;
+}
+exports.statusChannel = statusChannel;
+/**
+ * Function to return the name of a checkpoint status channel, given the parent name (e.g. service name, component name) and the checkpoint name
+ * @param parentName
+ * @param checkpointName
+ * @returns
+ */
+function checkpointChannel(parentName, checkpointName) {
+    return `${_constants_1.CHECKPOINT_CHANNEL_BASE}.${parentName}.${checkpointName}`;
+}
+exports.checkpointChannel = checkpointChannel;
+
+
+/***/ }),
+/* 33 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {/**
+ * lodash (Custom Build) <https://lodash.com/>
+ * Build: `lodash modularize exports="npm" -o ./`
+ * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+ * Released under MIT license <https://lodash.com/license>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ */
+
+/** Used as the `TypeError` message for "Functions" methods. */
+var FUNC_ERROR_TEXT = 'Expected a function';
+
+/** Used to stand-in for `undefined` hash values. */
+var HASH_UNDEFINED = '__lodash_hash_undefined__';
+
+/** Used as references for various `Number` constants. */
+var INFINITY = 1 / 0;
+
+/** `Object#toString` result references. */
+var funcTag = '[object Function]',
+    genTag = '[object GeneratorFunction]',
+    symbolTag = '[object Symbol]';
+
+/** Used to match property names within property paths. */
+var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\\]|\\.)*?\1)\]/,
+    reIsPlainProp = /^\w*$/,
+    reLeadingDot = /^\./,
+    rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|$))/g;
+
+/**
+ * Used to match `RegExp`
+ * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
+ */
+var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
+
+/** Used to match backslashes in property paths. */
+var reEscapeChar = /\\(\\)?/g;
+
+/** Used to detect host constructors (Safari). */
+var reIsHostCtor = /^\[object .+?Constructor\]$/;
+
+/** Detect free variable `global` from Node.js. */
+var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
+
+/** Detect free variable `self`. */
+var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+
+/** Used as a reference to the global object. */
+var root = freeGlobal || freeSelf || Function('return this')();
+
+/**
+ * Gets the value at `key` of `object`.
+ *
+ * @private
+ * @param {Object} [object] The object to query.
+ * @param {string} key The key of the property to get.
+ * @returns {*} Returns the property value.
+ */
+function getValue(object, key) {
+  return object == null ? undefined : object[key];
+}
+
+/**
+ * Checks if `value` is a host object in IE < 9.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
+ */
+function isHostObject(value) {
+  // Many host objects are `Object` objects that can coerce to strings
+  // despite having improperly defined `toString` methods.
+  var result = false;
+  if (value != null && typeof value.toString != 'function') {
+    try {
+      result = !!(value + '');
+    } catch (e) {}
+  }
+  return result;
+}
+
+/** Used for built-in method references. */
+var arrayProto = Array.prototype,
+    funcProto = Function.prototype,
+    objectProto = Object.prototype;
+
+/** Used to detect overreaching core-js shims. */
+var coreJsData = root['__core-js_shared__'];
+
+/** Used to detect methods masquerading as native. */
+var maskSrcKey = (function() {
+  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
+  return uid ? ('Symbol(src)_1.' + uid) : '';
+}());
+
+/** Used to resolve the decompiled source of functions. */
+var funcToString = funcProto.toString;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Used to resolve the
+ * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var objectToString = objectProto.toString;
+
+/** Used to detect if a method is native. */
+var reIsNative = RegExp('^' +
+  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
+  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
+);
+
+/** Built-in value references. */
+var Symbol = root.Symbol,
+    splice = arrayProto.splice;
+
+/* Built-in method references that are verified to be native. */
+var Map = getNative(root, 'Map'),
+    nativeCreate = getNative(Object, 'create');
+
+/** Used to convert symbols to primitives and strings. */
+var symbolProto = Symbol ? Symbol.prototype : undefined,
+    symbolToString = symbolProto ? symbolProto.toString : undefined;
+
+/**
+ * Creates a hash object.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function Hash(entries) {
+  var index = -1,
+      length = entries ? entries.length : 0;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+/**
+ * Removes all key-value entries from the hash.
+ *
+ * @private
+ * @name clear
+ * @memberOf Hash
+ */
+function hashClear() {
+  this.__data__ = nativeCreate ? nativeCreate(null) : {};
+}
+
+/**
+ * Removes `key` and its value from the hash.
+ *
+ * @private
+ * @name delete
+ * @memberOf Hash
+ * @param {Object} hash The hash to modify.
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function hashDelete(key) {
+  return this.has(key) && delete this.__data__[key];
+}
+
+/**
+ * Gets the hash value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf Hash
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function hashGet(key) {
+  var data = this.__data__;
+  if (nativeCreate) {
+    var result = data[key];
+    return result === HASH_UNDEFINED ? undefined : result;
+  }
+  return hasOwnProperty.call(data, key) ? data[key] : undefined;
+}
+
+/**
+ * Checks if a hash value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf Hash
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function hashHas(key) {
+  var data = this.__data__;
+  return nativeCreate ? data[key] !== undefined : hasOwnProperty.call(data, key);
+}
+
+/**
+ * Sets the hash `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf Hash
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the hash instance.
+ */
+function hashSet(key, value) {
+  var data = this.__data__;
+  data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
+  return this;
+}
+
+// Add methods to `Hash`.
+Hash.prototype.clear = hashClear;
+Hash.prototype['delete'] = hashDelete;
+Hash.prototype.get = hashGet;
+Hash.prototype.has = hashHas;
+Hash.prototype.set = hashSet;
+
+/**
+ * Creates an list cache object.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function ListCache(entries) {
+  var index = -1,
+      length = entries ? entries.length : 0;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+/**
+ * Removes all key-value entries from the list cache.
+ *
+ * @private
+ * @name clear
+ * @memberOf ListCache
+ */
+function listCacheClear() {
+  this.__data__ = [];
+}
+
+/**
+ * Removes `key` and its value from the list cache.
+ *
+ * @private
+ * @name delete
+ * @memberOf ListCache
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function listCacheDelete(key) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  if (index < 0) {
+    return false;
+  }
+  var lastIndex = data.length - 1;
+  if (index == lastIndex) {
+    data.pop();
+  } else {
+    splice.call(data, index, 1);
+  }
+  return true;
+}
+
+/**
+ * Gets the list cache value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf ListCache
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function listCacheGet(key) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  return index < 0 ? undefined : data[index][1];
+}
+
+/**
+ * Checks if a list cache value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf ListCache
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function listCacheHas(key) {
+  return assocIndexOf(this.__data__, key) > -1;
+}
+
+/**
+ * Sets the list cache `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf ListCache
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the list cache instance.
+ */
+function listCacheSet(key, value) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  if (index < 0) {
+    data.push([key, value]);
+  } else {
+    data[index][1] = value;
+  }
+  return this;
+}
+
+// Add methods to `ListCache`.
+ListCache.prototype.clear = listCacheClear;
+ListCache.prototype['delete'] = listCacheDelete;
+ListCache.prototype.get = listCacheGet;
+ListCache.prototype.has = listCacheHas;
+ListCache.prototype.set = listCacheSet;
+
+/**
+ * Creates a map cache object to store key-value pairs.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function MapCache(entries) {
+  var index = -1,
+      length = entries ? entries.length : 0;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+/**
+ * Removes all key-value entries from the map.
+ *
+ * @private
+ * @name clear
+ * @memberOf MapCache
+ */
+function mapCacheClear() {
+  this.__data__ = {
+    'hash': new Hash,
+    'map': new (Map || ListCache),
+    'string': new Hash
+  };
+}
+
+/**
+ * Removes `key` and its value from the map.
+ *
+ * @private
+ * @name delete
+ * @memberOf MapCache
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function mapCacheDelete(key) {
+  return getMapData(this, key)['delete'](key);
+}
+
+/**
+ * Gets the map value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf MapCache
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function mapCacheGet(key) {
+  return getMapData(this, key).get(key);
+}
+
+/**
+ * Checks if a map value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf MapCache
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function mapCacheHas(key) {
+  return getMapData(this, key).has(key);
+}
+
+/**
+ * Sets the map `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf MapCache
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the map cache instance.
+ */
+function mapCacheSet(key, value) {
+  getMapData(this, key).set(key, value);
+  return this;
+}
+
+// Add methods to `MapCache`.
+MapCache.prototype.clear = mapCacheClear;
+MapCache.prototype['delete'] = mapCacheDelete;
+MapCache.prototype.get = mapCacheGet;
+MapCache.prototype.has = mapCacheHas;
+MapCache.prototype.set = mapCacheSet;
+
+/**
+ * Gets the index at which the `key` is found in `array` of key-value pairs.
+ *
+ * @private
+ * @param {Array} array The array to inspect.
+ * @param {*} key The key to search for.
+ * @returns {number} Returns the index of the matched value, else `-1`.
+ */
+function assocIndexOf(array, key) {
+  var length = array.length;
+  while (length--) {
+    if (eq(array[length][0], key)) {
+      return length;
+    }
+  }
+  return -1;
+}
+
+/**
+ * The base implementation of `_.get` without support for default values.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {Array|string} path The path of the property to get.
+ * @returns {*} Returns the resolved value.
+ */
+function baseGet(object, path) {
+  path = isKey(path, object) ? [path] : castPath(path);
+
+  var index = 0,
+      length = path.length;
+
+  while (object != null && index < length) {
+    object = object[toKey(path[index++])];
+  }
+  return (index && index == length) ? object : undefined;
+}
+
+/**
+ * The base implementation of `_.isNative` without bad shim checks.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a native function,
+ *  else `false`.
+ */
+function baseIsNative(value) {
+  if (!isObject(value) || isMasked(value)) {
+    return false;
+  }
+  var pattern = (isFunction(value) || isHostObject(value)) ? reIsNative : reIsHostCtor;
+  return pattern.test(toSource(value));
+}
+
+/**
+ * The base implementation of `_.toString` which doesn't convert nullish
+ * values to empty strings.
+ *
+ * @private
+ * @param {*} value The value to process.
+ * @returns {string} Returns the string.
+ */
+function baseToString(value) {
+  // Exit early for strings to avoid a performance hit in some environments.
+  if (typeof value == 'string') {
+    return value;
+  }
+  if (isSymbol(value)) {
+    return symbolToString ? symbolToString.call(value) : '';
+  }
+  var result = (value + '');
+  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+}
+
+/**
+ * Casts `value` to a path array if it's not one.
+ *
+ * @private
+ * @param {*} value The value to inspect.
+ * @returns {Array} Returns the cast property path array.
+ */
+function castPath(value) {
+  return isArray(value) ? value : stringToPath(value);
+}
+
+/**
+ * Gets the data for `map`.
+ *
+ * @private
+ * @param {Object} map The map to query.
+ * @param {string} key The reference key.
+ * @returns {*} Returns the map data.
+ */
+function getMapData(map, key) {
+  var data = map.__data__;
+  return isKeyable(key)
+    ? data[typeof key == 'string' ? 'string' : 'hash']
+    : data.map;
+}
+
+/**
+ * Gets the native function at `key` of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {string} key The key of the method to get.
+ * @returns {*} Returns the function if it's native, else `undefined`.
+ */
+function getNative(object, key) {
+  var value = getValue(object, key);
+  return baseIsNative(value) ? value : undefined;
+}
+
+/**
+ * Checks if `value` is a property name and not a property path.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @param {Object} [object] The object to query keys on.
+ * @returns {boolean} Returns `true` if `value` is a property name, else `false`.
+ */
+function isKey(value, object) {
+  if (isArray(value)) {
+    return false;
+  }
+  var type = typeof value;
+  if (type == 'number' || type == 'symbol' || type == 'boolean' ||
+      value == null || isSymbol(value)) {
+    return true;
+  }
+  return reIsPlainProp.test(value) || !reIsDeepProp.test(value) ||
+    (object != null && value in Object(object));
+}
+
+/**
+ * Checks if `value` is suitable for use as unique object key.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is suitable, else `false`.
+ */
+function isKeyable(value) {
+  var type = typeof value;
+  return (type == 'string' || type == 'number' || type == 'symbol' || type == 'boolean')
+    ? (value !== '__proto__')
+    : (value === null);
+}
+
+/**
+ * Checks if `func` has its source masked.
+ *
+ * @private
+ * @param {Function} func The function to check.
+ * @returns {boolean} Returns `true` if `func` is masked, else `false`.
+ */
+function isMasked(func) {
+  return !!maskSrcKey && (maskSrcKey in func);
+}
+
+/**
+ * Converts `string` to a property path array.
+ *
+ * @private
+ * @param {string} string The string to convert.
+ * @returns {Array} Returns the property path array.
+ */
+var stringToPath = memoize(function(string) {
+  string = toString(string);
+
+  var result = [];
+  if (reLeadingDot.test(string)) {
+    result.push('');
+  }
+  string.replace(rePropName, function(match, number, quote, string) {
+    result.push(quote ? string.replace(reEscapeChar, '$1') : (number || match));
+  });
+  return result;
+});
+
+/**
+ * Converts `value` to a string key if it's not a string or symbol.
+ *
+ * @private
+ * @param {*} value The value to inspect.
+ * @returns {string|symbol} Returns the key.
+ */
+function toKey(value) {
+  if (typeof value == 'string' || isSymbol(value)) {
+    return value;
+  }
+  var result = (value + '');
+  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+}
+
+/**
+ * Converts `func` to its source code.
+ *
+ * @private
+ * @param {Function} func The function to process.
+ * @returns {string} Returns the source code.
+ */
+function toSource(func) {
+  if (func != null) {
+    try {
+      return funcToString.call(func);
+    } catch (e) {}
+    try {
+      return (func + '');
+    } catch (e) {}
+  }
+  return '';
+}
+
+/**
+ * Creates a function that memoizes the result of `func`. If `resolver` is
+ * provided, it determines the cache key for storing the result based on the
+ * arguments provided to the memoized function. By default, the first argument
+ * provided to the memoized function is used as the map cache key. The `func`
+ * is invoked with the `this` binding of the memoized function.
+ *
+ * **Note:** The cache is exposed as the `cache` property on the memoized
+ * function. Its creation may be customized by replacing the `_.memoize.Cache`
+ * constructor with one whose instances implement the
+ * [`Map`](http://ecma-international.org/ecma-262/7.0/#sec-properties-of-the-map-prototype-object)
+ * method interface of `delete`, `get`, `has`, and `set`.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Function
+ * @param {Function} func The function to have its output memoized.
+ * @param {Function} [resolver] The function to resolve the cache key.
+ * @returns {Function} Returns the new memoized function.
+ * @example
+ *
+ * var object = { 'a': 1, 'b': 2 };
+ * var other = { 'c': 3, 'd': 4 };
+ *
+ * var values = _.memoize(_.values);
+ * values(object);
+ * // => [1, 2]
+ *
+ * values(other);
+ * // => [3, 4]
+ *
+ * object.a = 2;
+ * values(object);
+ * // => [1, 2]
+ *
+ * // Modify the result cache.
+ * values.cache.set(object, ['a', 'b']);
+ * values(object);
+ * // => ['a', 'b']
+ *
+ * // Replace `_.memoize.Cache`.
+ * _.memoize.Cache = WeakMap;
+ */
+function memoize(func, resolver) {
+  if (typeof func != 'function' || (resolver && typeof resolver != 'function')) {
+    throw new TypeError(FUNC_ERROR_TEXT);
+  }
+  var memoized = function() {
+    var args = arguments,
+        key = resolver ? resolver.apply(this, args) : args[0],
+        cache = memoized.cache;
+
+    if (cache.has(key)) {
+      return cache.get(key);
+    }
+    var result = func.apply(this, args);
+    memoized.cache = cache.set(key, result);
+    return result;
+  };
+  memoized.cache = new (memoize.Cache || MapCache);
+  return memoized;
+}
+
+// Assign cache to `_.memoize`.
+memoize.Cache = MapCache;
+
+/**
+ * Performs a
+ * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+ * comparison between two values to determine if they are equivalent.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to compare.
+ * @param {*} other The other value to compare.
+ * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+ * @example
+ *
+ * var object = { 'a': 1 };
+ * var other = { 'a': 1 };
+ *
+ * _.eq(object, object);
+ * // => true
+ *
+ * _.eq(object, other);
+ * // => false
+ *
+ * _.eq('a', 'a');
+ * // => true
+ *
+ * _.eq('a', Object('a'));
+ * // => false
+ *
+ * _.eq(NaN, NaN);
+ * // => true
+ */
+function eq(value, other) {
+  return value === other || (value !== value && other !== other);
+}
+
+/**
+ * Checks if `value` is classified as an `Array` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an array, else `false`.
+ * @example
+ *
+ * _.isArray([1, 2, 3]);
+ * // => true
+ *
+ * _.isArray(document.body.children);
+ * // => false
+ *
+ * _.isArray('abc');
+ * // => false
+ *
+ * _.isArray(_.noop);
+ * // => false
+ */
+var isArray = Array.isArray;
+
+/**
+ * Checks if `value` is classified as a `Function` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a function, else `false`.
+ * @example
+ *
+ * _.isFunction(_);
+ * // => true
+ *
+ * _.isFunction(/abc/);
+ * // => false
+ */
+function isFunction(value) {
+  // The use of `Object#toString` avoids issues with the `typeof` operator
+  // in Safari 8-9 which returns 'object' for typed array and other constructors.
+  var tag = isObject(value) ? objectToString.call(value) : '';
+  return tag == funcTag || tag == genTag;
+}
+
+/**
+ * Checks if `value` is the
+ * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+ * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+ * @example
+ *
+ * _.isObject({});
+ * // => true
+ *
+ * _.isObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isObject(_.noop);
+ * // => true
+ *
+ * _.isObject(null);
+ * // => false
+ */
+function isObject(value) {
+  var type = typeof value;
+  return !!value && (type == 'object' || type == 'function');
+}
+
+/**
+ * Checks if `value` is object-like. A value is object-like if it's not `null`
+ * and has a `typeof` result of "object".
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+ * @example
+ *
+ * _.isObjectLike({});
+ * // => true
+ *
+ * _.isObjectLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isObjectLike(_.noop);
+ * // => false
+ *
+ * _.isObjectLike(null);
+ * // => false
+ */
+function isObjectLike(value) {
+  return !!value && typeof value == 'object';
+}
+
+/**
+ * Checks if `value` is classified as a `Symbol` primitive or object.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+ * @example
+ *
+ * _.isSymbol(Symbol.iterator);
+ * // => true
+ *
+ * _.isSymbol('abc');
+ * // => false
+ */
+function isSymbol(value) {
+  return typeof value == 'symbol' ||
+    (isObjectLike(value) && objectToString.call(value) == symbolTag);
+}
+
+/**
+ * Converts `value` to a string. An empty string is returned for `null`
+ * and `undefined` values. The sign of `-0` is preserved.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to process.
+ * @returns {string} Returns the string.
+ * @example
+ *
+ * _.toString(null);
+ * // => ''
+ *
+ * _.toString(-0);
+ * // => '-0'
+ *
+ * _.toString([1, 2, 3]);
+ * // => '1,2,3'
+ */
+function toString(value) {
+  return value == null ? '' : baseToString(value);
+}
+
+/**
+ * Gets the value at `path` of `object`. If the resolved value is
+ * `undefined`, the `defaultValue` is returned in its place.
+ *
+ * @static
+ * @memberOf _
+ * @since 3.7.0
+ * @category Object
+ * @param {Object} object The object to query.
+ * @param {Array|string} path The path of the property to get.
+ * @param {*} [defaultValue] The value returned for `undefined` resolved values.
+ * @returns {*} Returns the resolved value.
+ * @example
+ *
+ * var object = { 'a': [{ 'b': { 'c': 3 } }] };
+ *
+ * _.get(object, 'a[0].b.c');
+ * // => 3
+ *
+ * _.get(object, ['a', '0', 'b', 'c']);
+ * // => 3
+ *
+ * _.get(object, 'a.b.c', 'default');
+ * // => 'default'
+ */
+function get(object, path, defaultValue) {
+  var result = object == null ? undefined : baseGet(object, path);
+  return result === undefined ? defaultValue : result;
+}
+
+module.exports = get;
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+
+/***/ }),
+/* 34 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -16620,7 +16984,7 @@ var SystemSettings = function () {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 30 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
@@ -16813,79 +17177,9 @@ var SystemSettings = function () {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(1)))
 
 /***/ }),
-/* 31 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {var scope = (typeof global !== "undefined" && global) ||
-            (typeof self !== "undefined" && self) ||
-            window;
-var apply = Function.prototype.apply;
-
-// DOM APIs, for completeness
-
-exports.setTimeout = function() {
-  return new Timeout(apply.call(setTimeout, scope, arguments), clearTimeout);
-};
-exports.setInterval = function() {
-  return new Timeout(apply.call(setInterval, scope, arguments), clearInterval);
-};
-exports.clearTimeout =
-exports.clearInterval = function(timeout) {
-  if (timeout) {
-    timeout.close();
-  }
-};
-
-function Timeout(id, clearFn) {
-  this._id = id;
-  this._clearFn = clearFn;
-}
-Timeout.prototype.unref = Timeout.prototype.ref = function() {};
-Timeout.prototype.close = function() {
-  this._clearFn.call(scope, this._id);
-};
-
-// Does not start the time, just sets up the members needed.
-exports.enroll = function(item, msecs) {
-  clearTimeout(item._idleTimeoutId);
-  item._idleTimeout = msecs;
-};
-
-exports.unenroll = function(item) {
-  clearTimeout(item._idleTimeoutId);
-  item._idleTimeout = -1;
-};
-
-exports._unrefActive = exports.active = function(item) {
-  clearTimeout(item._idleTimeoutId);
-
-  var msecs = item._idleTimeout;
-  if (msecs >= 0) {
-    item._idleTimeoutId = setTimeout(function onTimeout() {
-      if (item._onTimeout)
-        item._onTimeout();
-    }, msecs);
-  }
-};
-
-// setimmediate attaches itself to the global object
-__webpack_require__(30);
-// On some exotic environments, it's not clear which object `setimmediate` was
-// able to install onto.  Search each possibility in the same order as the
-// `setimmediate` library.
-exports.setImmediate = (typeof self !== "undefined" && self.setImmediate) ||
-                       (typeof global !== "undefined" && global.setImmediate) ||
-                       (this && this.setImmediate);
-exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
-                         (typeof global !== "undefined" && global.clearImmediate) ||
-                         (this && this.clearImmediate);
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
-
-/***/ }),
-/* 32 */,
-/* 33 */,
-/* 34 */
+/* 36 */,
+/* 37 */,
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {var __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -34002,15 +34296,15 @@ exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
   }
 }.call(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(13)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(14)(module)))
 
 /***/ }),
-/* 35 */,
-/* 36 */
+/* 39 */,
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var rng = __webpack_require__(18);
-var bytesToUuid = __webpack_require__(17);
+var rng = __webpack_require__(20);
+var bytesToUuid = __webpack_require__(19);
 
 function v4(options, buf, offset) {
   var i = buf && offset || 0;
@@ -34041,12 +34335,12 @@ module.exports = v4;
 
 
 /***/ }),
-/* 37 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-const pTry = __webpack_require__(39);
+const pTry = __webpack_require__(43);
 
 const pLimit = concurrency => {
 	if (concurrency < 1) {
@@ -34100,7 +34394,7 @@ module.exports.default = pLimit;
 
 
 /***/ }),
-/* 38 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -34610,7 +34904,7 @@ module.exports = pick;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
-/* 39 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -34626,11 +34920,11 @@ module.exports.default = pTry;
 
 
 /***/ }),
-/* 40 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var v1 = __webpack_require__(19);
-var v4 = __webpack_require__(36);
+var v1 = __webpack_require__(21);
+var v4 = __webpack_require__(40);
 
 var uuid = v4;
 uuid.v1 = v1;
@@ -34640,16 +34934,11 @@ module.exports = uuid;
 
 
 /***/ }),
-/* 41 */,
-/* 42 */,
-/* 43 */,
-/* 44 */,
 /* 45 */,
 /* 46 */,
 /* 47 */,
 /* 48 */,
-/* 49 */,
-/* 50 */
+/* 49 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -35185,14 +35474,20 @@ class BoxMath {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
+/* 50 */,
 /* 51 */,
 /* 52 */,
 /* 53 */,
-/* 54 */
+/* 54 */,
+/* 55 */,
+/* 56 */,
+/* 57 */,
+/* 58 */,
+/* 59 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__boxMath__ = __webpack_require__(50);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__boxMath__ = __webpack_require__(49);
 
 class DockableBox {
 	constructor(bounds) {
@@ -35750,14 +36045,14 @@ class DockableBox {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 55 */
+/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const ObjectPool_1 = __webpack_require__(58);
-const WindowPool_1 = __webpack_require__(67);
+const ObjectPool_1 = __webpack_require__(63);
+const WindowPool_1 = __webpack_require__(77);
 const logger_1 = __webpack_require__(0);
 const dependencies = {
     Logger: logger_1.default
@@ -35775,7 +36070,7 @@ exports.DockingPoolSingleton = DockingPoolSingleton;
 
 
 /***/ }),
-/* 56 */
+/* 61 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -35827,8 +36122,8 @@ const SPLIT_HANDLE_MAP = {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 57 */,
-/* 58 */
+/* 62 */,
+/* 63 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -35889,7 +36184,9 @@ exports.ObjectPool = ObjectPool;
 
 
 /***/ }),
-/* 59 */
+/* 64 */,
+/* 65 */,
+/* 66 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -36273,13 +36570,15 @@ module.exports = debounce;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
-/* 60 */
+/* 67 */,
+/* 68 */,
+/* 69 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_async__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_async___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_async__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__constants__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__constants__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__constants___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__constants__);
 
 
@@ -36307,7 +36606,6 @@ class WindowGroup {
 		this.name = params.name;
 		this.groupState = groupStates.NORMAL;
 		this.GROUPSTATES = groupStates;
-		this.isAlwaysOnTop = false;
 		if (params.windows) {
 			this.windows = params.windows;
 		} else {
@@ -36331,7 +36629,6 @@ class WindowGroup {
 	addWindow(win) {
 		Logger.system.debug("windowGroup.addWindow", win.name);
 		this.windows[win.name] = win;
-		if (this.isMovable) win.alwaysOnTop(this.isAlwaysOnTop);
 	}
 
 	/**
@@ -36393,7 +36690,6 @@ class WindowGroup {
 			Logger.system.debug("windowGroup.addWindows", win.name);
 
 			self.windows[win.name] = win;
-			if (this.isMovable) win.alwaysOnTop(this.isAlwaysOnTop);
 		}, this);
 	}
 
@@ -36488,39 +36784,6 @@ class WindowGroup {
 			}
 		}
 		__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0_async__["forEach"])(windowList, restoreWindow, cb);
-	}
-
-	// Bring all windows to top. Also sets the state of the group to always on top and new windows added to the group inherit the state of thw window
-	allAlwaysOnTop(alwaysOnTop) {
-		this.isAlwaysOnTop = alwaysOnTop;
-		this.alwaysOnTop({ windowList: Object.keys(this.windows), restoreWindows: true, alwaysOnTop: alwaysOnTop });
-	}
-
-	// Set specific windows to top. Generally should call allAlwaysOnTop
-	alwaysOnTop(params) {
-		if (!params || params && Object.keys(params).length === 0) {
-			params = { windowList: Object.keys(this.windows), restoreWindows: true };
-		}
-		let { windowList, componentType } = params;
-		if (windowList && typeof windowList[0] !== "string") {
-			windowList = windowList.map(win => win.windowName);
-		}
-		if (componentType) windowList = this.findAllByComponentType(componentType);
-		var self = this;
-		if (!windowList) windowList = Object.keys(this.windows);
-		for (let w in windowList) {
-			let win;
-			if (Array.isArray(windowList)) w = windowList[w];
-
-			if (!(typeof w === "string" || w instanceof String)) {
-				win = self.getWindow(w.windowName || w.name);
-			} else {
-				win = self.getWindow(w);
-			}
-			if (win) {
-				win.alwaysOnTop(params.alwaysOnTop);
-			}
-		}
 	}
 
 	/**
@@ -36641,19 +36904,20 @@ class WindowGroup {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 61 */,
-/* 62 */,
-/* 63 */,
-/* 64 */,
-/* 65 */,
-/* 66 */,
-/* 67 */
+/* 70 */,
+/* 71 */,
+/* 72 */,
+/* 73 */,
+/* 74 */,
+/* 75 */,
+/* 76 */,
+/* 77 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const ObjectPool_1 = __webpack_require__(58);
+const ObjectPool_1 = __webpack_require__(63);
 class WindowPool extends ObjectPool_1.ObjectPool {
     *iterator() {
         for (let windowName in this.objects) {
@@ -36668,22 +36932,24 @@ exports.WindowPool = WindowPool;
 
 
 /***/ }),
-/* 68 */,
-/* 69 */,
-/* 70 */,
-/* 71 */,
-/* 72 */,
-/* 73 */
+/* 78 */,
+/* 79 */,
+/* 80 */,
+/* 81 */,
+/* 82 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_window_windowGroup__ = __webpack_require__(60);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__dockableBox__ = __webpack_require__(54);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__constants__ = __webpack_require__(56);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__boxMath__ = __webpack_require__(50);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_lodash_debounce__ = __webpack_require__(59);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_lodash_debounce___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_lodash_debounce__);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_window_windowGroup__ = __webpack_require__(69);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__dockableBox__ = __webpack_require__(59);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_disentangledUtils__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_disentangledUtils___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__common_disentangledUtils__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__constants__ = __webpack_require__(61);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__boxMath__ = __webpack_require__(49);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_lodash_debounce__ = __webpack_require__(66);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_lodash_debounce___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_lodash_debounce__);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 
 
 
@@ -36695,21 +36961,6 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
  */
 let Logger;
 const debounceTime = 300;
-const clone = function (obj) {
-	//This has been tested a good amount. Previous to this commit we were using a mix of deepmerge and JSON.parse(JSON.stringify()).
-	//Trying lodash.deepclone made my tests take 2-3s.
-	//JSON.parse everywhere made them take ~ 1s.
-	//Using JSON.parse on arrays and deep merge on objects makes them take 7-900ms.
-	if (Array.isArray(obj)) {
-		return obj.slice();
-	}
-	try {
-		return JSON.parse(JSON.stringify(obj));
-	} catch (e) {
-		Logger.system.error("clone error", e);
-		return e;
-	}
-};
 
 class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGroup__["a" /* WindowGroup */] {
 	/**
@@ -36727,6 +36978,11 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 		this.setMinimums(config);
 		this.name = config.name;
 		this.isMovable = typeof config.isMovable !== "undefined" ? config.isMovable : false;
+		/** A mapping from window names to their previous alwaysOnTop state.
+   * Allows us to set window back to the way they were when they leave
+   * the group.
+   */
+		this.ungroupedAlwaysOnTopState = config.ungroupedAlwaysOnTopState || {};
 		this.windowBoundingBox = {
 			min: {
 				x: 0,
@@ -36744,21 +37000,49 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 		this.dockableBox = new __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* default */]();
 		this.inheritDockableBox();
 		this.removeWindow = this.removeWindow.bind(this);
-
+		this.handleAlwaysOnTopChange = this.handleAlwaysOnTopChange.bind(this);
 		// Will wait 300 ms after every request before moving the group. This gives time for events to arrive from the other windows in the group
 		// The function will only be called after this amount of time has passed with no requests.
 		// Since the OS doesn't care if a group stays together, we need to move the group after the OS is finished moving all windows
-		this.performDeferredSystemMove = __WEBPACK_IMPORTED_MODULE_4_lodash_debounce___default()(this.performDeferredSystemMove.bind(this), debounceTime);
+		this.performDeferredSystemMove = __WEBPACK_IMPORTED_MODULE_5_lodash_debounce___default()(this.performDeferredSystemMove.bind(this), debounceTime);
 		this.deferredWindowMoves = [];
 	}
 
 	/**
+  * Fired when the alwaysOnTop of a window in the group changes.
+  * Sets all windows in the group to the new value.
+  */
+	handleAlwaysOnTopChange({ data: { alwaysOnTop } }) {
+		for (const groupWin of Object.values(this.windows)) {
+			const currentAlwaysOnTop = groupWin.isAlwaysOnTop();
+			if (currentAlwaysOnTop != alwaysOnTop) groupWin.alwaysOnTop(alwaysOnTop);
+		}
+	}
+
+	/**
+  * Returns the JSON representation of the group (stored on the workspace).
+  */
+	getJSON() {
+		const windowNames = this.getWindowNames();
+		const topRightWindow = windowNames.length ? this.getMoveAnchor("BottomLeft").name : null;
+
+		return {
+			windowNames,
+			isMovable: this.isMovable,
+			isAlwaysOnTop: this.isAlwaysOnTop,
+			topRightWindow,
+			isARectangle: this.isARectangle(),
+			ungroupedAlwaysOnTopState: this.ungroupedAlwaysOnTopState
+		};
+	}
+
+	/**
   * Responds to system events when the OS has moved a group. Every time a window in this group triggers this function a shared array will
-  * be updated with that window and it's bounds. After each update, request the group move. 
+  * be updated with that window and it's bounds. After each update, request the group move.
   * If this function is triggered again within a certain time, the group move will continue to be delayed until enough time passes without
-  * any windows events. Ideally the group will only move when all windows in the group with changes have responded to events. 
+  * any windows events. Ideally the group will only move when all windows in the group with changes have responded to events.
   * @param {*} windowObject - Contains the window name and it's updated bounds
-  * @param {*} calculator - an instance of docking calculator 
+  * @param {*} calculator - an instance of docking calculator
   */
 	deferSystemMove(windowObject, calculator) {
 		this.deferredWindowMoves.push(windowObject);
@@ -36768,8 +37052,8 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 	/**
   * Requests the group move. Uses an array of windows in the group and their bounds to choose which window's bounds to use for the group move.
   * Intended to move a group after the monitor configuration has changed as the OS may not keep the group intact when it is moved.
-  * 
-  * @param {*} calculator 
+  *
+  * @param {*} calculator
   * @param {*} deferredWindowMoves array of windowobjects to be used for the move.
   */
 	performDeferredSystemMove(calculator, deferredWindowMoves) {
@@ -36802,9 +37086,9 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 		}
 		// When a group straddles a monitor the OS will move the overlapping windows fully onto one monitor.
 		// This causes the group to break because we don't allow grouping on monitor edge.
-		// In some cases, the move anchor will be unchanged, even though other windows in the group have moved. 
+		// In some cases, the move anchor will be unchanged, even though other windows in the group have moved.
 		// This just means the old bounds of the move anchor are still valid.
-		// By shifting the bounds by one pixel, we insure that the move request is processed, and the group will 
+		// By shifting the bounds by one pixel, we insure that the move request is processed, and the group will
 		// be fully attached.
 		Object.keys(bounds).forEach(key => {
 			if (["right", "left", "top", "bottom"].includes(key)) bounds[key]++;
@@ -36832,7 +37116,7 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 	}
 	addWindow(win) {
 		if (Object.keys(this.windows).length === 0) {
-			this.windowBoundingBox = clone(win.windowBoundingBox);
+			this.windowBoundingBox = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__common_disentangledUtils__["clone"])(win.windowBoundingBox, Logger.system.error);
 		}
 		if (this.isMovable) win.win._updateOptions({
 			options: {
@@ -36840,8 +37124,33 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 			}
 		});
 		super.addWindows(win);
+
 		this.updateBounds();
 		if (this.isMovable) this.bringToFront({ restoreWindows: false });
+
+		// alwaysOnTop setup
+		if (this.isMovable) {
+			win.win.addEventListener("alwaysOnTop", this.handleAlwaysOnTopChange);
+			const winIsAlwaysOnTop = win.isAlwaysOnTop();
+			// Keep a record of the windows prev alwaysOnTop state
+			// In the case of reloading a workspace, the names will already be there,
+			// and we don't want to clobber the old state.
+			if (!(win.name in this.ungroupedAlwaysOnTopState)) {
+				this.ungroupedAlwaysOnTopState[win.name] = winIsAlwaysOnTop;
+			}
+			// If, after adding this window, any of the windows in the group are alwaysOnTop
+			// then all of the windows need to be alwaysOnTop.
+			const anyWindowsAlwaysOnTop = Object.values(this.windows).some(groupWin => groupWin.isAlwaysOnTop());
+			if (anyWindowsAlwaysOnTop) {
+				if (winIsAlwaysOnTop) {
+					// If this window is already on top, we still need to check the other windows.
+					this.handleAlwaysOnTopChange({ data: { alwaysOnTop: true } });
+				} else {
+					// Otherwise, we need to set this window to always on top.
+					win.alwaysOnTop(true);
+				}
+			}
+		}
 	}
 
 	updateBounds() {
@@ -36886,8 +37195,8 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 		let windowList = this.getWindows();
 		for (let windowName in windowList) {
 			let win = this.getWindow(windowName);
-			for (let i = 0; i < __WEBPACK_IMPORTED_MODULE_2__constants__["EDGES"].length; i++) {
-				let edge = __WEBPACK_IMPORTED_MODULE_2__constants__["EDGES"][i];
+			for (let i = 0; i < __WEBPACK_IMPORTED_MODULE_3__constants__["EDGES"].length; i++) {
+				let edge = __WEBPACK_IMPORTED_MODULE_3__constants__["EDGES"][i];
 				if (win[edge] === this[edge]) {
 					windowsOnSegment[win.name] = win;
 				}
@@ -37086,13 +37395,28 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
  * @param  {type} name {description}
  * @return {type} {description}
  */
-	removeWindow(name) {
-		let win = this.getWindow(name);
-		if (this.isMovable) win.win._updateOptions({
-			options: {
-				"taskbarIconGroup": win.win.uuid
+	removeWindow(name, updateAOT = true) {
+		const win = this.getWindow(name);
+		if (this.isMovable) {
+			win.win._updateOptions({
+				options: {
+					taskbarIconGroup: win.win.uuid
+				}
+			});
+
+			// Clean up alwaysOnTop state
+			// remove the listener
+			// Set the window's alwaysOnTop back to its previous state.
+			win.win.removeEventListener("alwaysOnTop", this.handleAlwaysOnTopChange);
+			if (updateAOT) {
+				win.alwaysOnTop(this.ungroupedAlwaysOnTopState[win.name]);
 			}
-		});
+			// On workspace reload, the window will be removed then added back.
+			// We want the ungroupedAlwaysOnTopState to stick around in that case,
+			// so we don't delete it from the object on remove. Window names are unique
+			// so there's no risk of collision.
+		}
+
 		super.removeWindows(name);
 		this.updateBounds();
 	}
@@ -37159,7 +37483,7 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 		splitHandle.forEach(handle => {
 			groupIter = calculator.groupWindowIterator(this);
 			//cleans up the edges of the group in case rounding error messed us up.
-			var oppEdge = __WEBPACK_IMPORTED_MODULE_2__constants__["OPPOSITE_EDGE_MAP"][handle];
+			var oppEdge = __WEBPACK_IMPORTED_MODULE_3__constants__["OPPOSITE_EDGE_MAP"][handle];
 			for (var win of groupIter) {
 				var moveRequest = movements[win.name];
 				if (win.onGroupEdge && win.onGroupEdge[oppEdge] && moveRequest[oppEdge] !== newBounds[oppEdge]) {
@@ -37224,7 +37548,7 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 				Logger.system.warn("INVESTIGATE: No win passed to doTheConga");
 				return;
 			}
-			var oppEdge = __WEBPACK_IMPORTED_MODULE_2__constants__["OPPOSITE_EDGE_MAP"][handle];
+			var oppEdge = __WEBPACK_IMPORTED_MODULE_3__constants__["OPPOSITE_EDGE_MAP"][handle];
 
 			for (var i = 0, len = win.snappedWindows.length; i < len; i++) {
 				var snappedWindowObj = win.snappedWindows[i];
@@ -37291,23 +37615,23 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 
 		let anchorPoint = {};
 		//The "Anchor" Is where the group is offset by. It's a point. Top/left is a misnomer. After scaling, each window will be shifted by deltaX and deltaY, where the delta is the distance between that window's top left and the anchor's point.
-		if (__WEBPACK_IMPORTED_MODULE_2__constants__["EDGES"].includes(anchor)) {
+		if (__WEBPACK_IMPORTED_MODULE_3__constants__["EDGES"].includes(anchor)) {
 			anchorPoint.top = newBounds.top;
 			anchorPoint.left = newBounds.left;
 			switch (anchor) {
 				case "left":
-					//When resizing from the left, we want to make sure the right edge of the group doesn't move.
+					// When resizing from the left, we want to make sure the right edge of the group doesn't move.
 					anchorPoint.left = newBounds.right;
 					break;
 				case "top":
-					//When resizing from the top, we want to make sure the bottom edge of the group doesn't move.
+					// When resizing from the top, we want to make sure the bottom edge of the group doesn't move.
 					anchorPoint.top = newBounds.bottom;
 					break;
 			}
-		} else if (__WEBPACK_IMPORTED_MODULE_2__constants__["CORNERS"].includes(anchor)) {
+		} else if (__WEBPACK_IMPORTED_MODULE_3__constants__["CORNERS"].includes(anchor)) {
 			//Get the opposite corner; that's the anchor.
 			//e.g., when resizing from the top right, the bottom left shouldn't move at all.
-			let corner = corners[__WEBPACK_IMPORTED_MODULE_2__constants__["OPPOSITE_EDGE_MAP"][anchor]];
+			let corner = corners[__WEBPACK_IMPORTED_MODULE_3__constants__["OPPOSITE_EDGE_MAP"][anchor]];
 			anchorPoint = {
 				top: corner.y,
 				left: corner.x
@@ -37403,7 +37727,7 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 			return [];
 		}
 
-		var oppEdge = __WEBPACK_IMPORTED_MODULE_2__constants__["OPPOSITE_EDGE_MAP"][edge];
+		var oppEdge = __WEBPACK_IMPORTED_MODULE_3__constants__["OPPOSITE_EDGE_MAP"][edge];
 		var windowSegment = win.getEdges("obj", includeCorners)[edge];
 
 		for (let windowName in this.windows) {
@@ -37412,7 +37736,9 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 				continue;
 			}
 			let segment = possibleSnapper.getEdges("obj", includeCorners)[oppEdge];
+
 			var shouldPush = false;
+
 			let points = [{
 				name: possibleSnapper.name,
 				val: segment.min
@@ -37426,12 +37752,13 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 				name: win.name,
 				val: windowSegment.max
 			}];
+
 			if (["top", "bottom"].includes(edge)) {
 				if (segment.min.y !== windowSegment.min.y) {
 					continue;
 				}
 				points = points.sort((a, b) => {
-					return a.val.x > b.val.x;
+					return b.val.x - a.val.x;
 				});
 			}
 
@@ -37440,12 +37767,14 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 					continue;
 				}
 				points = points.sort((a, b) => {
-					return a.val.y > b.val.y;
+					return b.val.y - a.val.y;
 				});
 			}
+
 			if (points[0].name !== points[1].name) {
 				shouldPush = true;
 			}
+
 			if (shouldPush) {
 				let snapObj = {
 					name: possibleSnapper.name,
@@ -37484,7 +37813,7 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 		const calculator = this.getWindow(candidates[0].name).calculator;
 
 		//Bounding box is needed for `sharesAnEdgeWith`.
-		myHole.windowBoundingBox = __WEBPACK_IMPORTED_MODULE_3__boxMath__["a" /* default */].getWindowBoundingBox(myHole);
+		myHole.windowBoundingBox = __WEBPACK_IMPORTED_MODULE_4__boxMath__["a" /* default */].getWindowBoundingBox(myHole);
 
 		//If the hole takes up the whole width or whole height of the group, we should scale the remaining windows to fill the hole.
 		if ((myHole.width === this.width || myHole.height === this.height) && this.sharesAnEdgeWith(myHole)) {
@@ -37577,7 +37906,7 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 					this.fillAttempts = 0;
 					return;
 				}
-				let leftovers = __WEBPACK_IMPORTED_MODULE_3__boxMath__["a" /* default */].clipRect(myHole, new __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* default */](newBounds), impactedEdge);
+				let leftovers = __WEBPACK_IMPORTED_MODULE_4__boxMath__["a" /* default */].clipRect(myHole, new __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* default */](newBounds), impactedEdge);
 				this.fillHole(leftovers);
 			} else {
 				calculator.onMouseUp();
@@ -37588,7 +37917,7 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 	}
 
 	moveTo(bounds, cb = Function.prototype) {
-		//System moves should already have an anchor window defined. For other moves set choose the top-left window. 
+		//System moves should already have an anchor window defined. For other moves set choose the top-left window.
 		if (!bounds.anchor) {
 			Logger.system.verbose("dockableGroup.moveTo: No bounds anchor predefined, defaulting to bottomRight move anchor");
 			bounds.anchor = this.getMoveAnchor("BottomRight");
@@ -37619,7 +37948,7 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 		});
 		let cornersNotOnEdges = uniqueCorners.filter(corner => {
 			let otherEdges = edges.filter(edge => edge.window !== corner.window);
-			return !otherEdges.some(edge => __WEBPACK_IMPORTED_MODULE_3__boxMath__["a" /* default */].isPointOnSegment(corner, edge));
+			return !otherEdges.some(edge => __WEBPACK_IMPORTED_MODULE_4__boxMath__["a" /* default */].isPointOnSegment(corner, edge));
 		});
 		return cornersNotOnEdges;
 	}
@@ -37862,11 +38191,11 @@ class DockableGroup extends __WEBPACK_IMPORTED_MODULE_0__common_window_windowGro
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 74 */
+/* 83 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__boxMath__ = __webpack_require__(50);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__boxMath__ = __webpack_require__(49);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
 
@@ -38213,20 +38542,20 @@ function DockableMonitor(params) {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 75 */
+/* 84 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__boxMath__ = __webpack_require__(50);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__dockableBox__ = __webpack_require__(54);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_disentangledUtils__ = __webpack_require__(22);
+/* WEBPACK VAR INJECTION */(function(process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__boxMath__ = __webpack_require__(49);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__dockableBox__ = __webpack_require__(59);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_disentangledUtils__ = __webpack_require__(23);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_disentangledUtils___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__common_disentangledUtils__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_lodash_get__ = __webpack_require__(24);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_lodash_get__ = __webpack_require__(33);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_lodash_get___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_lodash_get__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_storageClient__ = __webpack_require__(21);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_storageClient__ = __webpack_require__(25);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__clients_storageClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__clients_storageClient__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__common_util__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_constants__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_constants__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__common_constants___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6__common_constants__);
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
@@ -38253,7 +38582,7 @@ let System;
  */
 let calculator;
 //Need config service in order to see if a particular window is dockable presentationalComponents -> components.Toolbar.component.dockable = true?
-const _throttle = __webpack_require__(23);
+const _throttle = __webpack_require__(24);
 
 //defaults for the openfin version.
 /*var OF_VERSION = {
@@ -38275,7 +38604,7 @@ var warningsSent = {
 class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* default */] {
 	/**
   *
-  * @param {*} win Window object; OpenfinWindow, ExternalWindow, etc.
+  * @param {*} win Window object; WebWindow, ExternalWindow, etc.
   * @param {bounds} bounds initial bounds for the window.
   * @param {object} dependencies Dependency object that provides the calculator, System, and Logger.
   * @param {DockingCalculator} dependencies.calculator
@@ -39454,6 +39783,18 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 		}
 	}
 
+	/**
+  * Returns the present alwaysOnTop status of the window.
+  *
+  * NOTE: This only reflects Finsemble's internal representation
+  * of the alwaysOnTop status, not the container/OS. When changing the status,
+  * Finsemble's status changes before the underlying container, causing them
+  * to briefly become out of sync.
+  */
+	isAlwaysOnTop() {
+		return this.win._isAlwaysOnTop();
+	}
+
 	bringToFront() {
 		//window.methodCalls["bringToFront"]++;
 		try {
@@ -39558,23 +39899,23 @@ class DockableWindow extends __WEBPACK_IMPORTED_MODULE_1__dockableBox__["a" /* d
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 76 */
+/* 85 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(global, process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__dockableMonitor__ = __webpack_require__(74);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__dockableGroup__ = __webpack_require__(73);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__dockableBox__ = __webpack_require__(54);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__boxMath__ = __webpack_require__(50);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__maskBoundsCalculator__ = __webpack_require__(77);
+/* WEBPACK VAR INJECTION */(function(global, process, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__dockableMonitor__ = __webpack_require__(83);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__dockableGroup__ = __webpack_require__(82);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__dockableBox__ = __webpack_require__(59);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__boxMath__ = __webpack_require__(49);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__maskBoundsCalculator__ = __webpack_require__(86);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__maskBoundsCalculator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__maskBoundsCalculator__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_async__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_async___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_async__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Common_Pools_PoolSingletons__ = __webpack_require__(55);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Common_Pools_PoolSingletons__ = __webpack_require__(60);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Common_Pools_PoolSingletons___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6__Common_Pools_PoolSingletons__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_disentangledUtils__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_disentangledUtils__ = __webpack_require__(23);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__common_disentangledUtils___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7__common_disentangledUtils__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__constants__ = __webpack_require__(56);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__constants__ = __webpack_require__(61);
 
 
 
@@ -40034,9 +40375,9 @@ class DockingCalculator {
 			throw new Error("Window not found");
 		}
 
-		//When we mouse down on a dockable component, we need to store the monitor its on immediately. 
-		//Sometimes, in a multi-monitor configuration, when the window undocks it will momentarily 
-		//jump to another monitor (since the grabber when docked is always near a monitor edge). 
+		//When we mouse down on a dockable component, we need to store the monitor its on immediately.
+		//Sometimes, in a multi-monitor configuration, when the window undocks it will momentarily
+		//jump to another monitor (since the grabber when docked is always near a monitor edge).
 		//To prevent the moveAllWindowsOutOfClaimedSpace calculation from using the
 		//wrong monitor, we store it on the window to remove it later.
 		if (this.movingWindow.isDockableComponent && this.movingWindow.isDocked) {
@@ -40181,7 +40522,7 @@ class DockingCalculator {
 	/**
  * When the user lifts her mouse, this is fired. It cleans up opacity, shows windows if we were moving a group, and cleans up global variables.
  *
- * @param {} params - Optional. Possible parameters: 
+ * @param {} params - Optional. Possible parameters:
  *									systemMoved: If true, indicates the OS initiated the group move
  *									triggeredByAutoArrange: If true, indicate the move was initiated by auto-arrange
  */
@@ -40921,7 +41262,9 @@ class DockingCalculator {
 					continue;
 				}
 				let segment = possibleSnapper.getEdges("obj", includeCorners)[oppEdge];
+
 				var shouldPush = false;
+
 				let points = [{
 					name: possibleSnapper.name,
 					val: segment.min
@@ -40935,12 +41278,13 @@ class DockingCalculator {
 					name: win.name,
 					val: windowSegment.max
 				}];
+
 				if (["top", "bottom"].includes(edge)) {
 					if (segment.min.y !== windowSegment.min.y) {
 						continue;
 					}
 					points = points.sort((a, b) => {
-						return a.val.x > b.val.x;
+						return b.val.x - a.val.x;
 					});
 				}
 
@@ -40949,12 +41293,14 @@ class DockingCalculator {
 						continue;
 					}
 					points = points.sort((a, b) => {
-						return a.val.y > b.val.y;
+						return b.val.y - a.val.y;
 					});
 				}
+
 				if (points[0].name !== points[1].name) {
 					shouldPush = true;
 				}
+
 				if (shouldPush) {
 					if (debug) {
 						Logger.system.debug("forceObjectsToLogger", windowSegment, segment, win.name, possibleSnapper.name, edge);
@@ -41333,7 +41679,7 @@ class DockingCalculator {
 	}
 
 	/**
-  * Returns a list of 'rawMonitors' from openfin. These are only available when they are actually passed into the DockableMonitor when its instantiated.
+  * Returns a list of 'rawMonitors' from the container. These are only available when they are actually passed into the DockableMonitor when its instantiated.
   */
 	getRawMonitors() {
 		let rawMonitors = [];
@@ -41539,7 +41885,7 @@ class DockingCalculator {
 	/**
   * Removes a window from a group. When tiling, we do not delete groups with only one window. We could be doing an operation on a group with two windows, and we want to retain group membership so that hole-filling works appropriately.
   */
-	removeWindowFromGroup(windowName, groupName, deleteGroupsWithOneWindow = true) {
+	removeWindowFromGroup(windowName, groupName, deleteGroupsWithOneWindow = true, updateAOT = true) {
 		if (debug) {
 			Logger.system.debug("forceObjectsToLogger", "removing window from group", windowName, groupName);
 		}
@@ -41553,9 +41899,9 @@ class DockingCalculator {
 			return;
 		}
 
-		group.removeWindow(win.name);
+		group.removeWindow(win.name, updateAOT);
 		if (deleteGroupsWithOneWindow && group.getWindowNames().length === 1) {
-			this.removeWindowFromGroup(group.getWindowNames()[0], group.name);
+			this.removeWindowFromGroup(group.getWindowNames()[0], group.name, true, updateAOT);
 			this.removeGroup(group.name);
 		}
 	}
@@ -41634,12 +41980,12 @@ class DockingCalculator {
 		if (group.isMovable) {
 			let movableGroup = this.getMovableGroup(win.name);
 			if (movableGroup) {
-				this.removeWindowFromGroup(win.name, movableGroup.name);
+				this.removeWindowFromGroup(win.name, movableGroup.name, true, false);
 			}
 		} else {
 			let immobileGroup = this.getImmobileGroup(win.name);
 			if (immobileGroup) {
-				this.removeWindowFromGroup(win.name, immobileGroup.name);
+				this.removeWindowFromGroup(win.name, immobileGroup.name, true, false);
 			}
 		}
 
@@ -43153,7 +43499,6 @@ class DockingCalculator {
 
 		for (let i = 0, len = movingWindowSnappedWindows.length; i < len; i++) {
 			let snapObj = movingWindowSnappedWindows[i];
-
 			var snappedWindow = self.getWindow(snapObj.name);
 			let newBounds = movements[snapObj.name] ? movements[snapObj.name] : snappedWindow.getBounds();
 			newBounds.name = snapObj.name;
@@ -43812,7 +44157,7 @@ class DockingCalculator {
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(4), __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 77 */
+/* 86 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(process) {// Wanted to do ES6 export but that didn't work in current WP configurations, not sure why
@@ -43893,15 +44238,6 @@ function mousePosToBounds(mousePosition) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 78 */,
-/* 79 */,
-/* 80 */,
-/* 81 */,
-/* 82 */,
-/* 83 */,
-/* 84 */,
-/* 85 */,
-/* 86 */,
 /* 87 */,
 /* 88 */,
 /* 89 */,
@@ -43915,15 +44251,33 @@ function mousePosToBounds(mousePosition) {
 /* 97 */,
 /* 98 */,
 /* 99 */,
-/* 100 */
+/* 100 */,
+/* 101 */,
+/* 102 */,
+/* 103 */,
+/* 104 */,
+/* 105 */,
+/* 106 */,
+/* 107 */,
+/* 108 */,
+/* 109 */,
+/* 110 */,
+/* 111 */,
+/* 112 */,
+/* 113 */,
+/* 114 */,
+/* 115 */,
+/* 116 */,
+/* 117 */,
+/* 118 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(module, process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__dockableWindow__ = __webpack_require__(75);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__mockMonitor__ = __webpack_require__(161);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__dockingCalculator__ = __webpack_require__(76);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_disentangledUtils__ = __webpack_require__(22);
+/* WEBPACK VAR INJECTION */(function(module, process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__dockableWindow__ = __webpack_require__(84);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__mockMonitor__ = __webpack_require__(187);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__dockingCalculator__ = __webpack_require__(85);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_disentangledUtils__ = __webpack_require__(23);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_disentangledUtils___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__common_disentangledUtils__);
 
 
@@ -43933,8 +44287,8 @@ var dockableWindows = {};
 var DockingCalculator = new __WEBPACK_IMPORTED_MODULE_2__dockingCalculator__["a" /* default */]({}, {
 	Logger: __WEBPACK_IMPORTED_MODULE_3__common_disentangledUtils__["mockLogger"]
 });
-var CONSTANTS = __webpack_require__(56);
-const MockSystem = __webpack_require__(162);
+var CONSTANTS = __webpack_require__(61);
+const MockSystem = __webpack_require__(188);
 // var AutoArrange = require("../../../MultiWindowFeatures/autoArrange");
 
 DockingCalculator.sendAutoArrangeStatusUpdate = Function.prototype;
@@ -44102,24 +44456,6 @@ module.exports = new DockingMath();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(2)(module), __webpack_require__(1)))
 
 /***/ }),
-/* 101 */,
-/* 102 */,
-/* 103 */,
-/* 104 */,
-/* 105 */,
-/* 106 */,
-/* 107 */,
-/* 108 */,
-/* 109 */,
-/* 110 */,
-/* 111 */,
-/* 112 */,
-/* 113 */,
-/* 114 */,
-/* 115 */,
-/* 116 */,
-/* 117 */,
-/* 118 */,
 /* 119 */,
 /* 120 */,
 /* 121 */,
@@ -44162,7 +44498,33 @@ module.exports = new DockingMath();
 /* 158 */,
 /* 159 */,
 /* 160 */,
-/* 161 */
+/* 161 */,
+/* 162 */,
+/* 163 */,
+/* 164 */,
+/* 165 */,
+/* 166 */,
+/* 167 */,
+/* 168 */,
+/* 169 */,
+/* 170 */,
+/* 171 */,
+/* 172 */,
+/* 173 */,
+/* 174 */,
+/* 175 */,
+/* 176 */,
+/* 177 */,
+/* 178 */,
+/* 179 */,
+/* 180 */,
+/* 181 */,
+/* 182 */,
+/* 183 */,
+/* 184 */,
+/* 185 */,
+/* 186 */,
+/* 187 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -44186,7 +44548,7 @@ module.exports = new DockingMath();
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1), __webpack_require__(2)(module)))
 
 /***/ }),
-/* 162 */
+/* 188 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(process) {// passthrough to openfin. In the future we can make this the passthrough to any container.
@@ -44368,37 +44730,47 @@ module.exports = System;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 163 */,
-/* 164 */,
-/* 165 */,
-/* 166 */,
-/* 167 */,
-/* 168 */,
-/* 169 */,
-/* 170 */,
-/* 171 */,
-/* 172 */,
-/* 173 */,
-/* 174 */,
-/* 175 */,
-/* 176 */,
-/* 177 */,
-/* 178 */,
-/* 179 */,
-/* 180 */,
-/* 181 */,
-/* 182 */,
-/* 183 */,
-/* 184 */,
-/* 185 */,
-/* 186 */,
-/* 187 */,
-/* 188 */,
 /* 189 */,
-/* 190 */
+/* 190 */,
+/* 191 */,
+/* 192 */,
+/* 193 */,
+/* 194 */,
+/* 195 */,
+/* 196 */,
+/* 197 */,
+/* 198 */,
+/* 199 */,
+/* 200 */,
+/* 201 */,
+/* 202 */,
+/* 203 */,
+/* 204 */,
+/* 205 */,
+/* 206 */,
+/* 207 */,
+/* 208 */,
+/* 209 */,
+/* 210 */,
+/* 211 */,
+/* 212 */,
+/* 213 */,
+/* 214 */,
+/* 215 */,
+/* 216 */,
+/* 217 */,
+/* 218 */,
+/* 219 */,
+/* 220 */,
+/* 221 */,
+/* 222 */,
+/* 223 */,
+/* 224 */,
+/* 225 */,
+/* 226 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(100);
+module.exports = __webpack_require__(118);
 
 
 /***/ })

@@ -110,7 +110,7 @@ export class BaseWindow extends EventEmitter {
 		this.wrapStateChangeSubscription = RouterClient.subscribe("Finsemble.Component.State." + this.name, this.handleWrapStateChange);
 		this.eventManager = new WindowEventManager({ name: this.name });
 		this.finishedMove = true;
-		// Prevents duplicate calls to maximize from corrupting the window state for OpenfinWindow and stackedWindow implementations
+		// Prevents duplicate calls to maximize from corrupting the window state for WebWindow and stackedWindow implementations
 		this.isMaximizing = false;
 	}
 
@@ -151,7 +151,7 @@ export class BaseWindow extends EventEmitter {
 	doConstruction(params) {
 		//TODO this is the same as wrap (eventually this should spawn)
 		if (!params.setWindowType && !params.windowType) { //Default WindowType
-			params.windowType = "OpenFinWindow";
+			params.windowType = "WebWindow";
 		}
 		if (params.windowType) { //We need to make a specific kind of Window
 			params.setWindowType = params.windowType;
@@ -343,9 +343,9 @@ export class BaseWindow extends EventEmitter {
 			let wrap: any = null;
 			if (typeof window._FSBLCache.windowAttempts[params.name] === "undefined") window._FSBLCache.windowAttempts[params.name] = 0;
 
-			//OpenfinApplication is essentially just an openfinWindow in its own process. We can wrap it just like a window.
-			if (!params.setWindowType && !identifier.windowType || identifier.windowType === "OpenFinApplication") { //Default WindowType
-				identifier.windowType = "OpenFinWindow";
+			//WebApplication is essentially just an WebWindow in its own process. We can wrap it just like a window.
+			if (!params.setWindowType && !identifier.windowType || identifier.windowType === "WebApplication") { //Default WindowType
+				identifier.windowType = "WebWindow";
 			}
 
 			//Top level keeps important info (e.g., uuid, name, windowType).
@@ -402,7 +402,7 @@ export class BaseWindow extends EventEmitter {
 	}
 
 	handleWrapRemoveRequest() {
-		//wrap is the openfin or stacked window. if the removeListeners function exists, we remove all listeners we added during the lifecycle of that window wrapper.
+		//wrap is the Web or stacked window. if the removeListeners function exists, we remove all listeners we added during the lifecycle of that window wrapper.
 		if (this.removeListeners) {
 			this.removeListeners();
 		}
@@ -679,10 +679,10 @@ export class BaseWindow extends EventEmitter {
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Core Private Window Functions: generally should only be directly invoked by the WindowService (an exception is _close)
-	// Note: These private window functions can also optionally be invoked from the derived class definition.  See openfinWindowWrapper _minimize for example.
+	// Note: These private window functions can also optionally be invoked from the derived class definition.  See WebWindowWrapper _minimize for example.
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	// Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow).  All base function follow same template.
+	// Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow).  All base function follow same template.
 	// If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
 	_minimize(params, cb = Function.prototype) {
 		Logger.system.debug("BaseWindow._minimize", params);
@@ -699,7 +699,7 @@ export class BaseWindow extends EventEmitter {
 		}
 	}
 
-	// Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+	// Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
 	// If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
 	_maximize(params, cb = Function.prototype) {
 		Logger.system.debug("BaseWindow._maximize", params);
@@ -717,7 +717,7 @@ export class BaseWindow extends EventEmitter {
 		}
 	}
 
-	// Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+	// Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
 	// If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
 	_restore(params, cb = Function.prototype) {
 		Logger.system.debug("BaseWindow._restore", params);
@@ -749,7 +749,7 @@ export class BaseWindow extends EventEmitter {
 		}
 	}
 
-	// Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+	// Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
 	// If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
 	_focus(params, cb = Function.prototype) {
 		Logger.system.debug("BaseWindow._focus", params);
@@ -766,7 +766,7 @@ export class BaseWindow extends EventEmitter {
 		}
 	}
 
-	// Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+	// Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
 	// If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
 	_bringToFront(params, cb = Function.prototype) {
 		Logger.system.debug("BaseWindow._bringToFront", params);
@@ -783,7 +783,7 @@ export class BaseWindow extends EventEmitter {
 		}
 	}
 
-	// Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+	// Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
 	// If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
 	_isShowing(params, cb = Function.prototype) {
 		Logger.system.debug("BaseWindow._isShowing", params);
@@ -800,7 +800,7 @@ export class BaseWindow extends EventEmitter {
 		}
 	}
 
-	// Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+	// Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
 	// If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
 	_setBounds(params, cb = Function.prototype) {
 		Logger.system.verbose("BaseWindow._setBounds", params);
@@ -825,7 +825,7 @@ export class BaseWindow extends EventEmitter {
 		}
 	}
 
-	// Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+	// Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
 	// If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
 	_getBounds(params, cb) {
 		Logger.system.verbose("BaseWindow._getBounds", params);
@@ -859,7 +859,7 @@ export class BaseWindow extends EventEmitter {
 		}
 	}
 
-	// Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+	// Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
 	// If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
 	_updateOptions(params, cb = Function.prototype) {
 		Logger.system.debug("BaseWindow._updateOptions", params);
@@ -876,7 +876,7 @@ export class BaseWindow extends EventEmitter {
 		}
 	}
 
-	// Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+	// Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
 	// If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
 	_hide(params, cb = Function.prototype) {
 		Logger.system.debug("BaseWindow._hide", params);
@@ -893,7 +893,7 @@ export class BaseWindow extends EventEmitter {
 		}
 	}
 
-	// Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+	// Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
 	// If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
 	_show(params, cb = Function.prototype) {
 		Logger.system.debug("BaseWindow._show", params);
@@ -910,7 +910,7 @@ export class BaseWindow extends EventEmitter {
 		}
 	}
 
-	// Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+	// Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
 	// If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
 	//@todo fully document this function
 	/**
@@ -926,7 +926,7 @@ export class BaseWindow extends EventEmitter {
 		if (params.fromSystem) {
 			// If the close is initiated from a system close (i.e. close from the taskbar or using the hotkey) and we're closing a stacked window, close the entire stacked window.
 			// Except for when a native window is part of that stack and the system close is initiated on the native window, in which case we only close the native window instead of the whole stack.
-			// fromSystem is only set by the openfinWindowWrapper in _systemClosed. It is not set by other kinds of windows.
+			// fromSystem is only set by the WebWindowWrapper in _systemClosed. It is not set by other kinds of windows.
 			if (parentWindow && parentWindow.componentType.toLowerCase() === "stackedwindow") {
 				params = {};
 				params.removeFromWorkspace = true;
@@ -955,7 +955,7 @@ export class BaseWindow extends EventEmitter {
 		}
 	}
 
-	// Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+	// Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
 	// If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
 	_alwaysOnTop(params, cb = Function.prototype) {
 		Logger.system.debug("BaseWindow._alwaysOnTop", params);
@@ -972,7 +972,17 @@ export class BaseWindow extends EventEmitter {
 		}
 	}
 
-	// Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+	/**
+	 * Returns the alwaysOnTop state for the window.
+	 * @param params This parameter is ignored.
+	 * @param cb A callback accepting two arguments: an error object (which is always `null` for this method), and a boolean value representing the alwaysOnTop state.
+	 */
+	_isAlwaysOnTop(params = {}, cb = Function.prototype) {
+		cb(null, Boolean(this.windowOptions.alwaysOnTop));
+		return Boolean(this.windowOptions.alwaysOnTop);
+	}
+
+	// Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
 	// If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
 	_setOpacity(params, cb = Function.prototype) {
 		Logger.system.debug("BaseWindow._setOpacity", params);
@@ -989,7 +999,7 @@ export class BaseWindow extends EventEmitter {
 		}
 	}
 
-	// Private base window function optionally invoked by derived class (e.g. openFinWindowWrapper, FinsembleNativeWindow). All base function follow same template.
+	// Private base window function optionally invoked by derived class (e.g. WebWindowWrapper, FinsembleNativeWindow). All base function follow same template.
 	// If parent defined then let parent decide appropriate functionality, including passing result back to caller specifying what to do next.
 	_saveWindowOptions(params, cb = Function.prototype) {
 		Logger.system.debug("BaseWindow._saveWindowOptions", params);
@@ -1477,7 +1487,7 @@ export class BaseWindow extends EventEmitter {
 	clearParent() {
 		Logger.system.debug("BaseWindow.clearParent");
 		this.parentWindow = null;
-		this.emit("clearParent", this.parentWindow);
+		this.eventManager.trigger("parent-unset", this.parentWindow);
 	}
 
 	setTitle(title) {

@@ -94,11 +94,11 @@ var RouterTransport = {
 			}
 		}
 
-		// if OpenFin IAB available, then add IAB to active list
-		if (fin && fin.desktop && fin.desktop.InterApplicationBus) addToActive("OpenFinBus");
+		// if IPCBus available, then add IAB to active list
+		if (System.InterApplicationBus) addToActive("IPCBus");
 
 		// If electron, always have FinsembleTransport active
-		if (fin && fin.container === "Electron") addToActive("FinsembleTransport");
+		if (System.container === "Electron") addToActive("FinsembleTransport");
 
 		// if shared worker available, then add shared-worker transport to active list
 		if (SharedWorker) addToActive("SharedWorker");
@@ -123,7 +123,7 @@ var RouterTransport = {
 	 * @returns the transport object
 	 */
 	getDefaultTransport: function (params, incomingMessageHandler, source, destination) {
-		return RouterTransport.getTransport(params, "OpenFinBus", incomingMessageHandler, source, destination);
+		return RouterTransport.getTransport(params, "IPCBus", incomingMessageHandler, source, destination);
 	},
 
 	/**
@@ -278,30 +278,30 @@ RouterTransportImplementation.SharedWorkerTransport = function (params, parentMe
 };
 
 /*
- * Implements the OpenFin Bus Transport.
+ * Implements the IPC Bus Transport.
  *
  * Required Functions (used by transport clients):
  * 		send(transport, routerMessage) -- transport object contains destination transport info; routerMessage is the message to send
  * 		identifier() -- returns transport's name
  *
- * @param {object} params unused in OpenFin transport
+ * @param {object} params unused in IPC transport
  * @param {any} parentMessageHandler callback for incoming event
  * @param {any} source either the client name or "RouterService"
  * @param {any} destination either the client name or "RouterService"
  */
-RouterTransportImplementation.OpenFinTransport = function (params, parentMessageHandler, source, destination, callback) {
+RouterTransportImplementation.IPCTransport = function (params, parentMessageHandler, source, destination, callback) {
 	var uuid = System.Application.getCurrent().uuid;
 	var self = this;
 
 	// receives incoming OpenFin bus messages then passes on to parent with correct "wrapper"
-	function openFinMessageHandler(routerMessage, senderUuid) {
+	function messageHandler(routerMessage, senderUuid) {
 		var incomingTransportInfo = { "transportID": self.identifier(), "senderUuid": senderUuid, "name": routerMessage.header.origin };
-		Logger.system.verbose("OpenFinTransport Incoming Transport", incomingTransportInfo, "Message", routerMessage);
+		Logger.system.verbose("IPCTransport Incoming Transport", incomingTransportInfo, "Message", routerMessage);
 		parentMessageHandler(incomingTransportInfo, routerMessage);
 	}
 
 	function subscribeFailure(reason) {
-		Logger.system.error("OpenFinBus Subscribe Failure: " + reason);
+		Logger.system.error("IPCBus Subscribe Failure: " + reason);
 	}
 
 	//required function for the parent (i.e. routeClient or routeService)
@@ -317,19 +317,19 @@ RouterTransportImplementation.OpenFinTransport = function (params, parentMessage
 			routerMessage = arguments[1];
 		}
 
-		Logger.system.verbose("OpenFinTransport Outgoing Transport", uuid, destTopic, "Message", routerMessage);
-		fin.desktop.InterApplicationBus.publish(destTopic, routerMessage,
+		Logger.system.verbose("IPCTransport Outgoing Transport", uuid, destTopic, "Message", routerMessage);
+		System.InterApplicationBus.publish(destTopic, routerMessage,
 			function () { }, function (err) { });
 	};
 
 	//required function for the parent (i.e. routeClient or routeService)
 	this.identifier = function () {
-		return "OpenFinBus";
+		return "IPCBus";
 	};
 
-	Logger.system.log(`OpenFinBus Transport Initializing for ${source}`);
-	console.log(`OpenFinBus Transport Initializing for ${source}`);
-	fin.desktop.InterApplicationBus.subscribe("*", source, openFinMessageHandler, null, subscribeFailure);
+	Logger.system.log(`IPCBus Transport Initializing for ${source}`);
+	console.log(`IPCBus Transport Initializing for ${source}`);
+	System.InterApplicationBus.subscribe("*", source, messageHandler, null, subscribeFailure);
 
 	callback(this);
 };
@@ -347,13 +347,12 @@ RouterTransportImplementation.OpenFinTransport = function (params, parentMessage
  * @param {any} destination either the client name or "RouterService" (unused in FinsembleTransport)
  */
 RouterTransportImplementation.FinsembleTransport = function (params, parentMessageHandler, source, destination, callback) {
-	/** @TODO - split into two separate vars for clarity. */
-	var serverAddress = ConfigUtils.getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress",
-		ConfigUtils.getDefault(params, "params.IAC.serverAddress","ws://127.0.0.1:3376")
-	);
+	const defaultServerAddress = "ws://127.0.0.1:3376";
+	const IACServerAddress = ConfigUtils.getDefault(params, "params.IAC.serverAddress", defaultServerAddress);
+	const serverAddress = ConfigUtils.getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress", IACServerAddress);
 	const SOCKET_SERVER_ADDRESS = serverAddress + "/router"; // "router" is the socket namespace used on server
 
-	var self = this;
+	const self = this;
 
 	// receives incoming messages then passes on to parent (what's passed to parent should be same routerMessage received in send()
 	function finsembleMessageHandler(routerMessage) {
@@ -539,7 +538,7 @@ RouterTransportImplementation.FinsembleCloudTransport = function (params, parent
 
 // add the transports to the available/active list
 RouterTransport.addTransport("SharedWorker", RouterTransportImplementation.SharedWorkerTransport);
-RouterTransport.addTransport("OpenFinBus", RouterTransportImplementation.OpenFinTransport);
+RouterTransport.addTransport("IPCBus", RouterTransportImplementation.IPCTransport);
 RouterTransport.addTransport("FinsembleTransport", RouterTransportImplementation.FinsembleTransport);
 
 export default RouterTransport;

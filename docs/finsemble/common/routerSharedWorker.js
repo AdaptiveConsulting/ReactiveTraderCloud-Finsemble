@@ -7,7 +7,7 @@
 // by all router clients and the router service. It is typically at the center of Finsemble communications -- it provides the
 // fastest communication between windows whenever the Openfin Bus transport isn't required for cross-domain communication.
 
-// Event message between clients (i.e. Finsemble components and services) and the router service flow though here.
+// Event messsage between clients (i.e. Finsemble components and services) and the router service flow though here.
 // Again, shared worker threads cannot communicate across domains or iFrames, so this is only for "local"" clients.
 
 var portList = [];

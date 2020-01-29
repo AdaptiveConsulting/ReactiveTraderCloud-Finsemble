@@ -64,7 +64,7 @@ When a `SplinterAgent`'s last window is closed, it will send an event to the `Sp
 					"dialogTemplate",
 					"dialogTest",
 					"File Menu",
-					"AdhocComponentForm",
+					"QuickComponentForm",
 					"Process Monitor"
 				],
                 "maxWindowsPerAgent": 1

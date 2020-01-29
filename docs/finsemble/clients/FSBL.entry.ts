@@ -14,6 +14,9 @@ import wrapCallbacks from "../common/wrapCallbacks";
 import { ConfigUtilInstance as ConfigUtils } from "../common/configUtil";
 import * as Utils from "../common/util";
 import Validate from "../common/validate";
+import SystemManagerClient from "../common/systemManagerClient";
+import Logger from "./logger";
+
 /** The global `window` object. We cast it to a specific interface here to be
  * explicit about what Finsemble-related properties it may have. */
 const Globals = window as IGlobals
@@ -33,7 +36,7 @@ if (Globals.FSBLAlreadyPreloaded) {
 	module.exports = Globals.FSBL;
 }
 
-if ((fin.container === "browser" || window.top === window) && !Globals.FSBLAlreadyPreloaded) { // @todo - remove when OpenFin Fixes preload
+if ((System.container === "browser" || window.top === window) && !Globals.FSBLAlreadyPreloaded) { // @todo - remove when OpenFin Fixes preload
 	Globals.FSBLAlreadyPreloaded = true;
 	// FSBL.initialize() or System.ready() may start first. It's unpredictable. initialize() depends on main()
 	// so we use variables to defer running that function if main() hasn't yet run.
@@ -62,6 +65,7 @@ if ((fin.container === "browser" || window.top === window) && !Globals.FSBLAlrea
 		this.ConfigUtils = ConfigUtils;
 		this.Validate = Validate;
 		this.UserNotification = UserNotification;
+		this.SystemManagerClient = SystemManagerClient;
 
 		//This order is _roughly_ as follows: Get everything up that is a dependency of something else, then get those up. The linker and DnD depend on the Store. Workspace depends on Storage and so on. It's not exact, but this was the combination that yielded the best results for me.
 		/** @namespace Clients  */
@@ -137,6 +141,7 @@ if ((fin.container === "browser" || window.top === window) && !Globals.FSBLAlrea
 				}
 			}
 			this.dependencyManager = FSBLDependencyManager;
+
 			FSBLDependencyManager.startup.waitFor({
 				clients: clientDependencies
 			}, this.setFSBLOnline);
@@ -213,6 +218,12 @@ if ((fin.container === "browser" || window.top === window) && !Globals.FSBLAlrea
 			this.Clients.RouterClient.publish("Finsemble." + windowName + ".componentReady", { // signal workspace and launcher service that component is ready
 				name: windowName
 			});
+			FSBL.Clients.Logger.debug(`FSBL.Clients.WindowClient.options`, FSBL.Clients.WindowClient.options);
+
+			let componentType = FSBL.Clients.WindowClient.options.customData.component.type;
+			this.Clients.Logger.system.log("publishBootStatus", componentType, "components", "completed", FSBL.Clients.WindowClient.options.customData);
+			SystemManagerClient.publishBootStatus(componentType, "components", "completed"); // here the component type acts as the name
+
 			window.dispatchEvent(new Event("FSBLReady"));
 		};
 
@@ -369,9 +380,9 @@ if ((fin.container === "browser" || window.top === window) && !Globals.FSBLAlrea
 					 * In authentication components, the "authenticated" state will never occur.
 					 *
 					 * The following clients are currently unsafe to use before authentication:
-					 * DragAndDropClient, LinkerClient, WorkspaceClient, dialogManager
+					 * DragAndDropClient, LinkerClient, WorkspaceClient, dialogManager, hotkeyClient
 					 */
-					FSBL.useClients(["ConfigClient", "LauncherClient", "DistributedStoreClient", "WindowClient", "AuthenticationClient", "hotkeyClient", "searchClient", "storageClient"
+					FSBL.useClients(["ConfigClient", "LauncherClient", "DistributedStoreClient", "WindowClient", "AuthenticationClient", "searchClient", "storageClient"
 					]);
 					FSBL.initialize(deferredCallback);
 				}

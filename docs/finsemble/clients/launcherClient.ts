@@ -15,10 +15,15 @@ import { SpawnParams } from "../services/window/Launcher/launcher";
  * explicit about what Finsemble-related properties it may have. */
 const Globals = window as IGlobals;
 interface ShowWindowParams extends SpawnParams {
+	/**
+	 * If true, then spawns a new window if the requested one cannot be found.
+	 * *Note, only works if the windowIdentifier contains a componentType.*
+	 */
 	spawnIfNotFound?: boolean,
-	autoFocus?: boolean,
-	windowIdentifier?: WindowIdentifier,
-	relativeWindow?: WindowIdentifier
+	/**
+	 * Whether or not the window should be focused when shown.
+	 */
+	autoFocus?: boolean
 }
 /**
  * An object that includes all the potential identifications for a window.
@@ -26,7 +31,7 @@ interface ShowWindowParams extends SpawnParams {
  *
  * @typedef WindowIdentifier
  * @property {string} [windowName] The name of the physical HTML window, or a reference to a native window that was launched with Assimilation service
- * @property {string} [uuid] Optional uuid of a particular OpenFin application process
+ * @property {string} [uuid] Optional uuid of a particular application process
  * @property {string} [componentType] The type of component
  * @property {number|string} [monitor] The number of the monitor. Potentially used to disambiguate multiple components with the same name (for searches only)
  */
@@ -42,24 +47,13 @@ interface ShowWindowParams extends SpawnParams {
  * @property {string} componentType The type of component (from <i>components.json</i>).
  */
 
-/**
- *
- * A convenient assembly of native JavaScript window, `OpenFin` window and windowDescriptor.
- *
- * @typedef RawWindowResult
- * @property {WindowDescriptor} windowDescriptor The window descriptor.
- * @property {fin.desktop.Window} finWindow The `OpenFin` window.
- * @property {Window} browserWindow The native JavaScript window.
- *
- */
-
 // A map of related menus that is kept by handleToggle.
 var okayToOpenMenu = {};
 
 /**
  *
  * @introduction
- * <h2>Launcher Client</h2>
+ * <h2>Launcher Client (Finsemble Workspaces)</h2>
  *
  * The Launcher Client handles spawning windows of all kinds.
  * Finsemble provides the architecture to launch, resize, and reposition any component, whether native, modern, or third-party.
@@ -141,14 +135,15 @@ class LauncherClient extends BaseClient {
 	 * **monitorRect** - The full dimensions for the monitor. <br>
 	 * **availableRect** - The dimensions for the available space on the monitor (less the Windows task bar). <br>
 	 * **unclaimedRect** - The dimensions for available monitor space less any space claimed by components (such as the Toolbar). <br>
+	 * **position** - The position of the monitor, numerically from zero to X. Primary monitor is zero. <br>
+	 * **whichMonitor** - Contains the string "primary" if it is the primary monitor. <br>
 	 *
-	 * Each of these is supplemented with the following additional members:
+	 * The dimensions are supplemented with the following additional members:
 	 *
 	 * **width** - The width as calculated (right - left). <br>
 	 * **height** - The height as calculated (bottom - top). <br>
-	 * **position** - The position of the monitor, numerically from zero to X. Primary monitor is zero. <br>
-	 * **whichMonitor** - Contains the string "primary" if it is the primary monitor.
 	 *
+	 * @param {object} params
 	 * @param  {WindowIdentifier} params.windowIdentifier The windowIdentifier to get the monitorInfo. If undefined, then the current window.
 	 * @param  {number|string} params.monitor If passed then a specific monitor is identified. Valid values include:
 	 *
@@ -287,22 +282,20 @@ class LauncherClient extends BaseClient {
 	}
 
 	/**
-	 * Displays a window and relocates/resizes it according to the values contained in params.
+	 * Displays a window and relocates/resizes it according to the values contained in parameters. If the specified window is in a group or tabbed, it will be unsnapped/ungrouped/untabbed from the other windows.
+	 * 	 * If invoked on a tabbed window or a window in a group, the window will be removed from the tab/group.
 	 *
 	 * @param {WindowIdentifier} windowIdentifier A windowIdentifier. This is an object containing windowName and componentType. If windowName is not given, Finsemble will try to find it by componentType.
 	 * @param {object} params Parameters. These are the same as {@link LauncherClient#spawn} with the following exceptions:
 	 * @param {any} [params.monitor] Same as spawn() except that null or undefined means the window should not be moved to a different monitor.
 	 * @param {number | string} [params.left] Same as spawn() except that null or undefined means the window should not be moved from current horizontal location.
 	 * @param {number | string} [params.top] Same as spawn() except that null or undefined means the window should not be moved from current vertical location.
-	 * @param {boolean} [params.spawnIfNotFound=false] If true, then spawns a new window if the requested one cannot be found.
-	 * *Note, only works if the windowIdentifier contains a componentType.*
-	 * @param {boolean} [params.autoFocus] If true, window will focus when first shown.
 	 * @param {boolean} [params.slave] Cannot be set for an existing window. Will only go into effect if the window is spawned.
 	 * (In other words, only use this in conjunction with spawnIfNotFound).
 	 * @param {Function} cb Callback to be invoked after function is completed. Callback contains an object with the following information:
-	 * <b>windowIdentifier</b> - The {@link WindowIdentifier} for the new window.
-	 * <b>windowDescriptor</b> - The {@link WindowDescriptor} of the new window.
-	 * <b>finWindow</b> - An `OpenFin` window referencing the new window.
+	 * <b>windowIdentifier</b> - The <a href="tutorial-ComponentTypesAndWindowNames.html">WindowIdentifier</a> for the new window.
+	 * <b>windowDescriptor</b> - The <a href="tutorial-ComponentTypesAndWindowNames.html">WindowDescriptor</a> of the new window.
+	 * <b>finWindow</b> - A <code>finWindow</code> object referencing the new window.
 	 * @example
 	 * FSBL.Clients.LauncherClient.showWindow({windowName: "Welcome Component-86-3416-Finsemble", componentType: "Welcome Component"}, {spawnIfNotFound: true});
 	 */
@@ -345,7 +338,7 @@ class LauncherClient extends BaseClient {
 	 *
 	 * The launcher parameters mimic CSS window positioning.
 	 * For instance, to set a full size window use `left=0`,`top=0`,`right=0`,`bottom=0`.
-	 * This is functionally equivalent to: left=0,top=0,width="100%",height="100%"
+	 * This is functionally equivalent to: left=0,top=0,width="100%",height="100%".
 	 *
 	 * @since 2.4.1 Added params.windowType (deprecated params.native), params.path, params.alias, params.argumentsAsQueryString - These are all for launching native apps.
 	 * @since 3.7.0 Added "affinity" parameter
@@ -380,37 +373,6 @@ class LauncherClient extends BaseClient {
 			});
 		};
 		return new Promise(promiseResolver);
-	}
-
-	/**
-	 * Returns an object that provides raw access to a remote window.
-	 * It returns an object that contains references to the Finsemble windowDescriptor, to
-	 * the `OpenFin` window, and to the native JavaScript (browser) window.
-	 *
-	 * *This will only work for windows that are launched using the Finsemble Launcher API.*
-	 *
-	 * As in any browser, you will not be able to manipulate a window that has been launched
-	 * cross domain or in a separate physical application (separate process). Caution
-	 * should be taken to prevent a window from being closed by the user if you plan on
-	 * referencing it directly. Due to these inherent limitations we strongly advise against a
-	 * paradigm of directly manipulating remote windows through JavaScript. Instead leverage the
-	 * RouterClient to communicate between windows and to use an event based paradigm!
-	 *
-	 * @param  {object} params Parameters
-	 * @param {string} params.windowName The name of the window to access.
-	 * @return {RawWindowResult} An object containing windowDescriptor, finWindow, and browserWindow. Or null if window isn't found.
-	 * @deprecated Finsemble now uses a splintering agent which disconnects windows from the main launcher.
-	 * It becomes impossible to access raw windows. See LauncherClient.getActiveDescriptors() and Util.getFinWindow()
-	 * @private
-	 */
-	getRawWindow(params: {
-		windowName: string
-	}) {
-		var launcher = window.opener;
-		if (launcher.name !== "launcherService") {
-			Logger.system.warn("LauncherClient.getNativeWindow: window not opened by Launcher Service");
-		}
-		return launcher.activeWindows.getWindow(params.windowName);
 	}
 
 	/**
@@ -599,16 +561,22 @@ class LauncherClient extends BaseClient {
 		dataTypes: string[]
 	}, cb: Function = Function.prototype) {
 		Validate.args(cb, "function=");
-		if (params.dataTypes && !Array.isArray(params.dataTypes)) { params.dataTypes = [params.dataTypes]; }
-		Validate.args(params.dataTypes, "array");
 		const promiseResolver = (resolve) => {
-			this.routerClient.query("LauncherService.getComponentsThatCanReceiveDataTypes", params, function (err, response) {
-				cb(err, response.data);
-				resolve({ err, data: response.data });
-			});
+			if (!params || !params.dataTypes) {
+				const err = "Invalid params. Expected: {dataTypes: string[]}";
+				cb(err);
+				return resolve({ err });
+			}
+			if (!Array.isArray(params.dataTypes)) {
+				params.dataTypes = [params.dataTypes];
+			}
+			this.routerClient.query("LauncherService.getComponentsThatCanReceiveDataTypes",
+				params, (err, response) => {
+					cb(err, response.data);
+					resolve({ err, data: response.data });
+				});
 		};
 		return new Promise(promiseResolver);
-
 	}
 
 	/**
@@ -651,6 +619,8 @@ class LauncherClient extends BaseClient {
 	}
 
 	/**
+	 * @deprecated as of 4.0.0, may be removed in the future
+	 *
 	 * Minimizes all but a specific list or group of windows. Either groupName or windowList must be specified.
 	 * @param params
 	 * @param {Array.<string | Object>} [params.windowList] Optional. An array of window names or window identifiers. Not to be used with componentType.
@@ -670,6 +640,9 @@ class LauncherClient extends BaseClient {
 		groupName?: string,
 		componentType?: string
 	}, cb: Function = Function.prototype) {
+		Logger.system.warn("hyperFocus is deprecated as of version 4.0.0. This functionality may be removed in a future release");
+		console.warn("hyperFocus is deprecated as of version 4.0.0. This functionality may be removed in a future release");
+
 		Validate.args(cb, "function=");
 		if (params.windowList && !Array.isArray(params.windowList)) {
 			params.windowList = [params.windowList];
@@ -951,9 +924,6 @@ function constructInstance(params?) {
 	if (!params.windowClient) params.windowClient = WindowClient;
 	return new LauncherClient({
 		clients: params,
-		startupDependencies: {
-			services: ["windowService"],
-		},
 		onReady: function (cb) {
 			Logger.system.debug("launcherClient ready", window.name);
 			Logger.perf.debug("LauncherClientReadyTime", "stop");

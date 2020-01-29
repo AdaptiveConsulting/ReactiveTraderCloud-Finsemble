@@ -8,10 +8,12 @@ import { System } from "../../../common/system";
 import Logger from "../../../clients/logger";
 
 import ConfigClient from "../../../clients/configClient";
+ConfigClient.initialize();
 import { ConfigUtilInstance as ConfigUtil } from "../../../common/configUtil";
 import WorkspaceClient from "../../../clients/workspaceClient";
 import RouterClient from "../../../clients/routerClientInstance";
 import DistributedStoreClient from "../../../clients/distributedStoreClient";
+DistributedStoreClient.initialize();
 import { LauncherGroup as LauncherWindowGroup } from "./launcherGroup";
 import { FinsembleWindowInternal } from "../WindowAbstractions/FinsembleWindowInternal";
 import { CreateSplinterAndInject } from "./createSplinterAndInject";
@@ -22,6 +24,7 @@ import {
 	series as asyncSeries,
 	doUntil as asyncDoUntil,
 	some as asyncSome,
+	any,
 } from "async";
 import _difference from "lodash.difference";
 import { get, set } from "lodash";
@@ -97,10 +100,10 @@ const NAME_STORAGE_KEY = "finsemble.NameCountData";
 
 /** All the possible window types, including their aliases used in config. */
 type WindowTypes =
-	"OpenFinWindow" | "openfin"
+	"WebWindow" | "openfin" | "openFinWindow" | "openFinApplication"
 	| "NativeWindow" | "assimilation" | "assimilated"
 	| "native" | "FinsembleNativeWindow"
-	| "application" | "OpenFinApplication" | "StackedWindow";
+	| "application" | "WebApplication" | "StackedWindow";
 
 /** The parameters passed to Launcher.Spawn.
  *
@@ -180,6 +183,9 @@ export type SpawnParams = {
 	 * Optional group name. Adds windows to a group (unrelated to docking or linking) that is used for window management functions. If the group does not exist it will be created.
 	 */
 	groupName?: string;
+	/**
+	 * Groups the window to the `relativeWindow` based on their adjacent position.
+	 */
 	groupOnSpawn?: boolean;
 	/**
 	 * Which monitor to place the new window.
@@ -195,7 +201,7 @@ export type SpawnParams = {
 	 */
 	monitor?: number | "mine" | "primary" | "next" | "previous" | "all";
 	/**
-	 * Name to give the component. If not provided, a random one will be generated. Name will be made unique (if not already).
+	 * Name to give the component. If not provided, a random one will be generated.
 	 */
 	name?: string;
 	/**
@@ -204,14 +210,15 @@ export type SpawnParams = {
 	native?: boolean;
 	/**
 	 * Properties to merge with the default windowDescriptor.
-	 * Any value set here will be sent directly to the `OpenFin` window, and will override the effect of relevant parameters to spawn(). By default, all Finsemble windows are frameless.
+	 * Any value set here will be sent directly to the <code>WebWindow</code>, and will override the effect of relevant parameters to spawn(). By default, all Finsemble windows are frameless.
+	 * FEA Permissions and window properties (such as always on top) are provided here.
 	 */
 	options?: any;
 	/**
 	 * Used when windowType is "native" or "assimilation". Specifies the path to the application. The path can be:
 	 * The name of an exe that is on the system path (e.g., <i>notepad.exe</i>).
 	 * The full path to an executable on the user's machine (e.g., <i>C:\Program Files\app.exe</i>).
-	 * A system installed URI (e.g., <i>myuri://myapp</i>).
+	 * A system installed URI (e.g., <i>myuri://advancedapplauncher</i>).
 	 *
 	 * When windowType is "native" then additional arguments will be automatically appended to the path or the URI. These arguments can be captured by the native application
 	 * in order to tie it to Finsemble's window tracking. When building an application with finsemble.dll, this is handled automatically. Those arguments are:
@@ -225,10 +232,6 @@ export type SpawnParams = {
 	 * **width** - The width of the new window
 	 *
 	 * **height** - The height of the new window
-	 *
-	 * **openfinVersion** - The OpenFin version that Finsemble runs (necessary for native windows to connection on the OpenFin IAB)
-	 *
-	 * **openfinSocketPort** - The OpenFin socket used for the Inter-application Bus (IAB) (necessary for Java windows that wish to use the OpenFin IAB)
 	 *
 	 * **finsembleWindowName** - The name of the window in the Finsemble config
 	 *
@@ -258,7 +261,7 @@ export type SpawnParams = {
 	 */
 	position?: string;
 	/**
-	 * Sets environment variables for a spawned native application. Create a map (JSON) object of names to values. This is only available when running assimilation and with the config assimilation.useOpenFinSpawn=false.
+	 * Sets environment variables for a spawned native application. Create a map (JSON) object of names to values. This is only available when running Assimilation.
 	 */
 	env?: any;
 	/**
@@ -273,19 +276,18 @@ export type SpawnParams = {
 	/**
 	 * Optional. Describes which type of component to spawn.
 	 *
-	 * <b>openfin</b> - A normal HTML window.
+	 * <b>WebWindow</b> - A normal HTML window.
 	 *
-	 * **assimilation** - A window that is managed by the Finsemble assimilation process (usually a native window without source code access). Requires "path" to be specified, which may be the name of an executable on the system path, a system file path or system installed URI.
+	 * <b>assimilation</b> - A window that is managed by the Finsemble assimilation process (usually a native window without source code access). Requires "path" to be specified, which may be the name of an executable on the system path, a system file path or system installed URI.
 	 *
-	 * **native** - A native window that has implemented finsemble.dll. Requires "path" to be specified.
+	 * <b>native</b> - A native window that has implemented finsemble.dll. Requires "path" to be specified.
 	 *
-	 * **application** - A standalone application. This launch a component in its own browser process (splintered, giving it dedicated CPU and memory).
+	 * <b>application</b> - A standalone application. This launch a component in its own browser process (splintered, giving it dedicated CPU and memory).
 	 * This can also point to a standalone web application (such as from a third party).
 	 */
 	windowType?: WindowTypes;
 	/**
-	 * Built and passed internally. This is not a public api parameter, and cannot be
-	 * supplied by a user
+	 * Component instances are often referred to in Finsemble API calls via a <a href="tutorial-ComponentTypesAndWindowNames.html#windowidentifier">windowIdentifier</a>. A windowIdentifier is an object with both windowName and componentType properties.
 	 * @private
 	 */
 	windowIdentifier?: WindowIdentifier;
@@ -1132,7 +1134,7 @@ export class Launcher {
 			// unknown component. If the component is native, the url is removed by the merge from
 			// params.options (params.options.window does not have a url...).
 			// We delete the windowType on both objects so that WPF/Native applications
-			// are spawned as unknown HTML5 applications. Otherwise, the spawn requests
+			// are spawned as unknown Web applications. Otherwise, the spawn requests
 			// go off into the ether and prevent workspaces from loading properly.
 			if (config.component && config.component.isUnknownComponent) {
 				windowDescriptor.url = config.window.url;
@@ -1160,6 +1162,53 @@ export class Launcher {
 		windowDescriptor.customData.manifest = this.rawManifest; // pass in custom data so router can use
 		Logger.system.debug("Launcher.compileWindowDescriptor", windowDescriptor);
 
+		// Preload the titlebar if component supports FSBLHeader and
+		// deliveryMechanism is set to "preload" under -
+		// Window Manager entry in configs/config.json
+		// Check for customData.window.compound
+		const isCompoundWindow = lodashGet(windowDescriptor, 'customData.window.compound', false);
+		// Check for customData.Window Manager.FSBLHeader
+		const componentSupportsHeader = !isCompoundWindow && lodashGet(
+			windowDescriptor, ['customData', 'foreign',
+				'components', 'Window Manager', 'FSBLHeader'], false);
+		// Get the delivery mechanism value from config
+		const deliveryMechanism = this.finsembleConfig['Window Manager'].deliveryMechanism;
+		// Make sure that component supports header and the delivery mechanism is set to "preload"
+		if (componentSupportsHeader && deliveryMechanism === DELIVERY_MECHANISM.PRELOAD) {
+			let url = this._generateURL(Components['windowTitleBar'].window.url);
+			// push into the preloadScripts array
+			if (windowDescriptor.preloadScripts.findIndex(obj => obj.url === url) === -1) {
+				windowDescriptor.preloadScripts.push({ url: url });
+			}
+
+			// preload is a shallow copy of preloadScripts but when loaded from another workspace they can point to different addresses in memory
+			if (windowDescriptor.preload.findIndex(obj => obj.url === url) === -1) {
+				windowDescriptor.preload.push({ url: url });
+			}
+		}
+		// TODO, [Terry] persistURL logic should be in the workspace-service, not in launcher service.
+		//[Ryan] the logic should sit in the workspace client( although I think we actually do it in the window client right now)
+		if (params.spawnedByWorkspaceService) {
+			let persistURL = ConfigUtil.getDefault(config.foreign, "foreign.services.workspace.persistURL", this.persistURL);
+			let persistPath = ConfigUtil.getDefault(config.foreign, "foreign.services.workspace.persistPath", this.persistPath);
+
+			/** DH 3/11/2019
+			 * We store the fact that a component had its URL swapped with the unknown component URL
+			 * on the windowDescriptor itself. Therefore, if that prop is true, we need to swap the
+			 * current URL with the one found in config. This logic will likely need to remain here
+			 * (where we have access to the component's config), regardless of where the persistURL
+			 * logic lands.*/
+			const isUnknownComponent = get(params, "options.customData.component.isUnknownComponent");
+			if (!persistURL || isUnknownComponent) {
+				windowDescriptor.url = config.window.url;
+			}
+			if (!persistPath || isUnknownComponent) {
+				windowDescriptor.path = config.window.path;
+			}
+		}
+
+		// Make sure the URL of the windowDescriptor is set before you get the security policy. Otherwise the security policy
+        // is going to set to the most restrictive ones for the component by default.
 		windowDescriptor.securityPolicy = SpawnUtils.getSecurityPolicy(windowDescriptor, this.finsembleConfig);
 		windowDescriptor.permissions = SpawnUtils.getPermissions(windowDescriptor, this.finsembleConfig);
 		return windowDescriptor;
@@ -1444,11 +1493,15 @@ export class Launcher {
 	}
 
 	/**
-	 * Returns an map of components that can receive specific data types based on "advertiseReceivers" in the component config
-	 *
-	 * @param {array} dataTypes A list of dataTypes (string)
-	 */
+ * Returns an map of components that can receive specific data types based on "advertiseReceivers" in the component config
+ *
+ * @param {array} dataTypes A list of dataTypes (string)
+ */
 	getComponentsThatCanReceiveDataTypes(dataTypes) {
+		if (!dataTypes || !Array.isArray(dataTypes)) {
+			Logger.system.error("Invalid dataTypes passed to getComponentsThatCanReceiveDataTypes");
+			return {};
+		}
 		var componentsThatCanReceiveDataTypes = {};
 		for (var c in Components) {
 			var component = Components[c];
@@ -1486,7 +1539,6 @@ export class Launcher {
 		}
 		return componentsThatCanReceiveDataTypes;
 	}
-
 	/*
 	A helper for pulling out the default config for url persistence
 	*/
@@ -1547,10 +1599,14 @@ export class Launcher {
 
 		ConfigClient.addListener({ field: "finsemble.components" }, this.onComponentListChanged.bind(this));
 		ConfigClient.addListener({ field: "finsemble.cssOverridePath" }, onCSSOverridePathChanged);
-		let { data: config } = await ConfigClient.getValues(null) as { data: { finsemble: any } };
-		this.appConfig = config;
-		this.finsembleConfig = config.finsemble; // replace manifest version of finsemble with processed version
-		this.persistURL = ConfigUtil.getDefault(config.finsemble, "finsemble.servicesConfig.workspace.persistURL", false);
+		let { err, data: config } = await ConfigClient.getValues(null) as { err, data: { finsemble: any } };
+		if (err) {
+			Logger.system.error(err);
+		} else {
+			this.appConfig = config;
+			this.finsembleConfig = config.finsemble; // replace manifest version of finsemble with processed version
+			this.persistURL = ConfigUtil.getDefault(config.finsemble, "finsemble.servicesConfig.workspace.persistURL", false);
+		}
 		cb();
 	}
 
@@ -2051,7 +2107,6 @@ export class Launcher {
 		};
 
 
-
 		//Deprecated value: this.windowOptions.customData.component.canMinimize. New value: this.windowOptions.customData.foreign.services.windowService.allowMinimize
 		let service = windowDescriptor.customData.foreign.services && windowDescriptor.customData.foreign.services.windowService !== undefined ? "windowService" : "dockingService";
 
@@ -2425,11 +2480,21 @@ export class Launcher {
 		}
 
 		if (activeWindow) { //window was found
+			// Remove the window from the Stack
+			if (activeWindow.parentWindow) {
+				activeWindow.parentWindow.removeWindow(
+					{ windowIdentifier: windowIdentifier },
+					err => Logger.system.error("Launcher.ShowWindow Remove from Stack", err)
+				);
+			}
+
+			// Remove the window from docking group
+			RouterClient.query("DockingService.leaveGroup", { name: windowIdentifier.windowName }, (err, response) => { });
+
 			let { data: bounds } = await activeWindow._getBounds();
-			windowIdentifier = activeWindow.windowIdentifier;
 			// The next 3 lines are needed because the windowIdentifier coming in from the client API is not guaranteed to have all of the information that we need in order to identify the window.
 			// All that's needed to retrieve a window is a name. We need to know the componentType to derive default configs for this component.
-			windowIdentifier = activeWindow.windowIdentifier;
+			windowIdentifier = (windowIdentifier in activeWindow) ? activeWindow.windowIdentifier : windowIdentifier;
 			windowIdentifier.componentType = activeWindow.componentType;
 			params.windowIdentifier = windowIdentifier;
 			//By default, return the first monitor. This method will be overwritten if the call requires a specific monitor.
@@ -2498,6 +2563,8 @@ export class Launcher {
 				} else if (params.monitor === "mine") { // asked to spawn on same monitor as parent
 					monitorFinder = relativeMonitorFinder;
 				}
+			} else {
+				params.monitor = "mine";
 			}
 
 			let monitor: any = await monitorFinder();
@@ -2601,7 +2668,7 @@ export class Launcher {
 						//If the show call doesn't prohibit autofocus, focus it. Search does this when showing search results.
 						if (params.autoFocus !== false) {
 							//This is so that any click elsewhere will hide the window.
-							activeWindow.focus();
+							if ('focus' in activeWindow) { activeWindow.focus() };
 						}
 
 						//@todo, when docking is rewritten and the window wraps get more love, put this functionality into a the wrappers. Right now they don't have the router and I'm unsure how things are working with multiple routers in the same window.
@@ -2829,7 +2896,7 @@ export class Launcher {
 			return;
 		}
 
-		//get default OpenFin config.
+		//get default config.
 		var baseDescriptor = new LauncherDefaults().windowDescriptor;
 		if (params.options) {
 			baseDescriptor = merge(baseDescriptor, params.options);
@@ -2886,8 +2953,8 @@ export class Launcher {
 			compound: baseDescriptor.compound,
 			type: baseDescriptor.type
 		}
-		
-		params.windowType = (util.getWindowType(winConfig) as WindowTypes);		
+
+		params.windowType = (util.getWindowType(winConfig) as WindowTypes);
 		baseDescriptor.windowType = params.windowType;
 
 		Logger.system.debug("Launcher.spawn 5", component, params);

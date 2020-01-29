@@ -49,7 +49,7 @@ declare type linkerGroup = {
 /**
  *
  * @introduction
- * <h2>Linker Client</h2>
+ * <h2>Linker Client (Finsemble Workspaces)</h2>
  * <p>
  * The Linker API allows components to synchronize on a piece of data. For instance, an end user can use the Linker to link multiple components by stock symbol.
  * Use the Linker API to enable your components to participate in this synchronization.
@@ -356,16 +356,21 @@ class LinkerClient extends _BaseClient {
 	/**
 	* Remove all listeners for the specified dataType.
 	* @param {String}  dataType - The data type to which the component is subscribed.
-	* @param {function} cb - Optional. Callback to retrieve returned results asynchronously (empty object)
+	* @param {function} cb - Optional. The function that was passed to subscribe. If not specified, all listeners will be deleted.
 	*
 	* @example
 	* FSBL.Clients.LinkerClient.unsubscribe("symbol");
 	*/
-	unsubscribe(dataType: string, cb?: StandardCallback) {
+	unsubscribe(dataType: string, cb?: Function) {
 		sysinfo("LinkerClient.unsubscribe", "DATA TYPE", dataType);
 		Validate.args(dataType, "string");
-		delete this.dataListenerList[dataType];
-		return asyncIt({}, cb);
+		if (this.dataListenerList[dataType]) {
+			if (!cb) {
+				delete this.dataListenerList[dataType];
+			} else {
+				this.dataListenerList[dataType] = this.dataListenerList[dataType].filter(fn => fn !== cb);
+			}
+		}
 	};
 
 	/**
@@ -404,11 +409,14 @@ class LinkerClient extends _BaseClient {
 	* 	console.log("New symbol received from a remote component " + data);
 	* });
 	*/
-	subscribe(dataType: string, cb: StandardCallback) {
+	subscribe(dataType: string, cb: Function) {
 		sysinfo("LinkerClient.subscribe", "DATA TYPE", dataType);
 		Validate.args(dataType, "string", cb, "function");
 		if (this.dataListenerList[dataType]) {
-			return this.dataListenerList[dataType].push(cb);
+			if (!this.dataListenerList[dataType].includes(cb)) {
+				this.dataListenerList[dataType].push(cb);
+			}
+			return;
 		}
 		this.dataListenerList[dataType] = [cb];
 	};
@@ -786,9 +794,10 @@ class LinkerClient extends _BaseClient {
 	* FSBL.Clients.LinkerClient.unsubscribe("symbol");
 	* @deprecated To be removed in 4.0.0. Please use LinkerClient.unsubscribe().
 	*/
-	unSubscribe(dataType: string) {
-		this.unsubscribe(dataType);
+	unSubscribe(dataType: string, cb: Function) {
+		this.unsubscribe(dataType, cb);
 	};
+
 	/**
 	 * Retrieves an array of all components with links that match the given parameters. If no parameters are specified, all windows with established links will be returned.
 	 *
@@ -900,8 +909,7 @@ function constructInstance(params?) {
 	return new LinkerClient({
 		clients: params,
 		startupDependencies: {
-			services: ["linkerService"],
-			clients: ["windowClient", "distributedStoreClient"],
+			clients: ["windowClient", "distributedStoreClient", "launcherClient"]
 		},
 		onReady: function (cb) {
 			sysdebug("Linker onReady");

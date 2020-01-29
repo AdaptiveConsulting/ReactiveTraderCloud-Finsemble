@@ -73,7 +73,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "http://localhost:3375/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 56);
+/******/ 	return __webpack_require__(__webpack_require__.s = 60);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -95,13 +95,13 @@ var CONSOLE_DEFAULT_LOG_SETTING = { Error: true, Warn: true, Info: true, Log: tr
 const MAX_LOG_MESSAGE_SIZE = 50000;
 const OVER_LOG_SIZE_LIMIT_MESSAGE = `Log argument greater than ${MAX_LOG_MESSAGE_SIZE / 1000}KB. Check local Console to see output of the object.`;
 const MAX_QUEUE_SIZE = 5 * 1000; // maximum logger queue size; plenty of space although shouldn't need much since continuously sending to logger if working correctly;
-const throttle = __webpack_require__(42);
+const throttle = __webpack_require__(46);
 const system_1 = __webpack_require__(2);
-const localLogger_1 = __webpack_require__(21);
+const localLogger_1 = __webpack_require__(22);
 /**
  * @introduction
  *
- * <h2>Logger Client</h2>
+ * <h2>Logger Client (Finsemble Workspaces)</h2>
  *
  * The Logger Client supports very efficient and configurable run-time logging to the <a href=tutorial-CentralLogger.html>Central Logger</a>.
  * Logging has a small performance overhead, so developers can liberally instrument their code with log messages for debugging and diagnostics.
@@ -810,7 +810,7 @@ const routerClientInstance_1 = __webpack_require__(5);
 const validate_1 = __webpack_require__(3); // Finsemble args validator
 const logger_1 = __webpack_require__(0);
 const system_1 = __webpack_require__(2);
-const dependencyManager_1 = __webpack_require__(22);
+const dependencyManager_1 = __webpack_require__(23);
 /**
  * @introduction
  * <h2>Base Client</h2>
@@ -995,7 +995,7 @@ var BaseClient = function (params) {
      */
     this.routerClient = routerClientInstance_1.default;
     /**
-     * Gets the current openfin window - stays here for backward compatibility
+     * Gets the current window - stays here for backward compatibility
      * @type {object}
      */
     this.finWindow = null;
@@ -1080,7 +1080,6 @@ var BaseClient = function (params) {
             self.windowName = self.finWindow.name;
             logger_1.default.system.debug("Baseclient Init Router Ready", self.name);
             dependencyManager_1.FSBLDependencyManagerSingleton.startup.waitFor({
-                services: self.startupDependencies.services || [],
                 clients: self.startupDependencies.clients || []
             }, () => {
                 cb();
@@ -1161,12 +1160,23 @@ class System {
             cb(info);
         });
     }
+    static get container() {
+        if (fin.container)
+            return fin.container;
+        return "Openfin";
+    }
+    static get fin() {
+        return e2o || fin || {};
+    }
     // static get makes this behave like a static variable. so calling system.ready is equivalent to fin.desktop.main.
     static get ready() {
         return fin.desktop.main;
     }
     static get getHostSpecs() {
         return fin.desktop.System.getHostSpecs;
+    }
+    static get InterApplicationBus() {
+        return fin.desktop.InterApplicationBus;
     }
     static get launchExternalProcess() {
         return fin.desktop.System.launchExternalProcess;
@@ -1201,6 +1211,9 @@ class System {
     }
     static get getAllWindows() {
         return fin.desktop.System.getAllWindows;
+    }
+    static get getProcessList() {
+        return fin.desktop.System.getProcessList;
     }
     static FinsembleReady(cb) {
         if (Globals.FSBL && Globals.FSBL.addEventListener) {
@@ -1258,7 +1271,7 @@ class System {
 }
 exports.System = System;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(15)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(16)))
 
 /***/ }),
 /* 3 */
@@ -1266,7 +1279,7 @@ exports.System = System;
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__systemSettings__ = __webpack_require__(54);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__systemSettings__ = __webpack_require__(58);
 /*!
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
@@ -1462,7 +1475,7 @@ module.exports = g;
 * All rights reserved.
 */
 Object.defineProperty(exports, "__esModule", { value: true });
-const routerClientConstructor_1 = __webpack_require__(35);
+const routerClientConstructor_1 = __webpack_require__(37);
 const logger_1 = __webpack_require__(0);
 let RCConstructor = routerClientConstructor_1.RouterClientConstructor;
 /** The logger needs a router client, and the router client needs a logger.
@@ -1486,12 +1499,12 @@ exports.default = RouterClientInstance;
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (immutable) */ __webpack_exports__["getOpenfinVersion"] = getOpenfinVersion;
+/* harmony export (immutable) */ __webpack_exports__["getContainerVersion"] = getContainerVersion;
 /* harmony export (immutable) */ __webpack_exports__["castToPromise"] = castToPromise;
 /* harmony export (immutable) */ __webpack_exports__["isPercentage"] = isPercentage;
 /* harmony export (immutable) */ __webpack_exports__["crossDomain"] = crossDomain;
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getAllMonitors", function() { return getAllMonitors; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getMonitorFromOpenFinXY", function() { return getMonitorFromOpenFinXY; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getMonitorFromXY", function() { return getMonitorFromXY; });
 /* harmony export (immutable) */ __webpack_exports__["getMonitorFromWindow"] = getMonitorFromWindow;
 /* harmony export (immutable) */ __webpack_exports__["getFinWindow"] = getFinWindow;
 /* harmony export (immutable) */ __webpack_exports__["getWindowDescriptor"] = getWindowDescriptor;
@@ -1514,10 +1527,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (immutable) */ __webpack_exports__["adjustWindowIfInTaskbarSpace"] = adjustWindowIfInTaskbarSpace;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__system__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__ = __webpack_require__(51);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__ = __webpack_require__(55);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__clients_logger__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1__ = __webpack_require__(28);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1__ = __webpack_require__(30);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_uuid_v1___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_uuid_v1__);
 /*!
  * Copyright 2017 by ChartIQ, Inc.
@@ -1541,9 +1554,9 @@ const Monitors = new __WEBPACK_IMPORTED_MODULE_1__monitorsAndScaling__["a" /* de
 }*/
 
 /**
- * Gets the openfin version in object form.
+ * Gets the container version in object form.
  */
-function getOpenfinVersion(cb = Function.prototype) {
+function getContainerVersion(cb = Function.prototype) {
 	return new Promise(function (resolve /*, reject*/) {
 		__WEBPACK_IMPORTED_MODULE_0__system__["System"].getVersion((ver) => {
 			let verArr = ver.split(".").map(Number);
@@ -1618,7 +1631,7 @@ function crossDomain(url) {
 };
 
 /**
- * Gets an array of monitor descriptors. Essentially rationalizing the results of OpenFin getMonitorInfo.
+ * Gets an array of monitor descriptors. Essentially rationalizing the results of getMonitorInfo.
  * into a single array with additional information added.
  *
  * whichMonitor is set to the secondary monitor number, or "primary" if the primary monitor.
@@ -1631,14 +1644,14 @@ function crossDomain(url) {
 var getAllMonitors = Monitors.getAllMonitors;
 
 /**
- * Retrieves a monitor descriptor given an absolute X Y on the OpenFin virtual screen
+ * Retrieves a monitor descriptor given an absolute X Y on the virtual screen
  * @param  {number} x The x position
  * @param  {number} y The y position
- * @param {callback-object}  cb Returns the monitor information from OpenFin.
+ * @param {callback-object}  cb Returns the monitor information from the Container.
  * "isPrimary" is set to true if it's the primary monitor.
  * null is returned if the x,y coordinates are beyond the bounds of the virtual screen.
  */
-var getMonitorFromOpenFinXY = Monitors.getMonitorFromScaledXY;
+var getMonitorFromXY = Monitors.getMonitorFromScaledXY;
 
 /**
  * Retrieves a monitor descriptor for a window. If the window straddles two monitors
@@ -1708,7 +1721,7 @@ function getFinWindow(windowIdentifier, cb) {
 		// Default to current window
 		var myWindow = __WEBPACK_IMPORTED_MODULE_0__system__["System"].Window.getCurrent();
 
-		// Get OpenFin options (windowDescriptor) for current window
+		// Get options (windowDescriptor) for current window
 		// we need this info even if we're going to reference a different window
 		myWindow.getOptions(function (options) {
 			// If windowName is provided, then find that window
@@ -2224,7 +2237,7 @@ function adjustBoundsToBeOnMonitor(bounds) {
  * @param {*} config - Object containing all possible values used to set windowTypes, some of these values may be unset depending on the execution path
  */
 function getWindowType(config) {
-	const DEFAULT_WINDOW_TYPE = "OpenFinWindow";
+	const DEFAULT_WINDOW_TYPE = "WebWindow";
 	// All possible windowTypes. Some of these values will be converted to other types
 	const validTypes = [
 		"openfin",
@@ -2237,6 +2250,8 @@ function getWindowType(config) {
 		"FinsembleNativeWindow",
 		"OpenFinApplication",
 		"CompoundWindow",
+		"WebWindow",
+		"WebApplication",
 		"StackedWindow"
 	];
 	// If an invalid windowType is given, default and log an error. Note that an empty windowType
@@ -2249,7 +2264,7 @@ function getWindowType(config) {
 	}
 	let ret = config.windowType || DEFAULT_WINDOW_TYPE;
 
-  // We allow several additional windowTypes to be inputted to make the config user-friendly
+	// We allow several additional windowTypes to be inputted to make the config user-friendly
 	// These windowTypes need to be converted to values Finsemble can process
 	switch (config.windowType) {
 		case "assimilation":
@@ -2260,10 +2275,19 @@ function getWindowType(config) {
 			ret = "FinsembleNativeWindow";
 			break;
 		case "application":
-			ret = "OpenFinApplication";
+			ret = "WebApplication";
+			break;
+		case "openFinApplication":
+			ret = "WebApplication";
+			__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.warn(`Window type ${config.windowType} deprecated. Please use WebWindow`);
+			break;
+		case "Web":
+			ret = "WebWindow";
 			break;
 		case "openfin":
-			ret = "OpenFinWindow";
+		case "openFinWindow":
+			ret = "WebWindow";
+			__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.warn(`Window type ${config.windowType} deprecated. Please use WebWindow`);
 			break;
 		case "StackedWindow":
 			ret = "StackedWindow";
@@ -2275,7 +2299,10 @@ function getWindowType(config) {
 
 	// Next handle any backward compatibility windowType inputs
 	if (config.native) ret = "NativeWindow"; //Backward Compatibility
-	if (config.type === "openfinApplication") ret = "OpenFinApplication"; //Backward Compatibility
+	if (config.type === "openfinApplication") {
+		ret = "WebApplication"; //Backward Compatibility
+		__WEBPACK_IMPORTED_MODULE_2__clients_logger___default.a.system.warn("Window type openFinApplication deprecated. Please use WebApplication");
+	}
 	if (config.compound) ret = "CompoundWindow";
 	return ret;
 }
@@ -7775,7 +7802,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(16)(module), __webpack_require__(47).setImmediate, __webpack_require__(15)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(17)(module), __webpack_require__(51).setImmediate, __webpack_require__(16)))
 
 /***/ }),
 /* 8 */
@@ -7787,14 +7814,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const routerClientInstance_1 = __webpack_require__(5);
 const logger_1 = __webpack_require__(0);
 const distributedStoreClient_1 = __webpack_require__(9);
-const storageClient_1 = __webpack_require__(18);
+const storageClient_1 = __webpack_require__(19);
 const util = __webpack_require__(6);
-const WindowEventManager_1 = __webpack_require__(39);
+const WindowEventManager_1 = __webpack_require__(41);
 const constants = __webpack_require__(11);
-const FinsembleEvent_1 = __webpack_require__(38);
+const FinsembleEvent_1 = __webpack_require__(40);
 const system_1 = __webpack_require__(2);
 /** This import syntax helps the compiler infer the types. */
-const clone = __webpack_require__(40);
+const clone = __webpack_require__(44);
 distributedStoreClient_1.default.initialize();
 storageClient_1.default.initialize();
 const BOUNDS_SET = "bounds-set";
@@ -7859,7 +7886,7 @@ class FinsembleWindow {
     //allows backwards compatibility.
     standardizeEventName(event) {
         switch (event) {
-            //all of these should be deprecated in 3.5ish.
+            // all of these should be deprecated in 3.5ish.
             case "bounds-set":
             case "stoppedMoving":
                 return "bounds-change-end";
@@ -7951,9 +7978,6 @@ class FinsembleWindow {
     listenForBoundsSet() {
         this.eventManager.listenForRemoteEvents(["bounds-change-start", "bounds-changing", "bounds-change-end"]);
     }
-    animate(params = {}, callback = Function.prototype) {
-        this.queryWindowService("animate", params, callback);
-    }
     getWindowStore(cb) {
         if (window._FSBLCache.windowStore) {
             return cb(window._FSBLCache.windowStore);
@@ -7966,7 +7990,7 @@ class FinsembleWindow {
     doConstruction(params) {
         //TODO this is the same as wrap (eventually this should spawn)
         if (!params.setWindowType && !params.windowType) { //Default WindowType
-            params.windowType = "OpenFinWindow";
+            params.windowType = "WebWindow";
         }
         if (params.windowType) { //We need to make a specific kind of Window
             params.setWindowType = params.windowType;
@@ -8016,7 +8040,7 @@ class FinsembleWindow {
         if (!response || !response.data || typeof response.data !== "string")
             return;
         //this.windowOptions.title = response.data;
-        this.eventManager.trigger("title-changed", {
+        this.eventManager.emit("title-changed", {
             title: response.data
         });
     }
@@ -8127,9 +8151,9 @@ class FinsembleWindow {
             let wrap = null;
             if (typeof window._FSBLCache.windowAttempts[params.name] === "undefined")
                 window._FSBLCache.windowAttempts[params.name] = 0;
-            //OpenfinApplication is essentially just an openfinWindow in its own process. We can wrap it just like a window.
-            if (!params.setWindowType && !identifier.windowType || identifier.windowType === "OpenFinApplication") { //Default WindowType
-                identifier.windowType = "OpenFinWindow";
+            // WebApplication is essentially just an WebWindow in its own process. We can wrap it just like a window.
+            if (!params.setWindowType && !identifier.windowType || identifier.windowType === "WebApplication") { //Default WindowType
+                identifier.windowType = "WebWindow";
             }
             //Top level keeps important info (e.g., uuid, name, windowType).
             let paramsForWindow = Object.assign({}, identifier);
@@ -8299,6 +8323,22 @@ class FinsembleWindow {
     bringToFront(params, callback) {
         this.queryWindowService("bringToFront", params, callback);
     }
+    /**
+     * Sets the alwaysOnTop state for the window.
+     * @param params Objecting representing the new alwaysOnTop state.
+     * @param callback Callback accepting two values: a (possible) error object and the alwaysOnTop value for the window.
+     */
+    setAlwaysOnTop(params, callback) {
+        this.queryWindowService("setAlwaysOnTop", params, callback);
+    }
+    /**
+     * Returns the alwaysOnTop for the window.
+     * @param params This parameter is ignored.
+     * @param callback Callback invoked with the alwaysOnTop state for the window.
+     */
+    isAlwaysOnTop(params, callback) {
+        this.queryWindowService("isAlwaysOnTop", {}, callback);
+    }
     isShowing(params, callback) {
         this.queryWindowService("isShowing", params, callback);
     }
@@ -8337,6 +8377,9 @@ class FinsembleWindow {
             logger_1.default.system.debug("WRAP CLOSE. Public close initiated for", this.name);
             callback();
         });
+    }
+    animate(params = {}, callback = Function.prototype) {
+        this.queryWindowService("animate", params, callback);
     }
     /**
      *Register a window with docking. Use this if you don't want to use the full initialization function
@@ -8502,7 +8545,7 @@ class FinsembleWindow {
      * @param {function} cb Callback
      */
     getMonitor(cb) {
-        routerClientInstance_1.default.query("DockingService.getMonitorForWindow", { windowIdentifier: this.identifier }, (err, message) => message ? cb(message.data) : cb());
+        routerClientInstance_1.default.query("DockingService.getMonitorForWindow", { windowIdentifier: this.identifier }, (err, message) => (message ? cb(message.data) : cb()));
     }
     /**
      * Given params, will return the component state. Either the params to search for, or the entire state.
@@ -8622,9 +8665,19 @@ class FinsembleWindow {
                     else {
                         logger_1.default.system.error("FinsembleWindow.setParent error", err);
                     }
+                    /** DH 11/8/2019
+                     * There is an intrinsic race between stacks and grouping:
+                     * The stack is the group, not the children, so the parent might
+                     * not be correct before the update arrives. This publish ensures
+                     * that there is at least one publish _afer_ the parent has been set.
+                     */
+                    routerClientInstance_1.default.transmit(constants.DOCKING.REQUEST_PUBLISH, null);
                     this.settingParent = false;
-                    this.eventManager.trigger("parent-set", { parentName: this.parentWindow.name });
-                    cb(err, wrappedStackedWindow);
+                    const parentSettingDone = () => {
+                        this.removeEventListener("parent-set", parentSettingDone);
+                        cb(err, wrappedStackedWindow);
+                    };
+                    this.addEventListener("parent-set", parentSettingDone);
                 });
             });
         }
@@ -8669,7 +8722,7 @@ class FinsembleWindow {
      */
     clearParent() {
         logger_1.default.system.debug("FinsembleWindow.clearParent", this.parentWindow);
-        this.eventManager.trigger("parent-unset", {
+        this.eventManager.emit("parent-unset", {
             parentName: this.parentWindow.name
         });
         this.parentWindow = null;
@@ -8878,7 +8931,7 @@ FinsembleWindow.isStartupApplication = async function (windowName) {
     // We cannot wrap the service manager.
     // No need to do these checks if we're in a window that lives in the startup app.
     if (manifest) {
-        switch (fin.container) {
+        switch (system_1.System.container) {
             case "Electron":
                 isStartupApplication = manifest && manifest.startup_app && manifest.startup_app.name === windowName;
                 break;
@@ -8924,6 +8977,7 @@ FinsembleWindow._windowReady = function (windowName) {
     return new Promise(promiseResolver);
 };
 exports.FinsembleWindow = FinsembleWindow;
+// @TODO - Process Monitor uses finWindow.getParentApplication. We should implement that here.
 
 
 /***/ }),
@@ -8934,7 +8988,7 @@ exports.FinsembleWindow = FinsembleWindow;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const baseClient_1 = __webpack_require__(1);
-const StoreModel_1 = __webpack_require__(31);
+const StoreModel_1 = __webpack_require__(33);
 /** I'm not sure why we previously deferred requiring StoreModel, but we did.
   * I've tried to stay as true to the original implementation as possible. -- Daniel 12/19/18 */
 let _StoreModel;
@@ -8963,7 +9017,7 @@ function removeGlobalStore(params, cb) {
 /**
  *
  * @introduction
- * <h2>Distributed Store Client</h2>
+ * <h2>Distributed Store Client (Finsemble Flow)</h2>
  * The Distributed Store Client handles creating, retrieving, and destroying stores. Stores are used to save and retrieve data either locally or globally.
  * This data is not persisted. You can add listeners at multiple levels (store or field), and get the updated data as it's updated in the store.
  * Fields are stored within the store as key/value pair. For more information, see the <a href="tutorial-DistributedStore.html">Distributed Store tutorial</a>.
@@ -8985,9 +9039,11 @@ class DistributedStoreClient extends baseClient_1._BaseClient {
         this.ls = localStore;
     }
     /**
-     * Get a store. If no store is set, you will get the global Finsemble store. If global is not set, Finsemble will check local first then check global.
+     * Retrieve a store if it exists in the local scope, otherwise from the global scope.
+     *
+     * @param {object} params
      * @param {String} params.store The name of the store.
-     * @param {boolean} params.global Whether a store is accessible outside of the component it's created in.
+     * @param {boolean} params.global Get the store only from the global scope.
      * @param {function} cb -  Will return the value if found.
      * @returns {StoreModel} - returns the store
      * @example
@@ -9073,9 +9129,7 @@ class DistributedStoreClient extends baseClient_1._BaseClient {
 }
 ;
 var storeClient = new DistributedStoreClient({
-    startupDependencies: {
-        services: ["dataStoreService"]
-    },
+    startupDependencies: {},
     onReady: function (cb) {
         _StoreModel = StoreModel_1.default;
         storeClient.load(cb);
@@ -9097,8 +9151,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
-const storageClient_1 = __webpack_require__(18);
-const hotkeysClient_1 = __webpack_require__(19);
+const storageClient_1 = __webpack_require__(19);
+const hotkeysClient_1 = __webpack_require__(20);
 const util = __webpack_require__(6);
 const system_1 = __webpack_require__(2);
 const baseClient_1 = __webpack_require__(1);
@@ -9108,10 +9162,10 @@ const FinsembleWindow_1 = __webpack_require__(8);
 const configUtil_1 = __webpack_require__(13);
 const async_1 = __webpack_require__(7);
 const routerClientInstance_1 = __webpack_require__(5);
-const lodashGet = __webpack_require__(24);
+const lodashGet = __webpack_require__(26);
 // DH 3/6/2019 - @TODO - All uses of this should be replaced with calls to the WindowStorageManager
 const constants_1 = __webpack_require__(11);
-const configClient_1 = __webpack_require__(17);
+const configClient_1 = __webpack_require__(18);
 var finsembleWindow;
 /**
  *
@@ -9160,7 +9214,7 @@ function removeClass(el, className) {
 /**
  *
  *@introduction
-  <h2>Window Client</h2>
+  <h2>Window Client (Finsemble Workspaces)</h2>
   ----------
  * The Window Client is primarily responsible for managing the `windowState` (the window's bounds) and `componentState` (data inside of your component).
  * The reference below is provided in case you'd like to manually trigger events.
@@ -9224,7 +9278,6 @@ class WindowClient extends baseClient_1._BaseClient {
         this.onWindowMaximized = this.onWindowMaximized.bind(this);
         this.onWindowBlurred = this.onWindowBlurred.bind(this);
         this.onWindowFocused = this.onWindowFocused.bind(this);
-        this.onParentSet = this.onParentSet.bind(this);
         this.onMinimizedRestored = this.onMinimizedRestored.bind(this);
         this.onWindowMinimized = this.onWindowMinimized.bind(this);
         this.close = this.close.bind(this);
@@ -9234,7 +9287,6 @@ class WindowClient extends baseClient_1._BaseClient {
     }
     /**
      * This function is fired every time the window's bounds change. It saves the window's position.
-     * @param {object} bounds
      * @private
      */
     onWindowRestored() {
@@ -9277,15 +9329,8 @@ class WindowClient extends baseClient_1._BaseClient {
         finsembleWindow.addEventListener("restored", this.onMinimizedRestored);
     }
     /**
-     * Handles the event that fires when the finsemble window's parent is set.
-     * @private
-     * @param evt the event itself, which is ignored.  Any time a parent is set, force a group data update.
-     */
-    onParentSet(evt) {
-        this.requestGroupDataPublish();
-    }
-    /**
      * Returns a list of the groups this window is in, if any.
+     * @private
      */
     getWindowGroups() {
         return this.windowGroups;
@@ -9307,18 +9352,12 @@ class WindowClient extends baseClient_1._BaseClient {
     }
     ;
     /**
-     * Requests an updated group data message.
-     * @private
-     */
-    requestGroupDataPublish() {
-        this.routerClient.transmit("DockingService.requestGroupDataPublish");
-    }
-    /**
      * Closes window. Defaults are to remove the window from the workspace if the user presses the X button, but not if the window is closed via an app-level request (e.g., switching workspaces, so all windows need to close).
      * @param {object} params
      * @param {boolean} params.removeFromWorkspace Whether to remove the window from the workspace.
      * @param {boolean} params.closeWindow Whether to close the window. On shutdown this method is called, but the Window Service actually closes the window.
      * @param {boolean} params.userInitiated Whether the user clicked the X, or if the system asked the window to close.
+     * @param {boolean} params.ignoreParent Whether or not to update the parent (stack) window when closing.
      * @param {function} cb The callback to be invoked after the method completes successfully.
      * @example
      * //Close window and remove from workspace (e.g., user closes the window).
@@ -9479,6 +9518,7 @@ class WindowClient extends baseClient_1._BaseClient {
      *
      * Saves the window's state. Rarely called manually, as it's called every time your window moves.
      * @param {Object} bounds optional param.
+     * @param {boolean} setActiveWorkspaceDirty
      * @example <caption>The code below is the bulk of our listener for the <code>bounds-changed</code> event from the window. Every time the <code>bounds-changed</code> event is fired (when the window is resized or moved), we save the window's state. The first few lines just prevent the window from being dropped behind the toolbar.</caption>
      *finWindow.addEventListener('disabled-frame-bounds-changed', function (bounds) {
      * 	if (bounds.top < 45) {
@@ -9546,15 +9586,13 @@ class WindowClient extends baseClient_1._BaseClient {
     ;
     /**
      * Sets whether window is always on top. By default, this is false.
+     * @param {boolean} alwaysOnTop The new mode for the window's alwaysOnTop option to be set to.
      * @param {function} cb Optional callback to be invoked after the method completes successfully.
      * @example
      * FSBL.Clients.WindowClient.setAlwaysOnTop(true);
      */
     setAlwaysOnTop(alwaysOnTop, cb) {
-        finsembleWindow.updateOptions({ options: { alwaysOnTop: alwaysOnTop } }, () => {
-            if (cb)
-                cb();
-        });
+        finsembleWindow.setAlwaysOnTop({ alwaysOnTop }, cb);
     }
     /**
      * Restores window from a maximized or minimized state.
@@ -9625,7 +9663,6 @@ class WindowClient extends baseClient_1._BaseClient {
         finsembleWindow.removeEventListener("focused", this.onWindowFocused);
         finsembleWindow.removeEventListener("close-requested", this.close);
         finsembleWindow.removeEventListener("minimized", this.onWindowMinimized);
-        finsembleWindow.removeEventListener("parent-set", this.onParentSet);
     }
     ;
     /**
@@ -9635,6 +9672,7 @@ class WindowClient extends baseClient_1._BaseClient {
      * @private
      */
     injectDOM(headerHeight) {
+        logger_1.default.system.debug("injectDOM", headerHeight);
         //for the aesthetics.
         if (document.getElementById("FSBLHeader")) {
             return;
@@ -9652,6 +9690,7 @@ class WindowClient extends baseClient_1._BaseClient {
     ;
     /**
      * Injects the windowTitleBar into the window.
+     * @param {InjectHeaderParams} params
      * @param {function} cb Callback function
      * @return {object} Reference to a RouterClient.query
      * @private
@@ -9676,6 +9715,7 @@ class WindowClient extends baseClient_1._BaseClient {
     ;
     /**
      * Given a field, this function retrieves app state. If no params are given, the full state is returned.
+     * @param {object} params
      * @param {string} params.field Field to retrieve.
      * @param {Array.<string>} params.fields Fields to retrieve.
      * @param {string} params.windowName Window whose component state you are retreiving. If null, the default is to the calling window.
@@ -9742,11 +9782,11 @@ class WindowClient extends baseClient_1._BaseClient {
     ;
     /**
      * Given a field, this function sets and persists app state.
-     * @param {object} params
-     * @param {string} params.field field
-     * @param {Array.<string>} params.fields fields
+     * @param {object} params Object of data to be saved
+     * @param {string} params.field The key name of the field to be saved. Required if not using `fields`.
+     * @param {Array.<object>} params.fields An array of objects with `field` and `value` keys to be saved.
      * @param {string} params.windowName Name of the component whose state you are setting. Defaults to the calling window.
-     * @param {any} params.value Value of the data being saved
+     * @param {any} params.value Value of the data being saved. Required if not using `fields`.
      * @param {function} cb The callback to be invoked after the method completes successfully.
      * @example <caption>The example below shows how we save our chart layout when it changes.</caption>
      * var s = stx.exportLayout(true);
@@ -9799,9 +9839,9 @@ class WindowClient extends baseClient_1._BaseClient {
     }
     /**
      * Given a field, this function removes it from app state.
-     * @param {object} params
-     * @param {string} params.field field
-     * @param {Array.<string>} params.fields fields
+     * @param {object} params Object of data to be removed
+     * @param {string} params.field The key name of the field to be saved. Required if not using `fields`.
+     * @param {Array.<object>} params.fields An array of objects with `field` keys to be removed.
      * @param {string} params.windowName The name of the window to remove component state from
      * @param {function} cb The callback to be invoked after the method completes successfully.
      * @example <caption>The example below shows how we would remove our chart layout when it no longer needed.</caption>
@@ -9864,7 +9904,7 @@ class WindowClient extends baseClient_1._BaseClient {
             name: windowName,
             uuid: uuid,
             options: params || {},
-            windowType: "OpenFinWindow"
+            windowType: "WebWindow"
         }, () => {
             this.startedRegistrationWithDocking = false;
             if (this.deregisterPlease) {
@@ -10024,6 +10064,7 @@ class WindowClient extends baseClient_1._BaseClient {
         // components."*".component.inject|preload="windowTitleBar.js" <-- set the windowTitleBar
         // components."welcome".component.inject|preload="windowTitleBar.js" <-- override the windowTitleBar
         // Everything from here down then goes into windowTitleBar.jsx inside FSBLReady()
+        logger_1.default.system.debug("injectHeader", params);
         let self = this;
         if (this.hasHeader)
             return;
@@ -10045,6 +10086,7 @@ class WindowClient extends baseClient_1._BaseClient {
         else {
             params = Object.assign(defaultParams, params);
         }
+        logger_1.default.system.debug("injectHeader 2", params);
         this.injectDOM(params.forceHeaderHeight);
         // initialize but if child of a stacked window then don't register with docking
         //finsembleWindow.getParent();
@@ -10060,7 +10102,7 @@ class WindowClient extends baseClient_1._BaseClient {
         document.body.appendChild(node);
     }
     /**
-     * If we spawned this openfin app from our parent application, we listen on that application for certain events that might fire _if_ our parent goes down. If the parent goes down, we want to kill its children as well.
+     * If we spawned this app from our parent application, we listen on that application for certain events that might fire _if_ our parent goes down. If the parent goes down, we want to kill its children as well.
      * @private
      */
     checkIfChildApp() {
@@ -10163,7 +10205,6 @@ class WindowClient extends baseClient_1._BaseClient {
         finsembleWindow.addEventListener("blurred", this.onWindowBlurred);
         // On focus add a border to the window
         finsembleWindow.addEventListener("focused", this.onWindowFocused);
-        finsembleWindow.addEventListener("parent-set", this.onParentSet);
         if (typeof FSBL !== "undefined") {
             FSBL.onShutdown(() => {
                 logger_1.default.system.info("WINDOW LIFECYCLE:SHUTDOWN: FSBL.onShutdown start");
@@ -10229,7 +10270,7 @@ class WindowClient extends baseClient_1._BaseClient {
     }
     /**
      * Retrieves data that was set with <a href="LauncherClient.html#spawn">LauncherClient.spawn</a>.
-     * @return {object} The data or empty object if no data was set. *Note, this will never return null or undefined.*
+     * @return {object} The data provided from the component config when spawned.
      */
     getSpawnData() {
         if (!this.options.customData) {
@@ -10252,7 +10293,7 @@ class WindowClient extends baseClient_1._BaseClient {
     ;
     /**
      * For the DOM element that has been passed in, this function returns a bounding box that is relative
-     * to the OpenFin virtual monitor space. That is, it returns the position of the DOM element on the desktop.
+     * to the virtual monitor space. That is, it returns the position of the DOM element on the desktop.
      * @param {HTMLElement|string} element A selector or HTMLElement
      * @private
      * @todo convert to use monitor util function and make sure current bounds are correct. For some windows (e.g., toolbars/menus that don't track their own bounds because they don't have drag regions), options.default will represent the data _on spawn_, not the bounds when the function is called.
@@ -10301,7 +10342,7 @@ class WindowClient extends baseClient_1._BaseClient {
     ;
     /**
      * Returns the window identifier for the current component.
-     * @returns {windowIdentifier}
+     * @returns {WindowIdentifier}
      */
     getWindowIdentifier() {
         var componentType = null;
@@ -10330,7 +10371,8 @@ class WindowClient extends baseClient_1._BaseClient {
     }
     ;
     /**
-     * Returns the bounds for the current window.
+     * Returns the object defining bounds for the current window including the position of the left and right edges measured in pixels from the left edge of the monitor, the top and bottom edges measured in pixels from the top edge, and the width and height of the component in pixels.
+     * Please note that this method differs from the right and bottom coordinates passed to LauncherClient.spawn(); those are measured from the right and bottom edges of the screen.
      * @param {StandardCallback} cb The callback to be invoked after the method completes successfully.
      */
     getBounds(cb) {
@@ -10342,6 +10384,7 @@ class WindowClient extends baseClient_1._BaseClient {
     /**
      * This is used by the Finsemble window title bar when a tab is dragged for tiling or tabbing.
      * @param {*} params - <code>params.windowIdentifier</code> is required.
+     * @param {WindowIdentifier} params.windowIdentifier The Finsemble identifier for the target window.
      * @param {*} cb The callback to be invoked after the method completes successfully.
      */
     startTilingOrTabbing(params, cb = Function.prototype) {
@@ -10350,9 +10393,25 @@ class WindowClient extends baseClient_1._BaseClient {
     }
     ;
     /**
+     * Begin programmatically moving the window; the first parameter is a mouse event. Until `stopMovingWindow` is invoked, the window will follow the user's mouse. This should be invoked inside of a `mouseDown` event handler.
+     */
+    startMovingWindow(event) {
+        const currentWindow = fin.desktop.Window.getCurrent();
+        currentWindow.startMovingWindow(event);
+    }
+    /**
+     * Stops moving a window that was sent in motion via `startMovingWindow`.
+     */
+    stopMovingWindow() {
+        const currentWindow = fin.desktop.Window.getCurrent();
+        currentWindow.stopMovingWindow();
+    }
+    /**
      * This is used to cancel a tabbing or tiling operation.
-     * @param {*} params - Put <code>windowIdentifier</code> in <code>params.windowIdentifier</code>. If not provided, must set <code>params.waitForIdentifier</code> true.
-     * @param {*} cb - The callback to be invoked after the method completes successfully.
+     *
+     * @param {object} params
+     * @param {WindowIdentifier} params.windowIdentifier The Finsemble identifier for the window.
+     * @param {Function} cb - The callback to be invoked after the method completes successfully.
      */
     cancelTilingOrTabbing(params, cb = Function.prototype) {
         console.debug("CancelTilingOrTabbing");
@@ -10363,6 +10422,7 @@ class WindowClient extends baseClient_1._BaseClient {
     /**
      * This is used to let Finsemble know which window is being dragged. <code>params.windowIdentifier</code> must be the identifier of the tab being dragged. This is only used if the identifier is unknown when <code>startTilingOrTabbing</code> is called.
      * @param {*} params - The <code>windowIdentifier</code> is required.
+     * @param {WindowIdentifier} params.windowIdentifier The Finsemble identifier for the target window.
      * @param {*} cb - The callback to be invoked after the method completes successfully.
      */
     sendIdentifierForTilingOrTabbing(params, cb = Function.prototype) {
@@ -10618,6 +10678,7 @@ class WindowClient extends baseClient_1._BaseClient {
                     return callback();
                 }
                 customData = finsembleWindow.windowOptions.customData;
+                logger_1.default.system.debug("getInitialOptions", customData);
                 if (customData) {
                     isCompoundWindow = lodashGet(customData, 'window.compound', false);
                     if (customData.cssOverride) {
@@ -10656,6 +10717,7 @@ class WindowClient extends baseClient_1._BaseClient {
                         else {
                             // Window doesn't support header injection (i.e. dialogModal, toolbar, searchMenu, etc)
                             // so we don't need to inject header and bump window content's fixed elements
+                            self.hasHeader = true;
                             done();
                         }
                     },
@@ -10844,7 +10906,7 @@ class WindowClient extends baseClient_1._BaseClient {
 }
 var windowClient = new WindowClient({
     startupDependencies: {
-        services: ["storageService", "windowService"]
+        clients: ["storageClient"]
     },
     onReady: function (cb) {
         windowClient.start(cb);
@@ -10874,6 +10936,26 @@ exports.SERVICE_INITIALIZING_CHANNEL = "Finsemble.ServiceManager.serviceInitiali
 exports.SERVICE_READY_CHANNEL = "Finsemble.ServiceManager.serviceReady";
 exports.SERVICE_CLOSING_CHANNEL = "Finsemble.ServiceManager.serviceClosing";
 exports.SERVICE_CLOSED_CHANNEL = "Finsemble.ServiceManager.serviceClosed";
+// Naming to supports handshake betwwen each client and its corresponding service
+// Returns the handshake channel for a given service name
+exports.SERVICE_QUERY_READY_CHANNEL = (name) => { return `Finsemble.ServiceManager.queryReady.${name}`; };
+// Maps a client name to its corresponding service name.  Okay to not include all clients here -- if not here then handshake won't be done
+exports.CLIENT_SERVER_MAPPING = (name) => {
+    const MAPPING = {
+        "authenticationClient": "authenticationService",
+        "configClient": "configService",
+        "distributedStoreClient": "dataStoreService",
+        "hotkeysClient": "hotkeysService",
+        "linkerClient": "linkerService",
+        "logger": "loggerService",
+        "searchClient": "searchService",
+        "storageClient": "storageService",
+        "windowClient": "windowService",
+        "workspaceClient": "workspaceService"
+    };
+    // returns undefined if there is no mapping
+    return MAPPING[name];
+};
 //This channel is where the aggregated state of all services is sent out on.
 exports.SERVICES_STATE_CHANNEL = "Finsemble.State.Services";
 exports.WINDOWSTATE = {
@@ -10889,11 +10971,11 @@ exports.DOCKING = {
     GROUP_UPDATE: "DockingService.groupUpdate",
     // For legacy reasons, this is named Workspace, even though it's generated by docking.
     WORKSPACE_GROUP_UPDATE: "Finsemble.WorkspaceService.groupUpdate",
+    REQUEST_PUBLISH: "DockingService.requestGroupDataPublish",
 };
 // These channels are for interrupting events
 exports.EVENT_INTERRUPT_CHANNEL = "Finsemble.Event.Interrupt";
 exports.INTERRUPTIBLE_EVENTS = ["close-requested", "closed", "close-complete", "_container-close-handlers"];
-exports.REMOTE_FOCUS = "WindowService.remoteFocus";
 exports.WORKSPACE = {
     CLEAN_SHUTDOWN: "Finsemble.Workspace.cleanShutdown",
     UPDATE_PUBSUB: "Finsemble.WorkspaceService.update",
@@ -10945,6 +11027,11 @@ exports.WORKSPACE = {
         ADD_WINDOW: "WorkspaceService.addWindow",
         REMOVE_WINDOW: "WorkspaceService.removeWindow",
     }
+};
+exports.WINDOW_SERVICE_REQUESTS = {
+    REMOTE_FOCUS: "WindowService.remoteFocus",
+    SET_ALWAYS_ON_TOP: "WindowService-Request-setAlwaysOnTop",
+    IS_ALWAYS_ON_TOP: "WindowService-Request-isAlwaysOnTop",
 };
 exports.COMPONENT_STATE_STORAGE_TOPIC = "finsemble.componentStateStorage";
 exports.HEARTBEAT_TIMEOUT_CHANNEL = "Finsemble.WindowService.HeartbeatTimeout";
@@ -11522,7 +11609,7 @@ var ConfigUtil = function () {
 		function getRawManifest(callback, application, level) {
 			__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getRawManifest", application, level);
 
-			application.getManifest(function (manifest) { // get raw openfin manifest
+			application.getManifest(function (manifest) { // get raw manifest
 				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getExpandedRawManifest: manifest retrieved. Pre-variable resolution", manifest);
 				self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables first time so can find config location
 				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getExpandedRawManifest:Complete. post-variable resolution", manifest);
@@ -11545,7 +11632,7 @@ var ConfigUtil = function () {
 			});
 		}
 
-		__WEBPACK_IMPORTED_MODULE_2__system__["System"].ready(function () { // make sure openfin is ready
+		__WEBPACK_IMPORTED_MODULE_2__system__["System"].ready(function () { // make sure system is ready
 			var application = __WEBPACK_IMPORTED_MODULE_2__system__["System"].Application.getCurrent();
 			getRawManifest(callback, application, 1);
 		});
@@ -11559,7 +11646,7 @@ var ConfigUtil = function () {
 		}).then(function (response) {
 			return response.json();
 		}).catch(function (err) {
-			importCallback("failure importing: " + err, null);
+			importCallback(`Failure importing ${coreConfigFile}: ${err}`, null);
 		}).then(function (importObject) {
 			importCallback(null, importObject);
 		});
@@ -11570,9 +11657,9 @@ var ConfigUtil = function () {
 	// However, the full config processing, including actually doing the imports, is only done in the Config Service.
 	this.getInitialManifest = function (callback) {
 
-		__WEBPACK_IMPORTED_MODULE_2__system__["System"].ready(function () { // make sure openfin is ready
+		__WEBPACK_IMPORTED_MODULE_2__system__["System"].ready(function () { // make sure system is ready
 			var application = __WEBPACK_IMPORTED_MODULE_2__system__["System"].Application.getCurrent();
-			application.getManifest(function (manifest) { // get raw openfin manifest
+			application.getManifest(function (manifest) { // get raw manifest
 				manifest.finsemble = manifest.finsemble || {}; // don't error on bad config
 				self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables first time so can find config config location
 				let CORE_CONFIG = manifest.finsemble.moduleRoot + "/configs/core/config.json"; // <<<--- here is the "hidden" core config file
@@ -11598,7 +11685,7 @@ var ConfigUtil = function () {
 						self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables with finsemble config
 						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.debug("forceObjectsToLogger", "ConfigUtil.getInitialManifest:getCoreConfig:Initial Manifest after variables Resolved", manifest);
 					} else {
-						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("ConfigUtil.getInitialManifest:getCoreConfig:failed importing into finsemble config", error);
+						__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("ConfigUtil.getInitialManifest:getCoreConfig:failed importing into finsemble config.", error);
 					}
 					callback(manifest);
 				});
@@ -11869,7 +11956,7 @@ const Globals = window;
  *
  * @typedef WindowIdentifier
  * @property {string} [windowName] The name of the physical HTML window, or a reference to a native window that was launched with Assimilation service
- * @property {string} [uuid] Optional uuid of a particular OpenFin application process
+ * @property {string} [uuid] Optional uuid of a particular application process
  * @property {string} [componentType] The type of component
  * @property {number|string} [monitor] The number of the monitor. Potentially used to disambiguate multiple components with the same name (for searches only)
  */
@@ -11883,22 +11970,12 @@ const Globals = window;
  * @property {string} name The name of the window (sometimes randomly assigned).
  * @property {string} componentType The type of component (from <i>components.json</i>).
  */
-/**
- *
- * A convenient assembly of native JavaScript window, `OpenFin` window and windowDescriptor.
- *
- * @typedef RawWindowResult
- * @property {WindowDescriptor} windowDescriptor The window descriptor.
- * @property {fin.desktop.Window} finWindow The `OpenFin` window.
- * @property {Window} browserWindow The native JavaScript window.
- *
- */
 // A map of related menus that is kept by handleToggle.
 var okayToOpenMenu = {};
 /**
  *
  * @introduction
- * <h2>Launcher Client</h2>
+ * <h2>Launcher Client (Finsemble Workspaces)</h2>
  *
  * The Launcher Client handles spawning windows of all kinds.
  * Finsemble provides the architecture to launch, resize, and reposition any component, whether native, modern, or third-party.
@@ -11972,14 +12049,15 @@ class LauncherClient extends baseClient_1._BaseClient {
      * **monitorRect** - The full dimensions for the monitor. <br>
      * **availableRect** - The dimensions for the available space on the monitor (less the Windows task bar). <br>
      * **unclaimedRect** - The dimensions for available monitor space less any space claimed by components (such as the Toolbar). <br>
+     * **position** - The position of the monitor, numerically from zero to X. Primary monitor is zero. <br>
+     * **whichMonitor** - Contains the string "primary" if it is the primary monitor. <br>
      *
-     * Each of these is supplemented with the following additional members:
+     * The dimensions are supplemented with the following additional members:
      *
      * **width** - The width as calculated (right - left). <br>
      * **height** - The height as calculated (bottom - top). <br>
-     * **position** - The position of the monitor, numerically from zero to X. Primary monitor is zero. <br>
-     * **whichMonitor** - Contains the string "primary" if it is the primary monitor.
      *
+     * @param {object} params
      * @param  {WindowIdentifier} params.windowIdentifier The windowIdentifier to get the monitorInfo. If undefined, then the current window.
      * @param  {number|string} params.monitor If passed then a specific monitor is identified. Valid values include:
      *
@@ -12102,22 +12180,20 @@ class LauncherClient extends baseClient_1._BaseClient {
         this.showWindow(windowIdentifier, params, onDisplayed);
     }
     /**
-     * Displays a window and relocates/resizes it according to the values contained in params.
+     * Displays a window and relocates/resizes it according to the values contained in parameters. If the specified window is in a group or tabbed, it will be unsnapped/ungrouped/untabbed from the other windows.
+     * 	 * If invoked on a tabbed window or a window in a group, the window will be removed from the tab/group.
      *
      * @param {WindowIdentifier} windowIdentifier A windowIdentifier. This is an object containing windowName and componentType. If windowName is not given, Finsemble will try to find it by componentType.
      * @param {object} params Parameters. These are the same as {@link LauncherClient#spawn} with the following exceptions:
      * @param {any} [params.monitor] Same as spawn() except that null or undefined means the window should not be moved to a different monitor.
      * @param {number | string} [params.left] Same as spawn() except that null or undefined means the window should not be moved from current horizontal location.
      * @param {number | string} [params.top] Same as spawn() except that null or undefined means the window should not be moved from current vertical location.
-     * @param {boolean} [params.spawnIfNotFound=false] If true, then spawns a new window if the requested one cannot be found.
-     * *Note, only works if the windowIdentifier contains a componentType.*
-     * @param {boolean} [params.autoFocus] If true, window will focus when first shown.
      * @param {boolean} [params.slave] Cannot be set for an existing window. Will only go into effect if the window is spawned.
      * (In other words, only use this in conjunction with spawnIfNotFound).
      * @param {Function} cb Callback to be invoked after function is completed. Callback contains an object with the following information:
-     * <b>windowIdentifier</b> - The {@link WindowIdentifier} for the new window.
-     * <b>windowDescriptor</b> - The {@link WindowDescriptor} of the new window.
-     * <b>finWindow</b> - An `OpenFin` window referencing the new window.
+     * <b>windowIdentifier</b> - The <a href="tutorial-ComponentTypesAndWindowNames.html">WindowIdentifier</a> for the new window.
+     * <b>windowDescriptor</b> - The <a href="tutorial-ComponentTypesAndWindowNames.html">WindowDescriptor</a> of the new window.
+     * <b>finWindow</b> - A <code>finWindow</code> object referencing the new window.
      * @example
      * FSBL.Clients.LauncherClient.showWindow({windowName: "Welcome Component-86-3416-Finsemble", componentType: "Welcome Component"}, {spawnIfNotFound: true});
      */
@@ -12159,7 +12235,7 @@ class LauncherClient extends baseClient_1._BaseClient {
      *
      * The launcher parameters mimic CSS window positioning.
      * For instance, to set a full size window use `left=0`,`top=0`,`right=0`,`bottom=0`.
-     * This is functionally equivalent to: left=0,top=0,width="100%",height="100%"
+     * This is functionally equivalent to: left=0,top=0,width="100%",height="100%".
      *
      * @since 2.4.1 Added params.windowType (deprecated params.native), params.path, params.alias, params.argumentsAsQueryString - These are all for launching native apps.
      * @since 3.7.0 Added "affinity" parameter
@@ -12193,34 +12269,6 @@ class LauncherClient extends baseClient_1._BaseClient {
             });
         };
         return new Promise(promiseResolver);
-    }
-    /**
-     * Returns an object that provides raw access to a remote window.
-     * It returns an object that contains references to the Finsemble windowDescriptor, to
-     * the `OpenFin` window, and to the native JavaScript (browser) window.
-     *
-     * *This will only work for windows that are launched using the Finsemble Launcher API.*
-     *
-     * As in any browser, you will not be able to manipulate a window that has been launched
-     * cross domain or in a separate physical application (separate process). Caution
-     * should be taken to prevent a window from being closed by the user if you plan on
-     * referencing it directly. Due to these inherent limitations we strongly advise against a
-     * paradigm of directly manipulating remote windows through JavaScript. Instead leverage the
-     * RouterClient to communicate between windows and to use an event based paradigm!
-     *
-     * @param  {object} params Parameters
-     * @param {string} params.windowName The name of the window to access.
-     * @return {RawWindowResult} An object containing windowDescriptor, finWindow, and browserWindow. Or null if window isn't found.
-     * @deprecated Finsemble now uses a splintering agent which disconnects windows from the main launcher.
-     * It becomes impossible to access raw windows. See LauncherClient.getActiveDescriptors() and Util.getFinWindow()
-     * @private
-     */
-    getRawWindow(params) {
-        var launcher = window.opener;
-        if (launcher.name !== "launcherService") {
-            logger_1.default.system.warn("LauncherClient.getNativeWindow: window not opened by Launcher Service");
-        }
-        return launcher.activeWindows.getWindow(params.windowName);
     }
     /**
      * @private
@@ -12391,12 +12439,16 @@ class LauncherClient extends baseClient_1._BaseClient {
      */
     getComponentsThatCanReceiveDataTypes(params, cb = Function.prototype) {
         validate_1.default.args(cb, "function=");
-        if (params.dataTypes && !Array.isArray(params.dataTypes)) {
-            params.dataTypes = [params.dataTypes];
-        }
-        validate_1.default.args(params.dataTypes, "array");
         const promiseResolver = (resolve) => {
-            this.routerClient.query("LauncherService.getComponentsThatCanReceiveDataTypes", params, function (err, response) {
+            if (!params || !params.dataTypes) {
+                const err = "Invalid params. Expected: {dataTypes: string[]}";
+                cb(err);
+                return resolve({ err });
+            }
+            if (!Array.isArray(params.dataTypes)) {
+                params.dataTypes = [params.dataTypes];
+            }
+            this.routerClient.query("LauncherService.getComponentsThatCanReceiveDataTypes", params, (err, response) => {
                 cb(err, response.data);
                 resolve({ err, data: response.data });
             });
@@ -12437,6 +12489,8 @@ class LauncherClient extends baseClient_1._BaseClient {
         return Promise.resolve();
     }
     /**
+     * @deprecated as of 4.0.0, may be removed in the future
+     *
      * Minimizes all but a specific list or group of windows. Either groupName or windowList must be specified.
      * @param params
      * @param {Array.<string | Object>} [params.windowList] Optional. An array of window names or window identifiers. Not to be used with componentType.
@@ -12452,6 +12506,8 @@ class LauncherClient extends baseClient_1._BaseClient {
      * @private
      */
     hyperFocus(params, cb = Function.prototype) {
+        logger_1.default.system.warn("hyperFocus is deprecated as of version 4.0.0. This functionality may be removed in a future release");
+        console.warn("hyperFocus is deprecated as of version 4.0.0. This functionality may be removed in a future release");
         validate_1.default.args(cb, "function=");
         if (params.windowList && !Array.isArray(params.windowList)) {
             params.windowList = [params.windowList];
@@ -12697,9 +12753,6 @@ function constructInstance(params) {
         params.windowClient = windowClient_1.default;
     return new LauncherClient({
         clients: params,
-        startupDependencies: {
-            services: ["windowService"],
-        },
         onReady: function (cb) {
             logger_1.default.system.debug("launcherClient ready", window.name);
             logger_1.default.perf.debug("LauncherClientReadyTime", "stop");
@@ -12715,6 +12768,188 @@ exports.default = launcherClient;
 
 /***/ }),
 /* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+/*!
+* Copyright 2017 by ChartIQ, Inc.
+* All rights reserved.
+*/
+Object.defineProperty(exports, "__esModule", { value: true });
+// NOTE: SystemManagerClient is currently located in common but accessible on FSBL.  We have not decided yet whether or not to expose it like the other clients.
+const routerClientInstance_1 = __webpack_require__(5);
+const logger_1 = __webpack_require__(0);
+const _types_1 = __webpack_require__(42);
+const _constants_1 = __webpack_require__(25);
+const common_1 = __webpack_require__(43);
+/**
+ * Singleton API to Finsemble System Manager
+ */
+class SystemManagerClient {
+    /**
+     * Publishes boot status for the service or component (or boot task) being started.  This method is used internally in FSBL and baseService and not directly called.
+     * @param name the name of the service or component or module
+     * @param type the type category ("services" or "components")
+     * @param state the state ("completed" or "failed")
+     *
+     * @private
+     */
+    publishBootStatus(name, type, state) {
+        console.log("publishStartingStatus", name, state);
+        logger_1.default.system.debug("publishBootStatus", name, type, state);
+        routerClientInstance_1.default.publish(common_1.statusChannel(name), { name, type, state });
+    }
+    ;
+    /**
+     * Waits for a specific boot stage
+     * @param stage the name of the service (e.g. "storageService")
+     * @param when wait until either "stageEntered" or "stageCompleted"
+     * @param= [callback]
+     * @returns a promise
+     *
+     * @example
+     *
+     * 	await SystemManagerClient.waitForBootStage("authentication", "stageCompleted");
+     *
+     * 	SystemManagerClient.waitForBootStage("authentication", "stageCompleted", () => {
+     *		RouterClient.publish(Constants.APPLICATION_STATE_CHANNEL, { state: "authenticated" });
+     * 	});
+     *
+     */
+    waitForBootStage(stage, when, callback = Function.prototype) {
+        const waitForBootStageCompletionPromiseResolver = (resolve, reject) => {
+            logger_1.default.system.debug(`SystemManagerClient.waitForBootStage entry`, stage, when);
+            let stageIndex = _types_1.ALL_BOOT_STAGES.indexOf(stage);
+            if (stage === "microkernel" && when === "stageEntered") {
+                logger_1.default.system.error("Cannot wait on `stageEntered` for microkernel because router isn't up yet. So will instead wait for microkernal stage complete.");
+            }
+            // receives startup state from services -- see SystemManagerClient.publishBootStatus
+            let subscribeId = routerClientInstance_1.default.subscribe(_constants_1.STAGE_CHANNEL, (err, notify) => {
+                logger_1.default.system.debug("SystemManagerClient.waitForBootStage new stage", notify.data.stage, subscribeId);
+                if (err) {
+                    logger_1.default.system.error("SystemManagerClient.waitForBootStage subscribe error", err);
+                    callback(err);
+                    reject(err);
+                }
+                else if (stageIndex === -1) { // if illegal stage was input
+                    err = "illegal stage argument";
+                    logger_1.default.system.debug("SystemManagerClient.waitForBootStage subscribe error", err, stage);
+                    callback(err);
+                    reject(err);
+                }
+                else {
+                    // note the following section handles cases where waitForBootStage might be invoked after the stage has been enter or passed
+                    let currentStageIndex = _types_1.ALL_BOOT_STAGES.indexOf(notify.data.stage);
+                    logger_1.default.system.debug(`SystemManagerClient.waitForBootStage currentStageIndex=${currentStageIndex} stageIndex=${stageIndex} wait-on-stage=${stage} this-stage=${notify.data.stage}`);
+                    // when the stage before completes (or anytime after) then done for "stageEntered"
+                    if (when === "stageEntered" && (currentStageIndex + 1) >= stageIndex) {
+                        logger_1.default.system.debug("SystemManagerClient.waitForBootStage stageEntered", stage, subscribeId, callback.name);
+                        callback();
+                        resolve();
+                        routerClientInstance_1.default.unsubscribe(subscribeId);
+                        // when current stage matches (or comes after) given stage, then done for "stageCompleted"
+                    }
+                    else if (when === "stageCompleted" && currentStageIndex >= stageIndex) {
+                        logger_1.default.system.debug("SystemManagerClient.waitForBootStage completed", stage, subscribeId);
+                        callback();
+                        resolve();
+                        routerClientInstance_1.default.unsubscribe(subscribeId);
+                    }
+                    else {
+                        logger_1.default.system.debug(`SystemManagerClient.waitForBootStage else currentStageIndex=${currentStageIndex} stageIndex=${stageIndex} `, currentStageIndex, stageIndex, stage, subscribeId);
+                    }
+                }
+            });
+        };
+        return new Promise(waitForBootStageCompletionPromiseResolver);
+    }
+    /**
+     * Waits for a specific service (or component or boot task) to be started
+     * @param name the name of the service (e.g. "storageService")
+     * @param= [callback]
+     * @returns a promise
+     *
+     * @example
+     *
+     * 	await SystemManagerClient.waitForStartup("configService");
+     *
+     *	SystemManagerClient.waitForStartup("dataStoreService", () => {
+     *		RouterClient.publish(Constants.APPLICATION_STATE_CHANNEL, { state: "configuring" });
+     *	});
+     *
+     */
+    waitForStartup(name, callback = Function.prototype) {
+        const waitForStartupStatePromiseResolver = (resolve, reject) => {
+            logger_1.default.system.debug(`SystemManagerClient.waitForStartup.${name}`, name);
+            // receives startup state from services -- see SystemManagerClient.publishBootStatus
+            let subscribeId = routerClientInstance_1.default.subscribe(common_1.statusChannel(name), (err, notify) => {
+                logger_1.default.system.debug("SystemManagerClient.waitForStartup subscribe", name, err, notify);
+                if (err) {
+                    logger_1.default.system.error("SystemManagerClient.waitForStartup subscribe error", err);
+                    callback(err);
+                    reject();
+                }
+                else {
+                    if (notify.data.name === name && notify.data.state === "completed") {
+                        logger_1.default.system.debug("SystemManagerClient.waitForStartup completed", name);
+                        callback();
+                        resolve();
+                        routerClientInstance_1.default.unsubscribe(subscribeId);
+                    }
+                }
+            });
+        };
+        return new Promise(waitForStartupStatePromiseResolver);
+    }
+    /**
+     * Publishes a checkpoints status. This must be done for any checkpoint so the SystemManager will know if the checkpoint succeeded or not
+     * @param parent the name of the service or component containing the checkpoint (as defined in config)
+     * @param checkpointName tthe name of the checkpoint (as defined in config)
+     * @param state the state for the checkpoint, either "completed" or "failed"
+     *
+     * @example
+     *
+     * 	SystemManagerClient.publishCheckpointState("workspaceService", "importedLegacyWorkspaces", "completed");
+     *
+     */
+    publishCheckpointState(windowName, checkpointName, state) {
+        console.log("publishCheckpoint", windowName, checkpointName, state, common_1.checkpointChannel(windowName, checkpointName));
+        logger_1.default.system.debug("publishCheckpoint", windowName, checkpointName, state, common_1.checkpointChannel(windowName, checkpointName));
+        routerClientInstance_1.default.publish(common_1.checkpointChannel(windowName, checkpointName), { windowName, checkpointName, state });
+    }
+    ;
+    /**
+     * Shows System Log window and bring its to front.
+     */
+    showSystemLog() {
+        logger_1.default.system.debug("SystemManagerClient.showSystemLog");
+        routerClientInstance_1.default.transmit(_constants_1.SHOW_SYSLOG_CHANNEL, true);
+    }
+    /**
+     * Displays message on the system log
+     * @param params gnenerally this is TBD until real system log is written
+     * @param params.error if true then the log message is an error
+     * @param params.notification if true then the log message is a notification
+     * @param message the message string to log
+     *
+     * @example
+     *
+     * 	SystemManagerClient.systemLog({ error: true}, errorMsg);
+     *  SystemManagerClient.systemLog({ notification: true }, "Notification: " + message);
+     *
+     */
+    systemLog(params, logMessage) {
+        logger_1.default.system.debug("SystemManagerClient.systemLog", params, logMessage);
+        routerClientInstance_1.default.transmit(_constants_1.SYSLOG_CHANNEL, { params, logMessage });
+    }
+}
+var systemManagerClient = new SystemManagerClient();
+exports.default = systemManagerClient;
+
+
+/***/ }),
+/* 16 */
 /***/ (function(module, exports) {
 
 // shim for using process in browser
@@ -12904,7 +13139,7 @@ process.umask = function() { return 0; };
 
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -12932,7 +13167,7 @@ module.exports = function(module) {
 
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12945,10 +13180,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const validate_1 = __webpack_require__(3); // Finsemble args validator
 const baseClient_1 = __webpack_require__(1);
 const async_1 = __webpack_require__(7);
+const systemManagerClient_1 = __webpack_require__(15);
 const logger_1 = __webpack_require__(0);
 /**
  * @introduction
- * <h2>Config Client</h2>
+ * <h2>Config Client (Finsemble Connect)</h2>
  *
  * This client provides run-time access to Finsemble's configuration.
  * The Config Client functions similar to a global store created with the Distributed Store Client and offers many of the same methods.
@@ -13216,13 +13452,14 @@ class ConfigClient extends baseClient_1._BaseClient {
     }
     ;
     /**
+     * Add an array of listeners as objects or strings. If using strings, you must provide a function callback as the second parameter.
      *
-    * Add an array of listeners as objects or strings. If using strings, you must provide a function callback as the second parameter.
-    * @param {function} fn The function to be called when the observed piece of config is modified.
-    * @param {function} cb Callback to be invoked after the listeners are added.
-    * @example
-    * var myFunction = function(err,data){}
-  * FSBL.Clients.ConfigClient.addListeners(
+     * @param {listenerParam | listenerParam[] | fieldOnlyParam | string[]} params
+     * @param {function} fn The function to be called when the observed piece of config is modified.
+     * @param {function} cb Callback to be invoked after the listeners are added.
+     * @example
+     * var myFunction = function(err,data){}
+    * FSBL.Clients.ConfigClient.addListeners(
     * 	[
     * 		{ field: "field1", listener: myFunction },
     * 		{ field: "field2", listener: myFunction }
@@ -13252,7 +13489,7 @@ class ConfigClient extends baseClient_1._BaseClient {
             }
             else if (item.field) {
                 field = item.field;
-                ls = params[i].listener;
+                ls = item.listener;
             }
             var combined = "configService" + (field ? "." + field : "");
             if (!ls) {
@@ -13508,19 +13745,18 @@ class ConfigClient extends baseClient_1._BaseClient {
     ;
     /**
      * Retrieves all of the preferences set for the application.
-     * @param {Object} params Parameters to pass to getPreferences. Optional. Defaults to null and currently ignored.
      * @param {StandardCallback} callback Callback to be invoked when preferences have been retrieved from the service.
      * @example
      * FSBL.Clients.ConfigClient.getPreferences((err, preferences)=> {
      * 		//use preferences.
      * });
      */
-    getPreferences(params, callback) {
-        if (typeof params === "function") {
-            callback = params;
-            params = null;
-        }
-        this.routerClient.query("PreferencesService.getPreferences", params, function (queryErr, queryResponse) {
+    async getPreferences(callback) {
+        logger_1.default.system.debug("ConfigClient.getPreferences", callback);
+        // need to check since preferences doesn't come up until after authentication, so not always ready
+        await systemManagerClient_1.default.waitForStartup("preferencesService");
+        this.routerClient.query("PreferencesService.getPreferences", null, function (queryErr, queryResponse) {
+            logger_1.default.system.debug("ConfigClient.getPrefences response", queryResponse);
             if (callback) {
                 callback(queryErr, queryResponse ? queryResponse.data : null);
             }
@@ -13544,7 +13780,7 @@ exports.default = configClient;
 
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13557,13 +13793,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const validate_1 = __webpack_require__(3);
 const logger_1 = __webpack_require__(0);
 const baseClient_1 = __webpack_require__(1);
-const p_limit_1 = __webpack_require__(44);
-const disentangledUtils_1 = __webpack_require__(23);
+const p_limit_1 = __webpack_require__(48);
+const disentangledUtils_1 = __webpack_require__(24);
 const limit = p_limit_1.default(1);
 /**
  *
  * @introduction
- * <h2>Storage Client</h2>
+ * <h2>Storage Client (Finsemble Connect)</h2>
  *
  * The Storage Client handles saving and retrieving data for your smart desktop.
  *
@@ -13576,19 +13812,21 @@ const limit = p_limit_1.default(1);
 class StorageClient extends baseClient_1._BaseClient {
     constructor() {
         super(...arguments);
+        this.clientReady = false;
         //Did this because "delete" is a reserved keyword; for autocomplete the client is exported as a namespace with a bunch of functions and wouldn't work with a function called delete.
         this.delete = this.remove;
     }
     /**
      * Define the user name for storage (i.e., each user has unique storage).
-     * @param {Object} params
-     * @param {String} params.user The user name defined for storage.
+     * @param {object} params
+     * @param {string} params.user A unique key to store user data under
      * @param {StandardCallback} cb Callback to be called on success.
      *
      * @example
      * FSBL.Clients.StorageClient.setUser({ user: "JohnDeere"});
      */
     setUser(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
         validate_1.default.args(params.user, "string", cb, "function=");
         this.routerClient.query("Storage.setUser", { user: params.user }, function (err, response) {
             const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
@@ -13610,6 +13848,7 @@ class StorageClient extends baseClient_1._BaseClient {
      * FSBL.Clients.StorageClient.setStore({topic:"finsemble", dataStore:"redis"})
      */
     setStore(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
         validate_1.default.args(params.topic, "string", params.dataStore, "string=", cb, "function=");
         logger_1.default.system.log("APPLICATION LIFECYCLE:StorageClient.setStore", params, cb);
         this.routerClient.query("Storage.setStore", params, (err, response) => {
@@ -13625,7 +13864,7 @@ class StorageClient extends baseClient_1._BaseClient {
      * Save a key value pair into storage.
      * @param {Object} params
      * @param {String} params.topic Storage topic for key being stored.
-     * @param {String} params.key The key to be stored.
+     * @param {String} params.key The key for the value to be stored under.
      * @param {any} params.value The value to be stored.
      * @param {function} cb Callback to be called on success.
      *
@@ -13633,6 +13872,7 @@ class StorageClient extends baseClient_1._BaseClient {
      * FSBL.Clients.StorageClient.save({topic:"finsemble", key:"testKey", value:"testValue"})
      */
     save(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
         if (typeof params.key !== "string" || typeof params.topic !== "string") {
             throw new Error("Values for key and topic must be strings.");
         }
@@ -13676,6 +13916,7 @@ class StorageClient extends baseClient_1._BaseClient {
      * });
      */
     get(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
         if (typeof params.key !== "string" || typeof params.topic !== "string") {
             throw new Error("Values for key and topic must be strings.");
         }
@@ -13742,6 +13983,7 @@ class StorageClient extends baseClient_1._BaseClient {
      * });
      */
     keys(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
         validate_1.default.args(params.topic, "string", cb, "function=");
         logger_1.default.system.debug("StorageClient.keys", params, cb);
         this.routerClient.query("Storage.keys", params, function (err, response) {
@@ -13771,6 +14013,7 @@ class StorageClient extends baseClient_1._BaseClient {
      * StorageClient.get({key:"testKey"});
      */
     getMultiple(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
         logger_1.default.system.info("StorageClient.getMultiple", params, cb);
         this.routerClient.query("Storage.getMultiple", params, function (err, response) {
             const logMethod = err ? logger_1.default.system.error : logger_1.default.system.info;
@@ -13790,6 +14033,7 @@ class StorageClient extends baseClient_1._BaseClient {
      * FSBL.Clients.StorageClient.remove({ key:"testKey" })
      */
     remove(params, cb) {
+        this.clientReady || logger_1.default.system.error("storageClient invoked before ready");
         const promiseResolver = (resolve, reject) => {
             validate_1.default.args(params.topic, "string", params.key, "string", cb, "function=");
             this.routerClient.query("Storage.delete", params, function (err, response) {
@@ -13837,13 +14081,11 @@ class StorageClient extends baseClient_1._BaseClient {
 exports.StorageClient = StorageClient;
 ;
 var storageClient = new StorageClient({
-    startupDependencies: {
-        services: ["storageService"]
-    },
     onReady: function (cb) {
         if (cb) {
             cb();
         }
+        storageClient.clientReady = true;
     },
     name: "storageClient"
 });
@@ -13851,7 +14093,7 @@ exports.default = storageClient;
 
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13861,21 +14103,17 @@ exports.default = storageClient;
 * All rights reserved.
 */
 Object.defineProperty(exports, "__esModule", { value: true });
-/*
-Overview of how this works:
--hotkeys are added/removed via methods, passing an array of strings representing keys pressed, a handler method, and (optionally) a callback
-
--When adding a hotkey, a node js event emitter is created on the client side to trigger the hotkey handler, and a router message is sent to the service to register the key combination with the window name on the client side. Multiple hotkeys may be created for the same key combination, so long as they have different handler functions.
-
--When the service detects that all of the keys in the hotkey combination are pressed, it sends a message on the "HotkeyTriggered" channel (the method for this is "ListenForHotkeys") which contains the list of all windows registered with that hotkey combination. The client then reads the list of windows, and checks if it's one of those windows. If it is, it fires off the node js event emitter that was registered for that hotkey.
-
--Removing a hotkey clears the corresponding event emitter, and also sends a router message to the service to remove its window id from the array of windows registered for the hotkey combination - if the window is registered with that hotkey combination multiple times, it will only remove one, allowing other hotkeys on the same window with the same key combination to still be registered.
-
+/**
+ * Overview of how this works:
+ * - hotkeys are added/removed via methods, passing an array of strings representing keys pressed, a handler method, and (optionally) a callback
+ * - When adding a hotkey, a node js event emitter is created on the client side to trigger the hotkey handler, and a router message is sent to the service to register the key combination with the window name on the client side. Multiple hotkeys may be created for the same key combination, so long as they have different handler functions.
+ * - When the service detects that all of the keys in the hotkey combination are pressed, it sends a message on the "HotkeyTriggered" channel (the method for this is "ListenForHotkeys") which contains the list of all windows registered with that hotkey combination. The client then reads the list of windows, and checks if it's one of those windows. If it is, it fires off the node js event emitter that was registered for that hotkey.
+ * - Removing a hotkey clears the corresponding event emitter, and also sends a router message to the service to remove its window id from the array of windows registered for the hotkey combination - if the window is registered with that hotkey combination multiple times, it will only remove one, allowing other hotkeys on the same window with the same key combination to still be registered.
 */
 const baseClient_1 = __webpack_require__(1);
 const routerClientInstance_1 = __webpack_require__(5);
 const logger_1 = __webpack_require__(0);
-const keyMap = __webpack_require__(50).dictionary;
+const keyMap = __webpack_require__(54).dictionary;
 /** The global `window` object. We cast it to a specific interface here to be
  * explicit about what Finsemble-related properties it may have. */
 const Globals = window;
@@ -14005,6 +14243,24 @@ Keystroke.prototype.initialize = function () {
 };
 // Used to keep track of which browser key combinations are registered locally
 var registeredBrowserKeys = [];
+/**
+ * @introduction
+ *
+ * <h2>Hotkey Client (Finsemble Flow)</h2>
+ *
+ * This module contains the Hotkey Client, used for registering hotkey combinations and their respective handler functions with Finsemble.
+ *
+ * The client can handle two types of hotkeys: **local hotkeys**, for which the handlers will only fire when the window which defined the hotkey is in focus, and **global hotkeys**, which will fire regardless of what window is in focus.
+ *
+ * For more information, see the [Hotkey tutorial](tutorial-Hotkeys.html).
+ *
+ *
+ *
+ * @constructor
+ * @hideconstructor
+ * @publishedName HotkeyClient
+ * @param {*} params
+ */
 class HotkeyClient extends baseClient_1._BaseClient {
     constructor(params) {
         super(params);
@@ -14170,9 +14426,6 @@ class HotkeyClient extends baseClient_1._BaseClient {
     }
 }
 var hotkeyClient = new HotkeyClient({
-    startupDependencies: {
-        services: ["hotkeysService"]
-    },
     onReady: function (cb) {
         if (cb) {
             cb();
@@ -14186,7 +14439,7 @@ exports.default = hotkeyClient;
 
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14206,7 +14459,7 @@ logger_1.default.system.debug("Starting LinkerClient");
 var sysinfo = logger_1.default.system.info;
 var sysdebug = logger_1.default.system.debug;
 const async_1 = __webpack_require__(7);
-const deepEqual = __webpack_require__(25);
+const deepEqual = __webpack_require__(27);
 function makeKey(windowIdentifier) {
     return (windowIdentifier.windowName + "::" + windowIdentifier.uuid).replace(/\./g, "_");
 }
@@ -14226,7 +14479,7 @@ function asyncIt(data, cb) {
 /**
  *
  * @introduction
- * <h2>Linker Client</h2>
+ * <h2>Linker Client (Finsemble Workspaces)</h2>
  * <p>
  * The Linker API allows components to synchronize on a piece of data. For instance, an end user can use the Linker to link multiple components by stock symbol.
  * Use the Linker API to enable your components to participate in this synchronization.
@@ -14557,7 +14810,7 @@ class LinkerClient extends baseClient_1._BaseClient {
     /**
     * Remove all listeners for the specified dataType.
     * @param {String}  dataType - The data type to which the component is subscribed.
-    * @param {function} cb - Optional. Callback to retrieve returned results asynchronously (empty object)
+    * @param {function} cb - Optional. The function that was passed to subscribe. If not specified, all listeners will be deleted.
     *
     * @example
     * FSBL.Clients.LinkerClient.unsubscribe("symbol");
@@ -14565,8 +14818,14 @@ class LinkerClient extends baseClient_1._BaseClient {
     unsubscribe(dataType, cb) {
         sysinfo("LinkerClient.unsubscribe", "DATA TYPE", dataType);
         validate_1.default.args(dataType, "string");
-        delete this.dataListenerList[dataType];
-        return asyncIt({}, cb);
+        if (this.dataListenerList[dataType]) {
+            if (!cb) {
+                delete this.dataListenerList[dataType];
+            }
+            else {
+                this.dataListenerList[dataType] = this.dataListenerList[dataType].filter(fn => fn !== cb);
+            }
+        }
     }
     ;
     /**
@@ -14606,7 +14865,10 @@ class LinkerClient extends baseClient_1._BaseClient {
         sysinfo("LinkerClient.subscribe", "DATA TYPE", dataType);
         validate_1.default.args(dataType, "string", cb, "function");
         if (this.dataListenerList[dataType]) {
-            return this.dataListenerList[dataType].push(cb);
+            if (!this.dataListenerList[dataType].includes(cb)) {
+                this.dataListenerList[dataType].push(cb);
+            }
+            return;
         }
         this.dataListenerList[dataType] = [cb];
     }
@@ -14936,8 +15198,8 @@ class LinkerClient extends baseClient_1._BaseClient {
     * FSBL.Clients.LinkerClient.unsubscribe("symbol");
     * @deprecated To be removed in 4.0.0. Please use LinkerClient.unsubscribe().
     */
-    unSubscribe(dataType) {
-        this.unsubscribe(dataType);
+    unSubscribe(dataType, cb) {
+        this.unsubscribe(dataType, cb);
     }
     ;
     /**
@@ -15032,8 +15294,7 @@ function constructInstance(params) {
     return new LinkerClient({
         clients: params,
         startupDependencies: {
-            services: ["linkerService"],
-            clients: ["windowClient", "distributedStoreClient"],
+            clients: ["windowClient", "distributedStoreClient", "launcherClient"]
         },
         onReady: function (cb) {
             sysdebug("Linker onReady");
@@ -15075,7 +15336,7 @@ exports.default = linkerClient;
 
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15157,7 +15418,7 @@ exports.LocalLogger = LocalLogger;
 
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15167,6 +15428,8 @@ const events_1 = __webpack_require__(12);
 const routerClientInstance_1 = __webpack_require__(5);
 const STARTUP_TIMEOUT_DURATION = 10000;
 const constants_1 = __webpack_require__(11);
+const systemManagerClient_1 = __webpack_require__(15);
+const logger_1 = __webpack_require__(0);
 /**
  * Small class to hold on to dependencies and callbacks. Also emits a timeout event that the startupManager is listening for. When it times out, the startupManager catches the event and generates a message that includes all of the offline clients and services. It then causes this class to emit an  err event that the baseService is listening for. This arrangement is set up for a couple of reasons.
  * 1. I can't use the logger in here because the logger uses the startupManager, and there'd be a circular dependency.
@@ -15220,9 +15483,7 @@ class StartupManager {
         this.servicesAreAllOnline = {};
         this.clientsAreAllOnline = {};
         this.onlineClients = [];
-        this.onlineServices = [];
         this.dependencies = {};
-        this.AuthorizationCompleted = false;
         this.startupTimers = {};
         this.startupTimerFired = false;
         this.bindCorrectContext();
@@ -15237,15 +15498,10 @@ class StartupManager {
     waitFor(dependencies, callback) {
         let id = uuidv4();
         //Set defaults to an empty array if they aren't passed in.
-        if (!dependencies.services)
-            dependencies.services = [];
         if (!dependencies.clients)
             dependencies.clients = [];
         //The dependency manager can pass in a name to the dependency. If it does, we'll use it. If not, we won't.
         if (dependencies.clients.length) {
-            if (this.AuthorizationCompleted === false && dependencies.clients.includes("authenticationClient")) {
-                dependencies.clients.splice(dependencies.clients.indexOf("authenticationClient"), 1);
-            }
             //Lowercase the first letter of the client.
             dependencies.clients = dependencies.clients.map(clientName => {
                 return clientName.charAt(0).toLowerCase() + clientName.slice(1);
@@ -15266,42 +15522,11 @@ class StartupManager {
      */
     onDependencyTimeout(dependency) {
         const NEW_LINE = "\n", TAB = "\u0009", BULLET = "\u2022", BULLET_POINT = NEW_LINE + TAB + BULLET, STORAGE_ADAPTER_ERROR = "The default storage adapter failed to fully initialize, or has a syntax error. Ensure that the default storage adapter is up, connected, and sending/receiving data properly.";
-        const HELPFUL_MESSAGES = {
-            preferencesService: [
-                `PreferencesService failed to start.${BULLET_POINT}Typically this is caused by a failure to retrieve data from your default storage adapter. ${STORAGE_ADAPTER_ERROR}`
-            ],
-            storageService: [
-                `StorageService failed to start. Here are some common reasons for failure:${BULLET_POINT}${STORAGE_ADAPTER_ERROR}${BULLET_POINT}The data coming back from your adapter is improperly formatted or otherwise corrupted. Try clearing your storage and restarting. If the problem persists, the issue may not be in your adapter.`
-            ],
-            routerService: [
-                "RouterService failed to start. This is a fatal error. Contact finsemble support."
-            ],
-            workspaceService: [
-                `WorkspaceService failed to start. Here are some common reasons for failure:${BULLET_POINT}${STORAGE_ADAPTER_ERROR}.${BULLET_POINT}Your active workspace is corrupted.`
-            ],
-            assimilationService: [
-                "AssimilationService failed to start. Check to see that the 'FinsembleAssimilation' is active in your taskManager. If it is, please contact finsemble support."
-            ]
-        };
         let offlineClients = this.getOfflineClients();
-        let offlineServices = this.getOfflineServices();
         let errorMessage = `APPLICATION LIFECYCLE:STARTUP:Dependency not online after ${STARTUP_TIMEOUT_DURATION / 1000} seconds.`;
         if (offlineClients.length) {
             errorMessage += ` Waiting for these clients: ${offlineClients.join(", ")}.`;
         }
-        if (offlineServices.length) {
-            errorMessage += ` Waiting for these services: ${offlineServices.join(", ")}.`;
-        }
-        //For every service that's offline, check to see if we have any helpful messages for it. If so, iterate through the array and append to the error message.
-        offlineServices.forEach((service) => {
-            if (HELPFUL_MESSAGES[service]) {
-                HELPFUL_MESSAGES[service].forEach((msg) => {
-                    errorMessage += NEW_LINE + NEW_LINE + msg + NEW_LINE;
-                });
-                //puts a line between our helpful messages and the log stack.
-                errorMessage += NEW_LINE;
-            }
-        });
         //The BaseService is listening for this event, and will log the errorMessage to the central logger.
         dependency.emit("err", errorMessage);
     }
@@ -15314,12 +15539,6 @@ class StartupManager {
         for (let id in this.dependencies) {
             let dependency = this.dependencies[id];
             let { dependencies, callback } = dependency;
-            if (dependencies.services.length && !this.servicesAreAllOnline[id]) {
-                this.servicesAreAllOnline[id] = this.checkServices(dependencies.services);
-                if (!this.servicesAreAllOnline[id]) {
-                    continue;
-                }
-            }
             if (dependencies.clients.length && !this.clientsAreAllOnline[id]) {
                 this.clientsAreAllOnline[id] = this.checkClients(dependencies.clients);
                 if (!this.clientsAreAllOnline[id]) {
@@ -15342,23 +15561,6 @@ class StartupManager {
         //return deduped list.
         return offlineClients.filter((client, i) => offlineClients.indexOf(client) === i);
     }
-    getOfflineServices() {
-        let offlineServices = [];
-        for (let id in this.dependencies) {
-            let { dependencies } = this.dependencies[id];
-            offlineServices = offlineServices.concat(dependencies.services.filter((dep) => !this.onlineServices.includes(dep)));
-        }
-        return offlineServices.filter((client, i) => offlineServices.indexOf(client) === i);
-    }
-    /**
-     * Iterates through required service list, returns false if any required service is offline.
-     *
-     * @param {any} serviceList
-     * @memberof StartupManager
-     */
-    checkServices(serviceList) {
-        return serviceList.every(service => this.onlineServices.includes(service));
-    }
     /**
      * Iterates through required client list, returns false if any required client is offline.
      *
@@ -15368,26 +15570,6 @@ class StartupManager {
      */
     checkClients(clientList) {
         return clientList.every(client => this.onlineClients.includes(client));
-    }
-    /**
-     * When a service comes online, we push it onto our array of online services, and run through all of the registered dependencies.
-     *
-     * @param {any} serviceName
-     * @memberof StartupManager
-     */
-    setServiceOnline(serviceName) {
-        this.onlineServices.push(serviceName);
-        this.checkDependencies();
-    }
-    /**
-     * Sets an array of services online. Only happens once at startup.
-     *
-     * @param {any} serviceList
-     * @memberof StartupManager
-     */
-    setServicesOnline(serviceList) {
-        this.onlineServices = this.onlineServices.concat(serviceList);
-        this.checkDependencies();
     }
     /**
      *
@@ -15403,6 +15585,28 @@ class StartupManager {
         }
         this.onlineClients.push(clientName);
         this.checkDependencies();
+        // Note From Mike: Must change or workaround how some client usage triggers this code even though the client's service is NOT ready.
+        // This problem happens because some services initialize their clients when the client's service hasn't been created yet, but then don't use the client until later.
+        // So although the general code is correct here, the overall result is not (specifically the queries will timeout causing delays, error logging, and potential side effects).
+        // Therefore disabling this handshake code for now -- BUT KEEP CODE COMMENTED-OUT CODE UNTIL THIS IS RESOLVED. Just to be clear, nothing breaks without this code, but this
+        // code is what generates an error when improperly using a client...so it provides a needed check.
+        // let serviceName = CLIENT_SERVER_MAPPING(clientName);
+        // if (true /*disabling*/ && serviceName) {
+        // 	console.debug("SERVICE_QUERY_READY_CHANNEL querying", clientName, SERVICE_QUERY_READY_CHANNEL(serviceName));
+        // 	// before going online make sure this client's service is ready -- it should be until there is a startup problem
+        // 	RouterClient.query(SERVICE_QUERY_READY_CHANNEL(serviceName), {}, { timeout: 500 }, (err) => {
+        // 		if (err) {
+        // 			Logger.system.error(`DependencyManager: server ${serviceName} is not ready for client ${clientName}. ${err}. Make sure dependencies client dependencies are correct.`)
+        // 		} else {
+        // 			Logger.system.debug(`DependencyManager: server ${serviceName} is ready for client ${clientName} `)
+        // 		}
+        // 		this.onlineClients.push(clientName);
+        // 		this.checkDependencies();
+        // 	});
+        // } else {
+        // 	this.onlineClients.push(clientName);
+        // 	this.checkDependencies();
+        // }
     }
     /**
      * Returns the array of online clients.
@@ -15414,25 +15618,14 @@ class StartupManager {
         return this.onlineClients;
     }
     /**
-     * Returns the array of online services.
-     *
-
-     * @memberof StartupManager
-     */
-    getOnlineServices() {
-        return this.onlineServices;
-    }
-    /**
      * Method to make sure that `this` is correct when the callbacks are invoked.
      *
      * @memberof StartupManager
      */
     bindCorrectContext() {
         this.checkDependencies = this.checkDependencies.bind(this);
-        this.checkServices = this.checkServices.bind(this);
         this.checkClients = this.checkClients.bind(this);
         this.getOfflineClients = this.getOfflineClients.bind(this);
-        this.getOfflineServices = this.getOfflineServices.bind(this);
         this.onDependencyTimeout = this.onDependencyTimeout.bind(this);
         this.waitFor = this.waitFor.bind(this);
     }
@@ -15457,6 +15650,7 @@ class ShutdownManager {
      * @memberof StartupManager
      */
     waitFor(dependencies, callback) {
+        logger_1.default.system.debug(`DependencyManager:waitFor`, dependencies);
         //Set defaults to an empty array if they aren't passed in.
         if (!dependencies.services) {
             dependencies.services = [];
@@ -15474,7 +15668,7 @@ class ShutdownManager {
         if (Object.keys(this.dependencies)) {
             for (let id in this.dependencies) {
                 let { dependencies, callback } = this.dependencies[id];
-                console.debug("checkDependency", dependencies.services, this.offlineServices);
+                logger_1.default.system.debug(`DependencyManager:checkDependency`, dependencies.services, this.offlineServices);
                 if (dependencies.services.length) {
                     let servicesAreAllOffline = this.checkServices(dependencies.services);
                     if (!servicesAreAllOffline) {
@@ -15494,19 +15688,24 @@ class ShutdownManager {
      *
      * @param {any} serviceList
 
-     * @memberof StartupManager
+     * @memberof ShutdownManager
      */
     checkServices(serviceList) {
         return serviceList.every(service => this.offlineServices.includes(service));
     }
     setServiceOffline(service) {
+        logger_1.default.system.debug("setServiceOffline", service);
         console.debug("setServiceOffline", service);
         this.offlineServices.push(service);
         this.checkDependencies();
     }
 }
 /**
- * This is a class that handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
+ * This class handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready.
+ *
+ * The constructor is exported for the system mananger's shutDownManager so that class isn't constructed until right time in the starup process.
+ * Otherwise, this class is used as a singleton thoughout the rest of the system.
+ *
  * @shouldBePublished false
  * @private
  * @class FSBLDependencyManager
@@ -15542,12 +15741,7 @@ class FSBLDependencyManager extends events_1.EventEmitter {
         //Iterate through all services. If it was online but isn't anymore, set it offline. If it was offline but now is, set it online.
         ServiceNames.forEach((serviceName) => {
             let state = data[serviceName].state;
-            let wasOnline = this.startup.onlineServices.includes(serviceName);
-            let isOnline = state === "ready";
-            if (!wasOnline && isOnline) {
-                this.startup.setServiceOnline(serviceName);
-            }
-            if (wasOnline && !isOnline && state === "closed") {
+            if (state === "closed") {
                 this.shutdown.setServiceOffline(serviceName);
             }
         });
@@ -15557,35 +15751,35 @@ class FSBLDependencyManager extends events_1.EventEmitter {
      *
      */
     listenForServices() {
-        console.debug("dependency manager: listenForServices in " + this.name);
-        this.RouterClient.subscribe(constants_1.SERVICES_STATE_CHANNEL, (err, event) => {
-            this.onServiceStateChange(event.data);
-        });
-        // TODO: The pubsub responder doesn't seem to work here. IT works for the above when not closing.
-        this.RouterClient.addListener(constants_1.SERVICE_CLOSED_CHANNEL, (err, event) => {
-            let services = {};
-            services[event.data.name] = {
-                state: "closed"
-            };
-            this.onServiceStateChange(services);
-        });
-        this.RouterClient.subscribe(constants_1.APPLICATION_STATE_CHANNEL, (err, response) => {
-            switch (response.data.state) {
-                //authenticated will only be caught by components/services that are up before auth does its thing. Otherwise, a component/service coming up will have the 'ready' application state. In either case, we need to do the things below. But only once.
-                case "authenticated":
-                case "ready":
-                    //No need to send this message out twice.
-                    if (this.AuthorizationCompleted)
+        logger_1.default.system.debug(`DependencyManager:listenForServices before wait`);
+        var listenForServicesCallback;
+        // wait until the essential parts of the microkernel stage is done so pubsub responders are available
+        systemManagerClient_1.default.waitForBootStage("kernel", "stageEntered", listenForServicesCallback = () => {
+            logger_1.default.system.debug(`DependencyManager:listenForServices after wait`);
+            this.RouterClient.subscribe(constants_1.SERVICES_STATE_CHANNEL, (err, event) => {
+                logger_1.default.system.debug(`DependencyManager:listenForServices SERVICES_STATE_CHANNEL`, event.data);
+                this.onServiceStateChange(event.data);
+            });
+            // TODO: The pubsub responder doesnt seem to work here. IT works for the above when not closing.
+            this.RouterClient.addListener(constants_1.SERVICE_CLOSED_CHANNEL, (err, event) => {
+                logger_1.default.system.debug(`DependencyManager:listenForServices SERVICE_CLOSED_CHANNEL`, event.data);
+                let services = {};
+                services[event.data.name] = {
+                    state: "closed"
+                };
+                this.onServiceStateChange(services);
+            });
+            this.RouterClient.subscribe(constants_1.APPLICATION_STATE_CHANNEL, (err, response) => {
+                switch (response.data.state) {
+                    //authenticated will only be caught by components/services that are up before auth does its thing. Otherwise, a component/service coming up will have the 'ready' application state. In either case, we need to do the things below. But only once.
+                    case "authenticated":
+                    case "ready":
                         break;
-                    console.debug("Authorization Completed");
-                    this.AuthorizationCompleted = true;
-                    this.startup.AuthorizationCompleted = true;
-                    this.emit("AuthorizationCompleted");
-                    break;
-                case "closing":
-                    this.shutdown.checkDependencies();
-                    break;
-            }
+                    case "closing":
+                        this.shutdown.checkDependencies();
+                        break;
+                }
+            });
         });
     }
     onAuthorizationCompleted(callback) {
@@ -15597,8 +15791,9 @@ class FSBLDependencyManager extends events_1.EventEmitter {
         }
     }
 }
+exports.FSBLDependencyManager = FSBLDependencyManager;
 /**
- * This is a class that handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
+ * This class handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
  * @shouldBePublished false
  * @private
  * @class FSBLDependencyManager
@@ -15608,16 +15803,16 @@ exports.default = exports.FSBLDependencyManagerSingleton;
 
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const uuid_1 = __webpack_require__(48);
-const get = __webpack_require__(24);
-const pick = __webpack_require__(41);
-const lodash_1 = __webpack_require__(43);
+const uuid_1 = __webpack_require__(52);
+const get = __webpack_require__(26);
+const pick = __webpack_require__(45);
+const lodash_1 = __webpack_require__(47);
 //Class without deep openfin/system dependencies.
 function guuid() {
     return uuid_1.v1(); // return global uuid
@@ -15899,7 +16094,23 @@ exports.checkIfBoundsAreEqual = checkIfBoundsAreEqual;
 
 
 /***/ }),
-/* 24 */
+/* 25 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ALL_BOOT_STAGES = ["microkernel", "kernel", "authentication", "preuser", "earlyuser", "user"];
+exports.CRITICAL_BOOT_STAGES = ["microkernel", "kernel", "authentication"];
+exports.SYSLOG_CHANNEL = "systemManager.systemlog";
+exports.SHOW_SYSLOG_CHANNEL = "systemManager.showSystemlog";
+exports.STATUS_CHANNEL_BASE = "systemManager.boot.status";
+exports.STAGE_CHANNEL = "systemManager.boot.stage";
+exports.CHECKPOINT_CHANNEL_BASE = "systemManager.checkpoint";
+
+
+/***/ }),
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -16837,7 +17048,7 @@ module.exports = get;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
-/* 25 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {/**
@@ -18689,10 +18900,10 @@ function stubFalse() {
 
 module.exports = isEqual;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(16)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(17)(module)))
 
 /***/ }),
-/* 26 */
+/* 28 */
 /***/ (function(module, exports) {
 
 /**
@@ -18721,7 +18932,7 @@ module.exports = bytesToUuid;
 
 
 /***/ }),
-/* 27 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {// Unique ID creation requires a high quality random # generator.  In the
@@ -18761,14 +18972,14 @@ module.exports = rng;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
-/* 28 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Unique ID creation requires a high quality random # generator.  We feature
 // detect to determine the best RNG source, normalizing to a function that
 // returns 128-bits of randomness, since that's what's usually required
-var rng = __webpack_require__(27);
-var bytesToUuid = __webpack_require__(26);
+var rng = __webpack_require__(29);
+var bytesToUuid = __webpack_require__(28);
 
 // **`v1()` - Generate time-based UUID**
 //
@@ -18870,7 +19081,7 @@ module.exports = v1;
 
 
 /***/ }),
-/* 29 */
+/* 31 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -18880,10 +19091,14 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__configUtil__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_system___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__common_system__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__systemManagerClient__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__systemManagerClient___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__systemManagerClient__);
 /*!
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
+
+
 
 
 
@@ -18895,7 +19110,7 @@ var ConfigClient = null;
 
 /**
  * @introduction
- * <h2>Notification Client</h2>
+ * <h2>Notification Client (Finsemble Workspaces)</h2>
  *
  * Finsemble makes use of pop up (toast) notifications for communicating information to the end user in a gentler way than modal dialogs.
  * Use the Notification API to route messages so that your components can create these notifications.
@@ -18925,7 +19140,7 @@ var UserNotification = function () {
 			}, 0);
 		} else {
 			// Require configClient here instead of at top of page to avoid a dependency error (Router uses UserNotification before config service is ready).
-			if (!ConfigClient) ConfigClient = __webpack_require__(17).default;
+			if (!ConfigClient) ConfigClient = __webpack_require__(18).default;
 			ConfigClient.get({ field: "finsemble" }, function (err, finConfig) {
 				defaultTemplateURL = __WEBPACK_IMPORTED_MODULE_1__configUtil__["ConfigUtilInstance"].getDefault(finConfig, "finsemble.notificationURL", finConfig.moduleRoot + "/components/system/notification/notification.html");
 				cb(defaultTemplateURL);
@@ -18937,7 +19152,7 @@ var UserNotification = function () {
 	/**
 	 * Conditionally alerts the end user using a desktop notification.
 	 *
-	 * @param {string} topic Specifies a category for the notification. Topic is currently unused, but in the future it will be used to filter notifications (e.g., applying regEx's defined in config to determine which notifications are displayed). Any topic string can be specified; however "system" is the recommended topic for system notifications applicable both to end uses and to developers. "dev" is the recommended topic for notifications applicable only during development (e.g., a notification that <i>config.json</i> has an illegal value).
+	 * @param {string} topic Specifies a category for the notification. This parameter is reserved for future use; it is designed to filter notifications (e.g., applying regEx's defined in config to determine which notifications are displayed). Any topic string can be specified; however "system" is the recommended topic for system notifications applicable both to end uses and to developers. "dev" is the recommended topic for notifications applicable only during development (e.g., a notification that <i>config.json</i> has an illegal value).
 	 * @param {string} frequency Either "ALWAYS", "ONCE-SINCE-STARTUP", or "MAX-COUNT" to determine if alert should be displayed. Note, the frequencies are based on the number of notifications emitted from a window (as opposed to system wide).
 	 * @param {string} identifier Uniquely identifies this specific notification message. Used when "frequency" is set to "ONCE-SINCE-STARTUP" or "MAX-COUNT".
 	 * @param {any} message Message to display in the notification. Typically a string. Finsemble's built in templating accepts and object. See <i>../src-built-in/components/notification/notification.html<i>.
@@ -19005,6 +19220,7 @@ var UserNotification = function () {
 				message: message,
 				timeout: duration
 			};
+			__WEBPACK_IMPORTED_MODULE_3__systemManagerClient___default.a.systemLog({ notification: true }, "Notification: " + message);
 			new __WEBPACK_IMPORTED_MODULE_2__common_system__["System"].Notification(notifyObject);
 		}
 	};
@@ -19013,7 +19229,7 @@ var UserNotification = function () {
 /* harmony default export */ __webpack_exports__["default"] = (new UserNotification());
 
 /***/ }),
-/* 30 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19023,17 +19239,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 * Copyright 2017 by ChartIQ, Inc.
 * All rights reserved.
 */
-const dependencyManager_1 = __webpack_require__(22);
+const dependencyManager_1 = __webpack_require__(23);
 const system_1 = __webpack_require__(2);
 const FinsembleWindow_1 = __webpack_require__(8);
-const userNotification_1 = __webpack_require__(29);
+const userNotification_1 = __webpack_require__(31);
 const applicationConstants = __webpack_require__(11);
 const { APPLICATION_STATE_CHANNEL } = applicationConstants;
 const async_1 = __webpack_require__(7);
-const wrapCallbacks_1 = __webpack_require__(55);
+const wrapCallbacks_1 = __webpack_require__(59);
 const configUtil_1 = __webpack_require__(13);
 const Utils = __webpack_require__(6);
 const validate_1 = __webpack_require__(3);
+const systemManagerClient_1 = __webpack_require__(15);
 /** The global `window` object. We cast it to a specific interface here to be
  * explicit about what Finsemble-related properties it may have. */
 const Globals = window;
@@ -19051,7 +19268,7 @@ if (Globals.FSBLAlreadyPreloaded) {
     console.error("window.FSBLAlreadyPreloaded detected. FSBL must already be loaded. Skipping initialization of FSBL.");
     module.exports = Globals.FSBL;
 }
-if ((fin.container === "browser" || window.top === window) && !Globals.FSBLAlreadyPreloaded) { // @todo - remove when OpenFin Fixes preload
+if ((system_1.System.container === "browser" || window.top === window) && !Globals.FSBLAlreadyPreloaded) { // @todo - remove when OpenFin Fixes preload
     Globals.FSBLAlreadyPreloaded = true;
     // FSBL.initialize() or System.ready() may start first. It's unpredictable. initialize() depends on main()
     // so we use variables to defer running that function if main() hasn't yet run.
@@ -19078,23 +19295,24 @@ if ((fin.container === "browser" || window.top === window) && !Globals.FSBLAlrea
         this.ConfigUtils = configUtil_1.ConfigUtilInstance;
         this.Validate = validate_1.default;
         this.UserNotification = userNotification_1.default;
+        this.SystemManagerClient = systemManagerClient_1.default;
         //This order is _roughly_ as follows: Get everything up that is a dependency of something else, then get those up. The linker and DnD depend on the Store. Workspace depends on Storage and so on. It's not exact, but this was the combination that yielded the best results for me.
         /** @namespace Clients  */
         this.Clients = {
             RouterClient: __webpack_require__(5).default,
-            AuthenticationClient: __webpack_require__(32).default,
+            AuthenticationClient: __webpack_require__(34).default,
             WindowClient: __webpack_require__(10).default,
             DistributedStoreClient: __webpack_require__(9).default,
             LauncherClient: __webpack_require__(14).default,
-            DragAndDropClient: __webpack_require__(34).default,
-            LinkerClient: __webpack_require__(20).default,
-            StorageClient: __webpack_require__(18).default,
-            WorkspaceClient: __webpack_require__(37).default,
-            DialogManager: __webpack_require__(33).default,
-            ConfigClient: __webpack_require__(17).default,
+            DragAndDropClient: __webpack_require__(36).default,
+            LinkerClient: __webpack_require__(21).default,
+            StorageClient: __webpack_require__(19).default,
+            WorkspaceClient: __webpack_require__(39).default,
+            DialogManager: __webpack_require__(35).default,
+            ConfigClient: __webpack_require__(18).default,
             BaseClient: __webpack_require__(1).default,
-            HotkeyClient: __webpack_require__(19).default,
-            SearchClient: __webpack_require__(36).default,
+            HotkeyClient: __webpack_require__(20).default,
+            SearchClient: __webpack_require__(38).default,
             Logger: __webpack_require__(0).default,
         };
         this.displayStartupTimeoutError = true;
@@ -19215,6 +19433,10 @@ if ((fin.container === "browser" || window.top === window) && !Globals.FSBLAlrea
             this.Clients.RouterClient.publish("Finsemble." + windowName + ".componentReady", {
                 name: windowName
             });
+            FSBL.Clients.Logger.debug(`FSBL.Clients.WindowClient.options`, FSBL.Clients.WindowClient.options);
+            let componentType = FSBL.Clients.WindowClient.options.customData.component.type;
+            this.Clients.Logger.system.log("publishBootStatus", componentType, "components", "completed", FSBL.Clients.WindowClient.options.customData);
+            systemManagerClient_1.default.publishBootStatus(componentType, "components", "completed"); // here the component type acts as the name
             window.dispatchEvent(new Event("FSBLReady"));
         };
         this.setFSBLOnline = this.setFSBLOnline.bind(this);
@@ -19369,9 +19591,9 @@ if ((fin.container === "browser" || window.top === window) && !Globals.FSBLAlrea
                      * In authentication components, the "authenticated" state will never occur.
                      *
                      * The following clients are currently unsafe to use before authentication:
-                     * DragAndDropClient, LinkerClient, WorkspaceClient, dialogManager
+                     * DragAndDropClient, LinkerClient, WorkspaceClient, dialogManager, hotkeyClient
                      */
-                    FSBL.useClients(["ConfigClient", "LauncherClient", "DistributedStoreClient", "WindowClient", "AuthenticationClient", "hotkeyClient", "searchClient", "storageClient"
+                    FSBL.useClients(["ConfigClient", "LauncherClient", "DistributedStoreClient", "WindowClient", "AuthenticationClient", "searchClient", "storageClient"
                     ]);
                     FSBL.initialize(deferredCallback);
                 }
@@ -19439,14 +19661,14 @@ if ((fin.container === "browser" || window.top === window) && !Globals.FSBLAlrea
 
 
 /***/ }),
-/* 31 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const async_1 = __webpack_require__(7);
-const storeUtils = __webpack_require__(53);
+const storeUtils = __webpack_require__(57);
 const logger_1 = __webpack_require__(0);
 const baseClient_1 = __webpack_require__(1);
 /** The global `window` object. We cast it to a specific interface here to be
@@ -19604,6 +19826,7 @@ class StoreModel extends baseClient_1._BaseClient {
     ;
     /**
      * Get a value from the store. If global is not set, we'll check local first then we'll check global. Returns the value of the field. If no callback is given and the value is local, this will run synchronously.
+     * @param {object|string} params The field where the value is stored.
      * @param {String} params.field The field where the value is stored.
      * @param {StandardCallback} cb Will return the value if found.
      * @returns {any} The value of the field. If no callback is given and the value is local, this will run synchronous
@@ -19972,7 +20195,7 @@ exports.default = StoreModel;
 
 
 /***/ }),
-/* 32 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19987,7 +20210,7 @@ const baseClient_1 = __webpack_require__(1);
 const FinsembleWindow_1 = __webpack_require__(8);
 /**
  * @introduction
- * <h2>Authentication Client</h2>
+ * <h2>Authentication Client (Finsemble Connect)</h2>
  *
  * The Authentication Client supports three distinct areas of functionality:
  *
@@ -20035,10 +20258,15 @@ class AuthenticationClient extends baseClient_1._BaseClient {
                 cb(err, credentials);
             });
         };
+        // @TODO There are more signOnData properties at the lower levels. Figure out which need to be documented here.
         /**
-         * Automatic sign-on Function. Not used by components signing on, but only by "system dialog" component that prompts the user for sign on data. This command will send the user-input sign-on data back to the Authentication Service.
+         * Sends the provided data to the authentication service for a sign-on attempt.
          *
          * @param {object} signOnData
+         * @param {string|undefined} signOnData.username The username to authenticate the request for
+         * @param {string|undefined} signOnData.password The password to validate for the requested user
+         * @param {string|undefined} signOnData.error An error message indicating failure to retrieve login credentials.
+         * @param {string} signOnData.signOnKey component-defined unique identifier string representing the sign-on data (the same string must be used for each unique sign on).
          */
         this.transmitSignOnToAuthService = (signOnData) => {
             validate_1.default.args(signOnData, "object");
@@ -20110,8 +20338,8 @@ class AuthenticationClient extends baseClient_1._BaseClient {
          * Completes an OAuth2 authentication that was begun with <a href="AuthenticationClient.html#beginAuthentication">beginAuthentication</a>.
          * This function is called when an OAuth2 response is completed.
          * You should call this function from within the page that you specified in "redirect_uri" in your Authentication Profile config.
-         * @param {string} error The error to be returned if the method fails.
-         * @param {any} params Optionally pass the OAuth2 query string parameters from your response page. Set to null and the query string will automatically be parsed based on the OAuth2 specification.
+         * @param {string} err The error to be returned if the method fails.
+         * @param {*} params Optionally pass the OAuth2 query string parameters from your response page. Set to null and the query string will automatically be parsed based on the OAuth2 specification.
          * @param {StandardCallback} cb Returns the result (err, data). Data will contain the results of the authentication process, such as the access_token and other values provided by your Identify Provider.
          * @since TBD
          */
@@ -20205,7 +20433,7 @@ exports.default = authenticationClient;
 
 
 /***/ }),
-/* 33 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20224,14 +20452,14 @@ const baseClient_1 = __webpack_require__(1);
 const FinsembleWindow_1 = __webpack_require__(8);
 const logger_1 = __webpack_require__(0);
 const system_1 = __webpack_require__(2);
-const disentangledUtils_1 = __webpack_require__(23);
+const disentangledUtils_1 = __webpack_require__(24);
 windowClient_1.default.initialize();
 launcherClient_1.default.initialize();
 distributedStoreClient_1.default.initialize();
 /**
  *
  * @introduction
- * <h2>Dialog Manager Client</h2>
+ * <h2>Dialog Manager Client (Finsemble Flow)</h2>
  *
  * The Dialog Manager Client simplifies interacting with dialog windows by spawning them and getting data back from them.
  * In this context, a dialog window is simply a child window spawned to interact with the user, such as a confirmation dialog.
@@ -20490,7 +20718,7 @@ class DialogManagerClient extends baseClient_1._BaseClient {
         };
         /**
          * Sends data back to the window that opened the dialog. Will hide the modal unless <code>{ hideModalOnClose: false }</code> is passed in as the first argument.
-         * @param {any} data
+         * @param {any} data Data desired to be handed back to the window that requested the dialog.
          */
         this.respondToOpener = (data) => {
             logger_1.default.system.info("DialogManagerClient:RespondToOpener:", data);
@@ -20630,7 +20858,6 @@ class DialogManagerClient extends baseClient_1._BaseClient {
 // instance of dialogManagerClient that is exported by this module
 var dialogManagerClient = new DialogManagerClient({
     startupDependencies: {
-        services: ["startupLauncherService"],
         clients: ["distributedStoreClient", "windowClient"]
     },
     onReady: function (cb) {
@@ -20650,7 +20877,7 @@ exports.default = dialogManagerClient;
 
 
 /***/ }),
-/* 34 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20663,7 +20890,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const logger_1 = __webpack_require__(0);
 const validate_1 = __webpack_require__(3); // Finsemble args validator
 const baseClient_1 = __webpack_require__(1);
-const linkerClient_1 = __webpack_require__(20);
+const linkerClient_1 = __webpack_require__(21);
 const launcherClient_1 = __webpack_require__(14);
 const windowClient_1 = __webpack_require__(10);
 const distributedStoreClient_1 = __webpack_require__(9);
@@ -20681,7 +20908,7 @@ const SHARE_METHOD = {
 /**
  *
  * @introduction
- * <h2>Drag and Drop Client</h2>
+ * <h2>Drag and Drop Client (Finsemble Workspaces)</h2>
  *
  * The Drag and Drop Client acts as an API to share data between components via a user action i.e., drag and drop.
  * As an example, consider a user wanting to share a chart inside a chat - they can do so using the Drag and Drop Service.
@@ -20974,7 +21201,7 @@ class DragAndDropClient extends baseClient_1._BaseClient {
     /**
      * This is a drag event handler for an element that can be dragged to share data. Our sample Window Title Bar component uses this internally when the share icon is dragged. This can be attached to any element that needs to be draggable. The data from all emitters that match receivers in the drop component is automatically shared.
      *
-     * @param {event} event
+     * @param {DragEvent} event The DragEvent fired from the native browser event.
      *
      */
     dragStart(event) {
@@ -20990,8 +21217,8 @@ class DragAndDropClient extends baseClient_1._BaseClient {
     /**
      * This is a drag event handler to enable dragging specific data that is not tied to an emitter. For example, an item in a list.
      *
-     * @param {event} event
-     * @param {any} data
+     * @param {DragEvent} event The DragEvent fired from the native browser event.
+     * @param {any} data The data you wish to be transferred with the event.
      *
      * @example
      * element.addEventListener('dragstart', function(event) {
@@ -21047,7 +21274,7 @@ class DragAndDropClient extends baseClient_1._BaseClient {
     /**
      * This is a drop event handler that can be attached to any element that you want to be a drop zone for the Drag and Drop Client. It automatically requests data for all the data elements that are common between the receiver and the emitter.
      *
-     * @param {event} event
+     * @param {DragEvent} event The DragEvent fired from the native browser event.
      */
     drop(event) {
         let self = this;
@@ -21312,7 +21539,7 @@ exports.default = dragAndDropClient;
 
 
 /***/ }),
-/* 35 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21322,18 +21549,18 @@ exports.default = dragAndDropClient;
 */
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const routerTransport_1 = __webpack_require__(52);
+const routerTransport_1 = __webpack_require__(56);
 const Utils = __webpack_require__(6);
 const configUtil_1 = __webpack_require__(13);
 const validate_1 = __webpack_require__(3); // Finsemble args validator
-const userNotification_1 = __webpack_require__(29);
+const userNotification_1 = __webpack_require__(31);
 const system_1 = __webpack_require__(2);
 const logger_1 = __webpack_require__(0);
 var queue = []; // should never be used, but message sent before router ready will be queue
 const Globals = typeof window !== "undefined"
     ? window
     : process;
-const localLogger_1 = __webpack_require__(21);
+const localLogger_1 = __webpack_require__(22);
 let Logger = logger_1.Logger;
 //@todo proper types for router messages would be great.
 // Use global data for these objects in case multiple clients running in same window (a side effect of injection and perhaps other edge conditions).
@@ -21354,7 +21581,7 @@ Globals.FSBLData.RouterClients = Globals.FSBLData.RouterClients || {};
  * @hideconstructor
  * @publishedName RouterClient
  * @param {string} clientName router base client name for human readable messages (window name is concatenated to baseClientName)
- * @param {string=} transportName router transport name, currently either "SharedWorker" or "OpenFinBus" (usually this is auto-configured internally but can be selected for testing or special configurations)
+ * @param {string=} transportName router transport name, currently either "SharedWorker" or "IPCBus" (usually this is auto-configured internally but can be selected for testing or special configurations)
  */
 // un-comment for optimization.
 // console.time("FinMainStartup");
@@ -21566,8 +21793,8 @@ exports.RouterClientConstructor = function (params) {
         //This is the only place we need to wait for desktop.main
         system_1.System.ready(function () {
             var finWindow = system_1.System.Window.getCurrent();
-            Logger.system.debug(`WINDOW LIFECYCLE:STARTUP: fin.main invoked in ${finWindow.name}`);
-            console.debug(`WINDOW LIFECYCLE:STARTUP: fin.main invoked in ${finWindow.name}`);
+            Logger.system.debug(`WINDOW LIFECYCLE:STARTUP: System.ready invoked in ${finWindow.name}`);
+            console.debug(`WINDOW LIFECYCLE:STARTUP: System.ready invoked in ${finWindow.name}`);
             self.startupTime = performance.now();
             // un-comment for optimization.
             // console.timeEnd("FinMainStartup");
@@ -21605,14 +21832,13 @@ exports.RouterClientConstructor = function (params) {
         var isFinished = false;
         var handshakeFailedCount = 0;
         var finConfig = manifest.finsemble;
-        var isElectron = fin && fin.container == "Electron";
         var routerParams = {
             FinsembleUUID: finConfig.FinsembleUUID,
             applicationRoot: finConfig.applicationRoot,
             routerDomainRoot: finConfig.moduleRoot,
             forceWindowTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.forceWindowTransport", {}),
             sameDomainTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.sameDomainTransport", "SharedWorker"),
-            crossDomainTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.crossDomainTransport", "OpenFinBus"),
+            crossDomainTransport: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.crossDomainTransport", "IPCBus"),
             transportSettings: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.router.transportSettings", {}),
             IAC: configUtil_1.ConfigUtilInstance.getDefault(finConfig, "finConfig.IAC", {})
         };
@@ -22453,8 +22679,9 @@ exports.RouterClientConstructor = function (params) {
      *
      * @example
      *
-     * var subscribeId = RouterClient.subscribe("topicABC", function(err,notify) {
-     *		if (!err) {
+     * var subscriptionDetails = RouterClient.subscribe("topicABC", function(err, notify) {
+     *		if (err) { console.log(err); }
+     *		if (notify) {
      *			var notificationStateData = notify.data;
      *			// do something with notify data
      *  	}
@@ -22497,6 +22724,13 @@ exports.RouterClientConstructor = function (params) {
      * @example
      *
      * FSBL.Clients.RouterClient.unsubscribe(subscribeId);
+     * //Subscription details returned by RouterClient.subscribe(), which take the form:
+     * let subscriptionDetails = {
+     * 	subscribeID: "<subscribeID returned by RouterClient.subscribe>",
+     * 	topic: "topicABC"
+     * };
+     * FSBL.Clients.RouterClient.unsubscribe(subscriptionDetails);
+     *
      *
      */
     this.unsubscribe = function (subscribeIDStruct) {
@@ -22577,10 +22811,10 @@ exports.RouterClientConstructor = function (params) {
     return Globals.FSBLData.RouterClients[clientName];
 };
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(15)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(16)))
 
 /***/ }),
-/* 36 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22596,7 +22830,7 @@ const baseClient_1 = __webpack_require__(1);
 /**
  *
  * @introduction
- * <h2>Search Client</h2>
+ * <h2>Search Client (Finsemble Connect)</h2>
  *
  * The Search Client allows for any window launched by Finsemble to act as a search provider or query against the registered providers.
  *
@@ -22762,8 +22996,11 @@ class SearchClient extends baseClient_1._BaseClient {
     }
     ;
     /**
-     * Call this when you want to trigger an action associated to a provider. This may not exist on the provider.
-     * @param {Provider} provider - This is the search result item.
+     * Call this when you want to trigger an action associated with a provider.
+     * Not all providers register an action handler.
+     *
+     * @param {object} provider Object containing the information needed to trigger an action.
+     * @param {string} provider.channel The channel identifier which is being requested to conduct it's action
      * @example
      * FSBL.Clients.SearchClient.invokeProviderAction(provider);
      */
@@ -22774,9 +23011,6 @@ class SearchClient extends baseClient_1._BaseClient {
 }
 ;
 var searchClient = new SearchClient({
-    startupDependencies: {
-        services: ["searchService"]
-    },
     onReady: function (cb) {
         if (cb) {
             cb();
@@ -22788,7 +23022,7 @@ exports.default = searchClient;
 
 
 /***/ }),
-/* 37 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22805,7 +23039,7 @@ const logger_1 = __webpack_require__(0);
 const constants_1 = __webpack_require__(11);
 /**
  * @introduction
- * <h2>Workspace Client</h2>
+ * <h2>Workspace Client (Finsemble Workspaces)</h2>
  * ----------
  * The Workspace Client manages all calls to load, save, rename, and delete workspaces.
  *
@@ -22927,10 +23161,10 @@ class WorkspaceClient extends baseClient_1._BaseClient {
     }
     // Window Related Workspace Functions. Eventually these need to move to the Window Service
     /**
-     * Auto arranges all windows on the user's screen.
+     * This method is an experimental feature in Finsemble Labs. Calling this method automatically arranges all windows on the user's screen into a grid-like pattern.
      * @param {object} params Parameters
-     * });
-     * @param {string} params.monitor Same options as <a href="LauncherClient.html#showWindow">LauncherClient.showWindow</a>. Default is monitor of calling window.
+     * @param {string | undefined} params.monitor Same options as <a href="LauncherClient.html#showWindow">LauncherClient.showWindow</a>. Default is monitor of calling window.
+     * @param {* | undefined} params.monitorDimensions The surface area of the monitor to arrange over. If not defined defaults to the unclaimed area of the current monitor.
      * @param {function} cb The callback to be invoked after the method completes successfully.
      * @example
      * FSBL.Clients.WorkspaceClient.autoArrange(function(err, response) {
@@ -22953,7 +23187,8 @@ class WorkspaceClient extends baseClient_1._BaseClient {
     /**
      * Minimizes all windows.
      * @param {object} params
-     * @param {string} 	[params.monitor="all"] Same options as <a href="LauncherClient.html#showWindow">LauncherClient.showWindow</a> except that "all" will work for all monitors. Defaults to all.
+     * @param {string} 	params.monitor Same options as <a href="LauncherClient.html#showWindow">LauncherClient.showWindow</a> except that "all" will work for all monitors. Defaults to all.
+     * @param {* | undefined} params.windowIdentifier The Finsemble identifier structure for the window triggering the request.
      * @param {function} cb The callback to be invoked after the method completes successfully.
      * @example
      * FSBL.Clients.WorkspaceClient.bringWindowsToFront();
@@ -22972,6 +23207,7 @@ class WorkspaceClient extends baseClient_1._BaseClient {
      * Brings all windows to the front.
      * @param {object} params
      * @param {string} 	params.monitor Same options as <a href="LauncherClient.html#showWindow">LauncherClient.showWindow</a> except that "all" will work for all monitors. Defaults to the monitor for the current window.
+     * @param {* | undefined} params.windowIdentifier The Finsemble identifier for the target window. If not provided, defaults to the current window.
      * @param {function} cb The callback to be invoked after the method completes successfully.
      * @example
      * FSBL.Clients.WorkspaceClient.bringWindowsToFront();
@@ -23023,7 +23259,7 @@ class WorkspaceClient extends baseClient_1._BaseClient {
     getWorkspaces(cb) {
         validate_1.default.args(cb, "function=");
         logger_1.default.system.debug("WorkspaceClient.getWorkspaces");
-        const getWorkspacesPromiseResolver = (resolve, reject) => {
+        const getWorkspacesPromiseResolver = async (resolve, reject) => {
             this.routerClient.query(constants_1.WORKSPACE.API_CHANNELS.GET_WORKSPACES, {}, (err, response) => {
                 this._serviceResponseHandler(err, response, resolve, reject, cb);
             });
@@ -23052,9 +23288,9 @@ class WorkspaceClient extends baseClient_1._BaseClient {
     /**
      * Removes a workspace. Either the workspace object or its name must be provided.
      * @param {object} params
-     * @param {Object} 	params.workspace Workspace
-     * @param {string} 	params.workspace.name Workspace Name
-     * @param {string} 	params.name Workspace Name
+     * @param {object | undefined} 	params.workspace The workspace data object.
+     * @param {string} 	params.workspace.name The workspace name removal is requested for.
+     * @param {string | undefined} 	params.name The workspace name removal is requested for.
      * @param {function} cb Callback to fire after 'Finsemble.WorkspaceService.update' is transmitted.
      * @example <caption>This function removes 'My Workspace' from the main menu and the default storage tied to the application.</caption>
      * FSBL.Clients.WorkspaceClient.remove({
@@ -23272,10 +23508,10 @@ class WorkspaceClient extends baseClient_1._BaseClient {
      * If the requested name already exists, a new workspace will be created
      * with the form "[name] (1)" (or "[name] (2)", etc.)
      *
-     * @param {String} workspaceName Name for new workspace.
-     * @param {Object} params Optional params
+     * @param {string} workspaceName Name for new workspace.
+     * @param {object} params Optional params
      * @param {boolean} params.switchAfterCreation Whether to switch to the new workspace after creating it.
-     * @param {Function} cb <code>cb(err,response)</code> With response, set to new workspace object if no error.
+     * @param {function} cb <code>cb(err,response)</code> With response, set to new workspace object if no error.
      * @example <caption>This function creates the workspace 'My Workspace'.</caption>
      * FSBL.Clients.WorkspaceClient.createWorkspace(function(err, response) {
      *		if (!err) {}
@@ -23320,7 +23556,7 @@ class WorkspaceClient extends baseClient_1._BaseClient {
      * Adds a workspace definition to the list of available workspaces.
      *
      * @param {object} params
-     * @param {object} params.workspaceJSONDefinition JSON for workspace definition
+     * @param {object} params.workspaceJSONDefinition The JSON for the workspace definition, as exported by the User Preferences menu in Finsemble Connect.
      * @param {boolean} params.force Whether to overwrite any workspace of the same name that already exists
      * @param {function=} cb <code>cb(err)</code> where the operation was successful if !err; otherwise, err carries diagnostics
      *
@@ -23392,10 +23628,6 @@ class WorkspaceClient extends baseClient_1._BaseClient {
     }
 }
 var workspaceClient = new WorkspaceClient({
-    startupDependencies: {
-        services: ["workspaceService"],
-        clients: []
-    },
     onReady: (cb) => {
         workspaceClient.start(cb);
     },
@@ -23405,7 +23637,7 @@ exports.default = workspaceClient;
 
 
 /***/ }),
-/* 38 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23478,7 +23710,7 @@ exports.FinsembleEvent = FinsembleEvent;
 
 
 /***/ }),
-/* 39 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23561,8 +23793,8 @@ class WindowEventManager extends events_1.EventEmitter {
             }
             //todo need to accommodate wrap-state-changed events in here...maybe?
             let data = { eventName, name: this.windowName };
-            if (eventName.includes("bounds") || eventName.includes("parent")) {
-                //bounds events need to push out more data than just name/eventName. ...response.data will destructure the object and copy them into this new object.
+            if (eventName.includes("bounds") || eventName.includes("parent") || eventName.includes("alwaysOnTop")) {
+                // bounds events need to push out more data than just name/eventName. ...response.data will destructure the object and copy them into this new object.
                 data = Object.assign({ eventName }, response.data);
             }
             if (!response.originatedHere()) {
@@ -23650,7 +23882,89 @@ exports.WindowEventManager = WindowEventManager;
 
 
 /***/ }),
-/* 40 */
+/* 42 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ALL_BOOT_STAGES = ["microkernel", "kernel", "authentication", "preuser", "earlyuser", "user"];
+/**
+ * Boot config element used to build a node in a dependency tree
+ */
+class BootConfigElement {
+}
+exports.BootConfigElement = BootConfigElement;
+/**
+ * Represents a ready node (i.e. all that's need to start the corresponding task/service/component)
+ */
+class BootReadyItem {
+    constructor(name, type, config) {
+        this.name = name;
+        this.type = type;
+        this.config = config;
+    }
+}
+exports.BootReadyItem = BootReadyItem;
+
+
+/***/ }),
+/* 43 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+// contains common functions -- used in multiple places in the system manager
+Object.defineProperty(exports, "__esModule", { value: true });
+const system_1 = __webpack_require__(2);
+const _constants_1 = __webpack_require__(25);
+/**
+ * Kills old applications -- used at the beginning of start
+ * @param finUUID
+ * @returns
+ */
+function killOldApplications(finUUID) {
+    const promiseResolver = async (resolve) => {
+        system_1.System.getAllApplications(async (applications) => {
+            if (applications) {
+                for (let i = 0; i < applications.length; i++) {
+                    let a = applications[i];
+                    if (a.uuid.endsWith("-" + finUUID)) {
+                        let application = system_1.System.Application.wrap(a.uuid);
+                        await system_1.System.closeApplication(application);
+                    }
+                }
+            }
+            console.log("killOldApplications: finished closing old apps");
+            resolve();
+        });
+    };
+    return new Promise(promiseResolver);
+}
+exports.killOldApplications = killOldApplications;
+/**
+ * Function to return the name of a startup status channel, given the window name
+ * @param name
+ * @returns
+ */
+function statusChannel(name) {
+    return `${_constants_1.STATUS_CHANNEL_BASE}.${name}`;
+}
+exports.statusChannel = statusChannel;
+/**
+ * Function to return the name of a checkpoint status channel, given the parent name (e.g. service name, component name) and the checkpoint name
+ * @param parentName
+ * @param checkpointName
+ * @returns
+ */
+function checkpointChannel(parentName, checkpointName) {
+    return `${_constants_1.CHECKPOINT_CHANNEL_BASE}.${parentName}.${checkpointName}`;
+}
+exports.checkpointChannel = checkpointChannel;
+
+
+/***/ }),
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {/**
@@ -25402,10 +25716,10 @@ function stubFalse() {
 
 module.exports = cloneDeep;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(16)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(17)(module)))
 
 /***/ }),
-/* 41 */
+/* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -25915,7 +26229,7 @@ module.exports = pick;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
-/* 42 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -26361,7 +26675,7 @@ module.exports = throttle;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
-/* 43 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {var __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -43478,15 +43792,15 @@ module.exports = throttle;
   }
 }.call(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(16)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(17)(module)))
 
 /***/ }),
-/* 44 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-const pTry = __webpack_require__(45);
+const pTry = __webpack_require__(49);
 
 const pLimit = concurrency => {
 	if (concurrency < 1) {
@@ -43540,7 +43854,7 @@ module.exports.default = pLimit;
 
 
 /***/ }),
-/* 45 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -43556,7 +43870,7 @@ module.exports.default = pTry;
 
 
 /***/ }),
-/* 46 */
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
@@ -43746,10 +44060,10 @@ module.exports.default = pTry;
     attachTo.clearImmediate = clearImmediate;
 }(typeof self === "undefined" ? typeof global === "undefined" ? this : global : self));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(15)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(16)))
 
 /***/ }),
-/* 47 */
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {var scope = (typeof global !== "undefined" && global) ||
@@ -43805,7 +44119,7 @@ exports._unrefActive = exports.active = function(item) {
 };
 
 // setimmediate attaches itself to the global object
-__webpack_require__(46);
+__webpack_require__(50);
 // On some exotic environments, it's not clear which object `setimmediate` was
 // able to install onto.  Search each possibility in the same order as the
 // `setimmediate` library.
@@ -43819,11 +44133,11 @@ exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
-/* 48 */
+/* 52 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var v1 = __webpack_require__(28);
-var v4 = __webpack_require__(49);
+var v1 = __webpack_require__(30);
+var v4 = __webpack_require__(53);
 
 var uuid = v4;
 uuid.v1 = v1;
@@ -43833,11 +44147,11 @@ module.exports = uuid;
 
 
 /***/ }),
-/* 49 */
+/* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var rng = __webpack_require__(27);
-var bytesToUuid = __webpack_require__(26);
+var rng = __webpack_require__(29);
+var bytesToUuid = __webpack_require__(28);
 
 function v4(options, buf, offset) {
   var i = buf && offset || 0;
@@ -43868,20 +44182,24 @@ module.exports = v4;
 
 
 /***/ }),
-/* 50 */
+/* 54 */
 /***/ (function(module, exports) {
 
 module.exports = {"dictionary":{"0":"0","1":"1","2":"2","3":"3","4":"4","5":"5","6":"6","7":"7","8":"8","9":"9","backspace":"backspace","bs":"backspace","bksp":"backspace","tab":"tab","escape":"escape","esc":"escape","clear":"clear","enter":"enter","return":"enter","shift":"shift","shft":"shift","lshift":"shift","lshft":"shift","left shift":"shift","leftshift":"shift","rshift":"shift","rshft":"shift","right shift":"shift","rightshift":"shift","control":"control","ctrl":"control","alt":"alt","alternate":"alt","pause":"pause","caps lock":"caps lock","capslock":"caps lock","spacebar":"spacebar","space":"spacebar","space bar":"space","page up":"page up","pgup":"page up","pg up":"page up","page down":"page down","pgdn":"page down","pg dn":"page down","end":"end","home":"home","left arrow":"left arrow","left":"left arrow","up arrow":"up arrow","up":"up arrow","right arrow":"right arrow","right":"right arrow","down arrow":"down arrow","down":"down arrow","select":"select","slct":"select","print":"print","prnt":"print","execute":"execute","print screen":"print screen","printscreen":"print screen","print scrn":"print screen","printscrn":"print screen","prnt scrn":"print screen","prntscrn":"print screen","prt scrn":"print screen","prtscrn":"print screen","prt scn":"print screen","prtscn":"print screen","prt scr":"print screen","prtscr":"print screen","prt sc":"print screen","prtsc":"print screen","pr sc":"print screen","prsc":"print screen","insert":"insert","ins":"insert","delete":"delete","del":"delete","help":"help","a":"a","b":"b","c":"c","d":"d","e":"e","f":"f","g":"g","h":"h","i":"i","j":"j","k":"k","l":"l","m":"m","n":"n","o":"o","p":"p","q":"q","r":"r","s":"s","t":"t","u":"u","v":"v","w":"w","x":"x","y":"y","z":"z","windows":"windows","left windows":"windows","right windows":"windows","applications":"applications","computer sleep":"computer sleep","sleep":"computer sleep","numpad 0":"0","numpad 1":"1","numpad 2":"2","numpad 3":"3","numpad 4":"4","numpad 5":"5","numpad 6":"6","numpad 7":"7","numpad 8":"8","numpad 9":"9","f1":"f1","fn1":"f1","function 1":"f1","f2":"f2","fn2":"f2","function 2":"f2","f3":"f3","fn3":"f3","function 3":"f3","f4":"f4","fn4":"f4","function 4":"f4","f5":"f5","fn5":"f5","function 5":"f5","f6":"f6","fn6":"f6","function 6":"f6","f7":"f7","fn7":"f7","function 7":"f7","f8":"f8","fn8":"f8","function 8":"f8","f9":"f9","fn9":"f9","function 9":"f9","f10":"f10","fn10":"f10","function 10":"f10","f11":"f11","fn11":"f11","function 11":"f11","f12":"f12","fn12":"f12","function 12":"f12","f13":"f13","fn":"f13","function 13":"f13","f14":"f14","fn14":"f14","function 14":"f14","f15":"f15","fn15":"f15","function 15":"f15","f16":"f16","fn16":"f16","function 16":"f16","num lock":"num lock","numlock":"num lock","number lock":"num lock","numeric lock":"num lock","scroll lock":"scroll lock","sclk":"scroll lock","scrlk":"scroll lock","slk":"scroll lock","menu":"menu","*":"*","+":"+","-":"-","/":"/",";":";","=":"=",",":",","_":"-",".":".","`":"`","[":"[","]":"]","'":"'"},"assimilationMap":{"1":"lmb","2":"rmb","4":"mmb","8":"backspace","9":"tab","13":"enter","16":"shift","17":"control","18":"alt","19":"pause","20":"caps lock","27":"escape","32":"spacebar","33":"page up","34":"page down","35":"end","36":"home","37":"left arrow","38":"up arrow","39":"right arrow","40":"down arrow","41":"select","42":"print","43":"execute","44":"print screen","45":"insert","46":"delete","47":"help","48":"0","49":"1","50":"2","51":"3","52":"4","53":"5","54":"6","55":"7","56":"8","57":"9","65":"a","66":"b","67":"c","68":"d","69":"e","70":"f","71":"g","72":"h","73":"i","74":"j","75":"k","76":"l","77":"m","78":"n","79":"o","80":"p","81":"q","82":"r","83":"s","84":"t","85":"u","86":"v","87":"w","88":"x","89":"y","90":"z","91":"windows","92":"windows","93":"applications","95":"computer sleep","96":"0","97":"1","98":"2","99":"3","100":"4","101":"5","102":"6","103":"7","104":"8","105":"9","106":"*","107":"+","109":"-","111":"/","112":"f1","113":"f2","114":"f3","115":"f4","116":"f5","117":"f6","118":"f7","119":"f8","120":"f9","121":"f10","122":"f11","123":"f12","124":"f13","125":"f14","126":"f15","127":"f16","144":"num lock","145":"scroll lock","160":"shift","161":"shift","162":"control","163":"control","164":"alt","165":"alt","186":";","187":"=","188":",","189":"-","190":".","191":"/","192":"`","219":"[","220":"\\","221":"]","222":"\\","223":"'","//note, backtick and apostrophe":"are reversed on uk and us keyboards"}}
 
 /***/ }),
-/* 51 */
+/* 55 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_events___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_events__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__clients_logger___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__clients_logger__);
 
-const deepEqual = __webpack_require__(25);
+
+const deepEqual = __webpack_require__(27);
+
 /** Singleton of the System class shared among all instances of Monitors
  * @TODO Refactor to instance member of class.
  */
@@ -43980,20 +44298,26 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 				console.info("Skipped refreshMonitors because monitors do not change.");
 				monitorsChanged = false;
 			}
-			//console.log("getAllMonitors");
+			
 			this.allMonitors = [];
-			var primaryMonitor = monitorInfo.primaryMonitor;
-			this.primaryMonitor = primaryMonitor;
-			primaryMonitor.whichMonitor = "primary";
-
-			if (fin.container !== "Electron") {
-				primaryMonitor.deviceScaleFactor = this.calculateMonitorScale(primaryMonitor.monitor.dipRect, primaryMonitor.monitor.scaledRect);
+			let primaryMonitor = monitorInfo.primaryMonitor;
+			if (Object.entries(primaryMonitor).length) {
+				primaryMonitor.whichMonitor = "primary";
+				primaryMonitor.position = 0;
+				if (System.container !== "Electron") {
+					primaryMonitor.deviceScaleFactor = this.calculateMonitorScale(primaryMonitor.monitor.dipRect, primaryMonitor.monitor.scaledRect);
+				}
+				this.allMonitors.push(primaryMonitor);
+			} else {
+				// If there is no primary monitor, then the system is still in the process of updating the monitor information,
+				// so we can return and wait for the next monitor change event comes in.
+				__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.System.info("There is no primary monitor in 'monitorInfo' - the system is still in the process of updating the monitor information. Returning from monitorsAndScaling -> refreshMonitors");
+				return;
 			}
-			primaryMonitor.position = 0;
-			this.allMonitors.push(primaryMonitor);
+
 			for (let i = 0; i < monitorInfo.nonPrimaryMonitors.length; i++) {
 				let monitor = monitorInfo.nonPrimaryMonitors[i];
-				if (fin.container !== "Electron") {
+				if(System.container !== "Electron") {
 					monitor.deviceScaleFactor = this.calculateMonitorScale(monitor.monitor.dipRect, monitor.monitor.scaledRect);
 				}
 				monitor.whichMonitor = i;
@@ -44028,7 +44352,7 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 	}
 
 	/**
-	 * Gets the monitor on which the point is or null if not on any monitor. This assumes scaled dimensions for the monitor (For example from Openfin or WPF directly).
+	 * Gets the monitor on which the point is or null if not on any monitor. This assumes scaled dimensions for the monitor (For example from electron or WPF directly).
 	 * @param {*} x
 	 * @param {*} y
 	 * @param {*} cb
@@ -44246,7 +44570,7 @@ class Monitors extends __WEBPACK_IMPORTED_MODULE_0_events__["EventEmitter"] {
 
 
 /***/ }),
-/* 52 */
+/* 56 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -44352,11 +44676,11 @@ var RouterTransport = {
 			}
 		}
 
-		// if OpenFin IAB available, then add IAB to active list
-		if (fin && fin.desktop && fin.desktop.InterApplicationBus) addToActive("OpenFinBus");
+		// if IPCBus available, then add IAB to active list
+		if (__WEBPACK_IMPORTED_MODULE_2__common_system__["System"].InterApplicationBus) addToActive("IPCBus");
 
 		// If electron, always have FinsembleTransport active
-		if (fin && fin.container === "Electron") addToActive("FinsembleTransport");
+		if (__WEBPACK_IMPORTED_MODULE_2__common_system__["System"].container === "Electron") addToActive("FinsembleTransport");
 
 		// if shared worker available, then add shared-worker transport to active list
 		if (SharedWorker) addToActive("SharedWorker");
@@ -44381,7 +44705,7 @@ var RouterTransport = {
 	 * @returns the transport object
 	 */
 	getDefaultTransport: function (params, incomingMessageHandler, source, destination) {
-		return RouterTransport.getTransport(params, "OpenFinBus", incomingMessageHandler, source, destination);
+		return RouterTransport.getTransport(params, "IPCBus", incomingMessageHandler, source, destination);
 	},
 
 	/**
@@ -44536,30 +44860,30 @@ RouterTransportImplementation.SharedWorkerTransport = function (params, parentMe
 };
 
 /*
- * Implements the OpenFin Bus Transport.
+ * Implements the IPC Bus Transport.
  *
  * Required Functions (used by transport clients):
  * 		send(transport, routerMessage) -- transport object contains destination transport info; routerMessage is the message to send
  * 		identifier() -- returns transport's name
  *
- * @param {object} params unused in OpenFin transport
+ * @param {object} params unused in IPC transport
  * @param {any} parentMessageHandler callback for incoming event
  * @param {any} source either the client name or "RouterService"
  * @param {any} destination either the client name or "RouterService"
  */
-RouterTransportImplementation.OpenFinTransport = function (params, parentMessageHandler, source, destination, callback) {
+RouterTransportImplementation.IPCTransport = function (params, parentMessageHandler, source, destination, callback) {
 	var uuid = __WEBPACK_IMPORTED_MODULE_2__common_system__["System"].Application.getCurrent().uuid;
 	var self = this;
 
 	// receives incoming OpenFin bus messages then passes on to parent with correct "wrapper"
-	function openFinMessageHandler(routerMessage, senderUuid) {
+	function messageHandler(routerMessage, senderUuid) {
 		var incomingTransportInfo = { "transportID": self.identifier(), "senderUuid": senderUuid, "name": routerMessage.header.origin };
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("OpenFinTransport Incoming Transport", incomingTransportInfo, "Message", routerMessage);
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("IPCTransport Incoming Transport", incomingTransportInfo, "Message", routerMessage);
 		parentMessageHandler(incomingTransportInfo, routerMessage);
 	}
 
 	function subscribeFailure(reason) {
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("OpenFinBus Subscribe Failure: " + reason);
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.error("IPCBus Subscribe Failure: " + reason);
 	}
 
 	//required function for the parent (i.e. routeClient or routeService)
@@ -44575,19 +44899,19 @@ RouterTransportImplementation.OpenFinTransport = function (params, parentMessage
 			routerMessage = arguments[1];
 		}
 
-		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("OpenFinTransport Outgoing Transport", uuid, destTopic, "Message", routerMessage);
-		fin.desktop.InterApplicationBus.publish(destTopic, routerMessage,
+		__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.verbose("IPCTransport Outgoing Transport", uuid, destTopic, "Message", routerMessage);
+		__WEBPACK_IMPORTED_MODULE_2__common_system__["System"].InterApplicationBus.publish(destTopic, routerMessage,
 			function () { }, function (err) { });
 	};
 
 	//required function for the parent (i.e. routeClient or routeService)
 	this.identifier = function () {
-		return "OpenFinBus";
+		return "IPCBus";
 	};
 
-	__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log(`OpenFinBus Transport Initializing for ${source}`);
-	console.log(`OpenFinBus Transport Initializing for ${source}`);
-	fin.desktop.InterApplicationBus.subscribe("*", source, openFinMessageHandler, null, subscribeFailure);
+	__WEBPACK_IMPORTED_MODULE_1__clients_logger___default.a.system.log(`IPCBus Transport Initializing for ${source}`);
+	console.log(`IPCBus Transport Initializing for ${source}`);
+	__WEBPACK_IMPORTED_MODULE_2__common_system__["System"].InterApplicationBus.subscribe("*", source, messageHandler, null, subscribeFailure);
 
 	callback(this);
 };
@@ -44605,13 +44929,12 @@ RouterTransportImplementation.OpenFinTransport = function (params, parentMessage
  * @param {any} destination either the client name or "RouterService" (unused in FinsembleTransport)
  */
 RouterTransportImplementation.FinsembleTransport = function (params, parentMessageHandler, source, destination, callback) {
-	/** @TODO - split into two separate vars for clarity. */
-	var serverAddress = __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress",
-		__WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.IAC.serverAddress","ws://127.0.0.1:3376")
-	);
+	const defaultServerAddress = "ws://127.0.0.1:3376";
+	const IACServerAddress = __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.IAC.serverAddress", defaultServerAddress);
+	const serverAddress = __WEBPACK_IMPORTED_MODULE_0__configUtil__["ConfigUtilInstance"].getDefault(params, "params.transportSettings.FinsembleTransport.serverAddress", IACServerAddress);
 	const SOCKET_SERVER_ADDRESS = serverAddress + "/router"; // "router" is the socket namespace used on server
 
-	var self = this;
+	const self = this;
 
 	// receives incoming messages then passes on to parent (what's passed to parent should be same routerMessage received in send()
 	function finsembleMessageHandler(routerMessage) {
@@ -44797,14 +45120,14 @@ RouterTransportImplementation.FinsembleCloudTransport = function (params, parent
 
 // add the transports to the available/active list
 RouterTransport.addTransport("SharedWorker", RouterTransportImplementation.SharedWorkerTransport);
-RouterTransport.addTransport("OpenFinBus", RouterTransportImplementation.OpenFinTransport);
+RouterTransport.addTransport("IPCBus", RouterTransportImplementation.IPCTransport);
 RouterTransport.addTransport("FinsembleTransport", RouterTransportImplementation.FinsembleTransport);
 
 /* harmony default export */ __webpack_exports__["default"] = (RouterTransport);
 
 
 /***/ }),
-/* 53 */
+/* 57 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -44922,7 +45245,7 @@ function removeChildMapping(mapping, field) {
 
 
 /***/ }),
-/* 54 */
+/* 58 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -44976,7 +45299,7 @@ var SystemSettings = function () {
 /* harmony default export */ __webpack_exports__["a"] = (new SystemSettings());
 
 /***/ }),
-/* 55 */
+/* 59 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -45183,10 +45506,10 @@ function wrapCallbacks(parentObject, params) { // variable number of parameters
 
 
 /***/ }),
-/* 56 */
+/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(30);
+module.exports = __webpack_require__(32);
 
 
 /***/ })

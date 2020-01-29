@@ -5,6 +5,10 @@
 import { FSBLDependencyManagerSingleton as FSBLDependencyManager } from "../common/dependencyManager";
 import RouterClient from "../clients/routerClientInstance";
 import Logger from "../clients/logger";
+import SystemManagerClient from "../common/systemManagerClient";
+import { System } from "../common/system";
+import * as Constants from "../common/constants";
+import { IRouterClient } from "../clients/IRouterClient";
 
 import {
 	series as asyncSeries,
@@ -12,10 +16,8 @@ import {
 	each as asyncEach,
 	timeout as asyncTimeout
 } from "async";
-import { System } from "../common/system";
-import * as Constants from "../common/constants";
-import { IRouterClient } from "../clients/IRouterClient";
-const { SERVICE_INITIALIZING_CHANNEL, SERVICE_READY_CHANNEL, SERVICE_CLOSING_CHANNEL, SERVICE_CLOSED_CHANNEL, SERVICE_STOP_CHANNEL } = Constants;
+
+const { SERVICE_INITIALIZING_CHANNEL, SERVICE_READY_CHANNEL, SERVICE_QUERY_READY_CHANNEL, SERVICE_CLOSING_CHANNEL, SERVICE_CLOSED_CHANNEL, SERVICE_STOP_CHANNEL } = Constants;
 const defaultBaseServiceParams: ServiceConstructorParams = {
 	startupDependencies: {
 		services: [],
@@ -27,11 +29,14 @@ const defaultBaseServiceParams: ServiceConstructorParams = {
 	addOFWrapper: false,
 	name: window.name
 };
-/*
+/**
  * @introduction
  * <h2>Base Service</h2>
- * Creates an instance of the Base Service which all service must inherit. Services are spawned from your *service.json* file and managed by a helper thread - the **Service Manager**.
- * Services communicate their status and receive status of other service through the Service Manager.
+ *
+ * The Base Service is available with any of Finsemble's advanced packages.
+ *
+ * Creates an instance of the Base Service which all service must inherit. Services are spawned from your <i>service.json</i> file and managed by a helper thread - the <b>Service Manager</b>.
+ * Services communicate their status and receive status of other services through the Service Manager.
  * Services have an initial handshake with the Service Manager on load, and then either go online or wait for dependant services to come online.
  * Service initialization is completely asynchronous, which allows all services to load at the same time, as long as their dependencies have been met.
  * @constructor
@@ -53,7 +58,6 @@ export class BaseService {
 	started: boolean;
 	startupDependencies: FinsembleDependencyObject
 	status: ServiceState;
-	waitedLongEnough: boolean;
 
 	constructor(params = defaultBaseServiceParams) {
 		fixParams(params);
@@ -62,8 +66,6 @@ export class BaseService {
 		this.shutdownDependencies = params.shutdownDependencies;
 		this.Logger = Logger;
 		this.RouterClient = RouterClient;
-		//This will be set to true after the debugServiceDelay is met. Defaults to 0, but developers can up it if they need to jump in and add breakpoints and are on a bad computer.
-		this.waitedLongEnough = false;
 		//this.parentUuid = System.Application.getCurrent().uuid;
 		this.onBaseServiceReadyCB = null;
 		this.setOnConnectionCompleteCB = null;
@@ -87,6 +89,7 @@ export class BaseService {
 	* @private
 	*/
 	waitForDependencies() {
+		var self = this;
 		//For backwards compat. note Start used to be invoked after the constructor.
 		//note do this later
 
@@ -95,6 +98,7 @@ export class BaseService {
 		this.started = true;
 		var service = this;
 		Logger.system.debug(`${this.name} starting`);
+
 		function cacheCustomData(done) {
 			Logger.system.debug("BaseService.start.setParentUUID");
 			System.Window.getCurrent().getOptions((opts) => {
@@ -106,6 +110,16 @@ export class BaseService {
 
 		function onRouterReady(done) {
 			RouterClient.onReady(function () {
+
+				// Here is the responder to allow each client to handshake with its service to make sure its ready
+				RouterClient.addResponder(SERVICE_QUERY_READY_CHANNEL(self.name), (err, message) => {
+					if (self.status = "ready") {
+						message.sendQueryResponse(null)
+					} else {
+						message.sendQueryResponse("service not ready");
+					}
+				});
+
 				RouterClient.transmit(SERVICE_INITIALIZING_CHANNEL, { name: service.name });
 				window.addEventListener("beforeunload", service.RouterClient.disconnectAll);
 				Logger.system.debug("APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start.onRouterReady");
@@ -113,13 +127,31 @@ export class BaseService {
 			});
 		}
 
+		// supports option to delay the debug based on service config's debugServiceDelay value (passed in through custom data).
+		function debugDelay(done) {
+			const debugServiceDelay = service.customData.debugServiceDelay || 0;
+			Logger.system.debug(`Custom Data: ${service.name} custom data`, service.customData);
+
+			if (!Number.isInteger(debugServiceDelay)) {
+				const errorMsg = `debugDelay has an illegal value ("${debugServiceDelay}") for ${service.name}. Value must be an integer.`;
+				Logger.system.error(`APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start: ${errorMsg}`);
+				SystemManagerClient.systemLog({ error: true }, errorMsg);
+			} else if (debugServiceDelay > 0) {
+				Logger.system.debug(`APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start.debugDelay: ${service.name} startup will delayed by ${debugServiceDelay} milliseconds for debugging`);
+			}
+
+			// invoke done() after optional debug delay
+			setTimeout(done, debugServiceDelay);
+		}
+
 		function readyToGo(done) {
-			Logger.system.debug("APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start.readyToGo");
+			Logger.system.debug(`APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start.readyToGo ${service.name}`);
 			console.log(performance.now(), "ReadyToGo called");
 			console.log("Startup Dependencies for", service.name, service.startupDependencies);
 			console.log("Shutdown Dependencies for", service.name, service.shutdownDependencies);
-			service.waitedLongEnough = true;
 			FSBLDependencyManager.shutdown.waitFor(service.shutdownDependencies, service.handleShutdown);
+			Logger.system.debug(`APPLICATION LIFECYCLE:STARTUP:SERVICE:BaseService.start.readyToGo after wait ${service.name}`);
+
 			RouterClient.transmit(`${System.Window.getCurrent().name}.onSpawned`, {});
 
 			//`done` invoked when all dependencies are up
@@ -148,6 +180,7 @@ export class BaseService {
 				onRouterReady,
 				cacheCustomData,
 				showDeveloperTools,
+				debugDelay,
 				readyToGo
 			], () => {
 				resolve();
@@ -161,13 +194,16 @@ export class BaseService {
 	setOnline() {
 		if (this.status !== "ready") {
 			console.log("Setting service online", this.name);
-			Logger.system.log("APPLICATION LIFECYCLE:STARTUP:SERVICE ONLINE", this.name);
-			RouterClient.transmit(SERVICE_READY_CHANNEL, { serviceName: this.name }); // notify service manager
+
 			this.RouterClient.addListener(SERVICE_STOP_CHANNEL + "." + this.name, (err, response) => {
 				this;
 				FSBLDependencyManager.shutdown.checkDependencies();
 			});
+
 			this.status = "ready";
+			RouterClient.transmit(SERVICE_READY_CHANNEL, { serviceName: this.name }); // notify service manager
+			Logger.system.log("APPLICATION LIFECYCLE:STARTUP:SERVICE ONLINE", this.name);
+			SystemManagerClient.publishBootStatus(this.name, "services", "completed");
 		}
 	}
 	/**
@@ -195,6 +231,11 @@ export class BaseService {
 		});
 	}
 
+	/**
+	 * Conduct operations when the base service becomes ready.
+	 *
+	 * @param {function} func Any function of code desired to execute when ready.
+	 */
 	onBaseServiceReady(func) { // used by the inheriting service to know where baseService init is complete
 		if (this.status === "initializing") {
 			//onBaseServiceReady is backwards-compatibility stuff.
@@ -207,7 +248,7 @@ export class BaseService {
 	}
 	/**
 	 * Really only for shutdown right now. Simple array that gets looped through on shutdown.
-	 * @param {string} listenerType
+	 * @param {string} listenerType Any event identifier the service provides to operate with.
 	 * @param {function} callback The callback to be invoked after the method completes successfully.
 	 */
 	addEventListener(listenerType, callback) {
@@ -231,6 +272,8 @@ export class BaseService {
 	 * @private
 	*/
 	handleShutdown(err, message) {
+		Logger.system.debug("BaseService.handleShutdown")
+
 		var self = this;
 		function handleShutdownAction(handler, done) {
 			let cleanup = asyncAsyncify(handler);

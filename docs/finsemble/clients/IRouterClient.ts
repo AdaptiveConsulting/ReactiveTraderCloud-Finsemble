@@ -5,7 +5,7 @@ export interface RouterResponse<T> {
 		origin: string;
 		incomingTransportInfo: {
 			port: number;
-			transportID: "SharedWorker" | "OpenFinBus";
+			transportID: "SharedWorker" | "IPCBus";
 			lastClient: string;
 			origin: string;
 		};
@@ -29,7 +29,7 @@ export interface ResponderMessage<T = any> extends RouterMessage {
 
 /**
  * @introduction
- * <h2>Router Client</h2>
+ * <h2>Router Client (Finsemble Workspaces)</h2>
  *
  * For communications amongst desktop services, components, or outside the container entirely, Finsemble provides an event infrastructure with high level protocols.
  * The Router is the center of this functionality, sending and receiving messages between windows.
