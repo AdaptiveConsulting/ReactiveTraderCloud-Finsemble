@@ -11,7 +11,7 @@ import { SpawnParams } from "../services/window/Launcher/launcher";
 
 /**
  * @introduction
- * <h2>Authentication Client</h2>
+ * <h2>Authentication Client (Finsemble Connect)</h2>
  *
  * The Authentication Client supports three distinct areas of functionality:
  *
@@ -65,12 +65,17 @@ export class AuthenticationClient extends BaseClient {
 		});
 	};
 
+	// @TODO There are more signOnData properties at the lower levels. Figure out which need to be documented here.
 	/**
-	 * Automatic sign-on Function. Not used by components signing on, but only by "system dialog" component that prompts the user for sign on data. This command will send the user-input sign-on data back to the Authentication Service.
+	 * Sends the provided data to the authentication service for a sign-on attempt.
 	 *
 	 * @param {object} signOnData
+	 * @param {string|undefined} signOnData.username The username to authenticate the request for
+	 * @param {string|undefined} signOnData.password The password to validate for the requested user
+	 * @param {string|undefined} signOnData.error An error message indicating failure to retrieve login credentials.
+	 * @param {string} signOnData.signOnKey component-defined unique identifier string representing the sign-on data (the same string must be used for each unique sign on).
 	 */
-	transmitSignOnToAuthService = (signOnData: object) => {
+	transmitSignOnToAuthService = (signOnData: { username?: string, password?: string, signOnKey: string, error?: string }) => {
 		Validate.args(signOnData, "object");
 		this.logger.system.debug("AUTHORIZATION: Transmitting SignOn To AuthService");
 		this.routerClient.transmit("authentication.dialogSignOnToAuthService", signOnData);
@@ -145,8 +150,8 @@ export class AuthenticationClient extends BaseClient {
 	 * Completes an OAuth2 authentication that was begun with <a href="AuthenticationClient.html#beginAuthentication">beginAuthentication</a>.
 	 * This function is called when an OAuth2 response is completed.
 	 * You should call this function from within the page that you specified in "redirect_uri" in your Authentication Profile config.
-	 * @param {string} error The error to be returned if the method fails.
-	 * @param {any} params Optionally pass the OAuth2 query string parameters from your response page. Set to null and the query string will automatically be parsed based on the OAuth2 specification.
+	 * @param {string} err The error to be returned if the method fails.
+	 * @param {*} params Optionally pass the OAuth2 query string parameters from your response page. Set to null and the query string will automatically be parsed based on the OAuth2 specification.
 	 * @param {StandardCallback} cb Returns the result (err, data). Data will contain the results of the authentication process, such as the access_token and other values provided by your Identify Provider.
 	 * @since TBD
 	 */

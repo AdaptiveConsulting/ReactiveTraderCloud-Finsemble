@@ -43,7 +43,7 @@ Globals.FSBLData.RouterClients = Globals.FSBLData.RouterClients || {};
  * @hideconstructor
  * @publishedName RouterClient
  * @param {string} clientName router base client name for human readable messages (window name is concatenated to baseClientName)
- * @param {string=} transportName router transport name, currently either "SharedWorker" or "OpenFinBus" (usually this is auto-configured internally but can be selected for testing or special configurations)
+ * @param {string=} transportName router transport name, currently either "SharedWorker" or "IPCBus" (usually this is auto-configured internally but can be selected for testing or special configurations)
  */
 // un-comment for optimization.
 // console.time("FinMainStartup");
@@ -259,10 +259,10 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 			}
 		}
 		//This is the only place we need to wait for desktop.main
-		System.ready(function () { // wait for openfin to be ready
+		System.ready(function () { // wait for container to be ready
 			var finWindow = System.Window.getCurrent();
-			Logger.system.debug(`WINDOW LIFECYCLE:STARTUP: fin.main invoked in ${finWindow.name}`);
-			console.debug(`WINDOW LIFECYCLE:STARTUP: fin.main invoked in ${finWindow.name}`);
+			Logger.system.debug(`WINDOW LIFECYCLE:STARTUP: System.ready invoked in ${finWindow.name}`);
+			console.debug(`WINDOW LIFECYCLE:STARTUP: System.ready invoked in ${finWindow.name}`);
 			self.startupTime = performance.now();
 			// un-comment for optimization.
 			// console.timeEnd("FinMainStartup");
@@ -302,14 +302,13 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 		var handshakeFailedCount = 0;
 		var finConfig = manifest.finsemble;
 
-		var isElectron = fin && fin.container == "Electron";
 		var routerParams = {
 			FinsembleUUID: finConfig.FinsembleUUID,
 			applicationRoot: finConfig.applicationRoot,
 			routerDomainRoot: finConfig.moduleRoot,
 			forceWindowTransport: ConfigUtil.getDefault(finConfig, "finConfig.router.forceWindowTransport", {}),
 			sameDomainTransport: ConfigUtil.getDefault(finConfig, "finConfig.router.sameDomainTransport", "SharedWorker"),
-			crossDomainTransport: ConfigUtil.getDefault(finConfig, "finConfig.router.crossDomainTransport", "OpenFinBus"),
+			crossDomainTransport: ConfigUtil.getDefault(finConfig, "finConfig.router.crossDomainTransport", "IPCBus"),
 			transportSettings: ConfigUtil.getDefault(finConfig, "finConfig.router.transportSettings", {}),
 			IAC: ConfigUtil.getDefault(finConfig, "finConfig.IAC", {})
 		};
@@ -1199,8 +1198,9 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 	 *
 	 * @example
 	 *
-	 * var subscribeId = RouterClient.subscribe("topicABC", function(err,notify) {
-	 *		if (!err) {
+	 * var subscriptionDetails = RouterClient.subscribe("topicABC", function(err, notify) {
+	 *		if (err) { console.log(err); }
+	 *		if (notify) {
 	 *			var notificationStateData = notify.data;
 	 *			// do something with notify data
 	 *  	}
@@ -1245,6 +1245,13 @@ export var RouterClientConstructor = function (params: { clientName: string, tra
 	 * @example
 	 *
 	 * FSBL.Clients.RouterClient.unsubscribe(subscribeId);
+	 * //Subscription details returned by RouterClient.subscribe(), which take the form:
+	 * let subscriptionDetails = {
+	 * 	subscribeID: "<subscribeID returned by RouterClient.subscribe>",
+	 * 	topic: "topicABC"
+	 * };
+	 * FSBL.Clients.RouterClient.unsubscribe(subscriptionDetails);
+	 *
 	 *
 	 */
 	this.unsubscribe = function (subscribeIDStruct: any) {

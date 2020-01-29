@@ -17,7 +17,7 @@ import { componentMutateParams } from '../services/window/WindowAbstractions/Bas
 /**
  *
  * @introduction
- * <h2>Storage Client</h2>
+ * <h2>Storage Client (Finsemble Connect)</h2>
  *
  * The Storage Client handles saving and retrieving data for your smart desktop.
  *
@@ -28,16 +28,19 @@ import { componentMutateParams } from '../services/window/WindowAbstractions/Bas
  * @constructor
  */
 export class StorageClient extends _BaseClient {
+	clientReady: boolean = false;
+
 	/**
 	 * Define the user name for storage (i.e., each user has unique storage).
-	 * @param {Object} params
-	 * @param {String} params.user The user name defined for storage.
+	 * @param {object} params
+	 * @param {string} params.user A unique key to store user data under
 	 * @param {StandardCallback} cb Callback to be called on success.
 	 *
 	 * @example
 	 * FSBL.Clients.StorageClient.setUser({ user: "JohnDeere"});
 	 */
 	setUser(params: { user: string }, cb?: StandardCallback) {
+		this.clientReady || Logger.system.error("storageClient invoked before ready");
 		Validate.args(params.user, "string", cb, "function=");
 		this.routerClient.query("Storage.setUser", { user: params.user }, function (err, response) {
 			const logMethod = err ? Logger.system.error : Logger.system.info;
@@ -59,6 +62,7 @@ export class StorageClient extends _BaseClient {
 	 * FSBL.Clients.StorageClient.setStore({topic:"finsemble", dataStore:"redis"})
 	 */
 	setStore(params: { topic: string, dataStore?: string }, cb?: StandardCallback) {
+		this.clientReady || Logger.system.error("storageClient invoked before ready");
 		Validate.args(params.topic, "string", params.dataStore, "string=", cb, "function=");
 		Logger.system.log("APPLICATION LIFECYCLE:StorageClient.setStore", params, cb);
 		this.routerClient.query("Storage.setStore", params, (err, response) => {
@@ -74,7 +78,7 @@ export class StorageClient extends _BaseClient {
 	 * Save a key value pair into storage.
 	 * @param {Object} params
 	 * @param {String} params.topic Storage topic for key being stored.
-	 * @param {String} params.key The key to be stored.
+	 * @param {String} params.key The key for the value to be stored under.
 	 * @param {any} params.value The value to be stored.
 	 * @param {function} cb Callback to be called on success.
 	 *
@@ -82,6 +86,7 @@ export class StorageClient extends _BaseClient {
 	 * FSBL.Clients.StorageClient.save({topic:"finsemble", key:"testKey", value:"testValue"})
 	 */
 	save(params: componentMutateParams, cb?: StandardCallback) {
+		this.clientReady || Logger.system.error("storageClient invoked before ready");
 		if (typeof params.key !== "string" || typeof params.topic !== "string") {
 			throw new Error("Values for key and topic must be strings.");
 		}
@@ -125,7 +130,9 @@ export class StorageClient extends _BaseClient {
 	 *	var myData = data;
 	 * });
 	 */
+
 	get<T = any>(params: { key: string, topic: string }, cb?: StandardCallback<string | Error, T>): Promise<T> {
+		this.clientReady || Logger.system.error("storageClient invoked before ready");
 		if (typeof params.key !== "string" || typeof params.topic !== "string") {
 			throw new Error("Values for key and topic must be strings.");
 		}
@@ -195,6 +202,7 @@ export class StorageClient extends _BaseClient {
 	 * });
 	 */
 	keys(params: { topic: string, keyPrefix?: string }, cb?: StandardCallback) {
+		this.clientReady || Logger.system.error("storageClient invoked before ready");
 		Validate.args(params.topic, "string", cb, "function=");
 		Logger.system.debug("StorageClient.keys", params, cb);
 		this.routerClient.query("Storage.keys", params, function (err, response) {
@@ -225,6 +233,7 @@ export class StorageClient extends _BaseClient {
 	 * StorageClient.get({key:"testKey"});
 	 */
 	getMultiple(params, cb?: StandardCallback) {
+		this.clientReady || Logger.system.error("storageClient invoked before ready");
 		Logger.system.info("StorageClient.getMultiple", params, cb);
 		this.routerClient.query("Storage.getMultiple", params, function (err, response) {
 			const logMethod = err ? Logger.system.error : Logger.system.info;
@@ -243,6 +252,7 @@ export class StorageClient extends _BaseClient {
 	 * FSBL.Clients.StorageClient.remove({ key:"testKey" })
 	 */
 	remove(params: { key: string, topic: string }, cb?: StandardCallback) {
+		this.clientReady || Logger.system.error("storageClient invoked before ready");
 		const promiseResolver = (resolve, reject) => {
 			Validate.args(params.topic, "string", params.key, "string", cb, "function=");
 			this.routerClient.query("Storage.delete", params, function (err, response) {
@@ -291,13 +301,11 @@ export class StorageClient extends _BaseClient {
 };
 
 var storageClient = new StorageClient({
-	startupDependencies: {
-		services: ["storageService"]
-	},
 	onReady: function (cb: () => void) {
 		if (cb) {
 			cb();
 		}
+		storageClient.clientReady = true;
 	},
 	name: "storageClient"
 });

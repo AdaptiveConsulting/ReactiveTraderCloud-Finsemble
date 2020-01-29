@@ -3,7 +3,8 @@ import merge = require("deepmerge");
 import { WindowDescriptor } from "./types";
 import Logger from "../../../clients/logger";
 
-export default {	/**
+export default {
+   /**
 	* If the component has a security policy specified, we check to see that it exists.
 	* If it does, we return that.
 	* If not, we return the default security policy based on whether it's same or cross domain.
@@ -20,8 +21,9 @@ export default {	/**
 
 		// If we make it down here, either the component doesn't have a security policy or
 		// the policy that the component wants to use is not part of our config.
-		// Below, we decide which policy we should apply for the component.
-		const isCrossDomain = util.crossDomain(descriptor.url);
+		// Below, we decide which policy we should apply for the component. If there is no URL
+        // set on the component, we will treat it like a crossDomain component security-wise.
+        const isCrossDomain = descriptor.url ? util.crossDomain(descriptor.url) : true;
 		let policy = finsembleConfig.securityPolicyRules.sameDomain;
 		if (isCrossDomain) {
 			policy = finsembleConfig.securityPolicyRules.crossDomain;

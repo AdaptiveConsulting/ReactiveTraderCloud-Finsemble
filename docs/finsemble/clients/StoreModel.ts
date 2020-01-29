@@ -167,6 +167,7 @@ class StoreModel extends _BaseClient {
 
 	/**
 	 * Get a value from the store. If global is not set, we'll check local first then we'll check global. Returns the value of the field. If no callback is given and the value is local, this will run synchronously.
+	 * @param {object|string} params The field where the value is stored.
 	 * @param {String} params.field The field where the value is stored.
 	 * @param {StandardCallback} cb Will return the value if found.
 	 * @returns {any} The value of the field. If no callback is given and the value is local, this will run synchronous

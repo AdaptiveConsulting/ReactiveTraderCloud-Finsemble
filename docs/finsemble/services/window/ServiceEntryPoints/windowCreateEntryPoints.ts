@@ -6,6 +6,7 @@ export class WindowCreateEntry {
 	finsembleConfig: any;
 	manifest: any;
 	launcher: Launcher;
+	moduleReady: boolean = false;
 
 	constructor(manifest, launcher) {
 		this.manifest = manifest;
@@ -17,6 +18,10 @@ export class WindowCreateEntry {
 
 	initialize(done) {
 		done();
+	}
+
+	setReady() {
+		this.moduleReady = true;
 	}
 
 	windowServiceChannelName(channelTopic) { return `WindowService-Request-${channelTopic}`; }
@@ -47,6 +52,7 @@ export class WindowCreateEntry {
 
 	// probably only a temporary routine -- currently supports public wrapper
 	async getWindowIdentifier(queryError, queryMessage) {
+		this.moduleReady || Logger.system.error("windowService window creation invoked before ready", queryMessage);
 		Logger.system.debug(`WindowService-Request-getWindowIdentifier for ${queryMessage.data.windowName}`, queryMessage.data);
 		this.launcher.createSplinterAndInject.getWindowIdentifier(queryMessage.data, (err, data) => {
 			queryMessage.sendQueryResponse(err, data);
@@ -55,8 +61,8 @@ export class WindowCreateEntry {
 
 	// may replace with preload
 	async injectTitleBar(queryError, queryMessage) {
+		this.moduleReady || Logger.system.error("windowService window creation invoked before ready", queryMessage);
 		Logger.system.debug(`"WindowService-Request-injectTitleBar for ${queryMessage.data.config.name}`, queryMessage.data);
-
 		this.launcher.createSplinterAndInject.injectTitleBar(queryMessage.data, (err, data) => {
 			queryMessage.sendQueryResponse(err, data);
 		});

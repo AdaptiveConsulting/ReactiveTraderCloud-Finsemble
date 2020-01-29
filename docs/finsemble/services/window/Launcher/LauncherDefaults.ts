@@ -1,6 +1,6 @@
 export default function LauncherDefaults() {
 	// We must provide a clean slate of properties otherwise new windows will spawn with the same
-	// properties as the main window (from the openfin manifest). Here we set reasonable defaults
+	// properties as the main window (from the manifest). Here we set reasonable defaults
 	// for every window. We allow some properties to carry through from the manifest (such as cornerRounding).
 	//
 	// A developer can then override any of *these* values by specifying an "options" entry in the component

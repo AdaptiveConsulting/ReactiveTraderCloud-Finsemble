@@ -1,0 +1,75 @@
+{
+	"devtools_port": 9090,
+	"startup_app": {
+		"name": "Reactive Trader Finsemble Production",
+		"url": "https://adaptiveconsulting.github.io/rtc-finsemble/finsemble/components/system/serviceManager/serviceManager.html",
+		"uuid": "Finsemble-Prod",
+		"applicationIcon": "https://adaptiveconsulting.github.io/rtc-finsemble/assets/img/adaptive-logo@2x.png",
+		"defaultTop": 0,
+		"defaultLeft": 0,
+		"showTaskbarIcon": true,
+		"autoShow": false,
+		"frame": false,
+		"resizable": false,
+		"maximizable": false,
+		"delay_connection": true,
+		"contextMenu": true,
+		"cornerRounding": {
+			"width": 4,
+			"height": 4
+		},
+		"alwaysOnTop": false
+	},
+	"splashScreenImage": "https://adaptiveconsulting.github.io/rtc-finsemble/assets/img/splash-screen.jpg",
+	"runtime": {
+		"arguments": "--noerrdialogs  --v=4 --no-sandbox  --framestrategy=frames --winhttp-proxy-resolver",
+		"version": "9.61.36.36",
+		"//": "Add these arguments when diagnosing issues",
+		"--enable-crash-reporting": "Adding this flag will enable crash reporting to openfin, which has caused memory leaks in some versions.",
+		"--diagnostics": "Adding this to the runtimeArguments activates verbose logging and crash reporting.",
+		"--disable-gpu": "This flag disables hardware acceleration. Try this if 'Blank Screen' issues are reported (sometimes on virtual desktops)",
+		"--winhttp-proxy-resolver": "Chromium v56 contains a bug that in some environments can create a memory leak. The bug is related to the way Chromium handles PAC files."
+	},
+	"shortcut": {
+		"company": "Adaptive",
+		"description": "Reactice Trader Finsemble Production",
+		"icon": "https://adaptiveconsulting.github.io/rtc-finsemble/assets/img/favicon.ico",
+		"name": "Adaptive - PPROD",
+		"target": ["desktop", "start-menu"],
+		"force": false,
+		"startMenuRootFolder": "Reactice Trader Finsemble Production"
+	},
+	"dialogSettings": {
+		"logo": "https://adaptiveconsulting.github.io/rtc-finsemble/assets/img/ciq-banner-100x25.png",
+		"bgColor": 4280109424,
+		"textColor": 4293521652,
+		"progressBarBgColor": 4294967295,
+		"progressBarFillColor": 4282684881,
+		"progressBarBorderColor": 4293521652
+	},
+	"supportInformation": {
+		"company": "Adaptive",
+		"product": "Reactice Trader Finsemble Production",
+		"email": "support@weareadaptive.com"
+	},
+	"fileName": "ReacticeTraderFinsemble-Prod",
+	"appAssets": [
+		{
+			"src": "https://files.chartiq.com/finsemble/Assimilation_3_7_0_pre1.zip",
+			"version": "3.7.0-pre1",
+			"alias": "assimilation",
+			"target": "AssimilationMain.exe"
+		}
+	],
+	"finsemble": {
+		"applicationRoot": "https://adaptiveconsulting.github.io/rtc-finsemble",
+		"moduleRoot": "$applicationRoot/finsemble",
+		"servicesRoot": "$applicationRoot/finsemble/services",
+		"componentRoot": "https://web-demo.adaptivecluster.com",
+		"notificationURL": "$applicationRoot/components/notification/notification.html",
+		"importConfig": ["$applicationRoot/configs/application/config.json"],
+		"IAC": {
+			"serverAddress": "ws://127.0.0.1:3376"
+		}
+	}
+}

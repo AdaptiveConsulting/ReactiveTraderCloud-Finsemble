@@ -1,7 +1,9 @@
 import { EventEmitter } from "events";
 import RouterClient from "../clients/routerClientInstance";
 const STARTUP_TIMEOUT_DURATION = 10000;
-import { APPLICATION_STATE_CHANNEL, SERVICES_STATE_CHANNEL, SERVICE_CLOSED_CHANNEL } from "./constants";
+import { APPLICATION_STATE_CHANNEL, SERVICES_STATE_CHANNEL, SERVICE_CLOSED_CHANNEL, SERVICE_QUERY_READY_CHANNEL, CLIENT_SERVER_MAPPING } from "./constants";
+import SystemManagerClient from "./systemManagerClient";
+import Logger from "../clients/logger";
 
 type StartupDependencyParams = {
 	callback: Function;
@@ -72,9 +74,7 @@ class StartupManager {
 	 */
 	constructor() {
 		this.onlineClients = [];
-		this.onlineServices = [];
 		this.dependencies = {};
-		this.AuthorizationCompleted = false;
 		this.startupTimers = {};
 		this.startupTimerFired = false;
 		this.bindCorrectContext();
@@ -90,14 +90,10 @@ class StartupManager {
 		let id = uuidv4();
 
 		//Set defaults to an empty array if they aren't passed in.
-		if (!dependencies.services) dependencies.services = [];
 		if (!dependencies.clients) dependencies.clients = [];
 		//The dependency manager can pass in a name to the dependency. If it does, we'll use it. If not, we won't.
 
 		if (dependencies.clients.length) {
-			if (this.AuthorizationCompleted === false && dependencies.clients.includes("authenticationClient")) {
-				dependencies.clients.splice(dependencies.clients.indexOf("authenticationClient"), 1);
-			}
 			//Lowercase the first letter of the client.
 			dependencies.clients = dependencies.clients.map(clientName => {
 				return clientName.charAt(0).toLowerCase() + clientName.slice(1);
@@ -127,44 +123,14 @@ class StartupManager {
 			BULLET_POINT = NEW_LINE + TAB + BULLET,
 			STORAGE_ADAPTER_ERROR = "The default storage adapter failed to fully initialize, or has a syntax error. Ensure that the default storage adapter is up, connected, and sending/receiving data properly.";
 
-		const HELPFUL_MESSAGES = {
-			preferencesService: [
-				`PreferencesService failed to start.${BULLET_POINT}Typically this is caused by a failure to retrieve data from your default storage adapter. ${STORAGE_ADAPTER_ERROR}`],
-			storageService: [
-				`StorageService failed to start. Here are some common reasons for failure:${BULLET_POINT}${STORAGE_ADAPTER_ERROR}${BULLET_POINT}The data coming back from your adapter is improperly formatted or otherwise corrupted. Try clearing your storage and restarting. If the problem persists, the issue may not be in your adapter.`
-			],
-			routerService: [
-				"RouterService failed to start. This is a fatal error. Contact finsemble support."
-			],
-			workspaceService: [
-				`WorkspaceService failed to start. Here are some common reasons for failure:${BULLET_POINT}${STORAGE_ADAPTER_ERROR}.${BULLET_POINT}Your active workspace is corrupted.`
-			],
-			assimilationService: [
-				"AssimilationService failed to start. Check to see that the 'FinsembleAssimilation' is active in your taskManager. If it is, please contact finsemble support."
-			]
-		};
 
 		let offlineClients = this.getOfflineClients();
-		let offlineServices = this.getOfflineServices();
 		let errorMessage = `APPLICATION LIFECYCLE:STARTUP:Dependency not online after ${STARTUP_TIMEOUT_DURATION / 1000} seconds.`;
 
 		if (offlineClients.length) {
 			errorMessage += ` Waiting for these clients: ${offlineClients.join(", ")}.`;
 		}
-		if (offlineServices.length) {
-			errorMessage += ` Waiting for these services: ${offlineServices.join(", ")}.`;
-		}
 
-		//For every service that's offline, check to see if we have any helpful messages for it. If so, iterate through the array and append to the error message.
-		offlineServices.forEach((service) => {
-			if (HELPFUL_MESSAGES[service]) {
-				HELPFUL_MESSAGES[service].forEach((msg) => {
-					errorMessage += NEW_LINE + NEW_LINE + msg + NEW_LINE;
-				});
-				//puts a line between our helpful messages and the log stack.
-				errorMessage += NEW_LINE;
-			}
-		});
 
 		//The BaseService is listening for this event, and will log the errorMessage to the central logger.
 		dependency.emit("err", errorMessage);
@@ -178,12 +144,6 @@ class StartupManager {
 		for (let id in this.dependencies) {
 			let dependency = this.dependencies[id];
 			let { dependencies, callback } = dependency;
-			if (dependencies.services.length && !this.servicesAreAllOnline[id]) {
-				this.servicesAreAllOnline[id] = this.checkServices(dependencies.services);
-				if (!this.servicesAreAllOnline[id]) {
-					continue;
-				}
-			}
 
 			if (dependencies.clients.length && !this.clientsAreAllOnline[id]) {
 				this.clientsAreAllOnline[id] = this.checkClients(dependencies.clients);
@@ -209,23 +169,6 @@ class StartupManager {
 		return offlineClients.filter((client, i) => offlineClients.indexOf(client) === i);
 	}
 
-	getOfflineServices() {
-		let offlineServices = [];
-		for (let id in this.dependencies) {
-			let { dependencies } = this.dependencies[id];
-			offlineServices = offlineServices.concat(dependencies.services.filter((dep) => !this.onlineServices.includes(dep)));
-		}
-		return offlineServices.filter((client, i) => offlineServices.indexOf(client) === i);
-	}
-	/**
-	 * Iterates through required service list, returns false if any required service is offline.
-	 *
-	 * @param {any} serviceList
-	 * @memberof StartupManager
-	 */
-	checkServices(serviceList) {
-		return serviceList.every(service => this.onlineServices.includes(service));
-	}
 	/**
 	 * Iterates through required client list, returns false if any required client is offline.
 	 *
@@ -237,26 +180,6 @@ class StartupManager {
 		return clientList.every(client => this.onlineClients.includes(client));
 	}
 
-	/**
-	 * When a service comes online, we push it onto our array of online services, and run through all of the registered dependencies.
-	 *
-	 * @param {any} serviceName
-	 * @memberof StartupManager
-	 */
-	setServiceOnline(serviceName) {
-		this.onlineServices.push(serviceName);
-		this.checkDependencies();
-	}
-	/**
-	 * Sets an array of services online. Only happens once at startup.
-	 *
-	 * @param {any} serviceList
-	 * @memberof StartupManager
-	 */
-	setServicesOnline(serviceList) {
-		this.onlineServices = this.onlineServices.concat(serviceList);
-		this.checkDependencies();
-	}
 	/**
 	 *
 	 *
@@ -271,6 +194,29 @@ class StartupManager {
 		}
 		this.onlineClients.push(clientName);
 		this.checkDependencies();
+
+		// Note From Mike: Must change or workaround how some client usage triggers this code even though the client's service is NOT ready.
+		// This problem happens because some services initialize their clients when the client's service hasn't been created yet, but then don't use the client until later.
+		// So although the general code is correct here, the overall result is not (specifically the queries will timeout causing delays, error logging, and potential side effects).
+		// Therefore disabling this handshake code for now -- BUT KEEP CODE COMMENTED-OUT CODE UNTIL THIS IS RESOLVED. Just to be clear, nothing breaks without this code, but this
+		// code is what generates an error when improperly using a client...so it provides a needed check.
+		// let serviceName = CLIENT_SERVER_MAPPING(clientName);
+		// if (true /*disabling*/ && serviceName) {
+		// 	console.debug("SERVICE_QUERY_READY_CHANNEL querying", clientName, SERVICE_QUERY_READY_CHANNEL(serviceName));
+		// 	// before going online make sure this client's service is ready -- it should be until there is a startup problem
+		// 	RouterClient.query(SERVICE_QUERY_READY_CHANNEL(serviceName), {}, { timeout: 500 }, (err) => {
+		// 		if (err) {
+		// 			Logger.system.error(`DependencyManager: server ${serviceName} is not ready for client ${clientName}. ${err}. Make sure dependencies client dependencies are correct.`)
+		// 		} else {
+		// 			Logger.system.debug(`DependencyManager: server ${serviceName} is ready for client ${clientName} `)
+		// 		}
+		// 		this.onlineClients.push(clientName);
+		// 		this.checkDependencies();
+		// 	});
+		// } else {
+		// 	this.onlineClients.push(clientName);
+		// 	this.checkDependencies();
+		// }
 	}
 	/**
 	 * Returns the array of online clients.
@@ -282,25 +228,14 @@ class StartupManager {
 		return this.onlineClients;
 	}
 	/**
-	 * Returns the array of online services.
-	 *
-
-	 * @memberof StartupManager
-	 */
-	getOnlineServices() {
-		return this.onlineServices;
-	}
-	/**
 	 * Method to make sure that `this` is correct when the callbacks are invoked.
 	 *
 	 * @memberof StartupManager
 	 */
 	bindCorrectContext() {
 		this.checkDependencies = this.checkDependencies.bind(this);
-		this.checkServices = this.checkServices.bind(this);
 		this.checkClients = this.checkClients.bind(this);
 		this.getOfflineClients = this.getOfflineClients.bind(this);
-		this.getOfflineServices = this.getOfflineServices.bind(this);
 		this.onDependencyTimeout = this.onDependencyTimeout.bind(this);
 		this.waitFor = this.waitFor.bind(this);
 	}
@@ -328,6 +263,8 @@ class ShutdownManager {
 	 * @memberof StartupManager
 	 */
 	waitFor(dependencies, callback) {
+		Logger.system.debug(`DependencyManager:waitFor`, dependencies);
+
 		//Set defaults to an empty array if they aren't passed in.
 		if (!dependencies.services) {
 			dependencies.services = [];
@@ -347,7 +284,8 @@ class ShutdownManager {
 		if (Object.keys(this.dependencies)) {
 			for (let id in this.dependencies) {
 				let { dependencies, callback } = this.dependencies[id];
-				console.debug("checkDependency", dependencies.services, this.offlineServices);
+				Logger.system.debug(`DependencyManager:checkDependency`, dependencies.services, this.offlineServices);
+
 				if (dependencies.services.length) {
 					let servicesAreAllOffline = this.checkServices(dependencies.services);
 					if (!servicesAreAllOffline) {
@@ -368,26 +306,33 @@ class ShutdownManager {
 	 *
 	 * @param {any} serviceList
 
-	 * @memberof StartupManager
+	 * @memberof ShutdownManager
 	 */
 	checkServices(serviceList) {
 		return serviceList.every(service => this.offlineServices.includes(service));
 	}
 
 	setServiceOffline(service) {
+		Logger.system.debug("setServiceOffline", service);
 		console.debug("setServiceOffline", service);
 		this.offlineServices.push(service);
 		this.checkDependencies();
 	}
 
 }
+
+
 /**
- * This is a class that handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
+ * This class handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready.
+ *
+ * The constructor is exported for the system mananger's shutDownManager so that class isn't constructed until right time in the starup process.
+ * Otherwise, this class is used as a singleton thoughout the rest of the system.
+ *
  * @shouldBePublished false
  * @private
  * @class FSBLDependencyManager
  */
-class FSBLDependencyManager extends EventEmitter {
+export class FSBLDependencyManager extends EventEmitter {
 	/**
 	 * Binds context, and listens for services to come online.
 	 * Creates an instance of FSBLDependencyManager.
@@ -430,13 +375,7 @@ class FSBLDependencyManager extends EventEmitter {
 		//Iterate through all services. If it was online but isn't anymore, set it offline. If it was offline but now is, set it online.
 		ServiceNames.forEach((serviceName: string) => {
 			let state: ServiceState = data[serviceName].state;
-			let wasOnline: boolean = this.startup.onlineServices.includes(serviceName);
-			let isOnline: boolean = state === "ready";
-
-			if (!wasOnline && isOnline) {
-				this.startup.setServiceOnline(serviceName);
-			}
-			if (wasOnline && !isOnline && state === "closed") {
+			if (state === "closed") {
 				this.shutdown.setServiceOffline(serviceName);
 			}
 		});
@@ -446,37 +385,38 @@ class FSBLDependencyManager extends EventEmitter {
 	 *
 	 */
 	listenForServices() {
-		console.debug("dependency manager: listenForServices in " + this.name);
+		Logger.system.debug(`DependencyManager:listenForServices before wait`);
+		var listenForServicesCallback;
 
-		this.RouterClient.subscribe(SERVICES_STATE_CHANNEL, (err, event) => {
-			this.onServiceStateChange(event.data);
-		});
+		// wait until the essential parts of the microkernel stage is done so pubsub responders are available
+		SystemManagerClient.waitForBootStage("kernel", "stageEntered", listenForServicesCallback = () => {
+			Logger.system.debug(`DependencyManager:listenForServices after wait`);
+			this.RouterClient.subscribe(SERVICES_STATE_CHANNEL, (err, event) => {
+				Logger.system.debug(`DependencyManager:listenForServices SERVICES_STATE_CHANNEL`, event.data);
+				this.onServiceStateChange(event.data);
+			});
 
-		// TODO: The pubsub responder doesn't seem to work here. IT works for the above when not closing.
-		this.RouterClient.addListener(SERVICE_CLOSED_CHANNEL, (err, event) => {
-			let services = {};
-			services[event.data.name] = {
-				state: "closed"
-			}
-			this.onServiceStateChange(services);
-		});
+			// TODO: The pubsub responder doesnt seem to work here. IT works for the above when not closing.
+			this.RouterClient.addListener(SERVICE_CLOSED_CHANNEL, (err, event) => {
+				Logger.system.debug(`DependencyManager:listenForServices SERVICE_CLOSED_CHANNEL`, event.data);
+				let services = {};
+				services[event.data.name] = {
+					state: "closed"
+				}
+				this.onServiceStateChange(services);
+			});
 
-		this.RouterClient.subscribe(APPLICATION_STATE_CHANNEL, (err, response: ApplicationStateChange) => {
-			switch (response.data.state) {
-				//authenticated will only be caught by components/services that are up before auth does its thing. Otherwise, a component/service coming up will have the 'ready' application state. In either case, we need to do the things below. But only once.
-				case "authenticated":
-				case "ready":
-					//No need to send this message out twice.
-					if (this.AuthorizationCompleted) break;
-					console.debug("Authorization Completed");
-					this.AuthorizationCompleted = true;
-					this.startup.AuthorizationCompleted = true;
-					this.emit("AuthorizationCompleted");
-					break;
-				case "closing":
-					this.shutdown.checkDependencies();
-					break;
-			}
+			this.RouterClient.subscribe(APPLICATION_STATE_CHANNEL, (err, response: ApplicationStateChange) => {
+				switch (response.data.state) {
+					//authenticated will only be caught by components/services that are up before auth does its thing. Otherwise, a component/service coming up will have the 'ready' application state. In either case, we need to do the things below. But only once.
+					case "authenticated":
+					case "ready":
+						break;
+					case "closing":
+						this.shutdown.checkDependencies();
+						break;
+				}
+			});
 		});
 	}
 
@@ -490,7 +430,7 @@ class FSBLDependencyManager extends EventEmitter {
 
 }
 /**
- * This is a class that handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
+ * This class handles FSBL client/service dependency management. Given a list of services and/or clients, it will invoke a callback when all dependencies are ready. This is a singleton.
  * @shouldBePublished false
  * @private
  * @class FSBLDependencyManager

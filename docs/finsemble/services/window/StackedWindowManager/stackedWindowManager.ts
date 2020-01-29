@@ -294,7 +294,8 @@ class StackedWindowManager implements StackedWindowManagement {
 		this.setupInterfaceListener("show", this.show);
 		this.setupInterfaceListener("close", this.close);
 		this.setupInterfaceListener("reorder", this.reorder);
-		this.setupInterfaceListener("alwaysOnTop", this.alwaysOnTop);
+		this.setupInterfaceListener("alwaysOnTop", this.setAlwaysOnTop);
+
 		// this.setupInterfaceListener("setOpacity", this.setOpacity);
 		RouterClient.addResponder("StackedWindow.setOpacity", (err, queryMessage) => {
 			if (err) {
@@ -319,17 +320,32 @@ class StackedWindowManager implements StackedWindowManagement {
 
 	async visibleChildEventHandler(stackedWindowName, stackWrap, eventObject) {
 		let event = eventObject.data;
-		if (event.eventName === "bounds-change-end") {
-			await this.saveStore({
-				windowName: stackedWindowName,
-				name: stackedWindowName,
-				windowType: "StackedWindow"
-			}, { closing: false });
+		const stackedWindowIdentifier = {
+			windowName: stackedWindowName,
+			name: stackedWindowName,
+			windowType: "StackedWindow"
+		}
+		switch (event.eventName) {
+			case "bounds-change-end":
+				await this.saveStore(stackedWindowIdentifier, { closing: false });
+				stackWrap.eventManager.trigger(event.eventName, event);
+				Logger.system.verbose("StackedWindowManager transmitting event", event.eventName, this.eventChannelName(stackedWindowName, event.eventName), event);
+				break;
+			case "alwaysOnTop":
+				await this.setAlwaysOnTop({
+					stackedWindowIdentifier,
+					alwaysOnTop: event.alwaysOnTop
+				});
+				break;
+			default:
+				stackWrap.eventManager.trigger(event.eventName, event);
+				Logger.system.verbose("StackedWindowManager transmitting event", event.eventName, this.eventChannelName(stackedWindowName, event.eventName), event);
+				break;
 		}
 
-		Logger.system.verbose("StackedWindowManager transmitting event", event.eventName, this.eventChannelName(stackedWindowName, event.eventName), event);
 
-		stackWrap.eventManager.trigger(event.eventName, event);
+
+
 	};
 
 
@@ -565,8 +581,10 @@ class StackedWindowManager implements StackedWindowManagement {
 						this.childNameToSID[windowIdentifier.windowName] = stackedWindowIdentifier; // add mapping to parent stackedWindowIdentifier
 						FinsembleWindowInternal.getInstance(windowIdentifier, async (err, wrappedWindow) => {
 							//@todo failure point - no wrap callback.
-
 							this.childWindow[windowIdentifier.windowName] = wrappedWindow; // save the wrapper for quick use
+
+							// save alwaysOnTop state so that when the window leaves the stack, its original alwaysOnTop state is restored
+							if (typeof windowIdentifier.alwaysOnTop !== "boolean") windowIdentifier.alwaysOnTop = wrappedWindow._isAlwaysOnTop();
 
 							// if stacked window doesn't have a visible window, then make this window being added the visible window
 							if (!thisStackRecord.visibleWindowIdentifier) {
@@ -592,7 +610,6 @@ class StackedWindowManager implements StackedWindowManagement {
 									wrappedWindow._setBounds({ bounds: thisStackRecord.bounds, invokedByParent: true });
 								});
 							}
-
 
 							if (!params.noRemove) { // if higher level (e.g. presentation components) isn't handling the previous state of the window
 								// handling the previous state of the window being added
@@ -630,6 +647,10 @@ class StackedWindowManager implements StackedWindowManagement {
 							//Publish Exists event right after the Added event because windows use this event type to track parent state.
 							RouterClient.publish(`Finsemble.parentChange.${windowIdentifier.windowName}`, { type: "Exists", stackedWindowIdentifier });
 
+							await this.makeStackAlwaysOnTopIfNeeded({
+								stackedWindowIdentifier
+							})
+
 							callback(err);
 							err ? reject(err) : resolve();
 
@@ -643,6 +664,20 @@ class StackedWindowManager implements StackedWindowManagement {
 			}); // subscription handle
 		}
 		return new Promise(promiseResolver);
+	}
+
+	/**
+	 * This will make a stack always on top if any child is always on top.
+	 */
+	async makeStackAlwaysOnTopIfNeeded(params) {
+		const thisStackRecord = this.storeCache[params.stackedWindowIdentifier.windowName];
+		const alwaysOnTop = thisStackRecord.childWindowIdentifiers.some(({ windowName }) => this.childWindow[windowName]._isAlwaysOnTop());
+		if (alwaysOnTop) {
+			await this.setAlwaysOnTop({
+				stackedWindowIdentifier: params.stackedWindowIdentifier,
+				alwaysOnTop
+			})
+		}
 	}
 
 	triggerEvent(params, cb) {
@@ -761,8 +796,18 @@ class StackedWindowManager implements StackedWindowManagement {
 			var err = null;
 
 			if (thisStackRecord) {
-				thisStackRecord.childWindowIdentifiers = thisStackRecord.childWindowIdentifiers.filter(item => item.windowName !== windowIdentifier.windowName); // remove child window
 				let childWrapper = this.childWindow[windowIdentifier.windowName];
+
+				// remove child window
+				for (let i = 0; i < thisStackRecord.childWindowIdentifiers.length; i++) {
+					const item = thisStackRecord.childWindowIdentifiers[i];
+					if (item.windowName === windowIdentifier.windowName) {
+						childWrapper._alwaysOnTop({ alwaysOnTop: item.alwaysOnTop });
+						thisStackRecord.childWindowIdentifiers.splice(i, 1);
+						break;
+					}
+				}
+
 				childWrapper.clearParent(); // remove parent setting from child being remove
 				delete this.childNameToSID[windowIdentifier.windowName]; // remove child's mapping to parent stackedWindowIdentifier
 
@@ -874,7 +919,7 @@ class StackedWindowManager implements StackedWindowManagement {
 					 * If the close event is sent from the system (i.e. user is closing a stacked window from the taskbar), tell the wrapper to not show the error
 					 * when attempting to close that window (because the window is already closed from the system).
 					 * For now we're still calling this function even if it's a system close because we need some way to close a slacked window from the
-					 * taskbar. We can also change the event name we pass into "this.setupSystemListener" in case of a system close in the openfinWindowWrapper file from
+					 * taskbar. We can also change the event name we pass into "this.setupSystemListener" in case of a system close in the WebWindowWrapper file from
 					 * 'closed' to 'system-closed' so we don't have to close twice. But we decided it's a big change and we should go with a less risky approach in this bug fixing PR.
 					 */
 					suppressError: params.fromSystem,
@@ -1211,12 +1256,12 @@ class StackedWindowManager implements StackedWindowManagement {
 	}
 
 	// stacked window getBoundsFromSystem (invoked remotely through stacked window wrapper)
-	getBoundsFromSystem(params, callback = Function.prototype) {		
+	getBoundsFromSystem(params, callback = Function.prototype) {
 		Logger.system.debug("StackedWindowManager.getBoundsFromSystem", params);
 		const thisStackRecord = this.storeCache[params.stackedWindowIdentifier.windowName];
 		// if operating on StackedWindow then operation should apply to the visible window
 		if (this.operatingDirectlyOnStackedWindow(params)) {
-			
+
 			if (thisStackRecord) {
 				params.windowIdentifier = thisStackRecord.visibleWindowIdentifier;
 			} else {
@@ -1385,31 +1430,40 @@ class StackedWindowManager implements StackedWindowManagement {
 		}
 	}
 
-	// stacked window alwaysOnTop (invoked remotely through stacked window wrapper)
-	alwaysOnTop(params, callback) {
-		Logger.system.debug("StackedWindowManager.alwaysOnTop", params);
+	/**
+	 * set Stack to be always on top. Makes all children of the stack always on top and triggers the alwaysOnTop event for the stack
+	 */
+	setAlwaysOnTop(params, callback = Function.prototype) {
+		const setAlwaysOnTopPromiseResolver = (resolve) => {
+			Logger.system.debug("StackedWindowManager.setAlwaysOnTop", params);
 
-		// if operating on StackedWindow then operation should apply to the visible window
-		if (this.operatingDirectlyOnStackedWindow(params)) {
-			var thisStackRecord = this.storeCache[params.stackedWindowIdentifier.windowName];
-			if (thisStackRecord) {
-				params.windowIdentifier = thisStackRecord.visibleWindowIdentifier;
-			} else {
-				Logger.system.warn("ignoring command because StackedWindow undefined (probably okay due to its recent close)", params);
-				return callback("undefined window");
+			// if operating on StackedWindow then operation should apply to the visible window
+			if (this.operatingDirectlyOnStackedWindow(params)) {
+				var thisStackRecord = this.storeCache[params.stackedWindowIdentifier.windowName];
+				if (!thisStackRecord) {
+					Logger.system.warn("ignoring command because StackedWindow undefined (probably okay due to its recent close)", params);
+					resolve();
+					return callback("undefined window");
+				}
 			}
-		}
 
-		if (this.isShowing(params)) {
-			var visibleWindow = this.childWindow[params.windowIdentifier.windowName];
 			params.invokedByParent = true; // prevents wrapper function from recalling parent (causing a loop)
-			if (visibleWindow._alwaysOnTop) {
-				visibleWindow._alwaysOnTop(params); // invoke function on active window's wrapper
+			for (const childWindowIdentifier of thisStackRecord.childWindowIdentifiers) {
+				const childWindow = this.childWindow[childWindowIdentifier.windowName];
+				childWindow._alwaysOnTop(params);
 			}
-		} else {
-			Logger.system.error(`StackedWindowManager Warning: alwaysOnTop received for hidden window ${params.windowIdentifier.windowName}`);
+
+			FinsembleWindowInternal.getInstance({ name: thisStackRecord.name }, (err, stackedWindow) => {
+				if (stackedWindow.alwaysOnTop !== params.alwaysOnTop) {
+					stackedWindow.alwaysOnTop = params.alwaysOnTop
+					stackedWindow.eventManager.trigger("alwaysOnTop", { alwaysOnTop: params.alwaysOnTop });
+					Logger.system.verbose("StackedWindowManager transmitting event", "alwaysOnTop", this.eventChannelName(thisStackRecord.name, "alwaysOnTop"), event);
+				}
+				callback(null);
+				resolve();
+			});
 		}
-		callback(null);
+		return new Promise(setAlwaysOnTopPromiseResolver);
 	}
 
 	// stacked window setOpacity (invoked remotely through stacked window wrapper)

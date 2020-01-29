@@ -32,12 +32,12 @@ type removeListenersType = listenerParam | listenerParam[];
 import Validate from "../common/validate"; // Finsemble args validator
 import { _BaseClient as BaseClient } from "./baseClient";
 import { map as asyncMap } from "async";
-
+import SystemManagerClient from "../common/systemManagerClient";
 import Logger from "./logger";
 
 /**
  * @introduction
- * <h2>Config Client</h2>
+ * <h2>Config Client (Finsemble Connect)</h2>
  *
  * This client provides run-time access to Finsemble's configuration.
  * The Config Client functions similar to a global store created with the Distributed Store Client and offers many of the same methods.
@@ -250,13 +250,14 @@ class ConfigClient extends BaseClient {
 	};
 
 	/**
+	 * Add an array of listeners as objects or strings. If using strings, you must provide a function callback as the second parameter.
 	 *
-	* Add an array of listeners as objects or strings. If using strings, you must provide a function callback as the second parameter.
-	* @param {function} fn The function to be called when the observed piece of config is modified.
-	* @param {function} cb Callback to be invoked after the listeners are added.
-	* @example
-	* var myFunction = function(err,data){}
-  * FSBL.Clients.ConfigClient.addListeners(
+	 * @param {listenerParam | listenerParam[] | fieldOnlyParam | string[]} params
+	 * @param {function} fn The function to be called when the observed piece of config is modified.
+	 * @param {function} cb Callback to be invoked after the listeners are added.
+	 * @example
+	 * var myFunction = function(err,data){}
+	* FSBL.Clients.ConfigClient.addListeners(
 	* 	[
 	* 		{ field: "field1", listener: myFunction },
 	* 		{ field: "field2", listener: myFunction }
@@ -273,7 +274,7 @@ class ConfigClient extends BaseClient {
 	*
 	* FSBL.Clients.ConfigClient.addListeners(["field1", "field2"], myFunction, cb);
 	*/
-	addListeners(params: listenerParam | listenerParam[], fn?: Function, cb?: Function) {
+	addListeners(params: listenerParam | listenerParam[] | fieldOnlyParam | string[], fn?: Function, cb?: Function) {
 		if (!Array.isArray(params)) {
 			return this.addListener({ field: params.field }, fn, cb);
 		}
@@ -286,7 +287,7 @@ class ConfigClient extends BaseClient {
 				field = item;
 			} else if (item.field) {
 				field = item.field;
-				ls = params[i].listener;
+				ls = item.listener;
 			}
 
 			var combined = "configService" + (field ? "." + field : "");
@@ -601,19 +602,19 @@ class ConfigClient extends BaseClient {
 
 	/**
 	 * Retrieves all of the preferences set for the application.
-	 * @param {Object} params Parameters to pass to getPreferences. Optional. Defaults to null and currently ignored.
 	 * @param {StandardCallback} callback Callback to be invoked when preferences have been retrieved from the service.
 	 * @example
 	 * FSBL.Clients.ConfigClient.getPreferences((err, preferences)=> {
 	 * 		//use preferences.
 	 * });
 	 */
-	getPreferences(params?: any, callback?: StandardCallback) {
-		if (typeof params === "function") {
-			callback = params;
-			params = null;
-		}
-		this.routerClient.query("PreferencesService.getPreferences", params, function (queryErr, queryResponse) {
+	async getPreferences(callback?: StandardCallback) {
+		Logger.system.debug("ConfigClient.getPreferences", callback);
+
+		// need to check since preferences doesn't come up until after authentication, so not always ready
+		await SystemManagerClient.waitForStartup("preferencesService");
+		this.routerClient.query("PreferencesService.getPreferences", null, function (queryErr, queryResponse) {
+			Logger.system.debug("ConfigClient.getPrefences response", queryResponse);
 			if (callback) {
 				callback(queryErr, queryResponse ? queryResponse.data : null);
 			}

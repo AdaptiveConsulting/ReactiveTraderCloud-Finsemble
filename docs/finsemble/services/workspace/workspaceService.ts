@@ -23,6 +23,7 @@ import SearchClient from "../../clients/searchClient";
 SearchClient.initialize();
 import Logger from "../../clients/logger";
 Logger.start();
+import SystemManagerClient from "../../common/systemManagerClient";
 
 const LIFECYCLE = "APPLICATION LIFECYCLE: "
 
@@ -125,11 +126,16 @@ class WorkspaceService extends BaseService {
 	private static loadWorkspaceTimeout: number;
 	private static loadWorkspaceTimeoutMessage: string;
 	private static closeWorkspaceTimeout: number;
+	private static workspaceServiceReady: boolean = false;
 	private static closeWorkspaceTimeoutMessage: string;
 	private static concurrentSpawnLimit: number;
 
 	constructor(params) {
 		super(params);
+	}
+
+	setReady() {
+		WorkspaceService.workspaceServiceReady = true;
 	}
 
 	initialize = async () => {
@@ -141,6 +147,7 @@ class WorkspaceService extends BaseService {
 		 * on startup.
 		 */
 		await WSM.importLegacyWorkspaces(trace);
+		SystemManagerClient.publishCheckpointState("workspaceService", "importedLegacyWorkspaces", "completed");
 
 		let { data: finsemble } = await ConfigClient.getValue({ field: "finsemble" });
 
@@ -173,6 +180,9 @@ class WorkspaceService extends BaseService {
 		const workspaceNames = await WSM.getWorkspaceNames(trace);
 		const configWorkspacesExist = Boolean(finsemble.workspaces && finsemble.workspaces.length);
 
+		SystemManagerClient.publishCheckpointState("workspaceService", "workspaceConfigRead", "completed");
+
+		// We don't want to import any workspaces already in storage
 		const defaultIfNoConfig = !workspaceNames.length ? [emptyWS] : [];
 		const workspaces: WorkspaceImport[] = configWorkspacesExist ?
 			finsemble.workspaces : defaultIfNoConfig;
@@ -181,13 +191,15 @@ class WorkspaceService extends BaseService {
 		for (const ws of workspaces.filter(x => !workspaceNames.includes(x.name))) {
 			await WSM.importWorkspace(trace, ws);
 		}
+		SystemManagerClient.publishCheckpointState("workspaceService", "workspaceImportsComplete", "completed");
 
 		// DH 3/6/2019 - If registration fails, this will hang the entire WS launch
 		await WorkspaceService.registerSearch();
+		SystemManagerClient.publishCheckpointState("workspaceService", "searchRegistered", "completed");
 
 		const initPref = await new Promise((resolve) =>
-			ConfigClient.getPreferences(INITIAL_WORKSPACE_PREFERENCE,
-				(err, res) => resolve(res)));
+			ConfigClient.getPreferences((err, res) => resolve(res)));
+		SystemManagerClient.publishCheckpointState("workspaceService", "preferencesRead", "completed");
 
 		const startupWS = initPref[INITIAL_WORKSPACE_PREFERENCE];
 
@@ -215,12 +227,16 @@ class WorkspaceService extends BaseService {
 
 			Logger.log(LIFECYCLE, `Loading last used workspace "${awsToBe.name}"`);
 		}
+		SystemManagerClient.publishCheckpointState("workspaceService", "activeWorkspaceSet", "completed");
 
 
 
-		// By intentionally not awaiting this promise, the service will come online
-		// without waiting for all the windows to launch (which could take a long time).
-		WorkspaceService.load(trace, (await WSM.getActiveWorkspace(trace)).name);
+		// the service will come online without waiting for all the workspace to load (which could take a long time)
+		// also as defined the toolbar will come up in earlyUser stage before this code executes in user stage.
+		SystemManagerClient.waitForBootStage("user", "stageEntered", async () => {
+			WorkspaceService.load(trace, (await WSM.getActiveWorkspace(trace)).name);
+			SystemManagerClient.publishCheckpointState("workspaceService", "workspaceLoaded", "completed");
+		});
 
 		await WorkspaceService.createRouterEndpoints();
 
@@ -366,6 +382,9 @@ class WorkspaceService extends BaseService {
 					message.sendQueryResponse(errToSend, null)
 				};
 				try {
+					if (!WorkspaceService.workspaceServiceReady) {
+						Logger.system.error("workspaceService invoked before ready", message);
+					}
 					Logger.info(`TRACE-${traceCounter}-Handling response for ${channel}. Lifecycle status: ${WorkspaceService.lifecycle}`);
 					Logger.debug(`TRACE-${traceCounter}-Message data`, message)
 					if (dropOnClose && WorkspaceService.lifecycle === "closing") {
@@ -701,22 +720,18 @@ class WorkspaceService extends BaseService {
 const serviceInstance = new WorkspaceService({
 	name: "workspaceService",
 	startupDependencies: {
-		services: ["preferencesService", "dataStoreService"],
 		clients: ["configClient", "storageClient", "searchClient", "launcherClient"]
 	},
 	shutdownDependencies: {
-		services: ["startupLauncherService"]
+		services: ["windowService"]
 	}
 });
 
-serviceInstance.onBaseServiceReady(cb => {
-	FSBLDependencyManager.onAuthorizationCompleted(() => {
-		FSBLDependencyManager.startup.waitFor({
-			services: ["assimilationService", "windowService"]
-		}, (cb2) => {
-			serviceInstance.initialize().then(cb2).then(cb);
-		});
-	});
+serviceInstance.onBaseServiceReady(async cb => {
+	await SystemManagerClient.waitForStartup("assimilationService");
+	await SystemManagerClient.waitForStartup("windowService");
+	serviceInstance.initialize().then(cb);
+	serviceInstance.setReady();
 });
 
 serviceInstance.start();

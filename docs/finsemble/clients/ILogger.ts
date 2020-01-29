@@ -11,7 +11,7 @@
 /**
  * @introduction
  *
- * <h2>Logger Client</h2>
+ * <h2>Logger Client (Finsemble Workspaces)</h2>
  *
  * The Logger Client supports very efficient and configurable run-time logging to the <a href=tutorial-CentralLogger.html>Central Logger</a>.
  * Logging has a small performance overhead, so developers can liberally instrument their code with log messages for debugging and diagnostics.
@@ -55,7 +55,7 @@ export interface ILogger {
 	/**
 	 * Log a dev info message.
 	 *
-	 * @param {any} message Zero or more parameters of any type that can be stringified (e.g., string, object).
+	 * @param {*} message Zero or more parameters of any type that can be JSON stringified (e.g., string, object).
 	 *
 	 * @example
 	 * FSBL.Clients.Logger.info("some message", parm1, parm2);
@@ -64,7 +64,7 @@ export interface ILogger {
 	/**
 	 * Log a dev debug message.
 	 *
-	 * @param {any} message Zero or more parameters of any type that can be stringified (e.g., string, object).
+	 * @param {*} message Zero or more parameters of any type that can be JSON stringified (e.g., string, object).
 	 *
 	 * @example
 	 * FSBL.Clients.Logger.debug("some message", parm1, parm2);
@@ -73,7 +73,7 @@ export interface ILogger {
 	/**
 	 * Log a dev verbose message (an extra level of verbose-debug output)
 	 *
-	 * @param {Array.<any>} message Zero or more parameters of any type that can be stringified (e.g., string, object).
+	 * @param {*} message Zero or more parameters of any type that can be JSON stringified (e.g., string, object).
 	 *
 	 * @example
 	 * FSBL.Clients.Logger.verbose("some message", parm1, parm2);
@@ -82,7 +82,7 @@ export interface ILogger {
 	/**
  * Log a dev log message.
  *
- * @param {any} message Parameter of any type that can be stringified (e.g., string, object).
+ * @param {*} message Zero or more parameters of any type that can be JSON stringified (e.g., string, object).
  *
  * @example
  * FSBL.Clients.Logger.log("some message", parm1, parm2);
@@ -92,7 +92,7 @@ export interface ILogger {
 	/**
 	 * Log a dev error message.
 	 *
-	 * @param {any} message Parameter of any type that can be stringified (e.g., string, object).
+	 * @param {*} message Zero or more parameters of any type that can be JSON stringified (e.g., string, object).
 	 *
 	 * @example
 	 * FSBL.Clients.Logger.error("some message", parm1, parm2);
@@ -101,7 +101,7 @@ export interface ILogger {
 	/**
 	 * Log a dev warning message.
 	 *
-	 * @param {any} message Parameter of any type that can be stringified (e.g., string, object).
+	 * @param {*} message Zero or more parameters of any type that can be JSON stringified (e.g., string, object).
 	 *
 	 * @example
 	 * FSBL.Clients.Logger.warn("some message", parm1, parm2);

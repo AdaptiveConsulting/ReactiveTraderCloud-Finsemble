@@ -35,7 +35,7 @@ function removeGlobalStore(params, cb) {
 /**
  *
  * @introduction
- * <h2>Distributed Store Client</h2>
+ * <h2>Distributed Store Client (Finsemble Flow)</h2>
  * The Distributed Store Client handles creating, retrieving, and destroying stores. Stores are used to save and retrieve data either locally or globally.
  * This data is not persisted. You can add listeners at multiple levels (store or field), and get the updated data as it's updated in the store.
  * Fields are stored within the store as key/value pair. For more information, see the <a href="tutorial-DistributedStore.html">Distributed Store tutorial</a>.
@@ -54,9 +54,11 @@ class DistributedStoreClient extends _BaseClient {
 
 
 	/**
-	 * Get a store. If no store is set, you will get the global Finsemble store. If global is not set, Finsemble will check local first then check global.
+	 * Retrieve a store if it exists in the local scope, otherwise from the global scope.
+	 *
+	 * @param {object} params
 	 * @param {String} params.store The name of the store.
-	 * @param {boolean} params.global Whether a store is accessible outside of the component it's created in.
+	 * @param {boolean} params.global Get the store only from the global scope.
 	 * @param {function} cb -  Will return the value if found.
 	 * @returns {StoreModel} - returns the store
 	 * @example
@@ -169,9 +171,7 @@ class DistributedStoreClient extends _BaseClient {
 };
 
 var storeClient = new DistributedStoreClient({
-	startupDependencies: {
-		services: ["dataStoreService"]
-	},
+	startupDependencies: {},
 	onReady: function (cb) {
 		_StoreModel = StoreModel;
 		storeClient.load(cb);

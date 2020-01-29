@@ -100,19 +100,19 @@
 
 	function quit() {
 		console.debug("quitting");
-		fin.desktop.Window.getCurrent().getOptions(function (opts) {
+		FSBL.System.Window.getCurrent().getOptions(function (opts) {
 			var signOnData = opts.customData.spawnData
 			var signOnKey = signOnData.signOnKey;
 			var error = "user prematurely exited from sign-on dialog";
 			var signOnData = { signOnKey, error };
 			FSBL.Clients.AuthenticationClient.transmitSignOnToAuthService(signOnData);
-			fin.desktop.Window.getCurrent().close(true); // done so close window
+			FSBL.System.Window.getCurrent().close(true); // done so close window
 		});
 	}
 
 	function processSignOnInput() {
 		//var signOnKey = FSBL.Clients.WindowClient.getSpawnData();
-		fin.desktop.Window.getCurrent().getOptions(function (opts) {
+		FSBL.System.Window.getCurrent().getOptions(function (opts) {
 			var signOnData = opts.customData.spawnData
 			var signOnKey = signOnData.signOnKey;
 
@@ -124,13 +124,13 @@
 			} else {
 				var signOnData = { signOnKey, username, password };
 				FSBL.Clients.AuthenticationClient.transmitSignOnToAuthService(signOnData); // send back signon input to authentication service
-				fin.desktop.Window.getCurrent().close(true); // done so close window
+				FSBL.System.Window.getCurrent().close(true); // done so close window
 			}
 		});
 	}
 
 	function setupSignOn() {
-		fin.desktop.Window.getCurrent().getOptions(function (opts) {
+		FSBL.System.Window.getCurrent().getOptions(function (opts) {
 			var signOnParams = opts.customData.spawnData.params;
 			if (signOnParams.prompt) {
 				$("#signonPrompt").text(signOnParams.prompt);

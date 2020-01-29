@@ -22,7 +22,7 @@ StoreClient.initialize();
 /**
  *
  * @introduction
- * <h2>Dialog Manager Client</h2>
+ * <h2>Dialog Manager Client (Finsemble Flow)</h2>
  *
  * The Dialog Manager Client simplifies interacting with dialog windows by spawning them and getting data back from them.
  * In this context, a dialog window is simply a child window spawned to interact with the user, such as a confirmation dialog.
@@ -367,7 +367,7 @@ class DialogManagerClient extends _BaseClient {
 
 	/**
 	 * Sends data back to the window that opened the dialog. Will hide the modal unless <code>{ hideModalOnClose: false }</code> is passed in as the first argument.
-	 * @param {any} data
+	 * @param {any} data Data desired to be handed back to the window that requested the dialog.
 	 */
 	respondToOpener = (data: any) => {
 		Logger.system.info("DialogManagerClient:RespondToOpener:", data);
@@ -444,7 +444,6 @@ class DialogManagerClient extends _BaseClient {
 // instance of dialogManagerClient that is exported by this module
 var dialogManagerClient = new DialogManagerClient({
 	startupDependencies: {
-		services: ["startupLauncherService"],
 		clients: ["distributedStoreClient", "windowClient"]
 	},
 	onReady: function (cb) {

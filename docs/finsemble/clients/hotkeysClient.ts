@@ -3,16 +3,12 @@
 * All rights reserved.
 */
 
-/*
-Overview of how this works:
--hotkeys are added/removed via methods, passing an array of strings representing keys pressed, a handler method, and (optionally) a callback
-
--When adding a hotkey, a node js event emitter is created on the client side to trigger the hotkey handler, and a router message is sent to the service to register the key combination with the window name on the client side. Multiple hotkeys may be created for the same key combination, so long as they have different handler functions.
-
--When the service detects that all of the keys in the hotkey combination are pressed, it sends a message on the "HotkeyTriggered" channel (the method for this is "ListenForHotkeys") which contains the list of all windows registered with that hotkey combination. The client then reads the list of windows, and checks if it's one of those windows. If it is, it fires off the node js event emitter that was registered for that hotkey.
-
--Removing a hotkey clears the corresponding event emitter, and also sends a router message to the service to remove its window id from the array of windows registered for the hotkey combination - if the window is registered with that hotkey combination multiple times, it will only remove one, allowing other hotkeys on the same window with the same key combination to still be registered.
-
+/**
+ * Overview of how this works:
+ * - hotkeys are added/removed via methods, passing an array of strings representing keys pressed, a handler method, and (optionally) a callback
+ * - When adding a hotkey, a node js event emitter is created on the client side to trigger the hotkey handler, and a router message is sent to the service to register the key combination with the window name on the client side. Multiple hotkeys may be created for the same key combination, so long as they have different handler functions.
+ * - When the service detects that all of the keys in the hotkey combination are pressed, it sends a message on the "HotkeyTriggered" channel (the method for this is "ListenForHotkeys") which contains the list of all windows registered with that hotkey combination. The client then reads the list of windows, and checks if it's one of those windows. If it is, it fires off the node js event emitter that was registered for that hotkey.
+ * - Removing a hotkey clears the corresponding event emitter, and also sends a router message to the service to remove its window id from the array of windows registered for the hotkey combination - if the window is registered with that hotkey combination multiple times, it will only remove one, allowing other hotkeys on the same window with the same key combination to still be registered.
 */
 import { _BaseClient as BaseClient } from "./baseClient";
 import RouterClient from "./routerClientInstance";
@@ -156,25 +152,25 @@ Keystroke.prototype.initialize = function () {
 // Used to keep track of which browser key combinations are registered locally
 var registeredBrowserKeys = [];
 
+/**
+ * @introduction
+ *
+ * <h2>Hotkey Client (Finsemble Flow)</h2>
+ *
+ * This module contains the Hotkey Client, used for registering hotkey combinations and their respective handler functions with Finsemble.
+ *
+ * The client can handle two types of hotkeys: **local hotkeys**, for which the handlers will only fire when the window which defined the hotkey is in focus, and **global hotkeys**, which will fire regardless of what window is in focus.
+ *
+ * For more information, see the [Hotkey tutorial](tutorial-Hotkeys.html).
+ *
+ *
+ *
+ * @constructor
+ * @hideconstructor
+ * @publishedName HotkeyClient
+ * @param {*} params
+ */
 class HotkeyClient extends BaseClient {
-	/**
-	* @introduction
-	*
-	* <h2>Hotkey Client</h2>
-	*
-	* This module contains the Hotkey Client, used for registering hotkey combinations and their respective handler functions with Finsemble.
-	*
-	* The client can handle two types of hotkeys: **local hotkeys**, for which the handlers will only fire when the window which defined the hotkey is in focus, and **global hotkeys**, which will fire regardless of what window is in focus.
-	*
-	* For more information, see the [Hotkey tutorial](tutorial-Hotkeys.html).
-	*
-	*
-	*
-	* @constructor
-	* @hideconstructor
-	* @publishedName HotkeyClient
-	* @param {*} params
-	*/
 	keyMap;
 	localListeners;
 	KeyStroke;
@@ -349,9 +345,6 @@ class HotkeyClient extends BaseClient {
 }
 
 var hotkeyClient = new HotkeyClient({
-	startupDependencies: {
-		services: ["hotkeysService"]
-	},
 	onReady: function (cb) {
 		if (cb) {
 			cb();

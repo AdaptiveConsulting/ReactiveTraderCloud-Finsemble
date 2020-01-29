@@ -10,6 +10,7 @@ import Logger from "../../../clients/logger";
 
 export class TabbingEntry {
 	stackedWindowManager: any;
+	moduleReady: boolean = false;
 
 	constructor(stackedWindowManager) {
 		this.stackedWindowManager = stackedWindowManager;
@@ -21,6 +22,10 @@ export class TabbingEntry {
 		console.debug("TabbingEntry.initialize");
 		this.setupStackedWindowManagerListeners();
 		done();
+	}
+
+	setReady() {
+		this.moduleReady = true;
 	}
 
 	shutdown(done) {
@@ -43,7 +48,9 @@ export class TabbingEntry {
 
 	setupInterfaceListener(methodName, methodFunction) {
 		Logger.system.debug(`TabbingEntry.setupInterfaceListener for ${methodName}`);
-		RouterClient.addResponder(`StackedWindow.${methodName}`, function (err, queryMessage) {
+
+		RouterClient.addResponder(`StackedWindow.${methodName}`, (err, queryMessage) => {
+			this.moduleReady || Logger.system.error("windowService StackedWindow Management invoked before ready", methodName, queryMessage);
 			if (err) {
 				Logger.system.error(`StackedWindow.${methodName} addResponder failed: ${err}`);
 			} else {

@@ -41,7 +41,7 @@ type emitter = {
 /**
  *
  * @introduction
- * <h2>Drag and Drop Client</h2>
+ * <h2>Drag and Drop Client (Finsemble Workspaces)</h2>
  *
  * The Drag and Drop Client acts as an API to share data between components via a user action i.e., drag and drop.
  * As an example, consider a user wanting to share a chart inside a chat - they can do so using the Drag and Drop Service.
@@ -357,7 +357,7 @@ class DragAndDropClient extends BaseClient {
 	/**
 	 * This is a drag event handler for an element that can be dragged to share data. Our sample Window Title Bar component uses this internally when the share icon is dragged. This can be attached to any element that needs to be draggable. The data from all emitters that match receivers in the drop component is automatically shared.
 	 *
-	 * @param {event} event
+	 * @param {DragEvent} event The DragEvent fired from the native browser event.
 	 *
 	 */
 	dragStart(event: any) {
@@ -374,8 +374,8 @@ class DragAndDropClient extends BaseClient {
 	/**
 	 * This is a drag event handler to enable dragging specific data that is not tied to an emitter. For example, an item in a list.
 	 *
-	 * @param {event} event
-	 * @param {any} data
+	 * @param {DragEvent} event The DragEvent fired from the native browser event.
+	 * @param {any} data The data you wish to be transferred with the event.
 	 *
 	 * @example
 	 * element.addEventListener('dragstart', function(event) {
@@ -433,7 +433,7 @@ class DragAndDropClient extends BaseClient {
 	/**
 	 * This is a drop event handler that can be attached to any element that you want to be a drop zone for the Drag and Drop Client. It automatically requests data for all the data elements that are common between the receiver and the emitter.
 	 *
-	 * @param {event} event
+	 * @param {DragEvent} event The DragEvent fired from the native browser event.
 	 */
 	drop(event: any) {
 		let self = this;

@@ -66,7 +66,7 @@ export class _BaseClient {
 	startupDependencies: { services?: any[], clients?: any[] } = { services: [], clients: [] };
 	/** Reference to the RouterClient. */
 	routerClient;
-	/** Gets the current openfin window - stays here for backward compatibility. */
+	/** Gets the current window - stays here for backward compatibility. */
 	finWindow: {
 		name: string,
 		uuid: string,
@@ -225,7 +225,7 @@ var BaseClient = function (params) {
 	this.routerClient = RouterClient;
 
 	/**
-	 * Gets the current openfin window - stays here for backward compatibility
+	 * Gets the current window - stays here for backward compatibility
 	 * @type {object}
 	 */
 	this.finWindow = null;
@@ -315,7 +315,6 @@ var BaseClient = function (params) {
 			self.windowName = self.finWindow.name;
 			Logger.system.debug("Baseclient Init Router Ready", self.name);
 			FSBLDependencyManager.startup.waitFor({
-				services: self.startupDependencies.services || [],
 				clients: self.startupDependencies.clients || []
 			}, () => {
 				cb();

@@ -1,8 +1,99 @@
 {
 	"comment": "Top-level core configuration -- the `hidden` config file that is always automatically loaded. A reference for the configuration tree can be found at https://documentation.chartiq.com/finsemble/tutorial-ConfigReference.html",
+
+	"bootTasks": {
+		"initializeDeepLinkingTask": {
+			"bootParams": {
+				"stage": "microkernel"
+			}
+		},
+		"initializeRouterTask": {
+			"bootParams": {
+				"stage": "microkernel",
+				"dependencies": [ "initializeDeepLinkingTask" ]
+			}
+		},
+		"initializeFinsemblePubsubTask": {
+			"bootParams": {
+				"stage": "microkernel",
+				"dependencies": [ "initializeRouterTask" ]
+			}
+		},
+		"initializeSystemStateHandersTask": {
+			"bootParams": {
+				"stage": "microkernel",
+				"dependencies": [ "initializeRouterTask" ]
+			}
+		},
+		"updateServiceLauncherConfigTask": {
+			"bootParams": {
+				"stage": "microkernel",
+				"dependencies": [ "configService" ]
+			}
+		},
+		"testTask_initializeSplinterAgentPool": {
+			"bootParams": {
+				"stage": "kernel"
+			}
+		},
+		"waitForAuthenticatedTask": {
+			"bootParams": {
+				"stage": "authentication",
+				"dependencies": [ "authenticationService" ],
+				"timeout": 36000000
+			}
+		},
+		"initializeSystemManagerAPITask": {
+			"bootParams": {
+				"stage": "microkernel",
+				"dependencies": [ "initializeRouterTask" ]
+			}
+		},
+		"startLoggerTask": {
+			"bootParams": {
+				"stage": "microkernel",
+				"dependencies": [ "loggerService" ]
+			}
+		},
+		"loadUserDefinedComponentsTask": {
+			"bootParams": {
+				"stage": "preuser",
+				"stopOnFailure": false,
+				"autoStart": true
+			}
+		},
+		"loadSystemTrayIconTask": {
+			"bootParams": {
+				"stage": "user",
+				"stopOnFailure": false,
+				"autoStart": true
+			}
+		},
+		"registerHotkeysTask": {
+			"bootParams": {
+				"stage": "user",
+				"stopOnFailure": false,
+				"autoStart": true
+			}
+		},
+		"setupSearchLauncherTask": {
+			"bootParams": {
+				"stage": "user",
+				"stopOnFailure": false,
+				"autoStart": true
+			}
+		},
+		"checkForScheduledRestartTask": {
+			"bootParams": {
+				"stage": "user",
+				"stopOnFailure": false,
+				"autoStart": true
+			}
+		}
+	},
 	"system": {
-		"FSBLVersion": "3.13.2",
-		"gitHash": "7a3f6c912a03461e88a4e98424c5518dd49d914d",
+		"FSBLVersion": "4.0.0",
+		"gitHash": "177f6e9eb4e51b0768d151d3d410114ce63725a5",
 		"finsembleLibraryPath": "$moduleRoot/FSBL.js",
 		"premiumRoot": "$moduleRoot",
 		"systemTrayIcon": "$moduleRoot/assets/img/Finsemble_Taskbar_Icon.png",
@@ -18,26 +109,20 @@
 		],
 		"requiredServicesConfig": {
 			"routerService": {
+				"bootParams": {
+					"stage": "microkernel",
+					"autoStart": false
+				},
 				"spawnAs": "process",
 				"name": "routerService",
 				"html": "$servicesRoot/router/router.html",
 				"file": "$servicesRoot/router/routerService.js"
 			},
-			"dataStoreService": {
-				"spawnAs": "window",
-				"name": "dataStoreService",
-				"html": "$servicesRoot/dataStore/dataStore.html",
-				"file": "$servicesRoot/dataStore/dataStoreService.js"
-			},
-			"configService": {
-				"spawnAs": "window",
-				"changeApplicationStateBeforeLoad": "configuring",
-				"changeApplicationStateAfterLoad": "initializing",
-				"name": "configService",
-				"html": "$servicesRoot/config/config.html",
-				"file": "$servicesRoot/config/configService.js"
-			},
 			"loggerService": {
+				"bootParams": {
+					"stage": "microkernel",
+					"dependencies": [ "initializeSystemStateHandersTask" ]
+				},
 				"spawnAs": "window",
 				"frame": true,
 				"window": {
@@ -52,7 +137,30 @@
 				},
 				"name": "loggerService",
 				"html": "$servicesRoot/logger/logger.html",
-				"file": "$servicesRoot/logger/loggerService.js"
+				"file": "$servicesRoot/logger/loggerService.js",
+				"showWarningForLogStates": ["Info", "Debug", "Verbose"]
+			},
+			"dataStoreService": {
+				"bootParams": {
+					"stage": "microkernel",
+					"dependencies": [ "loggerService" ]
+				},
+				"spawnAs": "window",
+				"name": "dataStoreService",
+				"html": "$servicesRoot/dataStore/dataStore.html",
+				"file": "$servicesRoot/dataStore/dataStoreService.js"
+			},
+			"configService": {
+				"bootParams": {
+					"stage": "microkernel",
+					"dependencies": [ "dataStoreService" ]
+				},
+				"spawnAs": "window",
+				"changeApplicationStateBeforeLoad": "configuring",
+				"changeApplicationStateAfterLoad": "initializing",
+				"name": "configService",
+				"html": "$servicesRoot/config/config.html",
+				"file": "$servicesRoot/config/configService.js"
 			}
 		}
 	},

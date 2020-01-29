@@ -95,7 +95,7 @@ var ConfigUtil = function () {
 		function getRawManifest(callback, application, level) {
 			Logger.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getRawManifest", application, level);
 
-			application.getManifest(function (manifest) { // get raw openfin manifest
+			application.getManifest(function (manifest) { // get raw manifest
 				Logger.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getExpandedRawManifest: manifest retrieved. Pre-variable resolution", manifest);
 				self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables first time so can find config location
 				Logger.system.debug("forceObjectsToLogger", "ConfigUtil.getExpandedRawManifest:getExpandedRawManifest:Complete. post-variable resolution", manifest);
@@ -118,7 +118,7 @@ var ConfigUtil = function () {
 			});
 		}
 
-		System.ready(function () { // make sure openfin is ready
+		System.ready(function () { // make sure system is ready
 			var application = System.Application.getCurrent();
 			getRawManifest(callback, application, 1);
 		});
@@ -132,7 +132,7 @@ var ConfigUtil = function () {
 		}).then(function (response) {
 			return response.json();
 		}).catch(function (err) {
-			importCallback("failure importing: " + err, null);
+			importCallback(`Failure importing ${coreConfigFile}: ${err}`, null);
 		}).then(function (importObject) {
 			importCallback(null, importObject);
 		});
@@ -143,9 +143,9 @@ var ConfigUtil = function () {
 	// However, the full config processing, including actually doing the imports, is only done in the Config Service.
 	this.getInitialManifest = function (callback) {
 
-		System.ready(function () { // make sure openfin is ready
+		System.ready(function () { // make sure system is ready
 			var application = System.Application.getCurrent();
-			application.getManifest(function (manifest) { // get raw openfin manifest
+			application.getManifest(function (manifest) { // get raw manifest
 				manifest.finsemble = manifest.finsemble || {}; // don't error on bad config
 				self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables first time so can find config config location
 				let CORE_CONFIG = manifest.finsemble.moduleRoot + "/configs/core/config.json"; // <<<--- here is the "hidden" core config file
@@ -171,7 +171,7 @@ var ConfigUtil = function () {
 						self.resolveConfigVariables(manifest.finsemble, manifest.finsemble); // resolve variables with finsemble config
 						Logger.system.debug("forceObjectsToLogger", "ConfigUtil.getInitialManifest:getCoreConfig:Initial Manifest after variables Resolved", manifest);
 					} else {
-						Logger.system.error("ConfigUtil.getInitialManifest:getCoreConfig:failed importing into finsemble config", error);
+						Logger.system.error("ConfigUtil.getInitialManifest:getCoreConfig:failed importing into finsemble config.", error);
 					}
 					callback(manifest);
 				});

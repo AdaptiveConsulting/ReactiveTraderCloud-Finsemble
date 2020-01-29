@@ -16,7 +16,7 @@ import { StateType, CompleteWindowState } from "../common/windowStorageManager";
 
 /**
  * @introduction
- * <h2>Workspace Client</h2>
+ * <h2>Workspace Client (Finsemble Workspaces)</h2>
  * ----------
  * The Workspace Client manages all calls to load, save, rename, and delete workspaces.
  *
@@ -143,10 +143,10 @@ class WorkspaceClient extends _BaseClient {
 
 	// Window Related Workspace Functions. Eventually these need to move to the Window Service
 	/**
-	 * Auto arranges all windows on the user's screen.
+	 * This method is an experimental feature in Finsemble Labs. Calling this method automatically arranges all windows on the user's screen into a grid-like pattern.
 	 * @param {object} params Parameters
-	 * });
-	 * @param {string} params.monitor Same options as <a href="LauncherClient.html#showWindow">LauncherClient.showWindow</a>. Default is monitor of calling window.
+	 * @param {string | undefined} params.monitor Same options as <a href="LauncherClient.html#showWindow">LauncherClient.showWindow</a>. Default is monitor of calling window.
+	 * @param {* | undefined} params.monitorDimensions The surface area of the monitor to arrange over. If not defined defaults to the unclaimed area of the current monitor.
 	 * @param {function} cb The callback to be invoked after the method completes successfully.
 	 * @example
 	 * FSBL.Clients.WorkspaceClient.autoArrange(function(err, response) {
@@ -173,7 +173,8 @@ class WorkspaceClient extends _BaseClient {
 	/**
 	 * Minimizes all windows.
 	 * @param {object} params
-	 * @param {string} 	[params.monitor="all"] Same options as <a href="LauncherClient.html#showWindow">LauncherClient.showWindow</a> except that "all" will work for all monitors. Defaults to all.
+	 * @param {string} 	params.monitor Same options as <a href="LauncherClient.html#showWindow">LauncherClient.showWindow</a> except that "all" will work for all monitors. Defaults to all.
+	 * @param {* | undefined} params.windowIdentifier The Finsemble identifier structure for the window triggering the request.
 	 * @param {function} cb The callback to be invoked after the method completes successfully.
 	 * @example
 	 * FSBL.Clients.WorkspaceClient.bringWindowsToFront();
@@ -196,6 +197,7 @@ class WorkspaceClient extends _BaseClient {
 	 * Brings all windows to the front.
 	 * @param {object} params
 	 * @param {string} 	params.monitor Same options as <a href="LauncherClient.html#showWindow">LauncherClient.showWindow</a> except that "all" will work for all monitors. Defaults to the monitor for the current window.
+	 * @param {* | undefined} params.windowIdentifier The Finsemble identifier for the target window. If not provided, defaults to the current window.
 	 * @param {function} cb The callback to be invoked after the method completes successfully.
 	 * @example
 	 * FSBL.Clients.WorkspaceClient.bringWindowsToFront();
@@ -251,7 +253,7 @@ class WorkspaceClient extends _BaseClient {
 	getWorkspaces(cb?) {
 		Validate.args(cb, "function=");
 		Logger.system.debug("WorkspaceClient.getWorkspaces");
-		const getWorkspacesPromiseResolver = (resolve, reject) => {
+		const getWorkspacesPromiseResolver = async (resolve, reject) => {
 			this.routerClient.query(WORKSPACE.API_CHANNELS.GET_WORKSPACES, {}, (err, response) => {
 				this._serviceResponseHandler(err, response, resolve, reject, cb);
 			});
@@ -284,9 +286,9 @@ class WorkspaceClient extends _BaseClient {
 	/**
 	 * Removes a workspace. Either the workspace object or its name must be provided.
 	 * @param {object} params
-	 * @param {Object} 	params.workspace Workspace
-	 * @param {string} 	params.workspace.name Workspace Name
-	 * @param {string} 	params.name Workspace Name
+	 * @param {object | undefined} 	params.workspace The workspace data object.
+	 * @param {string} 	params.workspace.name The workspace name removal is requested for.
+	 * @param {string | undefined} 	params.name The workspace name removal is requested for.
 	 * @param {function} cb Callback to fire after 'Finsemble.WorkspaceService.update' is transmitted.
 	 * @example <caption>This function removes 'My Workspace' from the main menu and the default storage tied to the application.</caption>
 	 * FSBL.Clients.WorkspaceClient.remove({
@@ -529,10 +531,10 @@ class WorkspaceClient extends _BaseClient {
 	 * If the requested name already exists, a new workspace will be created
 	 * with the form "[name] (1)" (or "[name] (2)", etc.)
 	 *
-	 * @param {String} workspaceName Name for new workspace.
-	 * @param {Object} params Optional params
+	 * @param {string} workspaceName Name for new workspace.
+	 * @param {object} params Optional params
 	 * @param {boolean} params.switchAfterCreation Whether to switch to the new workspace after creating it.
-	 * @param {Function} cb <code>cb(err,response)</code> With response, set to new workspace object if no error.
+	 * @param {function} cb <code>cb(err,response)</code> With response, set to new workspace object if no error.
 	 * @example <caption>This function creates the workspace 'My Workspace'.</caption>
 	 * FSBL.Clients.WorkspaceClient.createWorkspace(function(err, response) {
 	 *		if (!err) {}
@@ -540,7 +542,7 @@ class WorkspaceClient extends _BaseClient {
 	 *		}
 	 * });
 	 */
-	async createWorkspace(workspaceName, params: {
+	async createWorkspace(workspaceName: string, params: {
 		switchAfterCreation?: boolean
 	}, cb = (err, result: { workspaceName: string }) => { }): Promise<{ workspaceName: string }> {
 		Logger.system.log(`WorkspaceClient: Creating Workspace Request for name "${workspaceName}"`)
@@ -591,7 +593,7 @@ class WorkspaceClient extends _BaseClient {
 	 * Adds a workspace definition to the list of available workspaces.
 	 *
 	 * @param {object} params
-	 * @param {object} params.workspaceJSONDefinition JSON for workspace definition
+	 * @param {object} params.workspaceJSONDefinition The JSON for the workspace definition, as exported by the User Preferences menu in Finsemble Connect.
 	 * @param {boolean} params.force Whether to overwrite any workspace of the same name that already exists
 	 * @param {function=} cb <code>cb(err)</code> where the operation was successful if !err; otherwise, err carries diagnostics
 	 *
@@ -671,10 +673,6 @@ class WorkspaceClient extends _BaseClient {
 }
 
 var workspaceClient = new WorkspaceClient({
-	startupDependencies: {
-		services: ["workspaceService"],
-		clients: []
-	},
 	onReady: (cb) => {
 		workspaceClient.start(cb);
 	},

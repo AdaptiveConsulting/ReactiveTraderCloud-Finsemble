@@ -14,18 +14,20 @@ import * as Constants from "../../../common/constants";
 import { MockDockableWindow } from "../Common/MockDockableWindow";
 import { WindowPoolSingleton } from "../Common/Pools/PoolSingletons";
 import WorkspaceClient from "../../../clients/workspaceClient";
-import { REMOTE_FOCUS } from "../../../common/constants";
+import { WINDOW_SERVICE_REQUESTS } from "../../../common/constants";
 import { BaseWindow } from "../WindowAbstractions/BaseWindow";
 import { Launcher } from "../Launcher/launcher"
 import DockingMain from "../Docking/dockingMain";
 import { ResponderMessage } from "../../../clients/IRouterClient";
 
+const { REMOTE_FOCUS, SET_ALWAYS_ON_TOP, IS_ALWAYS_ON_TOP } = WINDOW_SERVICE_REQUESTS;
 
 
 export class WindowPrimitives {
 	dockingMain: DockingMain;
 	launcher: Launcher;
 	eventInterruptors: any;
+	moduleReady: boolean = false;
 
 	constructor(dockingMain: DockingMain, launcher: Launcher) {
 		this.dockingMain = dockingMain;
@@ -37,6 +39,10 @@ export class WindowPrimitives {
 	initialize(done) {
 		this.definePubicInterface_Window();
 		done();
+	}
+
+	setReady() {
+		this.moduleReady = true;
 	}
 
 	windowServiceChannelName(channelTopic) { return `WindowService-Request-${channelTopic}`; }
@@ -76,7 +82,8 @@ export class WindowPrimitives {
 		RouterClient.addResponder(this.windowServiceChannelName("hide"), this.hideHandler);
 		RouterClient.addResponder(this.windowServiceChannelName("show"), this.showHandler);
 		RouterClient.addResponder(this.windowServiceChannelName("showAt"), this.showAtHandler);
-		RouterClient.addResponder(this.windowServiceChannelName("alwaysOnTop"), this.alwaysOnTopHandler);
+		RouterClient.addResponder(SET_ALWAYS_ON_TOP, this.setAlwaysOnTopHandler);
+		RouterClient.addResponder(IS_ALWAYS_ON_TOP, this.isAlwaysOnTopHandler);
 		RouterClient.addResponder(this.windowServiceChannelName("setOpacity"), this.setOpacityHandler);
 		RouterClient.addResponder(this.windowServiceChannelName("close"), this.closeHandler);
 		RouterClient.addResponder(this.windowServiceChannelName("isShowing"), this.isShowingHandler);
@@ -94,6 +101,8 @@ export class WindowPrimitives {
 
 	// housekeeping function used in each of the public window-wrapper handlers below
 	publicWindowHandlerPreface(method, queryError, queryMessage) {
+		this.moduleReady || Logger.system.error("windowService window primative invoked before ready", method, queryMessage);
+
 		var okay = true;
 		let params = queryMessage.data;
 		let { windowIdentifier, eventName, guid } = queryMessage.data;
@@ -168,11 +177,11 @@ export class WindowPrimitives {
 		// refactoring.
 		const windows: any[] = Object.values(WindowPoolSingleton.getAll());
 
-			const focused: BaseWindow = windows
-				.find((x: { focused: boolean }) => x.focused) as BaseWindow;
-			if (focused && focused.name !== name) {
-				focused.eventManager.trigger("blurred");
-			}
+		const focused: BaseWindow = windows
+			.find((x: { focused: boolean }) => x.focused) as BaseWindow;
+		if (focused && focused.name !== name) {
+			focused.eventManager.trigger("blurred");
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -266,6 +275,7 @@ export class WindowPrimitives {
 	 * @memberof WindowPrimitives
 	 */
 	async getMonitorForWindowHandler(queryError, queryMessage) {
+		this.moduleReady || Logger.system.error("windowService window primative invoked before ready", queryMessage);
 		let { windowIdentifier } = queryMessage.data;
 		let callback = queryMessage.sendQueryResponse;
 		let dockableWindow = this.dockingMain.getWindow(windowIdentifier.windowName, false);
@@ -510,7 +520,7 @@ export class WindowPrimitives {
 		}
 	}
 
-	async alwaysOnTopHandler(queryError, queryMessage) {
+	async setAlwaysOnTopHandler(queryError, queryMessage) {
 		let { windowIdentifier } = this.publicWindowHandlerPreface("alwaysOnTop", queryError, queryMessage);
 		let callback = queryMessage.sendQueryResponse;
 
@@ -518,6 +528,19 @@ export class WindowPrimitives {
 
 		if (wrap) {
 			wrap._alwaysOnTop(queryMessage.data, callback);
+		} else {
+			callback(`unidentified window name: ${windowIdentifier.name}`, null);
+		}
+	}
+
+	async isAlwaysOnTopHandler(queryError, queryMessage) {
+		let { windowIdentifier } = this.publicWindowHandlerPreface("isAlwaysOnTop", queryError, queryMessage);
+		let callback = queryMessage.sendQueryResponse;
+
+		let wrap = WindowPoolSingleton.get(windowIdentifier.name);
+
+		if (wrap) {
+			wrap._isAlwaysOnTop(null, callback);
 		} else {
 			callback(`unidentified window name: ${windowIdentifier.name}`, null);
 		}
@@ -628,6 +651,7 @@ export class WindowPrimitives {
 	}
 
 	async closeHandler(queryError, queryMessage: ResponderMessage) {
+		this.moduleReady || Logger.system.error("windowService window primitive invoked before ready", queryMessage);
 
 		const { windowIdentifier } = this.publicWindowHandlerPreface("close", queryError, queryMessage)
 
@@ -651,7 +675,7 @@ export class WindowPrimitives {
 					Logger.system.debug("closeHandler: Waiting on ", delayers);
 				}
 			}, 1000);
-      const listener = (sid, eventGuid, response) => {
+			const listener = (sid, eventGuid, response) => {
 				if (promiseResolved) return;
 				const data = response.data;
 				if (Object.keys(data).length > 0 && this.eventInterruptors[windowIdentifier.name][eventName][eventGuid]) { // if initial pubsub "empty" state without any key then ignore
@@ -705,7 +729,7 @@ export class WindowPrimitives {
 
 			Logger.system.debug("WRAP CLOSE. starting in wrap", windowIdentifier.name);
 
-      let wrapState = "closing";
+			let wrapState = "closing";
 			// we update wrapState over the router, but it's not always happening fast enough to prevent new listeners from being set up
 			wrap.wrapState = wrapState;
 
@@ -754,7 +778,7 @@ export class WindowPrimitives {
 				queryMessage.sendQueryResponse(null, null);
 			});
 
-		// else if no wrap for the window being closed (might be an error or might be because window's spawn is still pending and it's wrap hasn't been saved yet)
+			// else if no wrap for the window being closed (might be an error or might be because window's spawn is still pending and it's wrap hasn't been saved yet)
 		} else {
 			// this section handles the specific case of trying to close a window that hasn't finished spawning yet, which happens when reloading a workspace (due to an OpenFin bug).
 			// Since wrap couldn't be found in pool, it may be than the spawn window never completely finished and is now stuck in pendind; therefore attempt a force kill.

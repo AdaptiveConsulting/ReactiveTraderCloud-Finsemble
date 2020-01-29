@@ -5,8 +5,8 @@
 ## Prerequisites
 
 - Please make sure you have the core Finsemble packages associated with your npm username for local development
-- You need to run npm login and enter your credentials before downloading the core Finsemble packages
-- Node v13 +
+- You need to run npm login and enter your credentials before installing the core Finsemble packages
+- Node v12.13.1
 - NPM v6 +
 - Windows only
 

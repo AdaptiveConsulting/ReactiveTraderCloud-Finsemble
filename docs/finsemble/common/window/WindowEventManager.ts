@@ -189,12 +189,12 @@ export class WindowEventManager extends EventEmitter implements WindowEventManag
 			//todo need to accommodate wrap-state-changed events in here...maybe?
 			let data: WindowEvent | BoundsChangeEvent = { eventName, name: this.windowName };
 
-			if (eventName.includes("bounds") || eventName.includes("parent")) {
-				//bounds events need to push out more data than just name/eventName. ...response.data will destructure the object and copy them into this new object.
+			if (eventName.includes("bounds") || eventName.includes("parent") || eventName.includes("alwaysOnTop")) {
+				// bounds events need to push out more data than just name/eventName. ...response.data will destructure the object and copy them into this new object.
 				data = {
 					eventName,
 					...response.data
-				}
+				};
 			}
 			if (!response.originatedHere()) {
 				Logger.system.debug("WindowEventManager. Received remote event emitted", this.windowName, eventName, data);

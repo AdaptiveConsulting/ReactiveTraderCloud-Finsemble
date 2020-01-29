@@ -9,6 +9,7 @@ export type GroupData = {
 	isAlwaysOnTop: boolean;
 	topRightWindow: string;
 	isARectangle: boolean;
+	ungroupedAlwaysOnTopState: Record<string, Boolean>;
 };
 
 /**

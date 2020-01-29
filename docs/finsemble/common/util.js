@@ -18,9 +18,9 @@ import uuidv1 from "uuid/v1";
 }*/
 
 /**
- * Gets the openfin version in object form.
+ * Gets the container version in object form.
  */
-export function getOpenfinVersion(cb = Function.prototype) {
+export function getContainerVersion(cb = Function.prototype) {
 	return new Promise(function (resolve /*, reject*/) {
 		System.getVersion((ver) => {
 			let verArr = ver.split(".").map(Number);
@@ -95,7 +95,7 @@ export function crossDomain(url) {
 };
 
 /**
- * Gets an array of monitor descriptors. Essentially rationalizing the results of OpenFin getMonitorInfo.
+ * Gets an array of monitor descriptors. Essentially rationalizing the results of getMonitorInfo.
  * into a single array with additional information added.
  *
  * whichMonitor is set to the secondary monitor number, or "primary" if the primary monitor.
@@ -108,14 +108,14 @@ export function crossDomain(url) {
 export var getAllMonitors = Monitors.getAllMonitors;
 
 /**
- * Retrieves a monitor descriptor given an absolute X Y on the OpenFin virtual screen
+ * Retrieves a monitor descriptor given an absolute X Y on the virtual screen
  * @param  {number} x The x position
  * @param  {number} y The y position
- * @param {callback-object}  cb Returns the monitor information from OpenFin.
+ * @param {callback-object}  cb Returns the monitor information from the Container.
  * "isPrimary" is set to true if it's the primary monitor.
  * null is returned if the x,y coordinates are beyond the bounds of the virtual screen.
  */
-export var getMonitorFromOpenFinXY = Monitors.getMonitorFromScaledXY;
+export var getMonitorFromXY = Monitors.getMonitorFromScaledXY;
 
 /**
  * Retrieves a monitor descriptor for a window. If the window straddles two monitors
@@ -185,7 +185,7 @@ export function getFinWindow(windowIdentifier, cb) {
 		// Default to current window
 		var myWindow = System.Window.getCurrent();
 
-		// Get OpenFin options (windowDescriptor) for current window
+		// Get options (windowDescriptor) for current window
 		// we need this info even if we're going to reference a different window
 		myWindow.getOptions(function (options) {
 			// If windowName is provided, then find that window
@@ -701,7 +701,7 @@ export function adjustBoundsToBeOnMonitor(bounds) {
  * @param {*} config - Object containing all possible values used to set windowTypes, some of these values may be unset depending on the execution path
  */
 export function getWindowType(config) {
-	const DEFAULT_WINDOW_TYPE = "OpenFinWindow";
+	const DEFAULT_WINDOW_TYPE = "WebWindow";
 	// All possible windowTypes. Some of these values will be converted to other types
 	const validTypes = [
 		"openfin",
@@ -714,6 +714,8 @@ export function getWindowType(config) {
 		"FinsembleNativeWindow",
 		"OpenFinApplication",
 		"CompoundWindow",
+		"WebWindow",
+		"WebApplication",
 		"StackedWindow"
 	];
 	// If an invalid windowType is given, default and log an error. Note that an empty windowType
@@ -726,7 +728,7 @@ export function getWindowType(config) {
 	}
 	let ret = config.windowType || DEFAULT_WINDOW_TYPE;
 
-  // We allow several additional windowTypes to be inputted to make the config user-friendly
+	// We allow several additional windowTypes to be inputted to make the config user-friendly
 	// These windowTypes need to be converted to values Finsemble can process
 	switch (config.windowType) {
 		case "assimilation":
@@ -737,10 +739,19 @@ export function getWindowType(config) {
 			ret = "FinsembleNativeWindow";
 			break;
 		case "application":
-			ret = "OpenFinApplication";
+			ret = "WebApplication";
+			break;
+		case "openFinApplication":
+			ret = "WebApplication";
+			Logger.system.warn(`Window type ${config.windowType} deprecated. Please use WebWindow`);
+			break;
+		case "Web":
+			ret = "WebWindow";
 			break;
 		case "openfin":
-			ret = "OpenFinWindow";
+		case "openFinWindow":
+			ret = "WebWindow";
+			Logger.system.warn(`Window type ${config.windowType} deprecated. Please use WebWindow`);
 			break;
 		case "StackedWindow":
 			ret = "StackedWindow";
@@ -752,7 +763,10 @@ export function getWindowType(config) {
 
 	// Next handle any backward compatibility windowType inputs
 	if (config.native) ret = "NativeWindow"; //Backward Compatibility
-	if (config.type === "openfinApplication") ret = "OpenFinApplication"; //Backward Compatibility
+	if (config.type === "openfinApplication") {
+		ret = "WebApplication"; //Backward Compatibility
+		Logger.system.warn("Window type openFinApplication deprecated. Please use WebApplication");
+	}
 	if (config.compound) ret = "CompoundWindow";
 	return ret;
 }

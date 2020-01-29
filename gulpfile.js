@@ -31,6 +31,7 @@ const { launch, connect } = require("hadouken-js-adapter");
 		? require("@chartiq/finsemble-electron-adapter/exports")
 		: undefined;
 	const FEAPackager = FEA ? FEA.packager : undefined;
+	const MAX_NODE_VERSION = "12.13.1";
 
 	// local
 	const extensions = fs.existsSync("./gulpfile-extensions.js")
@@ -66,6 +67,90 @@ const { launch, connect } = require("hadouken-js-adapter");
 		);
 	};
 
+	/**
+	 * Splits a string version with semantic versioning into an object with major, minor and patch versions
+	 * Valid inputs are 'X.X.X' or 'vX.X.X'
+	 */
+	const createSemverObject = version => {
+		let tempVersionArray;
+		let semverObject;
+		if (typeof version !== "string") {
+			console.log(`Version must be type string but is ${typeof version}`);
+			return;
+		}
+		// Split the version into a temp array.
+		if (version.startsWith("v")) {
+			tempVersionArray = version.split("v");
+			tempVersionArray = tempVersionArray[1].split(".");
+		} else {
+			tempVersionArray = version.split(".");
+		}
+		if (tempVersionArray.length === 3) {
+			// Convert each array element to a number and store in the object.
+			semverObject = {
+				majorVersion: Number(tempVersionArray[0]) || null,
+				minorVersion: Number(tempVersionArray[1]) || null,
+				patchVersion: Number(tempVersionArray[2]) || null
+			};
+			// If major, minor or patch versions are missing or not a number return nothing
+			if (
+				!semverObject.majorVersion ||
+				!semverObject.minorVersion ||
+				!semverObject.patchVersion
+			) {
+				return;
+			}
+			return semverObject;
+		}
+	};
+
+	/**
+	 * Compares two node version objects
+	 * Each object is expected to contain majorVersion, minorVersion, patchVersion
+	 */
+	const compareNodeVersions = (a, b) => {
+		if (a.majorVersion !== b.majorVersion) {
+			return a.majorVersion > b.majorVersion ? 1 : -1;
+		}
+		if (a.minorVersion !== b.minorVersion) {
+			return a.minorVersion > b.minorVersion ? 1 : -1;
+		}
+		if (a.patchVersion !== b.patchVersion) {
+			return a.patchVersion > b.patchVersion ? 1 : -1;
+		}
+		return 0;
+	};
+
+	/**
+	 * Validates the current node version against supported node versions specified in this file
+	 * Returns boolean indicating whether current node version is valid
+	 * Currently only validates against a max node version which must be in the format 'X.X.X' or 'vX.X.X'
+	 *
+	 * Note: This method is being used instead of npm engines because of an npm bug where warnings don't print
+	 * This bug was resolved in npm 6.12.0 but as that is a very new version of npm and is not linked to node 10.15.3
+	 * in nvm we can't assume our users have access to this version.
+	 */
+	const isNodeVersionValid = () => {
+		// Split the current node version into an object with major, minor and patch numbers for easier comparison.
+		// If any of these values are missing, nothing will be returned
+		let currentVersionObject = createSemverObject(process.version);
+		let maxVersionObject = createSemverObject(MAX_NODE_VERSION);
+
+		// Only allow the check both objects exist and contain major, minor and patch versions.
+		if (!currentVersionObject || !maxVersionObject) {
+			logToTerminal(
+				"Format of node version must be: 'X.X.X', unable to validate node version",
+				"yellow"
+			);
+			return true;
+		}
+
+		// Check if the node version is higher than the maximum allowed node version.
+		if (compareNodeVersions(currentVersionObject, maxVersionObject) == 1)
+			return false;
+		return true;
+	};
+
 	let angularComponents;
 	try {
 		angularComponents = require("./build/angular-components.json");
@@ -81,8 +166,6 @@ const { launch, connect } = require("hadouken-js-adapter");
 
 	// #endregion
 
-	// #region Script variables
-	let watchClose;
 	// If you specify environment variables to child_process, it overwrites all environment variables, including
 	// PATH. So, copy based on our existing env variables.
 	const env = process.env;
@@ -526,6 +609,7 @@ const { launch, connect } = require("hadouken-js-adapter");
 
 			let config = {
 				manifest: cfg.serverConfig,
+				onElectronClose: process.exit,
 				chromiumFlags: JSON.stringify(cfg.chromiumFlags),
 				path: FEA_PATH
 			};
@@ -594,6 +678,7 @@ const { launch, connect } = require("hadouken-js-adapter");
 			}
 
 			FEAPackager.setFeaPath(FEA_PATH);
+			await FEAPackager.setApplicationFolderName(installerConfig.name);
 			await FEAPackager.setManifestURL(manifestUrl);
 			await FEAPackager.setUpdateURL(updateUrl);
 			await FEAPackager.setChromiumFlags(chromiumFlags || {});
@@ -601,6 +686,12 @@ const { launch, connect } = require("hadouken-js-adapter");
 			done();
 		},
 		launchApplication: done => {
+			if (!isNodeVersionValid()) {
+				logToTerminal(
+					`Node version: ${process.version} is not supported. Max supported version: ${MAX_NODE_VERSION}`,
+					"red"
+				);
+			}
 			logToTerminal("Launching Finsemble", "black", "bgCyan");
 
 			launchTimestamp = Date.now();

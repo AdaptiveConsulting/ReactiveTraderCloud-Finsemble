@@ -1,64 +1,89 @@
 @import url("https://fonts.googleapis.com/css?family=Roboto");
 @import url('https://fonts.googleapis.com/css?family=Source+Code+Pro');
 :root {
-	--slate1: #7B98B3;
-	--slate2: #67829A;
-	--slate3: #617383;
-	--slate4: #495A69;
-	--slate5: #3C4C58;
-	--slate6: #303D47;
-	--slate7: #1C2A36;
-	--gray1: #EEE;
-	--gray2: #DDD;
-	--gray3: #CCC;
-	--gray4: #BBB;
-	--gray5: #999;
-	--gray6: #777;
-	--gray7: #555;
-	--blue1: #66C2FF;
-	--blue2: #3FB2FC;
-	--blue3: #039BFF;
-	--blue4: #0A8CF4;
-	--blue5: #117DE9;
-	--blue6: #005BC5;
-	--blue7: #004BA3;
-	--yellow1: #FFE869;
-	--yellow2: #FFE347;
-	--yellow3: #FFDD25;
-	--yellow4: #FFD803;
-	--yellow5: #F1CC00;
-	--yellow6: #E0BD00;
-	--yellow7: #CFAF00;
-	--red1: #EE5C5C;
-	--red2: #F64352;
-	--red3: #FF2445;
-	--red4: #EF1436;
-	--red5: #D30E2D;
-	--red6: #B70C06;
-	--red7: #960A05;
+	--core-primary: #22262F;
+    --core-primary-1: #171A20;
+    --core-primary-2: #373B43;
+    --core-primary-3: #3D4455;
+    --core-primary-4: #5B606F;
+    --core-primary-5: #ACB2C0;
+
+    --accent-primary: #0A8CF4;
+    --accent-primary-1: #087DDB;
+    --accent-primary-2: #398BFF;
+
+    --accent-positive: #2CC13F;
+    --accent-positive-1: #27AE38;
+
+    --accent-aware: #F5A623;
+    --accent-aware-1: #DC951F;
+
+    --accent-negative: #F26666;
+    --accent-negative-1: #DA5C5C;
+
+	--scrollbar-color: var(--core-primary-5);
+
+	--slate1: var(--core-primary-5);
+    --slate2: var(--core-primary-5);
+    --slate3: var(--core-primary-4);
+    --slate4: var(--core-primary-3);
+    --slate5: var(--core-primary-2);
+    --slate6: var(--core-primary);
+    --slate7: var(--core-primary-1);
+    --gray1: #EEE;
+    --gray2: #DDD;
+    --gray3: #CCC;
+    --gray4: #BBB;
+    --gray5: #999;
+    --gray6: #777;
+    --gray7: #555;
+    --blue1: var(--accent-primary-2);
+    --blue2: var(--accent-primary-2);
+    --blue3: var(--accent-primary-2);
+    --blue4: var(--accent-primary);
+    --blue5: var(--accent-primary);
+    --blue6: var(--accent-primary-1);
+    --blue7: var(--accent-primary-1);
+    --yellow1: var(--accent-aware);
+    --yellow2: var(--accent-aware);
+    --yellow3: var(--accent-aware);
+    --yellow4: var(--accent-aware);
+    --yellow5: var(--accent-aware-1);
+    --yellow6: var(--accent-aware-1);
+    --yellow7: var(--accent-aware-1);
+    --red1: var(--accent-negative);
+    --red2: var(--accent-negative);
+    --red3: var(--accent-negative);
+    --red4: var(--accent-negative);
+    --red5: var(--accent-negative-1);
+    --red6: var(--accent-negative-1);
+    --red7: var(--accent-negative-1);
 	--slate: var(--slate4);
 	--gray: var(--gray4);
 	--blue: var(--blue4);
 	--yellow: var(--yellow4);
 	--red: var(--red4);
-	--active-logger-button-background: var(--blue7);
-	--collar-background-color: var(--slate5);
-	--collar-border-color: #dadada;
 
-	--basic-button-background-color: var(--gray3);
+	--collar-background-color: var(--core-primary);
+	--collar-border-color: #dadada;
+	--left-panel-background-color: var(--core-primary-2);
+	--leftNav-background-color: var(--core-primary);
+
+	--active-logger-button-background: var(--accent-primary);
+	--basic-button-background-color: var(--gray1);
+	--basic-button-font-color: black;
 	--button-border-color: var(--active-logger-button-background);
 	--accordion-label-color: var(--collar-background-color);
 	--logger-row-border-color: var(--accordion-label-color);
-	--left-panel-background-color: var(--slate4);
 	--inactive-logger-button-background: var(--basic-button-background-color);
-	--basic-button-font-color: var(--gray7);
-	--toggle-button-font-color: var(--gray4);
-	--toggle-button-background-color: var(--slate6);
+	--toggle-button-font-color: var(--gray1);
+	--toggle-button-background-color: var(--core-primary-4);
 	--accordion-label-wrap-height: 30px;
-	--match-0: var(--slate4);
-	--match-1: var(--blue4);
-	--match-2: var(--yellow4);
-	--match-3: rgb(32, 173, 32);
+
+	--match-0: var(--core-primary-5);
+	--match-1: var(--accent-primary-2);
+	--match-2: var(--accent-aware);
+	--match-3: var(--accent-positive);
 }
 * {
 	box-sizing: border-box;
@@ -86,16 +111,22 @@ title {
 }
 
 .fsbl-logger-button.fsbl-logger-button-negative, .fsbl-logger-button-negative {
-	background-color: var(--red5);
-	color: var(--gray1);
+	background-color: var(--accent-negative);
+	color: white;
+}
+
+.fsbl-logger-button.fsbl-logger-button-negative:hover {
+	background-color: var(--accent-negative-1);
+	color: white;
 }
 
 .fsbl-logger-button {
 	text-align: center;
 	font-size: 1em;
-	margin-right: 2px;
+	margin: 2px;
 	display: inline-block;
-	padding: 2px;
+	padding: 2px 4px;
+	border-radius: 3px;
 	background-color: var(--basic-button-background-color);
 	color: var(--basic-button-font-color);
 	cursor: pointer;
@@ -286,6 +317,13 @@ title {
 	align-items: center;
 }
 
+.fsbl-logger-client-label {
+	white-space: nowrap;
+    overflow: hidden;
+	text-overflow: ellipsis;
+	width: 100%;
+}
+
 .time-elapsed {
 	color: gray;
 	width: 85px;
@@ -301,24 +339,22 @@ title {
 
 .fsbl-logger-button.active {
 	background-color: var(--active-logger-button-background) !important;
-	color: #f1f0f0 !important;
+	color: white !important;
 }
 
 .fsbl-logger-button.active:hover {
-	background-color: white !important;
-	border: 1px solid var(--active-logger-button-background);
-	color: black !important;
+	background-color: var(--accent-primary-1) !important;
+	color: white !important;
 }
 
 .fsbl-logger-button:hover {
-	color: #2a2a2a;
-	background-color: gainsboro;
+	background-color: var(--gray3);
 	transition: .1s ease;
 }
 
 .fsbl-logger-toggle:hover {
 	background: var(--active-logger-button-background);
-	color: var(--gray2);
+	color: white;
 	transition: .1s ease;
 }
 .fsbl-logger-toggle {
@@ -375,12 +411,12 @@ title {
 	margin-top: 0px;
 	margin-bottom: 0px;
 	padding: .5em;
-	color: var(--gray3);
+	color: var(--core-primary-5);
 }
 
 .top-collar .fsbl-logger-button:hover {
-	background-color: var(--gray3);
-	color: var(--gray6);
+	background-color: var(--core-primary-2);
+	color: white;
 }
 
 .fsbl-logger-row-diff-slow {
@@ -488,7 +524,7 @@ input {
 }
 
 .filter {
-	width: 450px;
+	width: 480px;
 }
 
 .checkbox {
@@ -541,19 +577,19 @@ img {
 }
 
 .filter-0 {
-	box-shadow: inset 0px 0px 3px 3px var(--match-0);
+	border: solid 2px var(--match-0);
 }
 
 .filter-1 {
-	box-shadow: inset 0px 0px 3px 3px var(--match-1);
+	border: solid 2px var(--match-1);
 }
 
 .filter-2 {
-	box-shadow: inset 0px 0px 3px 3px var(--match-2);
+	border: solid 2px var(--match-2);
 }
 
 .filter-3 {
-	box-shadow: inset 0px 0px 3px 3px var(--match-3);
+	border: solid 2px var(--match-3);
 }
 
 .match-0 {
@@ -606,9 +642,9 @@ img {
 
 .left-panel input {
 	display: flex;
-	background-color: var(--slate3);
-	color: var(--gray1);
-	caret-color: var(--gray1);
+	background-color: var(--left-panel-background-color);
+	color: var(--core-primary-5);
+	caret-color: var(--core-primary-5);
 	height: 26px;
 	margin-top: 7px;
 }
@@ -617,7 +653,7 @@ img {
 	background-color: var(--left-panel-background-color);
 	height: calc(100vh - 26px);
 	color: var(--gray2);
-	width: 500px;
+	width: 530px;
 	border-right: 1px solid var(--collar-border-color);
 }
 
@@ -627,6 +663,7 @@ img {
 }
 .client-list-accordion {
 	flex: 1;
+	overflow: hidden;
 }
 
 .left-panel-accordion-content.visible {
@@ -680,8 +717,9 @@ img {
 .view-switcher {
 	display: flex;
 	flex-direction: column;
-	width: 35px;
-	background-color: var(--slate7);
+	width: 50px;
+	padding: 0 4px;
+	background-color: var(--leftNav-background-color);
 	color: var(--gray5);
 	align-items: center;
 }
@@ -690,10 +728,19 @@ img {
 	font-size: 14px;
 	margin: 1em 0;
 	cursor: pointer;
+	padding-bottom: 4px;
+	border-bottom: 3px solid transparent;
 }
+
+.view-label:hover {
+	border-bottom: 3px solid var(--core-primary-5);
+	color: white;
+}
+
 .view-label-active {
 	color: var(--gray2);
 	font-weight: bold;
+	border-bottom: 3px solid var(--accent-primary);
 }
 .config-viewer {
 	display: flex;
@@ -740,4 +787,20 @@ img {
 
 .spritesheet-smallicons.icon-mask {
 	-webkit-mask-image: url(smallIcons.png);
+}
+
+::-webkit-scrollbar-track {
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar {
+    width: 9px;
+    background-color: var(--scrollbar-color);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+    cursor: pointer;
+    border-radius: inherit;
+    background-color: rgba(0, 0, 0, 0.2);
 }

@@ -19,12 +19,10 @@ import Minimize from "./components/right/MinimizeButton.jsx";
 import DockingButton from "./components/right/DockingButton.jsx";
 import Maximize from "./components/right/MaximizeButton.jsx";
 import Close from "./components/right/CloseButton.jsx";
-import BringSuiteToFront from "./components/right/BringSuiteToFront.jsx";
 import AlwaysOnTop from "./components/right/AlwaysOnTop.jsx";
 import TabRegion from './components/center/TabRegion'
 import "../../../../assets/css/finsemble.css";
-
-import {AdaptiveLogo} from "./components/assets/AdaptiveLogo.jsx";
+import "../../../../assets/css/_windowTitleBar.css";
 
 /**
  * This is the main window manager component. It's the custom window frame that we add to each window that has useFSBLHeader set to true in its windowDescriptor.
@@ -89,6 +87,7 @@ class WindowTitleBar extends React.Component {
 		this.onTilingStop = this.onTilingStop.bind(this);
 		this.onTilingStart = this.onTilingStart.bind(this);
 		this.resizeDragHandle = this.resizeDragHandle.bind(this);
+		this.onDoubleClick = this.onDoubleClick.bind(this);
 
 	}
 	componentWillMount() {
@@ -174,7 +173,7 @@ class WindowTitleBar extends React.Component {
 	}
 
 	/**
-	 * When tiling stops, we want to find the dragHandler and reshow it
+	 * When tiling stops, we want to find the dragHandler and re-show it
 	 */
 	onTilingStop() {
 		let dragHandle = document.querySelector('.fsbl-drag-handle.hidden');
@@ -183,6 +182,21 @@ class WindowTitleBar extends React.Component {
 		}
 	}
 
+	/**
+	 * Called whenever a tab is dropped on a non tab area.
+	 * It won't be called when dropped on a tab that handles handle the event.
+	 */
+	onDropHandler() {
+		FSBL.Clients.WindowClient.cancelTilingOrTabbing({});
+	}
+	/**
+	 * Called when user double clicks on drag handle
+	 */
+	onDoubleClick() {
+		// Actions.clickMaximize checks the window state
+		// and toggles between maximize and minimize.
+		HeaderActions.clickMaximize();
+	}
 	/**
 	 * The dragger is an absolutely positioned element that is superimposed on the actual area that we'd like to drag.
 	 * This is necessary due to a bug in Chromium. Effectively, we need the dragger to change its left position and width
@@ -204,9 +218,12 @@ class WindowTitleBar extends React.Component {
 		// Create the dragger if it doesn't already exist
 		let dragHandle = document.querySelector(".fsbl-drag-handle");
 		if (!dragHandle) {
+			const currentWindow = fin.desktop.Window.getCurrent();
 			dragHandle = document.createElement("div");
 			dragHandle.className = "fsbl-drag-handle";
-
+			dragHandle.onmousedown = (e) => {currentWindow.startMovingWindow(e)}
+			dragHandle.onmouseup = (e) => {currentWindow.stopMovingWindow(e)}
+			dragHandle.ondblclick = () => { this.onDoubleClick(); }
 			fsblHeader.insertBefore(dragHandle, fsblHeader.firstChild);
 			var self = this;
 			window.addEventListener("resize", function () {
@@ -256,8 +273,9 @@ class WindowTitleBar extends React.Component {
 		//Add an event listener to hide the drag-handler when tiling is started
 		FSBL.Clients.RouterClient.addListener("DockingService.startTilingOrTabbing", this.onTilingStart);
 
-		//Add an event listener to show the drag-handler when tiling is stopped
+		//Add an event listener to show the drag-handler when tiling is stopped or cancelled
 		FSBL.Clients.RouterClient.addListener("DockingService.stopTilingOrTabbing", this.onTilingStop);
+		FSBL.Clients.RouterClient.addListener("DockingService.cancelTilingOrTabbing", this.onTilingStop);
 	}
 
 	/**
@@ -285,18 +303,17 @@ class WindowTitleBar extends React.Component {
 	onTitleChange(err, response) {
 		let { tabs } = this.state;
 		let myIdentifier = FSBL.Clients.WindowClient.getWindowIdentifier();
-		let myIndex = -1;
-		tabs = tabs.filter((el, i) => {
+		
+		tabs = tabs.map((el) => {
 			if (!el.windowName && el.name) el.windowName = el.name;
 			if (!el.name && el.windowName) el.name = el.windowName;
-
-			if (el.name === myIdentifier.windowName) {
-				myIndex = i;
-				return true;
-			}
-			return false;
+			return el;
 		});
-		let myTab = tabs[0] || {};
+
+		const myIndex = tabs.findIndex(el => el.name === myIdentifier.windowName);
+		if (myIndex === -1) return;
+
+		let myTab = tabs[myIndex] || {};
 		myTab.title = response.value;
 		tabs.splice(myIndex, 1, myTab);
 
@@ -378,8 +395,14 @@ class WindowTitleBar extends React.Component {
 		}
 		//See this.allowDragOnCenterRegion for more explanation.
 		return (
-			<div className={headerClasses}>
-			    <AdaptiveLogo />
+			<div className={headerClasses} onDrop={this.onDropHandler.bind(this)}>
+				{/* Only render the left section if something is inside of it. The left section has a right-border that we don't want showing willy-nilly. */}
+				{RENDER_LEFT_SECTION &&
+					<div className="fsbl-header-left">
+						{self.state.showLinkerButton ? <Linker /> : null}
+						{self.state.showShareButton ? <Sharer /> : null}
+					</div>
+				}
 				{/* center section of the titlebar */}
 				<div className={titleWrapperClasses}
 					ref={this.setTabBarRef}>
@@ -396,19 +419,21 @@ class WindowTitleBar extends React.Component {
 							ref="tabArea"
 							onTitleUpdated={this.resizeDragHandle}
 						/>}
+
 				</div>
-					{/* Only render the left section if something is inside of it. The left section has a right-border that we don't want showing willy-nilly. */}
-					{RENDER_LEFT_SECTION &&
-					<div className="fsbl-header-left">
-						{self.state.showLinkerButton ? <Linker /> : null}
-						{self.state.showShareButton ? <Sharer /> : null}
-					</div>
-				}
 				<div className={rightWrapperClasses} ref={this.setToolbarRight}>
-					{this.state.alwaysOnTopButton && showMinimizeIcon ? <AlwaysOnTop /> : null}
-					<BringSuiteToFront />
-					{showDockingIcon ? <DockingButton/> : null}
+					{showDockingIcon ? <DockingButton /> : null}
+					{/** DH 11/22/2019
+					 * Because AlwaysOnTop is a "smart" component that registers
+					 * event handlers, etc., it's not a good idea to constantly mount
+					 * and unmount it. To prevent this, we pass in a "visible" prop that,
+					 * if false, sets "display: none". Ideally, AlwaysOnTop should be a "dumb"
+					 * component, and all the event handlers, etc. should be registered in a parent component,
+					 * as this simplifies the UI and allows React to better optimize under the hood.
+					 */}
+					<AlwaysOnTop visible={this.state.alwaysOnTopButton && showMinimizeIcon}/>
 					{this.state.minButton && showMinimizeIcon ? <Minimize /> : null}
+					{this.state.maxButton ? <Maximize /> : null}
 					{this.state.closeButton ? <Close /> : null}
 				</div>
 			</div>

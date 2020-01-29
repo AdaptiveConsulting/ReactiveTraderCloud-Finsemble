@@ -24,7 +24,6 @@ export class WindowGroup {
 		this.name = params.name;
 		this.groupState = groupStates.NORMAL;
 		this.GROUPSTATES = groupStates;
-		this.isAlwaysOnTop = false;
 		if (params.windows) {
 			this.windows = params.windows;
 		} else {
@@ -48,7 +47,6 @@ export class WindowGroup {
 	addWindow(win) {
 		Logger.system.debug("windowGroup.addWindow", win.name);
 		this.windows[win.name] = win;
-		if (this.isMovable) win.alwaysOnTop(this.isAlwaysOnTop);
 	}
 
 	/**
@@ -111,8 +109,6 @@ export class WindowGroup {
 			Logger.system.debug("windowGroup.addWindows", win.name);
 
 			self.windows[win.name] = win;
-			if (this.isMovable) win.alwaysOnTop(this.isAlwaysOnTop);
-
 		}, this);
 	}
 
@@ -205,39 +201,6 @@ export class WindowGroup {
 			}
 		}
 		asyncForEach(windowList, restoreWindow, cb);
-	}
-
-	// Bring all windows to top. Also sets the state of the group to always on top and new windows added to the group inherit the state of thw window
-	allAlwaysOnTop(alwaysOnTop) {
-		this.isAlwaysOnTop = alwaysOnTop;
-		this.alwaysOnTop({ windowList: Object.keys(this.windows), restoreWindows: true, alwaysOnTop: alwaysOnTop });
-	}
-
-	// Set specific windows to top. Generally should call allAlwaysOnTop
-	alwaysOnTop(params) {
-		if (!params || (params && Object.keys(params).length === 0)) {
-			params = { windowList: Object.keys(this.windows), restoreWindows: true };
-		}
-		let { windowList, componentType } = params;
-		if (windowList && typeof windowList[0] !== "string") {
-			windowList = windowList.map(win => win.windowName);
-		}
-		if (componentType) windowList = this.findAllByComponentType(componentType);
-		var self = this;
-		if (!windowList) windowList = Object.keys(this.windows);
-		for (let w in windowList) {
-			let win;
-			if (Array.isArray(windowList)) w = windowList[w];
-
-			if (!(typeof w === "string" || w instanceof String)) {
-				win = self.getWindow(w.windowName || w.name);
-			} else {
-				win = self.getWindow(w);
-			}
-			if (win) {
-				win.alwaysOnTop(params.alwaysOnTop);
-			}
-		}
 	}
 
 	/**

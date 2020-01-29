@@ -146,9 +146,9 @@ export class CreateSplinterAndInject {
 
 		const promiseResolver = async (resolve) => {
 			var splinteringConfig = this.finsembleConfig.splinteringConfig;
-			let { versionObject } = await util.getOpenfinVersion();
-			//Due to a bug in chromium 53, we can't splinter _and_ spawn child windows (quickly) without crashing render processes. This was fixed somewhere between chromium 53 and 56, and the bug does not present in OF version 8.
-			this.ALLOW_SPLINTERING = versionObject.major > 7 && fin.container !== "Electron" && splinteringConfig.enabled;
+			let { versionObject } = await util.getContainerVersion();
+			//Due to a bug in chromium 53, we can't splinter _and_ spawn child windows (quickly) without crashing render processes. This was fixed somewhere between chromium 53 and 56.
+			this.ALLOW_SPLINTERING = versionObject.major > 7 && System.container !== "Electron" && splinteringConfig.enabled;
 			resolve();
 		};
 		return new Promise(promiseResolver);
@@ -203,10 +203,10 @@ export class CreateSplinterAndInject {
 			// If we don't do this, then chromium creates them as new applications under the sheets but they don't show up in process monitor.
 			// A developer can set isolateCrossDomainComponents=false to override this behavior if for some reason they need to.
 			var dontIsolateCrossDomain = (this.finsembleConfig.isolateCrossDomainComponents === false);
-			if (windowType === "OpenFinWindow" && !dontIsolateCrossDomain) {
+			if (windowType === "WebWindow" && !dontIsolateCrossDomain) {
 				//Push cross domain windows into their own process.
 				if (util.crossDomain(windowDescriptor.url)) {
-					windowType = "OpenFinApplication";
+					windowType = "WebApplication";
 				}
 			}
 
@@ -232,17 +232,17 @@ export class CreateSplinterAndInject {
 					var { data } = await this.spawnExternalWindow(windowDescriptor);
 					MyWrapManager.setUuid(result.windowIdentifier.windowName, data.uuid);
 					break;
-				case "OpenFinWindow":
+				case "WebWindow":
 					if (this.ALLOW_SPLINTERING) {
 						Logger.system.debug("WindowService.doSpawn-time splinter", windowType, windowDescriptor.name);
 						var { data } = await this.splinter(windowDescriptor);
 					} else {
-						var { data } = await this.spawnOpenFinWindow(windowDescriptor);
+						var { data } = await this.spawnWebWindow(windowDescriptor);
 					}
 					MyWrapManager.setUuid(result.windowIdentifier.windowName, data.uuid);
 					break;
-				case "OpenFinApplication":
-					var { data } = await this.spawnOpenfinApplication(windowDescriptor);
+				case "WebApplication":
+					var { data } = await this.spawnWebApplication(windowDescriptor);
 					MyWrapManager.setUuid(result.windowIdentifier.windowName, data.uuid);
 
 					break;
@@ -272,7 +272,7 @@ export class CreateSplinterAndInject {
 				resolve({ err: null, data: fw });
 			}
 			RouterClient.addListener(windowDescriptor.name + ".onSpawned", spawnedListener);
-			RouterClient.query("Assimilation.spawnNative", windowDescriptor, function() { });
+			RouterClient.query("Assimilation.spawnNative", windowDescriptor, function () { });
 		}
 		return new Promise(promiseResolver);
 	}
@@ -295,8 +295,8 @@ export class CreateSplinterAndInject {
 
 	}
 
-	// Spawns an OpenFin window
-	spawnOpenFinWindow(windowDescriptor): Promise<{ err: any, data: any }> {
+	// Spawns an Web window
+	spawnWebWindow(windowDescriptor): Promise<{ err: any, data: any }> {
 		// This will ensure that the window is actually opened before returning. Seemingly an OpenFin bug means we
 		// can't rely on new System.Window callback. We believe this exhibits for cross-domain windows.
 		const promiseResolver = (resolve) => {
@@ -322,9 +322,9 @@ export class CreateSplinterAndInject {
 		return new Promise(promiseResolver);
 	}
 
-	// Spawns a new openfin application.
-	spawnOpenfinApplication(componentConfig): Promise<{ err: any, data: any }> {
-		let descriptor = this.compileOpenfinApplicationDescriptor(componentConfig);
+	// Spawns a new Web application.
+	spawnWebApplication(componentConfig): Promise<{ err: any, data: any }> {
+		let descriptor = this.compileWebApplicationDescriptor(componentConfig);
 		const self = this;
 
 		const promiseResolver = (resolve) => {
@@ -340,23 +340,21 @@ export class CreateSplinterAndInject {
 				resolve({ err: null, data: fw });
 			};
 
-			let finApp = new System.Application(descriptor,
-				function onAppCreated() {
-					RouterClient.addListener(descriptor.name + ".onSpawned", onAppSpawned);
-					/** Because we mess with the `this` of System.Application,
-					 * the compiler gets confused, so we have to cast to the right thing.
-					 */
-					(finApp as fin.OpenFinApplication).run();
-				}, function createAppError(err) {
-					Logger.system.error("Failed to create openfin Application", err);
+			const onAppCreated = () => {
+				RouterClient.addListener(descriptor.name + ".onSpawned", onAppSpawned);
+				finApp.run();
+			}
+			const finApp: any = new System.Application(descriptor,
+				onAppCreated, (err) => {
+					Logger.system.error("Failed to create Web Application", err);
 				});
 		};
 		return new Promise(promiseResolver);
 	}
 
-	compileOpenfinApplicationDescriptor(componentConfig) {
+	compileWebApplicationDescriptor(componentConfig) {
 		componentConfig.uuid = componentConfig.name;
-		// If a window is specified to have windowType 'application' or 'OpenfinApplication', it should be in an isolated
+		// If a window is specified to have windowType 'application' or 'WebApplication', it should be in an isolated
 		// process. This means that it cannot have an affinity. If this line is removed, FEA thinks that the window is both
 		// an application _and_ grouped with other windows in the same affinity. This causes all manner of strange bugs.
 		// For example, if three components that are both windowType 'application', and in an affinity are spawned, and
@@ -459,7 +457,7 @@ export class CreateSplinterAndInject {
 			/** If we're running in Electron, splintering is not efficient, and is replaced instead with affinities, so
 			 * we short circuit splintering here.
 			 */
-			if (fin.container === "Electron") {
+			if (System.container === "Electron") {
 				Logger.system.debug("CreateSplinterAndInject: Detected Electron environment. Short-circuiting splintering.")
 				resolve();
 				return;

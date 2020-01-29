@@ -1,7 +1,7 @@
 
 // Typescript Interface
 
-declare type WindowType = "OpenFinWindow" | "ExternalWindow" | "NativeWindow" | "StackedWindow";
+declare type WindowType = "WebWindow" | "ExternalWindow" | "NativeWindow" | "StackedWindow";
 
 export interface WindowCreationParams {
 	name: string;
