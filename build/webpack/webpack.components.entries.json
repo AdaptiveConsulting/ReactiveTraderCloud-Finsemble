@@ -1,1 +1,10 @@
-{}
+{
+	"currencyChart": {
+		"output": "components/currencyChart/currencyChart",
+		"entry": "./src/components/currencyChart/template-advanced.html"
+	},
+	"test123": {
+		"output": "components/test123/test123",
+		"entry": "./src/components/test123/test123.js"
+	}
+}
