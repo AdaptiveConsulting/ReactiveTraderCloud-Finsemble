@@ -4,7 +4,6 @@ FSBL.addEventListener("onReady", function() {
 			{
 				type: "symbol",
 				handler: function(err, response) {
-					console.log("resp", response);
 					if (!err) {
 						UIContext.changeSymbol({ symbol: response.data["symbol"] });
 					}
