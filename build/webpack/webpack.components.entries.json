@@ -1,1 +1,6 @@
-{}
+{
+	"currencyChart": {
+		"output": "components/currencyChart/currencyChart",
+		"entry": "./src/components/currencyChart/js/chartiq.js"
+	}
+}
