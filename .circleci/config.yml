@@ -29,3 +29,6 @@ jobs:
       - run:
           name: 'Deploy Production Assets'
           command: 'yarn deploy'
+      - run:
+          name: 'Build Production Package'
+          command: 'yarn makeInstaller:prod'
