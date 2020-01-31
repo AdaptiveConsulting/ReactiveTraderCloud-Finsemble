@@ -599,7 +599,7 @@ Object.observe ||
 
 				/** @type {Notifier} */
 				return (
-					(data && data.notifier) || {
+					((data && data.notifier) || {
 						/**
 						 * @method notify
 						 * @see http://arv.github.io/ecmascript-object-observe/#notifierprototype._notify
@@ -650,7 +650,7 @@ Object.observe ||
 								addChangeRecord(object, data, changeRecord)
 							}
 						},
-					}
+					})
 				)
 			},
 			/**

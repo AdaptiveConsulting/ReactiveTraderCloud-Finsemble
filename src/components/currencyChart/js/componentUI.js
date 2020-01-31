@@ -107,7 +107,6 @@
 	/*
 	http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/
 	 */
-
 	;(function() {
 		var attachEvent = document.attachEvent
 		var isIE = navigator.userAgent.match(/Trident/)

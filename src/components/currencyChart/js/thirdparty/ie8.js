@@ -107,7 +107,6 @@
 		Date.now = function() {
 			return new Date().getTime()
 		}
-
 	;(function() {
 		'use strict'
 
