@@ -32,9 +32,13 @@ jobs:
       - run:
           name: 'Build Production Package'
           command: 'yarn makeInstaller:prod'
+      - run:
+          name: 'Zip Docs'
+          command: tar -cvf docs.tar ~/repo/docs
+          shell: bash.exe
       - store_artifacts:
-          path: ~/repo/pkg/
-          destination: /pkg/
+          path: ~/repo/docs.tar
+          destination: docs.tar
       - store_artifacts:
-          path: ~/repo/docs/
-          destination: /docs/
+          path: ~/repo/pkg/ReactiveTraderFinsembleSetup.exe
+          destination: ReactiveTraderFinsembleSetup.exe
