@@ -27,16 +27,14 @@ jobs:
           name: 'Build Production Assets'
           command: 'yarn build:prod'
       - run:
-          name: 'Deploy Production Assets'
+          name: 'Move Production Assets'
           command: 'yarn deploy'
       - run:
           name: 'Build Production Package'
           command: 'yarn makeInstaller:prod'
       - store_artifacts:
           path: ~/repo/pkg/
+          destination: /pkg/
       - store_artifacts:
           path: ~/repo/docs/
-      - store_artifacts:
-          path: ~/repo/finsemble/
-      - store_artifacts:
-          path: ~/repo/dist/
+          destination: /docs/
