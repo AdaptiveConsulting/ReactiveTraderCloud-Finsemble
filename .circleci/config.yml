@@ -34,6 +34,9 @@ jobs:
           command: 'yarn makeInstaller:prod'
       - store_artifacts:
           path: /pkg/
+      - store_artifacts:
           path: /docs/
-          path: /dist/
+      - store_artifacts:
           path: /finsemble/
+      - store_artifacts:
+          path: /dist/
