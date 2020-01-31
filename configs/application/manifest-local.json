@@ -54,23 +54,37 @@
 		"email": "support@weareadaptive.com"
 	},
 	"fileName": "ReacticeTraderFinsemble-Local",
+
 	"appAssets": [
 		{
-			"src": "https://assets.finsemble.com/assimilation/assimilation_3.13.0.0.zip",
-			"version": "3.13.0",
+			"src": "https://assets.finsemble.com/assimilation/assimilation_4.0.0.0.zip",
+			"version": "4.0.0",
 			"alias": "assimilation",
 			"target": "AssimilationMain.exe"
 		}
 	],
 	"finsemble": {
 		"applicationRoot": "http://localhost:3375",
-		"componentRoot": "https://web-demo.adaptivecluster.com",
 		"moduleRoot": "$applicationRoot/finsemble",
+		"componentRoot": "https://web-demo.adaptivecluster.com",
 		"servicesRoot": "$applicationRoot/finsemble/services",
 		"notificationURL": "$applicationRoot/components/notification/notification.html",
+		"bootConfig": {
+			"onErrorMakeSystemManagerVisible": true,
+			"defaults": {
+				"startServiceTimeout": 10000,
+				"startComponentTimeout": 15000,
+				"startTaskTimeout": 10000
+			}
+		},
 		"importConfig": ["$applicationRoot/configs/application/config.json"],
-		"IAC": {
-			"serverAddress": "ws://127.0.0.1:3376"
+		"router": {
+			"crossDomainTransport": "IPCBus",
+			"transportSettings": {
+				"FinsembleTransport": {
+					"serverAddress": "ws://127.0.0.1:3376"
+				}
+			}
 		}
 	}
 }

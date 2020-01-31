@@ -55,8 +55,8 @@
 	"fileName": "ReacticeTraderFinsemble-Prod",
 	"appAssets": [
 		{
-			"src": "https://files.chartiq.com/finsemble/Assimilation_3_7_0_pre1.zip",
-			"version": "3.7.0-pre1",
+			"src": "https://assets.finsemble.com/assimilation/assimilation_4.0.0.0.zip",
+			"version": "4.0.0",
 			"alias": "assimilation",
 			"target": "AssimilationMain.exe"
 		}
@@ -64,12 +64,25 @@
 	"finsemble": {
 		"applicationRoot": "https://adaptiveconsulting.github.io/ReactiveTraderCloud-Finsemble",
 		"moduleRoot": "$applicationRoot/finsemble",
-		"servicesRoot": "$applicationRoot/finsemble/services",
 		"componentRoot": "https://web-demo.adaptivecluster.com",
+		"servicesRoot": "$applicationRoot/finsemble/services",
 		"notificationURL": "$applicationRoot/components/notification/notification.html",
+		"bootConfig": {
+			"onErrorMakeSystemManagerVisible": true,
+			"defaults": {
+				"startServiceTimeout": 10000,
+				"startComponentTimeout": 15000,
+				"startTaskTimeout": 10000
+			}
+		},
 		"importConfig": ["$applicationRoot/configs/application/config.json"],
-		"IAC": {
-			"serverAddress": "ws://127.0.0.1:3376"
+		"router": {
+			"crossDomainTransport": "IPCBus",
+			"transportSettings": {
+				"FinsembleTransport": {
+					"serverAddress": "ws://127.0.0.1:3376"
+				}
+			}
 		}
 	}
 }

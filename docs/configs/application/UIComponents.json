@@ -732,6 +732,34 @@
 				}
 			}
 		},
+		"Process Monitor": {
+			"window": {
+				"url": "$applicationRoot/components/processMonitor/processMonitor.html",
+				"affinity": "workspaceComponents",
+				"width": 600,
+				"height": 700
+			},
+			"component": {
+				"category": "system"
+			},
+			"foreign": {
+				"services": {
+					"windowService": {
+						"allowAutoArrange": true
+					}
+				},
+				"components": {
+					"App Launcher": {
+						"launchableByUser": true
+					},
+					"Window Manager": {
+						"FSBLHeader": true,
+						"persistWindowState": true,
+						"title": "Process Monitor"
+					}
+				}
+			}
+		},
 		"App Catalog": {
 			"window": {
 				"url": "$applicationRoot/components/appCatalog/appCatalog.html",
