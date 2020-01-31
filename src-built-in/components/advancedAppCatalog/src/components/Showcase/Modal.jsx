@@ -1,8 +1,8 @@
 /*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-import React from "react";
+ * Copyright 2017 by ChartIQ, Inc.
+ * All rights reserved.
+ */
+import React from 'react'
 
 /**
  * The image modal (light box)
@@ -11,20 +11,18 @@ import React from "react";
  * @param {object} props.children The inner contents (elements) of the array
  */
 const Modal = props => {
-	let modalClassName = "modal";
+	let modalClassName = 'modal'
 	if (props.open) {
-		modalClassName += " open";
+		modalClassName += ' open'
 	} else {
-		modalClassName += " closed";
+		modalClassName += ' closed'
 	}
 
 	return (
 		<div className={modalClassName} onClick={props.closeModal}>
-			<div className="modal-main">
-				{props.children}
-			</div>
+			<div className="modal-main">{props.children}</div>
 		</div>
-	);
+	)
 }
 
-export default Modal;
+export default Modal

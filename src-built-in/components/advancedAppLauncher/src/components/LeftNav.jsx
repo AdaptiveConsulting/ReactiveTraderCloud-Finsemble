@@ -1,22 +1,18 @@
-import React from "react";
-import FoldersList from "./FoldersList";
-import LeftNavBottomLinks from "./LeftNavBottomLinks";
-import { getStore } from "../stores/LauncherStore";
-import storeActions from "../stores/StoreActions";
-
-
-
+import React from 'react'
+import FoldersList from './FoldersList'
+import LeftNavBottomLinks from './LeftNavBottomLinks'
+import { getStore } from '../stores/LauncherStore'
+import storeActions from '../stores/StoreActions'
 
 const bottomEntries = [
-	"New folder",
+	'New folder',
 	//'New dashboard',
-	"App catalog"
-];
+	'App catalog',
+]
 
 export default class LeftNav extends React.Component {
-
 	constructor(props) {
-		super(props);
+		super(props)
 	}
 
 	render() {
@@ -24,8 +20,7 @@ export default class LeftNav extends React.Component {
 			<div className="complex-menu-left-nav">
 				<FoldersList />
 				<LeftNavBottomLinks {...this.props} />
-			</div >
-
-		);
+			</div>
+		)
 	}
 }

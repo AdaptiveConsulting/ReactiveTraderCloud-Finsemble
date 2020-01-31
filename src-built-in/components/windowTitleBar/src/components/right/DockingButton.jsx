@@ -2,30 +2,27 @@
  * Copyright 2017 by ChartIQ, Inc.
  * All rights reserved.
  */
-import React from "react";
-import { FinsembleHoverDetector } from "@chartiq/finsemble-react-controls";
-import {
-	getStore,
-	Actions as HeaderActions
-} from "../../stores/windowTitleBarStore";
-let windowTitleBarStore;
-import { ReactComponent as DockedButtonIcon } from "../../../../../../assets/img/titlebar/dockedIcon.svg";
-import { ReactComponent as UndockedButtonIcon } from "../../../../../../assets/img/titlebar/undockedIcon.svg";
+import React from 'react'
+import { FinsembleHoverDetector } from '@chartiq/finsemble-react-controls'
+import { getStore, Actions as HeaderActions } from '../../stores/windowTitleBarStore'
+let windowTitleBarStore
+import { ReactComponent as DockedButtonIcon } from '../../../../../../assets/img/titlebar/dockedIcon.svg'
+import { ReactComponent as UndockedButtonIcon } from '../../../../../../assets/img/titlebar/undockedIcon.svg'
 
 export default class DockingButton extends React.Component {
 	constructor(props) {
-		super(props);
-		this.bindEventHandlers();
+		super(props)
+		this.bindEventHandlers()
 		/**
 		 * We assign in the constructor instead of via a require at the top of the file because the store is initialized asynchronously.
 		 */
-		windowTitleBarStore = getStore();
+		windowTitleBarStore = getStore()
 		this.state = {
 			showDockingTooltip: false,
 			dockingEnabled: false,
-			dockingIcon: windowTitleBarStore.getValue({ field: "Main.dockingIcon" }),
-			hoverState: "false"
-		};
+			dockingIcon: windowTitleBarStore.getValue({ field: 'Main.dockingIcon' }),
+			hoverState: 'false',
+		}
 	}
 
 	/**
@@ -34,9 +31,9 @@ export default class DockingButton extends React.Component {
 	 * @memberof DockingButton
 	 */
 	bindEventHandlers() {
-		this.onClick = this.onClick.bind(this);
-		this.onStoreChanged = this.onStoreChanged.bind(this);
-		this.hoverAction = this.hoverAction.bind(this);
+		this.onClick = this.onClick.bind(this)
+		this.onStoreChanged = this.onStoreChanged.bind(this)
+		this.hoverAction = this.hoverAction.bind(this)
 	}
 
 	/**
@@ -45,9 +42,7 @@ export default class DockingButton extends React.Component {
 	 * @memberof DockingButton
 	 */
 	componentWillMount() {
-		windowTitleBarStore.addListeners([
-			{ field: "Main.dockingIcon", listener: this.onStoreChanged }
-		]);
+		windowTitleBarStore.addListeners([{ field: 'Main.dockingIcon', listener: this.onStoreChanged }])
 	}
 
 	/**
@@ -57,8 +52,8 @@ export default class DockingButton extends React.Component {
 	 */
 	componentWillUnmount() {
 		windowTitleBarStore.removeListeners([
-			{ field: "Main.dockingIcon", listener: this.onStoreChanged }
-		]);
+			{ field: 'Main.dockingIcon', listener: this.onStoreChanged },
+		])
 	}
 
 	/**
@@ -69,7 +64,7 @@ export default class DockingButton extends React.Component {
 	 * @memberof DockingButton
 	 */
 	onStoreChanged(err, response) {
-		this.setState({ dockingIcon: response.value });
+		this.setState({ dockingIcon: response.value })
 	}
 
 	/**
@@ -79,7 +74,7 @@ export default class DockingButton extends React.Component {
 	 * @memberof LinkerButton
 	 */
 	hoverAction(newHoverState) {
-		this.setState({ hoverState: newHoverState });
+		this.setState({ hoverState: newHoverState })
 	}
 
 	/**
@@ -88,14 +83,14 @@ export default class DockingButton extends React.Component {
 	 * @memberof DockingButton
 	 */
 	onClick(e) {
-		if (this.state.dockingIcon === "ejector" && e.shiftKey) {
+		if (this.state.dockingIcon === 'ejector' && e.shiftKey) {
 			return HeaderActions.hyperFocus({
 				linkerChannel: null,
 				includeDockedGroups: true,
-				includeAppSuites: false
-			});
+				includeAppSuites: false,
+			})
 		} else {
-			HeaderActions.toggleGroup();
+			HeaderActions.toggleGroup()
 		}
 	}
 
@@ -106,16 +101,15 @@ export default class DockingButton extends React.Component {
 	 * @memberof DockingButton
 	 */
 	render() {
-		let iconClass = "ff-";
-		let wrapClasses = "fsbl-icon fsbl-icon-bordered docking-control";
+		let iconClass = 'ff-'
+		let wrapClasses = 'fsbl-icon fsbl-icon-bordered docking-control'
 
-		const { shade } = this.props;
-		iconClass += this.state.dockingIcon === "ejector" ? "attached" : "detached";
-		let toolTip =
-			this.state.dockingIcon === "ejector" ? "Detach Window" : "Attach Windows";
+		const { shade } = this.props
+		iconClass += this.state.dockingIcon === 'ejector' ? 'attached' : 'detached'
+		let toolTip = this.state.dockingIcon === 'ejector' ? 'Detach Window' : 'Attach Windows'
 
-		if (iconClass === "ff-attached") {
-			wrapClasses += " fsbl-icon-highlighted";
+		if (iconClass === 'ff-attached') {
+			wrapClasses += ' fsbl-icon-highlighted'
 		}
 
 		return (
@@ -127,12 +121,8 @@ export default class DockingButton extends React.Component {
 				onClick={this.onClick}
 			>
 				<FinsembleHoverDetector edge="top" hoverAction={this.hoverAction} />
-				{this.state.dockingIcon === "ejector" ? (
-					<DockedButtonIcon />
-				) : (
-					<UndockedButtonIcon />
-				)}
+				{this.state.dockingIcon === 'ejector' ? <DockedButtonIcon /> : <UndockedButtonIcon />}
 			</div>
-		);
+		)
 	}
 }

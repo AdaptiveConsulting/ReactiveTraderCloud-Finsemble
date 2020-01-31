@@ -1,31 +1,39 @@
 /*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
+ * Copyright 2017 by ChartIQ, Inc.
+ * All rights reserved.
  * This is the list of actions the user can take; it's placed above the list of workspaces..
  */
-import React from "react";
-import { FinsembleMenuItem, FinsembleMenuItemLabel, FinsembleMenuSection } from "@chartiq/finsemble-react-controls";
-import { getStore, Actions as WorkspaceManagementMenuActions } from "../stores/workspaceManagementMenuStore";
+import React from 'react'
+import {
+	FinsembleMenuItem,
+	FinsembleMenuItemLabel,
+	FinsembleMenuSection,
+} from '@chartiq/finsemble-react-controls'
+import {
+	getStore,
+	Actions as WorkspaceManagementMenuActions,
+} from '../stores/workspaceManagementMenuStore'
 
 export default class WorkspaceActions extends React.Component {
 	constructor() {
-		super();
+		super()
 		this.userActions = [
 			{
 				method: this.createWorkspace,
-				label: "New Workspace",
-				id: "NewWorkspace"
+				label: 'New Workspace',
+				id: 'NewWorkspace',
 			},
 			{
 				method: this.saveWorkspace,
-				label: "Save",
-				id: "SaveWorkspace"
+				label: 'Save',
+				id: 'SaveWorkspace',
 			},
 			{
 				method: this.saveWorkspaceAs,
-				label: "Save As",
-				id: "SaveWorkspaceAs"
-			}];
+				label: 'Save As',
+				id: 'SaveWorkspaceAs',
+			},
+		]
 	}
 
 	/**
@@ -34,8 +42,8 @@ export default class WorkspaceActions extends React.Component {
 	 * @memberof WorkspaceActions
 	 */
 	createWorkspace() {
-		WorkspaceManagementMenuActions.blurWindow();
-		WorkspaceManagementMenuActions.newWorkspace();
+		WorkspaceManagementMenuActions.blurWindow()
+		WorkspaceManagementMenuActions.newWorkspace()
 	}
 
 	/**
@@ -44,8 +52,8 @@ export default class WorkspaceActions extends React.Component {
 	 * @memberof WorkspaceActions
 	 */
 	saveWorkspace() {
-		WorkspaceManagementMenuActions.blurWindow();
-		WorkspaceManagementMenuActions.saveWorkspace();
+		WorkspaceManagementMenuActions.blurWindow()
+		WorkspaceManagementMenuActions.saveWorkspace()
 	}
 
 	/**
@@ -54,13 +62,12 @@ export default class WorkspaceActions extends React.Component {
 	 * @memberof WorkspaceActions
 	 */
 	saveWorkspaceAs() {
-		WorkspaceManagementMenuActions.blurWindow();
-		WorkspaceManagementMenuActions.saveWorkspaceAs();
+		WorkspaceManagementMenuActions.blurWindow()
+		WorkspaceManagementMenuActions.saveWorkspaceAs()
 	}
 	showPreferences() {
-		WorkspaceManagementMenuActions.blurWindow();
-		WorkspaceManagementMenuActions.showPreferences();
-
+		WorkspaceManagementMenuActions.blurWindow()
+		WorkspaceManagementMenuActions.showPreferences()
 	}
 	/**
 	 * Render method.
@@ -72,15 +79,22 @@ export default class WorkspaceActions extends React.Component {
 		/**
 		 * Iterates through the list of actions defined in the constructor, creating an `li` for each.
 		 */
-		var workspaceActions = this.userActions.map(function (action, index) {
-			return (<FinsembleMenuItem key={index}>
-				<FinsembleMenuItemLabel onClick={action.method} className='menu-item-fullwidth workspace-action'>
-					<i className={action.iconClass}></i> {action.label}
-				</FinsembleMenuItemLabel>
-			</FinsembleMenuItem>);
-		});
-		return (<FinsembleMenuSection className='menu-secondary workspace-actions'>
-			{workspaceActions}
-		</FinsembleMenuSection>);
+		var workspaceActions = this.userActions.map(function(action, index) {
+			return (
+				<FinsembleMenuItem key={index}>
+					<FinsembleMenuItemLabel
+						onClick={action.method}
+						className="menu-item-fullwidth workspace-action"
+					>
+						<i className={action.iconClass}></i> {action.label}
+					</FinsembleMenuItemLabel>
+				</FinsembleMenuItem>
+			)
+		})
+		return (
+			<FinsembleMenuSection className="menu-secondary workspace-actions">
+				{workspaceActions}
+			</FinsembleMenuSection>
+		)
 	}
 }

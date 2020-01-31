@@ -1,44 +1,41 @@
-
 export default {
 	Main: {
-		windowTitle: "",
+		windowTitle: '',
 		showDockingTooltip: false,
 		dockingIcon: false,
 		dockingEnabled: false,
 		mains2: {
 			main3: {
-				main4: {
-
-				}
-			}
-		}
+				main4: {},
+			},
+		},
 	},
 	Sharer: {
 		emitterEnabled: false,
 		receiverEnabled: false,
-		receiverHandler: false
+		receiverHandler: false,
 	},
 	Linker: {
 		channels: {},
 		allChannels: {},
-		showLinkerButton: false
+		showLinkerButton: false,
 	},
 	Close: {
-		hide: false
+		hide: false,
 	},
 	Maximize: {
 		maximized: false,
-		hide: false
+		hide: false,
 	},
 	Minimize: {
-		hide: false
+		hide: false,
 	},
 	Ejector: {
-		enabled: false
+		enabled: false,
 	},
 	isSnapped: false,
 	isGrouped: false,
 	isTopRight: false,
 	tabs: [],
-	activeTab: {}
-};
+	activeTab: {},
+}

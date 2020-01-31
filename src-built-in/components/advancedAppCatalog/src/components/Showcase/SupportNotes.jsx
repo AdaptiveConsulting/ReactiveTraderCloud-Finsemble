@@ -1,11 +1,11 @@
 /*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-import React from "react";
+ * Copyright 2017 by ChartIQ, Inc.
+ * All rights reserved.
+ */
+import React from 'react'
 
 //data
-import storeActions from '../../stores/storeActions';
+import storeActions from '../../stores/storeActions'
 
 /**
  * AppShowcase support notes section.
@@ -18,26 +18,28 @@ const SupportNotes = props => {
 		<div className="dev-notes support">
 			<div className="support-content">
 				<span className="showcase-label">Support</span>
-				<div className="support">
-					{props.email}
-				</div>
+				<div className="support">{props.email}</div>
 			</div>
 			<div className="tags-content">
 				<span className="showcase-label">Tags</span>
 				<div className="tags">
 					{props.tags.map((tag, i) => {
-						let tagName = tag[0].toUpperCase() + tag.substring(1);
+						let tagName = tag[0].toUpperCase() + tag.substring(1)
 
 						return (
-							<div key={"showcase-tag-label-" + i} className="tag-label" onClick={storeActions.addTag.bind(this, tag)}>
+							<div
+								key={'showcase-tag-label-' + i}
+								className="tag-label"
+								onClick={storeActions.addTag.bind(this, tag)}
+							>
 								<span className="label-content">{tagName}</span>
 							</div>
-						);
+						)
 					})}
 				</div>
 			</div>
 		</div>
-	);
+	)
 }
 
-export default SupportNotes;
+export default SupportNotes

@@ -1,23 +1,23 @@
 /*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-import React from "react";
-import { FinsembleHoverDetector } from "@chartiq/finsemble-react-controls";
-import { getStore, Actions as HeaderActions } from "../../stores/windowTitleBarStore";
-let windowTitleBarStore;
+ * Copyright 2017 by ChartIQ, Inc.
+ * All rights reserved.
+ */
+import React from 'react'
+import { FinsembleHoverDetector } from '@chartiq/finsemble-react-controls'
+import { getStore, Actions as HeaderActions } from '../../stores/windowTitleBarStore'
+let windowTitleBarStore
 /**
  * Close button, located on the far right of the window Manager.
  */
 export default class CloseButton extends React.Component {
 	constructor(props) {
-		super(props);
-		this.bindCorrectContext();
+		super(props)
+		this.bindCorrectContext()
 		/**
 		 * We assign in the constructor instead of via a require at the top of the file because the store is initialized asynchronously.
 		 */
-		windowTitleBarStore = getStore();
-		this.state = { hoverState: "false" };
+		windowTitleBarStore = getStore()
+		this.state = { hoverState: 'false' }
 	}
 	/**
 	 * This is necessary to make sure that the `this` inside of the callback is correct.
@@ -25,7 +25,7 @@ export default class CloseButton extends React.Component {
 	 * @memberof CloseButton
 	 */
 	bindCorrectContext() {
-		this.hoverAction = this.hoverAction.bind(this);
+		this.hoverAction = this.hoverAction.bind(this)
 	}
 	/**
 	 * Listener invoked when the user clicks the close button.
@@ -33,16 +33,16 @@ export default class CloseButton extends React.Component {
 	 * @memberof CloseButton
 	 */
 	onClick() {
-		HeaderActions.clickClose();
+		HeaderActions.clickClose()
 	}
 	/**
-     * When your mouse enters/leaves the hoverDetector, this function is invoked.
-     *
-     * @param {any} newHoverState
-     * @memberof LinkerButton
-     */
+	 * When your mouse enters/leaves the hoverDetector, this function is invoked.
+	 *
+	 * @param {any} newHoverState
+	 * @memberof LinkerButton
+	 */
 	hoverAction(newHoverState) {
-		this.setState({ hoverState: newHoverState });
+		this.setState({ hoverState: newHoverState })
 	}
 	/**
 	 * Render method
@@ -51,9 +51,17 @@ export default class CloseButton extends React.Component {
 	 * @memberof CloseButton
 	 */
 	render() {
-		return (<div onClick={this.onClick} className="fsbl-icon fsbl-close" data-hover={this.state.hoverState} title="Close" id="fsbl-window-close">
-			<FinsembleHoverDetector edge="top right" hoverAction={this.hoverAction} />
-			<i className="ff-close"></i>
-		</div>);
+		return (
+			<div
+				onClick={this.onClick}
+				className="fsbl-icon fsbl-close"
+				data-hover={this.state.hoverState}
+				title="Close"
+				id="fsbl-window-close"
+			>
+				<FinsembleHoverDetector edge="top right" hoverAction={this.hoverAction} />
+				<i className="ff-close"></i>
+			</div>
+		)
 	}
 }

@@ -1,8 +1,8 @@
 /*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-import React from "react";
+ * Copyright 2017 by ChartIQ, Inc.
+ * All rights reserved.
+ */
+import React from 'react'
 
 /**
  * Empty Results to show on the search page when filters/search text apply to zero results
@@ -10,12 +10,10 @@ import React from "react";
  */
 const EmptyResults = props => {
 	return (
-		<div className='app-results'>
-			<h3 className='app-results-no-results'>
-				No results found. Please try again.
-			</h3>
+		<div className="app-results">
+			<h3 className="app-results-no-results">No results found. Please try again.</h3>
 		</div>
-	);
+	)
 }
 
-export default EmptyResults;
+export default EmptyResults

@@ -1,11 +1,11 @@
 /*!
-* Copyright 2018 by ChartIQ, Inc.
-* All rights reserved.
-*/
-import AppDirectory from "../modules/AppDirectory";
-import FDC3 from "../modules/FDC3";
-import { getStore } from "./appStore";
-import * as path from "path";
+ * Copyright 2018 by ChartIQ, Inc.
+ * All rights reserved.
+ */
+import AppDirectory from '../modules/AppDirectory'
+import FDC3 from '../modules/FDC3'
+import { getStore } from './appStore'
+import * as path from 'path'
 export default {
 	initialize,
 	getApps,
@@ -31,70 +31,75 @@ export default {
 	setForceSearch,
 	getSearchValue,
 	getForceSearch,
-	goHome
-};
+	goHome,
+}
 
-let ToolbarStore;
-const data = {};
-let FDC3Client;
-let appd;
+let ToolbarStore
+const data = {}
+let FDC3Client
+let appd
 
 function initialize(done = Function.prototype) {
-	FSBL.Clients.ConfigClient.getValue({ field: "finsemble.appDirectoryEndpoint" }, function (err, appDirectoryEndpoint) {
-		FDC3Client = new FDC3({ url: appDirectoryEndpoint });
-		appd = new AppDirectory(FDC3Client);
+	FSBL.Clients.ConfigClient.getValue({ field: 'finsemble.appDirectoryEndpoint' }, function(
+		err,
+		appDirectoryEndpoint,
+	) {
+		FDC3Client = new FDC3({ url: appDirectoryEndpoint })
+		appd = new AppDirectory(FDC3Client)
 
+		const store = getStore()
+		data.apps = store.values.apps
+		store.getValue({ field: 'appFolders.folders' }, (err, folders) => {
+			data.folders = folders
+			store.addListener({ field: 'appFolders.folders' }, (err, dt) => (data.folders = dt.value))
+		})
+		store.getValue({ field: 'activeFolder' }, (err, active) => {
+			data.activeFolder = active
+			store.addListener({ field: 'activeFolder' }, (err, dt) => (data.activeFolder = dt.value))
+		})
+		store.getValue({ field: 'defaultFolder' }, (err, folder) => {
+			data.defaultFolder = folder
+		})
+		data.installed = store.values.appDefinitions
+		data.tags = store.values.tags
+		data.filteredApps = store.values.filteredApps
+		data.activeTags = store.values.activeTags
+		data.activeApp = store.values.activeApp
+		data.searchText = store.values.searchText
+		data.forceSearch = store.values.forceSearch
+		data.ADVANCED_APP_LAUNCHER = store.values.defaultFolder
 
-		const store = getStore();
-		data.apps = store.values.apps;
-		store.getValue({ field: "appFolders.folders" }, (err, folders) => {
-			data.folders = folders;
-			store.addListener({ field: "appFolders.folders" }, (err, dt) => data.folders = dt.value);
-		});
-		store.getValue({ field: "activeFolder" }, (err, active) => {
-			data.activeFolder = active;
-			store.addListener({ field: "activeFolder" }, (err, dt) => data.activeFolder = dt.value);
-		});
-		store.getValue({ field: "defaultFolder" }, (err, folder) => {
-			data.defaultFolder = folder;
-		});
-		data.installed = store.values.appDefinitions;
-		data.tags = store.values.tags;
-		data.filteredApps = store.values.filteredApps;
-		data.activeTags = store.values.activeTags;
-		data.activeApp = store.values.activeApp;
-		data.searchText = store.values.searchText;
-		data.forceSearch = store.values.forceSearch;
-		data.ADVANCED_APP_LAUNCHER = store.values.defaultFolder;
-
-		store.addListener({ field: "apps" }, (err, dt) => data.apps = dt.value);
-		store.addListener({ field: "appDefinitions" }, (err, dt) => data.installed = dt.value);
-		store.addListener({ field: "tags" }, (err, dt) => data.tags = dt.value);
-		store.addListener({ field: "activeApp" }, (err, dt) => data.activeApp = dt.value);
-		store.addListener({ field: "activeTags" }, (err, dt) => data.activeTags = dt.value);
-		store.addListener({ field: "filteredApps" }, (err, dt) => data.filteredApps = dt.value);
-		store.addListener({ field: "searchText" }, (err, dt) => data.searchText = dt.value);
-		store.addListener({ field: "forceSearch" }, (err, dt) => data.forceSearch = dt.value);
-		getToolbarStore(done);
-	});
+		store.addListener({ field: 'apps' }, (err, dt) => (data.apps = dt.value))
+		store.addListener({ field: 'appDefinitions' }, (err, dt) => (data.installed = dt.value))
+		store.addListener({ field: 'tags' }, (err, dt) => (data.tags = dt.value))
+		store.addListener({ field: 'activeApp' }, (err, dt) => (data.activeApp = dt.value))
+		store.addListener({ field: 'activeTags' }, (err, dt) => (data.activeTags = dt.value))
+		store.addListener({ field: 'filteredApps' }, (err, dt) => (data.filteredApps = dt.value))
+		store.addListener({ field: 'searchText' }, (err, dt) => (data.searchText = dt.value))
+		store.addListener({ field: 'forceSearch' }, (err, dt) => (data.forceSearch = dt.value))
+		getToolbarStore(done)
+	})
 }
 
 function getToolbarStore(done) {
-	FSBL.Clients.DistributedStoreClient.getStore({ global: true, store: "Finsemble-Toolbar-Store" }, (err, toolbarStore) => {
-		ToolbarStore = toolbarStore;
-		done();
-	});
+	FSBL.Clients.DistributedStoreClient.getStore(
+		{ global: true, store: 'Finsemble-Toolbar-Store' },
+		(err, toolbarStore) => {
+			ToolbarStore = toolbarStore
+			done()
+		},
+	)
 }
 
 /**
  * Return to the App Catalog home page
  */
 function goHome() {
-	setForceSearch(false);
-	clearFilteredApps();
-	clearApp();
-	clearTags();
-	clearSearchText();	
+	setForceSearch(false)
+	clearFilteredApps()
+	clearApp()
+	clearTags()
+	clearSearchText()
 }
 
 /**
@@ -102,10 +107,12 @@ function goHome() {
  * @param {string} tag The name of the tag
  */
 function _addActiveTag(tag) {
-	let activeTags = data.activeTags;
-	if (!activeTags.includes(tag)) {activeTags.push(tag);}
+	let activeTags = data.activeTags
+	if (!activeTags.includes(tag)) {
+		activeTags.push(tag)
+	}
 
-	getStore().setValue({ field: "activeTags", value: activeTags }, filterApps());
+	getStore().setValue({ field: 'activeTags', value: activeTags }, filterApps())
 }
 
 /**
@@ -113,39 +120,37 @@ function _addActiveTag(tag) {
  * @param {string} tag The name of the tag
  */
 function _removeActiveTag(tag) {
-	data.activeTags = data.activeTags.filter((currentTag) => {
-		return currentTag !== tag;
-	});
+	data.activeTags = data.activeTags.filter(currentTag => {
+		return currentTag !== tag
+	})
 
-	getStore().setValue({ field: "activeTags", value: data.activeTags	});
-	filterApps();
+	getStore().setValue({ field: 'activeTags', value: data.activeTags })
+	filterApps()
 }
 
 /**
  * Clears all active tags
  */
 function _clearActiveTags() {
-	getStore().setValue({ field: "activeTags", value: [] });	
+	getStore().setValue({ field: 'activeTags', value: [] })
 }
-
 
 /**
  * Send the search text and tags to the appd server and get a list of apps
  */
 function filterApps() {
-	let { activeTags, searchText } = data;
-	
+	let { activeTags, searchText } = data
 
-	if (activeTags.length === 0 && searchText === "") {
-		goHome();
+	if (activeTags.length === 0 && searchText === '') {
+		goHome()
 	} else {
 		appd.search({ text: searchText, tags: activeTags }, (err, data) => {
 			if (err) {
-				Logger.system.error(`FDC3 App search failed!: ${err}`);
-				return;
+				Logger.system.error(`FDC3 App search failed!: ${err}`)
+				return
 			}
-			getStore().setValue({ field: "filteredApps", value: data });
-		});
+			getStore().setValue({ field: 'filteredApps', value: data })
+		})
 	}
 }
 
@@ -156,12 +161,12 @@ async function getApps() {
 	let apps = await appd.getAll((err, apps) => {
 		if (!err) {
 			getStore().setValue({
-				field: "apps",
-				value: apps
-			});
+				field: 'apps',
+				value: apps,
+			})
 		}
-	});
-	return apps;
+	})
+	return apps
 }
 
 /**
@@ -170,11 +175,11 @@ async function getApps() {
 async function getTags() {
 	let tags = await appd.getTags((err, tags) => {
 		getStore().setValue({
-			field: "tags",
-			value: tags
-		});
-	});
-	return tags;
+			field: 'tags',
+			value: tags,
+		})
+	})
+	return tags
 }
 
 /**
@@ -182,91 +187,98 @@ async function getTags() {
  * @param {string} name The name of the app
  */
 async function addApp(id, cb = Function.prototype) {
-	let { activeApp, installed, apps } = data;
-	const appID = id;
+	let { activeApp, installed, apps } = data
+	const appID = id
 	let app = apps.find(app => {
-		return app.appId === appID;
-	});
-	const folder = data.activeFolder;
+		return app.appId === appID
+	})
+	const folder = data.activeFolder
 
 	if (app === undefined) {
-		console.warn("App not found.");
-		return;
+		console.warn('App not found.')
+		return
 	}
-
 
 	installed[appID] = {
 		appID,
 		tags: app.tags,
 		name: app.title || app.name,
 		url: app.url,
-		type: "component",
+		type: 'component',
 		component: {
-			type: app.title || app.name
+			type: app.title || app.name,
 		},
 		window: {
-			windowType: app.windowType || "WebWindow"
+			windowType: app.windowType || 'WebWindow',
 		},
 		foreign: {
 			components: {
-				"App Launcher": {
-					"launchableByUser": true
+				'App Launcher': {
+					launchableByUser: true,
 				},
-				"Window Manager": {
-					title: app.title || app.name
-				}
-			}
-		}
-	};
+				'Window Manager': {
+					title: app.title || app.name,
+				},
+			},
+		},
+	}
 
-	const appConfig = installed[appID];
-	let applicationRoot = "";
-	if (appConfig.url && appConfig.url.includes("$applicationRoot")) {
+	const appConfig = installed[appID]
+	let applicationRoot = ''
+	if (appConfig.url && appConfig.url.includes('$applicationRoot')) {
 		//we may use this if we put macros in the stored URLs on the FDC3 server. commented out for now.
-		applicationRoot = (await FSBL.Clients.ConfigClient.getValue({ field: "finsemble.applicationRoot" })).data;
-		appConfig.url = appConfig.url.replace("$applicationRoot", "");
-		appConfig.url = applicationRoot + appConfig.url;
-		appConfig.window.url = appConfig.url;
+		applicationRoot = (
+			await FSBL.Clients.ConfigClient.getValue({ field: 'finsemble.applicationRoot' })
+		).data
+		appConfig.url = appConfig.url.replace('$applicationRoot', '')
+		appConfig.url = applicationRoot + appConfig.url
+		appConfig.window.url = appConfig.url
 	}
 
-	if (typeof appConfig.url === "undefined") {
+	if (typeof appConfig.url === 'undefined') {
 		//If there is no url, it will be set to the 'unknown component' inside of the Launcher.
-		delete appConfig.url;
-		delete appConfig.window.url;
+		delete appConfig.url
+		delete appConfig.window.url
 	}
 
-	if (typeof app.manifest !== "object") {
-		appConfig.manifest = { ...appConfig };
+	if (typeof app.manifest !== 'object') {
+		appConfig.manifest = { ...appConfig }
 	}
 
 	if (app.friendlyName) {
-		appConfig.displayName = app.friendlyName;
+		appConfig.displayName = app.friendlyName
 	}
 
-	let ADVANCED_APP_LAUNCHER = data.defaultFolder;
-	let folders = data.folders;
+	let ADVANCED_APP_LAUNCHER = data.defaultFolder
+	let folders = data.folders
 
 	data.folders[ADVANCED_APP_LAUNCHER].apps[appID] = appConfig
 	data.folders[folder].apps[appID] = appConfig
-	FSBL.Clients.LauncherClient.registerComponent({
-		componentType: appConfig.name,
-		manifest: appConfig.manifest
-	}, (err, response) => {
-		getStore().setValues([
-			{
-				field: "activeApp",
-				value: activeApp
-			},
-			{
-				field: "appDefinitions",
-				value: installed
-			},
-			{
-				field: "appFolders.folders",
-				value: folders
-			}
-		], cb);
-	});
+	FSBL.Clients.LauncherClient.registerComponent(
+		{
+			componentType: appConfig.name,
+			manifest: appConfig.manifest,
+		},
+		(err, response) => {
+			getStore().setValues(
+				[
+					{
+						field: 'activeApp',
+						value: activeApp,
+					},
+					{
+						field: 'appDefinitions',
+						value: installed,
+					},
+					{
+						field: 'appFolders.folders',
+						value: folders,
+					},
+				],
+				cb,
+			)
+		},
+	)
 }
 
 /**
@@ -274,40 +286,49 @@ async function addApp(id, cb = Function.prototype) {
  * @param {string} name The name of the app
  */
 function removeApp(id, cb = Function.prototype) {
-	let { installed, folders } = data;
+	let { installed, folders } = data
 
-	ToolbarStore.removeValue({ field: "pins." + installed[id].name.replace(/[.]/g, "^DOT^") }, (err, res) => {
-		if (err) {
-			console.warn("Error removing pin for deleted app");
-			return;
-		}
-		FSBL.Clients.LauncherClient.unRegisterComponent({ componentType: installed[id].name }, (err, res) => {
+	ToolbarStore.removeValue(
+		{ field: 'pins.' + installed[id].name.replace(/[.]/g, '^DOT^') },
+		(err, res) => {
 			if (err) {
-				console.warn("Failed to deregister a component");
-				return;
+				console.warn('Error removing pin for deleted app')
+				return
 			}
+			FSBL.Clients.LauncherClient.unRegisterComponent(
+				{ componentType: installed[id].name },
+				(err, res) => {
+					if (err) {
+						console.warn('Failed to deregister a component')
+						return
+					}
 
-			for (const key in data.folders) {
-				if (folders[key].apps[id]) {
-					delete folders[key].apps[id];
-				}
-			}
+					for (const key in data.folders) {
+						if (folders[key].apps[id]) {
+							delete folders[key].apps[id]
+						}
+					}
 
-			//Delete the app from the list
-			delete installed[id];
+					//Delete the app from the list
+					delete installed[id]
 
-			getStore().setValues([
-				{
-					field: "appDefinitions",
-					value: installed
+					getStore().setValues(
+						[
+							{
+								field: 'appDefinitions',
+								value: installed,
+							},
+							{
+								field: 'appFolders.folders',
+								value: folders,
+							},
+						],
+						cb,
+					)
 				},
-				{
-					field: "appFolders.folders",
-					value: folders
-				}
-			], cb);
-		});
-	});
+			)
+		},
+	)
 }
 
 /**
@@ -315,17 +336,17 @@ function removeApp(id, cb = Function.prototype) {
  * @param {string} id The app id to show as the actively showcasing app
  */
 function openApp(id) {
-	let apps = data.apps;
+	let apps = data.apps
 
-	let index = apps.findIndex((app) => {
-		return app.appId === id;
-	});
+	let index = apps.findIndex(app => {
+		return app.appId === id
+	})
 
 	if (index > -1) {
 		getStore().setValue({
-			field: "activeApp",
-			value: id
-		});
+			field: 'activeApp',
+			value: id,
+		})
 	}
 }
 
@@ -334,9 +355,9 @@ function openApp(id) {
  */
 function clearApp() {
 	getStore().setValue({
-		field: "activeApp",
-		value: null
-	});
+		field: 'activeApp',
+		value: null,
+	})
 }
 
 /**
@@ -345,7 +366,7 @@ function clearApp() {
  * @returns {string} activeApp
  */
 function getActiveApp() {
-	return data.activeApp;
+	return data.activeApp
 }
 
 /**
@@ -355,23 +376,23 @@ function getActiveApp() {
  */
 function setActiveApp(app) {
 	getStore().setValue({
-		field: "activeApp",
-		value: app
-	});
+		field: 'activeApp',
+		value: app,
+	})
 }
 
 /**
  * Retrieves a list of installed apps by id
  */
 function getInstalledApps() {
-	return data.installed;
+	return data.installed
 }
 
 /**
  * Gets the list of filtered apps (when searching/filtering by tags)
  */
 function getFilteredApps() {
-	return data.filteredApps;
+	return data.filteredApps
 }
 
 /**
@@ -379,9 +400,9 @@ function getFilteredApps() {
  */
 function clearFilteredApps() {
 	getStore().setValue({
-		field: "filteredApps",
-		value: []
-	});
+		field: 'filteredApps',
+		value: [],
+	})
 }
 
 /**
@@ -390,7 +411,7 @@ function clearFilteredApps() {
  * @param {set} val Search string
  */
 function setSearchValue(val) {
-	getStore().setValue({field: "searchText", value: val})
+	getStore().setValue({ field: 'searchText', value: val })
 }
 
 /**
@@ -399,7 +420,7 @@ function setSearchValue(val) {
  * @returns {string}  Search string
  */
 function getSearchValue() {
-	return data.searchText;
+	return data.searchText
 }
 
 /**
@@ -407,7 +428,7 @@ function getSearchValue() {
  *
  */
 function clearSearchText() {
-	getStore().setValue({field: "searchText", value: ""})
+	getStore().setValue({ field: 'searchText', value: '' })
 }
 
 /**
@@ -416,9 +437,8 @@ function clearSearchText() {
  * @returns {boolean} forceSearch
  */
 function getForceSearch() {
-	return data.forceSearch;
+	return data.forceSearch
 }
-
 
 /**
  * Set the forceSearch value
@@ -426,14 +446,14 @@ function getForceSearch() {
  * @param {string} val Boolean value for forceSearch
  */
 function setForceSearch(val) {
-	getStore().setValue({field: "forceSearch", value: val})
+	getStore().setValue({ field: 'forceSearch', value: val })
 }
 
 /**
  * Gets the list of active tags (these are tags that are actively filtering the content list)
  */
 function getActiveTags() {
-	return data.activeTags;
+	return data.activeTags
 }
 
 /**
@@ -441,7 +461,7 @@ function getActiveTags() {
  * @param {string} tag The tag name
  */
 function addTag(tag) {
-	_addActiveTag(tag);
+	_addActiveTag(tag)
 }
 
 /**
@@ -449,21 +469,21 @@ function addTag(tag) {
  * @param {string} tag The tag name
  */
 function removeTag(tag) {
-	_removeActiveTag(tag);
+	_removeActiveTag(tag)
 }
 
 /**
  * Refreshes the active tags search
  */
 function refreshTagSearch() {
-	filterApps();
+	filterApps()
 }
 
 /**
  * Removes all tags from the active tags list
  */
 function clearTags() {
-	_clearActiveTags();
+	_clearActiveTags()
 }
 
 /**
@@ -471,28 +491,33 @@ function clearTags() {
  * @param {string} terms The search terms provided by the user
  */
 function searchApps(terms, cb = Function.prototype) {
-	data.searchText = terms;
-	setForceSearch(true);
-	getStore().setValue({
-		field: "searchText",
-		value: terms
-	}, () => {filterApps(); cb();});
+	data.searchText = terms
+	setForceSearch(true)
+	getStore().setValue(
+		{
+			field: 'searchText',
+			value: terms,
+		},
+		() => {
+			filterApps()
+			cb()
+		},
+	)
 }
-
 
 /**
  * Async function to call the launcher client to get a list of added apps
  */
 function fetchInstalledApps() {
 	let addedApps = getStore().getValue({
-		field: "apps"
-	});
+		field: 'apps',
+	})
 
-	let installed = [];
-	if (apps.length > 0) installed.push([apps[0].appId]);
+	let installed = []
+	if (apps.length > 0) installed.push([apps[0].appId])
 
 	getStore().setValue({
-		field: "installed",
-		value: installed
-	});
+		field: 'installed',
+		value: installed,
+	})
 }

@@ -1,19 +1,19 @@
-(function (definition) {
-	"use strict";
+;(function(definition) {
+	'use strict'
 
-	if (typeof exports === "object" && typeof module === "object") {
-		module.exports = definition( require("../chartiq") );
-	} else if (typeof define === "function" && define.amd) {
-		define(["chartiq"], definition);
-	} else if (typeof window !== "undefined" || typeof self !== "undefined") {
-		var global = typeof window !== "undefined" ? window : self;
-		definition(global);
+	if (typeof exports === 'object' && typeof module === 'object') {
+		module.exports = definition(require('../chartiq'))
+	} else if (typeof define === 'function' && define.amd) {
+		define(['chartiq'], definition)
+	} else if (typeof window !== 'undefined' || typeof self !== 'undefined') {
+		var global = typeof window !== 'undefined' ? window : self
+		definition(global)
 	} else {
-		throw new Error("Only CommonJS, RequireJS, and <script> tags supported for comparison.js.");
+		throw new Error('Only CommonJS, RequireJS, and <script> tags supported for comparison.js.')
 	}
-})(function(_exports){
+})(function(_exports) {
 	//console.log("comparison.js",_exports);
-	var CIQ=_exports.CIQ;
+	var CIQ = _exports.CIQ
 
 	/**
 	 * ** This function is maintained for legacy implementations only (not using web components). New implementations should use functionality included in the web components (stxUI.js) **<br>
@@ -22,7 +22,16 @@
 	 * @memberOf CIQ.Comparison
 	 * @version ChartIQ Advanced Package
 	 */
-	CIQ.Comparison.colorOrder=["#b387d7","#ff9250","#e36460","#dcdf67","#b3d987","#ffcd2b","#66cac4","#97b8f7"];
+	CIQ.Comparison.colorOrder = [
+		'#b387d7',
+		'#ff9250',
+		'#e36460',
+		'#dcdf67',
+		'#b3d987',
+		'#ffcd2b',
+		'#66cac4',
+		'#97b8f7',
+	]
 
 	/**
 	 * ** This function is maintained for legacy implementations only (not using web components). New implementations should use functionality included in the web components (stxUI.js) **<br>
@@ -31,7 +40,7 @@
 	 * @memberOf CIQ.Comparison
 	 * @version ChartIQ Advanced Package
 	 */
-	CIQ.Comparison.colorPointer=0;
+	CIQ.Comparison.colorPointer = 0
 
 	/**
 	 * ** This function is maintained for legacy implementations only (not using web components). New implementations should use functionality included in the web components (stxUI.js) **<br>
@@ -49,7 +58,7 @@
 	 * @memberOf CIQ.Comparison
 	 * @version ChartIQ Advanced Package
 	 */
-	CIQ.Comparison.type="compare";
+	CIQ.Comparison.type = 'compare'
 
 	/**
 	 * ** This function is maintained for legacy implementations only (not using web components). New implementations should use functionality included in the web components (stxUI.js) **<br>
@@ -57,14 +66,19 @@
 	 * @memberOf CIQ.Comparison
 	 * @version ChartIQ Advanced Package
 	 */
-	CIQ.Comparison.attachColorPicker=function(){
-		var swatch=$$$("#menuWrapperCompare .stx-color");
-		var style=getComputedStyle(swatch);
-		if(style) CIQ.Comparison.colorSelection=style.backgroundColor;
-		CIQ.MenuManager.attachColorPicker(swatch, $$$("#menuWrapperCompare #menuCompare"), function(color){
-			CIQ.Comparison.colorSelection="#" + color;
-		}, true);
-	};
+	CIQ.Comparison.attachColorPicker = function() {
+		var swatch = $$$('#menuWrapperCompare .stx-color')
+		var style = getComputedStyle(swatch)
+		if (style) CIQ.Comparison.colorSelection = style.backgroundColor
+		CIQ.MenuManager.attachColorPicker(
+			swatch,
+			$$$('#menuWrapperCompare #menuCompare'),
+			function(color) {
+				CIQ.Comparison.colorSelection = '#' + color
+			},
+			true,
+		)
+	}
 
 	/**
 	 * ** This function is maintained for legacy implementations only (not using web components). New implementations should use functionality included in the web components (stxUI.js) **<br>
@@ -78,10 +92,10 @@
 	 * @version ChartIQ Advanced Package
 	 * @deprecated use {@link CIQ#addMemberToMasterdata } instead
 	 */
-	CIQ.Comparison.processComparison=function(stx, symbol, comparison){
+	CIQ.Comparison.processComparison = function(stx, symbol, comparison) {
 		// Match up the comparison and store the data point
-		CIQ.addMemberToMasterdata(stx, symbol, comparison);
-	};
+		CIQ.addMemberToMasterdata(stx, symbol, comparison)
+	}
 
 	/**
 	 * ** This function is maintained for legacy implementations only (not using web components). New implementations should use functionality included in the web components (stxUI.js) **<br>
@@ -102,78 +116,84 @@
 	 * <br> 07/01/2015 added parameters argument.
 	 * <br> 2015-11-1 compareSymbol can now be a string or an object.
 	 */
-	CIQ.Comparison.add=function(stx, compareSymbol, cb, displaySymbol, parameters){
-
-		if(!compareSymbol) compareSymbol=$$$("#compareSymbol").value.toUpperCase();
-		if(!compareSymbol) {
-			if(cb) cb();
-			return;
+	CIQ.Comparison.add = function(stx, compareSymbol, cb, displaySymbol, parameters) {
+		if (!compareSymbol) compareSymbol = $$$('#compareSymbol').value.toUpperCase()
+		if (!compareSymbol) {
+			if (cb) cb()
+			return
 		}
 
-		if(!parameters) parameters={};
+		if (!parameters) parameters = {}
 
-		if(typeof compareSymbol == 'object') {
-			parameters.symbolObject=compareSymbol;
-			compareSymbol = compareSymbol.symbol;
-      	}
-
-		if(compareSymbol==stx.chart.symbol && !parameters.force) {
-			if(cb) cb();
-			return;
+		if (typeof compareSymbol == 'object') {
+			parameters.symbolObject = compareSymbol
+			compareSymbol = compareSymbol.symbol
 		}
-		if(!displaySymbol) displaySymbol=compareSymbol;
-		$$$("#compareSymbol").blur();
 
+		if (compareSymbol == stx.chart.symbol && !parameters.force) {
+			if (cb) cb()
+			return
+		}
+		if (!displaySymbol) displaySymbol = compareSymbol
+		$$$('#compareSymbol').blur()
 
-		function processResponse(symbol){
-			return function(err){
-				if(err) {
-					delete stx.chart.series[symbol];  // clean up the series list so we don't continue to fetch this symbol
-					if(cb) cb();
-					return;
+		function processResponse(symbol) {
+			return function(err) {
+				if (err) {
+					delete stx.chart.series[symbol] // clean up the series list so we don't continue to fetch this symbol
+					if (cb) cb()
+					return
 				}
-	            $$$("#compareSymbol").value="";
-	        	$$$("#compareNone").style.display="none";
-				CIQ.Comparison.correlate(stx, symbol);
-				stx.draw();
-				if(!stx.comparisons[symbol]){
-					var template=$$$(".symComparisonTemplate");
-					var div=template.cloneNode(true);
-					$$$(".stxItem", div).innerHTML=symbol;
-					$$$(".stx-ico-close", div).onclick=function(stx, symbol){return function(){
-						stx.getSeriesRenderer("_generic_series").removeSeries(symbol).ready();
-					};}(stx, symbol);
-					div.style.display="";
-					template.parentNode.appendChild(div);
-					stx.comparisons[symbol]={
-							"div": div
-					};
+				$$$('#compareSymbol').value = ''
+				$$$('#compareNone').style.display = 'none'
+				CIQ.Comparison.correlate(stx, symbol)
+				stx.draw()
+				if (!stx.comparisons[symbol]) {
+					var template = $$$('.symComparisonTemplate')
+					var div = template.cloneNode(true)
+					$$$('.stxItem', div).innerHTML = symbol
+					$$$('.stx-ico-close', div).onclick = (function(stx, symbol) {
+						return function() {
+							stx
+								.getSeriesRenderer('_generic_series')
+								.removeSeries(symbol)
+								.ready()
+						}
+					})(stx, symbol)
+					div.style.display = ''
+					template.parentNode.appendChild(div)
+					stx.comparisons[symbol] = {
+						div: div,
+					}
 				}
 				// Set up the next default color
-				CIQ.Comparison.colorPointer++;
-				if(CIQ.Comparison.colorPointer>=CIQ.Comparison.colorOrder.length) CIQ.Comparison.colorPointer=0;
-				CIQ.Comparison.colorSelection=$$$("#menuWrapperCompare .stx-color").style.backgroundColor=CIQ.Comparison.colorOrder[CIQ.Comparison.colorPointer];
-				if(cb) cb();
-			};
+				CIQ.Comparison.colorPointer++
+				if (CIQ.Comparison.colorPointer >= CIQ.Comparison.colorOrder.length)
+					CIQ.Comparison.colorPointer = 0
+				CIQ.Comparison.colorSelection = $$$(
+					'#menuWrapperCompare .stx-color',
+				).style.backgroundColor = CIQ.Comparison.colorOrder[CIQ.Comparison.colorPointer]
+				if (cb) cb()
+			}
 		}
 
-		if(!stx.chart.legend){
-			stx.chart.legend={
-					x: 260,
-					y: 10
-			};
+		if (!stx.chart.legend) {
+			stx.chart.legend = {
+				x: 260,
+				y: 10,
+			}
 		}
 
-		var isComparison=(CIQ.Comparison.type=="compare");
-		var sharedAxis=isComparison || CIQ.Comparison.type=="absolute";
-		var requiredParams= {isComparison:isComparison, shareYAxis:sharedAxis};
-		CIQ.extend(parameters, requiredParams);
-		if (!parameters.gaps) parameters.gaps=true;
-		if (!parameters.color) parameters.color= CIQ.Comparison.colorSelection;
-		if (!parameters.display) parameters.display=displaySymbol;
-		if (!parameters.chartType) parameters.chartType="line";
-		CIQ.Comparison.fetch(stx, compareSymbol, parameters, processResponse(compareSymbol));
-	};
+		var isComparison = CIQ.Comparison.type == 'compare'
+		var sharedAxis = isComparison || CIQ.Comparison.type == 'absolute'
+		var requiredParams = { isComparison: isComparison, shareYAxis: sharedAxis }
+		CIQ.extend(parameters, requiredParams)
+		if (!parameters.gaps) parameters.gaps = true
+		if (!parameters.color) parameters.color = CIQ.Comparison.colorSelection
+		if (!parameters.display) parameters.display = displaySymbol
+		if (!parameters.chartType) parameters.chartType = 'line'
+		CIQ.Comparison.fetch(stx, compareSymbol, parameters, processResponse(compareSymbol))
+	}
 
 	/**
 	 * ** This function is maintained for legacy implementations only (not using web components). New implementations should use functionality included in the web components (stxUI.js) **<br>
@@ -201,13 +221,12 @@
 			});
 		};
 	 */
-	CIQ.Comparison.fetch=function(stx, comparisonSymbol, parameters, cb){
+	CIQ.Comparison.fetch = function(stx, comparisonSymbol, parameters, cb) {
 		// if not using a quoteFeed, fetch comparison data here and set the parameters.data for the series as follows:
 		// parameters.data= { your data array here };
-		if(!parameters.data) parameters.data={useDefaultQuoteFeed:true};
-		stx.addSeries(comparisonSymbol, parameters, cb);
-	};
-
+		if (!parameters.data) parameters.data = { useDefaultQuoteFeed: true }
+		stx.addSeries(comparisonSymbol, parameters, cb)
+	}
 
 	/**
 	 * ** This function is maintained for legacy implementations only (not using web components). New implementations should use functionality included in the web components (stxUI.js) **<br>
@@ -216,18 +235,17 @@
 	 * @private
 	 * @deprecated -- now done in addSeries
 	 */
-	CIQ.Comparison.quoteFeedFetch=function(stx, comparisonSymbol, cb){
-	  var driver=stx.quoteDriver;
-	  var params=driver.makeParams(comparisonSymbol, stx.chart);
-	  // for comparisons, you must  fetch enough data on the new Comparison to match the masterData, from  beginning to end ticks
-	  params.startDate = stx.chart.masterData[0].DT;
-	  params.endDate = stx.chart.masterData[stx.chart.masterData.length-1].DT;
-	  driver.quoteFeed.fetch(params, function(dataCallback){
-	    //if(dataCallback.error) return; // ignore any server errors
-	    cb(dataCallback.error, dataCallback.quotes);
-	  });
-	};
-
+	CIQ.Comparison.quoteFeedFetch = function(stx, comparisonSymbol, cb) {
+		var driver = stx.quoteDriver
+		var params = driver.makeParams(comparisonSymbol, stx.chart)
+		// for comparisons, you must  fetch enough data on the new Comparison to match the masterData, from  beginning to end ticks
+		params.startDate = stx.chart.masterData[0].DT
+		params.endDate = stx.chart.masterData[stx.chart.masterData.length - 1].DT
+		driver.quoteFeed.fetch(params, function(dataCallback) {
+			//if(dataCallback.error) return; // ignore any server errors
+			cb(dataCallback.error, dataCallback.quotes)
+		})
+	}
 
 	/**
 	 * ** This function is maintained for legacy implementations only (not using web components). New implementations should use functionality included in the web components (stxUI.js) **<br>
@@ -236,23 +254,25 @@
 	 * @memberOf CIQ.Comparison
 	 * @version ChartIQ Advanced Package
 	 */
-	CIQ.Comparison.reset=function(stx){
-		for(var field in stx.comparisons){
-			var comparison=stx.comparisons[field];
-			var div=comparison.div;
-			div.parentNode.removeChild(div);
-			var gRenderer=stx.getSeriesRenderer("_generic_series");
-			if(gRenderer) gRenderer.removeSeries(field);
+	CIQ.Comparison.reset = function(stx) {
+		for (var field in stx.comparisons) {
+			var comparison = stx.comparisons[field]
+			var div = comparison.div
+			div.parentNode.removeChild(div)
+			var gRenderer = stx.getSeriesRenderer('_generic_series')
+			if (gRenderer) gRenderer.removeSeries(field)
 		}
-		stx.comparisons={};
-		CIQ.Comparison.colorPointer=0;
-		CIQ.Comparison.colorSelection=$$$("#menuWrapperCompare .stx-color").style.backgroundColor=CIQ.Comparison.colorOrder[CIQ.Comparison.colorPointer];
-		stx.setComparison(false);
-		for(var panel in stx.panels){
-			if(stx.panels[panel].name.indexOf(CIQ.Comparison.correlationPanel)===0) stx.panelClose(stx.panels[panel]);
+		stx.comparisons = {}
+		CIQ.Comparison.colorPointer = 0
+		CIQ.Comparison.colorSelection = $$$('#menuWrapperCompare .stx-color').style.backgroundColor =
+			CIQ.Comparison.colorOrder[CIQ.Comparison.colorPointer]
+		stx.setComparison(false)
+		for (var panel in stx.panels) {
+			if (stx.panels[panel].name.indexOf(CIQ.Comparison.correlationPanel) === 0)
+				stx.panelClose(stx.panels[panel])
 		}
-		$$$("#compareNone").style.display="";
-	};
+		$$$('#compareNone').style.display = ''
+	}
 
 	/**
 	 * ** This function is maintained for legacy implementations only (not using web components). New implementations should use functionality included in the web components (stxUI.js) **<br>
@@ -262,18 +282,18 @@
 	 * @memberOf CIQ.Comparison
 	 * @version ChartIQ Advanced Package
 	 */
-	CIQ.Comparison.initialize=function(stx, inputEventHandling){
-		CIQ.Comparison.attachColorPicker();
-		stx.comparisons={};	// Holding object for comparison symbols
-		if(inputEventHandling!==false){
-			CIQ.inputKeyEvents($$$("#compareSymbol"), function(){
-				var compareSymbol=$$$("#compareSymbol").value.toUpperCase();
-				if(compareSymbol==stx.chart.symbol) return;
-			    CIQ.MenuManager.closeThisMenu($$$("#compareSymbol"));
-			    CIQ.Comparison.add(stx);
-			});
+	CIQ.Comparison.initialize = function(stx, inputEventHandling) {
+		CIQ.Comparison.attachColorPicker()
+		stx.comparisons = {} // Holding object for comparison symbols
+		if (inputEventHandling !== false) {
+			CIQ.inputKeyEvents($$$('#compareSymbol'), function() {
+				var compareSymbol = $$$('#compareSymbol').value.toUpperCase()
+				if (compareSymbol == stx.chart.symbol) return
+				CIQ.MenuManager.closeThisMenu($$$('#compareSymbol'))
+				CIQ.Comparison.add(stx)
+			})
 		}
-	};
+	}
 
 	/**
 	 * ** This function is maintained for legacy implementations only (not using web components). New implementations should use functionality included in the web components (stxUI.js) **<br>
@@ -285,17 +305,17 @@
 	 * @memberOf CIQ.Comparison
 	 * @version ChartIQ Advanced Package
 	 */
-	CIQ.Comparison.removeSeries=function(stx,field){
-		if ( !stx.comparisons) return; // in case GUI not using the Comparison interface.
-		var comparison=stx.comparisons[field];
-		if(!comparison) return;
-		var div=comparison.div;
-		if(div.parentNode) div.parentNode.removeChild(div);
-		delete stx.comparisons[field];
-		if(CIQ.isEmpty(stx.comparisons)){
-			CIQ.Comparison.reset(stx);
+	CIQ.Comparison.removeSeries = function(stx, field) {
+		if (!stx.comparisons) return // in case GUI not using the Comparison interface.
+		var comparison = stx.comparisons[field]
+		if (!comparison) return
+		var div = comparison.div
+		if (div.parentNode) div.parentNode.removeChild(div)
+		delete stx.comparisons[field]
+		if (CIQ.isEmpty(stx.comparisons)) {
+			CIQ.Comparison.reset(stx)
 		}
-	};
+	}
 
 	/**
 	 * ** This function is maintained for legacy implementations only (not using web components). New implementations should use functionality included in the web components (stxUI.js) **<br>
@@ -306,65 +326,77 @@
 	 * @deprecated
 	 */
 
-	CIQ.Comparison.quoteFeedCallback=function(params){
-		if(params.comparisonRequested) return;
+	CIQ.Comparison.quoteFeedCallback = function(params) {
+		if (params.comparisonRequested) return
 
 		//use to determine startDate for a comparison if params.update=true
-		function getStartDate(symbol){
-			for(var c=params.stx.masterData.length-1;c>=0;c--){
-				if(params.stx.masterData[c] && typeof params.stx.masterData[c][symbol] != "undefined"){
-					return CIQ.strToDateTime(params.stx.masterData[c].Date);
+		function getStartDate(symbol) {
+			for (var c = params.stx.masterData.length - 1; c >= 0; c--) {
+				if (params.stx.masterData[c] && typeof params.stx.masterData[c][symbol] != 'undefined') {
+					return CIQ.strToDateTime(params.stx.masterData[c].Date)
 				}
 			}
-			return params.startDate;
+			return params.startDate
 		}
 
-		var syms={};
-		var field;
+		var syms = {}
+		var field
 
 		// get the symbol used in comparisons
-	    for(field in params.stx.chart.series) {
-			if(!params.stx.chart.series[field].parameters.isComparison && !params.stx.chart.series[field].parameters.quoteFeedCallbackRefresh) continue;
-			syms[field]=true;
-	    }
+		for (field in params.stx.chart.series) {
+			if (
+				!params.stx.chart.series[field].parameters.isComparison &&
+				!params.stx.chart.series[field].parameters.quoteFeedCallbackRefresh
+			)
+				continue
+			syms[field] = true
+		}
 
-	    // get the symbols used in the studies
-		for(var p in params.stx.panels){
-			if(params.stx.panels[p].studyQuotes){
-				for(var sq in params.stx.panels[p].studyQuotes) syms[sq]=true;
+		// get the symbols used in the studies
+		for (var p in params.stx.panels) {
+			if (params.stx.panels[p].studyQuotes) {
+				for (var sq in params.stx.panels[p].studyQuotes) syms[sq] = true
 			}
 		}
 
-		var arr=[];
-		for(field in syms){
-			var seriesParam=CIQ.shallowClone(params.originalState);
-			seriesParam.symbol=field;
-			if(seriesParam.update) {
-				seriesParam.startDate=getStartDate(field);
+		var arr = []
+		for (field in syms) {
+			var seriesParam = CIQ.shallowClone(params.originalState)
+			seriesParam.symbol = field
+			if (seriesParam.update) {
+				seriesParam.startDate = getStartDate(field)
 			} else {
 				// since we support comparisons between instruments that may have different trading hours,
 				// we can't depend on the params.ticks to keep them in sync.
 				// Instead , when appending data, we must explicitly send exact ranges to load.
 				// Using ticks may cause to load different ranges for instruments with different trading hours.
-				if (!seriesParam.startDate) seriesParam.startDate = params.stx.masterData[0].DT;
-				if (!seriesParam.endDate) seriesParam.endDate = params.stx.masterData[params.stx.masterData.length-1].DT;
+				if (!seriesParam.startDate) seriesParam.startDate = params.stx.masterData[0].DT
+				if (!seriesParam.endDate)
+					seriesParam.endDate = params.stx.masterData[params.stx.masterData.length - 1].DT
 			}
-			arr.push(seriesParam);
+			arr.push(seriesParam)
 		}
-		if(!arr.length) return;
-		params.comparisonRequested=true;
-		var driver=params.stx.quoteDriver;
-		driver.quoteFeed.multiFetch(arr, function(results){
-			for(var i=0;i<results.length;i++){
-				var result=results[i];
-				if(!result.dataCallback.error){
-					CIQ.addMemberToMasterdata(params.stx, result.params.symbol, result.dataCallback.quotes, null, null, params.stx.chart.series[result.params.symbol].parameters.field);
+		if (!arr.length) return
+		params.comparisonRequested = true
+		var driver = params.stx.quoteDriver
+		driver.quoteFeed.multiFetch(arr, function(results) {
+			for (var i = 0; i < results.length; i++) {
+				var result = results[i]
+				if (!result.dataCallback.error) {
+					CIQ.addMemberToMasterdata(
+						params.stx,
+						result.params.symbol,
+						result.dataCallback.quotes,
+						null,
+						null,
+						params.stx.chart.series[result.params.symbol].parameters.field,
+					)
 				}
-	 		}
-			params.stx.createDataSet();
-			params.stx.draw();
-		});
-	};
+			}
+			params.stx.createDataSet()
+			params.stx.draw()
+		})
+	}
 
-	return _exports;
-});
+	return _exports
+})

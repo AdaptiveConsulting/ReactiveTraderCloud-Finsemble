@@ -1,26 +1,26 @@
 /*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-import React from "react";
-import { FinsembleHoverDetector } from "@chartiq/finsemble-react-controls";
-import { getStore, Actions as HeaderActions } from "../../stores/windowTitleBarStore";
-let windowTitleBarStore;
+ * Copyright 2017 by ChartIQ, Inc.
+ * All rights reserved.
+ */
+import React from 'react'
+import { FinsembleHoverDetector } from '@chartiq/finsemble-react-controls'
+import { getStore, Actions as HeaderActions } from '../../stores/windowTitleBarStore'
+let windowTitleBarStore
 /**
  * Maximize button. This button is hidden when the window is maximized. In its place is the restore button.
  */
 export default class MaximizeButton extends React.Component {
 	constructor(props) {
-		super(props);
-		this.bindCorrectContext();
+		super(props)
+		this.bindCorrectContext()
 		/**
 		 * We assign in the constructor instead of via a require at the top of the file because the store is initialized asynchronously.
 		 */
-		windowTitleBarStore = getStore();
+		windowTitleBarStore = getStore()
 		this.state = {
-			maximized: windowTitleBarStore.getValue({ field: "Maximize.maximized" }),
-			hoverState: "false"
-		};
+			maximized: windowTitleBarStore.getValue({ field: 'Maximize.maximized' }),
+			hoverState: 'false',
+		}
 	}
 	/**
 	 * This is necessary to make sure that the `this` inside of the callback is correct.
@@ -28,9 +28,9 @@ export default class MaximizeButton extends React.Component {
 	 * @memberof MaximizeButton
 	 */
 	bindCorrectContext() {
-		this.onMaximized = this.onMaximized.bind(this);
-		this.onRestored = this.onRestored.bind(this);
-		this.hoverAction = this.hoverAction.bind(this);
+		this.onMaximized = this.onMaximized.bind(this)
+		this.onRestored = this.onRestored.bind(this)
+		this.hoverAction = this.hoverAction.bind(this)
 	}
 
 	/**
@@ -42,11 +42,11 @@ export default class MaximizeButton extends React.Component {
 	 */
 	onRestored(err, response) {
 		//console.log("onRestored")
-		this.setState({ maximized: false });
+		this.setState({ maximized: false })
 	}
 	onMaximized() {
 		//console.log("onMaximized")
-		this.setState({ maximized: true });
+		this.setState({ maximized: true })
 	}
 	/**
 	 * Invoked when the user clicks the button.
@@ -54,7 +54,7 @@ export default class MaximizeButton extends React.Component {
 	 * @memberof MaximizeButton
 	 */
 	onClick() {
-		HeaderActions.clickMaximize();
+		HeaderActions.clickMaximize()
 	}
 
 	/**
@@ -64,8 +64,8 @@ export default class MaximizeButton extends React.Component {
 	 */
 	componentWillMount() {
 		//console.log("componentWillMount")
-		FSBL.Clients.WindowClient.finsembleWindow.addListener("maximized", this.onMaximized)
-		FSBL.Clients.WindowClient.finsembleWindow.addListener("restored", this.onRestored);
+		FSBL.Clients.WindowClient.finsembleWindow.addListener('maximized', this.onMaximized)
+		FSBL.Clients.WindowClient.finsembleWindow.addListener('restored', this.onRestored)
 
 		//windowTitleBarStore.addListener({ field: "Maximize.maximized" }, this.onMaxChange);
 	}
@@ -77,8 +77,8 @@ export default class MaximizeButton extends React.Component {
 	 */
 	componentWillUnmount() {
 		//console.log("unmount this")
-		FSBL.Clients.WindowClient.finsembleWindow.removeListener("maximized", this.onMaximized)
-		FSBL.Clients.WindowClient.finsembleWindow.removeListener("restored", this.onRestored)
+		FSBL.Clients.WindowClient.finsembleWindow.removeListener('maximized', this.onMaximized)
+		FSBL.Clients.WindowClient.finsembleWindow.removeListener('restored', this.onRestored)
 		//windowTitleBarStore.removeListener({ field: "Maximize.maximized" }, this.onMaxChange);
 	}
 
@@ -89,7 +89,7 @@ export default class MaximizeButton extends React.Component {
 	 * @memberof LinkerButton
 	 */
 	hoverAction(newHoverState) {
-		this.setState({ hoverState: newHoverState });
+		this.setState({ hoverState: newHoverState })
 	}
 
 	/**
@@ -99,18 +99,26 @@ export default class MaximizeButton extends React.Component {
 	 * @memberof MaximizeButton
 	 */
 	render() {
-		let iconClasses = "";
-		let wrapClasses = "fsbl-icon fsbl-maximize ";
-		let tooltip = this.state.maximized ? "Restore" : "Maximize";
+		let iconClasses = ''
+		let wrapClasses = 'fsbl-icon fsbl-maximize '
+		let tooltip = this.state.maximized ? 'Restore' : 'Maximize'
 
 		//Classes for the maximize button.
-		iconClasses += this.state.maximized ? "ff-restore" : "ff-maximize";
+		iconClasses += this.state.maximized ? 'ff-restore' : 'ff-maximize'
 		//Classes for the wrap
-		wrapClasses += this.state.maximized ? "window-restore" : "window-max";
+		wrapClasses += this.state.maximized ? 'window-restore' : 'window-max'
 
-		return (<div className={wrapClasses} id="fsbl-window-restore" title={tooltip} data-hover={this.state.hoverState} onClick={this.onClick}>
-			<FinsembleHoverDetector edge="top" hoverAction={this.hoverAction} />
-			<i className={iconClasses}></i>
-		</div>);
+		return (
+			<div
+				className={wrapClasses}
+				id="fsbl-window-restore"
+				title={tooltip}
+				data-hover={this.state.hoverState}
+				onClick={this.onClick}
+			>
+				<FinsembleHoverDetector edge="top" hoverAction={this.hoverAction} />
+				<i className={iconClasses}></i>
+			</div>
+		)
 	}
 }

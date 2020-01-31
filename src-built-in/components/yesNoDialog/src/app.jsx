@@ -1,23 +1,27 @@
 /*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-import React from "react";
-import ReactDOM from "react-dom";
-import "../../../../assets/css/finsemble.css";
-import { FinsembleDialog, FinsembleDialogQuestion, FinsembleDialogButton } from "@chartiq/finsemble-react-controls";
-import Timer from "./timer";
-const DEFAULT_TITLE = ""
+ * Copyright 2017 by ChartIQ, Inc.
+ * All rights reserved.
+ */
+import React from 'react'
+import ReactDOM from 'react-dom'
+import '../../../../assets/css/finsemble.css'
+import {
+	FinsembleDialog,
+	FinsembleDialogQuestion,
+	FinsembleDialogButton,
+} from '@chartiq/finsemble-react-controls'
+import Timer from './timer'
+const DEFAULT_TITLE = ''
 const DEFAULT_COMPONENT_STATE = {
 	title: DEFAULT_TITLE,
-	question: "No question.",
-	negativeResponseLabel: "No",
-	affirmativeResponseLabel: "Yes",
-	cancelResponseLabel: "Cancel",
+	question: 'No question.',
+	negativeResponseLabel: 'No',
+	affirmativeResponseLabel: 'Yes',
+	cancelResponseLabel: 'Cancel',
 	showNegativeButton: true,
 	showAffirmativeButton: true,
-	showCancelButton: true
-};
+	showCancelButton: true,
+}
 /**
  * This is our standard dialog that presents the user with 1 - 3 choices. It can be used to allow the user to confirm, reject, or cancel an action. All of these options can be included, and all can be excluded.
  *
@@ -26,10 +30,10 @@ const DEFAULT_COMPONENT_STATE = {
  */
 class YesNoDialog extends React.Component {
 	constructor() {
-		super();
-		this.bindCorrectContext();
-		this.state = DEFAULT_COMPONENT_STATE;
-		document.body.addEventListener("keydown", this.handleKeydownOnBody);
+		super()
+		this.bindCorrectContext()
+		this.state = DEFAULT_COMPONENT_STATE
+		document.body.addEventListener('keydown', this.handleKeydownOnBody)
 	}
 	/**
 	 * Handles escape and enter.
@@ -38,12 +42,12 @@ class YesNoDialog extends React.Component {
 	 * @memberof YesNoDialog
 	 */
 	handleKeydownOnBody(e) {
-		if (e.code === "Enter" && e.shiftKey === false) {
-			this.sendResponse("affirmative");
+		if (e.code === 'Enter' && e.shiftKey === false) {
+			this.sendResponse('affirmative')
 		}
 
-		if (e.code === "Escape") {
-			this.sendResponse("cancel");
+		if (e.code === 'Escape') {
+			this.sendResponse('cancel')
 		}
 	}
 	/**
@@ -52,13 +56,13 @@ class YesNoDialog extends React.Component {
 	 * @memberof YesNoDialog
 	 */
 	bindCorrectContext() {
-		this.handleKeydownOnBody = this.handleKeydownOnBody.bind(this);
-		this.onShowRequested = this.onShowRequested.bind(this);
-		this.sendAffirmativeResponse = this.sendAffirmativeResponse.bind(this);
-		this.sendCancelResponse = this.sendCancelResponse.bind(this);
-		this.sendNegativeResponse = this.sendNegativeResponse.bind(this);
-		this.sendExpiredResponse = this.sendExpiredResponse.bind(this);
-		this.sendResponse = this.sendResponse.bind(this);
+		this.handleKeydownOnBody = this.handleKeydownOnBody.bind(this)
+		this.onShowRequested = this.onShowRequested.bind(this)
+		this.sendAffirmativeResponse = this.sendAffirmativeResponse.bind(this)
+		this.sendCancelResponse = this.sendCancelResponse.bind(this)
+		this.sendNegativeResponse = this.sendNegativeResponse.bind(this)
+		this.sendExpiredResponse = this.sendExpiredResponse.bind(this)
+		this.sendResponse = this.sendResponse.bind(this)
 	}
 	/**
 	 * When the opener requests that the dialog show itself, it also passes in initialization data. This function grabs that data, calls setState, and then fits the window to the contents of the DOM. Then we call `showDialog`, which will display the dialog on the proper monitor.
@@ -68,20 +72,27 @@ class YesNoDialog extends React.Component {
 	 * @memberof YesNoDialog
 	 */
 	onShowRequested(err, response) {
-		let data = response.data;
-		this.setState({
-			title: typeof data.title === "undefined" ? DEFAULT_TITLE : data.title,
-			hideModalOnClose: typeof data.hideModalOnClose === "undefined" ? true : data.hideModalOnClose,
-			question: data.question,
-			negativeResponseLabel: data.negativeResponseLabel || "No",
-			affirmativeResponseLabel: data.affirmativeResponseLabel || "Yes",
-			cancelResponseLabel: data.cancelResponseLabel || "Cancel",
-			showNegativeButton: typeof data.showNegativeButton === "undefined" ? true : data.showNegativeButton,
-			showAffirmativeButton: typeof data.showAffirmativeButton === "undefined" ? true : data.showAffirmativeButton,
-			showCancelButton: typeof data.showCancelButton === "undefined" ? true : data.showCancelButton,
-			showTimer: typeof data.showTimer === "undefined" ? false : data.showTimer,
-			timerDuration: typeof data.timerDuration === "undefined" ? null : data.timerDuration
-		}, this.fitAndShow);
+		let data = response.data
+		this.setState(
+			{
+				title: typeof data.title === 'undefined' ? DEFAULT_TITLE : data.title,
+				hideModalOnClose:
+					typeof data.hideModalOnClose === 'undefined' ? true : data.hideModalOnClose,
+				question: data.question,
+				negativeResponseLabel: data.negativeResponseLabel || 'No',
+				affirmativeResponseLabel: data.affirmativeResponseLabel || 'Yes',
+				cancelResponseLabel: data.cancelResponseLabel || 'Cancel',
+				showNegativeButton:
+					typeof data.showNegativeButton === 'undefined' ? true : data.showNegativeButton,
+				showAffirmativeButton:
+					typeof data.showAffirmativeButton === 'undefined' ? true : data.showAffirmativeButton,
+				showCancelButton:
+					typeof data.showCancelButton === 'undefined' ? true : data.showCancelButton,
+				showTimer: typeof data.showTimer === 'undefined' ? false : data.showTimer,
+				timerDuration: typeof data.timerDuration === 'undefined' ? null : data.timerDuration,
+			},
+			this.fitAndShow,
+		)
 	}
 
 	/**
@@ -90,9 +101,9 @@ class YesNoDialog extends React.Component {
 	 * @memberof YesNoDialog
 	 */
 	fitAndShow() {
-		FSBL.Clients.WindowClient.fitToDOM(null, function () {
-			FSBL.Clients.DialogManager.showDialog();
-		});
+		FSBL.Clients.WindowClient.fitToDOM(null, function() {
+			FSBL.Clients.DialogManager.showDialog()
+		})
 	}
 	/**
 	 * Sends user input to the opener.
@@ -103,11 +114,11 @@ class YesNoDialog extends React.Component {
 	sendResponse(response) {
 		FSBL.Clients.DialogManager.respondToOpener({
 			choice: response,
-			hideModalOnClose: this.state.hideModalOnClose
-		});
+			hideModalOnClose: this.state.hideModalOnClose,
+		})
 		//This will detach the timer component from the dom. Next time the component comes up, it'll have a fresh timer.
 		this.setState({
-			showTimer: false
+			showTimer: false,
 		})
 	}
 	/**
@@ -116,7 +127,7 @@ class YesNoDialog extends React.Component {
 	 * @memberof YesNoDialog
 	 */
 	sendAffirmativeResponse() {
-		this.sendResponse("affirmative");
+		this.sendResponse('affirmative')
 	}
 	/**
 	 * Sends a negative response to the opener.
@@ -124,7 +135,7 @@ class YesNoDialog extends React.Component {
 	 * @memberof YesNoDialog
 	 */
 	sendNegativeResponse() {
-		this.sendResponse("negative");
+		this.sendResponse('negative')
 	}
 	/**
 	 * Sends a cancel response to the opener.
@@ -132,7 +143,7 @@ class YesNoDialog extends React.Component {
 	 * @memberof YesNoDialog
 	 */
 	sendCancelResponse() {
-		this.sendResponse("cancel");
+		this.sendResponse('cancel')
 	}
 
 	/**
@@ -141,51 +152,68 @@ class YesNoDialog extends React.Component {
 	 * @memberof YesNoDialog
 	 */
 	sendExpiredResponse() {
-		this.sendResponse("expired");
+		this.sendResponse('expired')
 	}
 
 	render() {
-		var self = this;
-		return (<FinsembleDialog
-			userInputTimeout={10000}
-			behaviorOnResponse="hide"
-			onShowRequested={this.onShowRequested}
-			isModal={true}>
-			<div className="dialog-title">{this.state.title}</div>
-			<FinsembleDialogQuestion>
-				{this.state.question}
-				{this.state.showTimer &&
-					<Timer ontimerDurationExpiration={this.sendExpiredResponse} timerDuration={this.state.timerDuration}/>}
-			</FinsembleDialogQuestion>
-			<div className="button-wrapper">
-			<FinsembleDialogButton show={this.state.showNegativeButton} className="fsbl-button-neutral" onClick={this.sendNegativeResponse}>
-				{this.state.negativeResponseLabel}
-			</FinsembleDialogButton>
+		var self = this
+		return (
+			<FinsembleDialog
+				userInputTimeout={10000}
+				behaviorOnResponse="hide"
+				onShowRequested={this.onShowRequested}
+				isModal={true}
+			>
+				<div className="dialog-title">{this.state.title}</div>
+				<FinsembleDialogQuestion>
+					{this.state.question}
+					{this.state.showTimer && (
+						<Timer
+							ontimerDurationExpiration={this.sendExpiredResponse}
+							timerDuration={this.state.timerDuration}
+						/>
+					)}
+				</FinsembleDialogQuestion>
+				<div className="button-wrapper">
+					<FinsembleDialogButton
+						show={this.state.showNegativeButton}
+						className="fsbl-button-neutral"
+						onClick={this.sendNegativeResponse}
+					>
+						{this.state.negativeResponseLabel}
+					</FinsembleDialogButton>
 
-			<FinsembleDialogButton show={this.state.showCancelButton} className="fsbl-button-neutral" onClick={this.sendCancelResponse}>
-				{this.state.cancelResponseLabel}
-			</FinsembleDialogButton>
+					<FinsembleDialogButton
+						show={this.state.showCancelButton}
+						className="fsbl-button-neutral"
+						onClick={this.sendCancelResponse}
+					>
+						{this.state.cancelResponseLabel}
+					</FinsembleDialogButton>
 
-			<FinsembleDialogButton show={this.state.showAffirmativeButton} className="fsbl-button-affirmative" onClick={this.sendAffirmativeResponse}>
-				{this.state.affirmativeResponseLabel}
-			</FinsembleDialogButton>
-			</div>
-		</FinsembleDialog>);
-
-
+					<FinsembleDialogButton
+						show={this.state.showAffirmativeButton}
+						className="fsbl-button-affirmative"
+						onClick={this.sendAffirmativeResponse}
+					>
+						{this.state.affirmativeResponseLabel}
+					</FinsembleDialogButton>
+				</div>
+			</FinsembleDialog>
+		)
 	}
 }
 
-window.yesNoDone = false;
+window.yesNoDone = false
 //render component when FSBL is ready.
-if (window.FSBL && FSBL.addEventListener) { FSBL.addEventListener("onReady", FSBLReady); } else { window.addEventListener("FSBLReady", FSBLReady) }
+if (window.FSBL && FSBL.addEventListener) {
+	FSBL.addEventListener('onReady', FSBLReady)
+} else {
+	window.addEventListener('FSBLReady', FSBLReady)
+}
 function FSBLReady() {
 	if (!window.yesNoDone) {
-		window.yesNoDone = true;
-		ReactDOM.render(
-			<YesNoDialog />
-			, document.getElementById("YesNoDialog-component-wrapper")
-		);
+		window.yesNoDone = true
+		ReactDOM.render(<YesNoDialog />, document.getElementById('YesNoDialog-component-wrapper'))
 	}
-
 }

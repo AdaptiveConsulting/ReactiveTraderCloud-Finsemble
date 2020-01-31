@@ -3,21 +3,21 @@
 // All rights reserved
 //-------------------------------------------------------------------------------------------
 
-(function (definition) {
-	"use strict";
+;(function(definition) {
+	'use strict'
 
-	if (typeof exports === "object" && typeof module === "object") {
-		module.exports = definition(require('./chartiq') );
-	} else if (typeof define === "function" && define.amd) {
-		define(["chartiq" ], definition);
-	} else if (typeof window !== "undefined" || typeof self !== "undefined") {
-		var global = typeof window !== "undefined" ? window : self;
-		definition(global,global);
+	if (typeof exports === 'object' && typeof module === 'object') {
+		module.exports = definition(require('./chartiq'))
+	} else if (typeof define === 'function' && define.amd) {
+		define(['chartiq'], definition)
+	} else if (typeof window !== 'undefined' || typeof self !== 'undefined') {
+		var global = typeof window !== 'undefined' ? window : self
+		definition(global, global)
 	} else {
-		throw new Error("Only CommonJS, RequireJS, and <script> tags supported for addOns.js.");
+		throw new Error('Only CommonJS, RequireJS, and <script> tags supported for addOns.js.')
 	}
-})(function(_exports){
-	var CIQ=_exports.CIQ;
+})(function(_exports) {
+	var CIQ = _exports.CIQ
 
 	/**
 	 * Use this constructor to initialize visualization styles of extended hours by the use of shading and delimitation lines.
@@ -101,66 +101,94 @@
 		}
 	 * @since  06-2016-02
 	 */
-	CIQ.ExtendedHours=function(stx,sessions){
-		this.stx=stx;
-		var styles={};
-		for(var sess=0;sess<sessions.length;sess++) {
-			if(!styles.session) styles.session={};
-			styles.session[sessions[sess]]=null;
+	CIQ.ExtendedHours = function(stx, sessions) {
+		this.stx = stx
+		var styles = {}
+		for (var sess = 0; sess < sessions.length; sess++) {
+			if (!styles.session) styles.session = {}
+			styles.session[sessions[sess]] = null
 		}
-		stx.append("initializeDisplay", function(){
-			if(!this.layout.extended) return;
-			for(var sess in styles.session) 
-				styles.session[sess]=this.canvasStyle("stx_market_session "+sess);
-			styles.divider=this.canvasStyle("stx_market_session divider");
-			if(styles.session){
-				var m=this.chart.market;
-				var ranges=[];
-				var range={start:this.chart.left};
-				for(var i=0;i<this.chart.dataSegment.length;i++){
-					var ds=this.chart.dataSegment[i];
-					if(!ds || !ds.DT) continue;
-					var c=null;
-					var s=styles.session[m.getSession(ds.DT, stx.dataZone)];
-					if(s) c=s.backgroundColor;
-					if(range.color && range.color!=c){
-						ranges.push({start:range.start,end:range.end,color:range.color});
-						range={};					
+		stx.append('initializeDisplay', function() {
+			if (!this.layout.extended) return
+			for (var sess in styles.session)
+				styles.session[sess] = this.canvasStyle('stx_market_session ' + sess)
+			styles.divider = this.canvasStyle('stx_market_session divider')
+			if (styles.session) {
+				var m = this.chart.market
+				var ranges = []
+				var range = { start: this.chart.left }
+				for (var i = 0; i < this.chart.dataSegment.length; i++) {
+					var ds = this.chart.dataSegment[i]
+					if (!ds || !ds.DT) continue
+					var c = null
+					var s = styles.session[m.getSession(ds.DT, stx.dataZone)]
+					if (s) c = s.backgroundColor
+					if (range.color && range.color != c) {
+						ranges.push({ start: range.start, end: range.end, color: range.color })
+						range = {}
 					}
-					if(c){
-						var cw=this.layout.candleWidth;
-						if(ds.candleWidth) cw=ds.candleWidth;
-						range.end=this.pixelFromBar(i,this.chart)+cw/2;
-						if(!range.start && range.start!==0) range.start=range.end-cw;
-						range.color=c;
-					}else{
-						range={};
+					if (c) {
+						var cw = this.layout.candleWidth
+						if (ds.candleWidth) cw = ds.candleWidth
+						range.end = this.pixelFromBar(i, this.chart) + cw / 2
+						if (!range.start && range.start !== 0) range.start = range.end - cw
+						range.color = c
+					} else {
+						range = {}
 					}
 				}
-				if(range.start || range.start===0) ranges.push({start:range.start,end:range.end,color:range.color});
-				var noDashes=CIQ.isTransparent(styles.divider.backgroundColor);
-				var dividerLineWidth=styles.divider.width.replace(/px/g, '');
-				for(var panel in this.panels){
-					if(this.panels[panel].shareChartXAxis===false) continue;
-					this.startClip(panel);
-					for(i=0;i<ranges.length;i++){
-						this.chart.context.fillStyle=ranges[i].color;
-						if(!noDashes && ranges[i].start>this.chart.left) this.plotLine(ranges[i].start, ranges[i].start, this.panels[panel].bottom, this.panels[panel].top, styles.divider.backgroundColor, "line", this.chart.context, this.panels[panel], {
-							pattern: "dashed",
-							lineWidth: dividerLineWidth
-						});
-						this.chart.context.fillRect(ranges[i].start,this.panels[panel].top,ranges[i].end-ranges[i].start,this.panels[panel].bottom-this.panels[panel].top);
-						if(!noDashes && ranges[i].end<this.chart.right) this.plotLine(ranges[i].end, ranges[i].end, this.panels[panel].bottom, this.panels[panel].top, styles.divider.backgroundColor, "line", this.chart.context, this.panels[panel], {
-							pattern: "dashed",
-							lineWidth: dividerLineWidth
-						});
+				if (range.start || range.start === 0)
+					ranges.push({ start: range.start, end: range.end, color: range.color })
+				var noDashes = CIQ.isTransparent(styles.divider.backgroundColor)
+				var dividerLineWidth = styles.divider.width.replace(/px/g, '')
+				for (var panel in this.panels) {
+					if (this.panels[panel].shareChartXAxis === false) continue
+					this.startClip(panel)
+					for (i = 0; i < ranges.length; i++) {
+						this.chart.context.fillStyle = ranges[i].color
+						if (!noDashes && ranges[i].start > this.chart.left)
+							this.plotLine(
+								ranges[i].start,
+								ranges[i].start,
+								this.panels[panel].bottom,
+								this.panels[panel].top,
+								styles.divider.backgroundColor,
+								'line',
+								this.chart.context,
+								this.panels[panel],
+								{
+									pattern: 'dashed',
+									lineWidth: dividerLineWidth,
+								},
+							)
+						this.chart.context.fillRect(
+							ranges[i].start,
+							this.panels[panel].top,
+							ranges[i].end - ranges[i].start,
+							this.panels[panel].bottom - this.panels[panel].top,
+						)
+						if (!noDashes && ranges[i].end < this.chart.right)
+							this.plotLine(
+								ranges[i].end,
+								ranges[i].end,
+								this.panels[panel].bottom,
+								this.panels[panel].top,
+								styles.divider.backgroundColor,
+								'line',
+								this.chart.context,
+								this.panels[panel],
+								{
+									pattern: 'dashed',
+									lineWidth: dividerLineWidth,
+								},
+							)
 					}
-					this.endClip();
+					this.endClip()
 				}
 			}
-		});
-	};
-	
+		})
+	}
+
 	/**
 	 * Use this constructor to create a floating "tooltip" on the crosshairs, showing values of series, studies, etc at the point in time where pointer is located.
 	 * 
@@ -217,149 +245,183 @@
 	 * // define a hover tool tip.
 	 * new CIQ.Tooltip({stx:stxx, ohl:true, volume:true, series:true, studies:true});
 	 */
-	CIQ.Tooltip=function(tooltipParams){
-		var stx=tooltipParams.stx;
-		var showOhl=tooltipParams.ohl;
-		var showVolume=tooltipParams.volume;
-		var showSeries=tooltipParams.series;
-		var showStudies=tooltipParams.studies;
+	CIQ.Tooltip = function(tooltipParams) {
+		var stx = tooltipParams.stx
+		var showOhl = tooltipParams.ohl
+		var showVolume = tooltipParams.volume
+		var showSeries = tooltipParams.series
+		var showStudies = tooltipParams.studies
 
-		var node=$(stx.chart.container).find("stx-hu-tooltip")[0];
-		if(!node){
-			node=$("<stx-hu-tooltip></stx-hu-tooltip>").appendTo($(stx.chart.container))[0];
+		var node = $(stx.chart.container).find('stx-hu-tooltip')[0]
+		if (!node) {
+			node = $('<stx-hu-tooltip></stx-hu-tooltip>').appendTo($(stx.chart.container))[0]
 		}
-		CIQ.Marker.Tooltip=function(params){
-			if(!this.className) this.className="CIQ.Marker.Tooltip";
-			params.label="tooltip";
-			CIQ.Marker.call(this, params);
-		};
-		
-		CIQ.Marker.Tooltip.ciqInheritsFrom(CIQ.Marker,false);
-		
-		CIQ.Marker.Tooltip.placementFunction=function(params){
-			var offset=30;
-			var stx=params.stx;
-			for(var i=0;i<params.arr.length;i++){
-				var marker=params.arr[i];
-				var bar=stx.barFromPixel(stx.cx);
-				
-				if(	
-					(stx.controls.crossX && stx.controls.crossX.style.display=="none") ||
-					(stx.controls.crossY && stx.controls.crossY.style.display=="none") ||
-					!(CIQ.ChartEngine.insideChart && 
-						stx.layout.crosshair && 
-						stx.displayCrosshairs && 
-						!stx.overXAxis && 
-						!stx.overYAxis && 
-						!stx.openDialog && 
-						!stx.activeDrawing && 
-						!stx.grabbingScreen && 
-						stx.chart.dataSegment[bar] != "undefined" &&
-						stx.chart.dataSegment[bar] && 
-						stx.chart.dataSegment[bar].DT)
-				){
-					marker.node.style.left="-1000px";
-					marker.node.style.right="auto";
-					marker.lastBarDT=0;
-					return;
-				}
-				if(+stx.chart.dataSegment[bar].DT==+marker.lastBarDT && bar!=stx.chart.dataSegment.length-1) return;
-				marker.lastBarDT=stx.chart.dataSegment[bar].DT;
-				if(parseInt(getComputedStyle(marker.node).width,10)+offset<CIQ.ChartEngine.crosshairX){
-					marker.node.style.left="auto";
-					marker.node.style.right=Math.round(stx.container.clientWidth-stx.pixelFromBar(bar)+offset)+"px";
-				}else{
-					marker.node.style.left=Math.round(stx.pixelFromBar(bar)+offset)+"px";
-					marker.node.style.right="auto";
-				}
-				marker.node.style.top=Math.round(CIQ.ChartEngine.crosshairY-stx.top-parseInt(getComputedStyle(marker.node).height,10)/2)+"px";
-			}
-			stx.doDisplayCrosshairs();
-		};
+		CIQ.Marker.Tooltip = function(params) {
+			if (!this.className) this.className = 'CIQ.Marker.Tooltip'
+			params.label = 'tooltip'
+			CIQ.Marker.call(this, params)
+		}
 
-		function renderFunction(){
+		CIQ.Marker.Tooltip.ciqInheritsFrom(CIQ.Marker, false)
+
+		CIQ.Marker.Tooltip.placementFunction = function(params) {
+			var offset = 30
+			var stx = params.stx
+			for (var i = 0; i < params.arr.length; i++) {
+				var marker = params.arr[i]
+				var bar = stx.barFromPixel(stx.cx)
+
+				if (
+					(stx.controls.crossX && stx.controls.crossX.style.display == 'none') ||
+					(stx.controls.crossY && stx.controls.crossY.style.display == 'none') ||
+					!(
+						CIQ.ChartEngine.insideChart &&
+						stx.layout.crosshair &&
+						stx.displayCrosshairs &&
+						!stx.overXAxis &&
+						!stx.overYAxis &&
+						!stx.openDialog &&
+						!stx.activeDrawing &&
+						!stx.grabbingScreen &&
+						stx.chart.dataSegment[bar] != 'undefined' &&
+						stx.chart.dataSegment[bar] &&
+						stx.chart.dataSegment[bar].DT
+					)
+				) {
+					marker.node.style.left = '-1000px'
+					marker.node.style.right = 'auto'
+					marker.lastBarDT = 0
+					return
+				}
+				if (
+					+stx.chart.dataSegment[bar].DT == +marker.lastBarDT &&
+					bar != stx.chart.dataSegment.length - 1
+				)
+					return
+				marker.lastBarDT = stx.chart.dataSegment[bar].DT
+				if (
+					parseInt(getComputedStyle(marker.node).width, 10) + offset <
+					CIQ.ChartEngine.crosshairX
+				) {
+					marker.node.style.left = 'auto'
+					marker.node.style.right =
+						Math.round(stx.container.clientWidth - stx.pixelFromBar(bar) + offset) + 'px'
+				} else {
+					marker.node.style.left = Math.round(stx.pixelFromBar(bar) + offset) + 'px'
+					marker.node.style.right = 'auto'
+				}
+				marker.node.style.top =
+					Math.round(
+						CIQ.ChartEngine.crosshairY -
+							stx.top -
+							parseInt(getComputedStyle(marker.node).height, 10) / 2,
+					) + 'px'
+			}
+			stx.doDisplayCrosshairs()
+		}
+
+		function renderFunction() {
 			// the tooltip has not been initalized with this chart.
-			if(!this.huTooltip) return; 
-			
+			if (!this.huTooltip) return
+
 			// corosshairs are not on
-			if(	
-				(stx.controls.crossX && stx.controls.crossX.style.display=="none") ||
-				(stx.controls.crossY && stx.controls.crossY.style.display=="none")
-			) return;
-			
-			var bar=this.barFromPixel(this.cx);
-			if(!this.chart.dataSegment[bar]) return;
-			if(+this.chart.dataSegment[bar].DT==+stx.huTooltip.lastBarDT && bar!=this.chart.dataSegment.length-1) return;
-			var node=$(this.huTooltip.node);
-			node.find("[auto]").remove();
-			node.find("stx-hu-tooltip-field-value").html();
-			var fields=["DT"];
-			if(showOhl) fields=fields.concat(["Open","High","Low"]);
-			fields.push("Close");
-			if(showVolume) fields.push("Volume");
-			if(showSeries){
-				for(var series in this.chart.series) {
-					fields.push(this.chart.series[series].display);
+			if (
+				(stx.controls.crossX && stx.controls.crossX.style.display == 'none') ||
+				(stx.controls.crossY && stx.controls.crossY.style.display == 'none')
+			)
+				return
+
+			var bar = this.barFromPixel(this.cx)
+			if (!this.chart.dataSegment[bar]) return
+			if (
+				+this.chart.dataSegment[bar].DT == +stx.huTooltip.lastBarDT &&
+				bar != this.chart.dataSegment.length - 1
+			)
+				return
+			var node = $(this.huTooltip.node)
+			node.find('[auto]').remove()
+			node.find('stx-hu-tooltip-field-value').html()
+			var fields = ['DT']
+			if (showOhl) fields = fields.concat(['Open', 'High', 'Low'])
+			fields.push('Close')
+			if (showVolume) fields.push('Volume')
+			if (showSeries) {
+				for (var series in this.chart.series) {
+					fields.push(this.chart.series[series].display)
 				}
 			}
-			if(showStudies){
-				for(var study in this.layout.studies) {
-					for(var output in this.layout.studies[study].outputMap)
-						fields=fields.concat([output,study+"_hist",study+"_hist1",study+"_hist2"]);
+			if (showStudies) {
+				for (var study in this.layout.studies) {
+					for (var output in this.layout.studies[study].outputMap)
+						fields = fields.concat([output, study + '_hist', study + '_hist1', study + '_hist2'])
 				}
 			}
-			var dupMap={};
-			fields.forEach(function(name){
-				if((this.chart.dataSegment[bar][name] || this.chart.dataSegment[bar][name]===0) && 
-					(typeof this.chart.dataSegment[bar][name]!=="object" || name=="DT") &&
-					!dupMap[name]){
-					var fieldName=name.replace(/^(Result )(.*)/,"$2");
-					var fieldValue="";
-					dupMap[name]=true;
-					if(this.chart.dataSegment[bar][name].constructor==Number){
-						fieldValue=this.formatYAxisPrice(this.chart.dataSegment[bar][name], this.chart.panel);
-					}else if(this.chart.dataSegment[bar][name].constructor==Date){
-						if( name=="DT" && this.controls.floatDate && this.controls.floatDate.innerHTML ) {
-							fieldValue= this.controls.floatDate.innerHTML;
+			var dupMap = {}
+			fields.forEach(function(name) {
+				if (
+					(this.chart.dataSegment[bar][name] || this.chart.dataSegment[bar][name] === 0) &&
+					(typeof this.chart.dataSegment[bar][name] !== 'object' || name == 'DT') &&
+					!dupMap[name]
+				) {
+					var fieldName = name.replace(/^(Result )(.*)/, '$2')
+					var fieldValue = ''
+					dupMap[name] = true
+					if (this.chart.dataSegment[bar][name].constructor == Number) {
+						fieldValue = this.formatYAxisPrice(this.chart.dataSegment[bar][name], this.chart.panel)
+					} else if (this.chart.dataSegment[bar][name].constructor == Date) {
+						if (name == 'DT' && this.controls.floatDate && this.controls.floatDate.innerHTML) {
+							fieldValue = this.controls.floatDate.innerHTML
 						} else {
-							fieldValue=CIQ.yyyymmdd(this.chart.dataSegment[bar][name]);
-							if(!CIQ.ChartEngine.isDailyInterval(this.layout.interval)){
-								fieldValue+=" "+this.chart.dataSegment[bar][name].toTimeString().substr(0,8);
+							fieldValue = CIQ.yyyymmdd(this.chart.dataSegment[bar][name])
+							if (!CIQ.ChartEngine.isDailyInterval(this.layout.interval)) {
+								fieldValue += ' ' + this.chart.dataSegment[bar][name].toTimeString().substr(0, 8)
 							}
 						}
-					}else{
-						fieldValue=this.chart.dataSegment[bar][name];				
+					} else {
+						fieldValue = this.chart.dataSegment[bar][name]
 					}
-					var dedicatedField=node.find('stx-hu-tooltip-field[field="'+fieldName+'"]');
-					if(dedicatedField.length){
-						dedicatedField.find("stx-hu-tooltip-field-value").html(fieldValue);
-						var fieldNameField=dedicatedField.find("stx-hu-tooltip-field-name");
-						if(fieldNameField.html()==="") fieldNameField.html(fieldName+":");							
-					}else{
-						$("<stx-hu-tooltip-field auto></stx-hu-tooltip-field>")
-							.append($("<stx-hu-tooltip-field-name>"+this.translateIf(fieldName)+":</stx-hu-tooltip-field-name>"))
-							.append($("<stx-hu-tooltip-field-value>"+fieldValue+"</stx-hu-tooltip-field-value>"))
-							.appendTo(node);
+					var dedicatedField = node.find('stx-hu-tooltip-field[field="' + fieldName + '"]')
+					if (dedicatedField.length) {
+						dedicatedField.find('stx-hu-tooltip-field-value').html(fieldValue)
+						var fieldNameField = dedicatedField.find('stx-hu-tooltip-field-name')
+						if (fieldNameField.html() === '') fieldNameField.html(fieldName + ':')
+					} else {
+						$('<stx-hu-tooltip-field auto></stx-hu-tooltip-field>')
+							.append(
+								$(
+									'<stx-hu-tooltip-field-name>' +
+										this.translateIf(fieldName) +
+										':</stx-hu-tooltip-field-name>',
+								),
+							)
+							.append(
+								$('<stx-hu-tooltip-field-value>' + fieldValue + '</stx-hu-tooltip-field-value>'),
+							)
+							.appendTo(node)
 					}
 				}
-			},this);
-			this.huTooltip.render();
+			}, this)
+			this.huTooltip.render()
 		}
-		
-		CIQ.ChartEngine.prototype.append("undisplayCrosshairs",function(){
-			if( this.huTooltip && this.huTooltip.node ) {
-				var node=$(this.huTooltip.node);
-				if( node && node[0]){
-					node[0].style.left="-1000px";
-					node[0].style.right="auto";
-				}	
-			}
-		});
-		CIQ.ChartEngine.prototype.append("headsUpHR", renderFunction);
-		CIQ.ChartEngine.prototype.append("createDataSegment", renderFunction);
-		stx.huTooltip=new CIQ.Marker.Tooltip({ stx:stx, xPositioner:"bar", chartContainer:true, node:node });
-	};
-	
 
-	return _exports;
-});
+		CIQ.ChartEngine.prototype.append('undisplayCrosshairs', function() {
+			if (this.huTooltip && this.huTooltip.node) {
+				var node = $(this.huTooltip.node)
+				if (node && node[0]) {
+					node[0].style.left = '-1000px'
+					node[0].style.right = 'auto'
+				}
+			}
+		})
+		CIQ.ChartEngine.prototype.append('headsUpHR', renderFunction)
+		CIQ.ChartEngine.prototype.append('createDataSegment', renderFunction)
+		stx.huTooltip = new CIQ.Marker.Tooltip({
+			stx: stx,
+			xPositioner: 'bar',
+			chartContainer: true,
+			node: node,
+		})
+	}
+
+	return _exports
+})

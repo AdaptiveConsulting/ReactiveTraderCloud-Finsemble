@@ -1,46 +1,48 @@
-import React from "react";
-import ReactDOM from "react-dom";
-import { FinsembleHoverDetector } from "@chartiq/finsemble-react-controls";
-import Logo from "./logo";
-import { FinsembleDraggable } from "@chartiq/finsemble-react-controls";
-import Title from "../../../common/windowTitle"
+import React from 'react'
+import ReactDOM from 'react-dom'
+import { FinsembleHoverDetector } from '@chartiq/finsemble-react-controls'
+import Logo from './logo'
+import { FinsembleDraggable } from '@chartiq/finsemble-react-controls'
+import Title from '../../../common/windowTitle'
 /**
  * This component is pretty basic. It just takes a bunch of props and renders them.
  */
 export default class Tab extends React.Component {
 	constructor(props) {
-		super(props);
-		this.onDragOver = this.onDragOver.bind(this);
+		super(props)
+		this.onDragOver = this.onDragOver.bind(this)
 
 		this.state = {
-			hoverState: "false"
-		};
+			hoverState: 'false',
+		}
 	}
 	onDragOver(e) {
-		let boundingBox = this.refs.Me.getBoundingClientRect();
+		let boundingBox = this.refs.Me.getBoundingClientRect()
 		if (this.crossedMidline(e, boundingBox)) {
-			this.props.onTabDraggedOver(e, this.props.windowIdentifier);
+			this.props.onTabDraggedOver(e, this.props.windowIdentifier)
 		}
 	}
 	crossedMidline(e, box) {
-		return FSBL.Clients.WindowClient.isPointInBox({ x: e.nativeEvent.screenX, y: e.nativeEvent.screenY }, box);
+		return FSBL.Clients.WindowClient.isPointInBox(
+			{ x: e.nativeEvent.screenX, y: e.nativeEvent.screenY },
+			box,
+		)
 	}
 	hoverAction(newHoverState) {
-		this.setState({ hoverState: newHoverState });
+		this.setState({ hoverState: newHoverState })
 	}
-	componentWillUnmount() {
-	}
+	componentWillUnmount() {}
 	render() {
 		let style = {
-			width: this.props.tabWidth
+			width: this.props.tabWidth,
 		}
-		let self = this;
+		let self = this
 		return (
 			<div
 				ref="Me"
 				onDrop={this.props.onDrop}
 				onClick={this.props.onClick}
-				onDragStart={function (e) {
+				onDragStart={function(e) {
 					self.props.onDragStart(e, self.props.windowIdentifier)
 				}}
 				onDragEnd={this.props.onDragEnd}
@@ -49,22 +51,23 @@ export default class Tab extends React.Component {
 				data-hover={this.state.hoverState}
 				style={style}
 			>
-				{this.props.listenForDragOver &&
-					<div className="tab-drop-region"
-						onDragOver={this.onDragOver}
-					></div>
-				}
+				{this.props.listenForDragOver && (
+					<div className="tab-drop-region" onDragOver={this.onDragOver}></div>
+				)}
 				<FinsembleHoverDetector edge="top" hoverAction={this.hoverAction.bind(this)} />
 				<Logo windowIdentifier={this.props.windowIdentifier} />
 				<Title titleWidth={this.props.titleWidth} windowIdentifier={this.props.windowIdentifier} />
-				<div className="fsbl-tab-close" onClick={(e) => {
-					e.preventDefault();
-					e.stopPropagation();
-					this.props.onTabClose(e);
-				}}>
+				<div
+					className="fsbl-tab-close"
+					onClick={e => {
+						e.preventDefault()
+						e.stopPropagation()
+						this.props.onTabClose(e)
+					}}
+				>
 					<i className="ff-close"></i>
 				</div>
-			</div >
-		);
+			</div>
+		)
 	}
 }

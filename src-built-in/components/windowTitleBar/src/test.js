@@ -1,57 +1,61 @@
-var chai = require("chai");
-var assert = chai.assert;
-var should = chai.should;
-var expect = chai.expect;
-var RouterClient = FSBL.Clients.RouterClient;
-var LauncherClient = FSBL.Clients.LauncherClient;
+var chai = require('chai')
+var assert = chai.assert
+var should = chai.should
+var expect = chai.expect
+var RouterClient = FSBL.Clients.RouterClient
+var LauncherClient = FSBL.Clients.LauncherClient
 
-if (window.FSBL && FSBL.addEventListener) { FSBL.addEventListener("onReady", FSBLReady); } else { window.addEventListener("FSBLReady", FSBLReady) }
+if (window.FSBL && FSBL.addEventListener) {
+	FSBL.addEventListener('onReady', FSBLReady)
+} else {
+	window.addEventListener('FSBLReady', FSBLReady)
+}
 function FSBLReady() {
-
-	const TESTRUNNER_CHANNEL_NAME = `TestRunner.${fin.desktop.Window.getCurrent().name}.windowTitleBar`;
+	const TESTRUNNER_CHANNEL_NAME = `TestRunner.${
+		fin.desktop.Window.getCurrent().name
+	}.windowTitleBar`
 
 	function clickLinker() {
-		return new Promise(function (resolve, reject) {
-			document.querySelector(".fsbl-linker").click();
-			setTimeout(resolve, 1000);
-		});
+		return new Promise(function(resolve, reject) {
+			document.querySelector('.fsbl-linker').click()
+			setTimeout(resolve, 1000)
+		})
 	}
 
 	function getLinkerGroupClasses() {
-		return new Promise(function (resolve, reject) {
-			resolve(Array.from(document.querySelectorAll(".linker-group")).map((el)=>el.className));
-		});
+		return new Promise(function(resolve, reject) {
+			resolve(Array.from(document.querySelectorAll('.linker-group')).map(el => el.className))
+		})
 	}
-	RouterClient.addResponder(TESTRUNNER_CHANNEL_NAME, function (err, message) {
+	RouterClient.addResponder(TESTRUNNER_CHANNEL_NAME, function(err, message) {
 		function sendSuccess(data) {
-			message.sendQueryResponse(null, data || "Success");
+			message.sendQueryResponse(null, data || 'Success')
 		}
 		function sendError(error) {
-			let err = {};
-			err.message = error;
+			let err = {}
+			err.message = error
 			if (error.message) {
-				err.message = error.message;
+				err.message = error.message
 			}
-			message.sendQueryResponse(err, null);
+			message.sendQueryResponse(err, null)
 		}
 		//second responder added.
 		if (err) {
-			return;
+			return
 		}
-		let data = message.data;
+		let data = message.data
 		switch (data.test) {
-		case "clickLinker":
-			clickLinker()
+			case 'clickLinker':
+				clickLinker()
 					.then(sendSuccess)
-					.catch(sendError);
+					.catch(sendError)
 
-			break;
-		case "getLinkerGroupClasses":
-			getLinkerGroupClasses()
+				break
+			case 'getLinkerGroupClasses':
+				getLinkerGroupClasses()
 					.then(sendSuccess)
-					.catch(sendError);
-			break;
+					.catch(sendError)
+				break
 		}
-	});
-
+	})
 }
