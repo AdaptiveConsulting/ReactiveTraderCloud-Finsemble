@@ -5,5 +5,8 @@
 			"jsx": true
 		}
 	},
-	"extends": ["plugin:prettier/recommended"]
+	"rules": {
+		"no-restricted-globals": "off",
+		"@typescript-eslint/no-angle-bracket-type-assertion": "off"
+	}
 }
