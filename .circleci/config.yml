@@ -32,3 +32,8 @@ jobs:
       - run:
           name: 'Build Production Package'
           command: 'yarn makeInstaller:prod'
+      - store_artifacts:
+          path: ~/repo/pkg/
+          path: ~/repo/docs/
+          path: ~/repo/dist/
+          path: ~/repo/finsemble/
