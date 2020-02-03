@@ -1,14 +1,11 @@
 version: 2.1
+
 orbs:
   win: circleci/windows@2.2.0
-  gcp-cli: circleci/gcp-cli@1.0.0
+
 workflows:
-  install_and_configure_cli:
-    jobs:
-      - gcp-cli/install_and_initialize_cli:
-          context: myContext
-          executor: gcp-cli/default
-  build:
+  main:
+    build:
     executor: win/default
     working_directory: ~/repo
     steps:
@@ -48,3 +45,20 @@ workflows:
       - store_artifacts:
           path: ~/repo/pkg/ReactiveTraderFinsembleSetup.exe
           destination: ReactiveTraderFinsembleSetup.exe
+
+  deploy_to_environment:
+    description: 'Deploy Artifacts to GCS'
+    docker:
+      - image: google/cloud-sdk
+    steps:
+      - run:
+          name: 'Deployment information'
+          command: |
+            echo "Deploying $BUILD_VERSION"
+      - run:
+          name: Authenticate with gcloud
+          command: |
+            echo $BASH_ENV
+            echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+            gcloud config set project ${GOOGLE_PROJECT_ID}
+            gsutil
