@@ -29,16 +29,16 @@ jobs:
       - run:
           name: 'Move Production Assets'
           command: 'yarn deploy'
+      #   - run:
+      #       name: 'Build Production Package'
+      #       command: 'yarn makeInstaller:prod'
       - run:
-          name: 'Build Production Package'
-          command: 'yarn makeInstaller:prod'
-      - run:
-          name: 'Zip Docs'
-          command: tar -cvf docs.tar ~/repo/docs
+          name: 'Zip and Create Drop'
+          command: zip -r drop.zip ~/repo/docs
           shell: bash.exe
       - store_artifacts:
-          path: ~/repo/docs.tar
-          destination: docs.tar
+          path: ~/repo/drop.zip
+          destination: drop.zip
       - store_artifacts:
           path: ~/repo/pkg/ReactiveTraderFinsembleSetup.exe
           destination: ReactiveTraderFinsembleSetup.exe
