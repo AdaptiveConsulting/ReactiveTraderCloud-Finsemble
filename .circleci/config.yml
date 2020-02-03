@@ -3,63 +3,61 @@ version: 2.1
 orbs:
   win: circleci/windows@2.2.0
 
-workflows:
-  main:
-    jobs:
-      build:
-        executor: win/default
-        working_directory: ~/repo
-        steps:
-          - checkout
-          - attach_workspace:
-              at: ~/repo
-          - run:
-              name: 'Authenticate with registry'
-              command: 'echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/repo/.npmrc'
-              shell: bash.exe
-          - run:
-              name: 'Install NPM Packages'
-              command: 'yarn install'
-          - save_cache:
-              paths:
-                - node_modules
-              key: 'v1-dependencies-{{ checksum "package.json" }}'
-          - run:
-              name: 'Lint'
-              command: 'yarn eslint'
-          - run:
-              name: 'Build Production Assets'
-              command: 'yarn build:prod'
-          - run:
-              name: 'Move Production Assets'
-              command: 'yarn deploy'
-          - run:
-              name: 'Build Production Package'
-              command: 'yarn makeInstaller:prod'
-          - run:
-              name: 'Zip and Create Docs'
-              command: tar -cvf DOCS.tar.gz -C ~/repo/docs .
-              shell: bash.exe
-          - store_artifacts:
-              path: ~/repo/DOCS.tar.gz
-              destination: DOCS.tar.gz
-          - store_artifacts:
-              path: ~/repo/pkg/ReactiveTraderFinsembleSetup.exe
-              destination: ReactiveTraderFinsembleSetup.exe
+jobs:
+  build:
+    executor: win/default
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/repo
+      - run:
+          name: 'Authenticate with registry'
+          command: 'echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/repo/.npmrc'
+          shell: bash.exe
+      - run:
+          name: 'Install NPM Packages'
+          command: 'yarn install'
+      - save_cache:
+          paths:
+            - node_modules
+          key: 'v1-dependencies-{{ checksum "package.json" }}'
+      - run:
+          name: 'Lint'
+          command: 'yarn eslint'
+      - run:
+          name: 'Build Production Assets'
+          command: 'yarn build:prod'
+      - run:
+          name: 'Move Production Assets'
+          command: 'yarn deploy'
+      #   - run:
+      #       name: 'Build Production Package'
+      #       command: 'yarn makeInstaller:prod'
+      - run:
+          name: 'Zip and Create Docs'
+          command: tar -cvf DOCS.tar.gz -C ~/repo/docs .
+          shell: bash.exe
+      - store_artifacts:
+          path: ~/repo/DOCS.tar.gz
+          destination: DOCS.tar.gz
+      - store_artifacts:
+          path: ~/repo/pkg/ReactiveTraderFinsembleSetup.exe
+          destination: ReactiveTraderFinsembleSetup.exe
 
-      deploy:
-        description: 'Deploy Artifacts to GCS'
-        docker:
-          - image: google/cloud-sdk
-        steps:
-          - run:
-              name: 'Deployment information'
-              command: |
-                echo "Deploying $BUILD_VERSION"
-          - run:
-              name: Authenticate with gcloud
-              command: |
-                echo $BASH_ENV
-                echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
-                gcloud config set project ${GOOGLE_PROJECT_ID}
-                gsutil
+  deploy:
+    description: 'Deploy Artifacts to GCS'
+    docker:
+      - image: google/cloud-sdk
+    steps:
+      - run:
+          name: 'Deployment information'
+          command: |
+            echo "Deploying $BUILD_VERSION"
+      - run:
+          name: Authenticate with gcloud
+          command: |
+            echo $BASH_ENV
+            echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+            gcloud config set project ${GOOGLE_PROJECT_ID}
+            gsutil
