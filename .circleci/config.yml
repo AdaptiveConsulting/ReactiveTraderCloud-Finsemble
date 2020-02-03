@@ -34,18 +34,18 @@ jobs:
       #       command: 'yarn makeInstaller:prod'
       - run:
           name: 'Zip and Create DROP'
-          command: tar -cvf DROP-$CIRCLE_BUILD_NUM.tar.gz -C ~/ci_build/docs .
+          command: tar -cvf DROP-${CIRCLE_BUILD_NUM}.tar.gz -C ~/ci_build/docs .
           shell: bash.exe
       - store_artifacts:
-          path: ~/ci_build/DROP-$CIRCLE_BUILD_NUM.tar.gz
-          destination: DROP-$CIRCLE_BUILD_NUM.tar.gz
+          path: ~/ci_build/DROP-${CIRCLE_BUILD_NUM}.tar.gz
+          destination: DROP-${CIRCLE_BUILD_NUM}.tar.gz
       - store_artifacts:
           path: ~/ci_build/pkg/ReactiveTraderFinsembleSetup.exe
           destination: ReactiveTraderFinsembleSetup.exe
       - persist_to_workspace:
           root: .
           paths:
-            - DROP-$CIRCLE_BUILD_NUM.tar.gz
+            - DROP-${CIRCLE_BUILD_NUM}.tar.gz
 
   deploy:
     description: 'Deploy Artifacts to GCS'
