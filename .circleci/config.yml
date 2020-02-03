@@ -9,16 +9,6 @@ jobs:
     working_directory: ~/ci_build
     steps:
       - checkout
-      - persist_to_workspace:
-          root: .
-          paths:
-            - docs/
-            - pkg/
-            - DOCS.tar.gz
-            - finsemble/
-            - dist/
-            - public/
-
       - run:
           name: 'Authenticate with registry'
           command: 'echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/ci_build/.npmrc'
@@ -52,6 +42,10 @@ jobs:
       - store_artifacts:
           path: ~/ci_build/pkg/ReactiveTraderFinsembleSetup.exe
           destination: ReactiveTraderFinsembleSetup.exe
+      - persist_to_workspace:
+          root: .
+          paths:
+            - docs/
 
   deploy:
     description: 'Deploy Artifacts to GCS'
