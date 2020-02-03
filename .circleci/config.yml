@@ -34,18 +34,18 @@ jobs:
       #       command: 'yarn makeInstaller:prod'
       - run:
           name: 'Zip and Create DROP'
-          command: tar -cvf DROP.tar.gz -C ~/ci_build/docs .
+          command: tar -cvf DROP-$CIRCLE_BUILD_NUM.tar.gz -C ~/ci_build/docs .
           shell: bash.exe
       - store_artifacts:
-          path: ~/ci_build/DROP.tar.gz
-          destination: DROP.tar.gz
+          path: ~/ci_build/DROP-$CIRCLE_BUILD_NUM.tar.gz
+          destination: DROP-$CIRCLE_BUILD_NUM.tar.gz
       - store_artifacts:
           path: ~/ci_build/pkg/ReactiveTraderFinsembleSetup.exe
           destination: ReactiveTraderFinsembleSetup.exe
       - persist_to_workspace:
           root: .
           paths:
-            - DROP.tar.gz
+            - DROP-$CIRCLE_BUILD_NUM.tar.gz
 
   deploy:
     description: 'Deploy Artifacts to GCS'
@@ -64,8 +64,11 @@ jobs:
             echo $BASH_ENV
             echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
             gcloud config set project ${GOOGLE_PROJECT_ID}
+      - run:
+          name: Copy artifacts to GCS
+          command: |
             cd ~/ci_build/
-            tar -xvf DROP.tar.gz
+            tar -xvf DROP-*.tar.gz
             gsutil -m cp -r * gs://reactive-trader-finsemble
 
 workflows:
