@@ -11,7 +11,7 @@ jobs:
       - checkout
       - persist_to_workspace:
           root: .
-          paths: vars/env
+          paths: docs/
       - run:
           name: 'Authenticate with registry'
           command: 'echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/ci_build/.npmrc'
