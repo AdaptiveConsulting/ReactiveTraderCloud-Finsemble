@@ -1,4 +1,3 @@
-
 /**
  * Copyright 2018 by ChartIQ, Inc.
  * All rights reserved.
@@ -6,7 +5,6 @@
  */
 export default class AppDirectory {
 	constructor(client) {
-		return client;
+		return client
 	}
-
 }

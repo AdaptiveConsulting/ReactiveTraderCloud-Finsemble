@@ -1,18 +1,12 @@
 {
 	"parserOptions": {
-		"ecmaVersion": 6,
-		"sourceType": "module",
+		"ecmaVersion": 2017,
 		"ecmaFeatures": {
 			"jsx": true
 		}
 	},
-	"globals": {
-		"fin": true
-	},
 	"rules": {
 		"no-restricted-globals": "off",
-		"jsx-a11y/anchor-has-content": "off",
-		"@typescript-eslint/no-angle-bracket-type-assertion": "off",
-		"semi": "error"
+		"@typescript-eslint/no-angle-bracket-type-assertion": "off"
 	}
 }

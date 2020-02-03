@@ -1,8 +1,8 @@
 /*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-import React from "react";
+ * Copyright 2017 by ChartIQ, Inc.
+ * All rights reserved.
+ */
+import React from 'react'
 
 /**
  * AppShowcase description section
@@ -17,7 +17,7 @@ const AppDescription = props => {
 				<div>{props.description || DEFAULT_APP_DESCRIPTION}</div>
 			</div>
 		</div>
-	);
+	)
 }
 
-export default AppDescription;
+export default AppDescription

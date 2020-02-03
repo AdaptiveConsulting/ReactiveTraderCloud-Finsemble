@@ -1,24 +1,24 @@
 /*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
+ * Copyright 2017 by ChartIQ, Inc.
+ * All rights reserved.
  * This is a single workspace. When clicked, it requests that the app switch to the clicked workspace.
  */
 
-import React from "react";
-import { FinsembleMenuItem, FinsembleMenuItemLabel } from "@chartiq/finsemble-react-controls";
+import React from 'react'
+import { FinsembleMenuItem, FinsembleMenuItemLabel } from '@chartiq/finsemble-react-controls'
 
 export default class Workspace extends React.Component {
 	constructor(props) {
-		super(props);
-		this.bindCorrectContext();
+		super(props)
+		this.bindCorrectContext()
 	}
 	/**
-     * This is necessary to make sure that the `this` inside of the callback is correct.
-     *
-     * @memberof LinkerButton
-     */
+	 * This is necessary to make sure that the `this` inside of the callback is correct.
+	 *
+	 * @memberof LinkerButton
+	 */
 	bindCorrectContext() {
-		this.onClick = this.onClick.bind(this);
+		this.onClick = this.onClick.bind(this)
 	}
 
 	/**
@@ -28,8 +28,8 @@ export default class Workspace extends React.Component {
 	 */
 	onClick() {
 		this.props.mainAction({
-			name: this.props.workspace.name
-		});
+			name: this.props.workspace.name,
+		})
 	}
 
 	/**
@@ -39,40 +39,43 @@ export default class Workspace extends React.Component {
 	 * @memberof Workspace
 	 */
 	renderButtons() {
-		let { workspace, itemActions } = this.props;
+		let { workspace, itemActions } = this.props
 		//Remove trashcan for activeWorkspace. Prevents it from being deleted and causing issues.
 		if (this.props.isActiveWorkspace) {
-			let index = itemActions.findIndex(el => el.iconClass.includes('ff-adp-trash-outline'));
-			if (index > -1) itemActions.splice(index, 1);
+			let index = itemActions.findIndex(el => el.iconClass.includes('ff-adp-trash-outline'))
+			if (index > -1) itemActions.splice(index, 1)
 		}
-		return itemActions.map(function (action, index) {
-			let classes = "menu-item-action";
-			let iconClasses = action.iconClass;
+		return itemActions.map(function(action, index) {
+			let classes = 'menu-item-action'
+			let iconClasses = action.iconClass
 			if (workspace.isPinned && iconClasses.includes('favorite')) {
-				iconClasses += " finsemble-item-pinned";
+				iconClasses += ' finsemble-item-pinned'
 			} else {
-				classes += " remove-workspace";
+				classes += ' remove-workspace'
 			}
-			let title="";
+			let title = ''
 			if (iconClasses.includes('favorite') && workspace.isPinned) {
-				title="Unfavorite"
+				title = 'Unfavorite'
 			} else {
-				title="Favorite"
+				title = 'Favorite'
 			}
 			if (iconClasses.includes('trash')) {
-				title="Delete"
+				title = 'Delete'
 			}
-			let label = action.label || "";
-			return (<div key={index} title={title} className={classes} onClick={
-				() => {
-					action.method(workspace);
-				}
-			}>
-				{action.iconClass &&
-					<i className={iconClasses}></i>
-				}
-			</div>);
-		});
+			let label = action.label || ''
+			return (
+				<div
+					key={index}
+					title={title}
+					className={classes}
+					onClick={() => {
+						action.method(workspace)
+					}}
+				>
+					{action.iconClass && <i className={iconClasses}></i>}
+				</div>
+			)
+		})
 	}
 	/**
 	 * Render method.
@@ -81,26 +84,31 @@ export default class Workspace extends React.Component {
 	 * @memberof Workspace
 	 */
 	render() {
-		const { isSwitchingWorkspaces, workspace, isActiveWorkspace, dragHandle } = this.props;
-		let actionButtons = null;
+		const { isSwitchingWorkspaces, workspace, isActiveWorkspace, dragHandle } = this.props
+		let actionButtons = null
 
 		//Actions are remove and pin workspace.
 		if (this.props.itemActions) {
-			actionButtons = this.renderButtons();
+			actionButtons = this.renderButtons()
 		}
 
-		const showSpinner = isSwitchingWorkspaces && isActiveWorkspace;
+		const showSpinner = isSwitchingWorkspaces && isActiveWorkspace
 
-		let classes = this.props.isActiveWorkspace ? "active-workspace workspace-name" : "workspace-name";
+		let classes = this.props.isActiveWorkspace
+			? 'active-workspace workspace-name'
+			: 'workspace-name'
 		return (
 			<FinsembleMenuItem>
-				{showSpinner && <div className="fsbl-loader">Loading...</div> }
+				{showSpinner && <div className="fsbl-loader">Loading...</div>}
 				{dragHandle && dragHandle.iconClass && <div className={dragHandle.iconClass}></div>}
-				<FinsembleMenuItemLabel label={workspace.name} title={workspace.name} className={classes} onClick={this.onClick}/>
-				{actionButtons && <div className="menu-item-actions">
-					{actionButtons}
-				</div>}
+				<FinsembleMenuItemLabel
+					label={workspace.name}
+					title={workspace.name}
+					className={classes}
+					onClick={this.onClick}
+				/>
+				{actionButtons && <div className="menu-item-actions">{actionButtons}</div>}
 			</FinsembleMenuItem>
-		);
+		)
 	}
 }

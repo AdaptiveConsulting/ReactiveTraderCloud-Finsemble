@@ -1,8 +1,8 @@
 /*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-import React from "react";
+ * Copyright 2017 by ChartIQ, Inc.
+ * All rights reserved.
+ */
+import React from 'react'
 
 /**
  * A display component for tag name. Contains a stylized label
@@ -12,17 +12,17 @@ import React from "react";
  */
 const Tag = props => {
 	const remove = () => {
-		props.removeTag(props.name);
+		props.removeTag(props.name)
 	}
 
 	return (
-		<div className='app-tag'>
-			<div className='tag-content'>
-				<div className='tag-name'>{props.name}</div>&nbsp;&nbsp;
-				<i className='ff-close tag-delete' onClick={remove}></i>
+		<div className="app-tag">
+			<div className="tag-content">
+				<div className="tag-name">{props.name}</div>&nbsp;&nbsp;
+				<i className="ff-close tag-delete" onClick={remove}></i>
 			</div>
 		</div>
-	);
+	)
 }
 
-export default Tag;
+export default Tag

@@ -2,42 +2,42 @@
  * Copyright 2017 by ChartIQ, Inc.
  * All rights reserved.
  */
-import React from "react";
-import ReactDOM from "react-dom";
-import ToolbarStore from "../stores/toolbarStore";
+import React from 'react'
+import ReactDOM from 'react-dom'
+import ToolbarStore from '../stores/toolbarStore'
 
 // Toolbar Components
 import {
 	FinsembleToolbar,
 	FinsembleButton,
 	FinsembleToolbarSection,
-	FinsembleToolbarSeparator
-} from "@chartiq/finsemble-react-controls";
+	FinsembleToolbarSeparator,
+} from '@chartiq/finsemble-react-controls'
 
 // External Components to show on Toolbar
-import AutoArrange from "../components/AutoArrange";
-import MinimizeAll from "../components/MinimizeAll";
+import AutoArrange from '../components/AutoArrange'
+import MinimizeAll from '../components/MinimizeAll'
 
-import BringToFront from "../components/BringToFront";
-import WorkspaceLauncherButton from "../components/WorkspaceLauncherButton";
-import WorkspaceMenuOpener from "../components/WorkspaceMenuOpener";
+import BringToFront from '../components/BringToFront'
+import WorkspaceLauncherButton from '../components/WorkspaceLauncherButton'
+import WorkspaceMenuOpener from '../components/WorkspaceMenuOpener'
 // Styles
-import "../toolbar.css";
-import "../../../assets/css/font-finance.css";
-import "../../../assets/css/finsemble.css";
+import '../toolbar.css'
+import '../../../assets/css/font-finance.css'
+import '../../../assets/css/finsemble.css'
 
 var pinnableItems = {
 	componentLauncher: FinsembleButton,
-	workspaceSwitcher: WorkspaceLauncherButton
-};
+	workspaceSwitcher: WorkspaceLauncherButton,
+}
 
 export default class Toolbar extends React.Component {
 	constructor(props) {
-		super(props);
+		super(props)
 	}
 
 	componentDidMount() {
-		finsembleWindow.bringToFront();
+		finsembleWindow.bringToFront()
 	}
 
 	render() {
@@ -46,7 +46,7 @@ export default class Toolbar extends React.Component {
 				<FinsembleToolbarSection name="left" className="left">
 					<FinsembleButton
 						preSpawn={true}
-						buttonType={["MenuLauncher", "Toolbar"]}
+						buttonType={['MenuLauncher', 'Toolbar']}
 						iconClasses="finsemble-toolbar-brand-logo"
 						icon="../../../assets/img/adaptive-logo.png"
 						menuType="File Menu"
@@ -54,7 +54,7 @@ export default class Toolbar extends React.Component {
 					<WorkspaceMenuOpener />
 					<FinsembleButton
 						preSpawn={true}
-						buttonType={["MenuLauncher", "Toolbar"]}
+						buttonType={['MenuLauncher', 'Toolbar']}
 						label="Apps"
 						menuType="App Launcher"
 					/>
@@ -74,17 +74,17 @@ export default class Toolbar extends React.Component {
 					<BringToFront />
 				</FinsembleToolbarSection>
 			</FinsembleToolbar>
-		);
+		)
 	}
 }
 
 if (window.FSBL && FSBL.addEventListener) {
-	FSBL.addEventListener("onReady", FSBLReady);
+	FSBL.addEventListener('onReady', FSBLReady)
 } else {
-	window.addEventListener("FSBLReady", FSBLReady);
+	window.addEventListener('FSBLReady', FSBLReady)
 }
 function FSBLReady() {
 	ToolbarStore.initialize(function() {
-		ReactDOM.render(<Toolbar />, document.getElementById("toolbar_parent"));
-	});
+		ReactDOM.render(<Toolbar />, document.getElementById('toolbar_parent'))
+	})
 }

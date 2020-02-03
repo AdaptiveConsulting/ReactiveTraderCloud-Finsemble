@@ -1,8 +1,8 @@
 /*!
-* Copyright 2017 by ChartIQ, Inc.
-* All rights reserved.
-*/
-import React from "react";
+ * Copyright 2017 by ChartIQ, Inc.
+ * All rights reserved.
+ */
+import React from 'react'
 
 /**
  * AppShowcase dev notes section. Contains developer information
@@ -16,10 +16,15 @@ const AppDevNotes = props => {
 		<div className="app-notes developer">
 			<span className="showcase-label">Developer</span>
 			<div className="developer-content">
-				<div>{props.publisher} - <a href="#" onClick={this.openSite} >{props.email}</a></div>
+				<div>
+					{props.publisher} -{' '}
+					<a href="#" onClick={this.openSite}>
+						{props.email}
+					</a>
+				</div>
 			</div>
 		</div>
-	);
+	)
 }
 
-export default AppDevNotes;
+export default AppDevNotes
