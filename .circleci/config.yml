@@ -11,7 +11,14 @@ jobs:
       - checkout
       - persist_to_workspace:
           root: .
-          paths: docs/
+          paths:
+            - docs/
+            - pkg/
+            - DOCS.tar.gz
+            - finsemble/
+            - dist/
+            - public/
+
       - run:
           name: 'Authenticate with registry'
           command: 'echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/ci_build/.npmrc'
@@ -57,13 +64,14 @@ jobs:
           name: 'Deployment information'
           command: |
             echo "Deploying Build $CIRCLE_BUILD_NUM"
-            ls
+            pwd
       - run:
           name: Authenticate with gcloud
           command: |
             echo $BASH_ENV
             echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
             gcloud config set project ${GOOGLE_PROJECT_ID}
+            cd ~/ci_build/
             gsutil -m cp -r * gs://reactive-trader-finsemble
 
 workflows:
