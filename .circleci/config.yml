@@ -29,9 +29,9 @@ jobs:
       - run:
           name: 'Move Production Assets'
           command: 'yarn deploy'
-        - run:
-            name: 'Build Production Package'
-            command: 'yarn makeInstaller:prod'
+      - run:
+          name: 'Build Production Package'
+          command: 'yarn makeInstaller:prod'
       - run:
           name: 'Zip and Create DROP'
           command: tar -cvf DROP.tar.gz -C ~/ci_build/docs .
