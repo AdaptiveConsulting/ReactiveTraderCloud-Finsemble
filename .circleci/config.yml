@@ -56,8 +56,8 @@ jobs:
       - run:
           name: 'Deployment information'
           command: |
-            echo "Deploying $CIRCLE_BUILD_NUM"
-            echo "ls"
+            echo "Deploying Build $CIRCLE_BUILD_NUM"
+            ls
       - run:
           name: Authenticate with gcloud
           command: |
