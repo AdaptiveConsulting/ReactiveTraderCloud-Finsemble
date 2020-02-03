@@ -34,11 +34,11 @@ jobs:
           command: 'yarn makeInstaller:prod'
       - run:
           name: 'Zip and Create Docs'
-          command: tar -cvf DOCS.tar.gz -C ~/repo/docs .
+          command: tar -cvf DOCS-BUILD-$CIRCLE_BUILD_NUM.tar.gz -C ~/repo/docs .
           shell: bash.exe
       - store_artifacts:
-          path: ~/repo/docs/DOCS.tar.gz
-          destination: DOCS.tar.gz
+          path: ~/repo/DOCS-BUILD-$CIRCLE_BUILD_NUM.tar.gz
+          destination: DOCS-BUILD-$CIRCLE_BUILD_NUM.tar.gz
       - store_artifacts:
           path: ~/repo/pkg/ReactiveTraderFinsembleSetup.exe
           destination: ReactiveTraderFinsembleSetup.exe
