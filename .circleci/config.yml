@@ -6,14 +6,14 @@ orbs:
 jobs:
   build:
     executor: win/default
-    working_directory: ~/repo
+    working_directory: ~/
     steps:
       - checkout
-      - attach_workspace:
-          at: ~/repo
+      - persist_to_workspace
+          root: ~/
       - run:
           name: 'Authenticate with registry'
-          command: 'echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/repo/.npmrc'
+          command: 'echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/.npmrc'
           shell: bash.exe
       - run:
           name: 'Install NPM Packages'
@@ -36,13 +36,13 @@ jobs:
       #       command: 'yarn makeInstaller:prod'
       - run:
           name: 'Zip and Create Docs'
-          command: tar -cvf DOCS.tar.gz -C ~/repo/docs .
+          command: tar -cvf DOCS.tar.gz -C ~/docs .
           shell: bash.exe
       - store_artifacts:
-          path: ~/repo/DOCS.tar.gz
+          path: ~/DOCS.tar.gz
           destination: DOCS.tar.gz
       - store_artifacts:
-          path: ~/repo/pkg/ReactiveTraderFinsembleSetup.exe
+          path: ~/pkg/ReactiveTraderFinsembleSetup.exe
           destination: ReactiveTraderFinsembleSetup.exe
 
   deploy:
@@ -50,17 +50,19 @@ jobs:
     docker:
       - image: google/cloud-sdk
     steps:
+      - attach_workspace:
+        at: ~/
       - run:
           name: 'Deployment information'
           command: |
-            echo "Deploying $BUILD_VERSION"
+            echo "Deploying $CIRCLE_BUILD_NUM"
       - run:
           name: Authenticate with gcloud
           command: |
             echo $BASH_ENV
             echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
             gcloud config set project ${GOOGLE_PROJECT_ID}
-            gsutil
+            gsutil -m cp -r * gs://reactive-trader-finsemble
 
 workflows:
   version: 2
