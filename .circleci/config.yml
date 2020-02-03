@@ -70,7 +70,7 @@ jobs:
           command: |
             cd ~/ci_build/
             tar -xvf DROP*.tar.gz
-            gsutil rm gs://reactive-trader-finsemble/*
+            gsutil -m rm gs://reactive-trader-finsemble/**
             gsutil -m cp -r * gs://reactive-trader-finsemble
 
 workflows:
