@@ -4,22 +4,6 @@ orbs:
   win: circleci/windows@2.2.0
 
 jobs:
-  deploy:
-    description: 'Deploy Artifacts to GCS'
-    docker:
-      - image: google/cloud-sdk
-    steps:
-      - run:
-          name: 'Deployment information'
-          command: |
-            echo "Deploying $BUILD_VERSION"
-      - run:
-          name: Authenticate with gcloud
-          command: |
-            echo $BASH_ENV
-            echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
-            gcloud config set project ${GOOGLE_PROJECT_ID}
-            gsutil
   build:
     executor: win/default
     working_directory: ~/repo
@@ -60,3 +44,20 @@ jobs:
       - store_artifacts:
           path: ~/repo/pkg/ReactiveTraderFinsembleSetup.exe
           destination: ReactiveTraderFinsembleSetup.exe
+
+  deploy:
+    description: 'Deploy Artifacts to GCS'
+    docker:
+      - image: google/cloud-sdk
+    steps:
+      - run:
+          name: 'Deployment information'
+          command: |
+            echo "Deploying $BUILD_VERSION"
+      - run:
+          name: Authenticate with gcloud
+          command: |
+            echo $BASH_ENV
+            echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+            gcloud config set project ${GOOGLE_PROJECT_ID}
+            gsutil
