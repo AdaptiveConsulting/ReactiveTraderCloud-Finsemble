@@ -6,15 +6,16 @@ orbs:
 jobs:
   build:
     executor: win/default
-    working_directory: ~/
+    working_directory: ~/ci_build
     steps:
       - checkout
       - persist_to_workspace:
-          root: ~/
-          paths: vars/env
+          root: ~/ci_build
+          paths:
+            - /docs
       - run:
           name: 'Authenticate with registry'
-          command: 'echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/.npmrc'
+          command: 'echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/ci_build/.npmrc'
           shell: bash.exe
       - run:
           name: 'Install NPM Packages'
@@ -37,13 +38,13 @@ jobs:
       #       command: 'yarn makeInstaller:prod'
       - run:
           name: 'Zip and Create Docs'
-          command: tar -cvf DOCS.tar.gz -C ~/docs .
+          command: tar -cvf DOCS.tar.gz -C ~/ci_build/docs .
           shell: bash.exe
       - store_artifacts:
-          path: ~/DOCS.tar.gz
+          path: ~/ci_build/DOCS.tar.gz
           destination: DOCS.tar.gz
       - store_artifacts:
-          path: ~/pkg/ReactiveTraderFinsembleSetup.exe
+          path: ~/ci_build/pkg/ReactiveTraderFinsembleSetup.exe
           destination: ReactiveTraderFinsembleSetup.exe
 
   deploy:
@@ -52,7 +53,7 @@ jobs:
       - image: google/cloud-sdk
     steps:
       - attach_workspace:
-          at: ~/
+          at: ~/ci_build/
       - run:
           name: 'Deployment information'
           command: |
