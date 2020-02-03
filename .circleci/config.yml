@@ -12,11 +12,11 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            - ~/docs
-            - ~/public
-            - ~/dist
-            - ~/finsemble
-            - ~/pkg
+            - /docs
+            - /public
+            - /dist
+            - /finsemble
+            - /pkg
       - run:
           name: 'Authenticate with registry'
           command: 'echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/.npmrc'
@@ -62,6 +62,7 @@ jobs:
           name: 'Deployment information'
           command: |
             echo "Deploying $CIRCLE_BUILD_NUM"
+            echo "ls"
       - run:
           name: Authenticate with gcloud
           command: |
