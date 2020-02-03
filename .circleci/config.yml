@@ -9,8 +9,14 @@ jobs:
     working_directory: ~/
     steps:
       - checkout
-      - persist_to_workspace
+      - persist_to_workspace:
           root: ~/
+          paths:
+            - ~/docs
+            - ~/public
+            - ~/dist
+            - ~/finsemble
+            - ~/pkg
       - run:
           name: 'Authenticate with registry'
           command: 'echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/.npmrc'
@@ -51,7 +57,7 @@ jobs:
       - image: google/cloud-sdk
     steps:
       - attach_workspace:
-        at: ~/
+          at: ~/
       - run:
           name: 'Deployment information'
           command: |
