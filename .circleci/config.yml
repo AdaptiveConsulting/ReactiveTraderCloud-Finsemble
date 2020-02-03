@@ -29,16 +29,16 @@ jobs:
       - run:
           name: 'Move Production Assets'
           command: 'yarn deploy'
-      #   - run:
-      #       name: 'Build Production Package'
-      #       command: 'yarn makeInstaller:prod'
       - run:
-          name: 'Zip and Create Drop'
-          command: zip -r drop.zip ~/repo/docs
+          name: 'Build Production Package'
+          command: 'yarn makeInstaller:prod'
+      - run:
+          name: 'Zip Docs'
+          command: tar -cvf DOCS-BUILD-$CIRCLE_BUILD_NUM-DOCS-BRANCH-$CIRCLE_BRANCH.tar ~/repo/docs
           shell: bash.exe
       - store_artifacts:
-          path: ~/repo/drop.zip
-          destination: drop.zip
+          path: ~/repo/DOCS-BUILD-$CIRCLE_BUILD_NUM-DOCS-BRANCH-$CIRCLE_BRANCH.tar
+          destination: DOCS-BUILD-$CIRCLE_BUILD_NUM-DOCS-BRANCH-$CIRCLE_BRANCH.tar
       - store_artifacts:
           path: ~/repo/pkg/ReactiveTraderFinsembleSetup.exe
           destination: ReactiveTraderFinsembleSetup.exe
