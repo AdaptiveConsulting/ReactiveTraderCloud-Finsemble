@@ -1,19 +1,19 @@
-;(function(definition) {
-	'use strict'
+(function (definition) {
+	"use strict";
 
-	if (typeof exports === 'object' && typeof module === 'object') {
-		module.exports = definition(require('../chartiq'))
-	} else if (typeof define === 'function' && define.amd) {
-		define(['chartiq'], definition)
-	} else if (typeof window !== 'undefined' || typeof self !== 'undefined') {
-		var global = typeof window !== 'undefined' ? window : self
-		definition(global)
+	if (typeof exports === "object" && typeof module === "object") {
+		module.exports = definition( require("../chartiq") );
+	} else if (typeof define === "function" && define.amd) {
+		define(["chartiq"], definition);
+	} else if (typeof window !== "undefined" || typeof self !== "undefined") {
+		var global = typeof window !== "undefined" ? window : self;
+		definition(global);
 	} else {
-		throw new Error('Only CommonJS, RequireJS, and <script> tags supported for quotes.js.')
+		throw new Error("Only CommonJS, RequireJS, and <script> tags supported for quotes.js.");
 	}
-})(function(_exports) {
+})(function(_exports){
 	//console.log("quotes.js",_exports);
-	var CIQ = _exports.CIQ
+	var CIQ=_exports.CIQ;
 
 	/**
 	 * ** This class is maintained for legacy implementations only. New implementations should use {@link CIQ.QuoteFeed} **<br>
@@ -24,7 +24,7 @@
 	 * @name CIQ.Quotes
 	 * @version ChartIQ Advanced Package
 	 */
-	CIQ.Quotes = function() {}
+	CIQ.Quotes=function(){};
 
 	/**
 	 * If you support multiple data sources then this can be used to cascade through them if data is not available.
@@ -34,9 +34,10 @@
 	 * @memberOf CIQ.Quotes
 	 * @version ChartIQ Advanced Package
 	 */
-	CIQ.Quotes.nextDataSource = function(params, currentSource) {
-		return null
-	}
+	CIQ.Quotes.nextDataSource=function(params, currentSource){
+		return null;
+	};
+
 
 	/**
 	 * Fetch multiple quotes asynchronously, possibly from various data sources. This method can be used to update a chart with multiple symbols
@@ -46,29 +47,30 @@
 	 * @memberOf CIQ.Quotes
 	 * @version ChartIQ Advanced Package
 	 */
-	CIQ.Quotes.multiFetch = function(arr, cb) {
-		var tracker = {
-			counter: 0,
+	CIQ.Quotes.multiFetch=function(arr, cb){
+		var tracker={
+			counter:0,
 			finished: arr.length,
-			results: [],
-		}
+			results: []
+		};
 
-		function handleResponse(params, tracker, cb) {
-			return function(err, data) {
-				tracker.results.push({ err: err, params: params, data: data })
-				tracker.counter++
-				if (tracker.counter >= tracker.finished) {
-					var results = tracker.results
-					tracker.results = []
-					cb(results)
+		function handleResponse(params, tracker, cb){
+			return function(err, data){
+				tracker.results.push({err:err, params: params, data:data});
+				tracker.counter++;
+				if(tracker.counter>=tracker.finished){
+					var results=tracker.results;
+					tracker.results=[];
+					cb(results);
 				}
-			}
+			};
 		}
-		for (var i = 0; i < arr.length; i++) {
-			var params = arr[i]
-			CIQ.Quotes.fetch(params, handleResponse(params, tracker, cb))
+		for(var i=0;i<arr.length;i++){
+			var params=arr[i];
+			CIQ.Quotes.fetch(params, handleResponse(params, tracker, cb));
 		}
-	}
+	};
+
 
 	/**
 	 * Fetch data. This will automatically fetch data from your data source, if you pass the approprite params.source string.
@@ -80,13 +82,13 @@
 	 * @memberOf CIQ.Quotes
 	 * @version ChartIQ Advanced Package
 	 */
-	CIQ.Quotes.fetch = function(params, cb) {
-		if (!params.source) params.source = 'Demo'
-		function handleResponse(error, data) {
-			cb(error, data)
+	CIQ.Quotes.fetch=function(params, cb){
+	    if(!params.source) params.source="Demo";
+		function handleResponse(error, data){
+			cb(error, data);
 		}
-		CIQ.Quotes[params.source].fetch(params, handleResponse)
-	}
+		CIQ.Quotes[params.source].fetch(params, handleResponse);
+	};
 
 	/**
 	 * Returns how many bars should be fetched. If we're fetching a series then it's simply the number
@@ -97,17 +99,17 @@
 	 * @memberOf CIQ.Quotes
 	 * @version ChartIQ Advanced Package
 	 */
-	CIQ.Quotes.barsToFetch = function(params) {
-		if (params.isSeries) return params.stx.masterData.length
+	CIQ.Quotes.barsToFetch=function(params){
+		if(params.isSeries) return params.stx.masterData.length;
 
-		var p = params.stx.layout.periodicity
+		var p=params.stx.layout.periodicity;
 		// Rough calculation, this will account for 24x7 securities
-		if (params.stx.layout.interval == 'month') p = 30 * p
-		if (params.stx.layout.interval == 'week') p = 7 * p
+		if(params.stx.layout.interval=="month") p=30*p;
+		if(params.stx.layout.interval=="week") p=7*p;
 
-		var bars = params.stx.chart.maxTicks * p
-		return bars
-	}
+		var bars=params.stx.chart.maxTicks*p;
+		return bars;
+	};
 
 	/*
 	 * This is a demo version of fetch. You will need to create one for your own quote feed that behaves similarly.
@@ -116,50 +118,42 @@
 	 * start and end dates (for instance to support loading more when the user scrolls back or refresh updates)
 	 */
 
-	CIQ.Quotes.Demo = function() {}
+	CIQ.Quotes.Demo=function(){};
 
-	CIQ.Quotes.Demo.fetch = function(params, cb) {
-		function setQuotes(response) {
-			var varName = response.substr(0, response.indexOf('='))
-			var valueToParse = response.substring(
-				response.indexOf(varName + '=') + (varName + '=').length,
-				response.length - 1,
-			)
-			try {
-				return JSON.parse(
-					valueToParse
-						.replace(/,0+/g, ',0')
-						.replace(/,[.]/g, ',0.')
-						.replace(/;/g, ''),
-				)
-			} catch (e) {
-				return []
+	CIQ.Quotes.Demo.fetch=function(params, cb){
+		function setQuotes(response){
+			var varName=response.substr(0,response.indexOf("="));
+			var valueToParse=response.substring(response.indexOf(varName+"=")+(varName+"=").length,response.length-1);
+			try{
+				return JSON.parse(valueToParse.replace(/,0+/g,",0").replace(/,[.]/g,",0.").replace(/;/g,""));
+			}catch(e){
+				return [];
 			}
 		}
 
-		url = 'https://demoquotes.chartiq.com/' + params.symbol.toUpperCase()
+		url="https://demoquotes.chartiq.com/" + params.symbol.toUpperCase();
 		// Theoretically append interval to url as well (although Demo has limited EOD)
-		var bars = CIQ.Quotes.barsToFetch(params)
-		CIQ.postAjax(url, null, function(status, response) {
-			if (status != 200) {
-				cb(status)
-				return
+		var bars=CIQ.Quotes.barsToFetch(params);
+		CIQ.postAjax(url, null, function(status, response){
+			if(status!=200){
+				cb(status);
+				return;
 			}
-			var quotes = setQuotes(response)
-			var newQuotes = []
-			for (var i = 0; i < quotes.length; i++) {
-				newQuotes[i] = {}
-				newQuotes[i].Date = quotes[i][0]
-				newQuotes[i].Open = quotes[i][1]
-				newQuotes[i].High = quotes[i][2]
-				newQuotes[i].Low = quotes[i][3]
-				newQuotes[i].Close = quotes[i][4]
-				newQuotes[i].Volume = quotes[i][5]
-				newQuotes[i].Adj_Close = quotes[i][6]
+			var quotes=setQuotes(response);
+			var newQuotes=[];
+			for(var i=0;i<quotes.length;i++){
+				newQuotes[i]={};
+				newQuotes[i].Date=quotes[i][0];
+				newQuotes[i].Open=quotes[i][1];
+				newQuotes[i].High=quotes[i][2];
+				newQuotes[i].Low=quotes[i][3];
+				newQuotes[i].Close=quotes[i][4];
+				newQuotes[i].Volume=quotes[i][5];
+				newQuotes[i].Adj_Close=quotes[i][6];
 			}
-			cb(null, newQuotes)
-		})
-	}
+			cb(null, newQuotes);
+		});
+	};
 
-	return _exports
-})
+	return _exports;
+});
