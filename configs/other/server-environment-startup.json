@@ -15,7 +15,7 @@
 	"production": {
 		"//serverPort": "Port number for your server.",
 		"//serverConfig": "Url for your application's manifest.",
-		"serverConfig": "https://adaptiveconsulting.github.io/ReactiveTraderCloud-Finsemble/configs/application/manifest-prod.json",
+		"serverConfig": "https://storage.googleapis.com/reactive-trader-finsemble/configs/application/manifest-prod.json",
 		"clientRoute": "https://adaptiveconsulting.github.io/",
 		"//container": "Which adapter to use. The finsemble-electron-adapter Adapter or Openfin. Valid values are electron and openfin. Default: electron .",
 		"container": "electron",
