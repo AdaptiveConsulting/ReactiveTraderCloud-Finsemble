@@ -66,11 +66,19 @@ jobs:
             echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
             gcloud config set project ${GOOGLE_PROJECT_ID}
       - run:
+          name: Delete GCS Bucket and Contents
+          command: |
+            gsutil -m rm -r gs://reactive-trader-finsemble
+      - run:
+          name: Recreate Bucket and Make Public
+          command: |
+            gsutil mb -b on gs://reactive-trader-finsemble
+            gsutil iam ch allUsers:objectViewer gs://reactive-trader-finsemble
+      - run:
           name: Copy artifacts to GCS
           command: |
             cd ~/ci_build/
             tar -xvf DROP*.tar.gz
-            gsutil -m rm gs://reactive-trader-finsemble/**
             gsutil -m cp -r * gs://reactive-trader-finsemble
 
 workflows:
