@@ -3,14 +3,14 @@
     "components": {
         "Currency Chart": {
             "window": {
-                "url": "$applicationRoot/components/currencyChart/template-advanced.html",
+                "url": "$applicationRoot/components/currencyChart/technical-analysis-chart.html",
                 "frame": false,
                 "resizable": true,
                 "autoShow": true,
                 "top": "center",
                 "left": "center",
                 "width": 1000,
-                "height": 800
+                "height": 900
             },
             "component": {
                 "inject": [

@@ -10,30 +10,30 @@ jobs:
     steps:
       - checkout
       - run:
-          name: 'Authenticate with registry'
+          name: "Authenticate with registry"
           command: 'echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/ci_build/.npmrc'
           shell: bash.exe
       - run:
-          name: 'Install NPM Packages'
-          command: 'yarn install'
+          name: "Install NPM Packages"
+          command: "yarn install"
       - save_cache:
           paths:
             - node_modules
           key: 'v1-dependencies-{{ checksum "package.json" }}'
       - run:
-          name: 'Lint'
-          command: 'yarn eslint'
+          name: "Lint"
+          command: "yarn eslint"
       - run:
-          name: 'Build Production Assets'
-          command: 'yarn build:prod'
+          name: "Build Production Assets"
+          command: "yarn build:prod"
       - run:
-          name: 'Move Production Assets'
-          command: 'yarn deploy'
+          name: "Move Production Assets"
+          command: "yarn deploy"
       - run:
-          name: 'Build Production Package'
-          command: 'yarn makeInstaller:prod'
+          name: "Build Production Package"
+          command: "yarn makeInstaller:prod"
       - run:
-          name: 'Zip and Create DROP'
+          name: "Zip and Create DROP"
           command: tar -cvf DROP.tar.gz -C ~/ci_build/docs .
           shell: bash.exe
       - store_artifacts:
@@ -49,14 +49,14 @@ jobs:
             - pkg/ReactiveTraderFinsembleSetup.exe
 
   deploy:
-    description: 'Deploy Artifacts to GCS'
+    description: "Deploy Artifacts to GCS"
     docker:
       - image: google/cloud-sdk
     steps:
       - attach_workspace:
           at: ~/ci_build/
       - run:
-          name: 'Deployment information'
+          name: "Deployment information"
           command: |
             echo "Deploying Build $CIRCLE_BUILD_NUM"
       - run:
