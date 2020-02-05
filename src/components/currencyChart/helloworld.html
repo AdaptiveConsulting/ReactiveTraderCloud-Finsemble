@@ -1,3 +1,6 @@
+<!--
+This file provides an example of the most basic way to load a chart into an HTML page. It includes no UI.
+-->
 <!doctype html>
 <html>
 <head>
@@ -17,15 +20,22 @@
 <script src="js/chartiq.js"></script>
 
 <!-- statically define chart data in sampleData object -->
-<script src="example-data/STX_SAMPLE_5MIN.js"></script>
+<script src="examples/data/STX_SAMPLE_5MIN.js"></script>
 <script>
 
-// Create a STXChart object, the main object for drawing charts. 
-var stxx=new CIQ.ChartEngine({container:$$$(".chartContainer")}); 
+// Create a CIQ.ChartEngine object, the main object for drawing charts. 
+var stxx=new CIQ.ChartEngine({container:document.querySelector(".chartContainer")});
 
-// Display the chart (on-load callback)
+// Display the chart (on-load callback in 5 minute periodicity to match the data.)
 function displayChart(){
-	stxx.newChart("SPY", sample5min);
+	stxx.loadChart("SPY", {
+		masterData: sample5min,
+		periodicity: {
+			period: 1,
+			interval: 5,
+			timeUnit: 'minute'
+		}
+	});
 }
 
 </script>

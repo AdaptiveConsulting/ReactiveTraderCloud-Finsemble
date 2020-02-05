@@ -5,7 +5,7 @@ FSBL.addEventListener('onReady', function() {
 				type: 'symbol',
 				handler: function(err, response) {
 					if (!err) {
-						UIContext.changeSymbol({ symbol: response.data['symbol'] })
+						stxx.loadChart({ symbol: response.data['symbol'] })
 					}
 				},
 			},
