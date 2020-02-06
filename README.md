@@ -19,16 +19,15 @@
 
 ## Production
 
-To ready this application for production please follow these steps:
+To do a dry run of a production build for this application please follow these steps:
 
 - `npm build:prod` to build Finsemble for production
 - `npm run deploy` to copy the build assets to the docs folder for Github deployment
 - `npm makeInstaller:prod` run this when needed to regenerate the production installer
-- Then push your changes
 
-## Install Reactive Trader Finsemble
+## Install the Production Version of Reactive Trader Finsemble
 
-- Run the exe found in /pkg for the production instance installer
+- Run the exe for the production instance installer found [here](https://storage.googleapis.com/reactive-trader-finsemble/pkg/ReactiveTraderFinsembleSetup.exe) 
 
 ## Notes
 
