@@ -1,8 +1,15 @@
-# Reactive Trader Finsemble
+# Reactive Trader Finsemble Demo
 
 [![CircleCI](https://circleci.com/gh/AdaptiveConsulting/ReactiveTraderCloud-Finsemble/tree/master.svg?style=svg&circle-token=c9a64a94d9b308c65df792b7af0412b0a2310a12)](https://circleci.com/gh/AdaptiveConsulting/ReactiveTraderCloud-Finsemble/tree/master)
 
-## Prerequisites
+## Overview
+
+Reactive Trader Cloud is a real-time FX trading platform demo showcasing reactive programming principles applied across the full application stack.
+This demo is built with the Finsemble seed project and integrated with Reactive Trader Cloud.
+
+![image](assets\img\RTF.png)
+
+## Developer Prerequisites
 
 - Please make sure you have the core Finsemble packages associated with your npm username for local development
 - You need to run npm login and enter your credentials before installing the core Finsemble packages
@@ -27,7 +34,7 @@ To do a dry run of a production build for this application please follow these s
 
 ## Install the Production Version of Reactive Trader Finsemble
 
-- Run the exe for the production instance installer found [here](https://storage.googleapis.com/reactive-trader-finsemble/pkg/ReactiveTraderFinsembleSetup.exe) 
+- Run the exe for the production instance installer found [here](https://storage.googleapis.com/reactive-trader-finsemble/pkg/ReactiveTraderFinsembleSetup.exe)
 
 ## Notes
 
