@@ -7,7 +7,7 @@
 Reactive Trader Cloud is a real-time FX trading platform demo showcasing reactive programming principles applied across the full application stack.
 This demo is built with the Finsemble seed project and integrated with Reactive Trader Cloud.
 
-![image](assets\img\RTF.png)
+![image](/assets/img/RTF.png)
 
 ## Developer Prerequisites
 
