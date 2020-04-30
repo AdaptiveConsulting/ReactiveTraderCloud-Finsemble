@@ -1,0 +1,44 @@
+{
+	"components": {
+		"MD Chart": {
+			"window": {
+				"url": "$applicationRoot/components/chartiq/chart/md-chart.html",
+				"width": "50%",
+				"height": "50%",
+				"options": {
+					"minWidth": 75
+				}
+			},
+			"component": {
+				"mode": "premium",
+				"preload": "$applicationRoot/preloads/zoom.js"
+			},
+			"foreign": {
+				"components": {
+					"App Launcher": {
+						"launchableByUser": false
+					},
+					"Toolbar": {
+						"iconClass": "ff-chart-advanced"
+					},
+					"Window Manager": {
+						"title": "ChartIQ",
+						"FSBLHeader": {
+							"component": "windowTitleBar",
+							"bumpElements": {
+								"fixed": "0Positioned",
+								"absolute": "0Positioned",
+								"bumpBy": "0px"
+							},
+							"bodyMarginTop": "0px",
+							"forceHeaderHeight": false
+						},
+						"showLinker": true,
+						"persistWindowState": true,
+						"zoomDefault": 1
+					}
+				}
+			}
+		}
+	}
+}

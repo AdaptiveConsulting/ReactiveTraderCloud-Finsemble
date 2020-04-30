@@ -1,0 +1,59 @@
+{
+	"components": {
+		"Advanced Chart": {
+			"window": {
+				"url": "https://sales-demo.demo.chartiq.com/",
+				"width": 800,
+				"height": 600,
+				"options": {
+					"minWidth": 75,
+					"securityPolicy": "trusted"
+				}
+			},
+			"component": {
+				"mode": "premium",
+				"advertiseReceivers": [
+					"chartiq.chart",
+					"symbol"
+				],
+				"spawnOnHotkey": [
+					"ctrl",
+					"alt",
+					"a"
+				],
+				"category": "system",
+				"preload": "$applicationRoot/components/AdvancedChart/chartiq.js"
+			},
+			"foreign": {
+				"services": {
+					"dockingService": {
+						"isArrangable": true
+					}
+				},
+				"components": {
+					"App Launcher": {
+						"launchableByUser": true
+					},
+					"Toolbar": {
+						"iconClass": "ff-chart-advanced"
+					},
+					"Window Manager": {
+						"title": "ChartIQ",
+						"FSBLHeader": {
+							"component": "windowTitleBar",
+							"bumpElements": {
+								"fixed": "0Positioned",
+								"absolute": "0Positioned",
+								"bumpBy": "0px"
+							},
+							"bodyMarginTop": "0px",
+							"forceHeaderHeight": false
+						},
+						"showLinker": true,
+						"persistWindowState": true
+					}
+				}
+			}
+		}
+	}
+}
