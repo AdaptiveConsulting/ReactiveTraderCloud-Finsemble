@@ -32,7 +32,7 @@
                     "Window Manager": {
                         "title": "Currency Chart",
                         "FSBLHeader": true,
-                        "hackScrollbar": true,
+                        "hackScrollbar": false,
                         "persistWindowState": true,
                         "showLinker": true
                     },
