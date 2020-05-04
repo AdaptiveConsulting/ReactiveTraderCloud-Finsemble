@@ -59,6 +59,12 @@
 			"version": "4.0.0",
 			"alias": "assimilation",
 			"target": "AssimilationMain.exe"
+		},
+		{
+			"src": "https://web-demo.adaptivecluster.com/plugin/LimitChecker.zip",
+			"alias": "LimitChecker",
+			"version": "1.7.0",
+			"target": "LimitChecker.application"
 		}
 	],
 	"finsemble": {

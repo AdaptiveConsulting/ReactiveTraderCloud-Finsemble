@@ -505,6 +505,36 @@
                     }
                 }
             }
+        },
+        "Limit Checker": {
+            "window": {
+                "windowType": "native",
+				"alias": "LimitChecker",
+				"url": "",
+				"defaultHeight": 600,
+				"autoShow": false,
+				"alwaysOnTop": false,
+				"resizable": true,
+				"showTaskbarIcon": false,
+				"contextMenu": true,
+				"addToWorkspace": false
+            },
+            "foreign": {
+                "services": {
+                    "dockingService": {
+                        "canGroup": true,
+                        "isArrangable": true
+                    }
+                },
+                "components": {
+                    "App Launcher": {
+                        "launchableByUser": true
+                    },
+                    "Toolbar": {
+                        "iconClass": "Limit Checker"
+                    }
+                }
+            }
         }
 	}
 }

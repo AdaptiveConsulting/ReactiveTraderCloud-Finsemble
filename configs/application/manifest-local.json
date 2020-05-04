@@ -61,6 +61,12 @@
 			"version": "4.0.0",
 			"alias": "assimilation",
 			"target": "AssimilationMain.exe"
+		},
+		{
+			"src": "http://localhost:3375/assets/installer/clickonce/LimitChecker.zip",
+			"alias": "LimitChecker",
+			"version": "1.7.0",
+			"target": "LimitChecker.application"
 		}
 	],
 	"finsemble": {
