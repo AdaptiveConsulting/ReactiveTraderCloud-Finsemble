@@ -508,16 +508,17 @@
         },
         "Limit Checker": {
             "window": {
+                "id": "LimitChecker",
                 "windowType": "native",
+                "arguments": "Finsemble",
 				"alias": "LimitChecker",
-				"url": "",
 				"defaultHeight": 600,
-				"autoShow": false,
+				"autoShow": true,
 				"alwaysOnTop": false,
 				"resizable": true,
 				"showTaskbarIcon": false,
 				"contextMenu": true,
-				"addToWorkspace": false
+				"addToWorkspace": true
             },
             "foreign": {
                 "services": {
@@ -530,6 +531,9 @@
                     "App Launcher": {
                         "launchableByUser": true
                     },
+					"Window Manager": {
+						"showLinker": true
+					},
                     "Toolbar": {
                         "iconClass": "Limit Checker"
                     }

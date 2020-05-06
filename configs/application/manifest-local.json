@@ -65,14 +65,14 @@
 		{
 			"src": "http://localhost:3375/assets/installer/clickonce/LimitChecker.zip",
 			"alias": "LimitChecker",
-			"version": "1.7.0",
-			"target": "LimitChecker.application"
+			"version": "1.23.0",
+			"target": "LimitChecker.exe"
 		}
 	],
 	"finsemble": {
 		"applicationRoot": "http://localhost:3375",
 		"moduleRoot": "$applicationRoot/finsemble",
-		"componentRoot": "https://web-demo.adaptivecluster.com",
+		"componentRoot": "http://localhost:3000",
 		"servicesRoot": "$applicationRoot/finsemble/services",
 		"notificationURL": "$applicationRoot/components/notification/notification.html",
 		"bootConfig": {
