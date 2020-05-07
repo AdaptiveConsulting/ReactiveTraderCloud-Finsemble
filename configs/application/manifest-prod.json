@@ -61,10 +61,10 @@
 			"target": "AssimilationMain.exe"
 		},
 		{
-			"src": "https://web-demo.adaptivecluster.com/plugin/LimitChecker.zip",
+			"src": "https://storage.googleapis.com/reactive-trader-finsemble/assets/installer/limitChecker/LimitChecker.zip",
 			"alias": "LimitChecker",
-			"version": "1.7.0",
-			"target": "LimitChecker.application"
+			"version": "1.1.0",
+			"target": "LimitChecker.exe"
 		}
 	],
 	"finsemble": {
