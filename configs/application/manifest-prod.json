@@ -59,12 +59,18 @@
 			"version": "4.0.0",
 			"alias": "assimilation",
 			"target": "AssimilationMain.exe"
+		},
+		{
+			"src": "https://storage.googleapis.com/reactive-trader-finsemble/assets/installer/limitChecker/LimitChecker.zip",
+			"alias": "LimitChecker",
+			"version": "1.1.0",
+			"target": "LimitChecker.exe"
 		}
 	],
 	"finsemble": {
 		"applicationRoot": "https://storage.googleapis.com/reactive-trader-finsemble",
 		"moduleRoot": "$applicationRoot/finsemble",
-		"componentRoot": "https://web-demo.adaptivecluster.com",
+		"componentRoot": "https://web-dev.adaptivecluster.com",
 		"servicesRoot": "$applicationRoot/finsemble/services",
 		"notificationURL": "$applicationRoot/components/notification/notification.html",
 		"bootConfig": {

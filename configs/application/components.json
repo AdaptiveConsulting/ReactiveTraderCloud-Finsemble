@@ -505,6 +505,40 @@
                     }
                 }
             }
+        },
+        "Limit Checker": {
+            "window": {
+                "id": "LimitChecker",
+                "windowType": "native",
+                "arguments": "Finsemble",
+				"alias": "LimitChecker",
+				"defaultHeight": 600,
+				"autoShow": true,
+				"alwaysOnTop": false,
+				"resizable": true,
+				"showTaskbarIcon": false,
+				"contextMenu": true,
+				"addToWorkspace": true
+            },
+            "foreign": {
+                "services": {
+                    "dockingService": {
+                        "canGroup": true,
+                        "isArrangable": true
+                    }
+                },
+                "components": {
+                    "App Launcher": {
+                        "launchableByUser": true
+                    },
+					"Window Manager": {
+						"showLinker": true
+					},
+                    "Toolbar": {
+                        "iconClass": "Limit Checker"
+                    }
+                }
+            }
         }
 	}
 }
