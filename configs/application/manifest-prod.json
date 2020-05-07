@@ -61,7 +61,7 @@
 			"target": "AssimilationMain.exe"
 		},
 		{
-			"src": "https://storage.googleapis.com/reactive-trader-finsemble/assets/installer/limitChecker/LimitChecker.zip",
+			"src": "https://storage.googleapis.com/reactive-trader-finsemble/assets/installer/limitchecker/LimitChecker.zip",
 			"alias": "LimitChecker",
 			"version": "1.1.0",
 			"target": "LimitChecker.exe"
