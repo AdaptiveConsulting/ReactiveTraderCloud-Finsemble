@@ -63,9 +63,9 @@
 			"target": "AssimilationMain.exe"
 		},
 		{
-			"src": "http://localhost:3375/assets/installer/limitchecker/LimitChecker.zip",
+			"src": "http://localhost:3375/assets/exe/LimitChecker.zip",
 			"alias": "LimitChecker",
-			"version": "1.1.0",
+			"version": "1.2.0",
 			"target": "LimitChecker.exe"
 		}
 	],
