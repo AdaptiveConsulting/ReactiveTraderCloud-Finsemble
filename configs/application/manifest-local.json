@@ -72,7 +72,7 @@
 	"finsemble": {
 		"applicationRoot": "http://localhost:3375",
 		"moduleRoot": "$applicationRoot/finsemble",
-		"componentRoot": "https://web-dev.adaptivecluster.com",
+		"componentRoot": "https://web-uat.adaptivecluster.com",
 		"servicesRoot": "$applicationRoot/finsemble/services",
 		"notificationURL": "$applicationRoot/components/notification/notification.html",
 		"bootConfig": {
