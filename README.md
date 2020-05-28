@@ -13,24 +13,23 @@ This demo is built with the Finsemble seed project and integrated with Reactive 
 
 - Please make sure you have the core Finsemble packages associated with your npm username for local development
 - You need to run npm login and enter your credentials before installing the core Finsemble packages
-- Node v12.13.1
-- NPM v6 +
-- Windows only
+- Node v12
+- Yarn
 
 ## Local Development
 
-- `npm install` after logging in with your npm credentials
-- `npm run dev:fresh` to build and run the project
-- `npm run dev:nolaunch` to build and serve the project without launching Finsemble
-- `npm run makeInstaller:dev` to generate a local Electron installer for development
+- `yarn install` after logging in with your npm credentials
+- `yarn run dev` to build and run the project
+- `yarn run dev:nolaunch` to build and serve the project without launching Finsemble
+- `yarn run makeInstaller:dev` to generate a local Electron installer for development
 
 ## Production
 
 To do a dry run of a production build for this application please follow these steps:
 
-- `npm build:prod` to build Finsemble for production
-- `npm run deploy` to copy the build assets to the docs folder for Github deployment
-- `npm makeInstaller:prod` run this when needed to regenerate the production installer
+- `yarn build:prod` to build Finsemble for production
+- `yarn run deploy` to copy the build assets to the docs folder for Github deployment
+- `yarn makeInstaller:prod` run this when needed to regenerate the production installer
 
 ## Install the Production Version of Reactive Trader Finsemble
 
