@@ -40,13 +40,13 @@ jobs:
           path: ~/ci_build/DROP.tar.gz
           destination: DROP.tar.gz
       - store_artifacts:
-          path: ~/ci_build/pkg/ReactiveTraderFinsembleSetup.exe
-          destination: ReactiveTraderFinsembleSetup.exe
+          path: ~/ci_build/pkg/ReactiveTraderFinsemble.exe
+          destination: ReactiveTraderFinsemble.exe
       - persist_to_workspace:
           root: .
           paths:
             - DROP.tar.gz
-            - pkg/ReactiveTraderFinsembleSetup.exe
+            - pkg/ReactiveTraderFinsemble.exe
 
   deploy:
     description: "Deploy Artifacts to GCS"

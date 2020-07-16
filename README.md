@@ -34,7 +34,7 @@ To do a dry run of a production build for this application please follow these s
 
 ## Install the Production Version of Reactive Trader Finsemble
 
-- Run the exe for the production instance installer found [here](https://storage.googleapis.com/reactive-trader-finsemble/pkg/ReactiveTraderFinsembleSetup.exe)
+- Run the exe for the production instance installer found [here](https://storage.googleapis.com/reactive-trader-finsemble/pkg/ReactiveTraderFinsemble.exe)
 
 ## Notes
 
