@@ -1,42 +1,66 @@
-# Reactive Trader Finsemble Demo
+[![Finsemble SmartDesktop](./assets/img/Finsemble+Cosaic.svg)](https://documentation.finsemble.com/)
 
-[![CircleCI](https://circleci.com/gh/AdaptiveConsulting/ReactiveTraderCloud-Finsemble/tree/master.svg?style=svg&circle-token=c9a64a94d9b308c65df792b7af0412b0a2310a12)](https://circleci.com/gh/AdaptiveConsulting/ReactiveTraderCloud-Finsemble/tree/master)
+# Finsemble Seed 🌱
 
-## Overview
+## What is it?
 
-Reactive Trader Cloud is a real-time FX trading platform demo showcasing reactive programming principles applied across the full application stack.
-This demo is built with the Finsemble seed project and integrated with Reactive Trader Cloud.
+Finsemble is a smart desktop platform that allows any type of application to sync, link, and share information, even if
+they weren’t originally designed to.
 
-![image](/assets/img/RTF.png)
+Finsemble Seed is just that - a kernel packed with everything you need to grow your own SmartDesktop and <del>rule the
+world</del> turbocharge your workflow.
 
-## Developer Prerequisites
+## But really, what is it?
 
-- Please make sure you have the core Finsemble packages associated with your npm username for local development
-- You need to run npm login and enter your credentials before installing the core Finsemble packages
-- Node v12.13.1
-- NPM v6 +
-- Windows only
+- If you're in a hurry, check out our [2 minute intro](https://www.youtube.com/watch?v=Y_CL7nrowL8)
+- If you're developer and want the nitty-gritty details, check out our
+  [talk at CovalenceConf 2020](https://www.youtube.com/watch?v=3dNzaNN3unA&t=377s).
+- Once you've got the gist, checkout the [developer documentation](https://documentation.finsemble.com/) for the full
+  details.
 
-## Local Development
+## Getting Started
 
-- `npm install` after logging in with your npm credentials
-- `npm run dev:fresh` to build and run the project
-- `npm run dev:nolaunch` to build and serve the project without launching Finsemble
-- `npm run makeInstaller:dev` to generate a local Electron installer for development
+1. 📡 Clone the repository.
+   ```
+   git clone https://github.com/chartiq/finsemble-seed
+   ```
+2. 📦 Install the deps
 
-## Production
+   (Note, we recommend using the [Yarn Package Manager](https://yarnpkg.com/) - it's fast and reliable. But you can also
+   use npm.)
 
-To do a dry run of a production build for this application please follow these steps:
+   ```
+   cd finsemble-seed
+   yarn install
+   ```
 
-- `npm build:prod` to build Finsemble for production
-- `npm run deploy` to copy the build assets to the docs folder for Github deployment
-- `npm makeInstaller:prod` run this when needed to regenerate the production installer
+3. 🚀 Start it!
+   ```
+   yarn start
+   ```
 
-## Install the Production Version of Reactive Trader Finsemble
+Go ahead and take it for a spin!
 
-- Run the exe for the production instance installer found [here](https://storage.googleapis.com/reactive-trader-finsemble/pkg/ReactiveTraderFinsemble.exe)
+When you're ready to go deeper, check out the check out the
+[seed project tutorial](https://documentation.finsemble.com/tutorial-gettingStarted.html), which will walk you through
+all the basics of building your SmartDesktop.
 
-## Notes
+## What's Inside
 
-- You can change the `applicationRoot` and `componentRoot` in the manifest-local.json file for local development
-- You can update the Reactive Trader Demo workspace that's found in the `/configs/application/workspaces.json` file
+The seed project bundles together a Webpack-based build system, a set of bare-bones SmartDesktop components you can use
+as examples, and the necessary config files to orchestrate it all. You can see a detailed breakdown of the project
+structure [here](./ProjectStructure.md).
+
+## The API, Please
+
+Everything else there is to know about Finsemble and how to build on it can be found in our
+[developer documentation](https://documentation.finsemble.com/).
+
+## Getting Help
+
+Having trouble? Perhaps we've covered it in the [FAQ](https://documentation.finsemble.com/tutorial-FAQ.html).
+
+Still having trouble? Shoot us a line at support@finsemble.com! We'll be happy to help.
+
+Prefer the easy-button? Our solutions engineers can integrate your apps together in a POC faster than you can say
+"Desktop Interoperability". Schedule a [demo](https://cosaic.io/contact)!
