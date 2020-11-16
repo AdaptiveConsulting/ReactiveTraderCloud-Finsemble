@@ -2,18 +2,11 @@
 	"comment": "Top-level application config for development, adding on top of the core config",
 	"$schema": "../../node_modules/@finsemble/finsemble-core/configs/schemas/fileBasedSchemas/applicationConfigFile.schema.json",
 	"accessibleLinker": true,
-	"authentication": {
-		"startup": {
-			"adapter": "PASSWORD",
-			"component": "Registration"
-		}
-	},
 	"servicesConfig": {
 		"distributedStore": {
 			"initialStores": [
 				{
 					"name": "Finsemble-AppLauncher-Store",
-					"preferPreviousState": true,
 					"foundation": {
 						"appFolders": {
 							"list": ["Advanced App Launcher", "Favorites"],
@@ -21,30 +14,13 @@
 								"Advanced App Launcher": {
 									"icon": "ff-component",
 									"type": "folder",
-									"canDelete": false,
-									"apps": [
-										{
-											"name": "Welcome Component",
-											"appID": "welcome-comp"
-										},
-										{
-											"name": "Getting Started Tutorial",
-											"appID": "2"
-										},
-										{
-											"name": "Process Monitor",
-											"appID": "pm"
-										},
-										{
-											"name": "Notepad",
-											"appID": "note"
-										}
-									]
+									"disableUserRemove": true,
+									"apps": []
 								},
 								"Favorites": {
 									"icon": "ff-favorite",
 									"type": "folder",
-									"canDelete": false,
+									"disableUserRemove": true,
 									"apps": []
 								}
 							}
@@ -54,8 +30,6 @@
 					"default": {
 						"activeLauncherTags": [],
 						"filterText": "",
-						"activeTags": [],
-						"filteredApps": [],
 						"filterTags": [],
 						"activeFolder": "Advanced App Launcher",
 						"sortBy": "Alphabetical"
@@ -65,13 +39,10 @@
 		},
 		"launcher": {
 			"staggerPixels": 40,
-			"unknownComponent": "nonConfiguredComponent",
-			"defaultPreloads": {
-				"//": "Add preloads that will be injected into each browserView."
-			}
+			"unknownComponent": "nonConfiguredComponent"
 		},
 		"assimilation": {
-			"useFeaSpawn": false,
+			"useOpenFinSpawn": false,
 			"enabled": true,
 			"blacklist": [],
 			"whitelist": [],
@@ -90,10 +61,10 @@
 			"undockDisbandsEntireGroup": false,
 			"fillHolesOnUndock": true,
 			"tabbing": {
-				"enabled": false
+				"enabled": true
 			},
 			"tiling": {
-				"enabled": false
+				"enabled": true
 			}
 		},
 		"logger": {
@@ -117,20 +88,22 @@
 			"promptUserOnDirtyWorkspace": true
 		}
 	},
-	"systemTrayIcon": "$applicationRoot/assets/img/Finsemble_SystemTray_Icon.png",
-	"systemTrayComponent": "SystemTrayComponent",
+	"systemTrayIcon": "$applicationRoot/assets/img/adaptive-logo@2x.png",
+	"systemTrayComponent": "File Menu",
 	"Window Manager": {
 		"alwaysOnTopIcon": false,
-		"floatingTitlebarComponent": "Floating Titlebar"
+		"floatingTitlebarComponent": "Floating Titlebar",
+		"deliveryMechanism": "preload"
 	},
 	"//appDirectoryEndpoint": "If you'd like to test the server locally, point 'appDirectoryEndpoint' to http://localhost:3030/v1/ and make sure to run the AppD project.",
 	"appDirectoryEndpoint": "https://fpe.finsemble.com/v1/",
 	"globalHotkeys": {},
-	"//": "this importConfig contains components that are necessary to start Finsemble. All other components are loaded dynamically. See server/auth/test.json",
+	"//": "importConfig contains components that are necessary to start Finsemble. All other components are loaded dynamically. See server/auth/test.json",
 	"importConfig": [
 		"$applicationRoot/configs/application/UIComponents.json",
 		"$applicationRoot/configs/application/components.json",
 		"$applicationRoot/configs/application/workspaces.json",
+		"$applicationRoot/configs/application/workspaceTemplates.json",
 		"$applicationRoot/configs/application/services.json",
 		"$applicationRoot/configs/application/securityPolicies.json"
 	]

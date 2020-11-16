@@ -4,14 +4,35 @@
 	"workspaces": [
 		{
 			"version": "1.0.0",
-			"name": "Default Workspace",
+			"name": "Reactive Trader Demo",
 			"type": "workspace",
 			"groups": {},
 			"windows": [
 				{
-					"componentType": "Welcome Component",
-					"defaultLeft": 50,
-					"defaultTop": 50
+					"componentType": "Analytics",
+					"defaultLeft": 1100,
+					"defaultTop": 100
+				},
+				{
+					"componentType": "Blotter",
+					"defaultLeft": 200,
+					"defaultTop": 500
+				},
+				{
+					"componentType": "EURUSD",
+					"defaultLeft": 600,
+					"defaultTop": 200
+				},
+				{
+					"componentType": "GBPUSD Analytics",
+					"defaultLeft": 200,
+					"defaultTop": 200
+				},
+
+				{
+					"componentType": "Currency Chart",
+					"defaultLeft": 1500,
+					"defaultTop": 100
 				}
 			]
 		}
