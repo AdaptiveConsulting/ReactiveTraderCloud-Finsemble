@@ -17,7 +17,6 @@
 	},
 	"production": {
 		"//serverPort": "Port number for your server.",
-		"serverPort": 3375,
 		"//serverConfig": "Url for your application's manifest.",
 		"serverConfig": "https://storage.googleapis.com/reactive-trader-finsemble/configs/application/manifest-prod.json",
 		"clientRoute": "https://adaptiveconsulting.github.io/",

@@ -5,6 +5,7 @@
 		"name": "Reactive Trader Finsemble Production",
 		"url": "https://storage.googleapis.com/reactive-trader-finsemble/finsemble/services/systemManager/systemManager.html",
 		"uuid": "Finsemble-Prod",
+		"requireHandshake": true,
 		"applicationIcon": "https://storage.googleapis.com/reactive-trader-finsemble/assets/img/adaptive-logo@2x.png",
 		"defaultTop": 0,
 		"defaultLeft": 0,
@@ -24,8 +25,8 @@
 	"splashScreenImage": "https://storage.googleapis.com/reactive-trader-finsemble/assets/img/splash-screen.jpg",
 	"appAssets": [
 		{
-			"src": "https://assets.finsemble.com/assimilation/assimilation_4.0.0.0.zip",
-			"version": "4.0.0",
+			"src": "https://assets.finsemble.com/assimilation/assimilation_5.1.0.0.zip",
+			"version": "5.1.0.0",
 			"alias": "assimilation",
 			"target": "AssimilationMain.exe"
 		},
