@@ -2,7 +2,7 @@
 	"$schema": "../../node_modules/@finsemble/finsemble-core/configs/schemas/fileBasedSchemas/manifestFile.schema.json",
 	"devtools_port": 9090,
 	"startup_app": {
-		"name": "Reactice Trader Finsemble Local",
+		"name": "Reactive Trader Finsemble Local",
 		"url": "http://localhost:3375/finsemble/services/systemManager/systemManager.html",
 		"uuid": "Finsemble-local",
 		"requireHandshake": true,
