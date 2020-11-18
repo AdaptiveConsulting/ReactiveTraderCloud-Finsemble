@@ -511,7 +511,6 @@
             "window": {
                 "id": "LimitChecker",
                 "windowType": "native",
-                "arguments": "Finsemble",
 				"alias": "LimitChecker",
 				"defaultHeight": 600,
 				"autoShow": true,
