@@ -14,7 +14,7 @@
                 "height": 900
             },
             "component": {
-                "inject": [
+                "preload": [
                     "$applicationRoot/components/mindcontrol/chartSubscribeLinker.js",
                     "$applicationRoot/components/mindcontrol/chartDragAndDropReceiver.js"
                 ]
@@ -121,7 +121,7 @@
                 "height": 184
             },
             "component": {
-                "inject": [
+                "preload": [
                     "$applicationRoot/components/mindcontrol/spotTileDrag.js",
                     "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
                 ]
@@ -160,7 +160,7 @@
                 "height": 184
             },
             "component": {
-                "inject": [
+                "preload": [
                     "$applicationRoot/components/mindcontrol/spotTileDrag.js",
                     "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
                 ]
@@ -199,7 +199,7 @@
                 "height": 184
             },
             "component": {
-                "inject": [
+                "preload": [
                     "$applicationRoot/components/mindcontrol/spotTileDrag.js",
                     "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
                 ]
@@ -275,7 +275,7 @@
                 "height": 184
             },
             "component": {
-                "inject": [
+                "preload": [
                     "$applicationRoot/components/mindcontrol/spotTileDrag.js",
                     "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
                 ]
@@ -324,7 +324,7 @@
                 "height": 184
             },
             "component": {
-                "inject": [
+                "preload": [
                     "$applicationRoot/components/mindcontrol/spotTileDrag.js",
                     "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
                 ]
@@ -400,7 +400,7 @@
                 "height": 184
             },
             "component": {
-                "inject": [
+                "preload": [
                     "$applicationRoot/components/mindcontrol/spotTileDrag.js",
                     "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
                 ]
@@ -440,7 +440,7 @@
                 "height": 184
             },
             "component": {
-                "inject": [
+                "preload": [
                     "$applicationRoot/components/mindcontrol/spotTileDrag.js",
                     "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
                 ]
@@ -479,7 +479,7 @@
                 "height": 184
             },
             "component": {
-                "inject": [
+                "preload": [
                     "$applicationRoot/components/mindcontrol/spotTileDrag.js",
                     "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
                 ]
