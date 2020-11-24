@@ -31,8 +31,8 @@ jobs:
       - attach_workspace:
           at: ~/ci_build/
       - run:
-        name: 'Debug 1',
-        command: 'ls ~/ci_build/pkg'
+        name: "Debug 1"
+        command: "ls ~/ci_build/pkg"
       - run:
           name: "Authenticate with registry"
           command: 'echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/ci_build/.npmrc'
