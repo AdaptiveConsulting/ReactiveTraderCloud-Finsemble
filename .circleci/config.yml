@@ -5,7 +5,8 @@ orbs:
 
 jobs:
   build:
-    executor: win/default
+    docker:
+      - image: google/cloud-sdk
     working_directory: ~/ci_build
     steps:
       - checkout
@@ -21,6 +22,12 @@ jobs:
             - node_modules
           key: 'v1-dependencies-{{ checksum "package.json" }}'
       - run:
+          name: Authenticate with gcloud
+          command: |
+            echo $BASH_ENV
+            echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+            gcloud config set project ${GOOGLE_PROJECT_ID}
+      - run:
           name: "Lint"
           command: "yarn eslint"
       - run:
@@ -29,6 +36,12 @@ jobs:
       - run:
           name: "Move Production Assets"
           command: "yarn deploy"
+      - run:
+          name: Copy installer from GCS
+          command: "gsutil -m cp -r gs://reactive-trader-finsemble/pkg ~/ci_build"
+      - store_artifacts:
+          path: ~/ci_build
+          destination: test
       - run:
           name: "Build Production Package"
           command: "yarn makeInstaller:prod"
