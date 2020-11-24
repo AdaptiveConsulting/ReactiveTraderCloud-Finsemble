@@ -30,9 +30,6 @@ jobs:
       - checkout
       - attach_workspace:
           at: ~/ci_build/
-      - store_artifacts:
-          path: ~/ci_build/pkg
-          destination: test
       - run:
           name: "Authenticate with registry"
           command: 'echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/ci_build/.npmrc'
