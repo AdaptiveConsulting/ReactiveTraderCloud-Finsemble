@@ -49,7 +49,6 @@ jobs:
           root: .
           paths:
             - DROP.tar.gz
-            - pkg/ReactiveTraderFinsemble.exe
 
   deploy:
     description: "Deploy Artifacts to GCS"
