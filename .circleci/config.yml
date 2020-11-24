@@ -4,7 +4,7 @@ orbs:
   win: circleci/windows@2.2.0
 
 jobs:
-  pullInstaller:
+  pullinstaller:
     description: "Pull current installer from GCS"
     docker:
       - image: google/cloud-sdk
@@ -99,10 +99,10 @@ workflows:
   version: 2
   Main_Workflow:
     jobs:
-      - pullInstaller
+      - pullinstaller
       - build:
-        requires:
-          - pullInstaller
+          requires:
+            - pullinstaller
       - deploy:
           requires:
             - build
