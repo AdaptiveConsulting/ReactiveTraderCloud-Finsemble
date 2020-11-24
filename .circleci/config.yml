@@ -33,9 +33,6 @@ jobs:
           name: "Build Production Package"
           command: "yarn makeInstaller:prod"
       - run:
-          name: "Add Installer to Production Assets"
-          command: "cp -r ~/ci_build/pkg ~/ci_build/docs"
-      - run:
           name: "Zip and Create DROP"
           command: tar -cvf DROP.tar.gz -C ~/ci_build/docs .
           shell: bash.exe
@@ -49,6 +46,7 @@ jobs:
           root: .
           paths:
             - DROP.tar.gz
+            - pkg/ReactiveTraderFinsemble.exe
 
   deploy:
     description: "Deploy Artifacts to GCS"
