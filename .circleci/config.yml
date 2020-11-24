@@ -18,14 +18,21 @@ jobs:
       - run:
           name: Copy installer from GCS
           command: "gsutil -m cp -r gs://reactive-trader-finsemble/pkg ."
-      - store_artifacts:
-          path: ./pkg
-          destination: test
+      - persist_to_workspace:
+          root: .
+          paths:
+            - pkg
+      
   build:
     executor: win/default
     working_directory: ~/ci_build
     steps:
       - checkout
+      - attach_workspace:
+          at: ~/ci_build/
+      - store_artifacts:
+          path: ~/ci_build/pkg
+          destination: test
       - run:
           name: "Authenticate with registry"
           command: 'echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/ci_build/.npmrc'
