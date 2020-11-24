@@ -4,9 +4,25 @@ orbs:
   win: circleci/windows@2.2.0
 
 jobs:
-  build:
+  pullInstaller:
+    description: "Pull current installer from GCS"
     docker:
       - image: google/cloud-sdk
+    steps:
+      - run:
+          name: Authenticate with gcloud
+          command: |
+            echo $BASH_ENV
+            echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+            gcloud config set project ${GOOGLE_PROJECT_ID}
+      - run:
+          name: Copy installer from GCS
+          command: "gsutil -m cp -r gs://reactive-trader-finsemble/pkg ."
+      - store_artifacts:
+          path: ./pkg
+          destination: test
+  build:
+    executor: win/default
     working_directory: ~/ci_build
     steps:
       - checkout
@@ -22,12 +38,6 @@ jobs:
             - node_modules
           key: 'v1-dependencies-{{ checksum "package.json" }}'
       - run:
-          name: Authenticate with gcloud
-          command: |
-            echo $BASH_ENV
-            echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
-            gcloud config set project ${GOOGLE_PROJECT_ID}
-      - run:
           name: "Lint"
           command: "yarn eslint"
       - run:
@@ -36,12 +46,6 @@ jobs:
       - run:
           name: "Move Production Assets"
           command: "yarn deploy"
-      - run:
-          name: Copy installer from GCS
-          command: "gsutil -m cp -r gs://reactive-trader-finsemble/pkg ~/ci_build"
-      - store_artifacts:
-          path: ~/ci_build
-          destination: test
       - run:
           name: "Build Production Package"
           command: "yarn makeInstaller:prod"
@@ -95,7 +99,10 @@ workflows:
   version: 2
   Main_Workflow:
     jobs:
-      - build
+      - pullInstaller
+      - build:
+        requires:
+          - pullInstaller
       - deploy:
           requires:
             - build
