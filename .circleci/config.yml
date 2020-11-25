@@ -17,7 +17,7 @@ jobs:
             gcloud config set project ${GOOGLE_PROJECT_ID}
       - run:
           name: Copy installer from GCS
-          command: "gsutil -m cp -r gs://reactive-trader-finsemble-test/pkg ."
+          command: "gsutil -m cp -r gs://reactive-trader-finsemble/pkg ."
       - persist_to_workspace:
           root: .
           paths:

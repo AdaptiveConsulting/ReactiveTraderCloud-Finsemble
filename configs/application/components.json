@@ -11,7 +11,7 @@
                 "top": "center",
                 "left": "center",
                 "width": 1000,
-                "height": 902
+                "height": 900
             },
             "component": {
                 "preload": [
