@@ -47,7 +47,7 @@ jobs:
       - run:
           name: "Lint"
           command: "yarn eslint"
-       run:
+      - run:
           name: "Debug 1"
           command: "ls ./pkg"
       - run:
