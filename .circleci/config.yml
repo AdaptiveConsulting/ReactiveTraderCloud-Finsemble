@@ -47,15 +47,27 @@ jobs:
       - run:
           name: "Lint"
           command: "yarn eslint"
+       run:
+          name: "Debug 1"
+          command: "ls ./pkg"
       - run:
           name: "Build Production Assets"
           command: "yarn build:prod"
       - run:
+          name: "Debug 2"
+          command: "ls ./pkg"
+      - run:
           name: "Move Production Assets"
           command: "yarn deploy"
       - run:
+          name: "Debug 3"
+          command: "ls ./pkg"
+      - run:
           name: "Build Production Package"
           command: "yarn makeInstaller:prod"
+      - run:
+          name: "Debug 4"
+          command: "ls ./pkg"
       - run:
           name: "Add Installer to Production Assets"
           command: "cp -r ~/ci_build/pkg ~/ci_build/docs"
