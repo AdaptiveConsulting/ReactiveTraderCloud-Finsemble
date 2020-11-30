@@ -63,9 +63,6 @@ jobs:
       - store_artifacts:
           path: ~/ci_build/DROP.tar.gz
           destination: DROP.tar.gz
-      - store_artifacts:
-          path: ~/ci_build/pkg/ReactiveTraderFinsemble.exe
-          destination: ReactiveTraderFinsemble.exe
       - persist_to_workspace:
           root: .
           paths:
