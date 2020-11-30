@@ -4,11 +4,32 @@ orbs:
   win: circleci/windows@2.2.0
 
 jobs:
+  pullinstaller:
+    description: "Pull current installer from GCS"
+    docker:
+      - image: google/cloud-sdk
+    steps:
+      - run:
+          name: Authenticate with gcloud
+          command: |
+            echo $BASH_ENV
+            echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+            gcloud config set project ${GOOGLE_PROJECT_ID}
+      - run:
+          name: Copy installer from GCS
+          command: "gsutil -m cp -r gs://reactive-trader-finsemble/pkg ."
+      - persist_to_workspace:
+          root: .
+          paths:
+            - pkg
+      
   build:
     executor: win/default
     working_directory: ~/ci_build
     steps:
       - checkout
+      - attach_workspace:
+          at: ~/ci_build/
       - run:
           name: "Authenticate with registry"
           command: 'echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/ci_build/.npmrc'
@@ -33,20 +54,19 @@ jobs:
           name: "Build Production Package"
           command: "yarn makeInstaller:prod"
       - run:
+          name: "Add Installer to Production Assets"
+          command: "cp -r ~/ci_build/pkg ~/ci_build/docs"
+      - run:
           name: "Zip and Create DROP"
           command: tar -cvf DROP.tar.gz -C ~/ci_build/docs .
           shell: bash.exe
       - store_artifacts:
           path: ~/ci_build/DROP.tar.gz
           destination: DROP.tar.gz
-      - store_artifacts:
-          path: ~/ci_build/pkg/ReactiveTraderFinsemble.exe
-          destination: ReactiveTraderFinsemble.exe
       - persist_to_workspace:
           root: .
           paths:
             - DROP.tar.gz
-            - pkg/ReactiveTraderFinsemble.exe
 
   deploy:
     description: "Deploy Artifacts to GCS"
@@ -80,7 +100,10 @@ workflows:
   version: 2
   Main_Workflow:
     jobs:
-      - build
+      - pullinstaller
+      - build:
+          requires:
+            - pullinstaller
       - deploy:
           requires:
             - build
