@@ -13,7 +13,7 @@
 	"//description": "Description for your application. Used in the File description field of the exe properties.",
 	"description": "ReactiveTraderFinsemble",
 	"//certificateFile": "The path to an Authenticode Code Signing Certificate",
-	"certificateFile": "./configs/AdaptiveCodeSigning.pfx",
+	"certificateFile": null,
 	"//certificatePassword": "The password to decrypt the certificate given in certificateFile",
 	"certificatePassword": null,
 	"signWithParams": null,
