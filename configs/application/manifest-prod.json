@@ -25,7 +25,6 @@
 		"alwaysOnTop": false
 	},
 	"splashScreenImage": "https://storage.googleapis.com/reactive-trader-finsemble/assets/img/splash-screen.jpg",
-	
 	"appAssets": [
 		{
 			"src": "https://assets.finsemble.com/assimilation/assimilation_5.1.0.0.zip",

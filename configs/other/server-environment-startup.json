@@ -34,6 +34,6 @@
 		"//socketCertificateKey": "example.key",
 		"//socketCertificateCert": "example.crt",
 		"//webpackPublicPath": "Uncomment the line below to serve assets from a subdirectory.",
-		"///webpackPublicPath": "/directory/mySubDirectory"
+		"webpackPublicPath": "/reactive-trader-finsemble-test6"
 	}
 }
