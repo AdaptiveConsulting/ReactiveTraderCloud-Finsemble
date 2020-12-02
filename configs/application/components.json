@@ -2,47 +2,6 @@
 	"comment": "Reactive Trader Components",
 	"$schema": "../../node_modules/@finsemble/finsemble-core/configs/schemas/fileBasedSchemas/componentsFile.schema.json",
     "components": {
-        "Currency Chart": {
-            "window": {
-                "url": "$applicationRoot/components/currencyChart/technical-analysis-chart.html",
-                "frame": false,
-                "resizable": true,
-                "autoShow": true,
-                "top": "center",
-                "left": "center",
-                "width": 1000,
-                "height": 900
-            },
-            "component": {
-                "preload": [
-                    "$applicationRoot/components/mindcontrol/chartSubscribeLinker.js",
-                    "$applicationRoot/components/mindcontrol/chartDragAndDropReceiver.js"
-                ]
-            },
-            "foreign": {
-                "services": {
-                    "dockingService": {
-                        "canGroup": true,
-                        "isArrangable": true
-                    }
-                },
-                "components": {
-                    "App Launcher": {
-                        "launchableByUser": true
-                    },
-                    "Window Manager": {
-                        "title": "Currency Chart",
-                        "FSBLHeader": true,
-                        "hackScrollbar": false,
-                        "persistWindowState": true,
-                        "showLinker": true
-                    },
-                    "Toolbar": {
-                        "iconClass": "CurrencyChart"
-                    }
-                }
-            }
-        },
         "Blotter": {
             "window": {
                 "url": "$componentRoot/blotter",
