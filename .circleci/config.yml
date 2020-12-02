@@ -51,6 +51,9 @@ jobs:
           name: "Move Production Assets"
           command: "yarn deploy"
       - run:
+          name: "Debug 1"
+          command: "ls ."
+      - run:
           name: "Build Production Package"
           command: "yarn makeInstaller:prod"
       - run:
