@@ -54,6 +54,9 @@ jobs:
           name: "Debug 1"
           command: "ls ."
       - run:
+          name: "Debug 2"
+          command: "ls configs"
+      - run:
           name: "Build Production Package"
           command: "yarn makeInstaller:prod"
       - run:
