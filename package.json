@@ -37,11 +37,14 @@
 		"@finsemble/finsemble-core": "5.1.*",
 		"@finsemble/finsemble-electron-adapter": "5.1.*",
 		"@finsemble/finsemble-ui": "5.1.*",
+		"@types/react": "^17.0.0",
 		"async": "3.2.0",
 		"compression": "1.7.3",
+		"date-fns": "^2.16.1",
 		"express": "4.16.4",
 		"react": "16.13.1",
-		"react-dom": "16.13.1"
+		"react-dom": "16.13.1",
+		"react-transition-group": "^4.4.1"
 	},
 	"devDependencies": {
 		"@babel/core": "7.6.4",
