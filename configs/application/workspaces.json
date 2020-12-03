@@ -3,7 +3,7 @@
 	"$schema": "../../node_modules/@finsemble/finsemble-core/configs/schemas/fileBasedSchemas/workspacesFile.schema.json",
 	"workspaces": [
 		{
-			"version": "1.0.0",
+			"version": "1.1.0",
 			"name": "Reactive Trader Demo",
 			"type": "workspace",
 			"groups": {},
