@@ -27,12 +27,6 @@
 					"componentType": "GBPUSD Analytics",
 					"defaultLeft": 200,
 					"defaultTop": 200
-				},
-
-				{
-					"componentType": "Currency Chart",
-					"defaultLeft": 1500,
-					"defaultTop": 100
 				}
 			]
 		}
