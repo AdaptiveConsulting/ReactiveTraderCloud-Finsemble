@@ -1,47 +1,7 @@
 {
-    "comment": "Reactive Trader Components",
+	"comment": "Reactive Trader Components",
+	"$schema": "../../node_modules/@finsemble/finsemble-core/configs/schemas/fileBasedSchemas/componentsFile.schema.json",
     "components": {
-        "Currency Chart": {
-            "window": {
-                "url": "$applicationRoot/components/currencyChart/technical-analysis-chart.html",
-                "frame": false,
-                "resizable": true,
-                "autoShow": true,
-                "top": "center",
-                "left": "center",
-                "width": 1000,
-                "height": 900
-            },
-            "component": {
-                "inject": [
-                    "$applicationRoot/components/mindcontrol/chartSubscribeLinker.js",
-                    "$applicationRoot/components/mindcontrol/chartDragAndDropReceiver.js"
-                ]
-            },
-            "foreign": {
-                "services": {
-                    "dockingService": {
-                        "canGroup": true,
-                        "isArrangable": true
-                    }
-                },
-                "components": {
-                    "App Launcher": {
-                        "launchableByUser": true
-                    },
-                    "Window Manager": {
-                        "title": "Currency Chart",
-                        "FSBLHeader": true,
-                        "hackScrollbar": false,
-                        "persistWindowState": true,
-                        "showLinker": true
-                    },
-                    "Toolbar": {
-                        "iconClass": "CurrencyChart"
-                    }
-                }
-            }
-        },
         "Blotter": {
             "window": {
                 "url": "$componentRoot/blotter",
@@ -120,7 +80,7 @@
                 "height": 184
             },
             "component": {
-                "inject": [
+                "preload": [
                     "$applicationRoot/components/mindcontrol/spotTileDrag.js",
                     "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
                 ]
@@ -159,7 +119,7 @@
                 "height": 184
             },
             "component": {
-                "inject": [
+                "preload": [
                     "$applicationRoot/components/mindcontrol/spotTileDrag.js",
                     "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
                 ]
@@ -198,7 +158,7 @@
                 "height": 184
             },
             "component": {
-                "inject": [
+                "preload": [
                     "$applicationRoot/components/mindcontrol/spotTileDrag.js",
                     "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
                 ]
@@ -274,7 +234,7 @@
                 "height": 184
             },
             "component": {
-                "inject": [
+                "preload": [
                     "$applicationRoot/components/mindcontrol/spotTileDrag.js",
                     "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
                 ]
@@ -323,7 +283,7 @@
                 "height": 184
             },
             "component": {
-                "inject": [
+                "preload": [
                     "$applicationRoot/components/mindcontrol/spotTileDrag.js",
                     "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
                 ]
@@ -399,7 +359,7 @@
                 "height": 184
             },
             "component": {
-                "inject": [
+                "preload": [
                     "$applicationRoot/components/mindcontrol/spotTileDrag.js",
                     "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
                 ]
@@ -439,7 +399,7 @@
                 "height": 184
             },
             "component": {
-                "inject": [
+                "preload": [
                     "$applicationRoot/components/mindcontrol/spotTileDrag.js",
                     "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
                 ]
@@ -478,7 +438,7 @@
                 "height": 184
             },
             "component": {
-                "inject": [
+                "preload": [
                     "$applicationRoot/components/mindcontrol/spotTileDrag.js",
                     "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
                 ]
@@ -510,7 +470,6 @@
             "window": {
                 "id": "LimitChecker",
                 "windowType": "native",
-                "arguments": "Finsemble",
 				"alias": "LimitChecker",
 				"defaultHeight": 600,
 				"autoShow": true,

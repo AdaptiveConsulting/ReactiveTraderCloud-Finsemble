@@ -5,20 +5,21 @@
 		"//serverConfig": "Url for your application's manifest.",
 		"serverConfig": "http://localhost:3375/configs/application/manifest-local.json",
 		"clientRoute": "http://localhost:3375/",
-		"//container": "Which adapter to use. The finsemble-electron-adapter Adapter or Openfin. Valid values are electron and openfin. Default: electron .",
-		"container": "electron",
 		"//electronDebug": "Whether to start the finsemble-electron-adapter in debug mode. Default: true.",
 		"electronDebug": true,
 		"//breakpointOnStart": "Whether to pause finsemble-electron-adapter when it starts. Default: false.",
-		"breakpointOnStart": false
+		"breakpointOnStart": false,
+		"//socketCertificate": "Uncomment the two lines below to provide custom socket certificate files for FinsembleTransport. Paths must be relative to the finsemble-seed directory.",
+		"//socketCertificateKey": "example.key",
+		"//socketCertificateCert": "example.crt",
+		"//webpackPublicPath": "Change the key below to 'webpackPublicPath' to serve assets from a subdirectory.",
+		"///webpackPublicPath": "/directory/mySubDirectory"
 	},
 	"production": {
 		"//serverPort": "Port number for your server.",
 		"//serverConfig": "Url for your application's manifest.",
 		"serverConfig": "https://storage.googleapis.com/reactive-trader-finsemble/configs/application/manifest-prod.json",
 		"clientRoute": "https://adaptiveconsulting.github.io/",
-		"//container": "Which adapter to use. The finsemble-electron-adapter Adapter or Openfin. Valid values are electron and openfin. Default: electron .",
-		"container": "electron",
 		"//electronDebug": "Whether to start the finsemble-electron-adapter in debug mode. Default: true.",
 		"electronDebug": true,
 		"//breakpointOnStart": "Whether to pause finsemble-electron-adapter when it starts. Default: false.",
@@ -28,6 +29,11 @@
 		"//chromiumFlags": "set a chromium command line flag in Finsemble Electron Adapter",
 		"chromiumFlags": {
 			"remote-debugging-port": 9222
-		}
+		},
+		"//socketCertificate": "Uncomment the two lines below to provide custom socket certificate files for FinsembleTransport. Paths must be relative to the finsemble-seed directory.",
+		"//socketCertificateKey": "example.key",
+		"//socketCertificateCert": "example.crt",
+		"//webpackPublicPath": "Uncomment the line below to serve assets from a subdirectory.",
+		"webpackPublicPath": "/reactive-trader-finsemble"
 	}
 }

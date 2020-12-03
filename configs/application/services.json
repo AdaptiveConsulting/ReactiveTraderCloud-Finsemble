@@ -1,4 +1,5 @@
 {
     "comment": "Houses config for any custom services that you'd like to import into Finsemble.",
+    "$schema": "../../node_modules/@finsemble/finsemble-core/configs/schemas/fileBasedSchemas/servicesFile.schema.json",
     "services": {}
 }
