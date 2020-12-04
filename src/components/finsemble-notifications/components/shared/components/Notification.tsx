@@ -41,8 +41,11 @@ const HeaderArea = (props: Props) => {
 
 	return (
 		<div className="detail-area">
-			<div>
-				<img src={notification.headerLogo} />
+			<div className="detail-area_logo">
+				{/*
+					Removing this for now because our notifications do not need header icons
+					<img src={notification.headerLogo} />
+				*/}
 			</div>
 			<div className="detail-area_type">{notification.headerText}</div>
 			<div className="detail-area_time">{time} ago</div>

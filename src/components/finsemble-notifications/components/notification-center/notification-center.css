@@ -22,7 +22,7 @@ body {
 }
 .detail-area {
 	display: grid;
-	grid-template-columns: 20px var(--fr-test) auto 5px;
+	grid-template-columns: 20px var(--fr-test) auto;
 	grid-column-gap: 20px;
 	justify-items: flex-start;
 	margin-bottom: 10px;
