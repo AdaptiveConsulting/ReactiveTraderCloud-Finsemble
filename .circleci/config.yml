@@ -47,7 +47,7 @@ commands:
           command: "yarn eslint"
       - run:
           name: "Build Production Assets"
-          command: "yarn build:<<parameters.env>>"
+          command: "yarn build:prod"
       - run:
           name: "Move Production Assets"
           command: "yarn deploy"
