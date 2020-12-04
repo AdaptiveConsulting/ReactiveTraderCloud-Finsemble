@@ -12,8 +12,8 @@
                     "showDismissAction": true,
                     "defaultDismissButtonText": "Close",
                     "defaults": {
-                        "timeout": 1234,
-                        "contentLogo": "$applicationRoot/assets/img/adaptive-logo.png"
+						"timeout": 5000,
+                        "contentLogo": "$applicationRoot/assets/img/reactive-trader-icon-no-bkgd-256x256.png"
                     }
                 }
             }
