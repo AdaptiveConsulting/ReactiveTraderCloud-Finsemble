@@ -164,13 +164,10 @@ workflows:
       - build_prod:
           requires:
             - pull_prod_installer
-      - hold_deploy_prod:
+      - deploy_prod:
           type: approval
           requires:
             - build_prod
           filters:
             branches:
               only: master
-      - deploy_prod:
-          requires:
-            - hold_deploy_prod
