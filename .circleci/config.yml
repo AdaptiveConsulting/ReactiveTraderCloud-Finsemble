@@ -3,11 +3,11 @@ version: 2.1
 orbs:
   win: circleci/windows@2.2.0
 
-jobs:
-  pullinstaller:
-    description: "Pull current installer from GCS"
-    docker:
-      - image: google/cloud-sdk
+commands:
+  pull_installer: 
+    parameters:
+      cloud_bucket:
+        type: string
     steps:
       - run:
           name: Authenticate with gcloud
@@ -17,15 +17,16 @@ jobs:
             gcloud config set project ${GOOGLE_PROJECT_ID}
       - run:
           name: Copy installer from GCS
-          command: "gsutil -m cp -r gs://reactive-trader-finsemble/pkg ."
+          command: "gsutil -m cp -r gs://<<parameters.cloud_bucket>>/pkg ."
       - persist_to_workspace:
           root: .
           paths:
             - pkg
-      
-  build:
-    executor: win/default
-    working_directory: ~/ci_build
+
+  build: 
+    parameters:
+      env:
+        type: string
     steps:
       - checkout
       - attach_workspace:
@@ -52,7 +53,7 @@ jobs:
           command: "yarn deploy"
       - run:
           name: "Build Production Package"
-          command: "yarn makeInstaller:prod"
+          command: "yarn makeInstaller:<<parameters.env>>"
       - run:
           name: "Add Installer to Production Assets"
           command: "cp -r ~/ci_build/pkg ~/ci_build/docs"
@@ -69,9 +70,9 @@ jobs:
             - DROP.tar.gz
 
   deploy:
-    description: "Deploy Artifacts to GCS"
-    docker:
-      - image: google/cloud-sdk
+    parameters:
+      cloud_bucket:
+        type: string
     steps:
       - attach_workspace:
           at: ~/ci_build/
@@ -88,25 +89,88 @@ jobs:
       - run:
           name: Delete GCS Bucket Contents
           command: |
-            gsutil -m rm 'gs://reactive-trader-finsemble/**'
+            gsutil -m rm 'gs://<<parameters.cloud_bucket>>/**'
       - run:
           name: Copy artifacts to GCS
           command: |
             cd ~/ci_build/
             tar -xvf DROP*.tar.gz
-            gsutil -m cp -r * gs://reactive-trader-finsemble
+            gsutil -m cp -r * gs://<<parameters.cloud_bucket>>
+
+jobs:
+  pull_uat_installer:
+    description: "Pull current installer from UAT GCS"
+    docker:
+      - image: google/cloud-sdk
+    steps:
+      - pull_installer:
+          cloud_bucket: "reactive-trader-finsemble-uat"
+
+  pull_prod_installer:
+    description: "Pull current installer from production GCS"
+    docker:
+      - image: google/cloud-sdk
+    steps:
+      - pull_installer:
+          cloud_bucket: "reactive-trader-finsemble"
+      
+  build_uat:
+    executor: win/default
+    working_directory: ~/ci_build
+    steps:
+      - build:
+          env: "uat"
+
+  build_prod:
+    executor: win/default
+    working_directory: ~/ci_build
+    steps:
+      - build:
+          env: "prod"
+
+  deploy_uat:
+    description: "Deploy Artifacts to UAT GCS"
+    docker:
+      - image: google/cloud-sdk
+    steps:
+      - deploy:
+          cloud_bucket: "reactive-trader-finsemble-uat"
+
+  deploy_prod:
+    description: "Deploy Artifacts to production GCS"
+    docker:
+      - image: google/cloud-sdk
+    steps:
+      - deploy:
+          cloud_bucket: "reactive-trader-finsemble"
 
 workflows:
   version: 2
-  Main_Workflow:
+  UAT_Workflow:
     jobs:
-      - pullinstaller
-      - build:
+      - pull_uat_installer
+      - build_uat:
           requires:
-            - pullinstaller
-      - deploy:
+            - pull_uat_installer
+      - deploy_uat:
           requires:
-            - build
+            - build_uat
           filters:
             branches:
               only: master
+  Prod_Workflow:
+    jobs:
+      - pull_prod_installer
+      - build_prod:
+          requires:
+            - pull_prod_installer
+      - hold_deploy_prod:
+          type: approval
+          requires:
+            - build_prod
+          filters:
+            branches:
+              only: master
+      - deploy_prod:
+          requires:
+            - hold_deploy_prod
