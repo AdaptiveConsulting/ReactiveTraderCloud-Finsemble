@@ -29,12 +29,25 @@ This demo is built with the Finsemble seed project and integrated with Reactive 
 To do a dry run of a production build for this application please follow these steps:
 
 - `npm run build:prod` to build Finsemble for production
-- `npm run deploy` to copy the build assets to the docs folder for Github deployment
 - `npm run makeInstaller:prod` run this when needed to regenerate the production installer
+
+## Deployment
+
+We have two environments for the Finsemble demo: UAT and production. The UAT executable connects to the web-uat Reactive Trader application, while the production executable connects to the web-demo application.
+
+To deploy changes:
+
+- Make a PR against master. Every commit runs both a UAT and Production workflow in CircleCI where the respective executables are constructed. You can download the zipped file with the results of the build process from the CircleCI artifacts and verify that the constructed executable works as expected.
+- Merge into master. This will trigger the same CircleCI build steps as before with an extra step at the end to deploy to both the UAT and Production Google Cloud Storage buckets. UAT will be deployed to automatically, and the Production workflow will be blocked waiting for an approval to deploy master to production.
+- You can verify by downloading the new UAT executable that the changes made to Finsemble work as expected, or that features tested in RT UAT work in Finsemble. Once satisfied, you can approve the workflow to deploy to the production bucket.
 
 ## Install the Production Version of Reactive Trader Finsemble
 
 - Run the exe for the production instance installer found [here](https://storage.googleapis.com/reactive-trader-finsemble/pkg/ReactiveTraderFinsemble.exe)
+
+## Install the UAT Version of Reactive Trader Finsemble
+
+- Run the exe for the UAT instance installer found [here](https://storage.googleapis.com/reactive-trader-finsemble-uat/pkg/ReactiveTraderFinsemble.exe)
 
 ## Notes
 
