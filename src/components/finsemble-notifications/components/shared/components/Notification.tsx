@@ -42,10 +42,13 @@ const HeaderArea = (props: Props) => {
 	return (
 		<div className="detail-area">
 			<div className="detail-area_logo">
-				{/*
-					Removing this for now because our notifications do not need header icons
-					<img src={notification.headerLogo} />
-				*/}
+				{
+					// The default text for header logo is "toast logo", which is causing a 
+					// broken image to show if we don't supply a logo
+					notification.headerLogo
+					&& notification.headerLogo !== "toast logo"
+					&& <img src={notification.headerLogo} />
+				}
 			</div>
 			<div className="detail-area_type">{notification.headerText}</div>
 			<div className="detail-area_time">{time} ago</div>
