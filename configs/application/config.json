@@ -3,6 +3,21 @@
 	"$schema": "../../node_modules/@finsemble/finsemble-core/configs/schemas/fileBasedSchemas/applicationConfigFile.schema.json",
 	"accessibleLinker": true,
 	"servicesConfig": {
+		"notifications": {
+            "maxNotificationsToRetain": 1000,
+            "maxNotificationRetentionPeriodSeconds": 86400,
+            "defaultDismissButtonText": "Dismiss",
+            "types": {
+                "trade": {
+                    "showDismissAction": true,
+                    "defaultDismissButtonText": "Close",
+                    "defaults": {
+						"timeout": 5000,
+                        "contentLogo": "$applicationRoot/assets/img/reactive-trader-icon-no-bkgd-256x256.png"
+                    }
+                }
+            }
+        },
 		"distributedStore": {
 			"initialStores": [
 				{
@@ -110,6 +125,7 @@
 		"$applicationRoot/configs/application/workspaces.json",
 		"$applicationRoot/configs/application/workspaceTemplates.json",
 		"$applicationRoot/configs/application/services.json",
-		"$applicationRoot/configs/application/securityPolicies.json"
+		"$applicationRoot/configs/application/securityPolicies.json",
+		"$applicationRoot/components/finsemble-notifications/config.json"
 	]
 }
