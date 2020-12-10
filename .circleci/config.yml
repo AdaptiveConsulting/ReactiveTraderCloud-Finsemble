@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  win: circleci/windows@2.2.0
+  win: circleci/windows@2.4.0
 
 commands:
   pull_installer: 
@@ -51,6 +51,9 @@ commands:
       - run:
           name: "Move Production Assets"
           command: "yarn deploy"
+      - store_artifacts:
+          path: ~/ci_build/node_modules/electron-winstaller/vendor/signtool.exe
+          destination: signtool.exe
       - run:
           name: "Build Production Package"
           command: "yarn makeInstaller:<<parameters.env>>"

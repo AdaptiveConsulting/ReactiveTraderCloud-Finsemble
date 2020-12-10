@@ -9,6 +9,7 @@
 	const gulp = require("gulp");
 	const shell = require("shelljs");
 	const path = require("path");
+	const PowerShell = require("node-powershell");
 	const FEA = require("@finsemble/finsemble-electron-adapter/exports");
 	const FEA_PATH = path.resolve("./node_modules/@finsemble/finsemble-electron-adapter");
 	const FEAPackager = FEA ? FEA.packager : undefined;
@@ -350,7 +351,38 @@
 			}
 
 			// need absolute paths for certain installer configs
-			installerConfig = resolveRelativePaths(installerConfig, ["icon", "macIcon", "background"], "./");
+			installerConfig = resolveRelativePaths(installerConfig, ["icon", "macIcon", "background", "certificateFile"], "./");
+
+			// CircleCI runs its Windows environment with a non-standard user, without access to the CurrentUser certificate store.
+			// We must manually import the key to LocalMachine and use this for code signing instead.
+			if (process.env.CIRCLECI) {
+				const powershell = new PowerShell({
+					executionPolicy: "Bypass",
+					noProfile: true
+				});
+
+				powershell.addCommand(`$CertPasswd = ConvertTo-SecureString -String "${installerConfig.certificatePassword}" -AsPlainText -Force`);
+				powershell.addCommand(`Import-PfxCertificate -FilePath "${installerConfig.certificateFile}" -Password $CertPasswd -CertStoreLocation cert:\\LocalMachine\\My`);
+				await powershell.invoke();
+				await powershell.dispose();
+
+				installerConfig.certificateFile = null;
+				installerConfig.certificatePassword = null;
+
+				if (installerConfig.signWithParams) {
+					installerConfig.signWithParams += " /s My /sm /a";
+				}
+			}
+
+			if (installerConfig.signWithParams) {
+				if (installerConfig.certificateFile) {
+					installerConfig.signWithParams += ` /f "${installerConfig.certificateFile}"`;
+				}
+
+				if (installerConfig.certificatePassword) {
+					installerConfig.signWithParams += ` /p ${installerConfig.certificatePassword}`;
+				}
+			}
 
 			const manifestUrl = process.env.manifesturl || taskMethods.startupConfig[env.NODE_ENV].serverConfig;
 			console.log("The manifest location is: ", manifestUrl);
