@@ -1,0 +1,114 @@
+{
+	"components": {
+		"Advanced Chart": {
+			"window": {
+				"url": "$applicationRoot/components/chartiq/chartiq/technical-analysis-chart.html",
+				"width": 800,
+				"height": 600,
+				"options": {
+					"minWidth": 75,
+					"securityPolicy": "trusted"
+				},
+				"affinity": "charts"
+			},
+			"component": {
+				"mode": "premium",
+				"advertiseReceivers": [
+					"chartiq.chart",
+					"symbol"
+				],
+				"spawnOnHotkey": [
+					"ctrl",
+					"alt",
+					"a"
+				],
+				"category": "system",
+				"preload": [
+					"$applicationRoot/components/chartiq/chartiq.js"
+				]
+			},
+			"foreign": {
+				"services": {
+					"windowService": {
+						"allowAutoArrange": true
+					}
+				},
+				"components": {
+					"App Launcher": {
+						"launchableByUser": true
+					},
+					"Toolbar": {
+						"iconURL": "$applicationRoot/assets/img/IQ-icon.png"
+					},
+					"Window Manager": {
+						"title": "ChartIQ",
+						"FSBLHeader": true,
+						"showLinker": true,
+						"persistWindowState": true
+					}
+				}
+			}
+		},
+		"Advanced Chart FDC3": {
+			"window": {
+				"url": "$applicationRoot/components/chartiq/chartiq/technical-analysis-chart.html",
+				"width": 800,
+				"height": 600,
+				"options": {
+					"minWidth": 75,
+					"securityPolicy": "trusted"
+				},
+				"affinity": "charts"
+			},
+			"component": {
+				"mode": "fdc3",
+				"advertiseReceivers": [
+					"chartiq.chart",
+					"symbol"
+				],
+				"spawnOnHotkey": [
+					"ctrl",
+					"alt",
+					"a"
+				],
+				"category": "system",
+				"preload": [
+					"$applicationRoot/preloads/FDC3Client.js",
+					"$applicationRoot/components/chartiq/chartiq.js"
+				]
+			},
+			"foreign": {
+				"services": {
+					"windowService": {
+						"allowAutoArrange": true
+					},
+					"fdc3": {
+						"intents": [
+							{
+								"name": "ViewChart",
+								"displayName": "ViewChart",
+								"contexts": [
+									"fdc3.instrument"
+								]
+							}
+						]
+					}
+				},
+				"components": {
+					"App Launcher": {
+						"launchableByUser": true
+					},
+					"Toolbar": {
+						"iconURL": "$applicationRoot/assets/img/IQ-icon.png"
+					},
+					"Window Manager": {
+						"title": "ChartIQ",
+						"FSBLHeader": true,
+						"showLinker": true,
+						"persistWindowState": true
+					}
+				}
+			}
+		}
+	}
+}
