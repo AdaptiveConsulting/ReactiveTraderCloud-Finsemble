@@ -470,14 +470,15 @@
             "window": {
                 "id": "LimitChecker",
                 "windowType": "native",
-				"alias": "LimitChecker",
-				"defaultHeight": 600,
-				"autoShow": true,
-				"alwaysOnTop": false,
-				"resizable": true,
-				"showTaskbarIcon": false,
-				"contextMenu": true,
-				"addToWorkspace": true
+                "arguments": "Finsemble",
+                "alias": "LimitChecker",
+                "defaultHeight": 600,
+                "autoShow": true,
+                "alwaysOnTop": false,
+                "resizable": true,
+                "showTaskbarIcon": false,
+                "contextMenu": true,
+                "addToWorkspace": true
             },
             "foreign": {
                 "services": {
