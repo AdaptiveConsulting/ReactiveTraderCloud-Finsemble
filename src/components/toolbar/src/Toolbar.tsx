@@ -21,6 +21,7 @@ import {
 } from "@finsemble/finsemble-ui/react/components/toolbar";
 import { FileMenu } from "./FileMenu";
 import { useHotkey } from "@finsemble/finsemble-ui/react/hooks/useHotkey";
+import "@finsemble/finsemble-ui/react/assets/css/font-finance.css";
 import "@finsemble/finsemble-ui/react/assets/css/finsemble.css";
 import "../../../../assets/css/theme.css";
 
