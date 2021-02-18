@@ -43,7 +43,7 @@
 	"finsemble": {
 		"applicationRoot": "http://localhost:3375",
 		"moduleRoot": "$applicationRoot/finsemble",
-		"componentRoot": "https://web-demo.adaptivecluster.com",
+		"componentRoot": "https://www.reactivetrader.com",
 		"servicesRoot": "$applicationRoot/finsemble/services",
 		"notificationURL": "$applicationRoot/components/notification/notification.html",
 		"configSchemaURL": "$moduleRoot/configs/schemas/finsemble.schema.json",
