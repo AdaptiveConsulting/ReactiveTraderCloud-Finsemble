@@ -42,7 +42,7 @@
 	"finsemble": {
 		"applicationRoot": "https://storage.googleapis.com/reactive-trader-finsemble-uat",
 		"moduleRoot": "$applicationRoot/finsemble",
-		"componentRoot": "https://web-uat.adaptivecluster.com",
+		"componentRoot": "https://uat.reactivetrader.com",
 		"servicesRoot": "$applicationRoot/finsemble/services",
 		"notificationURL": "$applicationRoot/components/notification/notification.html",
 		"configSchemaURL": "$moduleRoot/configs/schemas/finsemble.schema.json",
