@@ -70,7 +70,7 @@
 		},
 		"EURCAD": {
             "window": {
-                "url": "$componentRoot/spot/EURCAD",
+                "url": "$componentRoot/spot/EURCAD?tileView=Normal",
                 "frame": false,
                 "resizable": true,
                 "autoShow": true,
@@ -109,7 +109,7 @@
         },
         "EURUSD": {
             "window": {
-                "url": "$componentRoot/spot/EURUSD",
+                "url": "$componentRoot/spot/EURUSD?tileView=Normal",
                 "frame": true,
                 "resizable": true,
                 "autoShow": true,
@@ -148,7 +148,7 @@
 		},
 		"EURJPY": {
             "window": {
-                "url": "$componentRoot/spot/EURJPY",
+                "url": "$componentRoot/spot/EURJPY?tileView=Normal",
                 "frame": false,
                 "resizable": true,
                 "autoShow": true,
@@ -224,7 +224,7 @@
         },
         "GBPUSD": {
             "window": {
-                "url": "$componentRoot/spot/GBPUSD",
+                "url": "$componentRoot/spot/GBPUSD?tileView=Normal",
                 "frame": false,
                 "resizable": true,
                 "autoShow": true,
@@ -273,7 +273,7 @@
 
         "GBPJPY": {
             "window": {
-                "url": "$componentRoot/spot/GBPJPY",
+                "url": "$componentRoot/spot/GBPJPY?tileView=Normal",
                 "frame": false,
                 "resizable": true,
                 "autoShow": true,
@@ -349,7 +349,7 @@
         },
         "NZDUSD": {
             "window": {
-                "url": "$componentRoot/spot/NZDUSD",
+                "url": "$componentRoot/spot/NZDUSD?tileView=Normal",
                 "frame": false,
                 "resizable": true,
                 "autoShow": true,
@@ -389,7 +389,7 @@
 
         "AUDUSD": {
             "window": {
-                "url": "$componentRoot/spot/AUDUSD",
+                "url": "$componentRoot/spot/AUDUSD?tileView=Normal",
                 "frame": false,
                 "resizable": true,
                 "autoShow": true,
