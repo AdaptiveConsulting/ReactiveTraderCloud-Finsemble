@@ -12,7 +12,7 @@
 			"Window": {
 				"executeJavaScript": false,
 				"webPreferences": {
-					"preload": false
+					"preload": true
 				}
 			}
 		}
