@@ -81,8 +81,8 @@
             },
             "component": {
                 "preload": [
-                    "$applicationRoot/components/mindcontrol/spotTileDrag.js",
-                    "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
+                    "$applicationRoot/preloads/spotTileDrag.js",
+                    "$applicationRoot/preloads/spotTilePublishLinker.js"
                 ]
             },
             "foreign": {
@@ -120,8 +120,8 @@
             },
             "component": {
                 "preload": [
-                    "$applicationRoot/components/mindcontrol/spotTileDrag.js",
-                    "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
+                    "$applicationRoot/preloads/spotTileDrag.js",
+                    "$applicationRoot/preloads/spotTilePublishLinker.js"
                 ]
             },
             "foreign": {
@@ -159,8 +159,8 @@
             },
             "component": {
                 "preload": [
-                    "$applicationRoot/components/mindcontrol/spotTileDrag.js",
-                    "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
+                    "$applicationRoot/preloads/spotTileDrag.js",
+                    "$applicationRoot/preloads/spotTilePublishLinker.js"
                 ]
             },
             "foreign": {
@@ -235,8 +235,8 @@
             },
             "component": {
                 "preload": [
-                    "$applicationRoot/components/mindcontrol/spotTileDrag.js",
-                    "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
+                    "$applicationRoot/preloads/spotTileDrag.js",
+                    "$applicationRoot/preloads/spotTilePublishLinker.js"
                 ]
             },
             "foreign": {
@@ -284,8 +284,8 @@
             },
             "component": {
                 "preload": [
-                    "$applicationRoot/components/mindcontrol/spotTileDrag.js",
-                    "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
+                    "$applicationRoot/preloads/spotTileDrag.js",
+                    "$applicationRoot/preloads/spotTilePublishLinker.js"
                 ]
             },
             "foreign": {
@@ -360,8 +360,8 @@
             },
             "component": {
                 "preload": [
-                    "$applicationRoot/components/mindcontrol/spotTileDrag.js",
-                    "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
+                    "$applicationRoot/preloads/spotTileDrag.js",
+                    "$applicationRoot/preloads/spotTilePublishLinker.js"
                 ]
             },
             "foreign": {
@@ -400,8 +400,8 @@
             },
             "component": {
                 "preload": [
-                    "$applicationRoot/components/mindcontrol/spotTileDrag.js",
-                    "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
+                    "$applicationRoot/preloads/spotTileDrag.js",
+                    "$applicationRoot/preloads/spotTilePublishLinker.js"
                 ]
             },
             "foreign": {
@@ -439,8 +439,8 @@
             },
             "component": {
                 "preload": [
-                    "$applicationRoot/components/mindcontrol/spotTileDrag.js",
-                    "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
+                    "$applicationRoot/preloads/spotTileDrag.js",
+                    "$applicationRoot/preloads/spotTilePublishLinker.js"
                 ]
             },
             "foreign": {
