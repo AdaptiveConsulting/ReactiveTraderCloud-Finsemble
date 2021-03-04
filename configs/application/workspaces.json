@@ -4,7 +4,7 @@
 	"workspaces": [
 		{
 			"version": "1.1.0",
-			"name": "Reactive Trader Demo",
+			"name": "Reactive Trader - Default",
 			"type": "workspace",
 			"groups": {},
 			"windows": [
@@ -27,6 +27,34 @@
 					"componentType": "GBPUSD Analytics",
 					"defaultLeft": 200,
 					"defaultTop": 200
+				}
+			]
+		},
+		{
+			"version": "1.1.0",
+			"name": "Reactive Trader - Trade Limits",
+			"type": "workspace",
+			"groups": {},
+			"windows": [
+				{
+					"componentType": "Limit Checker",
+					"defaultLeft": 1100,
+					"defaultTop": 100
+				},
+				{
+					"componentType": "Blotter",
+					"defaultLeft": 100,
+					"defaultTop": 400
+				},
+				{
+					"componentType": "EURUSD",
+					"defaultLeft": 500,
+					"defaultTop": 100
+				},
+				{
+					"componentType": "GBPUSD Analytics",
+					"defaultLeft": 100,
+					"defaultTop": 100
 				}
 			]
 		}
