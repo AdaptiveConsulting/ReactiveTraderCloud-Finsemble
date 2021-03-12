@@ -1,10 +1,10 @@
 /**
  *	8.1.0
- *	Generation date: 2020-12-17T21:02:23.183Z
+ *	Generation date: 2021-03-12T16:13:14.981Z
  *	Client name: adaptive
- *	Package Type: Technical Analysis
+ *	Package Type: Technical Analysis 8.0
  *	License type: annual
- *	Expiration date: "2021/02/01"
+ *	Expiration date: "2022/02/01"
  */
 
 /***********************************************************

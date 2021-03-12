@@ -1,12 +1,10 @@
 /**
  *	8.1.0
- *	Generation date: 2020-12-14T16:21:56.817Z
- *	Client name: finsemble
- *	Package Type: Technical Analysis
+ *	Generation date: 2021-03-12T16:13:14.981Z
+ *	Client name: adaptive
+ *	Package Type: Technical Analysis 8.0
  *	License type: annual
- *	Expiration date: "2021/07/20"
- *	Domain lock: ["127.0.0.1","localhost","chartiq.com","finsemble.com"]
- *	iFrame lock: true
+ *	Expiration date: "2022/02/01"
  */
 
 /***********************************************************
