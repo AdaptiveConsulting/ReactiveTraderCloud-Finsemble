@@ -24,7 +24,9 @@
 				],
 				"category": "system",
 				"preload": [
-					"$applicationRoot/components/chartiq/chartiq.js"
+					"$applicationRoot/components/chartiq/chartiq.js",
+          "$applicationRoot/components/mindcontrol/chartDragAndDropReceiver.js",
+          "$applicationRoot/components/mindcontrol/chartSubscribeLinker.js"
 				]
 			},
 			"foreign": {
