@@ -1,7 +1,8 @@
 (function() {
   function runPreload() {
     const window = FSBL.Clients.WindowClient.getWindowIdentifier()
-    const symbol = window.componentType
+    const symbol = window.componentType?.split(' ')[0]
+
     FSBL.Clients.DragAndDropClient.setEmitters({
       emitters: [
         {
