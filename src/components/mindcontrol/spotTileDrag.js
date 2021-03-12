@@ -1,12 +1,20 @@
-FSBL.addEventListener('onReady', function() {
-	const window = FSBL.Clients.WindowClient.getWindowIdentifier()
-	const symbol = window.componentType
-	FSBL.Clients.DragAndDropClient.setEmitters({
-		emitters: [
-			{
-				type: 'symbol',
-				data: symbol,
-			},
-		],
-	})
-})
+(function() {
+  function runPreload() {
+    const window = FSBL.Clients.WindowClient.getWindowIdentifier()
+    const symbol = window.componentType
+    FSBL.Clients.DragAndDropClient.setEmitters({
+      emitters: [
+        {
+          type: 'symbol',
+          data: symbol,
+        },
+      ],
+    })
+  }
+
+  if (window.FSBL && FSBL.addEventListener) {
+    FSBL.addEventListener('onReady', runPreload)
+  } else {
+    window.addEventListener('FSBLReady', runPreload)
+  }
+})()
