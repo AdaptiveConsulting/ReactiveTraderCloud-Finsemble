@@ -5,8 +5,8 @@
         {
           type: 'symbol',
           handler: function(err, response) {
-            if (!err) {
-              stxx.loadChart({ symbol: response.data['symbol'] })
+            if (!err && window.stxx) {
+              window.stxx.loadChart({ symbol: response.data['symbol'] })
             }
           },
         },
