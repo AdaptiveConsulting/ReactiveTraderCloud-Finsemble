@@ -1,14 +1,13 @@
 (function() {
   function runPreload() {
-    FSBL.Clients.DragAndDropClient.addReceivers({
-      receivers: [
+    const window = FSBL.Clients.WindowClient.getWindowIdentifier()
+    const symbol = window.componentType?.split(' ')[0]
+
+    FSBL.Clients.DragAndDropClient.setEmitters({
+      emitters: [
         {
           type: 'symbol',
-          handler: function(err, response) {
-            if (!err) {
-              stxx.loadChart({ symbol: response.data['symbol'] })
-            }
-          },
+          data: symbol,
         },
       ],
     })

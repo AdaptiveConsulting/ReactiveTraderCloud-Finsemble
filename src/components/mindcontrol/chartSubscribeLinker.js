@@ -1,12 +1,20 @@
-const LINKER_DATA_TYPE = 'symbol'
-const interaval = 5
+(function() {
+  const LINKER_DATA_TYPE = 'symbol'
+  const interval = 5
 
-FSBL.addEventListener('onReady', function() {
-	let symbol
-	FSBL.Clients.LinkerClient.subscribe(LINKER_DATA_TYPE, data => {
-		if (data !== symbol) {
-			symbol = data
-			configureChart(5, symbol)
-		}
-	})
-})
+  function runPreload() {
+    let symbol
+    FSBL.Clients.LinkerClient.subscribe(LINKER_DATA_TYPE, data => {
+      if (data !== symbol) {
+        symbol = data
+        configureChart(interval, symbol)
+      }
+    })
+  }
+
+  if (window.FSBL && FSBL.addEventListener) {
+    FSBL.addEventListener('onReady', runPreload)
+  } else {
+    window.addEventListener('FSBLReady', runPreload)
+  }
+})()
