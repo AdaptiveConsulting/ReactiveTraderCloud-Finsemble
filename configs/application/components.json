@@ -77,7 +77,7 @@
                 "top": "center",
                 "left": "center",
                 "width": 370,
-                "height": 184
+                "height": 196
             },
             "component": {
                 "preload": [
@@ -116,7 +116,7 @@
                 "top": "center",
                 "left": "center",
                 "width": 360,
-                "height": 184
+                "height": 196
             },
             "component": {
                 "preload": [
@@ -155,7 +155,7 @@
                 "top": "center",
                 "left": "center",
                 "width": 370,
-                "height": 184
+                "height": 196
             },
             "component": {
                 "preload": [
@@ -194,7 +194,7 @@
                 "top": "center",
                 "left": "center",
                 "width": 370,
-                "height": 184
+                "height": 196
             },
             "component": {
                 "inject": false
@@ -231,7 +231,7 @@
                 "top": "center",
                 "left": "center",
                 "width": 370,
-                "height": 184
+                "height": 196
             },
             "component": {
                 "preload": [
@@ -280,7 +280,7 @@
                 "top": "center",
                 "left": "center",
                 "width": 370,
-                "height": 184
+                "height": 196
             },
             "component": {
                 "preload": [
@@ -319,7 +319,7 @@
                 "top": "center",
                 "left": "center",
                 "width": 370,
-                "height": 184
+                "height": 196
             },
             "component": {
                 "inject": false
@@ -356,7 +356,7 @@
                 "top": "center",
                 "left": "center",
                 "width": 370,
-                "height": 184
+                "height": 196
             },
             "component": {
                 "preload": [
@@ -396,7 +396,7 @@
                 "top": "center",
                 "left": "center",
                 "width": 370,
-                "height": 184
+                "height": 196
             },
             "component": {
                 "preload": [
@@ -435,7 +435,7 @@
                 "top": "center",
                 "left": "center",
                 "width": 370,
-                "height": 184
+                "height": 196
             },
             "component": {
                 "preload": [
