@@ -39,6 +39,9 @@ commands:
           name: Set node version
           command: "nvm use 12"
       - run:
+          name: Install yarn
+          command: "npm install -g yarn"
+      - run:
           name: "Authenticate with registry"
           command: 'echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/ci_build/.npmrc'
           shell: bash.exe
