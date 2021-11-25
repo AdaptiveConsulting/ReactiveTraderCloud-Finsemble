@@ -33,8 +33,11 @@ commands:
       - attach_workspace:
           at: ~/ci_build/
       - run:
+          name: Install node 12
+          command: "nvm install 12"
+      - run:
           name: Set node version
-          command: "nvm install 12 && nvm use 12"
+          command: "nvm use 12"
       - run:
           name: "Authenticate with registry"
           command: 'echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/ci_build/.npmrc'
