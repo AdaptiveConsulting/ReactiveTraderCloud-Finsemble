@@ -197,7 +197,10 @@
                 "height": 196
             },
             "component": {
-                "inject": false
+                "preload": [
+                    "$applicationRoot/components/mindcontrol/spotTileDrag.js",
+                    "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
+                ]
             },
             "foreign": {
                 "services": {
@@ -322,7 +325,10 @@
                 "height": 196
             },
             "component": {
-                "inject": false
+                "preload": [
+                    "$applicationRoot/components/mindcontrol/spotTileDrag.js",
+                    "$applicationRoot/components/mindcontrol/spotTilePublishLinker.js"
+                ]
             },
             "foreign": {
                 "services": {
