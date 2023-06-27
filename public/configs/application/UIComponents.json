@@ -1,0 +1,82 @@
+{
+  "comment": "Sample component config, including app launcher, menus, etc.",
+  "$schema": "../../../node_modules/@finsemble/finsemble-core/configs/schemas/fileBasedSchemas/uiComponentsFile.schema.json",
+  "components": {
+    "Toolbar": {
+      "uiComponent": true,
+      "bootParams": {
+        "stage": "earlyuser",
+        "checkpoints": {
+          "initialize": {
+            "postStartupCompletion": true
+          }
+        }
+      },
+      "window": {
+        "id": "launcher",
+        "url": "$applicationRoot/Toolbar/index.html",
+        "width": 600,
+        "height": 39,
+        "dockedHeight": 39,
+        "top": 0,
+        "left": 0,
+        "right": 0,
+        "position": "available",
+        "dockable": [
+          "top",
+          "bottom"
+        ],
+        "maxHeight": 39,
+        "minHeight": 39,
+        "minWidth": 300,
+        "docked": "top",
+        "options": {
+          "autoShow": true,
+          "contextMenu": false,
+          "showTaskbarIcon": true,
+          "alwaysOnTop": false,
+          "resizable": true
+        }
+      },
+      "component": {
+        "spawnOnStartup": true
+      },
+      "foreign": {
+        "services": {
+          "workspaceService": {
+            "global": true
+          },
+          "windowService": {
+            "allowGrouping": false
+          }
+        }
+      },
+      "childWindowOptions": {
+        "window": {
+          "maxHeight": null,
+          "minHeight": null,
+          "dockable": false,
+          "show": false,
+          "options": {
+            "resizable": false
+          }
+        },
+        "foreign": {
+          "components": {
+            "Window Manager": {
+              "FSBLHeader": false
+            }
+          },
+          "services": {
+            "windowService": {
+              "manageWindowMovement": false
+            },
+            "workspaceService": {
+              "addToWorkspace": false
+            }
+          }
+        }
+      }
+    }
+  }
+}

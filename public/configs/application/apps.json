@@ -1,0 +1,419 @@
+{
+	"comment": "AppD component config",
+	"$schema": "../../../node_modules/@finsemble/finsemble-core/configs/schemas/fileBasedSchemas/appsConfigFile.schema.json",
+	"apps": [
+		{
+			"appId": "ChartIQ Example App",
+			"name": "ChartIQ Example App",
+			"type": "web",
+			"details": {
+				"url": "https://salesdemo-v6.finsemble.com/production/ChartIQ/Finsemble-SD-ChartIQ/technical-analysis-chart.html"
+			},
+			"description": "Visualize market data in the leading FDC3 compliant technical chart.",
+			"hostManifests": {
+				"Finsemble": {
+					"window": {
+						"width": 800,
+						"height": 600,
+						"options": {
+							"minWidth": 175
+						}
+					},
+					"foreign": {
+						"components": {
+							"App Launcher": {
+								"launchableByUser": true
+							},
+							"Toolbar": {
+								"iconClass": "ff-chart-advanced"
+							},
+							"Window Manager": {
+								"FSBLHeader": true,
+								"persistWindowState": true
+							}
+						}
+					},
+					"interop": {
+						"selectConnect": [
+							{
+								"contextType": "layout",
+								"fwd": "#Workspace"
+							},
+							{
+								"contextType": "fdc3.instrument",
+								"cc": "#Workspace"
+							}
+						]
+					}
+				}
+			},
+			"version": "1.0.0",
+			"tooltip": "ChartIQ Technical Chart",
+			"icons": [
+				{
+					"src": "https://i.imgur.com/10C3LdH.png"
+				}
+			],
+			"categories": [
+				"analytics",
+				"charts",
+				"market data",
+				"visualisation"
+			],
+			"contactEmail": "info@cosaic.io",
+			"supportEmail": "support@finsemble.com",
+			"publisher": "Cosaic",
+			"interop": {
+				"intents": {
+					"listensFor": {
+						"ViewChart": {
+							"contexts": [
+								"fdc3.instrument"
+							]
+						}
+					}
+				}
+			}
+		},
+		{
+			"appId": "FxBlotter",
+			"name": "Fx Blotter",
+			"type": "web",
+			"details": {
+				"url": "$componentRoot/fx-blotter"
+			},
+			"hostManifests": {
+				"Finsemble": {
+					"window": {
+						"width": 850,
+						"height": 475,
+						"options": {
+							"minWidth": 175
+						}
+					},
+					"foreign": {
+						"components": {
+							"App Launcher": {
+								"launchableByUser": true
+							},
+							"Window Manager": {
+								"title": "Blotter",
+								"FSBLHeader": true,
+								"persistWindowState": false
+							},
+							"Toolbar": {
+								"iconClass": "blotter"
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"appId": "FxAnalytics",
+			"name": "Fx Analytics",
+			"type": "web",
+			"details": {
+				"url": "$componentRoot/fx-analytics"
+			},
+			"hostManifests": {
+				"Finsemble": {
+					"window": {
+						"width": 330,
+						"height": 870,
+						"options": {
+							"minWidth": 175
+						}
+					},
+					"foreign": {
+						"components": {
+							"App Launcher": {
+								"launchableByUser": true
+							},
+							"Window Manager": {
+								"title": "Analytics",
+								"FSBLHeader": true,
+								"persistWindowState": false
+							},
+							"Toolbar": {
+								"iconClass": "ff-component"
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"appId": "EURCAD",
+			"name": "EURCAD",
+			"type": "web",
+			"details": {
+				"url": "$componentRoot/fx-spot/EURCAD"
+			},
+			"hostManifests": {
+				"Finsemble": {
+					"window": {
+						"width": 370,
+						"height": 196,
+						"options": {
+							"minWidth": 150
+						}
+					},
+					"foreign": {
+						"components": {
+							"App Launcher": {
+								"launchableByUser": true
+							},
+							"Window Manager": {
+								"title": "EURCAD",
+								"FSBLHeader": true,
+								"persistWindowState": false
+							},
+							"Toolbar": {
+								"iconClass": "EURCAD"
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"appId": "EURUSD",
+			"name": "EURUSD",
+			"type": "web",
+			"details": {
+				"url": "$componentRoot/fx-spot/EURUSD"
+			},
+			"hostManifests": {
+				"Finsemble": {
+					"window": {
+						"width": 370,
+						"height": 196,
+						"options": {
+							"minWidth": 150
+						}
+					},
+					"foreign": {
+						"components": {
+							"App Launcher": {
+								"launchableByUser": true
+							},
+							"Window Manager": {
+								"title": "EURUSD",
+								"FSBLHeader": true,
+								"persistWindowState": false
+							},
+							"Toolbar": {
+								"iconClass": "EURUSD"
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"appId": "EURJPY",
+			"name": "EURJPY",
+			"type": "web",
+			"details": {
+				"url": "$componentRoot/fx-spot/EURJPY"
+			},
+			"hostManifests": {
+				"Finsemble": {
+					"window": {
+						"width": 370,
+						"height": 196,
+						"options": {
+							"minWidth": 150
+						}
+					},
+					"foreign": {
+						"components": {
+							"App Launcher": {
+								"launchableByUser": true
+							},
+							"Window Manager": {
+								"title": "EURJPY",
+								"FSBLHeader": true,
+								"persistWindowState": false
+							},
+							"Toolbar": {
+								"iconClass": "EURJPY"
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"appId": "GBPUSD",
+			"name": "GBPUSD",
+			"type": "web",
+			"details": {
+				"url": "$componentRoot/fx-spot/GBPUSD"
+			},
+			"hostManifests": {
+				"Finsemble": {
+					"window": {
+						"width": 370,
+						"height": 196,
+						"options": {
+							"minWidth": 150
+						}
+					},
+					"foreign": {
+						"components": {
+							"App Launcher": {
+								"launchableByUser": true
+							},
+							"Window Manager": {
+								"title": "GBPUSD",
+								"FSBLHeader": true,
+								"persistWindowState": false
+							},
+							"Toolbar": {
+								"iconClass": "GBPUSD"
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"appId": "GBPJPY",
+			"name": "GBPJPY",
+			"type": "web",
+			"details": {
+				"url": "$componentRoot/fx-spot/GBPJPY"
+			},
+			"hostManifests": {
+				"Finsemble": {
+					"window": {
+						"width": 370,
+						"height": 196,
+						"options": {
+							"minWidth": 150
+						}
+					},
+					"foreign": {
+						"components": {
+							"App Launcher": {
+								"launchableByUser": true
+							},
+							"Window Manager": {
+								"title": "GBPJPY",
+								"FSBLHeader": true,
+								"persistWindowState": false
+							},
+							"Toolbar": {
+								"iconClass": "GBPJPY"
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"appId": "NZDUSD",
+			"name": "NZDUSD",
+			"type": "web",
+			"details": {
+				"url": "$componentRoot/fx-spot/NZDUSD"
+			},
+			"hostManifests": {
+				"Finsemble": {
+					"window": {
+						"width": 370,
+						"height": 196,
+						"options": {
+							"minWidth": 150
+						}
+					},
+					"foreign": {
+						"components": {
+							"App Launcher": {
+								"launchableByUser": true
+							},
+							"Window Manager": {
+								"title": "NZDUSD",
+								"FSBLHeader": true,
+								"persistWindowState": false
+							},
+							"Toolbar": {
+								"iconClass": "NZDUSD"
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"appId": "AUDUSD",
+			"name": "AUDUSD",
+			"type": "web",
+			"details": {
+				"url": "$componentRoot/fx-spot/AUDUSD"
+			},
+			"hostManifests": {
+				"Finsemble": {
+					"window": {
+						"width": 370,
+						"height": 196,
+						"options": {
+							"minWidth": 150
+						}
+					},
+					"foreign": {
+						"components": {
+							"App Launcher": {
+								"launchableByUser": true
+							},
+							"Window Manager": {
+								"title": "AUDUSD",
+								"FSBLHeader": true,
+								"persistWindowState": false
+							},
+							"Toolbar": {
+								"iconClass": "AUDUSD"
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"appId": "USDJPY",
+			"name": "USDJPY",
+			"type": "web",
+			"details": {
+				"url": "$componentRoot/fx-spot/USDJPY"
+			},
+			"hostManifests": {
+				"Finsemble": {
+					"window": {
+						"width": 370,
+						"height": 196,
+						"options": {
+							"minWidth": 150
+						}
+					},
+					"foreign": {
+						"components": {
+							"App Launcher": {
+								"launchableByUser": true
+							},
+							"Window Manager": {
+								"title": "USDJPY",
+								"FSBLHeader": true,
+								"persistWindowState": false
+							},
+							"Toolbar": {
+								"iconClass": "USDJPY"
+							}
+						}
+					}
+				}
+			}
+		}
+	]
+}
