@@ -4,3 +4,6 @@ public/build/
 .DS_Store
 .webpack-file-cache
 .babel_cache
+# installer stuff
+installer-tmp/
+pkg/

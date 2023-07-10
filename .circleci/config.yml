@@ -5,7 +5,7 @@ orbs:
   node: circleci/node@4.7.0
 
 commands:
-  pull_installer: 
+  pull_installer:
     parameters:
       cloud_bucket:
         type: string
@@ -18,13 +18,13 @@ commands:
             gcloud config set project ${GOOGLE_PROJECT_ID}
       - run:
           name: Copy installer from GCS
-          command: "gsutil -m cp -r gs://<<parameters.cloud_bucket>>/pkg ."
+          command: 'gsutil -m cp -r gs://<<parameters.cloud_bucket>>/pkg .'
       - persist_to_workspace:
           root: .
           paths:
             - pkg
 
-  build: 
+  build:
     parameters:
       env:
         type: string
@@ -33,45 +33,42 @@ commands:
       - attach_workspace:
           at: ~/ci_build/
       - run:
-          name: Install node 12
-          command: "nvm install 12"
+          name: Install node
+          command: 'nvm install 16'
       - run:
           name: Set node version
-          command: "nvm use 12"
+          command: 'nvm use 16'
       - run:
           name: Install yarn
-          command: "npm install -g yarn"
+          command: 'npm install -g yarn'
       - run:
-          name: "Authenticate with registry"
+          name: 'Authenticate with registry'
           command: 'echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/ci_build/.npmrc'
           shell: bash.exe
       - run:
-          name: "Install NPM Packages"
-          command: "yarn install"
+          name: 'Install NPM Packages'
+          command: 'yarn install'
       - save_cache:
           paths:
             - node_modules
           key: 'v1-dependencies-{{ checksum "package.json" }}'
       - run:
-          name: "Lint"
-          command: "yarn eslint"
-      - run:
-          name: "Build Production Assets"
-          command: "yarn build:prod"
-      - run:
-          name: "Move Production Assets"
-          command: "yarn deploy"
+          name: 'Build Production Assets'
+          command: 'yarn build:prod'
       - store_artifacts:
           path: ~/ci_build/node_modules/electron-winstaller/vendor/signtool.exe
           destination: signtool.exe
       - run:
-          name: "Build Production Package"
-          command: "yarn makeInstaller:<<parameters.env>>"
+          name: 'Build Production Package'
+          command: 'yarn makeInstaller:<<parameters.env>>'
       - run:
-          name: "Add Installer to Production Assets"
-          command: "cp -r ~/ci_build/pkg ~/ci_build/docs"
+          name: 'MAKE IT FAIL'
+          command: 'yarn fail-the-build'
       - run:
-          name: "Zip and Create DROP"
+          name: 'Add Installer to Production Assets'
+          command: 'cp -r ~/ci_build/pkg ~/ci_build/docs'
+      - run:
+          name: 'Zip and Create DROP'
           command: tar -cvf DROP.tar.gz -C ~/ci_build/docs .
           shell: bash.exe
       - store_artifacts:
@@ -90,7 +87,7 @@ commands:
       - attach_workspace:
           at: ~/ci_build/
       - run:
-          name: "Deployment information"
+          name: 'Deployment information'
           command: |
             echo "Deploying Build $CIRCLE_BUILD_NUM"
       - run:
@@ -112,50 +109,50 @@ commands:
 
 jobs:
   pull_uat_installer:
-    description: "Pull current installer from UAT GCS"
+    description: 'Pull current installer from UAT GCS'
     docker:
       - image: google/cloud-sdk
     steps:
       - pull_installer:
-          cloud_bucket: "reactive-trader-finsemble-uat"
+          cloud_bucket: 'reactive-trader-finsemble-uat'
 
   pull_prod_installer:
-    description: "Pull current installer from production GCS"
+    description: 'Pull current installer from production GCS'
     docker:
       - image: google/cloud-sdk
     steps:
       - pull_installer:
-          cloud_bucket: "reactive-trader-finsemble"
-      
+          cloud_bucket: 'reactive-trader-finsemble'
+
   build_uat:
     executor: win/default
     working_directory: ~/ci_build
     steps:
       - build:
-          env: "uat"
+          env: 'uat'
 
   build_prod:
     executor: win/default
     working_directory: ~/ci_build
     steps:
       - build:
-          env: "prod"
+          env: 'prod'
 
   deploy_uat:
-    description: "Deploy Artifacts to UAT GCS"
+    description: 'Deploy Artifacts to UAT GCS'
     docker:
       - image: google/cloud-sdk
     steps:
       - deploy:
-          cloud_bucket: "reactive-trader-finsemble-uat"
+          cloud_bucket: 'reactive-trader-finsemble-uat'
 
   deploy_prod:
-    description: "Deploy Artifacts to production GCS"
+    description: 'Deploy Artifacts to production GCS'
     docker:
       - image: google/cloud-sdk
     steps:
       - deploy:
-          cloud_bucket: "reactive-trader-finsemble"
+          cloud_bucket: 'reactive-trader-finsemble'
 
 workflows:
   version: 2
