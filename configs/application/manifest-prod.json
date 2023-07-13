@@ -42,7 +42,6 @@
 	"finsemble": {
 		"applicationRoot": "https://storage.googleapis.com/reactive-trader-finsemble",
 		"moduleRoot": "$applicationRoot/finsemble",
-		"componentRoot": "https://finsemble.prod.reactivetrader.com",
 		"servicesRoot": "$applicationRoot/finsemble/services",
 		"notificationURL": "$applicationRoot/components/notification/notification.html",
 		"configSchemaURL": "$moduleRoot/configs/schemas/finsemble.schema.json",
@@ -73,10 +72,10 @@
 				"Debug": false,
 				"Verbose": false,
 				"LocalOnly": false
-		}
+			}
 		},
 		"custom": {
-			"//": "Customer macros definitions must go here (e.g. 'myApplicationRoot' so it can be referenced elsewhere as '$myApplicationRoot'), along with other custom config at this level."
+			"componentRoot": "https://finsemble.prod.reactivetrader.com"
 		},
 		"importConfig": ["$applicationRoot/configs/application/config.json"]
 	},

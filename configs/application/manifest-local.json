@@ -43,7 +43,6 @@
 	"finsemble": {
 		"applicationRoot": "http://localhost:3375",
 		"moduleRoot": "$applicationRoot/finsemble",
-		"componentRoot": "http://localhost:1917",
 		"servicesRoot": "$applicationRoot/finsemble/services",
 		"notificationURL": "$applicationRoot/components/notification/notification.html",
 		"configSchemaURL": "$moduleRoot/configs/schemas/finsemble.schema.json",
@@ -74,10 +73,10 @@
 				"Debug": false,
 				"Verbose": false,
 				"LocalOnly": false
-		}
+			}
 		},
 		"custom": {
-			"//": "Customer macros definitions must go here (e.g. 'myApplicationRoot' so it can be referenced elsewhere as '$myApplicationRoot'), along with other custom config at this level."
+			"componentRoot": "http://localhost:1917"
 		},
 		"importConfig": ["$applicationRoot/configs/application/config.json"]
 	},

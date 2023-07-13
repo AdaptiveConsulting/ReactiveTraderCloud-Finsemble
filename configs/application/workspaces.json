@@ -4,6 +4,29 @@
 	"workspaces": [
 		{
 			"version": "1.1.0",
+			"name": "Reactive Trader - Test",
+			"type": "workspace",
+			"groups": {},
+			"windows": [
+				{
+					"componentType": "LiveRates",
+					"defaultLeft": 0,
+					"defaultTop": 100
+				},
+				{
+					"componentType": "Blotter",
+					"defaultLeft": 0,
+					"defaultTop": 600
+				},
+				{
+					"componentType": "Analytics",
+					"defaultLeft": 800,
+					"defaultTop": 100
+				}
+			]
+		},
+		{
+			"version": "1.1.0",
 			"name": "Reactive Trader - Default",
 			"type": "workspace",
 			"groups": {},
