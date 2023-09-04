@@ -12,7 +12,7 @@
 		"launch": "finsemble launch",
 		"makeInstaller": "finsemble makeInstaller",
 		"makeInstaller:dev": "set NODE_ENV=development && yarn makeInstaller",
-		"makeInstaller:uat": "set NODE_ENV=uat && yarn makeInstaller",
+		"makeInstaller:uat": "set NODE_ENV=uat && yarn makeInstaller --environment uat",
 		"makeInstaller:prod": "set NODE_ENV=production && yarn makeInstaller",
 		"server": "finsemble server",
 		"sdd": "finsemble sdd",

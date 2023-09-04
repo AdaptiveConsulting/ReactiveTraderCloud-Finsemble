@@ -61,9 +61,9 @@ commands:
       - run:
           name: 'Build Production Package'
           command: 'yarn makeInstaller:<<parameters.env>>'
-      - run:
-          name: 'MAKE IT FAIL'
-          command: 'yarn fail-the-build'
+      # - run:
+      #     name: 'MAKE IT FAIL'
+      #     command: 'yarn fail-the-build'
       - run:
           name: 'Add Installer to Production Assets'
           command: 'cp -r ~/ci_build/pkg ~/ci_build/docs'
