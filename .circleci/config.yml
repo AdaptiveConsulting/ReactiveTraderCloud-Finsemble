@@ -165,9 +165,9 @@ workflows:
       - deploy_uat:
           requires:
             - build_uat
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
   Prod_Workflow:
     jobs:
       - pull_prod_installer
