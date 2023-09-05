@@ -14,8 +14,11 @@
     }
   ],
   "finsemble": {
+    "applicationRoot": "https://storage.googleapis.com/reactive-trader-finsemble-uat",
+    "moduleRoot": "$applicationRoot/build/finsemble",
+    "configRoot": "$applicationRoot/configs/application",
     "componentRoot": "https://finsemble.uat.reactivetrader.com",
-    "systemTrayIcon": "../../assets/img/Finsemble_SystemTray_Icon.png",
+    "systemTrayIcon": "https://storage.googleapis.com/reactive-trader-finsemble-uat/assets/img/Finsemble_SystemTray_Icon.png",
     "waitForUpdate": false,
     "bootConfig": {
       "onErrorMakeSystemManagerVisible": true,

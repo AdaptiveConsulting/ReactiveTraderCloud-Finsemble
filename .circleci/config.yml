@@ -60,7 +60,7 @@ commands:
           destination: signtool.exe
       - run:
           name: 'List all files here'
-          command: 'ls -a'
+          command: 'ls'
       - run:
           name: 'Build Production Package'
           command: 'yarn makeInstaller:<<parameters.env>>'
