@@ -59,14 +59,11 @@ commands:
           path: ~/ci_build/node_modules/electron-winstaller/vendor/signtool.exe
           destination: signtool.exe
       - run:
-          name: 'List all files here'
-          command: 'ls'
-      - run:
           name: 'Build Production Package'
           command: 'yarn makeInstaller:<<parameters.env>>'
       - run:
           name: 'Copy assets and build'
-          command: 'cp -r ~/ci_build/public/* ~/ci_build/docs'
+          command: 'cp -r ~/ci_build/public ~/ci_build/docs'
       - run:
           name: 'Add Installer to Production Assets'
           command: 'cp -r ~/ci_build/pkg ~/ci_build/docs'
