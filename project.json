@@ -1,6 +1,6 @@
 {
 	"$schema": "./node_modules/@finsemble/finsemble-core/configs/schemas/fileBasedSchemas/project.schema.json",
-	"certificateFile": "./configs/AdaptiveCodeSigning.pfx",
+	"certificateFile": "https://storage.cloud.google.com/reactive-trader-finsemble-uat/configs/AdaptiveCodeSigning.pfx",
 	"certificatePassword": null,
 	"signWithParams": "/tr http://timestamp.comodoca.com /td SHA256 /fd SHA256",
 	"installer": {
@@ -29,7 +29,7 @@
 		},
 		"uat": {
 			"installer": {
-				"manifestUrl": "https://storage.cloud.google.com/reactive-trader-finsemble-uat/configs/application/manifest-uat.json",
+				"manifestUrl": "https://storage.googleapis.com/reactive-trader-finsemble-uat/configs/application/manifest-uat.json",
 				"name": "Reactive Trader Finsemble UAT"
 			}
 		}

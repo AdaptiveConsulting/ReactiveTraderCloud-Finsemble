@@ -138,7 +138,7 @@
 			},
 			"window": {
 				"id": "launcher",
-				"url": "$applicationRoot/Toolbar/index.html",
+				"url": "$applicationRoot/build/Toolbar/index.html",
 				"width": 600,
 				"height": 39,
 				"dockedHeight": 39,
