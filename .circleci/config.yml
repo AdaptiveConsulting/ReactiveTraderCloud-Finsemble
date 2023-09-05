@@ -66,7 +66,7 @@ commands:
           command: 'yarn makeInstaller:<<parameters.env>>'
       - run:
           name: 'Copy assets and build'
-          command: 'cp -r ~/ci_build/public/* ~/ci_build'
+          command: 'cp -r ~/ci_build/public/* ~/ci_build/docs'
       - run:
           name: 'Add Installer to Production Assets'
           command: 'cp -r ~/ci_build/pkg ~/ci_build/docs'
