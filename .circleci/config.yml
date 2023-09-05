@@ -119,13 +119,13 @@ jobs:
       - pull_installer:
           cloud_bucket: 'reactive-trader-finsemble-uat'
 
-  pull_prod_installer:
-    description: 'Pull current installer from production GCS'
-    docker:
-      - image: google/cloud-sdk
-    steps:
-      - pull_installer:
-          cloud_bucket: 'reactive-trader-finsemble'
+  # pull_prod_installer:
+  #   description: 'Pull current installer from production GCS'
+  #   docker:
+  #     - image: google/cloud-sdk
+  #   steps:
+  #     - pull_installer:
+  #         cloud_bucket: 'reactive-trader-finsemble'
 
   build_uat:
     executor: win/default
@@ -134,12 +134,12 @@ jobs:
       - build:
           env: 'uat'
 
-  build_prod:
-    executor: win/default
-    working_directory: ~/ci_build
-    steps:
-      - build:
-          env: 'prod'
+  # build_prod:
+  #   executor: win/default
+  #   working_directory: ~/ci_build
+  #   steps:
+  #     - build:
+  #         env: 'prod'
 
   deploy_uat:
     description: 'Deploy Artifacts to UAT GCS'
@@ -149,13 +149,13 @@ jobs:
       - deploy:
           cloud_bucket: 'reactive-trader-finsemble-uat'
 
-  deploy_prod:
-    description: 'Deploy Artifacts to production GCS'
-    docker:
-      - image: google/cloud-sdk
-    steps:
-      - deploy:
-          cloud_bucket: 'reactive-trader-finsemble'
+  # deploy_prod:
+  #   description: 'Deploy Artifacts to production GCS'
+  #   docker:
+  #     - image: google/cloud-sdk
+  #   steps:
+  #     - deploy:
+  #         cloud_bucket: 'reactive-trader-finsemble'
 
 workflows:
   version: 2
@@ -169,19 +169,19 @@ workflows:
           requires:
             - build_uat
 
-  Prod_Workflow:
-    jobs:
-      - pull_prod_installer
-      - build_prod:
-          requires:
-            - pull_prod_installer
-      - hold_deploy_prod:
-          type: approval
-          requires:
-            - build_prod
-          filters:
-            branches:
-              only: master
-      - deploy_prod:
-          requires:
-            - hold_deploy_prod
+  # Prod_Workflow:
+  #   jobs:
+  #     - pull_prod_installer
+  #     - build_prod:
+  #         requires:
+  #           - pull_prod_installer
+  #     - hold_deploy_prod:
+  #         type: approval
+  #         requires:
+  #           - build_prod
+  #         filters:
+  #           branches:
+  #             only: master
+  #     - deploy_prod:
+  #         requires:
+  #           - hold_deploy_prod
