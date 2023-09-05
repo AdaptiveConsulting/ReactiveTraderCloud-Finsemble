@@ -14,6 +14,7 @@
 		}
 	],
 	"finsemble": {
+		"applicationRoot": "http://localhost:3375",
 		"componentRoot": "http://localhost:1917",
 		"systemTrayIcon": "../../assets/img/Finsemble_SystemTray_Icon.png",
 		"waitForUpdate": false,

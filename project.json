@@ -1,6 +1,6 @@
 {
 	"$schema": "./node_modules/@finsemble/finsemble-core/configs/schemas/fileBasedSchemas/project.schema.json",
-	"certificateFile": "https://storage.cloud.google.com/reactive-trader-finsemble-uat/configs/AdaptiveCodeSigning.pfx",
+	"certificateFile": "https://storage.googleapis.com/reactive-trader-finsemble-uat/configs/AdaptiveCodeSigning.pfx",
 	"certificatePassword": null,
 	"signWithParams": "/tr http://timestamp.comodoca.com /td SHA256 /fd SHA256",
 	"installer": {
