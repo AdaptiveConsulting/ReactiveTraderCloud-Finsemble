@@ -1,12 +1,15 @@
 {
 	"$schema": "./node_modules/@finsemble/finsemble-core/configs/schemas/fileBasedSchemas/project.schema.json",
+	"certificateFile": "./configs/AdaptiveCodeSigning.pfx",
+	"certificatePassword": null,
+	"signWithParams": "/tr http://timestamp.comodoca.com /td SHA256 /fd SHA256",
 	"installer": {
 		"icon": "./public/assets/img/installer_icon.ico",
 		"version": "8.8.1",
-		"name": "Finsemble",
-		"authors": "Finsemble",
-		"description": "Finsemble",
-		"companyName": "Finsemble",
+		"name": "ReactiveTraderFinsemble",
+		"authors": "Adaptive",
+		"description": "Adaptive",
+		"companyName": "Adaptive",
 		"background": "./public/assets/img/installer-image-mac.png",
 		"loadingGif": "./public/assets/img/installer-image-windows.gif",
 		"macIcon": "./public/assets/img/installer_icon.icns"
