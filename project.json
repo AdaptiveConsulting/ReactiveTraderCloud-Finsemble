@@ -14,7 +14,7 @@
 	"environments": {
 		"development": {
 			"installer": {
-				"manifestUrl": "http://mysite.com/configs/application/manifest-local.json",
+				"manifestUrl": "http://localhost:3375/configs/application/manifest-local.json",
 				"name": "Reactive Trader Finsemble Dev"
 			}
 		},
@@ -26,7 +26,7 @@
 		},
 		"uat": {
 			"installer": {
-				"manifestUrl": "https://finsemble.uat.reactivetrader.com/configs/application/manifest-uat.json",
+				"manifestUrl": "https://storage.cloud.google.com/reactive-trader-finsemble-uat/configs/application/manifest-uat.json",
 				"name": "Reactive Trader Finsemble UAT"
 			}
 		}
