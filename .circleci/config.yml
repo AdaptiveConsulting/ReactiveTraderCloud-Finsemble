@@ -5,25 +5,6 @@ orbs:
   node: circleci/node@4.7.0
 
 commands:
-  pull_installer:
-    parameters:
-      cloud_bucket:
-        type: string
-    steps:
-      - run:
-          name: Authenticate with gcloud
-          command: |
-            echo $BASH_ENV
-            echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
-            gcloud config set project ${GOOGLE_PROJECT_ID}
-      - run:
-          name: Copy installer from GCS
-          command: 'gsutil -m cp -r gs://<<parameters.cloud_bucket>>/pkg .'
-      - persist_to_workspace:
-          root: .
-          paths:
-            - pkg
-
   build:
     parameters:
       env:
@@ -104,40 +85,16 @@ commands:
           name: Copy artifacts to GCS
           command: |
             cd ~/ci_build/
-            ls
             tar -xvf DROP*.tar.gz
             gsutil -m cp -r * gs://<<parameters.cloud_bucket>>
 
 jobs:
-  pull_uat_installer:
-    description: 'Pull current installer from UAT GCS'
-    docker:
-      - image: google/cloud-sdk
-    steps:
-      - pull_installer:
-          cloud_bucket: 'reactive-trader-finsemble-uat'
-
-  # pull_prod_installer:
-  #   description: 'Pull current installer from production GCS'
-  #   docker:
-  #     - image: google/cloud-sdk
-  #   steps:
-  #     - pull_installer:
-  #         cloud_bucket: 'reactive-trader-finsemble'
-
   build_uat:
     executor: win/default
     working_directory: ~/ci_build
     steps:
       - build:
           env: 'uat'
-
-  # build_prod:
-  #   executor: win/default
-  #   working_directory: ~/ci_build
-  #   steps:
-  #     - build:
-  #         env: 'prod'
 
   deploy_uat:
     description: 'Deploy Artifacts to UAT GCS'
@@ -147,39 +104,14 @@ jobs:
       - deploy:
           cloud_bucket: 'reactive-trader-finsemble-uat'
 
-  # deploy_prod:
-  #   description: 'Deploy Artifacts to production GCS'
-  #   docker:
-  #     - image: google/cloud-sdk
-  #   steps:
-  #     - deploy:
-  #         cloud_bucket: 'reactive-trader-finsemble'
-
 workflows:
   version: 2
   UAT_Workflow:
     jobs:
-      - pull_uat_installer
-      - build_uat:
-          requires:
-            - pull_uat_installer
+      - build_uat
       - deploy_uat:
           requires:
             - build_uat
-
-  # Prod_Workflow:
-  #   jobs:
-  #     - pull_prod_installer
-  #     - build_prod:
-  #         requires:
-  #           - pull_prod_installer
-  #     - hold_deploy_prod:
-  #         type: approval
-  #         requires:
-  #           - build_prod
-  #         filters:
-  #           branches:
-  #             only: master
-  #     - deploy_prod:
-  #         requires:
-  #           - hold_deploy_prod
+          filters:
+            branches:
+              only: master
