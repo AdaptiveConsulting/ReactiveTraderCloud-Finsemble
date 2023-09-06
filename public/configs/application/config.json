@@ -121,7 +121,7 @@
 	},
 	"globalHotkeys": {},
 	"importConfig": [
-		"$configRoot/application/apps.json"
+		"$configRoot/apps.json"
 	],
 	"toolbarMenus": {},
 	"components": {
