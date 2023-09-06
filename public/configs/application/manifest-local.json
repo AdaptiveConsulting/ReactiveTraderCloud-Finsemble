@@ -15,6 +15,8 @@
 	],
 	"finsemble": {
 		"applicationRoot": "http://localhost:3375",
+		"moduleRoot": "$applicationRoot/build/finsemble",
+		"configRoot": "http://localhost:3375/configs/application",
 		"componentRoot": "http://localhost:1917",
 		"systemTrayIcon": "../../assets/img/Finsemble_SystemTray_Icon.png",
 		"waitForUpdate": false,
