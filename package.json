@@ -20,10 +20,10 @@
 		"template": "finsemble template",
 		"lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings 0",
 		"lint:fix": "eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings 0 --fix",
-		"lint:cache": "npm run lint -- --cache",
+		"lint:cache": "yarn run lint -- --cache",
 		"_format": "prettier README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
-		"format": "npm run _format -- --write",
-		"format:check": "npm run _format -- --check"
+		"format": "yarn _format -- --write",
+		"format:check": "yarn _format -- --check"
 	},
 	"author": "Adaptive",
 	"dependencies": {
