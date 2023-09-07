@@ -13,18 +13,33 @@
 		"makeInstaller": "finsemble makeInstaller",
 		"makeInstaller:dev": "set NODE_ENV=development && yarn makeInstaller --environment development",
 		"makeInstaller:uat": "set NODE_ENV=uat && yarn makeInstaller --environment uat",
-		"makeInstaller:prod": "set NODE_ENV=production && yarn makeInstaller",
+		"makeInstaller:prod": "set NODE_ENV=production && yarn makeInstaller --environment production",
 		"server": "finsemble server",
 		"sdd": "finsemble sdd",
 		"start": "finsemble start",
-		"template": "finsemble template"
+		"template": "finsemble template",
+		"lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings 0",
+		"lint:fix": "eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings 0 --fix",
+		"lint:cache": "npm run lint -- --cache",
+		"_format": "prettier README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
+		"format": "npm run _format -- --write",
+		"format:check": "npm run _format -- --check"
 	},
-	"author": "Cosaic",
+	"author": "Adaptive",
 	"dependencies": {
 		"@finsemble/finsemble-core": "8.8.1",
 		"@types/react": "18.0.31",
 		"@types/react-dom": "18.0.11",
 		"react": "18.2.0",
 		"react-dom": "18.2.0"
+	},
+	"devDependencies": {
+		"@typescript-eslint/eslint-plugin": "5.58.0",
+		"@typescript-eslint/parser": "5.58.0",
+		"eslint": "8.38.0",
+		"eslint-config-prettier": "8.8.0",
+		"eslint-plugin-react": "7.32.2",
+		"eslint-plugin-simple-import-sort": "^10.0.0",
+		"prettier": "2.3.0"
 	}
 }

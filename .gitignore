@@ -3,7 +3,8 @@ public/build/
 .vscode
 .DS_Store
 .webpack-file-cache
-.babel_cache
+.eslintcache
+
 # installer stuff
 installer-tmp/
 pkg/

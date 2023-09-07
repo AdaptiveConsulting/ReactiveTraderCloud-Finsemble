@@ -18,19 +18,19 @@
 		"development": {
 			"installer": {
 				"manifestUrl": "http://localhost:3375/configs/application/manifest-local.json",
-				"name": "Reactive Trader Finsemble Dev"
+				"name": "reactive-trader-finsemble-dev"
 			}
 		},
 		"production": {
 			"installer": {
-				"manifestUrl": "http://productionsite.com/configs/application/manifest-prod.json",
-				"name": "Reactive Trader Finsemble Prod"
+				"manifestUrl": "https://storage.googleapis.com/reactive-trader-finsemble/configs/application/manifest-prod.json",
+				"name": "reactive-trader-finsemble-prod"
 			}
 		},
 		"uat": {
 			"installer": {
 				"manifestUrl": "https://storage.googleapis.com/reactive-trader-finsemble-uat/configs/application/manifest-uat.json",
-				"name": "Reactive Trader Finsemble UAT"
+				"name": "reactive-trader-finsemble-uat"
 			}
 		}
 	}

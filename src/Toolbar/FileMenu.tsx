@@ -1,23 +1,20 @@
-import React from "react";
 import {
-	Preferences,
-	SystemLog,
 	CentralLogger,
 	Documentation,
-	Restart,
-	Reset,
-	Quit,
 	Menu,
-} from "@finsemble/finsemble-core";
+	Preferences,
+	Quit,
+	Reset,
+	Restart,
+	SystemLog,
+} from '@finsemble/finsemble-core'
+import React from 'react'
 
 export const FileMenu = () => (
 	<Menu
 		id="fileMenu"
 		title={
-			<img
-				className="finsemble-toolbar-brand-logo"
-				src="../../assets/img/adaptive-logo.png"
-			/>
+			<img className="finsemble-toolbar-brand-logo" src="../../assets/img/adaptive-logo.png" />
 		}
 	>
 		<Preferences />
@@ -32,4 +29,4 @@ export const FileMenu = () => (
 		 * <MenuItem onClick={...}>Your Item</MenuItem>
 		 */}
 	</Menu>
-);
+)
