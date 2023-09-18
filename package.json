@@ -22,8 +22,8 @@
 		"lint:fix": "eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings 0 --fix",
 		"lint:cache": "yarn run lint -- --cache",
 		"_format": "prettier README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
-		"format": "yarn _format -- --write",
-		"format:check": "yarn _format -- --check"
+		"format": "yarn _format --write",
+		"format:check": "yarn _format --check"
 	},
 	"author": "Adaptive",
 	"dependencies": {
