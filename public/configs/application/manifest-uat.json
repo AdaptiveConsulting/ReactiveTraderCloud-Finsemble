@@ -18,7 +18,7 @@
     "moduleRoot": "$applicationRoot/build/finsemble",
     "configRoot": "$applicationRoot/configs/application",
     "componentRoot": "https://finsemble.uat.reactivetrader.com",
-    "systemTrayIcon": "https://storage.googleapis.com/reactive-trader-finsemble-uat/assets/img/Finsemble_SystemTray_Icon.png",
+    "systemTrayIcon": "$applicationRoot/reactive-trader-finsemble-uat/assets/img/Finsemble_SystemTray_Icon.png",
     "waitForUpdate": false,
     "bootConfig": {
       "onErrorMakeSystemManagerVisible": true,
