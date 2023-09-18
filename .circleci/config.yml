@@ -32,9 +32,6 @@ commands:
       - run:
           name: 'Build Production Assets'
           command: 'yarn build:prod'
-      - store_artifacts:
-          path: ~/ci_build/node_modules/electron-winstaller/vendor/signtool.exe
-          destination: signtool.exe
       - run:
           name: 'Build Production Package'
           command: 'yarn makeInstaller:<<parameters.env>>'
