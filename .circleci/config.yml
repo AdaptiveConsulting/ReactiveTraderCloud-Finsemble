@@ -87,6 +87,10 @@ commands:
             cd ~/ci_build/
             tar -xvf DROP*.tar.gz
             gsutil -m cp -r * gs://<<parameters.cloud_bucket>>
+      - run:
+          name: Delete DROP*.tar..
+          command: |
+            gsutil -m rm 'gs://<<parameters.cloud_bucket>>/DROP*.tar.gz'
 
 jobs:
   build_uat:
