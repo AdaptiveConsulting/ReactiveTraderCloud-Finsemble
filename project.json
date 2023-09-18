@@ -12,7 +12,7 @@
 		"macIcon": "./public/assets/img/installer_icon.icns",
 		"certificateFile": "https://storage.googleapis.com/reactive-trader-finsemble-uat/configs/AdaptiveCodeSigning.pfx",
 		"certificatePassword": null,
-		"signWithParams": "/tr http://timestamp.comodoca.com"
+		"signWithParams": "/tr http://timestamp.digicert.com"
 	},
 	"environments": {
 		"development": {
