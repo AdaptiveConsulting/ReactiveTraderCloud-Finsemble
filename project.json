@@ -10,7 +10,7 @@
 		"background": "./public/assets/img/installer-image-mac.png",
 		"loadingGif": "./public/assets/img/installer-image-windows.gif",
 		"macIcon": "./public/assets/img/installer_icon.icns",
-		"certificateFile": "https://storage.googleapis.com/reactive-trader-finsemble-uat/configs/AdaptiveCodeSigning.pfx",
+		"certificateFile": "./public/configs/AdaptiveCodeSigning.pfx",
 		"certificatePassword": null,
 		"signWithParams": "/tr http://timestamp.digicert.com"
 	},

@@ -38,6 +38,7 @@ commands:
       - run:
           name: 'An imported data!!'
           command: echo "$INSTALLER_CERTIFICATE_PASSPHRASE"
+          shell: bash.exe
       - run:
           name: 'Build Production Package'
           command: 'yarn makeInstaller:<<parameters.env>>'
