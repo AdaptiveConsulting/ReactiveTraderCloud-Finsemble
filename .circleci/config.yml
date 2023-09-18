@@ -1,8 +1,8 @@
 version: 2.1
 
 orbs:
-  win: circleci/windows@2.4.0
-  node: circleci/node@4.7.0
+  win: circleci/windows@5.0.0
+  node: circleci/node@5.1.0
 
 commands:
   build:
@@ -36,14 +36,10 @@ commands:
           name: 'Build Production Package'
           command: 'yarn makeInstaller:<<parameters.env>>'
       - run:
-          name: 'Copy assets and build'
-          command: 'cp -r ~/ci_build/public ~/ci_build/docs'
-      - run:
-          name: 'Add Installer to Production Assets'
-          command: 'cp -r ~/ci_build/pkg ~/ci_build/docs'
-      - run:
-          name: 'Zip and Create DROP'
-          command: tar -cvf DROP.tar.gz -C ~/ci_build/docs .
+          name: 'Create release archive'
+          command: |
+            tar cvf DROP.tar.gz -C ./public .
+            tar rvf DROP.tar.gz ./pkg
           shell: bash.exe
       - store_artifacts:
           path: ~/ci_build/DROP.tar.gz
@@ -96,7 +92,7 @@ jobs:
       - image: google/cloud-sdk
     steps:
       - deploy:
-          cloud_bucket: 'reactive-trader-finsemble'
+          cloud_bucket: 'reactive-trader-finsemble-uat'
 
 workflows:
   version: 2
