@@ -36,10 +36,6 @@ commands:
           path: ~/ci_build/node_modules/electron-winstaller/vendor/signtool.exe
           destination: signtool.exe
       - run:
-          name: 'An imported data!!'
-          command: echo "$INSTALLER_CERTIFICATE_PASSPHRASE"
-          shell: bash.exe
-      - run:
           name: 'Build Production Package'
           command: 'yarn makeInstaller:<<parameters.env>>'
       - run:
@@ -113,6 +109,6 @@ workflows:
       - deploy_uat:
           requires:
             - build_uat
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
