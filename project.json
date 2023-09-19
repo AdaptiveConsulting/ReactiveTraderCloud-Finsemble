@@ -13,20 +13,20 @@
     "development": {
       "installer": {
         "manifestUrl": "http://localhost:3375/configs/application/manifest-local.json",
-        "name": "rtc-finsemble-dev"
+        "name": "ReactiveTraderFinsemble"
       }
     },
     "macdev": {
       "installer": {
         "manifestUrl": "http://localhost:3375/configs/application/manifest-local.json",
-        "name": "rtc-finsemble-dev",
+        "name": "ReactiveTraderFinsemble",
         "macIcon": "./public/assets/img/installer_icon.icns"
       }
     },
     "uat": {
       "installer": {
         "manifestUrl": "https://storage.googleapis.com/reactive-trader-finsemble-uat/configs/application/manifest-uat.json",
-        "name": "rtc-finsemble-uat",
+        "name": "ReactiveTraderFinsemble",
         "certificateFile": "./signing/AdaptiveCodeSigning.pfx",
         "certificatePassword": null,
         "signWithParams": "/tr http://timestamp.digicert.com"
@@ -35,7 +35,7 @@
     "production": {
       "installer": {
         "manifestUrl": "https://storage.googleapis.com/reactive-trader-finsemble/configs/application/manifest-prod.json",
-        "name": "rtc-finsemble-prod",
+        "name": "ReactiveTraderFinsemble",
         "certificateFile": "./signing/AdaptiveCodeSigning.pfx",
         "certificatePassword": null,
         "signWithParams": "/tr http://timestamp.digicert.com"

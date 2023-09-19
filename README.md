@@ -20,25 +20,30 @@ Below is a brief outline of what's included in the seed project.
     using dynamic configuration. Contains the application manifest used to start up the Finsemble application. The
     default manifest for development is included, and additional configurations can be placed in this folder.
 
+- src\_: the folder that contains all Finsemble component that are overriden such as the Toolbar.
+
+- webpack/entries.json: This file contains entry points for components defined in the src folder, which Finsemble Webpack can bundle together.
+
 ## Developer Prerequisites
 
 - Node v16.x
 - Yarn v1.x
-- Windows only
+- Windows & Mac only
 
 ## Local Development
 
 - `yarn install`
-- `yarn dev:fresh` to build and run the project
-- `yarn dev:nolaunch` to build and serve the project without launching Finsemble
-- `yarn makeInstaller:dev` to generate a local Electron installer for development
+- `yarn dev` to build and run the project
+- `yarn launch` to build and serve the project without launching Finsemble
+- `yarn makeInstaller:dev` to generate a local Electron installer for development in Windows
+- `yarn makeInstaller:macdev` to generate a local Electron installer for development in Mac
 
 ## Production
 
 To do a dry run of a production build for this application please follow these steps:
 
 - `yarn build:prod` to build Finsemble for production
-- `yarn makeInstaller:prod` run this when needed to regenerate the production installer
+- `yarn makeInstaller:prod` run this when needed to regenerate the production installer for Windows
 
 ## Deployment
 
@@ -57,8 +62,3 @@ To deploy changes:
 ## Install the UAT Version of Reactive Trader Finsemble
 
 - Run the exe for the UAT instance installer found [here](https://storage.googleapis.com/reactive-trader-finsemble-uat/pkg/ReactiveTraderFinsemble.exe)
-
-## Notes
-
-- You can change the `applicationRoot` and `componentRoot` in the manifest-local.json file for local development
-- You can update the Reactive Trader Demo workspace that's found in the `/configs/application/workspaces.json` file
