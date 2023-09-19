@@ -17,7 +17,7 @@
     "applicationRoot": "https://storage.googleapis.com/reactive-trader-finsemble",
     "moduleRoot": "$applicationRoot/build/finsemble",
     "configRoot": "$applicationRoot/configs/application",
-    "componentRoot": "https://finsemble.reactivetrader.com",
+    "componentRoot": "https://finsemble.prod.reactivetrader.com",
     "systemTrayIcon": "$applicationRoot/reactive-trader-finsemble/assets/img/Finsemble_SystemTray_Icon.png",
     "waitForUpdate": false,
     "bootConfig": {
@@ -51,9 +51,13 @@
     "custom": {
       "//": "Customer macros definitions must go here (e.g. 'myApplicationRoot' so it can be referenced elsewhere as '$myApplicationRoot'), along with other custom config at this level."
     },
-    "importConfig": ["./config.json"]
+    "importConfig": [
+      "./config.json"
+    ]
   },
   "finsemble-electron-adapter": {
-    "allowedManifestDomains": ["*"]
+    "allowedManifestDomains": [
+      "*"
+    ]
   }
 }
