@@ -61,4 +61,4 @@ To deploy changes:
 
 ## Install the UAT Version of Reactive Trader Finsemble
 
-- Run the exe for the UAT instance installer found [here](https://storage.googleapis.com/reactive-trader-finsemble-uat/pkg/ReactiveTraderFinsemble.exe)
+- Run the exe for the UAT instance installer found [here](https://storage.googleapis.com/reactive-trader-finsemble-uat/pkg/ReactiveTraderFinsemble-UAT.exe)
