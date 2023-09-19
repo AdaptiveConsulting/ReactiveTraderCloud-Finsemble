@@ -7,22 +7,7 @@
 Reactive Trader Cloud is a real-time FX trading platform demo showcasing reactive programming principles applied across the full application stack.
 This demo is built with the Finsemble seed project and integrated with Reactive Trader Cloud.
 
-![image](/assets/img/RTF.png)
-
-# Project structure
-
-Below is a brief outline of what's included in the seed project.
-
-- _assets_ - Contains the CSS and images used to create the SmartDesktop's look and feel.
-
-  - _configs/application_ - Contains all of the base configurations for the Finsemble application. The files in this
-    folder are merged together to build the application configuration. This configuration can be changed at run time
-    using dynamic configuration. Contains the application manifest used to start up the Finsemble application. The
-    default manifest for development is included, and additional configurations can be placed in this folder.
-
-- src\_: the folder that contains all Finsemble component that are overriden such as the Toolbar.
-
-- webpack/entries.json: This file contains entry points for components defined in the src folder, which Finsemble Webpack can bundle together.
+![image](/public/assets/img/RTF.png)
 
 ## Developer Prerequisites
 
@@ -62,3 +47,18 @@ To deploy changes:
 ## Install the UAT Version of Reactive Trader Finsemble
 
 - Run the exe for the UAT instance installer found [here](https://storage.googleapis.com/reactive-trader-finsemble-uat/pkg/ReactiveTraderFinsemble-UAT.exe)
+
+# Project structure
+
+Below is a brief outline of what's included in the seed project.
+
+- _assets_ - Contains the CSS and images used to create the SmartDesktop's look and feel.
+
+  - _configs/application_ - Contains all of the base configurations for the Finsemble application. The files in this
+    folder are merged together to build the application configuration. This configuration can be changed at run time
+    using dynamic configuration. Contains the application manifest used to start up the Finsemble application. The
+    default manifest for development is included, and additional configurations can be placed in this folder.
+
+- src - the folder that contains all Finsemble component that are overriden such as the Toolbar.
+
+- webpack/entries.json: This file contains entry points for components defined in the src folder, which Finsemble Webpack can bundle together.
