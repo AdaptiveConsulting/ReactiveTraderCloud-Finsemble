@@ -1,9 +1,0 @@
-{
-	"services": {
-		"exampleCustomActionService": {
-			"name": "exampleCustomActionService",
-			"visible": false,
-			"html": "$applicationRoot/components/finsemble-notifications/services/exampleCustomAction/exampleCustomAction.html"
-		}
-	}
-}

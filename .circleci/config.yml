@@ -1,30 +1,11 @@
 version: 2.1
 
 orbs:
-  win: circleci/windows@2.4.0
-  node: circleci/node@4.7.0
+  win: circleci/windows@5.0.0
+  node: circleci/node@5.1.0
 
 commands:
-  pull_installer: 
-    parameters:
-      cloud_bucket:
-        type: string
-    steps:
-      - run:
-          name: Authenticate with gcloud
-          command: |
-            echo $BASH_ENV
-            echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
-            gcloud config set project ${GOOGLE_PROJECT_ID}
-      - run:
-          name: Copy installer from GCS
-          command: "gsutil -m cp -r gs://<<parameters.cloud_bucket>>/pkg ."
-      - persist_to_workspace:
-          root: .
-          paths:
-            - pkg
-
-  build: 
+  build:
     parameters:
       env:
         type: string
@@ -33,46 +14,35 @@ commands:
       - attach_workspace:
           at: ~/ci_build/
       - run:
-          name: Install node 12
-          command: "nvm install 12"
+          name: Install node
+          command: "nvm install 16"
       - run:
           name: Set node version
-          command: "nvm use 12"
+          command: "nvm use 16"
       - run:
           name: Install yarn
           command: "npm install -g yarn"
       - run:
-          name: "Authenticate with registry"
-          command: 'echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/ci_build/.npmrc'
-          shell: bash.exe
-      - run:
-          name: "Install NPM Packages"
-          command: "yarn install"
+          name: "Install dependencies"
+          command: "yarn"
       - save_cache:
           paths:
             - node_modules
           key: 'v1-dependencies-{{ checksum "package.json" }}'
       - run:
-          name: "Lint"
-          command: "yarn eslint"
+          name: "Lint, prettier .."
+          command: "yarn verify"
       - run:
           name: "Build Production Assets"
           command: "yarn build:prod"
       - run:
-          name: "Move Production Assets"
-          command: "yarn deploy"
-      - store_artifacts:
-          path: ~/ci_build/node_modules/electron-winstaller/vendor/signtool.exe
-          destination: signtool.exe
-      - run:
           name: "Build Production Package"
           command: "yarn makeInstaller:<<parameters.env>>"
       - run:
-          name: "Add Installer to Production Assets"
-          command: "cp -r ~/ci_build/pkg ~/ci_build/docs"
-      - run:
-          name: "Zip and Create DROP"
-          command: tar -cvf DROP.tar.gz -C ~/ci_build/docs .
+          name: "Create release archive"
+          command: |
+            tar cvf DROP.tar.gz -C ./public .
+            tar rvf DROP.tar.gz ./pkg
           shell: bash.exe
       - store_artifacts:
           path: ~/ci_build/DROP.tar.gz
@@ -108,25 +78,10 @@ commands:
           command: |
             cd ~/ci_build/
             tar -xvf DROP*.tar.gz
+            rm DROP*.tar.gz
             gsutil -m cp -r * gs://<<parameters.cloud_bucket>>
 
 jobs:
-  pull_uat_installer:
-    description: "Pull current installer from UAT GCS"
-    docker:
-      - image: google/cloud-sdk
-    steps:
-      - pull_installer:
-          cloud_bucket: "reactive-trader-finsemble-uat"
-
-  pull_prod_installer:
-    description: "Pull current installer from production GCS"
-    docker:
-      - image: google/cloud-sdk
-    steps:
-      - pull_installer:
-          cloud_bucket: "reactive-trader-finsemble"
-      
   build_uat:
     executor: win/default
     working_directory: ~/ci_build
@@ -161,22 +116,17 @@ workflows:
   version: 2
   UAT_Workflow:
     jobs:
-      - pull_uat_installer
-      - build_uat:
-          requires:
-            - pull_uat_installer
+      - build_uat
       - deploy_uat:
           requires:
             - build_uat
           filters:
             branches:
               only: master
+
   Prod_Workflow:
     jobs:
-      - pull_prod_installer
-      - build_prod:
-          requires:
-            - pull_prod_installer
+      - build_prod
       - hold_deploy_prod:
           type: approval
           requires:

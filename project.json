@@ -1,0 +1,45 @@
+{
+  "$schema": "./node_modules/@finsemble/finsemble-core/configs/schemas/fileBasedSchemas/project.schema.json",
+  "installer": {
+    "icon": "./public/assets/img/installer_icon.ico",
+    "version": "8.8.1",
+    "authors": "Adaptive",
+    "description": "Adaptive",
+    "companyName": "Adaptive",
+    "background": "./public/assets/img/installer-image-mac.png",
+    "loadingGif": "./public/assets/img/installer-image-windows.gif"
+  },
+  "environments": {
+    "development": {
+      "installer": {
+        "manifestUrl": "http://localhost:3375/configs/application/manifest-local.json",
+        "name": "ReactiveTraderFinsemble-Dev"
+      }
+    },
+    "macdev": {
+      "installer": {
+        "manifestUrl": "http://localhost:3375/configs/application/manifest-local.json",
+        "name": "ReactiveTraderFinsemble-Dev",
+        "macIcon": "./public/assets/img/installer_icon.icns"
+      }
+    },
+    "uat": {
+      "installer": {
+        "manifestUrl": "https://storage.googleapis.com/reactive-trader-finsemble-uat/configs/application/manifest-uat.json",
+        "name": "ReactiveTraderFinsemble-UAT",
+        "certificateFile": "./signing/AdaptiveCodeSigning.pfx",
+        "certificatePassword": null,
+        "signWithParams": "/tr http://timestamp.digicert.com"
+      }
+    },
+    "production": {
+      "installer": {
+        "manifestUrl": "https://storage.googleapis.com/reactive-trader-finsemble/configs/application/manifest-prod.json",
+        "name": "ReactiveTraderFinsemble",
+        "certificateFile": "./signing/AdaptiveCodeSigning.pfx",
+        "certificatePassword": null,
+        "signWithParams": "/tr http://timestamp.digicert.com"
+      }
+    }
+  }
+}
