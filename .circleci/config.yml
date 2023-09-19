@@ -86,6 +86,13 @@ jobs:
       - build:
           env: 'uat'
 
+  build_prod:
+    executor: win/default
+    working_directory: ~/ci_build
+    steps:
+      - build:
+          env: 'prod'
+
   deploy_uat:
     description: 'Deploy Artifacts to UAT GCS'
     docker:
@@ -93,6 +100,14 @@ jobs:
     steps:
       - deploy:
           cloud_bucket: 'reactive-trader-finsemble-uat'
+
+  deploy_prod:
+    description: 'Deploy Artifacts to production GCS'
+    docker:
+      - image: google/cloud-sdk
+    steps:
+      - deploy:
+          cloud_bucket: 'reactive-trader-finsemble'
 
 workflows:
   version: 2
@@ -102,6 +117,20 @@ workflows:
       - deploy_uat:
           requires:
             - build_uat
-          # filters:
-          #   branches:
-          #     only: master
+          filters:
+            branches:
+              only: master
+
+  Prod_Workflow:
+    jobs:
+      - build_prod
+      - hold_deploy_prod:
+          type: approval
+          requires:
+            - build_prod
+          filters:
+            branches:
+              only: master
+      - deploy_prod:
+          requires:
+            - hold_deploy_prod
