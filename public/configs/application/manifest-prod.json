@@ -51,13 +51,9 @@
     "custom": {
       "//": "Customer macros definitions must go here (e.g. 'myApplicationRoot' so it can be referenced elsewhere as '$myApplicationRoot'), along with other custom config at this level."
     },
-    "importConfig": [
-      "./config.json"
-    ]
+    "importConfig": ["./config.json"]
   },
   "finsemble-electron-adapter": {
-    "allowedManifestDomains": [
-      "*"
-    ]
+    "allowedManifestDomains": ["*"]
   }
 }
