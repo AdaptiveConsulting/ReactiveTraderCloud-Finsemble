@@ -9,9 +9,20 @@ This demo is built with the Finsemble seed project and integrated with Reactive 
 
 ![image](/assets/img/RTF.png)
 
+# Project structure
+
+Below is a brief outline of what's included in the seed project.
+
+- _assets_ - Contains the CSS and images used to create the SmartDesktop's look and feel.
+
+  - _configs/application_ - Contains all of the base configurations for the Finsemble application. The files in this
+    folder are merged together to build the application configuration. This configuration can be changed at run time
+    using dynamic configuration. Contains the application manifest used to start up the Finsemble application. The
+    default manifest for development is included, and additional configurations can be placed in this folder.
+
 ## Developer Prerequisites
 
-- Node v12.x
+- Node v16.x
 - Yarn v1.x
 - Windows only
 
@@ -51,4 +62,3 @@ To deploy changes:
 
 - You can change the `applicationRoot` and `componentRoot` in the manifest-local.json file for local development
 - You can update the Reactive Trader Demo workspace that's found in the `/configs/application/workspaces.json` file
-- When upgrading to a new version of Finsemble, please upgrade the version number in `configs/other/installer.json`. This number is used in building a history of installers, and allows for automatic update of clients on startup.

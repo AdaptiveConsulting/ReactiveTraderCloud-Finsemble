@@ -27,7 +27,7 @@
       "installer": {
         "manifestUrl": "https://storage.googleapis.com/reactive-trader-finsemble-uat/configs/application/manifest-uat.json",
         "name": "rtc-finsemble-uat",
-        "certificateFile": "./public/configs/AdaptiveCodeSigning.pfx",
+        "certificateFile": "./signing/AdaptiveCodeSigning.pfx",
         "certificatePassword": null,
         "signWithParams": "/tr http://timestamp.digicert.com"
       }
