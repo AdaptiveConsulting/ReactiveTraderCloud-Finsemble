@@ -15,8 +15,6 @@
     "makeInstaller:uat": "set NODE_ENV=uat && yarn makeInstaller --environment uat",
     "makeInstaller:prod": "set NODE_ENV=production && yarn makeInstaller --environment production",
     "makeInstaller:macdev": "set NODE_ENV=development && yarn makeInstaller --environment macdev",
-    "makeInstaller:macuat": "set NODE_ENV=uat && yarn makeInstaller --environment macuat",
-    "makeInstaller:macprod": "set NODE_ENV=production && yarn makeInstaller --environment macprod",
     "server": "finsemble server",
     "sdd": "finsemble sdd",
     "start": "finsemble start",
@@ -24,7 +22,7 @@
     "lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings 0",
     "lint:fix": "eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings 0 --fix",
     "lint:cache": "yarn run lint -- --cache",
-    "_format": "prettier README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
+    "_format": "prettier .",
     "format": "yarn _format --write",
     "format:check": "yarn _format --check",
     "verify": "yarn lint && yarn format:check"

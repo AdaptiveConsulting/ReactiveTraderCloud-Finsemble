@@ -1,6 +1,6 @@
 # Reactive Trader Finsemble Demo
 
-[![CircleCI](https://circleci.com/gh/AdaptiveConsulting/ReactiveTraderCloud-Finsemble/tree/master.svg?style=svg&circle-token=c9a64a94d9b308c65df792b7af0412b0a2310a12)](https://circleci.com/gh/AdaptiveConsulting/ReactiveTraderCloud-Finsemble/tree/master)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/AdaptiveConsulting/ReactiveTraderCloud-Finsemble/tree/master.svg?style=svg&circle-token=95d398d5ee0822db7533ea48e73dd1232ddcb158)](https://dl.circleci.com/status-badge/redirect/gh/AdaptiveConsulting/ReactiveTraderCloud-Finsemble/tree/master)
 
 ## Overview
 
@@ -16,6 +16,8 @@ This demo is built with the Finsemble seed project and integrated with Reactive 
 - Windows & Mac only
 
 ## Local Development
+
+(making sure you run the Finsemble variant in ReactiveTraderCloud repo first, so the RT apps work)
 
 - `yarn install`
 - `yarn dev` to build and run the project
@@ -52,13 +54,13 @@ To deploy changes:
 
 Below is a brief outline of what's included in the seed project.
 
-- _assets_ - Contains the CSS and images used to create the SmartDesktop's look and feel.
+- _public/assets_ - Contains the CSS and images used to create the SmartDesktop's look and feel.
 
-  - _configs/application_ - Contains all of the base configurations for the Finsemble application. The files in this
-    folder are merged together to build the application configuration. This configuration can be changed at run time
-    using dynamic configuration. Contains the application manifest used to start up the Finsemble application. The
-    default manifest for development is included, and additional configurations can be placed in this folder.
+- _public/configs/application_ - Contains all of the base configurations for the Finsemble application. The files in this
+  folder are merged together to build the application configuration. This configuration can be changed at run time
+  using dynamic configuration. Contains the application manifest used to start up the Finsemble application. The
+  default manifest for development is included, and additional configurations can be placed in this folder.
 
-- src - the folder that contains all Finsemble component that are overriden such as the Toolbar.
+- _src_ - the folder that contains all Finsemble component that are overriden such as the Toolbar.
 
-- webpack/entries.json: This file contains entry points for components defined in the src folder, which Finsemble Webpack can bundle together.
+- _webpack/entries.json_ - This file contains entry points for components defined in the src folder, which Finsemble webpack can bundle together.

@@ -7,14 +7,17 @@ import {
   Reset,
   Restart,
   SystemLog,
-} from '@finsemble/finsemble-core'
-import React from 'react'
+} from "@finsemble/finsemble-core"
+import React from "react"
 
 export const FileMenu = () => (
   <Menu
     id="fileMenu"
     title={
-      <img className="finsemble-toolbar-brand-logo" src="../../assets/img/adaptive-logo.png" />
+      <img
+        className="finsemble-toolbar-brand-logo"
+        src="../../assets/img/adaptive-logo.png"
+      />
     }
   >
     <Preferences />

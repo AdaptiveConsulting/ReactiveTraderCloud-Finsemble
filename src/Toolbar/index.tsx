@@ -19,11 +19,11 @@ import {
   ToolbarSection,
   ToolbarShell,
   WorkspaceManagementMenu,
-} from '@finsemble/finsemble-core'
-import * as React from 'react'
-import { createRoot } from 'react-dom/client'
+} from "@finsemble/finsemble-core"
+import * as React from "react"
+import { createRoot } from "react-dom/client"
 
-import { FileMenu } from './FileMenu'
+import { FileMenu } from "./FileMenu"
 
 /**
  * Note: Set `FSBL.debug = true` if you need to reload the toolbar during development.
@@ -33,17 +33,17 @@ import { FileMenu } from './FileMenu'
 const Toolbar = () => {
   return (
     <ToolbarShell
-      hotkeyShow={['ctrl', 'alt', 't']}
-      hotkeyHide={['ctrl', 'alt', 'h']}
-      hotkeyDock={['ctrl', 'shift', 'alt', 't']}
-      hotkeyMinimizeAll={['ctrl', 'alt', 'down']}
-      hotkeyBringWindowsToFront={['ctrl', 'alt', 'up']}
-      hotkeyRestartApplication={['ctrl', 'alt', 'shift', 'r']}
+      hotkeyShow={["ctrl", "alt", "t"]}
+      hotkeyHide={["ctrl", "alt", "h"]}
+      hotkeyDock={["ctrl", "shift", "alt", "t"]}
+      hotkeyMinimizeAll={["ctrl", "alt", "down"]}
+      hotkeyBringWindowsToFront={["ctrl", "alt", "up"]}
+      hotkeyRestartApplication={["ctrl", "alt", "shift", "r"]}
     >
       <ToolbarSection className="left">
         <DragHandle />
         <FileMenu />
-        <Search openHotkey={['ctrl', 'alt', 'f']} />
+        <Search openHotkey={["ctrl", "alt", "f"]} />
         <WorkspaceManagementMenu />
         {/* Uncomment the following to enable the AdvancedAppLauncherMenu*/}
         {/* <AdvancedAppLauncherMenu /> */}
@@ -66,7 +66,7 @@ const Toolbar = () => {
   )
 }
 
-const container = document.getElementsByTagName('div')[0]
+const container = document.getElementsByTagName("div")[0]
 createRoot(container).render(
   <FinsembleProvider>
     <FinsembleCSS />
