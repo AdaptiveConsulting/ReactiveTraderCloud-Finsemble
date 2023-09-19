@@ -26,7 +26,8 @@
     "lint:cache": "yarn run lint -- --cache",
     "_format": "prettier README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
     "format": "yarn _format --write",
-    "format:check": "yarn _format --check"
+    "format:check": "yarn _format --check",
+    "verify": "yarn lint && yarn format:check"
   },
   "author": "Adaptive",
   "dependencies": {
