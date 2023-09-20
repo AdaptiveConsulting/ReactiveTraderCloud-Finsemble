@@ -1,7 +1,7 @@
 {
   "$schema": "../../../node_modules/@finsemble/finsemble-core/configs/schemas/fileBasedSchemas/manifestFile.schema.json",
   "startup_app": {
-    "name": "Reactive Trader Finsemble PROD",
+    "name": "Reactive Trader Finsemble",
     "uuid": "Finsemble-PROD",
     "applicationIcon": "https://storage.googleapis.com/reactive-trader-finsemble/assets/img/adaptive-logo@2x.png"
   },
