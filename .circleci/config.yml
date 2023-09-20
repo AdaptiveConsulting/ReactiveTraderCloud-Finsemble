@@ -2,7 +2,6 @@ version: 2.1
 
 orbs:
   win: circleci/windows@5.0.0
-  node: circleci/node@5.1.0
 
 commands:
   build:
@@ -14,21 +13,11 @@ commands:
       - attach_workspace:
           at: ~/ci_build/
       - run:
-          name: Install node
-          command: "nvm install 16"
-      - run:
-          name: Set node version
-          command: "nvm use 16"
-      - run:
           name: Install yarn
           command: "npm install -g yarn"
       - run:
           name: "Install dependencies"
-          command: "yarn"
-      - save_cache:
-          paths:
-            - node_modules
-          key: 'v1-dependencies-{{ checksum "package.json" }}'
+          command: "yarn install --frozen-lockfile"
       - run:
           name: "Lint, prettier .."
           command: "yarn verify"
@@ -38,19 +27,11 @@ commands:
       - run:
           name: "Build Production Package"
           command: "yarn makeInstaller:<<parameters.env>>"
-      - run:
-          name: "Create release archive"
-          command: |
-            tar cvf DROP.tar.gz -C ./public .
-            tar rvf DROP.tar.gz ./pkg
-          shell: bash.exe
-      - store_artifacts:
-          path: ~/ci_build/DROP.tar.gz
-          destination: DROP.tar.gz
       - persist_to_workspace:
           root: .
           paths:
-            - DROP.tar.gz
+            - pkg
+            - public
 
   deploy:
     parameters:
@@ -61,8 +42,7 @@ commands:
           at: ~/ci_build/
       - run:
           name: "Deployment information"
-          command: |
-            echo "Deploying Build $CIRCLE_BUILD_NUM"
+          command: echo "Deploying Build $CIRCLE_BUILD_NUM"
       - run:
           name: Authenticate with gcloud
           command: |
@@ -70,16 +50,13 @@ commands:
             echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
             gcloud config set project ${GOOGLE_PROJECT_ID}
       - run:
-          name: Delete GCS Bucket Contents
-          command: |
-            gsutil -m rm 'gs://<<parameters.cloud_bucket>>/**'
+          name: Delete GCS Bucket Contents (if present)
+          command: gsutil -m rm 'gs://<<parameters.cloud_bucket>>/**' || echo Bucket empty
       - run:
           name: Copy artifacts to GCS
           command: |
             cd ~/ci_build/
-            tar -xvf DROP*.tar.gz
-            rm DROP*.tar.gz
-            gsutil -m cp -r * gs://<<parameters.cloud_bucket>>
+            gsutil -m cp -r pkg public/* gs://<<parameters.cloud_bucket>>
 
 jobs:
   build_uat:
