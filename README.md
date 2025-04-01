@@ -1,6 +1,4 @@
-# Reactive Trader Finsemble Demo
-
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/AdaptiveConsulting/ReactiveTraderCloud-Finsemble/tree/master.svg?style=svg&circle-token=95d398d5ee0822db7533ea48e73dd1232ddcb158)](https://dl.circleci.com/status-badge/redirect/gh/AdaptiveConsulting/ReactiveTraderCloud-Finsemble/tree/master)
+# Reactive Trader Finsemble
 
 ## Overview
 
